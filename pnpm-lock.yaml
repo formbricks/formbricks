@@ -37,8 +37,8 @@ importers:
         specifier: 4.16.5
         version: 4.16.5
       turbo:
-        specifier: 2.0.11
-        version: 2.0.11
+        specifier: 2.3.3
+        version: 2.3.3
 
   apps/demo:
     dependencies:
@@ -50,7 +50,7 @@ importers:
         version: 0.452.0(react@19.0.0-rc-ed15d500-20241110)
       next:
         specifier: 15.0.3
-        version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+        version: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react:
         specifier: 19.0.0-rc-ed15d500-20241110
         version: 19.0.0-rc-ed15d500-20241110
@@ -184,7 +184,7 @@ importers:
         version: 0.1.4
       next:
         specifier: 15.0.3
-        version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+        version: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       next-plausible:
         specifier: 3.12.2
         version: 3.12.2(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
@@ -474,7 +474,7 @@ importers:
         version: 0.0.25(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       '@sentry/nextjs':
         specifier: 8.34.0
-        version: 8.34.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(webpack@5.95.0)
+        version: 8.34.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(webpack@5.95.0)
       '@tailwindcss/forms':
         specifier: 0.5.9
         version: 0.5.9(tailwindcss@3.4.13(ts-node@10.9.2(typescript@5.4.5)))
@@ -495,7 +495,7 @@ importers:
         version: 1.10.0(@opentelemetry/api-logs@0.53.0)(@opentelemetry/api@1.9.0)(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/resources@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-logs@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-metrics@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))
       '@vercel/speed-insights':
         specifier: 1.0.12
-        version: 1.0.12(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))
+        version: 1.0.12(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))
       ai:
         specifier: 3.4.33
         version: 3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))(zod@3.23.8)
@@ -561,13 +561,13 @@ importers:
         version: 4.0.4
       next:
         specifier: 15.0.3
-        version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+        version: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       next-intl:
         specifier: 3.20.0
-        version: 3.20.0(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+        version: 3.20.0(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       next-safe-action:
         specifier: 7.9.3
-        version: 7.9.3(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(zod@3.23.8)
+        version: 7.9.3(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(zod@3.23.8)
       optional:
         specifier: 0.1.4
         version: 0.1.4
@@ -643,7 +643,7 @@ importers:
         version: link:../../packages/config-eslint
       '@neshca/cache-handler':
         specifier: 1.7.4
-        version: 1.7.4(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(redis@4.7.0)
+        version: 1.7.4(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(redis@4.7.0)
       '@types/bcryptjs':
         specifier: 2.4.6
         version: 2.4.6
@@ -12569,38 +12569,38 @@ packages:
   tty-browserify@0.0.1:
     resolution: {integrity: sha512-C3TaO7K81YvjCgQH9Q1S3R3P3BtN3RIM8n+OvX4il1K1zgE8ZhI0op7kClgkxtutIE8hQrcrHBXvIheqKUUCxw==}
 
-  turbo-darwin-64@2.0.11:
-    resolution: {integrity: sha512-YlHEEhcm+jI1BSZoLugGHUWDfRXaNaQIv7tGQBfadYjo9kixBnqoTOU6s1ubOrQMID+lizZZQs79GXwqM6vohg==}
+  turbo-darwin-64@2.3.3:
+    resolution: {integrity: sha512-bxX82xe6du/3rPmm4aCC5RdEilIN99VUld4HkFQuw+mvFg6darNBuQxyWSHZTtc25XgYjQrjsV05888w1grpaA==}
     cpu: [x64]
     os: [darwin]
 
-  turbo-darwin-arm64@2.0.11:
-    resolution: {integrity: sha512-K/YW+hWzRQ/wGmtffxllH4M1tgy8OlwgXODrIiAGzkSpZl9+pIsem/F86UULlhsIeavBYK/LS5+dzV3DPMjJ9w==}
+  turbo-darwin-arm64@2.3.3:
+    resolution: {integrity: sha512-DYbQwa3NsAuWkCUYVzfOUBbSUBVQzH5HWUFy2Kgi3fGjIWVZOFk86ss+xsWu//rlEAfYwEmopigsPYSmW4X15A==}
     cpu: [arm64]
     os: [darwin]
 
-  turbo-linux-64@2.0.11:
-    resolution: {integrity: sha512-mv8CwGP06UPweMh1Vlp6PI6OWnkuibxfIJ4Vlof7xqjohAaZU5FLqeOeHkjQflH/6YrCVuS9wrK0TFOu+meTtA==}
+  turbo-linux-64@2.3.3:
+    resolution: {integrity: sha512-eHj9OIB0dFaP6BxB88jSuaCLsOQSYWBgmhy2ErCu6D2GG6xW3b6e2UWHl/1Ho9FsTg4uVgo4DB9wGsKa5erjUA==}
     cpu: [x64]
     os: [linux]
 
-  turbo-linux-arm64@2.0.11:
-    resolution: {integrity: sha512-wLE5tl4oriTmHbuayc0ki0csaCplmVLj+uCWtecM/mfBuZgNS9ICNM9c4sB+Cfl5tlBBFeepqRNgvRvn8WeVZg==}
+  turbo-linux-arm64@2.3.3:
+    resolution: {integrity: sha512-NmDE/NjZoDj1UWBhMtOPmqFLEBKhzGS61KObfrDEbXvU3lekwHeoPvAMfcovzswzch+kN2DrtbNIlz+/rp8OCg==}
     cpu: [arm64]
     os: [linux]
 
-  turbo-windows-64@2.0.11:
-    resolution: {integrity: sha512-tja3zvVCSWu3HizOoeQv0qDJ+GeWGWRFOOM6a8i3BYnXLgGKAaDZFcjwzgC50tWiAw4aowIVR4OouwIyRhLBaQ==}
+  turbo-windows-64@2.3.3:
+    resolution: {integrity: sha512-O2+BS4QqjK3dOERscXqv7N2GXNcqHr9hXumkMxDj/oGx9oCatIwnnwx34UmzodloSnJpgSqjl8iRWiY65SmYoQ==}
     cpu: [x64]
     os: [win32]
 
-  turbo-windows-arm64@2.0.11:
-    resolution: {integrity: sha512-sYjXP6k94Bqh99R+y3M1Ks6LRIEZybMz+7enA8GKl6JJ2ZFaXxTnS6q+/2+ii1+rRwxohj5OBb4gxODcF8Jd4w==}
+  turbo-windows-arm64@2.3.3:
+    resolution: {integrity: sha512-dW4ZK1r6XLPNYLIKjC4o87HxYidtRRcBeo/hZ9Wng2XM/MqqYkAyzJXJGgRMsc0MMEN9z4+ZIfnSNBrA0b08ag==}
     cpu: [arm64]
     os: [win32]
 
-  turbo@2.0.11:
-    resolution: {integrity: sha512-imDlFFAvitbCm1JtDFJ6eG882qwxHUmVT2noPb3p2jq5o5DuXOchMbkVS9kUeC3/4WpY5N0GBZ3RvqNyjHZw1Q==}
+  turbo@2.3.3:
+    resolution: {integrity: sha512-DUHWQAcC8BTiUZDRzAYGvpSpGLiaOQPfYXlCieQbwUvmml/LRGIe3raKdrOPOoiX0DYlzxs2nH6BoWJoZrj8hA==}
     hasBin: true
 
   tween-functions@1.2.0:
@@ -16385,11 +16385,11 @@ snapshots:
 
   '@microsoft/tsdoc@0.14.2': {}
 
-  '@neshca/cache-handler@1.7.4(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(redis@4.7.0)':
+  '@neshca/cache-handler@1.7.4(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(redis@4.7.0)':
     dependencies:
       cluster-key-slot: 1.1.2
       lru-cache: 10.4.3
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       redis: 4.7.0
 
   '@next/env@13.5.7': {}
@@ -18536,7 +18536,7 @@ snapshots:
       '@sentry/types': 8.34.0
       '@sentry/utils': 8.34.0
 
-  '@sentry/nextjs@8.34.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(webpack@5.95.0)':
+  '@sentry/nextjs@8.34.0(@opentelemetry/api@1.9.0)(@opentelemetry/core@1.26.0(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.53.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.26.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(webpack@5.95.0)':
     dependencies:
       '@opentelemetry/instrumentation-http': 0.53.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/semantic-conventions': 1.27.0
@@ -18551,7 +18551,7 @@ snapshots:
       '@sentry/vercel-edge': 8.34.0
       '@sentry/webpack-plugin': 2.22.3(encoding@0.1.13)(webpack@5.95.0)
       chalk: 3.0.0
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       resolve: 1.22.8
       rollup: 3.29.5
       stacktrace-parser: 0.1.10
@@ -20152,9 +20152,9 @@ snapshots:
       '@opentelemetry/sdk-metrics': 1.26.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 1.26.0(@opentelemetry/api@1.9.0)
 
-  '@vercel/speed-insights@1.0.12(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))':
+  '@vercel/speed-insights@1.0.12(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))':
     optionalDependencies:
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react: 19.0.0-rc-ed15d500-20241110
       svelte: 4.2.19
       vue: 3.5.11(typescript@5.4.5)
@@ -25397,7 +25397,7 @@ snapshots:
       '@panva/hkdf': 1.2.1
       cookie: 0.7.1
       jose: 4.15.9
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       oauth: 0.9.15
       openid-client: 5.7.0
       preact: 10.23.2
@@ -25408,23 +25408,23 @@ snapshots:
     optionalDependencies:
       nodemailer: 6.9.15
 
-  next-intl@3.20.0(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
+  next-intl@3.20.0(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
       '@formatjs/intl-localematcher': 0.5.5
       negotiator: 0.6.3
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react: 19.0.0-rc-ed15d500-20241110
       use-intl: 3.23.2(react@19.0.0-rc-ed15d500-20241110)
 
   next-plausible@3.12.2(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
 
-  next-safe-action@7.9.3(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(zod@3.23.8):
+  next-safe-action@7.9.3(next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)(zod@3.23.8):
     dependencies:
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
     optionalDependencies:
@@ -25432,7 +25432,7 @@ snapshots:
 
   next-seo@6.6.0(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
 
@@ -25442,14 +25442,14 @@ snapshots:
       '@next/env': 13.5.7
       fast-glob: 3.3.2
       minimist: 1.2.8
-      next: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next: 15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
 
   next-themes@0.3.0(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
 
-  next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
+  next@15.0.3(@babel/core@7.25.2)(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
       '@next/env': 15.0.3
       '@swc/counter': 0.1.3
@@ -25459,7 +25459,7 @@ snapshots:
       postcss: 8.4.31
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
-      styled-jsx: 5.1.6(react@19.0.0-rc-ed15d500-20241110)
+      styled-jsx: 5.1.6(@babel/core@7.25.2)(react@19.0.0-rc-ed15d500-20241110)
     optionalDependencies:
       '@next/swc-darwin-arm64': 15.0.3
       '@next/swc-darwin-x64': 15.0.3
@@ -27631,10 +27631,12 @@ snapshots:
     dependencies:
       inline-style-parser: 0.2.4
 
-  styled-jsx@5.1.6(react@19.0.0-rc-ed15d500-20241110):
+  styled-jsx@5.1.6(@babel/core@7.25.2)(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
       client-only: 0.0.1
       react: 19.0.0-rc-ed15d500-20241110
+    optionalDependencies:
+      '@babel/core': 7.25.2
 
   stylis@4.3.4: {}
 
@@ -28074,32 +28076,32 @@ snapshots:
 
   tty-browserify@0.0.1: {}
 
-  turbo-darwin-64@2.0.11:
+  turbo-darwin-64@2.3.3:
     optional: true
 
-  turbo-darwin-arm64@2.0.11:
+  turbo-darwin-arm64@2.3.3:
     optional: true
 
-  turbo-linux-64@2.0.11:
+  turbo-linux-64@2.3.3:
     optional: true
 
-  turbo-linux-arm64@2.0.11:
+  turbo-linux-arm64@2.3.3:
     optional: true
 
-  turbo-windows-64@2.0.11:
+  turbo-windows-64@2.3.3:
     optional: true
 
-  turbo-windows-arm64@2.0.11:
+  turbo-windows-arm64@2.3.3:
     optional: true
 
-  turbo@2.0.11:
+  turbo@2.3.3:
     optionalDependencies:
-      turbo-darwin-64: 2.0.11
-      turbo-darwin-arm64: 2.0.11
-      turbo-linux-64: 2.0.11
-      turbo-linux-arm64: 2.0.11
-      turbo-windows-64: 2.0.11
-      turbo-windows-arm64: 2.0.11
+      turbo-darwin-64: 2.3.3
+      turbo-darwin-arm64: 2.3.3
+      turbo-linux-64: 2.3.3
+      turbo-linux-arm64: 2.3.3
+      turbo-windows-64: 2.3.3
+      turbo-windows-arm64: 2.3.3
 
   tween-functions@1.2.0: {}
 
