@@ -6,7 +6,7 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/ProjectConfigNavigation";
+import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";

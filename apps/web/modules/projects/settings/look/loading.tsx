@@ -1,7 +1,7 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/ProjectConfigNavigation";
+import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
