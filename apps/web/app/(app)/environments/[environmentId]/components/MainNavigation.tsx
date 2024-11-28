@@ -173,7 +173,6 @@ export const MainNavigation = ({
         name: t("common.contacts"),
         icon: UserIcon,
         isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
-        isPaywall: !isContactsEnabled,
       },
       {
         name: t("common.actions"),
@@ -194,7 +193,7 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/product"),
       },
     ],
-    [t, environment.id, pathname, isContactsEnabled]
+    [t, environment.id, pathname]
   );
 
   const dropdownNavigation = [
@@ -296,8 +295,7 @@ export const MainNavigation = ({
                         isActive={item.isActive}
                         isCollapsed={isCollapsed}
                         isTextVisible={isTextVisible}
-                        linkText={item.name}
-                        isPaywall={item.isPaywall}>
+                        linkText={item.name}>
                         <item.icon strokeWidth={1.5} />
                       </NavigationLink>
                     )

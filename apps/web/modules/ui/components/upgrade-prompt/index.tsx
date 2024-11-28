@@ -17,7 +17,7 @@ export const UpgradePrompt = ({ icon, title, description, buttons }: UpgradeProm
   const [primaryButton, secondaryButton] = buttons;
 
   return (
-    <div className="flex flex-col items-center gap-6 p-6">
+    <div className="flex w-full flex-col items-center gap-6 p-6">
       <div className="rounded-md border border-slate-200 p-3">{icon}</div>
       <div className="flex max-w-[80%] flex-col items-center gap-2 text-center">
         <p className="text-xl font-semibold text-slate-900">{title}</p>
