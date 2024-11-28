@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { cache } from "../cache";
@@ -361,7 +361,12 @@ export const createProduct = async (
 
     return updatedProduct;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new InvalidInputError("A product with this name already exists in your organization");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error.message);
       throw new DatabaseError(error.message);
     }
     throw error;

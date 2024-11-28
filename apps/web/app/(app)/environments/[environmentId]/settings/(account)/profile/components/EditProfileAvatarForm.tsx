@@ -158,7 +158,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
 
                   {imageUrl && (
                     <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
-                      {t("remove_image")}
+                      {t("environments.settings.profile.remove_image")}
                     </Button>
                   )}
                 </div>
