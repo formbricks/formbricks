@@ -1,10 +1,10 @@
 import { AutoCloseProgressBar } from "@/components/general/AutoCloseProgressBar";
 import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
 interface AutoCloseProps {
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
   onClose: () => void;
   offset: number;
   children: React.ReactNode;

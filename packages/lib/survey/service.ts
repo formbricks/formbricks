@@ -8,6 +8,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TPerson } from "@formbricks/types/people";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
@@ -235,7 +236,7 @@ export const getSurvey = reactCache(
           return null;
         }
 
-        return transformPrismaSurvey(surveyPrisma);
+        return transformPrismaSurvey<TSurvey>(surveyPrisma);
       },
       [`getSurvey-${surveyId}`],
       {
@@ -278,7 +279,7 @@ export const getSurveysByActionClassId = reactCache(
         const surveys: TSurvey[] = [];
 
         for (const surveyPrisma of surveysPrisma) {
-          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+          const transformedSurvey = transformPrismaSurvey<TSurvey>(surveyPrisma);
           surveys.push(transformedSurvey);
         }
 
@@ -314,7 +315,7 @@ export const getSurveys = reactCache(
             skip: offset,
           });
 
-          return surveysPrisma.map(transformPrismaSurvey);
+          return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
@@ -324,6 +325,73 @@ export const getSurveys = reactCache(
         }
       },
       [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const getSurveysForEnvironmentState = reactCache(
+  async (environmentId: string): Promise<TJsEnvironmentStateSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        try {
+          const surveysPrisma = await prisma.survey.findMany({
+            where: {
+              environmentId,
+            },
+            select: {
+              id: true,
+              welcomeCard: true,
+              name: true,
+              questions: true,
+              variables: true,
+              type: true,
+              showLanguageSwitch: true,
+              languages: true,
+              endings: true,
+              autoClose: true,
+              styling: true,
+              status: true,
+              segment: {
+                include: {
+                  surveys: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                },
+              },
+              recontactDays: true,
+              displayLimit: true,
+              displayOption: true,
+              hiddenFields: true,
+              triggers: {
+                select: {
+                  actionClass: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              displayPercentage: true,
+              delay: true,
+            },
+          });
+
+          return surveysPrisma.map(transformPrismaSurvey);
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getSurveysForEnvironmentState-${environmentId}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
@@ -1469,7 +1537,7 @@ export const getSurveysBySegmentId = reactCache(
           const surveys: TSurvey[] = [];
 
           for (const surveyPrisma of surveysPrisma) {
-            const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+            const transformedSurvey = transformPrismaSurvey<TSurvey>(surveyPrisma);
             surveys.push(transformedSurvey);
           }
 

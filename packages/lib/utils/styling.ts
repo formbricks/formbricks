@@ -1,7 +1,6 @@
-import { TProduct } from "@formbricks/types/product";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TJsEnvironmentStateProduct, TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
-export const getStyling = (product: TProduct, survey: TSurvey) => {
+export const getStyling = (product: TJsEnvironmentStateProduct, survey: TJsEnvironmentStateSurvey) => {
   // allow style overwrite is disabled from the product
   if (!product.styling.allowStyleOverwrite) {
     return product.styling;

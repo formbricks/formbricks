@@ -1,13 +1,14 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
-import {
-  TActionClass,
-  TActionClassNoCodeConfig,
-  TActionClassPageUrlRule,
-} from "@formbricks/types/action-classes";
+import { TActionClassNoCodeConfig, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 import { TAttributes } from "@formbricks/types/attributes";
-import { TJsEnvironmentState, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
+import {
+  TJsEnvironmentState,
+  TJsEnvironmentStateActionClass,
+  TJsEnvironmentStateSurvey,
+  TJsPersonState,
+  TJsTrackProperties,
+} from "@formbricks/types/js";
 import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
@@ -50,7 +51,10 @@ export const handleUrlFilters = (urlFilters: TActionClassNoCodeConfig["urlFilter
   return isMatch;
 };
 
-export const evaluateNoCodeConfigClick = (targetElement: HTMLElement, action: TActionClass): boolean => {
+export const evaluateNoCodeConfigClick = (
+  targetElement: HTMLElement,
+  action: TJsEnvironmentStateActionClass
+): boolean => {
   if (action.noCodeConfig?.type !== "click") return false;
 
   const innerHtml = action.noCodeConfig.elementSelector.innerHtml;
@@ -79,7 +83,7 @@ export const evaluateNoCodeConfigClick = (targetElement: HTMLElement, action: TA
 };
 
 export const handleHiddenFields = (
-  hiddenFieldsConfig: TSurvey["hiddenFields"],
+  hiddenFieldsConfig: TJsEnvironmentStateSurvey["hiddenFields"],
   hiddenFields: TJsTrackProperties["hiddenFields"]
 ): TResponseHiddenFieldValue => {
   const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig || {};
@@ -114,7 +118,10 @@ export const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   return randomNum <= displayPercentage;
 };
 
-export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): string | undefined => {
+export const getLanguageCode = (
+  survey: TJsEnvironmentStateSurvey,
+  attributes: TAttributes
+): string | undefined => {
   const language = attributes.language;
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
@@ -139,7 +146,7 @@ export const getLanguageCode = (survey: TSurvey, attributes: TAttributes): strin
   }
 };
 
-export const getDefaultLanguageCode = (survey: TSurvey) => {
+export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey) => {
   const defaultSurveyLanguage = survey.languages?.find((surveyLanguage) => {
     return surveyLanguage.default === true;
   });
@@ -159,7 +166,7 @@ export const getIsDebug = () => window.location.search.includes("formbricksDebug
 export const filterSurveys = (
   environmentState: TJsEnvironmentState,
   personState: TJsPersonState
-): TSurvey[] => {
+): TJsEnvironmentStateSurvey[] => {
   const { product, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = personState.data;
 
@@ -168,7 +175,7 @@ export const filterSurveys = (
   }
 
   // Function to filter surveys based on displayOption criteria
-  let filteredSurveys = surveys.filter((survey: TSurvey) => {
+  let filteredSurveys = surveys.filter((survey: TJsEnvironmentStateSurvey) => {
     switch (survey.displayOption) {
       case "respondMultiple":
         return true;

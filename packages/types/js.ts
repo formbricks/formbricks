@@ -14,6 +14,32 @@ export const ZJsPerson = z.object({
 
 export type TJsPerson = z.infer<typeof ZJsPerson>;
 
+export const ZJsEnvironmentStateSurvey = ZSurvey.innerType().pick({
+  id: true,
+  name: true,
+  welcomeCard: true,
+  questions: true,
+  variables: true,
+  type: true,
+  showLanguageSwitch: true,
+  languages: true,
+  endings: true,
+  autoClose: true,
+  styling: true,
+  status: true,
+  segment: true,
+  recontactDays: true,
+  displayLimit: true,
+  displayOption: true,
+  hiddenFields: true,
+  triggers: true,
+  displayPercentage: true,
+  delay: true,
+  productOverwrites: true,
+});
+
+export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
+
 // ZSurvey is a refinement, so to extend it to ZSurveyWithTriggers, we need to extend the innerType and then apply the same refinements.
 const ZSurveyWithTriggers = ZSurvey.innerType()
   .extend({
@@ -34,7 +60,7 @@ export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
 export const ZJsAppStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
-  surveys: z.array(ZSurvey),
+  surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
   language: z.string().optional(),
@@ -44,7 +70,7 @@ export type TJsAppStateSync = z.infer<typeof ZJsAppStateSync>;
 
 export const ZJsAppState = z.object({
   attributes: ZAttributes,
-  surveys: z.array(ZSurvey),
+  surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
@@ -87,7 +113,7 @@ export const ZJsRNSyncParams = z.object({
 export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
 
 export const ZJsWebsiteState = z.object({
-  surveys: z.array(ZSurvey),
+  surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
   displays: z.array(ZJSWebsiteStateDisplay),
@@ -96,12 +122,34 @@ export const ZJsWebsiteState = z.object({
 
 export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 
+export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
+  id: true,
+  key: true,
+  type: true,
+  name: true,
+  noCodeConfig: true,
+});
+
+export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
+
+export const ZJsEnvironmentStateProduct = ZProduct.pick({
+  id: true,
+  recontactDays: true,
+  clickOutsideClose: true,
+  darkOverlay: true,
+  placement: true,
+  inAppSurveyBranding: true,
+  styling: true,
+});
+
+export type TJsEnvironmentStateProduct = z.infer<typeof ZJsEnvironmentStateProduct>;
+
 export const ZJsEnvironmentState = z.object({
   expiresAt: z.date(),
   data: z.object({
-    surveys: z.array(ZSurvey),
-    actionClasses: z.array(ZActionClass),
-    product: ZProduct,
+    surveys: z.array(ZJsEnvironmentStateSurvey),
+    actionClasses: z.array(ZJsEnvironmentStateActionClass),
+    product: ZJsEnvironmentStateProduct,
   }),
 });
 
@@ -144,7 +192,7 @@ export const ZJsConfig = z.object({
   apiHost: z.string(),
   environmentState: ZJsEnvironmentState,
   personState: ZJsPersonState,
-  filteredSurveys: z.array(ZSurvey).default([]),
+  filteredSurveys: z.array(ZJsEnvironmentStateSurvey).default([]),
   attributes: z.record(z.string()),
   status: z.object({
     value: z.enum(["success", "error"]),

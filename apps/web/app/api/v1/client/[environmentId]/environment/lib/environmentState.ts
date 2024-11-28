@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
+import { getActionClassesForEnvironmentState } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
@@ -15,9 +15,9 @@ import {
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
 import { productCache } from "@formbricks/lib/product/cache";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProductForEnvironmentState } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurveys } from "@formbricks/lib/survey/service";
+import { getSurveysForEnvironmentState } from "@formbricks/lib/survey/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState } from "@formbricks/types/js";
 
@@ -36,7 +36,7 @@ export const getEnvironmentState = async (
       const [environment, organization, product] = await Promise.all([
         getEnvironment(environmentId),
         getOrganizationByEnvironmentId(environmentId),
-        getProductByEnvironmentId(environmentId),
+        getProductForEnvironmentState(environmentId),
       ]);
 
       if (!environment) {
@@ -93,8 +93,8 @@ export const getEnvironmentState = async (
       }
 
       const [surveys, actionClasses] = await Promise.all([
-        getSurveys(environmentId),
-        getActionClasses(environmentId),
+        getSurveysForEnvironmentState(environmentId),
+        getActionClassesForEnvironmentState(environmentId),
       ]);
 
       const filteredSurveys = surveys.filter(
