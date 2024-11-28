@@ -1,6 +1,7 @@
 "use client";
 
 import { handleFileUpload } from "@/app/lib/fileUpload";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -64,8 +65,16 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
       const updatedProject: TProjectUpdateInput = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
-      await updateProjectAction({ projectId: project.id, data: updatedProject });
-      toast.success(t("environments.project.look.logo_updated_successfully"));
+      const updateProjectResponse = await updateProjectAction({
+        projectId: project.id,
+        data: updatedProject,
+      });
+      if (updateProjectResponse?.data) {
+        toast.success(t("environments.project.look.logo_updated_successfully"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(updateProjectResponse);
+        toast.error(errorMessage);
+      }
     } catch (error) {
       toast.error(t("environments.project.look.failed_to_update_logo"));
     } finally {
@@ -86,8 +95,16 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
       const updatedProject: TProjectUpdateInput = {
         logo: { url: undefined, bgColor: undefined },
       };
-      await updateProjectAction({ projectId: project.id, data: updatedProject });
-      toast.success(t("environments.project.look.logo_removed_successfully"));
+      const updateProjectResponse = await updateProjectAction({
+        projectId: project.id,
+        data: updatedProject,
+      });
+      if (updateProjectResponse?.data) {
+        toast.success(t("environments.project.look.logo_removed_successfully"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(updateProjectResponse);
+        toast.error(errorMessage);
+      }
     } catch (error) {
       toast.error(t("environments.project.look.failed_to_remove_logo"));
     } finally {

@@ -124,17 +124,21 @@ export const ThemeStyling = ({
       },
     };
 
-    await updateProjectAction({
+    const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
         styling: { ...defaultStyling },
       },
     });
 
-    form.reset({ ...defaultStyling });
-
-    toast.success(t("environments.project.look.styling_updated_successfully"));
-    router.refresh();
+    if (updatedProjectResponse?.data) {
+      form.reset({ ...defaultStyling });
+      toast.success(t("environments.project.look.styling_updated_successfully"));
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
+      toast.error(errorMessage);
+    }
   }, [form, project.id, router]);
 
   const onSubmit: SubmitHandler<TProjectStyling> = async (data) => {

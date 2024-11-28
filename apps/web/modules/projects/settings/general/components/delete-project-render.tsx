@@ -22,7 +22,7 @@ interface DeleteProjectRenderProps {
 export const DeleteProjectRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
-  project: project,
+  project,
 }: DeleteProjectRenderProps) => {
   const t = useTranslations();
   const router = useRouter();

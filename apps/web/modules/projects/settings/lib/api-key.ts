@@ -34,7 +34,7 @@ export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
   }
 };
 
-export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
+const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
 export const createApiKey = async (
   environmentId: string,

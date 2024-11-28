@@ -810,6 +810,7 @@
         "delete_project_confirmation": "Bist Du sicher, dass Du {projectName} löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
         "delete_project_name_includes_surveys_responses_people_and_more": "Lösche {projectName} inkl. aller Umfragen, Antworten, Personen, Aktionen und Attribute.",
         "delete_project_settings_description": "Projekt mit allen Umfragen, Antworten, Personen, Aktionen und Attributen löschen. Dies kann nicht rückgängig gemacht werden.",
+        "error_saving_project_information": "Fehler beim Speichern der Projektinformationen",
         "only_owners_or_managers_can_delete_projects": "Nur Eigentümer oder Manager können Projekte löschen",
         "organization_name": "Name der Organisation",
         "project_deleted_successfully": "Projekt erfolgreich gelöscht",
@@ -894,6 +895,7 @@
         "tag": "Tag",
         "tag_already_exists": "Tag existiert bereits",
         "tag_deleted": "Tag gelöscht",
+        "tag_updated": "Tag aktualisiert",
         "tags_merged": "Tags zusammengeführt",
         "unique_constraint_failed_on_the_fields": "Eindeutige Einschränkung für die Felder fehlgeschlagen"
       },

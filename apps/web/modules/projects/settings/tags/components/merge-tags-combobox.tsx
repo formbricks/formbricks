@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-interface IMergeTagsComboboxProps {
+interface MergeTagsComboboxProps {
   tags: Tag[];
   onSelect: (tagId: string) => void;
 }
@@ -21,7 +21,7 @@ type Tag = {
   value: string;
 };
 
-export const MergeTagsCombobox = ({ tags, onSelect }: IMergeTagsComboboxProps) => {
+export const MergeTagsCombobox = ({ tags, onSelect }: MergeTagsComboboxProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");

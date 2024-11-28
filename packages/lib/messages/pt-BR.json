@@ -810,6 +810,7 @@
         "delete_project_confirmation": "Tem certeza de que quer deletar {projectName}? Essa ação não pode ser desfeita.",
         "delete_project_name_includes_surveys_responses_people_and_more": "Excluir {projectName} incluindo todas as pesquisas, respostas, pessoas, ações e atributos.",
         "delete_project_settings_description": "Excluir projeto com todas as pesquisas, respostas, pessoas, ações e atributos. Isso não pode ser desfeito.",
+        "error_saving_project_information": "Erro ao salvar informações do projeto",
         "only_owners_or_managers_can_delete_projects": "Apenas proprietários ou gerentes podem excluir projetos",
         "organization_name": "Nome da Organização",
         "project_deleted_successfully": "Projeto deletado com sucesso",
@@ -894,6 +895,7 @@
         "tag": "etiqueta",
         "tag_already_exists": "Tag já existe",
         "tag_deleted": "Tag apagada",
+        "tag_updated": "Tag atualizada",
         "tags_merged": "Tags mescladas",
         "unique_constraint_failed_on_the_fields": "Falha na restrição única nos campos"
       },

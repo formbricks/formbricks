@@ -9,7 +9,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
 
-interface EditFormbricksBrandingProps {
+interface EditBrandingProps {
   type: "linkSurvey" | "appSurvey";
   project: TProject;
   canRemoveBranding: boolean;
@@ -17,13 +17,13 @@ interface EditFormbricksBrandingProps {
   isReadOnly?: boolean;
 }
 
-export const EditFormbricksBranding = ({
+export const EditBranding = ({
   type,
   project,
   canRemoveBranding,
   environmentId,
   isReadOnly,
-}: EditFormbricksBrandingProps) => {
+}: EditBrandingProps) => {
   const t = useTranslations();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? project.linkSurveyBranding : project.inAppSurveyBranding

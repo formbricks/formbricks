@@ -14,6 +14,15 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
+interface EditAPIKeysProps {
+  environmentTypeId: string;
+  environmentType: string;
+  apiKeys: TApiKey[];
+  environmentId: string;
+  locale: TUserLocale;
+  isReadOnly: boolean;
+}
+
 export const EditAPIKeys = ({
   environmentTypeId,
   environmentType,
@@ -21,14 +30,7 @@ export const EditAPIKeys = ({
   environmentId,
   locale,
   isReadOnly,
-}: {
-  environmentTypeId: string;
-  environmentType: string;
-  apiKeys: TApiKey[];
-  environmentId: string;
-  locale: TUserLocale;
-  isReadOnly: boolean;
-}) => {
+}: EditAPIKeysProps) => {
   const t = useTranslations();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);

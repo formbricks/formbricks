@@ -810,6 +810,7 @@
         "delete_project_confirmation": "Are you sure you want to delete {projectName}? This action cannot be undone.",
         "delete_project_name_includes_surveys_responses_people_and_more": "Delete {projectName} incl. all surveys, responses, people, actions and attributes.",
         "delete_project_settings_description": "Delete project with all surveys, responses, people, actions and attributes. This cannot be undone.",
+        "error_saving_project_information": "Error saving project information",
         "only_owners_or_managers_can_delete_projects": "Only owners or managers can delete projects",
         "organization_name": "Organization Name",
         "project_deleted_successfully": "Project deleted successfully",
@@ -894,6 +895,7 @@
         "tag": "Tag",
         "tag_already_exists": "Tag already exists",
         "tag_deleted": "Tag deleted",
+        "tag_updated": "Tag updated",
         "tags_merged": "Tags merged",
         "unique_constraint_failed_on_the_fields": "Unique constraint failed on the fields"
       },
