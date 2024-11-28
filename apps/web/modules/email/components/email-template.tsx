@@ -42,16 +42,6 @@ export function EmailTemplate({ children }): React.JSX.Element {
                   />
                 </Link>
               </Column>
-              <Column align="left" key="discord">
-                <Link href="https://formbricks.com/discord" target="_blank">
-                  <Img
-                    alt="Discord"
-                    src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Discord-transp.png"
-                    title="Discord"
-                    width="32"
-                  />
-                </Link>
-              </Column>
             </Row>
           </Section>
           <Section className="mt-4 text-center">
