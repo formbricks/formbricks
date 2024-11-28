@@ -275,6 +275,7 @@ export const inviteUserAction = authenticatedActionClient
         name: parsedInput.name,
         role: parsedInput.role,
       },
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {

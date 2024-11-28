@@ -1,4 +1,5 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getMultiLanguagePermission,
   getRoleManagementPermission,
@@ -11,7 +12,6 @@ import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -32,7 +32,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   ]);
 
   if (!product) {
-    throw new Error(t("environments.product.general.product_not_found"));
+    throw new Error(t("common.product_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));

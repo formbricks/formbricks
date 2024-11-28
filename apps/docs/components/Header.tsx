@@ -69,7 +69,6 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
             <TopLevelNavItem href="https://github.com/formbricks/formbricks">
               Star us on GitHub
             </TopLevelNavItem>
-            <TopLevelNavItem href="https://formbricks.com/discord">Join our Discord</TopLevelNavItem>
           </ul>
         </nav>
         <div className="hidden md:block md:h-5 md:w-px md:bg-slate-900/10 md:dark:bg-white/15" />
