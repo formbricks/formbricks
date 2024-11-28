@@ -1,5 +1,6 @@
 "use client";
 
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
@@ -13,7 +14,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { TProject } from "@formbricks/types/project";
-import { updateProjectAction } from "../../actions";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },

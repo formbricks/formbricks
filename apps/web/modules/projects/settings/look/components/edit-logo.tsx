@@ -1,6 +1,7 @@
 "use client";
 
 import { handleFileUpload } from "@/app/lib/fileUpload";
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -13,7 +14,6 @@ import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
-import { updateProjectAction } from "../../actions";
 
 interface EditLogoProps {
   project: TProject;

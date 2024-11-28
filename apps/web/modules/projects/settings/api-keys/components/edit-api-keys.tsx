@@ -12,7 +12,7 @@ import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/api-keys";
 import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
-import { AddApiKeyModal } from "./AddApiKeyModal";
+import { AddApiKeyModal } from "./add-api-key-modal";
 
 export const EditAPIKeys = ({
   environmentTypeId,

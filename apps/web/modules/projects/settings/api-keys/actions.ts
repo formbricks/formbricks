@@ -8,8 +8,8 @@ import {
   getProjectIdFromApiKeyId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
+import { createApiKey, deleteApiKey } from "@/modules/projects/settings/lib/api-key";
 import { z } from "zod";
-import { createApiKey, deleteApiKey } from "@formbricks/lib/apiKey/service";
 import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZId } from "@formbricks/types/common";
 

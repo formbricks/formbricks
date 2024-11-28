@@ -3,66 +3,17 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
-  getIsMultiOrgEnabled,
   getOrganizationProjectsLimit,
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createProject, getOrganizationProjectsCount } from "@formbricks/lib/project/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
+import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";
-import { TUserNotificationSettings } from "@formbricks/types/user";
-
-const ZCreateOrganizationAction = z.object({
-  organizationName: z.string(),
-});
-
-export const createOrganizationAction = authenticatedActionClient
-  .schema(ZCreateOrganizationAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-    if (!isMultiOrgEnabled)
-      throw new OperationNotAllowedError(
-        "Creating Multiple organization is restricted on your instance of Formbricks"
-      );
-
-    const newOrganization = await createOrganization({
-      name: parsedInput.organizationName,
-    });
-
-    await createMembership(newOrganization.id, ctx.user.id, {
-      role: "owner",
-      accepted: true,
-    });
-
-    const project = await createProject(newOrganization.id, {
-      name: "My Project",
-    });
-
-    const updatedNotificationSettings: TUserNotificationSettings = {
-      ...ctx.user.notificationSettings,
-      alert: {
-        ...ctx.user.notificationSettings?.alert,
-      },
-      weeklySummary: {
-        ...ctx.user.notificationSettings?.weeklySummary,
-        [project.id]: true,
-      },
-      unsubscribedOrganizationIds: Array.from(
-        new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
-      ),
-    };
-
-    await updateUser(ctx.user.id, {
-      notificationSettings: updatedNotificationSettings,
-    });
-
-    return newOrganization;
-  });
 
 const ZCreateProjectAction = z.object({
   organizationId: ZId,

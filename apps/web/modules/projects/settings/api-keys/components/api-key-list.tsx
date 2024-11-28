@@ -3,7 +3,7 @@ import { getApiKeys } from "@formbricks/lib/apiKey/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TUserLocale } from "@formbricks/types/user";
-import { EditAPIKeys } from "./EditApiKeys";
+import { EditAPIKeys } from "./edit-api-keys";
 
 export const ApiKeyList = async ({
   environmentId,

@@ -7,9 +7,9 @@ import {
   getRemoveInAppBrandingPermission,
   getRemoveLinkBrandingPermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { updateProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { updateProject } from "@formbricks/lib/project/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProjectUpdateInput } from "@formbricks/types/project";

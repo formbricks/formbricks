@@ -9,8 +9,8 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromTagId,
 } from "@/lib/utils/helper";
+import { deleteTag, mergeTags, updateTagName } from "@/modules/projects/settings/lib/tag";
 import { z } from "zod";
-import { deleteTag, mergeTags, updateTagName } from "@formbricks/lib/tag/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZDeleteTagAction = z.object({

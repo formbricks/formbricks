@@ -1,12 +1,12 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   deleteTagAction,
   mergeTagsAction,
   updateTagNameAction,
-} from "@/app/(app)/environments/[environmentId]/project/tags/actions";
-import { MergeTagsCombobox } from "@/app/(app)/environments/[environmentId]/project/tags/components/MergeTagsCombobox";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+} from "@/modules/projects/settings/tags/actions";
+import { MergeTagsCombobox } from "@/modules/projects/settings/tags/components/merge-tags-combobox";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";

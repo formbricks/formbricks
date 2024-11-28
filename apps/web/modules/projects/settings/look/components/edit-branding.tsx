@@ -1,5 +1,6 @@
 "use client";
 
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
@@ -7,7 +8,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
-import { updateProjectAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {
   type: "linkSurvey" | "appSurvey";

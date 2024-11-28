@@ -1,7 +1,7 @@
 "use client";
 
-import { deleteProjectAction } from "@/app/(app)/environments/[environmentId]/project/general/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { deleteProjectAction } from "@/modules/projects/settings/general/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";

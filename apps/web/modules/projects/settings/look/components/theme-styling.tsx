@@ -3,8 +3,9 @@
 import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
-import { ThemeStylingPreviewSurvey } from "@/app/(app)/environments/[environmentId]/project/look/components/ThemeStylingPreviewSurvey";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateProjectAction } from "@/modules/projects/settings/actions";
+import { ThemeStylingPreviewSurvey } from "@/modules/projects/settings/look/components/theme-styling-preview-survey";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +28,6 @@ import toast from "react-hot-toast";
 import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { TProject, TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
-import { updateProjectAction } from "../../actions";
 
 interface ThemeStylingProps {
   project: TProject;
