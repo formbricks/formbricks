@@ -353,6 +353,7 @@
     "some_files_failed_to_upload": "Alguns arquivos falharam ao enviar",
     "something_went_wrong_please_try_again": "Algo deu errado. Tente novamente.",
     "sort_by": "Ordenar por",
+    "start_free_trial": "Iniciar Teste Grátis",
     "status": "status",
     "step_by_step_manual": "Manual passo a passo",
     "styling": "estilização",
@@ -579,6 +580,7 @@
     "contacts": {
       "contact_deleted_successfully": "Contato excluído com sucesso",
       "contact_not_found": "Nenhum contato encontrado",
+      "contacts_table_refresh": "Atualizar contatos",
       "error_fetching_next_page_of_people_data": "Erro ao buscar a próxima página de dados de contatos",
       "error_fetching_people_data": "Erro ao buscar os dados de contatos",
       "fetching_user": "Carregando usuário",
@@ -593,7 +595,6 @@
       "sessions": "Sessões",
       "unlock_contacts_description": "Gerencie contatos e envie pesquisas direcionadas",
       "unlock_contacts_title": "Desbloqueie contatos com um plano superior",
-
       "upload_contacts_modal_attributes_description": "Mapeie as colunas do seu CSV para os atributos no Formbricks.",
       "upload_contacts_modal_attributes_new": "Novo atributo",
       "upload_contacts_modal_attributes_search_or_add": "Buscar ou adicionar atributo",
@@ -1045,7 +1046,6 @@
         "say_hi": "Diz oi!",
         "scale": "escala",
         "scale_description": "Recursos avançados pra escalar seu negócio.",
-        "start_free_trial": "Iniciar Teste Grátis",
         "startup": "startup",
         "startup_description": "Tudo no Grátis com recursos adicionais.",
         "switch_plan": "Mudar Plano",

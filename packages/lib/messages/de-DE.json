@@ -353,6 +353,7 @@
     "some_files_failed_to_upload": "Einige Dateien konnten nicht hochgeladen werden",
     "something_went_wrong_please_try_again": "Etwas ist schiefgelaufen. Bitte versuche es noch einmal.",
     "sort_by": "Sortieren nach",
+    "start_free_trial": "Kostenlos starten",
     "status": "Status",
     "step_by_step_manual": "Schritt-für-Schritt-Anleitung",
     "styling": "Styling",
@@ -579,6 +580,7 @@
     "contacts": {
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
       "contact_not_found": "Kein solcher Kontakt gefunden",
+      "contacts_table_refresh": "Kontakte aktualisieren",
       "error_fetching_next_page_of_people_data": "Fehler beim Abrufen der nächsten Seite mit Kontaktdaten",
       "error_fetching_people_data": "Fehler beim Abrufen der Kontaktdaten",
       "fetching_user": "Benutzer wird geladen",
@@ -1043,7 +1045,6 @@
         "say_hi": "Sag Hi!",
         "scale": "Scale",
         "scale_description": "Erweiterte Funktionen für größere Unternehmen.",
-        "start_free_trial": "Kostenlos starten",
         "startup": "Start-up",
         "startup_description": "Alles in 'Free' mit zusätzlichen Funktionen.",
         "switch_plan": "Plan wechseln",

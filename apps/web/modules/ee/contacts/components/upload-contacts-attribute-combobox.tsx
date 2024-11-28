@@ -78,7 +78,7 @@ export const UploadContactsAttributeCombobox = ({
               placeholder={
                 keys?.length === 0
                   ? "Add attribute"
-                  : t("environments.contacts.upload_contacts_attributes_search_or_add")
+                  : t("environments.contacts.upload_contacts_modal_attributes_search_or_add")
               }
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}

@@ -68,7 +68,7 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard environmentId={environment.id} />
+            <TargetingLockedCard />
           )}
         </div>
       ) : null}

@@ -4,11 +4,7 @@ import { LockIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-interface TargetingLockedCardProps {
-  environmentId: string;
-}
-
-export const TargetingLockedCard = ({ environmentId }: TargetingLockedCardProps) => {
+export const TargetingLockedCard = () => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -22,10 +18,9 @@ export const TargetingLockedCard = ({ environmentId }: TargetingLockedCardProps)
         className="h-full w-full cursor-pointer rounded-lg hover:bg-slate-50">
         <div className="inline-flex px-4 py-6">
           <div className="flex items-center pl-2 pr-5">
-            <LockIcon
-              className="h-7 w-7 rounded-full border border-slate-300 bg-slate-100 p-1.5 text-slate-500"
-              strokeWidth={3}
-            />
+            <div className="rounded-full border border-slate-300 bg-slate-100 p-1">
+              <LockIcon className="h-4 w-4 text-slate-500" strokeWidth={3} />
+            </div>
           </div>
           <div>
             <p className="font-semibold text-slate-800">{t("environments.segments.target_audience")}</p>
@@ -42,12 +37,12 @@ export const TargetingLockedCard = ({ environmentId }: TargetingLockedCardProps)
             description={t("environments.surveys.edit.unlock_targeting_description")}
             buttons={[
               {
-                text: t("common.upgrade_now"),
-                href: `/environments/${environmentId}/settings/billing`,
+                text: t("common.start_free_trial"),
+                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
               },
               {
                 text: t("common.learn_more"),
-                href: `/environments/${environmentId}/settings/billing`,
+                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
               },
             ]}
           />

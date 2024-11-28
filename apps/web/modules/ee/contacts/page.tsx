@@ -95,8 +95,14 @@ export const ContactsPage = async ({
             title={t("environments.contacts.unlock_contacts_title")}
             description={t("environments.contacts.unlock_contacts_description")}
             buttons={[
-              { text: t("common.upgrade_now"), href: `/environments/${environment.id}/settings/billing` },
-              { text: t("common.learn_more"), href: `/environments/${environment.id}/settings/billing` },
+              {
+                text: t("common.start_free_trial"),
+                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
+              },
+              {
+                text: t("common.learn_more"),
+                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
+              },
             ]}
           />
         </div>

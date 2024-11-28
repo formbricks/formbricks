@@ -13,7 +13,7 @@ interface DataTableToolbarProps<T> {
   deleteRows: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  refreshContacts: () => void;
+  refreshContacts?: () => void;
 }
 
 export const DataTableToolbar = <T,>({
@@ -36,13 +36,18 @@ export const DataTableToolbar = <T,>({
         <div></div>
       )}
       <div className="flex space-x-2">
-        <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
-          <div
-            onClick={() => refreshContacts()}
-            className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
-            <RefreshCcwIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
-          </div>
-        </TooltipRenderer>
+        {type === "contact" ? (
+          <TooltipRenderer
+            tooltipContent={t("environments.contacts.contacts_table_refresh")}
+            shouldRender={true}>
+            <div
+              onClick={() => refreshContacts?.()}
+              className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
+              <RefreshCcwIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
+            </div>
+          </TooltipRenderer>
+        ) : null}
+
         <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
           <div
             onClick={() => setIsTableSettingsModalOpen(true)}

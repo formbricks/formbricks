@@ -101,12 +101,12 @@ export const SegmentsPage = async ({
             description={t("environments.segments.unlock_segments_description")}
             buttons={[
               {
-                text: t("common.upgrade_now"),
-                href: `/environments/${params.environmentId}/settings/billing`,
+                text: t("common.start_free_trial"),
+                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
               },
               {
                 text: t("common.learn_more"),
-                href: "https://formbricks.com/pricing",
+                href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
               },
             ]}
           />

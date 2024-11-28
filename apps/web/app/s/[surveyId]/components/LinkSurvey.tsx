@@ -31,7 +31,6 @@ let setResponseData = (_: TResponseData) => {};
 interface LinkSurveyProps {
   survey: TSurvey;
   product: TProduct;
-  userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -51,7 +50,6 @@ interface LinkSurveyProps {
 export const LinkSurvey = ({
   survey,
   product,
-  userId,
   emailVerificationStatus,
   singleUseId,
   singleUseResponse,
@@ -96,8 +94,8 @@ export const LinkSurvey = ({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   let surveyState = useMemo(() => {
-    return new SurveyState(survey.id, singleUseId, responseId, userId);
-  }, [survey.id, singleUseId, responseId, userId]);
+    return new SurveyState(survey.id, singleUseId, responseId);
+  }, [survey.id, singleUseId, responseId]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
@@ -258,7 +256,6 @@ export const LinkSurvey = ({
 
             const res = await api.client.display.create({
               surveyId: survey.id,
-              ...(userId && { userId }),
             });
 
             if (!res.ok) {

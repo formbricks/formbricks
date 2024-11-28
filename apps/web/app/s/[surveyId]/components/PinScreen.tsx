@@ -16,7 +16,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 interface PinScreenProps {
   surveyId: string;
   product: TProduct;
-  userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -38,7 +37,6 @@ export const PinScreen = (props: PinScreenProps) => {
     product,
     webAppUrl,
     emailVerificationStatus,
-    userId,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
@@ -124,7 +122,6 @@ export const PinScreen = (props: PinScreenProps) => {
     <LinkSurvey
       survey={survey}
       product={product}
-      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}

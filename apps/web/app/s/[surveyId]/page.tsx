@@ -23,7 +23,6 @@ interface LinkSurveyPageProps {
   }>;
   searchParams: Promise<{
     suId?: string;
-    userId?: string;
     verify?: string;
     lang?: string;
     embed?: string;

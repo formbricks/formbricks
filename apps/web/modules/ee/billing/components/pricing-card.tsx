@@ -81,7 +81,7 @@ export const PricingCard = ({
               setLoading(false);
             }}
             className="flex justify-center">
-            {t("environments.settings.billing.start_free_trial")}
+            {t("common.start_free_trial")}
           </Button>
         );
       }
