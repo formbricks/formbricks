@@ -1,7 +1,10 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getMultiLanguagePermission,
+  getSurveyFollowUpsPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { deleteSurvey, getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { TSurvey, ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
@@ -97,6 +100,13 @@ export const PUT = async (
       const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization);
       if (!isSurveyFollowUpsEnabled) {
         return responses.forbiddenResponse("Survey follow ups are not enabled for this organization");
+      }
+    }
+
+    if (surveyUpdate.languages && surveyUpdate.languages.length) {
+      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization);
+      if (!isMultiLanguageEnabled) {
+        return responses.forbiddenResponse("Multi language is not enabled for this organization");
       }
     }
 

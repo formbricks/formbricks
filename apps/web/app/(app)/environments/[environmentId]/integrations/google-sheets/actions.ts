@@ -1,7 +1,7 @@
 "use server";
 
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
 import { AuthorizationError } from "@formbricks/types/errors";

@@ -1,4 +1,5 @@
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
@@ -9,7 +10,6 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
