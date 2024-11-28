@@ -12,7 +12,6 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { FormbricksClient } from "../../components/FormbricksClient";
-import { IntercomClient } from "../../components/IntercomClient";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
@@ -61,12 +60,6 @@ export const EnvLayout = async (props) => {
           organizationBilling={organization.billing}
         />
         <FormbricksClient session={session} userEmail={user.email} />
-        <IntercomClient
-          session={session}
-          userEmail={user.email}
-          userName={user.name}
-          userCreatedAt={user.createdAt}
-        />
         <ToasterClient />
         <EnvironmentStorageHandler environmentId={params.environmentId} />
         <EnvironmentLayout environmentId={params.environmentId} session={session}>
