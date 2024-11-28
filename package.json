@@ -64,7 +64,6 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "2.27.7",
-    "playwright": "1.45.3"
+    "@changesets/cli": "2.27.7"
   }
 }
