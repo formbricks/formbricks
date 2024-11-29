@@ -7,13 +7,16 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { Card } from "@/modules/ui/components/integration-card";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -21,9 +24,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { Card } from "@formbricks/ui/components/IntegrationCard";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async (props) => {
   const params = await props.params;

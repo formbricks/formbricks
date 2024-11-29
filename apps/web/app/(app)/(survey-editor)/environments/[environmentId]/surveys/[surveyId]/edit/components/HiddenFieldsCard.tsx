@@ -1,6 +1,11 @@
 "use client";
 
 import { findHiddenFieldUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
+import { Tag } from "@/modules/ui/components/tag";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { EyeOff } from "lucide-react";
@@ -11,11 +16,6 @@ import { cn } from "@formbricks/lib/cn";
 import { extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyHiddenFields, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
-import { Tag } from "@formbricks/ui/components/Tag";
 
 interface HiddenFieldsCardProps {
   localSurvey: TSurvey;
@@ -81,6 +81,17 @@ export const HiddenFieldsCard = ({
           }
         )
       );
+      return;
+    }
+
+    const isHiddenFieldUsedInFollowUp = localSurvey.followUps
+      .filter((f) => !f.deleted)
+      .some((followUp) => {
+        return followUp.action.properties.to === fieldId;
+      });
+
+    if (isHiddenFieldUsedInFollowUp) {
+      toast.error(t("environments.surveys.edit.follow_ups_hidden_field_error"));
       return;
     }
 

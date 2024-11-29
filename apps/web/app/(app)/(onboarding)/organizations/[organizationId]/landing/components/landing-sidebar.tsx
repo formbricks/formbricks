@@ -3,19 +3,7 @@
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, PlusIcon } from "lucide-react";
-import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
-import { AiOutlineDiscord } from "react-icons/ai";
-import { cn } from "@formbricks/lib/cn";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { TOrganization } from "@formbricks/types/organizations";
-import { TUser } from "@formbricks/types/user";
-import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +16,18 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
+} from "@/modules/ui/components/dropdown-menu";
+import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, PlusIcon } from "lucide-react";
+import { signOut } from "next-auth/react";
+import { useTranslations } from "next-intl";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { cn } from "@formbricks/lib/cn";
+import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 
 interface LandingSidebarProps {
   isMultiOrgEnabled: boolean;
@@ -59,12 +58,6 @@ export const LandingSidebar = ({
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.join_discord"),
-      href: "https://formbricks.com/discord",
-      target: "_blank",
-      icon: AiOutlineDiscord,
     },
   ];
 

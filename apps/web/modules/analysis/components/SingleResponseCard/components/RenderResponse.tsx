@@ -1,3 +1,9 @@
+import { ArrayResponse } from "@/modules/ui/components/array-response";
+import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
+import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
+import { RankingRespone } from "@/modules/ui/components/ranking-response";
+import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { CheckCheckIcon, MousePointerClickIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -13,12 +19,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
-import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
-import { FileUploadResponse } from "@formbricks/ui/components/FileUploadResponse";
-import { PictureSelectionResponse } from "@formbricks/ui/components/PictureSelectionResponse";
-import { RankingRespone } from "@formbricks/ui/components/RankingResponse";
-import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
-import { ResponseBadges } from "@formbricks/ui/components/ResponseBadges";
 
 interface RenderResponseProps {
   responseData: string | number | string[] | Record<string, string>;

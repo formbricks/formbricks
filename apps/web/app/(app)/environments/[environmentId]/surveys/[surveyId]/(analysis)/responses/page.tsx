@@ -3,12 +3,14 @@ import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[
 import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   RESPONSES_PER_PAGE,
@@ -24,8 +26,6 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async (props) => {
   const params = await props.params;

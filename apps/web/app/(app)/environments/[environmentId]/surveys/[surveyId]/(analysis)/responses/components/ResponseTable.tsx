@@ -2,6 +2,14 @@ import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surv
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
+import { Button } from "@/modules/ui/components/button";
+import {
+  DataTableHeader,
+  DataTableSettingsModal,
+  DataTableToolbar,
+} from "@/modules/ui/components/data-table";
+import { Skeleton } from "@/modules/ui/components/skeleton";
+import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
   DndContext,
   type DragEndEvent,
@@ -24,14 +32,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@formbricks/ui/components/DataTable";
-import { Skeleton } from "@formbricks/ui/components/Skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@formbricks/ui/components/Table";
 
 interface ResponseTableProps {
   data: TResponseTableData[];

@@ -1,10 +1,10 @@
+import { Badge } from "@/modules/ui/components/badge";
 import { useTranslations } from "next-intl";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { Badge } from "@formbricks/ui/components/Badge";
 
 const renderSelectedSurveysText = (webhook: TWebhook, allSurveys: TSurvey[]) => {
   if (webhook.surveyIds.length === 0) {

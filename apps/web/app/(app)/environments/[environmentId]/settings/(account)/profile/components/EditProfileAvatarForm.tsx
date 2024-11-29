@@ -5,6 +5,9 @@ import {
   updateAvatarAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/actions";
 import { handleFileUpload } from "@/app/lib/fileUpload";
+import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
+import { FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Session } from "next-auth";
 import { useTranslations } from "next-intl";
@@ -13,9 +16,6 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { ProfileAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
 
 interface EditProfileAvatarFormProps {
   session: Session;
@@ -27,7 +27,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const t = useTranslations("environments.settings.profile");
+  const t = useTranslations();
   const fileSchema =
     typeof window !== "undefined"
       ? z
@@ -136,7 +136,9 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                     onClick={() => {
                       inputRef.current?.click();
                     }}>
-                    {imageUrl ? t("change_image") : t("upload_image")}
+                    {imageUrl
+                      ? t("environments.settings.profile.change_image")
+                      : t("environments.settings.profile.upload_image")}
                     <input
                       type="file"
                       id="hiddenFileInput"
@@ -156,7 +158,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
 
                   {imageUrl && (
                     <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
-                      {t("remove_image")}
+                      {t("environments.settings.profile.remove_image")}
                     </Button>
                   )}
                 </div>

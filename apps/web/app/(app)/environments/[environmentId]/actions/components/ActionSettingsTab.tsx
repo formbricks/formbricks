@@ -5,6 +5,12 @@ import {
   updateActionClassAction,
 } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { Button } from "@/modules/ui/components/button";
+import { CodeActionForm } from "@/modules/ui/components/code-action-form";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,12 +20,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { CodeActionForm } from "@formbricks/ui/components/organisms/CodeActionForm";
-import { NoCodeActionForm } from "@formbricks/ui/components/organisms/NoCodeActionForm";
 
 interface ActionSettingsTabProps {
   actionClass: TActionClass;

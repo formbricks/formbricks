@@ -1,8 +1,9 @@
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Dashboard } from "@/modules/ee/insights/experience/components/dashboard";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { DOCUMENTS_PER_PAGE, INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -11,7 +12,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
 
 export const ExperiencePage = async (props) => {
   const params = await props.params;

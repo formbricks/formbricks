@@ -3,6 +3,9 @@
 import { FormbricksAICard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/FormbricksAICard";
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
+import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
+import { SearchBar } from "@/modules/ui/components/search-bar";
+import { Separator } from "@/modules/ui/components/separator";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
@@ -10,9 +13,6 @@ import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
-import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
-import { SearchBar } from "@formbricks/ui/components/SearchBar";
-import { Separator } from "@formbricks/ui/components/Separator";
 import { getMinimalSurvey } from "../../lib/minimalSurvey";
 
 type TemplateContainerWithPreviewProps = {

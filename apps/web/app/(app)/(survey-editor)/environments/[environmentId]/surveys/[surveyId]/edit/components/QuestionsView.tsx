@@ -282,11 +282,13 @@ export const QuestionsView = ({
         }
       }
     });
+
     updatedSurvey.questions.splice(questionIdx, 1);
 
     const firstEndingCard = localSurvey.endings[0];
     setLocalSurvey(updatedSurvey);
     delete internalQuestionIdMap[questionId];
+
     if (questionId === activeQuestionIdTemp) {
       if (questionIdx <= localSurvey.questions.length && localSurvey.questions.length > 0) {
         setActiveQuestionId(localSurvey.questions[questionIdx % localSurvey.questions.length].id);
@@ -294,6 +296,7 @@ export const QuestionsView = ({
         setActiveQuestionId(firstEndingCard.id);
       }
     }
+
     toast.success(t("environments.surveys.edit.question_deleted"));
   };
 

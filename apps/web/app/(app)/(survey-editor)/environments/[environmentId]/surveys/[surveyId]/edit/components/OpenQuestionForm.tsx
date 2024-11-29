@@ -1,6 +1,9 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,11 +17,9 @@ import {
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AdvancedOptionToggle } from "@formbricks/ui/components/AdvancedOptionToggle";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { OptionsSwitch } from "@formbricks/ui/components/OptionsSwitch";
+import { AdvancedOptionToggle } from "@modules/ui/components/AdvancedOptionToggle";
+import { Input } from "@/modules/ui/components/input";
+
 
 const questionTypes = [
   { value: "text", label: "common.text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },

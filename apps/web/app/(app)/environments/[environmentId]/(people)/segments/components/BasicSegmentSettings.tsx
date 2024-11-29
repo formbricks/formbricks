@@ -1,5 +1,11 @@
 "use client";
 
+import { BasicAddFilterModal } from "@/modules/ui/components/basic-add-filter-modal";
+import { BasicSegmentEditor } from "@/modules/ui/components/basic-segment-editor";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
+import { Input } from "@/modules/ui/components/input";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { FilterIcon, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -9,12 +15,6 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isAdvancedSegment } from "@formbricks/lib/segment/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, TSegmentWithSurveyNames, ZSegmentFilters } from "@formbricks/types/segment";
-import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/components/Button";
-import { ConfirmDeleteSegmentModal } from "@formbricks/ui/components/ConfirmDeleteSegmentModal";
-import { Input } from "@formbricks/ui/components/Input";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { deleteBasicSegmentAction, updateBasicSegmentAction } from "../actions";
 
 type TBasicSegmentSettingsTabProps = {

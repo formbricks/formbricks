@@ -1,11 +1,11 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
+import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-import { Label } from "@formbricks/ui/components/Label";
-import { getPlacementStyle } from "@formbricks/ui/components/PreviewSurvey/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 const placements = [
   { name: "common.bottom_right", value: "bottomRight", disabled: false },

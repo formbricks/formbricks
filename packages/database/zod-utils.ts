@@ -1,15 +1,11 @@
+/* eslint-disable import/no-relative-packages -- required for importing types */
 import { z } from "zod";
 
 export const ZActionProperties = z.record(z.string());
-export { ZActionClassNoCodeConfig } from "@formbricks/types/action-classes";
-export { ZIntegrationConfig } from "@formbricks/types/integration";
+export { ZActionClassNoCodeConfig } from "../types/action-classes";
+export { ZIntegrationConfig } from "../types/integration";
 
-export {
-  ZResponseData,
-  ZResponsePersonAttributes,
-  ZResponseMeta,
-  ZResponseTtc,
-} from "@formbricks/types/responses";
+export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta, ZResponseTtc } from "../types/responses";
 
 export {
   ZSurveyWelcomeCard,
@@ -22,8 +18,10 @@ export {
   ZSurveySingleUse,
   ZSurveyInlineTriggers,
   ZSurveyEnding,
-} from "@formbricks/types/surveys/types";
+} from "../types/surveys/types";
 
-export { ZSegmentFilters } from "@formbricks/types/segment";
-export { ZOrganizationBilling } from "@formbricks/types/organizations";
-export { ZUserNotificationSettings } from "@formbricks/types/user";
+export { ZSurveyFollowUpAction, ZSurveyFollowUpTrigger } from "./types/survey-follow-up";
+
+export { ZSegmentFilters } from "../types/segment";
+export { ZOrganizationBilling } from "../types/organizations";
+export { ZUserNotificationSettings } from "../types/user";

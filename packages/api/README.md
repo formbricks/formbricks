@@ -142,4 +142,4 @@ The API client is now ready to be used across your project. It can be used to in
   );
   ```
 
-If you have any questions or need help, feel free to reach out to us on our [Discord](https://formbricks.com/discord)
+If you have any questions or need help, feel free to reach out to us on [Github Discussions](https://github.com/formbricks/formbricks/discussions)

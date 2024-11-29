@@ -1,13 +1,13 @@
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
 const ProductOnboardingLayout = async (props) => {
   const params = await props.params;

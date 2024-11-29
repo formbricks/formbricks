@@ -1,13 +1,15 @@
 import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/AttributesSection";
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -16,8 +18,6 @@ import { getPerson } from "@formbricks/lib/person/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
 const Page = async (props) => {
   const params = await props.params;

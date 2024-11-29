@@ -1,18 +1,18 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getMultiLanguagePermission,
   getRoleManagementPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { AccessView } from "@/modules/ee/teams/product-teams/components/access-view";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { getTeamsByOrganizationId, getTeamsByProductId } from "./lib/teams";
 
 export const ProductTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
