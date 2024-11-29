@@ -187,7 +187,7 @@ export const ContactsTable = ({
     columnResizeMode: "onChange",
     columnResizeDirection: "ltr",
     manualPagination: true,
-    defaultColumn: { size: 300 },
+    defaultColumn: { maxSize: 1000, size: 300 },
     state: {
       columnOrder,
       columnVisibility,
