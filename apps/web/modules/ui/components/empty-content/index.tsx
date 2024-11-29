@@ -1,4 +1,5 @@
 import { Button } from "@/modules/ui/components/button";
+import { Muted, P } from "@/modules/ui/components/typography";
 
 export type ModalButton = {
   text: string;
@@ -6,22 +7,22 @@ export type ModalButton = {
   onClick?: () => void;
 };
 
-interface UpgradePromptProps {
+interface EmptyContentProps {
   icon: React.ReactNode;
   title: string;
   description: string;
   buttons: [ModalButton, ModalButton];
 }
 
-export const UpgradePrompt = ({ icon, title, description, buttons }: UpgradePromptProps) => {
+export const EmptyContent = ({ icon, title, description, buttons }: EmptyContentProps) => {
   const [primaryButton, secondaryButton] = buttons;
 
   return (
     <div className="flex flex-col items-center gap-6 p-6">
       <div className="rounded-md border border-slate-200 p-3">{icon}</div>
       <div className="flex flex-col items-center gap-2">
-        <p className="text-xl font-semibold text-slate-900">{title}</p>
-        <p className="text-sm text-slate-500">{description}</p>
+        <P className="text-xl font-semibold text-slate-900">{title}</P>
+        <Muted className="text-slate-500">{description}</Muted>
       </div>
       <div className="flex gap-3">
         <Button
