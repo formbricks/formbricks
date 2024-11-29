@@ -48,3 +48,11 @@ export type TAllowedFileExtension = z.infer<typeof ZAllowedFileExtension>;
 export const ZId = z.string().cuid2();
 
 export const ZUuid = z.string().uuid();
+
+export const getZSafeUrl = (message: string): z.ZodEffects<z.ZodString, string, string> =>
+  z
+    .string()
+    .url({ message })
+    .refine((url) => url.startsWith("https://"), {
+      message: "URL must start with https://",
+    });
