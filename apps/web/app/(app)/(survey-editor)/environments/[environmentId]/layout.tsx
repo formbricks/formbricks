@@ -1,19 +1,23 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
-import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const SurveyEditorEnvironmentLayout = async ({ children, params }) => {
+const SurveyEditorEnvironmentLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {

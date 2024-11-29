@@ -63,10 +63,6 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
       );
     }
 
-    if (sourceEnvironment.productId !== targetEnvironment.productId) {
-      throw new Error("Cannot copy survey to environment with different product");
-    }
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
@@ -79,6 +75,22 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           type: "productTeam",
           minPermission: "readWrite",
           productId: sourceEnvironment.productId,
+        },
+      ],
+    });
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: targetEnvironment.productId,
         },
       ],
     });

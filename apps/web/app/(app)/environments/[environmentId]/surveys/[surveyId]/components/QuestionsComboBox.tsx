@@ -1,5 +1,14 @@
 "use client";
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/modules/ui/components/command";
+import { NetPromoterScoreIcon } from "@/modules/ui/components/icons";
 import clsx from "clsx";
 import {
   AirplayIcon,
@@ -27,15 +36,6 @@ import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@formbricks/ui/components/Command";
-import { NetPromoterScoreIcon } from "@formbricks/ui/components/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",

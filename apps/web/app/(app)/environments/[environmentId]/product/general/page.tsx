@@ -1,25 +1,29 @@
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import {
+  getMultiLanguagePermission,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getMultiLanguagePermission, getRoleManagementPermission } from "@formbricks/ee/lib/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
-import { SettingsId } from "@formbricks/ui/components/SettingsId";
 import { SettingsCard } from "../../settings/components/SettingsCard";
 import { DeleteProduct } from "./components/DeleteProduct";
 import { EditProductNameForm } from "./components/EditProductNameForm";
 import { EditWaitingTimeForm } from "./components/EditWaitingTimeForm";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
   const t = await getTranslations();
   const [product, session, organization] = await Promise.all([
     getProductByEnvironmentId(params.environmentId),
@@ -28,7 +32,7 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
   ]);
 
   if (!product) {
-    throw new Error(t("environments.product.general.product_not_found"));
+    throw new Error(t("common.product_not_found"));
   }
   if (!session) {
     throw new Error(t("common.session_not_found"));

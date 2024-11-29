@@ -1,7 +1,7 @@
+import { Checkbox } from "@/modules/ui/components/checkbox";
 import { useTranslations } from "next-intl";
 import React from "react";
 import { TPipelineTrigger } from "@formbricks/types/pipelines";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
 
 interface TriggerCheckboxGroupProps {
   selectedTriggers: TPipelineTrigger[];

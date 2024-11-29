@@ -2,17 +2,18 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { handleDeleteFile } from "@/app/storage/[environmentId]/[accessType]/[fileName]/lib/deleteFile";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { ZStorageRetrievalParams } from "@formbricks/types/storage";
 import { getFile } from "./lib/getFile";
 
 export const GET = async (
   request: NextRequest,
-  { params }: { params: { environmentId: string; accessType: string; fileName: string } }
+  props: { params: Promise<{ environmentId: string; accessType: string; fileName: string }> }
 ) => {
+  const params = await props.params;
   const paramValidation = ZStorageRetrievalParams.safeParse(params);
 
   if (!paramValidation.success) {
@@ -55,7 +56,8 @@ export const GET = async (
   }
 };
 
-export const DELETE = async (_: NextRequest, { params }: { params: { fileName: string } }) => {
+export const DELETE = async (_: NextRequest, props: { params: Promise<{ fileName: string }> }) => {
+  const params = await props.params;
   if (!params.fileName) {
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", {
       fileName: "fileName is required",

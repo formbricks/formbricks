@@ -1,13 +1,13 @@
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   const t = await getTranslations();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
@@ -25,12 +25,6 @@ const Page = async ({ params }) => {
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
-  }
-
-  const isAIEnabled = await getIsAIEnabled(organization);
-
-  if (isAIEnabled) {
-    return redirect(`/environments/${params.environmentId}/experience`);
   }
 
   return redirect(`/environments/${params.environmentId}/surveys`);

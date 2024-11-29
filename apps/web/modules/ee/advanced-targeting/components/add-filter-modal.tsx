@@ -1,9 +1,12 @@
 "use client";
 
+import { Input } from "@/modules/ui/components/input";
+import { Modal } from "@/modules/ui/components/modal";
+import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import React, { useMemo, useState } from "react";
+import React, { type JSX, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import type { TAttributeClass } from "@formbricks/types/attribute-classes";
 import type {
@@ -12,9 +15,6 @@ import type {
   TSegmentAttributeFilter,
   TSegmentPersonFilter,
 } from "@formbricks/types/segment";
-import { Input } from "@formbricks/ui/components/Input";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { TabBar } from "@formbricks/ui/components/TabBar";
 
 interface TAddFilterModalProps {
   open: boolean;

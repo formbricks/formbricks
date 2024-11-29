@@ -1,11 +1,15 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getUserProducts } from "@formbricks/lib/product/service";
 
-const LandingLayout = async ({ children, params }) => {
+const LandingLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);

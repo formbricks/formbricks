@@ -1,19 +1,20 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { Header } from "@formbricks/ui/components/Header";
 
 interface ConnectPageProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: ConnectPageProps) => {
+const Page = async (props: ConnectPageProps) => {
+  const params = await props.params;
   const t = await getTranslations();
   const environment = await getEnvironment(params.environmentId);
 

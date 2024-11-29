@@ -42,6 +42,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         name: "",
         role: "manager",
       },
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {

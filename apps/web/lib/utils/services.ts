@@ -52,7 +52,7 @@ export const getActionClass = reactCache(
 );
 
 export const getApiKey = reactCache(
-  (apiKeyId: string): Promise<{ environmentId: string } | null> =>
+  async (apiKeyId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([apiKeyId, ZString]);
@@ -119,7 +119,7 @@ export const getAttributeClass = reactCache(
 );
 
 export const getEnvironment = reactCache(
-  (environmentId: string): Promise<{ productId: string } | null> =>
+  async (environmentId: string): Promise<{ productId: string } | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -151,7 +151,7 @@ export const getEnvironment = reactCache(
 );
 
 export const getIntegration = reactCache(
-  (integrationId: string): Promise<{ environmentId: string } | null> =>
+  async (integrationId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         try {
@@ -179,7 +179,7 @@ export const getIntegration = reactCache(
 );
 
 export const getInvite = reactCache(
-  (inviteId: string): Promise<{ organizationId: string } | null> =>
+  async (inviteId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
         validateInputs([inviteId, ZString]);
@@ -234,7 +234,7 @@ export const getLanguage = async (languageId: string): Promise<{ productId: stri
 };
 
 export const getPerson = reactCache(
-  (personId: string): Promise<{ environmentId: string } | null> =>
+  async (personId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([personId, ZId]);
@@ -262,7 +262,7 @@ export const getPerson = reactCache(
 );
 
 export const getProduct = reactCache(
-  (productId: string): Promise<{ organizationId: string } | null> =>
+  async (productId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
         let productPrisma;
@@ -290,7 +290,7 @@ export const getProduct = reactCache(
 );
 
 export const getResponse = reactCache(
-  (responseId: string): Promise<{ surveyId: string } | null> =>
+  async (responseId: string): Promise<{ surveyId: string } | null> =>
     cache(
       async () => {
         validateInputs([responseId, ZId]);
@@ -320,7 +320,7 @@ export const getResponse = reactCache(
 );
 
 export const getResponseNote = reactCache(
-  (responseNoteId: string): Promise<{ responseId: string } | null> =>
+  async (responseNoteId: string): Promise<{ responseId: string } | null> =>
     cache(
       async () => {
         try {
@@ -349,7 +349,7 @@ export const getResponseNote = reactCache(
 );
 
 export const getSegment = reactCache(
-  (segmentId: string): Promise<{ environmentId: string } | null> =>
+  async (segmentId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([segmentId, ZId]);
@@ -378,7 +378,7 @@ export const getSegment = reactCache(
 );
 
 export const getSurvey = reactCache(
-  (surveyId: string): Promise<{ environmentId: string } | null> =>
+  async (surveyId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);
@@ -409,7 +409,7 @@ export const getSurvey = reactCache(
 );
 
 export const getTag = reactCache(
-  (id: string): Promise<{ environmentId: string } | null> =>
+  async (id: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([id, ZId]);
@@ -466,7 +466,7 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
   )();
 
 export const getTeam = reactCache(
-  (teamId: string): Promise<{ organizationId: string } | null> =>
+  async (teamId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
         validateInputs([teamId, ZString]);
@@ -498,7 +498,7 @@ export const getTeam = reactCache(
 );
 
 export const getInsight = reactCache(
-  (insightId: string): Promise<{ environmentId: string } | null> =>
+  async (insightId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([insightId, ZId]);
@@ -530,7 +530,7 @@ export const getInsight = reactCache(
 );
 
 export const getDocument = reactCache(
-  (documentId: string): Promise<{ environmentId: string } | null> =>
+  async (documentId: string): Promise<{ environmentId: string } | null> =>
     cache(
       async () => {
         validateInputs([documentId, ZId]);

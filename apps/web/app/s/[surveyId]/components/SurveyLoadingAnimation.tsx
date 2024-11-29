@@ -1,9 +1,9 @@
 import Logo from "@/images/powered-by-formbricks.svg";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 
 interface SurveyLoadingAnimationProps {
   survey: TSurvey;

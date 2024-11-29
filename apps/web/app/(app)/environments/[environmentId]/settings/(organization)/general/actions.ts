@@ -7,15 +7,20 @@ import {
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import {
+  deleteOrganization,
+  getOrganization,
+  updateOrganization,
+} from "@formbricks/lib/organization/service";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
@@ -38,30 +43,6 @@ export const updateOrganizationNameAction = authenticatedActionClient
           schema: ZOrganizationUpdateInput.pick({ name: true }),
           data: parsedInput.data,
           roles: ["owner"],
-        },
-      ],
-    });
-
-    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
-  });
-
-const ZUpdateOrganizationAIEnabledAction = z.object({
-  organizationId: ZId,
-  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
-});
-
-export const updateOrganizationAIEnabledAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationAIEnabledAction)
-  .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      access: [
-        {
-          type: "organization",
-          schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
-          data: parsedInput.data,
-          roles: ["owner", "manager"],
         },
       ],
     });
@@ -152,8 +133,18 @@ export const leaveOrganizationAction = authenticatedActionClient
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    if (membership.role === "owner") {
-      throw new ValidationError("You cannot leave an organization you own");
+    const { isOwner } = getAccessFlags(membership.role);
+
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+    if (isOwner) {
+      throw new OperationNotAllowedError("You cannot leave an organization you own");
+    }
+
+    if (!isMultiOrgEnabled) {
+      throw new OperationNotAllowedError(
+        "You cannot leave the organization because you are the only owner and organization deletion is disabled"
+      );
     }
 
     const memberships = await getMembershipsByUserId(ctx.user.id);
@@ -264,6 +255,19 @@ export const inviteUserAction = authenticatedActionClient
       ],
     });
 
+    if (parsedInput.role !== "owner") {
+      const organization = await getOrganization(parsedInput.organizationId);
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+      if (!canDoRoleManagement) {
+        throw new OperationNotAllowedError("Role management is disabled");
+      }
+    }
+
     const invite = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
@@ -271,6 +275,7 @@ export const inviteUserAction = authenticatedActionClient
         name: parsedInput.name,
         role: parsedInput.role,
       },
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {

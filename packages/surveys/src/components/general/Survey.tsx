@@ -11,6 +11,7 @@ import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContain
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "react";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import type {
@@ -258,6 +259,11 @@ export const Survey = ({
       }
     }
 
+    // Use logicFallback if no jump target was set
+    if (!firstJumpTarget && currQuesTemp.logicFallback) {
+      firstJumpTarget = currQuesTemp.logicFallback;
+    }
+
     // Make all collected questions required
     if (allRequiredQuestionIds.length > 0) {
       makeQuestionsRequired(allRequiredQuestionIds);
@@ -280,6 +286,10 @@ export const Survey = ({
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
 
+    const endingId = nextQuestionId
+      ? localSurvey.endings.find((ending) => ending.id === nextQuestionId)?.id
+      : undefined;
+
     onChange(responseData);
     onChangeVariables(calculatedVariables);
     onResponse({
@@ -288,6 +298,7 @@ export const Survey = ({
       finished,
       variables: calculatedVariables,
       language: selectedLanguage,
+      endingId,
     });
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.

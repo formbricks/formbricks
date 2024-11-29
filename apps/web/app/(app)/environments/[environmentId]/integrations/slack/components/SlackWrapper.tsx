@@ -5,6 +5,7 @@ import { AddChannelMappingModal } from "@/app/(app)/environments/[environmentId]
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/slack/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useEffect, useState } from "react";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -12,7 +13,6 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
 
 interface SlackWrapperProps {
   isEnabled: boolean;
@@ -46,7 +46,8 @@ export const SlackWrapper = ({
 
     if (
       getSlackChannelsResponse?.serverError &&
-      getSlackChannelsResponse.serverError.includes("missing_scope")
+      (getSlackChannelsResponse.serverError.includes("missing_scope") ||
+        getSlackChannelsResponse.serverError.includes("invalid_auth"))
     ) {
       setShowReconnectButton(true);
     }

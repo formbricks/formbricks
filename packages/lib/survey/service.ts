@@ -140,6 +140,7 @@ export const selectSurvey = {
       },
     },
   },
+  followUps: true,
 } satisfies Prisma.SurveySelect;
 
 const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
@@ -209,7 +210,7 @@ const handleTriggerUpdates = (
 };
 
 export const getSurvey = reactCache(
-  (surveyId: string): Promise<TSurvey | null> =>
+  async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);
@@ -244,7 +245,7 @@ export const getSurvey = reactCache(
 );
 
 export const getSurveysByActionClassId = reactCache(
-  (actionClassId: string, page?: number): Promise<TSurvey[]> =>
+  async (actionClassId: string, page?: number): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([actionClassId, ZId], [page, ZOptionalNumber]);
@@ -291,7 +292,7 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -330,7 +331,7 @@ export const getSurveys = reactCache(
 );
 
 export const getSurveyCount = reactCache(
-  (environmentId: string): Promise<number> =>
+  async (environmentId: string): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -359,7 +360,7 @@ export const getSurveyCount = reactCache(
 );
 
 export const getInProgressSurveyCount = reactCache(
-  (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
+  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -391,6 +392,7 @@ export const getInProgressSurveyCount = reactCache(
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   validateInputs([updatedSurvey, ZSurvey]);
+
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
@@ -402,7 +404,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, ...surveyData } = updatedSurvey;
+    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
+      updatedSurvey;
 
     if (languages) {
       // Process languages update logic here
@@ -543,6 +546,53 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           environmentId,
         });
       }
+    }
+
+    if (followUps) {
+      // Separate follow-ups into categories based on deletion flag
+      const deletedFollowUps = followUps.filter((followUp) => followUp.deleted);
+      const nonDeletedFollowUps = followUps.filter((followUp) => !followUp.deleted);
+
+      // Get set of existing follow-up IDs from currentSurvey
+      const existingFollowUpIds = new Set(currentSurvey.followUps.map((f) => f.id));
+
+      // Separate non-deleted follow-ups into new and existing
+      const existingFollowUps = nonDeletedFollowUps.filter((followUp) =>
+        existingFollowUpIds.has(followUp.id)
+      );
+      const newFollowUps = nonDeletedFollowUps.filter((followUp) => !existingFollowUpIds.has(followUp.id));
+
+      data.followUps = {
+        // Update existing follow-ups
+        updateMany: existingFollowUps.map((followUp) => ({
+          where: {
+            id: followUp.id,
+          },
+          data: {
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          },
+        })),
+        // Create new follow-ups
+        createMany:
+          newFollowUps.length > 0
+            ? {
+                data: newFollowUps.map((followUp) => ({
+                  name: followUp.name,
+                  trigger: followUp.trigger,
+                  action: followUp.action,
+                })),
+              }
+            : undefined,
+        // Delete follow-ups marked as deleted, regardless of whether they exist in DB
+        deleteMany:
+          deletedFollowUps.length > 0
+            ? deletedFollowUps.map((followUp) => ({
+                id: followUp.id,
+              }))
+            : undefined,
+      };
     }
 
     data.questions = questions.map((question) => {
@@ -812,6 +862,19 @@ export const createSurvey = async (
       }
     }
 
+    // Survey follow-ups
+    if (restSurveyBody.followUps?.length) {
+      data.followUps = {
+        create: restSurveyBody.followUps.map((followUp) => ({
+          name: followUp.name,
+          trigger: followUp.trigger,
+          action: followUp.action,
+        })),
+      };
+    } else {
+      delete data.followUps;
+    }
+
     const survey = await prisma.survey.create({
       data: {
         ...data,
@@ -1038,6 +1101,15 @@ export const copySurveyToOtherEnvironment = async (
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
+      followUps: {
+        createMany: {
+          data: existingSurvey.followUps.map((followUp) => ({
+            name: followUp.name,
+            trigger: followUp.trigger,
+            action: followUp.action,
+          })),
+        },
+      },
     };
 
     // Handle segment
@@ -1134,7 +1206,7 @@ export const copySurveyToOtherEnvironment = async (
 };
 
 export const getSyncSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     personId: string,
     deviceType: "phone" | "desktop" = "desktop"
@@ -1286,7 +1358,7 @@ export const getSyncSurveys = reactCache(
 );
 
 export const getSurveyIdByResultShareKey = reactCache(
-  (resultShareKey: string): Promise<string | null> =>
+  async (resultShareKey: string): Promise<string | null> =>
     cache(
       async () => {
         try {
@@ -1385,7 +1457,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
 };
 
 export const getSurveysBySegmentId = reactCache(
-  (segmentId: string): Promise<TSurvey[]> =>
+  async (segmentId: string): Promise<TSurvey[]> =>
     cache(
       async () => {
         try {

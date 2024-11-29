@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { cache } from "../cache";
@@ -36,7 +36,7 @@ const selectProduct = {
 };
 
 export const getUserProducts = reactCache(
-  (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
+  async (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
       async () => {
         validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
@@ -97,7 +97,7 @@ export const getUserProducts = reactCache(
 );
 
 export const getProducts = reactCache(
-  (organizationId: string, page?: number): Promise<TProduct[]> =>
+  async (organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
@@ -128,7 +128,7 @@ export const getProducts = reactCache(
 );
 
 export const getProductByEnvironmentId = reactCache(
-  (environmentId: string): Promise<TProduct | null> =>
+  async (environmentId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -215,7 +215,7 @@ export const updateProduct = async (
 };
 
 export const getProduct = reactCache(
-  (productId: string): Promise<TProduct | null> =>
+  async (productId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         let productPrisma;
@@ -361,7 +361,12 @@ export const createProduct = async (
 
     return updatedProduct;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new InvalidInputError("A product with this name already exists in your organization");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error.message);
       throw new DatabaseError(error.message);
     }
     throw error;

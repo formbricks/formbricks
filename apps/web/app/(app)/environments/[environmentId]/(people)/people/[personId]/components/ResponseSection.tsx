@@ -1,8 +1,8 @@
 import { ResponseTimeline } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseTimeline";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponsesByPersonId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
@@ -54,7 +54,7 @@ export const ResponseSection = async ({
 
   const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
 
-  const locale = findMatchingLocale();
+  const locale = await findMatchingLocale();
 
   return (
     <ResponseTimeline

@@ -1,7 +1,8 @@
 import { type ZodIssue, z } from "zod";
+import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAttributes } from "../attributes";
-import { ZAllowedFileExtension, ZColor, ZId, ZPlacement } from "../common";
+import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZInsight } from "../insights";
 import { ZLanguage } from "../product";
 import { ZSegment } from "../segment";
@@ -30,7 +31,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   headline: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   buttonLabel: ZI18nString.optional(),
-  buttonLink: z.string().url("Invalid Button Url in Ending card").optional(),
+  buttonLink: getZSafeUrl("Invalid Button Url in Ending card").optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
 });
@@ -39,7 +40,7 @@ export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: z.string().url("Invalid Redirect Url in Ending card").optional(),
+  url: getZSafeUrl("Invalid Redirect Url").optional(),
   label: z.string().optional(),
 });
 
@@ -444,6 +445,8 @@ export type TSurveyLogicAction = z.infer<typeof ZSurveyLogicAction>;
 
 const ZSurveyLogicActions = z.array(ZSurveyLogicAction);
 
+export type TSurveyLogicActions = z.infer<typeof ZSurveyLogicActions>;
+
 export const ZSurveyLogic = z.object({
   id: ZId,
   conditions: ZConditionGroup,
@@ -465,6 +468,7 @@ export const ZSurveyQuestionBase = z.object({
   scale: z.enum(["number", "smiley", "star"]).optional(),
   range: z.union([z.literal(5), z.literal(3), z.literal(4), z.literal(7), z.literal(10)]).optional(),
   logic: z.array(ZSurveyLogic).optional(),
+  logicFallback: ZSurveyQuestionId.optional(),
   isDraft: z.boolean().optional(),
 });
 
@@ -766,6 +770,11 @@ export const ZSurvey = z
         });
       }
     }),
+    followUps: z.array(
+      ZSurveyFollowUp.extend({
+        deleted: z.boolean().optional(),
+      })
+    ),
     delay: z.number(),
     autoComplete: z.number().min(1, { message: "Response limit must be greater than 0" }).nullable(),
     runOnDate: z.date().nullable(),
@@ -1153,6 +1162,52 @@ export const ZSurvey = z
         }
       }
     });
+
+    if (survey.followUps.length) {
+      survey.followUps
+        .filter((followUp) => !followUp.deleted)
+        .forEach((followUp, index) => {
+          if (followUp.action.properties.to) {
+            const validOptions = [
+              ...survey.questions
+                .filter((q) => {
+                  if (q.type === TSurveyQuestionTypeEnum.OpenText) {
+                    if (q.inputType === "email") {
+                      return true;
+                    }
+                  }
+
+                  if (q.type === TSurveyQuestionTypeEnum.ContactInfo) {
+                    return true;
+                  }
+
+                  return false;
+                })
+                .map((q) => q.id),
+              ...(survey.hiddenFields.fieldIds ?? []),
+            ];
+
+            if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+                path: ["followUps"],
+              });
+            }
+
+            if (followUp.trigger.type === "endings") {
+              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
+              if (!followUp.trigger.properties?.endingIds?.length) {
+                ctx.addIssue({
+                  code: z.ZodIssueCode.custom,
+                  message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
+                  path: ["followUps"],
+                });
+              }
+            }
+          }
+        });
+    }
   });
 
 const isInvalidOperatorsForQuestionType = (
@@ -1745,7 +1800,11 @@ const validateConditions = (
             });
           } else if (variable.type === "number") {
             const validQuestionTypes = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
-            if (!validQuestionTypes.includes(question.type)) {
+            if (
+              !validQuestionTypes.includes(question.type) &&
+              question.type === TSurveyQuestionTypeEnum.OpenText &&
+              question.inputType !== "number"
+            ) {
               issues.push({
                 code: z.ZodIssueCode.custom,
                 message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -1982,7 +2041,13 @@ const validateActions = (
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
         const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
-        if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
+
+        if (
+          !selectedQuestion ||
+          (!allowedQuestions.includes(selectedQuestion.type) &&
+            selectedQuestion.type === TSurveyQuestionTypeEnum.OpenText &&
+            selectedQuestion.inputType !== "number")
+        ) {
           return {
             code: z.ZodIssueCode.custom,
             message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
@@ -2024,23 +2089,93 @@ const validateActions = (
     return undefined;
   });
 
+  const jumpToQuestionActions = actions.filter((action) => action.objective === "jumpToQuestion");
+  if (jumpToQuestionActions.length > 1) {
+    actionIssues.push({
+      code: z.ZodIssueCode.custom,
+      message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+      path: ["questions", questionIndex, "logic"],
+    });
+  }
+
   const filteredActionIssues = actionIssues.filter((issue): issue is ZodIssue => issue !== undefined);
   return filteredActionIssues;
 };
 
+const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.ZodIssue[] | undefined => {
+  const question = survey.questions[questionIdx];
+
+  if (!question.logicFallback) return;
+
+  if (!question.logic?.length && question.logicFallback) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback logic is defined without any logic in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  } else if (question.id === question.logicFallback) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback logic is defined with the same question in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  }
+
+  const possibleFallbackIds: string[] = [];
+
+  survey.questions.forEach((q, idx) => {
+    if (idx !== questionIdx) {
+      possibleFallbackIds.push(q.id);
+    }
+  });
+
+  survey.endings.forEach((e) => {
+    possibleFallbackIds.push(e.id);
+  });
+
+  if (!possibleFallbackIds.includes(question.logicFallback)) {
+    return [
+      {
+        code: z.ZodIssueCode.custom,
+        message: `Conditional Logic: Fallback question ID ${question.logicFallback} does not exist in question ${String(questionIdx + 1)}`,
+        path: ["questions", questionIdx],
+      },
+    ];
+  }
+};
+
 const validateLogic = (survey: TSurvey, questionIndex: number, logic: TSurveyLogic[]): z.ZodIssue[] => {
+  const logicFallbackIssue = validateLogicFallback(survey, questionIndex);
+
   const logicIssues = logic.map((logicItem, logicIndex) => {
     return [
       ...validateConditions(survey, questionIndex, logicIndex, logicItem.conditions),
       ...validateActions(survey, questionIndex, logicIndex, logicItem.actions),
     ];
   });
-  return logicIssues.flat();
+
+  return [...logicIssues.flat(), ...(logicFallbackIssue ? logicFallbackIssue : [])];
 };
 
 // ZSurvey is a refinement, so to extend it to ZSurveyUpdateInput, we need to transform the innerType and then apply the same refinements.
 export const ZSurveyUpdateInput = ZSurvey.innerType()
-  .omit({ createdAt: true, updatedAt: true })
+  .omit({ createdAt: true, updatedAt: true, followUps: true })
+  .extend({
+    followUps: z
+      .array(
+        ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true }).and(
+          z.object({
+            createdAt: z.coerce.date(),
+            updatedAt: z.coerce.date(),
+          })
+        )
+      )
+      .default([]),
+  })
   .and(
     z.object({
       createdAt: z.coerce.date(),
@@ -2065,6 +2200,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     updatedAt: true,
     productOverwrites: true,
     languages: true,
+    followUps: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -2075,6 +2211,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
     }),
     endings: ZSurveyEndings.default([]),
     type: ZSurveyType.default("link"),
+    followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).default([]),
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
@@ -2089,7 +2226,7 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling";
+export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
 
 export const ZSurveyQuestionSummaryOpenText = z.object({
   type: z.literal("openText"),

@@ -2,11 +2,11 @@
 
 import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;

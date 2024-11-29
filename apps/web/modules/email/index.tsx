@@ -17,6 +17,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserEmail, TUserLocale } from "@formbricks/types/user";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
@@ -25,6 +26,7 @@ import { InviteAcceptedEmail } from "./emails/invite/invite-accepted-email";
 import { InviteEmail } from "./emails/invite/invite-email";
 import { OnboardingInviteEmail } from "./emails/invite/onboarding-invite-email";
 import { EmbedSurveyPreviewEmail } from "./emails/survey/embed-survey-preview-email";
+import { FollowUpEmail } from "./emails/survey/follow-up";
 import { LinkSurveyEmail } from "./emails/survey/link-survey-email";
 import { ResponseFinishedEmail } from "./emails/survey/response-finished-email";
 import { NoLiveSurveyNotificationEmail } from "./emails/weekly-summary/no-live-survey-notification-email";
@@ -39,12 +41,6 @@ interface SendEmailDataProps {
   subject: string;
   text?: string;
   html: string;
-}
-
-interface TEmailUser {
-  id: string;
-  email: string;
-  locale: string;
 }
 
 const getEmailSubject = (productName: string): string => {
@@ -74,26 +70,38 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<void> =>
   await transporter.sendMail({ ...emailDefaults, ...emailData });
 };
 
-export const sendVerificationEmail = async (user: TEmailUser): Promise<void> => {
-  const token = createToken(user.id, user.email, {
+export const sendVerificationEmail = async ({
+  id,
+  email,
+  locale,
+}: {
+  id: string;
+  email: TUserEmail;
+  locale: TUserLocale;
+}): Promise<void> => {
+  const token = createToken(id, email, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
   const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
-  const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale: user.locale }));
+  const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale }));
   await sendEmail({
-    to: user.email,
-    subject: translateEmailText("verification_email_subject", user.locale),
+    to: email,
+    subject: translateEmailText("verification_email_subject", locale),
     html,
   });
 };
 
-export const sendForgotPasswordEmail = async (user: TEmailUser, locale: string): Promise<void> => {
+export const sendForgotPasswordEmail = async (user: {
+  id: string;
+  email: TUserEmail;
+  locale: TUserLocale;
+}): Promise<void> => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await render(ForgotPasswordEmail({ verifyLink, locale }));
+  const html = await render(ForgotPasswordEmail({ verifyLink, locale: user.locale }));
   await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
@@ -101,7 +109,10 @@ export const sendForgotPasswordEmail = async (user: TEmailUser, locale: string):
   });
 };
 
-export const sendPasswordResetNotifyEmail = async (user: TEmailUser): Promise<void> => {
+export const sendPasswordResetNotifyEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<void> => {
   const html = await render(PasswordResetNotifyEmail({ locale: user.locale }));
   await sendEmail({
     to: user.email,
@@ -292,5 +303,25 @@ export const sendNoLiveSurveyNotificationEmail = async (
     to: email,
     subject: getEmailSubject(notificationData.productName),
     html,
+  });
+};
+
+export const sendFollowUpEmail = async (
+  html: string,
+  subject: string,
+  to: string,
+  replyTo: string[]
+): Promise<void> => {
+  const emailHtmlBody = await render(
+    FollowUpEmail({
+      html,
+    })
+  );
+
+  await sendEmail({
+    to,
+    replyTo: replyTo.join(", "),
+    subject,
+    html: emailHtmlBody,
   });
 };

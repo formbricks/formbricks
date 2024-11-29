@@ -1,9 +1,9 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -14,17 +14,19 @@ import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/TemplateContainer";
 
 interface SurveyTemplateProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     channel?: TProductConfigChannel;
     industry?: TProductConfigIndustry;
     role?: TTemplateRole;
-  };
+  }>;
 }
 
-const Page = async ({ params, searchParams }: SurveyTemplateProps) => {
+const Page = async (props: SurveyTemplateProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;

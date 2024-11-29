@@ -17,7 +17,7 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getTeamsByProductId = reactCache(
-  (productId: string): Promise<TProductTeam[] | null> =>
+  async (productId: string): Promise<TProductTeam[] | null> =>
     cache(
       async () => {
         validateInputs([productId, ZId]);
@@ -189,7 +189,7 @@ export const addTeamAccess = async (productId: string, teamIds: string[]): Promi
 };
 
 export const getTeamsByOrganizationId = reactCache(
-  (organizationId: string): Promise<TOrganizationTeam[] | null> =>
+  async (organizationId: string): Promise<TOrganizationTeam[] | null> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId]);

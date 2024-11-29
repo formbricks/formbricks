@@ -112,6 +112,7 @@ model Response {
   createdAt        DateTime          @default(now()) @map(name: "created_at")
   updatedAt        DateTime          @updatedAt @map(name: "updated_at")
   finished         Boolean           @default(false)
+  endingId         String?
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -333,9 +334,25 @@ model Survey {
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   documents                       Document[]
+  followUps                       SurveyFollowUp[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+}
+
+model SurveyFollowUp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  name      String
+  /// [SurveyFollowUpTrigger]
+  /// @zod.custom(imports.ZSurveyFollowUpTrigger)
+  trigger   Json
+  /// [SurveyFollowUpAction]
+  /// @zod.custom(imports.ZSurveyFollowUpAction)
+  action    Json
 }
 
 enum ActionType {
@@ -460,8 +477,8 @@ model Organization {
   name        String
   memberships Membership[]
   products    Product[]
-  /// @zod.custom(imports.ZTeamBilling)
-  /// [TeamBilling]
+  /// @zod.custom(imports.ZOrganizationBilling)
+  /// [OrganizationBilling]
   billing     Json
   invites     Invite[]
   isAIEnabled Boolean      @default(false)

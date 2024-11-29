@@ -2,12 +2,7 @@
 
 import { createAISurveyAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
+import { Button } from "@/modules/ui/components/button";
 import {
   Card,
   CardContent,
@@ -15,8 +10,13 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@formbricks/ui/components/Card";
-import { Textarea } from "@formbricks/ui/components/Textarea";
+} from "@/modules/ui/components/card";
+import { Textarea } from "@/modules/ui/components/textarea";
+import { Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface FormbricksAICardProps {
   environmentId: string;

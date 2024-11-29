@@ -54,6 +54,7 @@ export const navigation: Array<NavGroup> = [
             title: "Add Image/Video to Question",
             href: "/global/add-image-or-video-question",
           },
+          { title: "Variables", href: "/global/variables" },
         ],
       },
     ],
@@ -85,6 +86,7 @@ export const navigation: Array<NavGroup> = [
             title: "Add Image/Video to Question",
             href: "/global/add-image-or-video-question",
           },
+          { title: "Variables", href: "/global/variables" },
         ],
       },
     ],
@@ -141,6 +143,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Configuration", href: "/self-hosting/configuration" },
       { title: "Integrations", href: "/self-hosting/integrations" },
       { title: "License", href: "/self-hosting/license" },
+      { title: "Cluster Setup", href: "/self-hosting/cluster-setup" },
     ],
   },
   {

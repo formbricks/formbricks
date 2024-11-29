@@ -1,6 +1,8 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -8,8 +10,6 @@ import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProduct } from "@formbricks/types/product";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@formbricks/ui/components/Button";
-import { ConfirmationModal } from "@formbricks/ui/components/ConfirmationModal";
 import {
   createLanguageAction,
   deleteLanguageAction,

@@ -1,20 +1,21 @@
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getUserProducts } from "@formbricks/lib/product/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { Header } from "@formbricks/ui/components/Header";
 
 interface ModePageProps {
-  params: {
+  params: Promise<{
     organizationId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: ModePageProps) => {
+const Page = async (props: ModePageProps) => {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
