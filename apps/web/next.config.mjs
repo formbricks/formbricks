@@ -178,20 +178,6 @@ const nextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
-          {
-            key: "Content-Security-Policy",
-            value: "default-src 'self'; \
-              script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googleads.g.doubleclick.net https://geo.cookie-script.com; \
-              style-src 'self' 'unsafe-inline' https:; \
-              img-src 'self' data: https:; \
-              font-src 'self' https:; \
-              connect-src 'self' https://www.google-analytics.com https://www.googletagmanager.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://ep1.adtrafficquality.google; \
-              frame-src 'self' https://www.googletagmanager.com https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://www.google.com https://ep2.adtrafficquality.google; \
-              media-src 'self' https:; \
-              object-src 'none'; \
-              base-uri 'self'; \
-              form-action 'self';",
-          },
         ],
       },
       {
