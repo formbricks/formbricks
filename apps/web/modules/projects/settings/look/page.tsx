@@ -8,7 +8,7 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/ProjectConfigNavigation";
+import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -22,7 +22,7 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
-import { EditFormbricksBranding } from "./components/edit-branding";
+import { EditBranding } from "./components/edit-branding";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 
@@ -96,14 +96,14 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         title={t("environments.project.look.formbricks_branding")}
         description={t("environments.project.look.formbricks_branding_settings_description")}>
         <div className="space-y-4">
-          <EditFormbricksBranding
+          <EditBranding
             type="linkSurvey"
             project={project}
             canRemoveBranding={canRemoveLinkBranding}
             environmentId={params.environmentId}
             isReadOnly={isReadOnly}
           />
-          <EditFormbricksBranding
+          <EditBranding
             type="appSurvey"
             project={project}
             canRemoveBranding={canRemoveInAppBranding}

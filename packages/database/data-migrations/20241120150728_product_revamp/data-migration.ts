@@ -19,7 +19,7 @@ async function runMigration(): Promise<void> {
 
   await prisma.$transaction(
     async (transactionPrisma) => {
-      const organization = await transactionPrisma.organization.findMany({
+      const organizations = await transactionPrisma.organization.findMany({
         where: {
           billing: {
             path: ["limits", "projects"],
@@ -32,7 +32,7 @@ async function runMigration(): Promise<void> {
         },
       });
 
-      const updateOrganizationPromises = organization.map((org) =>
+      const updateOrganizationPromises = organizations.map((org) =>
         transactionPrisma.organization.update({
           where: {
             id: org.id,

@@ -1,7 +1,7 @@
 "use client";
 
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/ProjectConfigNavigation";
+import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { useTranslations } from "next-intl";

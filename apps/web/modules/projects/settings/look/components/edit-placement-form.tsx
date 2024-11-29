@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -56,19 +57,19 @@ export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) =
   const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-slate-700/80" : "bg-slate-200";
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
-    try {
-      await updateProjectAction({
-        projectId: project.id,
-        data: {
-          placement: data.placement,
-          darkOverlay: data.darkOverlay,
-          clickOutsideClose: data.clickOutsideClose,
-        },
-      });
-
+    const updatedProjectResponse = await updateProjectAction({
+      projectId: project.id,
+      data: {
+        placement: data.placement,
+        darkOverlay: data.darkOverlay,
+        clickOutsideClose: data.clickOutsideClose,
+      },
+    });
+    if (updatedProjectResponse?.data) {
       toast.success(t("environments.project.look.placement_updated_successfully"));
-    } catch (error) {
-      toast.error(`Error: ${error.message}`);
+    } else {
+      const errorMessage = getFormattedErrorMessage(updatedProjectResponse);
+      toast.error(errorMessage);
     }
   };
 

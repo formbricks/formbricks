@@ -77,7 +77,7 @@ export const ProjectSwitcher = ({
           },
         },
         {
-          text: t("environments.settings.billing.learn_more"),
+          text: t("common.learn_more"),
           onClick: () => {
             setOpenLimitModal(false);
             router.push(`/environments/${environmentId}/settings/billing`);
@@ -93,7 +93,7 @@ export const ProjectSwitcher = ({
             onClick: () => setOpenLimitModal(false),
           },
           {
-            text: t("environments.settings.billing.learn_more"),
+            text: t("common.learn_more"),
             href: "https://formbricks.com/docs/self-hosting/license",
             onClick: () => setOpenLimitModal(false),
           },
@@ -110,7 +110,7 @@ export const ProjectSwitcher = ({
           onClick: () => setOpenLimitModal(false),
         },
         {
-          text: t("environments.settings.billing.learn_more"),
+          text: t("common.learn_more"),
           href: "https://formbricks.com/docs/self-hosting/license",
           onClick: () => setOpenLimitModal(false),
         },

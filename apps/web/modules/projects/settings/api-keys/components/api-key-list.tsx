@@ -5,17 +5,14 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TUserLocale } from "@formbricks/types/user";
 import { EditAPIKeys } from "./edit-api-keys";
 
-export const ApiKeyList = async ({
-  environmentId,
-  environmentType,
-  locale,
-  isReadOnly,
-}: {
+interface ApiKeyListProps {
   environmentId: string;
   environmentType: string;
   locale: TUserLocale;
   isReadOnly: boolean;
-}) => {
+}
+
+export const ApiKeyList = async ({ environmentId, environmentType, locale, isReadOnly }: ApiKeyListProps) => {
   const t = await getTranslations();
   const findEnvironmentByType = (environments, targetType) => {
     for (const environment of environments) {

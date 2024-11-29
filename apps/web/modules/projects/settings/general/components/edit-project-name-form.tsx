@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -18,7 +19,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { TProject, ZProject } from "@formbricks/types/project";
-import { updateProjectAction } from "../../actions";
 
 interface EditProjectNameProps {
   project: TProject;
@@ -68,7 +68,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
       }
     } catch (err) {
       console.error(err);
-      toast.error(`Error: Unable to save project information`);
+      toast.error(t("environments.project.general.error_saving_project_information"));
     }
   };
 

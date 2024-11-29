@@ -144,6 +144,9 @@ export const createProject = async (
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        throw new InvalidInputError("A project with this name already exists in this organization");
+      }
       throw new DatabaseError(error.message);
     }
     throw error;
