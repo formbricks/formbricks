@@ -81,6 +81,45 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
   };
 };
 
+const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
+  const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
+
+  if (existingConfig) {
+    const parsedConfig = JSON.parse(existingConfig);
+
+    if (parsedConfig.environmentState.data.product) {
+      const { environmentState, filteredSurveys, ...restConfig } = parsedConfig;
+
+      // @ts-expect-error
+      const fixedFilteredSurveys = filteredSurveys.map((survey) => {
+        const { productOverwrites, ...rest } = survey;
+        return {
+          ...rest,
+          projectOverwrites: productOverwrites,
+        };
+      });
+
+      const { product, ...rest } = parsedConfig.environmentState.data;
+
+      const newLocalStorageConfig = {
+        ...restConfig,
+        environmentState: {
+          ...rest,
+          project: product,
+        },
+        filteredSurveys: fixedFilteredSurveys,
+      };
+
+      return {
+        changed: true,
+        newState: newLocalStorageConfig,
+      };
+    }
+  }
+
+  return { changed: false };
+};
+
 export const initialize = async (
   configInput: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
@@ -100,6 +139,17 @@ export const initialize = async (
     // otherwise, we just sync again!
     if (!configInput.userId && newState) {
       config.update(newState);
+    }
+  }
+
+  const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
+
+  if (migrated) {
+    config.resetConfig();
+    config = Config.getInstance();
+
+    if (updatedLocalState) {
+      config.update(updatedLocalState);
     }
   }
 
