@@ -6,15 +6,15 @@ import { useCallback, useEffect } from "react";
 import { env } from "@formbricks/lib/env";
 import { TUser } from "@formbricks/types/user";
 
-const intercomSecretKey = env.NEXT_PUBLIC_INTERCOM_SECRET_KEY;
 const intercomAppId = env.NEXT_PUBLIC_INTERCOM_APP_ID;
 
 interface IntercomClientProps {
   isIntercomConfigured: boolean;
+  intercomSecretKey?: string;
   user?: TUser | null;
 }
 
-export const IntercomClient = ({ user, isIntercomConfigured }: IntercomClientProps) => {
+export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }: IntercomClientProps) => {
   const initializeIntercom = useCallback(() => {
     let initParams = {};
 
