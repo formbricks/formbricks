@@ -1557,6 +1557,7 @@
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "seconds after trigger the survey will be closed if no response",
         "seconds_before_showing_the_survey": "seconds before showing the survey.",
         "segment_saved_successfully": "Segment saved successfully",
+        "select_or_type_value": "Select or type value",
         "select_ordering": "Select ordering",
         "select_saved_action": "Select saved action",
         "select_type": "Select type",
@@ -1924,7 +1925,7 @@
     "verify_email": "Verify email.",
     "verify_email_before_submission": "Verify your email to respond",
     "verify_email_before_submission_button": "Verify",
-    "verify_email_before_submission_description": "Only users who have the PIN can access the survey.",
+    "verify_email_before_submission_description": "To respond to this survey, please verify your email",
     "want_to_respond": "Want to respond?"
   },
   "setup": {

@@ -12,7 +12,7 @@ import {
 } from "@formbricks/lib/storage/service";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TProject, TProjectUpdateInput, ZProject, ZProjectUpdateInput } from "@formbricks/types/project";
 
 const selectProject = {
@@ -139,6 +139,10 @@ export const createProject = async (
 
     return updatedProject;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new InvalidInputError("A project with this name already exists in your organization");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

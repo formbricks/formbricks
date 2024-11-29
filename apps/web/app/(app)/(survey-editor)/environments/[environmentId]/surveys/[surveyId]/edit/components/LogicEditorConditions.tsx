@@ -295,7 +295,7 @@ export function LogicEditorConditions({
             withInput={showInput}
             inputProps={{
               type: inputType,
-              placeholder: "Value",
+              placeholder: t("environments.surveys.edit.select_or_type_value"),
             }}
             key="conditionMatchValue"
             showSearch={false}

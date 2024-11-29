@@ -1557,6 +1557,7 @@
         "seconds_after_trigger_the_survey_will_be_closed_if_no_response": "segundos após acionar, a pesquisa será encerrada se não houver resposta",
         "seconds_before_showing_the_survey": "segundos antes de mostrar a pesquisa.",
         "segment_saved_successfully": "Segmento salvo com sucesso",
+        "select_or_type_value": "Selecionar ou digitar valor",
         "select_ordering": "Selecionar pedido",
         "select_saved_action": "Selecionar ação salva",
         "select_type": "Selecionar tipo",
@@ -1924,7 +1925,7 @@
     "verify_email": "Verifica o e-mail.",
     "verify_email_before_submission": "Verifique seu e-mail para responder",
     "verify_email_before_submission_button": "Verificar",
-    "verify_email_before_submission_description": "Somente usuários que têm o PIN podem acessar a pesquisa.",
+    "verify_email_before_submission_description": "Para responder a esta pesquisa, confirme seu e-mail",
     "want_to_respond": "Quer responder?"
   },
   "setup": {
