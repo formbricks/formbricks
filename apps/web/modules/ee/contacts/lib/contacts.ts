@@ -287,26 +287,18 @@ export const createContactsFromCSV = async (
     });
 
     // Check for duplicate userIds
-    if (csvUserIds.length > 0) {
-      const existingUserIds = await prisma.contactAttribute.findMany({
-        where: {
-          attributeKey: {
-            key: "userId",
-            environmentId,
-          },
-          value: {
-            in: csvUserIds,
-          },
+    const existingUserIds = await prisma.contactAttribute.findMany({
+      where: {
+        attributeKey: {
+          key: "userId",
+          environmentId,
         },
-        select: { value: true },
-      });
-
-      if (existingUserIds.length > 0) {
-        throw new ValidationError(
-          `${existingUserIds.length} contacts with the same userId already exist in the environment. Please ensure userIds are unique.`
-        );
-      }
-    }
+        value: {
+          in: csvUserIds,
+        },
+      },
+      select: { value: true, contactId: true },
+    });
 
     // Fetch existing attribute keys and cache them
     const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
@@ -370,12 +362,27 @@ export const createContactsFromCSV = async (
             return null;
 
           case "update": {
-            const existingAttributes = new Map<string, string>();
-            existingContact.attributes.forEach((attr) => {
-              existingAttributes.set(attr.attributeKey.key, attr.value);
-            });
+            // if the record has a userId, check if it already exists
+            const existingUserId = existingUserIds.find(
+              (attr) => attr.value === record.userId && attr.contactId !== existingContact.id
+            );
+            let recordToProcess = { ...record };
+            if (existingUserId) {
+              const { userId, ...rest } = recordToProcess;
 
-            const attributesToUpsert = Object.entries(record).map(([key, value]) => ({
+              const existingContactUserId = existingContact.attributes.find(
+                (attr) => attr.attributeKey.key === "userId"
+              )?.value;
+
+              recordToProcess = {
+                ...rest,
+                ...(existingContactUserId && {
+                  userId: existingContactUserId,
+                }),
+              };
+            }
+
+            const attributesToUpsert = Object.entries(recordToProcess).map(([key, value]) => ({
               where: {
                 contactId_attributeKeyId: {
                   contactId: existingContact.id,
@@ -412,12 +419,31 @@ export const createContactsFromCSV = async (
           }
 
           case "overwrite": {
+            // if the record has a userId, check if it already exists
+            const existingUserId = existingUserIds.find(
+              (attr) => attr.value === record.userId && attr.contactId !== existingContact.id
+            );
+            let recordToProcess = { ...record };
+            if (existingUserId) {
+              const { userId, ...rest } = recordToProcess;
+              const existingContactUserId = existingContact.attributes.find(
+                (attr) => attr.attributeKey.key === "userId"
+              )?.value;
+
+              recordToProcess = {
+                ...rest,
+                ...(existingContactUserId && {
+                  userId: existingContactUserId,
+                }),
+              };
+            }
+
             // Overwrite by deleting existing attributes and creating new ones
             await prisma.contactAttribute.deleteMany({
               where: { contactId: existingContact.id },
             });
 
-            const newAttributes = Object.entries(record).map(([key, value]) => ({
+            const newAttributes = Object.entries(recordToProcess).map(([key, value]) => ({
               attributeKey: {
                 connect: { key_environmentId: { key, environmentId } },
               },

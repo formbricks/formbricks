@@ -5,8 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 
 /* eslint-disable no-console -- logging is allowed in migration scripts */
-import { createId } from "@paralleldrive/cuid2";
-import { type ContactAttributeType, PrismaClient } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -17,69 +16,23 @@ async function runMigration(): Promise<void> {
 
   await prisma.$transaction(
     async (tx) => {
-      // 1. Delete existing contactAttributes with attributeKey 'userId'
-      const allAttributesWithUserId = await tx.contactAttribute.deleteMany({
+      const totalContacts = await tx.contact.count();
+
+      // Check if any contacts still have a userId
+      const contactsWithUserId = await tx.contact.count({
         where: {
-          attributeKey: { key: "userId" },
+          userId: { not: null },
         },
       });
 
-      console.log("Deleted:", allAttributesWithUserId.count);
-
-      // 2. Ensure attributeKeys for 'userId' exist for all environments
-      // Fetch all unique environmentIds from contacts
-      const environmentIds = await tx.contact.findMany({
-        select: { environmentId: true },
-        distinct: ["environmentId"],
-      });
-
-      // Map to store environmentId to attributeKeyId
-      const attributeKeyMap = new Map<string, string>();
-
-      // Fetch existing attributeKeys
-      const existingUserIdAttributeKeys = await tx.contactAttributeKey.findMany({
-        where: {
-          key: "userId",
-          environmentId: { in: environmentIds.map((e) => e.environmentId) },
-        },
-        select: { id: true, environmentId: true },
-      });
-
-      existingUserIdAttributeKeys.forEach((ak) => {
-        attributeKeyMap.set(ak.environmentId, ak.id);
-      });
-
-      // Find missing environmentIds
-      const missingEnvironmentIds = environmentIds
-        .map((e) => e.environmentId)
-        .filter((envId) => !attributeKeyMap.has(envId));
-
-      // Create missing attributeKeys
-      if (missingEnvironmentIds.length > 0) {
-        const newAttributeKeysData = missingEnvironmentIds.map((envId) => ({
-          id: createId(),
-          key: "userId",
-          environmentId: envId,
-          // Add other required fields based on your schema
-          // For example:
-          isUnique: true,
-          type: "default" as ContactAttributeType,
-        }));
-
-        await tx.contactAttributeKey.createMany({
-          data: newAttributeKeysData,
-        });
-
-        // Update attributeKeyMap with new keys
-        newAttributeKeysData.forEach((ak) => {
-          attributeKeyMap.set(ak.environmentId, ak.id);
-        });
+      // If no contacts have a userId, migration is already complete
+      if (totalContacts > 0 && contactsWithUserId === 0) {
+        console.log("Migration already completed. No contacts with userId found.");
+        return;
       }
 
-      // 3. Process contacts in batches
       const BATCH_SIZE = 10000; // Adjust based on your system's capacity
       let skip = 0;
-      let processed = 0;
 
       while (true) {
         // Ensure email, firstName, lastName attributeKeys exist for all environments
@@ -88,6 +41,10 @@ async function runMigration(): Promise<void> {
           skip,
           take: BATCH_SIZE,
         });
+
+        if (allEnvironmentsInBatch.length === 0) {
+          break;
+        }
 
         console.log("Processing attributeKeys for", allEnvironmentsInBatch.length, "environments");
 
@@ -150,17 +107,53 @@ async function runMigration(): Promise<void> {
                       type: "default",
                     },
                   },
+                  {
+                    where: {
+                      key_environmentId: {
+                        key: "userId",
+                        environmentId: env.id,
+                      },
+                    },
+                    update: {
+                      type: "default",
+                      isUnique: true,
+                    },
+                    create: {
+                      key: "userId",
+                      name: "User ID",
+                      description: "The user ID of a contact",
+                      type: "default",
+                      isUnique: true,
+                    },
+                  },
                 ],
               },
             },
           });
         }
 
-        console.log("Processed attributeKeys for", allEnvironmentsInBatch.length, "environments");
+        skip += allEnvironmentsInBatch.length;
+      }
 
+      const CONTACTS_BATCH_SIZE = 20000;
+      let skipContacts = 0;
+      let processedContacts = 0;
+
+      // delete userIds for these environments:
+      const { count } = await tx.contactAttribute.deleteMany({
+        where: {
+          attributeKey: {
+            key: "userId",
+          },
+        },
+      });
+
+      console.log("Deleted userId attributes for", count, "contacts");
+
+      while (true) {
         const contacts = await tx.contact.findMany({
-          skip,
-          take: BATCH_SIZE,
+          skip: skipContacts,
+          take: CONTACTS_BATCH_SIZE,
           select: {
             id: true,
             userId: true,
@@ -175,18 +168,31 @@ async function runMigration(): Promise<void> {
           break;
         }
 
-        // Prepare data for contactAttribute.createMany
-        const contactAttributesData = contacts.map((contact) => ({
-          contactId: contact.id,
-          attributeKeyId: attributeKeyMap.get(contact.environmentId)!,
-          value: contact.userId!,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }));
+        const environmentIdsByContacts = contacts.map((c) => c.environmentId);
+
+        const attributeMap = new Map<string, string>();
+
+        const userIdAttributeKeys = await tx.contactAttributeKey.findMany({
+          where: {
+            key: "userId",
+            environmentId: {
+              in: environmentIdsByContacts,
+            },
+          },
+          select: { id: true, environmentId: true },
+        });
+
+        userIdAttributeKeys.forEach((ak) => {
+          attributeMap.set(ak.environmentId, ak.id);
+        });
 
         // Insert contactAttributes in bulk
         await tx.contactAttribute.createMany({
-          data: contactAttributesData,
+          data: contacts.map((contact) => ({
+            contactId: contact.id,
+            value: contact.userId!,
+            attributeKeyId: attributeMap.get(contact.environmentId)!,
+          })),
         });
 
         await tx.contact.updateMany({
@@ -198,10 +204,24 @@ async function runMigration(): Promise<void> {
           },
         });
 
-        processed += contacts.length;
-        skip += contacts.length;
-        console.log(`Processed ${processed.toString()} contacts`);
+        processedContacts += contacts.length;
+        skipContacts += contacts.length;
+
+        if (processedContacts > 0) {
+          console.log(`Processed ${processedContacts.toString()} contacts`);
+        }
       }
+
+      // total attributes with userId:
+      const totalAttributes = await tx.contactAttribute.count({
+        where: {
+          attributeKey: {
+            key: "userId",
+          },
+        },
+      });
+
+      console.log("Total attributes with userId now:", totalAttributes);
     },
     {
       timeout: TRANSACTION_TIMEOUT,

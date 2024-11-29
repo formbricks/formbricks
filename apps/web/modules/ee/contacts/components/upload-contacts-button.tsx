@@ -176,7 +176,11 @@ export const UploadContactsCSVButton = ({
     }
 
     if (result?.validationErrors) {
-      setErrror(result.validationErrors._errors?.[0] ?? "");
+      if (result.validationErrors.csvData?._errors?.[0]) {
+        setErrror(result.validationErrors.csvData._errors?.[0]);
+      } else {
+        setErrror("An error occurred while uploading the contacts. Please try again later.");
+      }
     }
 
     setLoading(false);

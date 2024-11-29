@@ -2,7 +2,7 @@
 
 /* eslint-disable no-console -- logging is allowed in migration scripts */
 import { PrismaClient } from "@prisma/client";
-import type { TBaseFilters, TSegmentAttributeFilter, TSegmentFilter } from "@formbricks/types/segment";
+import type { TBaseFilters, TSegmentAttributeFilter, TSegmentFilter } from "../../../types/segment";
 
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
