@@ -30,6 +30,7 @@ export const CLOUD_PRICING_DATA = {
       description: "environments.settings.billing.startup_description",
       price: { monthly: "$39", yearly: "$390 " },
       mainFeatures: [
+        "environments.settings.billing.everything_in_free",
         "environments.settings.billing.unlimited_surveys",
         "environments.settings.billing.remove_branding",
         "environments.settings.billing.email_support",
