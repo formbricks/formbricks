@@ -493,20 +493,6 @@ export const Survey = ({
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 md:fb-mb-6 md:fb-mt-6">
             {isBrandingEnabled && <FormbricksBranding />}
             {showProgressBar && <ProgressBar survey={localSurvey} questionId={questionId} />}
-            {currentQuestion && currentQuestion.type === "ad" && (
-              <div
-                style={{
-                  maxHeight: "100px",
-                  overflow: "auto",
-                  fontSize: "small",
-                  textAlign: "center",
-                  lineHeight: "1.5",
-                }}>
-                <div style={{ marginBottom: "25px" }}>{translations.adExplanation}</div>
-                <div style={{ fontSize: "large", marginBottom: "25px" }}>⬇️</div>
-                {translations.adDescription}
-              </div>
-            )}
           </div>
         </div>
       </AutoCloseWrapper>

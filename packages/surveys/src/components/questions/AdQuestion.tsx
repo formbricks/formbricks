@@ -2,7 +2,9 @@ import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline.tsx";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
+import AdExplanation from "@/components/questions/AdExplanation.tsx";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { surveyTranslations } from "@/lib/surveyTranslations.ts";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { Adsense } from "@ctrl/react-adsense";
 import { useState } from "react";
@@ -26,6 +28,25 @@ interface AdQuestionProps {
   currentQuestionId: string;
 }
 
+type LanguageCode = keyof typeof surveyTranslations;
+
+// const AdSensePlaceholder = () => (
+//   <div
+//     style={{
+//       display: 'block',
+//       height: '300px',
+//       width: '100%',
+//       backgroundColor: '#f0f0f0',
+//       border: '1px dashed #ccc',
+//       textAlign: 'center',
+//       lineHeight: '300px',
+//       color: '#999',
+//     }}
+//   >
+//     Ad Placeholder
+//   </div>
+// );
+
 export const AdQuestion = ({
   question,
   onSubmit,
@@ -42,6 +63,8 @@ export const AdQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  const [languageKey] = useState<LanguageCode>(languageCode as LanguageCode);
+  const translations = surveyTranslations[languageKey] || surveyTranslations.default;
 
   return (
     <div key={question.id}>
@@ -49,6 +72,8 @@ export const AdQuestion = ({
         <div>
           {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
           <Headline headline="Sponsored links" questionId={question.id} required={question.required} />
+          <AdExplanation translations={translations} />
+
           <Adsense
             client="ca-pub-1574672111746393"
             slot="3700116888"
@@ -56,6 +81,7 @@ export const AdQuestion = ({
             responsive="true"
             style={{ display: "block", height: "300px" }}
           />
+          {/*<AdSensePlaceholder/>*/}
         </div>
       </ScrollableContainer>
       <div className="flex w-full justify-between px-6 py-4">
