@@ -77,6 +77,26 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
+  for (const question of survey.questions) {
+    if (question.type === "openText") {
+      const responseText = responseInput.data[question.id];
+      const min = question.charLimit?.min;
+      const max = question.charLimit?.max;
+
+      if (min !== undefined && responseText.length < min) {
+        return responses.badRequestResponse(
+          `Response for question ${question.id} is too short. Minimum length is ${min}.`
+        );
+      }
+
+      if (max !== undefined && responseText.length > max) {
+        return responses.badRequestResponse(
+          `Response for question ${question.id} is too long. Maximum length is ${max}.`
+        );
+      }
+    }
+  }
+
   let response: TResponse;
   try {
     const meta: TResponseInput["meta"] = {
