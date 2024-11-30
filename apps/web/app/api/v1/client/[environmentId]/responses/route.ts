@@ -84,15 +84,15 @@ export const POST = async (request: Request, context: Context): Promise<Response
       const max = question.charLimit?.max;
 
       if (min !== undefined && responseText.length < min) {
-        return responses.badRequestResponse(
-          `Response for question ${question.id} is too short. Minimum length is ${min}.`
-        );
+        return responses.badRequestResponse(`Response is too short. Minimum length is ${min}.`, {
+          questionId: question.id,
+        });
       }
 
       if (max !== undefined && responseText.length > max) {
-        return responses.badRequestResponse(
-          `Response for question ${question.id} is too long. Maximum length is ${max}.`
-        );
+        return responses.badRequestResponse(`Response is too long. Maximum length is ${max}.`, {
+          questionId: question.id,
+        });
       }
     }
   }
