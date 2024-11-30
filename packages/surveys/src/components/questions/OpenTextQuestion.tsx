@@ -111,8 +111,8 @@ export const OpenTextQuestion = ({
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.minLength || undefined : undefined}
-                maxlength={question.inputType === "text" ? question.maxLength || undefined : undefined}
+                minlength={question.inputType === "text" ? question.charLimit.min : undefined}
+                maxlength={question.inputType === "text" ? question.charLimit.max : undefined}
               />
             ) : (
               <textarea
@@ -134,14 +134,14 @@ export const OpenTextQuestion = ({
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
-                minlength={question.inputType === "text" ? question.minLength || undefined : undefined}
-                maxlength={question.inputType === "text" ? question.maxLength || undefined : undefined}
+                minlength={question.inputType === "text" ? question.charLimit.min : undefined}
+                maxlength={question.inputType === "text" ? question.charLimit.max : undefined}
               />
             )}
-            {question.inputType === "text" && question.maxLength !== undefined && (
+            {question.inputType === "text" && question.charLimit.max !== undefined && (
               <span
-                className={`fb-text-xs ${currentLength >= question.maxLength ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
-                {currentLength}/{question.maxLength}
+                className={`fb-text-xs ${currentLength >= question.charLimit.max ? "fb-text-red-500 font-semibold" : "text-neutral-400"}`}>
+                {currentLength}/{question.charLimit.max}
               </span>
             )}
           </div>
