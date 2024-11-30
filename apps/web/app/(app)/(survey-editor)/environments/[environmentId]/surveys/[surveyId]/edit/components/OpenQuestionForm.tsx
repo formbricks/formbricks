@@ -1,14 +1,15 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useState, JSX } from "react";
-
+import { JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
@@ -17,9 +18,6 @@ import {
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AdvancedOptionToggle } from "@modules/ui/components/AdvancedOptionToggle";
-import { Input } from "@/modules/ui/components/input";
-
 
 const questionTypes = [
   { value: "text", label: "common.text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
@@ -64,8 +62,10 @@ export const OpenQuestionForm = ({
       inputType: inputType,
       placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
       longAnswer: inputType === "text" ? question.longAnswer : false,
-      minLength: undefined,
-      maxLength: undefined,
+      charLimit: {
+        min: undefined,
+        max: undefined,
+      },
     };
     setIsCharLimitEnabled(false);
     setShowCharLimits(inputType === "text");
@@ -76,7 +76,7 @@ export const OpenQuestionForm = ({
   const [isCharLimitEnabled, setIsCharLimitEnabled] = useState(false);
 
   useEffect(() => {
-    if (question.minLength !== undefined || question.maxLength !== undefined) {
+    if (question?.charLimit?.min !== undefined || question?.charLimit?.max !== undefined) {
       setIsCharLimitEnabled(true);
     } else {
       setIsCharLimitEnabled(false);
@@ -173,12 +173,16 @@ export const OpenQuestionForm = ({
             onToggle={(checked: boolean) => {
               setIsCharLimitEnabled(checked);
               updateQuestion(questionIdx, {
-                isCharLimitEnabled: checked,
+                charLimit: {
+                  enabled: checked,
+                },
               });
               if (!checked) {
                 updateQuestion(questionIdx, {
-                  minLength: undefined,
-                  maxLength: undefined,
+                  charLimit: {
+                    min: undefined,
+                    max: undefined,
+                  },
                 });
               }
             }}
@@ -195,12 +199,15 @@ export const OpenQuestionForm = ({
                   name="minLength"
                   type="number"
                   min={0}
-                  value={question.minLength || ""}
+                  value={question?.charLimit?.min || ""}
                   aria-label={t("common.minimum")}
                   className="bg-white"
                   onChange={(e) =>
                     updateQuestion(questionIdx, {
-                      minLength: e.target.value ? parseInt(e.target.value) : undefined,
+                      charLimit: {
+                        ...question?.charLimit,
+                        min: e.target.value ? parseInt(e.target.value) : undefined,
+                      },
                     })
                   }
                 />
@@ -213,11 +220,14 @@ export const OpenQuestionForm = ({
                   type="number"
                   min={0}
                   aria-label={t("common.maximum")}
-                  value={question.maxLength || ""}
+                  value={question?.charLimit?.max || ""}
                   className="bg-white"
                   onChange={(e) =>
                     updateQuestion(questionIdx, {
-                      maxLength: e.target.value ? parseInt(e.target.value) : undefined,
+                      charLimit: {
+                        ...question?.charLimit,
+                        max: e.target.value ? parseInt(e.target.value) : undefined,
+                      },
                     })
                   }
                 />
