@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -96,6 +96,11 @@ export const createContactsFromCSVAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
         },
       ],
     });

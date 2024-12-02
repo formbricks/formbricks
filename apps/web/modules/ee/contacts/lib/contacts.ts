@@ -89,6 +89,9 @@ export const getContacts = reactCache(
             select: selectContact,
             take: ITEMS_PER_PAGE,
             skip: offset,
+            orderBy: {
+              createdAt: "desc",
+            },
           });
 
           return contacts.map((contact) => transformPrismaContact(contact));

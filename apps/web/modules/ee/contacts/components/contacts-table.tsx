@@ -121,6 +121,7 @@ export const ContactsTable = ({
 
       setColumnVisibility({
         ...initialVisibility,
+        select: true,
         email: true,
         firstName: true,
         lastName: true,

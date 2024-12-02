@@ -110,10 +110,9 @@ async function runMigration(): Promise<void> {
           (acc, env) => acc + env.reduce((sum, item) => sum + item.deletedAttributeIds.length, 0),
           0
         ),
-        details: deletionSummary,
       };
 
-      console.dir(summary, { depth: null });
+      console.log("Data migration completed. Summary: ", summary);
     },
     {
       timeout: TRANSACTION_TIMEOUT,
