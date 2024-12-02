@@ -57,52 +57,55 @@ export const RankingQuestion = ({
   const [parent] = useAutoAnimate();
 
   const [error, setError] = useState<string | null>(null);
-
   const isMediaAvailable = question.imageUrl || question.videoUrl;
 
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+
+  const [localValue, setLocalValue] = useState<string[]>(value || []);
 
   const sortedItems = useMemo(() => {
-    return value
+    return localValue
       .map((id) => question.choices.find((c) => c.id === id))
       .filter((item): item is TSurveyQuestionChoice => item !== undefined);
-  }, [value, question.choices]);
+  }, [localValue, question.choices]);
 
   const unsortedItems = useMemo(() => {
     if (question.shuffleOption === "all" && sortedItems.length === 0) {
       return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
     } else {
-      return question.choices.filter((c) => !value.includes(c.id));
+      return question.choices.filter((c) => !localValue.includes(c.id));
     }
-  }, [question.choices, value, question.shuffleOption]);
+  }, [question.choices, question.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
 
   const handleItemClick = useCallback(
     (item: TSurveyQuestionChoice) => {
-      const isAlreadySorted = sortedItems.some((sortedItem) => sortedItem.id === item.id);
-      const newSortedItems = isAlreadySorted
-        ? sortedItems.filter((sortedItem) => sortedItem.id !== item.id)
-        : [...sortedItems, item];
-      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
+      const isAlreadySorted = localValue.includes(item.id);
+      const newLocalValue = isAlreadySorted
+        ? localValue.filter((id) => id !== item.id)
+        : [...localValue, item.id];
+
+      setLocalValue(newLocalValue);
+
       setError(null);
     },
-    [onChange, question.id, sortedItems]
+    [localValue]
   );
 
   const handleMove = useCallback(
     (itemId: string, direction: "up" | "down") => {
-      const index = sortedItems.findIndex((item) => item.id === itemId);
+      const index = localValue.findIndex((id) => id === itemId);
       if (index === -1) return;
 
-      const newSortedItems = [...sortedItems];
-      const [movedItem] = newSortedItems.splice(index, 1);
+      const newLocalValue = [...localValue];
+      const [movedItem] = newLocalValue.splice(index, 1);
       const newIndex =
-        direction === "up" ? Math.max(0, index - 1) : Math.min(newSortedItems.length, index + 1);
+        direction === "up" ? Math.max(0, index - 1) : Math.min(newLocalValue.length, index + 1);
+      newLocalValue.splice(newIndex, 0, movedItem);
+      setLocalValue(newLocalValue);
 
-      newSortedItems.splice(newIndex, 0, movedItem);
-      onChange({ [question.id]: newSortedItems.map((item) => getLocalizedValue(item.label, languageCode)) });
       setError(null);
     },
-    [sortedItems, onChange, question.id]
+    [localValue]
   );
 
   const handleSubmit = (e: Event) => {
@@ -119,10 +122,22 @@ export const RankingQuestion = ({
 
     const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtcObj);
+    onChange({
+      [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)),
+    });
     onSubmit(
       { [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)) },
       updatedTtcObj
     );
+  };
+
+  const handleBack = () => {
+    const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
+    setTtc(updatedTtcObj);
+    onChange({
+      [question.id]: sortedItems.map((item) => getLocalizedValue(item.label, languageCode)),
+    });
+    onBack();
   };
 
   return (
@@ -144,7 +159,7 @@ export const RankingQuestion = ({
               <legend className="fb-sr-only">Ranking Items</legend>
               <div className="fb-relative" ref={parent}>
                 {[...sortedItems, ...unsortedItems].map((item, idx) => {
-                  if (!item) return;
+                  if (!item) return null;
                   const isSorted = sortedItems.includes(item);
                   const isFirst = isSorted && idx === 0;
                   const isLast = isSorted && idx === sortedItems.length - 1;
@@ -253,11 +268,7 @@ export const RankingQuestion = ({
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             tabIndex={isCurrent ? 0 : -1}
-            onClick={() => {
-              const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
-              setTtc(updatedTtcObj);
-              onBack();
-            }}
+            onClick={handleBack}
           />
         )}
       </div>
