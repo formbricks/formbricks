@@ -12,52 +12,35 @@ export const ZJsPerson = z.object({
   userId: z.string().optional(),
 });
 
-export type TJsPerson = z.infer<typeof ZJsPerson>;
-
-export const ZJsEnvironmentStateSurvey = ZSurvey.innerType().pick({
-  id: true,
-  name: true,
-  welcomeCard: true,
-  questions: true,
-  variables: true,
-  type: true,
-  showLanguageSwitch: true,
-  languages: true,
-  endings: true,
-  autoClose: true,
-  styling: true,
-  status: true,
-  segment: true,
-  recontactDays: true,
-  displayLimit: true,
-  displayOption: true,
-  hiddenFields: true,
-  triggers: true,
-  displayPercentage: true,
-  delay: true,
-  productOverwrites: true,
-});
-
-export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
-
-// ZSurvey is a refinement, so to extend it to ZSurveyWithTriggers, we need to extend the innerType and then apply the same refinements.
-const ZSurveyWithTriggers = ZSurvey.innerType()
-  .extend({
-    triggers: z.array(ZActionClass).or(z.array(z.string())),
+export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
+  .pick({
+    id: true,
+    name: true,
+    welcomeCard: true,
+    questions: true,
+    variables: true,
+    type: true,
+    showLanguageSwitch: true,
+    languages: true,
+    endings: true,
+    autoClose: true,
+    styling: true,
+    status: true,
+    segment: true,
+    recontactDays: true,
+    displayLimit: true,
+    displayOption: true,
+    hiddenFields: true,
+    triggers: true,
+    displayPercentage: true,
+    delay: true,
+    productOverwrites: true,
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
-export type TSurveyWithTriggers = z.infer<typeof ZSurveyWithTriggers>;
+export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
 
-export const ZJSWebsiteStateDisplay = z.object({
-  createdAt: z.date(),
-  surveyId: z.string().cuid2(),
-  responded: z.boolean(),
-});
-
-export type TJSWebsiteStateDisplay = z.infer<typeof ZJSWebsiteStateDisplay>;
-
-export const ZJsAppStateSync = z.object({
+export const ZJsRNStateSync = z.object({
   person: ZJsPerson.nullish(),
   userId: z.string().optional(),
   surveys: z.array(ZJsEnvironmentStateSurvey),
@@ -66,42 +49,38 @@ export const ZJsAppStateSync = z.object({
   language: z.string().optional(),
 });
 
-export type TJsAppStateSync = z.infer<typeof ZJsAppStateSync>;
+export type TJsRNStateSync = z.infer<typeof ZJsRNStateSync>;
 
-export const ZJsAppState = z.object({
+export const ZJsRNState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
   product: ZProduct,
 });
 
-export type TJsAppState = z.infer<typeof ZJsAppState>;
+export type TJsRNState = z.infer<typeof ZJsRNState>;
 
-export const ZJsAppConfigUpdateInput = z.object({
+export const ZJsRNConfigUpdateInput = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
   userId: z.string(),
-  state: ZJsAppState,
+  state: ZJsRNState,
   expiresAt: z.date(),
   status: z.enum(["success", "error"]).optional(),
 });
 
-export type TJsAppConfigUpdateInput = z.infer<typeof ZJsAppConfigUpdateInput>;
+export type TJsRNConfigUpdateInput = z.infer<typeof ZJsRNConfigUpdateInput>;
 
 export const ZJsRNConfig = z.object({
   environmentId: z.string().cuid(),
   apiHost: z.string(),
   userId: z.string(),
-  state: ZJsAppState,
+  state: ZJsRNState,
   expiresAt: z.date(),
   status: z.enum(["success", "error"]).optional(),
 });
 
 export type TJsRNConfig = z.infer<typeof ZJsRNConfig>;
-
-export const ZJsWebsiteStateSync = ZJsAppStateSync.omit({ person: true });
-
-export type TJsWebsiteStateSync = z.infer<typeof ZJsWebsiteStateSync>;
 
 export const ZJsRNSyncParams = z.object({
   environmentId: z.string().cuid(),
@@ -111,16 +90,6 @@ export const ZJsRNSyncParams = z.object({
 });
 
 export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
-
-export const ZJsWebsiteState = z.object({
-  surveys: z.array(ZJsEnvironmentStateSurvey),
-  actionClasses: z.array(ZActionClass),
-  product: ZProduct,
-  displays: z.array(ZJSWebsiteStateDisplay),
-  attributes: ZAttributes.optional(),
-});
-
-export type TJsWebsiteState = z.infer<typeof ZJsWebsiteState>;
 
 export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   id: true,
@@ -166,7 +135,6 @@ export const ZJsPersonState = z.object({
   data: z.object({
     userId: z.string().nullable(),
     segments: z.array(ZId), // segment ids the person belongs to
-    // displays: z.array(z.string()), // displayed survey ids
     displays: z.array(
       z.object({
         surveyId: ZId,
@@ -213,15 +181,6 @@ export const ZJsConfigUpdateInput = ZJsConfig.omit({ status: true }).extend({
 
 export type TJsConfigUpdateInput = z.infer<typeof ZJsConfigUpdateInput>;
 
-export const ZJsWebsiteConfigInput = z.object({
-  environmentId: z.string().cuid2(),
-  apiHost: z.string(),
-  errorHandler: z.function().args(z.any()).returns(z.void()).optional(),
-  attributes: z.record(z.string()).optional(),
-});
-
-export type TJsWebsiteConfigInput = z.infer<typeof ZJsWebsiteConfigInput>;
-
 export const ZJsConfigInput = z.object({
   environmentId: z.string().cuid2(),
   apiHost: z.string(),
@@ -232,8 +191,8 @@ export const ZJsConfigInput = z.object({
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
 
-export const ZJsReactNativeConfigInput = ZJsConfigInput.omit({ userId: true }).extend({ userId: z.string() });
-export type TJsReactNativeConfigInput = z.infer<typeof ZJsReactNativeConfigInput>;
+export const ZJsRNConfigInput = ZJsConfigInput.omit({ userId: true }).extend({ userId: z.string() });
+export type TJsRNConfigInput = z.infer<typeof ZJsRNConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),
@@ -243,29 +202,6 @@ export const ZJsPeopleUserIdInput = z.object({
 export const ZJsPeopleUpdateAttributeInput = z.object({
   attributes: ZAttributes,
 });
-
-export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsPeopleUpdateAttributeInput>;
-
-export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
-
-export const ZJsPeopleAttributeInput = z.object({
-  key: z.string(),
-  value: z.string(),
-});
-
-export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
-
-export const ZJsActionInput = z.object({
-  environmentId: z.string().cuid2(),
-  userId: z.string().optional(),
-  name: z.string(),
-});
-
-export type TJsActionInput = z.infer<typeof ZJsActionInput>;
-
-export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
-
-export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
 
 export const ZJsEnvironmentSyncParams = z.object({
   environmentId: z.string().cuid(),
