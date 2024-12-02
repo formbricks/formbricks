@@ -1,6 +1,7 @@
+import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { getActionClassesForEnvironmentState } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
@@ -15,11 +16,154 @@ import {
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
 import { productCache } from "@formbricks/lib/product/cache";
-import { getProductForEnvironmentState } from "@formbricks/lib/product/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurveysForEnvironmentState } from "@formbricks/lib/survey/service";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
+import { validateInputs } from "@formbricks/lib/utils/validate";
+import { ZId } from "@formbricks/types/common";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState } from "@formbricks/types/js";
+import {
+  TJsEnvironmentStateActionClass,
+  TJsEnvironmentStateProduct,
+  TJsEnvironmentStateSurvey,
+} from "@formbricks/types/js";
+
+export const getActionClassesForEnvironmentState = reactCache(
+  async (environmentId: string): Promise<TJsEnvironmentStateActionClass[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        try {
+          return await prisma.actionClass.findMany({
+            where: {
+              environmentId: environmentId,
+            },
+            select: {
+              id: true,
+              type: true,
+              name: true,
+              key: true,
+              noCodeConfig: true,
+            },
+          });
+        } catch (error) {
+          throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+        }
+      },
+      [`getActionClassesForEnvironmentState-${environmentId}`],
+      {
+        tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const getSurveysForEnvironmentState = reactCache(
+  async (environmentId: string): Promise<TJsEnvironmentStateSurvey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        try {
+          const surveysPrisma = await prisma.survey.findMany({
+            where: {
+              environmentId,
+            },
+            select: {
+              id: true,
+              welcomeCard: true,
+              name: true,
+              questions: true,
+              variables: true,
+              type: true,
+              showLanguageSwitch: true,
+              languages: true,
+              endings: true,
+              autoClose: true,
+              styling: true,
+              status: true,
+              segment: {
+                include: {
+                  surveys: {
+                    select: {
+                      id: true,
+                    },
+                  },
+                },
+              },
+              recontactDays: true,
+              displayLimit: true,
+              displayOption: true,
+              hiddenFields: true,
+              triggers: {
+                select: {
+                  actionClass: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              displayPercentage: true,
+              delay: true,
+            },
+          });
+
+          return surveysPrisma.map((survey) => transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey));
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getSurveysForEnvironmentState-${environmentId}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const getProductForEnvironmentState = reactCache(
+  async (environmentId: string): Promise<TJsEnvironmentStateProduct | null> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId]);
+
+        try {
+          return await prisma.product.findFirst({
+            where: {
+              environments: {
+                some: {
+                  id: environmentId,
+                },
+              },
+            },
+            select: {
+              id: true,
+              recontactDays: true,
+              clickOutsideClose: true,
+              darkOverlay: true,
+              placement: true,
+              inAppSurveyBranding: true,
+              styling: true,
+            },
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getProductForEnvironmentState-${environmentId}`],
+      {
+        tags: [productCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
 
 /**
  *

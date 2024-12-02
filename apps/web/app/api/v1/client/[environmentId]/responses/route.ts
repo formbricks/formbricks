@@ -23,7 +23,12 @@ export const OPTIONS = async (): Promise<Response> => {
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
   const requestHeaders = await headers();
-  const responseInput = await request.json();
+  let responseInput;
+  try {
+    responseInput = await request.json();
+  } catch (error) {
+    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+  }
 
   const { environmentId } = params;
   const environmentIdValidation = ZId.safeParse(environmentId);

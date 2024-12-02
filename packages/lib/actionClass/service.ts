@@ -8,7 +8,6 @@ import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsEnvironmentStateActionClass } from "@formbricks/types/js";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { surveyCache } from "../survey/cache";
@@ -50,36 +49,6 @@ export const getActionClasses = reactCache(
         }
       },
       [`getActionClasses-${environmentId}-${page}`],
-      {
-        tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
-
-export const getActionClassesForEnvironmentState = reactCache(
-  async (environmentId: string): Promise<TJsEnvironmentStateActionClass[]> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
-
-        try {
-          return await prisma.actionClass.findMany({
-            where: {
-              environmentId: environmentId,
-            },
-            select: {
-              id: true,
-              type: true,
-              name: true,
-              key: true,
-              noCodeConfig: true,
-            },
-          });
-        } catch (error) {
-          throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
-        }
-      },
-      [`getActionClassesForEnvironmentState-${environmentId}`],
       {
         tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
       }
