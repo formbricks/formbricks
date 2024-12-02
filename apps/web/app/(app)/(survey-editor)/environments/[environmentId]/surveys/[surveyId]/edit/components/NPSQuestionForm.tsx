@@ -60,7 +60,7 @@ export const NPSQuestionForm = ({
 
       <div ref={parent}>
         {question.subheader !== undefined && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
@@ -96,7 +96,7 @@ export const NPSQuestionForm = ({
         )}
       </div>
 
-      <div className="mt-3 flex justify-between space-x-2">
+      <div className="flex justify-between space-x-2">
         <div className="w-full">
           <QuestionFormInput
             id="lowerLabel"

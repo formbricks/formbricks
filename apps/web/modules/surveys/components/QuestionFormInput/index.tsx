@@ -623,7 +623,7 @@ export const QuestionFormInput = ({
                 variant="secondary"
                 size="icon"
                 StartIcon={ImagePlusIcon}
-                tooltip="Add image or video"
+                tooltip={t("environments.surveys.edit.add_photo_or_video")}
                 aria-label="Toggle image uploader"
                 className="ml-2"
                 onClick={(e) => {

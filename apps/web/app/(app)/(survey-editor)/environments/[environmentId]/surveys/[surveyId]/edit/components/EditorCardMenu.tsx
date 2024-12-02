@@ -149,7 +149,6 @@ export const EditorCardMenu = ({
         tooltip={t("common.move_up")}
         disabled={cardIdx === 0}
         onClick={(e) => {
-          e.preventDefault();
           if (cardIdx !== 0) {
             e.stopPropagation();
             moveCard(cardIdx, true);
@@ -164,7 +163,6 @@ export const EditorCardMenu = ({
         tooltip={t("common.move_down")}
         disabled={lastCard}
         onClick={(e) => {
-          e.preventDefault();
           if (!lastCard) {
             e.stopPropagation();
             moveCard(cardIdx, false);
@@ -178,7 +176,6 @@ export const EditorCardMenu = ({
         StartIcon={CopyIcon}
         tooltip={t("common.duplicate")}
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
           duplicateCard(cardIdx);
         }}
@@ -191,7 +188,6 @@ export const EditorCardMenu = ({
         tooltip={t("common.delete")}
         disabled={isDeleteDisabled}
         onClick={(e) => {
-          e.preventDefault();
           e.stopPropagation();
           if (isDeleteDisabled) return;
           deleteCard(cardIdx);
@@ -200,7 +196,7 @@ export const EditorCardMenu = ({
       />
       <DropdownMenu>
         <DropdownMenuTrigger className="h-10 w-10 rounded-lg border border-transparent p-2 hover:border-slate-200">
-          <EllipsisIcon className="w-4text-slate-700 h-4 hover:text-slate-600" />
+          <EllipsisIcon className="mx-auto h-4 w-4 text-slate-700 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>

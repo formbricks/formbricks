@@ -56,7 +56,7 @@ export const RatingQuestionForm = ({
 
       <div ref={parent}>
         {question.subheader !== undefined && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
@@ -131,7 +131,7 @@ export const RatingQuestionForm = ({
         </div>
       </div>
 
-      <div className="mt-3 flex justify-between gap-8">
+      <div className="flex justify-between gap-8">
         <div className="flex-1">
           <QuestionFormInput
             id="lowerLabel"
