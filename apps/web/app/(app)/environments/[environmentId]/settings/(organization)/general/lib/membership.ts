@@ -35,7 +35,7 @@ export const getOrganizationOwnerCount = reactCache(
           throw error;
         }
       },
-      [`getOrganizationOwnersCount-${organizationId}`],
+      [`getOrganizationOwnerCount-${organizationId}`],
       {
         tags: [membershipCache.tag.byOrganizationId(organizationId)],
       }
