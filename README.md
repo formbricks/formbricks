@@ -232,10 +232,10 @@ Additional to the AGPL licensed Formbricks core, this repository contains code l
 
 ### White-Labeling Formbricks and Other Licensing Needs
 
-We currently do not offer Formbricks white-labeled. Any other needs? [Send us an email](mailto:hola@formbricks.com).
+We currently do not offer Formbricks white-labeled. That means that we don't sell a license which let's other companies resell Formbricks to third parties under their name nor take parts (like the survey editor) out of Formbricks to add to their own software products. Any other needs? [Send us an email](mailto:hola@formbricks.com).
 
 ### Why charge for Enterprise Features?
 
-The Enterprise Edition and White-Label Licenses allow us to fund the development of Formbricks sustainably. It guarantees that the open-source surveying infrastructure we're building will be around for decades to come.
+The Enterprise Edition allows us to fund the development of Formbricks sustainably. It guarantees that the free and open-source surveying infrastructure we're building will be around for decades to come.
 
 <p align="right"><a href="#top">🔼 Back to top</a></p>
