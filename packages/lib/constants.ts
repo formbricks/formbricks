@@ -145,6 +145,7 @@ export const LOGIN_RATE_LIMIT = {
   interval: 15 * 60, // 15 minutes
   allowedPerInterval: 30,
 };
+
 export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 5 * 60, // 5 minutes
   allowedPerInterval: 200,
@@ -238,3 +239,7 @@ export const IS_AI_CONFIGURED = Boolean(
     env.AI_AZURE_LLM_DEPLOYMENT_ID &&
     env.AI_AZURE_LLM_RESSOURCE_NAME
 );
+
+export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
+
+export const IS_INTERCOM_CONFIGURED = Boolean(env.NEXT_PUBLIC_INTERCOM_APP_ID && INTERCOM_SECRET_KEY);

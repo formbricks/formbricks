@@ -27,7 +27,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const t = useTranslations("environments.settings.profile");
+  const t = useTranslations();
   const fileSchema =
     typeof window !== "undefined"
       ? z
@@ -136,7 +136,9 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                     onClick={() => {
                       inputRef.current?.click();
                     }}>
-                    {imageUrl ? t("change_image") : t("upload_image")}
+                    {imageUrl
+                      ? t("environments.settings.profile.change_image")
+                      : t("environments.settings.profile.upload_image")}
                     <input
                       type="file"
                       id="hiddenFileInput"
@@ -156,7 +158,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
 
                   {imageUrl && (
                     <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
-                      {t("remove_image")}
+                      {t("environments.settings.profile.remove_image")}
                     </Button>
                   )}
                 </div>

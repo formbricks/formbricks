@@ -48,7 +48,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { AiOutlineDiscord } from "react-icons/ai";
 import { cn } from "@formbricks/lib/cn";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -226,12 +225,6 @@ export const MainNavigation = ({
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
-    },
-    {
-      label: t("common.join_discord"),
-      href: "https://formbricks.com/discord",
-      target: "_blank",
-      icon: AiOutlineDiscord,
     },
   ];
 
@@ -488,7 +481,8 @@ export const MainNavigation = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
-                      await signOut({ callbackUrl: "/auth/login" });
+                      const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
+                      router.push(route.url);
                       await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
