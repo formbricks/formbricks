@@ -1,5 +1,6 @@
 "use server";
 
+import { contactCache } from "@/lib/cache/contact";
 import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -7,6 +8,7 @@ import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { apiKeyCache } from "@formbricks/lib/apiKey/cache";
 import { cache } from "@formbricks/lib/cache";
+import { segmentCache } from "@formbricks/lib/cache/segment";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { integrationCache } from "@formbricks/lib/integration/cache";
 import { inviteCache } from "@formbricks/lib/invite/cache";
@@ -498,3 +500,60 @@ export const isTeamPartOfOrganization = async (organizationId: string, teamId: s
     throw error;
   }
 };
+
+export const getContact = reactCache(
+  async (contactId: string): Promise<{ environmentId: string } | null> =>
+    cache(
+      async () => {
+        validateInputs([contactId, ZId]);
+
+        try {
+          return await prisma.contact.findUnique({
+            where: {
+              id: contactId,
+            },
+            select: { environmentId: true },
+          });
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`utils-getPerson-${contactId}`],
+      {
+        tags: [contactCache.tag.byId(contactId)],
+      }
+    )()
+);
+
+export const getSegment = reactCache(
+  async (segmentId: string): Promise<{ environmentId: string } | null> =>
+    cache(
+      async () => {
+        validateInputs([segmentId, ZId]);
+        try {
+          const segment = await prisma.segment.findUnique({
+            where: {
+              id: segmentId,
+            },
+            select: { environmentId: true },
+          });
+
+          return segment;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`utils-getSegment-${segmentId}`],
+      {
+        tags: [segmentCache.tag.byId(segmentId)],
+      }
+    )()
+);

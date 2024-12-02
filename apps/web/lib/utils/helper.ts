@@ -1,6 +1,7 @@
 import {
   getActionClass,
   getApiKey,
+  getContact,
   getDocument,
   getEnvironment,
   getInsight,
@@ -10,6 +11,7 @@ import {
   getProduct,
   getResponse,
   getResponseNote,
+  getSegment,
   getSurvey,
   getTag,
   getTeam,
@@ -75,14 +77,14 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   return await getOrganizationIdFromSurveyId(response.surveyId);
 };
 
-// export const getOrganizationIdFromPersonId = async (personId: string) => {
-//   const person = await getPerson(personId);
-//   if (!person) {
-//     throw new ResourceNotFoundError("person", personId);
-//   }
+export const getOrganizationIdFromContactId = async (contactId: string) => {
+  const person = await getContact(contactId);
+  if (!person) {
+    throw new ResourceNotFoundError("person", contactId);
+  }
 
-//   return await getOrganizationIdFromEnvironmentId(person.environmentId);
-// };
+  return await getOrganizationIdFromEnvironmentId(person.environmentId);
+};
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
@@ -102,23 +104,14 @@ export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string
   return await getOrganizationIdFromResponseId(responseNote.responseId);
 };
 
-// export const getOrganizationIdFromAttributeClassId = async (attributeClassId: string) => {
-//   const attributeClass = await getAttributeClass(attributeClassId);
-//   if (!attributeClass) {
-//     throw new ResourceNotFoundError("attributeClass", attributeClassId);
-//   }
+export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
 
-//   return await getOrganizationIdFromEnvironmentId(attributeClass.environmentId);
-// };
-
-// export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
-//   const segment = await getSegment(segmentId);
-//   if (!segment) {
-//     throw new ResourceNotFoundError("segment", segmentId);
-//   }
-
-//   return await getOrganizationIdFromEnvironmentId(segment.environmentId);
-// };
+  return await getOrganizationIdFromEnvironmentId(segment.environmentId);
+};
 
 export const getOrganizationIdFromActionClassId = async (actionClassId: string) => {
   const actionClass = await getActionClass(actionClassId);
@@ -229,14 +222,14 @@ export const getProductIdFromInsightId = async (insightId: string) => {
   return await getProductIdFromEnvironmentId(insight.environmentId);
 };
 
-// export const getProductIdFromSegmentId = async (segmentId: string) => {
-//   const segment = await getSegment(segmentId);
-//   if (!segment) {
-//     throw new ResourceNotFoundError("segment", segmentId);
-//   }
+export const getProductIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
 
-//   return await getProductIdFromEnvironmentId(segment.environmentId);
-// };
+  return await getProductIdFromEnvironmentId(segment.environmentId);
+};
 
 export const getProductIdFromApiKeyId = async (apiKeyId: string) => {
   const apiKey = await getApiKey(apiKeyId);
@@ -292,14 +285,14 @@ export const getProductIdFromResponseNoteId = async (responseNoteId: string) => 
   return await getProductIdFromResponseId(responseNote.responseId);
 };
 
-// export const getProductIdFromPersonId = async (personId: string) => {
-//   const person = await getPerson(personId);
-//   if (!person) {
-//     throw new ResourceNotFoundError("person", personId);
-//   }
+export const getProductIdFromContactId = async (contactId: string) => {
+  const person = await getContact(contactId);
+  if (!person) {
+    throw new ResourceNotFoundError("person", contactId);
+  }
 
-//   return await getProductIdFromEnvironmentId(person.environmentId);
-// };
+  return await getProductIdFromEnvironmentId(person.environmentId);
+};
 
 export const getProductIdFromDocumentId = async (documentId: string) => {
   const document = await getDocument(documentId);
@@ -347,14 +340,14 @@ export const getEnvironmentIdFromInsightId = async (insightId: string) => {
   return insight.environmentId;
 };
 
-// export const getEnvironmentIdFromSegmentId = async (segmentId: string) => {
-//   const segment = await getSegment(segmentId);
-//   if (!segment) {
-//     throw new ResourceNotFoundError("segment", segmentId);
-//   }
+export const getEnvironmentIdFromSegmentId = async (segmentId: string) => {
+  const segment = await getSegment(segmentId);
+  if (!segment) {
+    throw new ResourceNotFoundError("segment", segmentId);
+  }
 
-//   return segment.environmentId;
-// };
+  return segment.environmentId;
+};
 
 export const getEnvironmentIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);

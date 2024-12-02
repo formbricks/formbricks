@@ -2,16 +2,15 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromContactId,
+  getOrganizationIdFromEnvironmentId,
+  getProductIdFromContactId,
+  getProductIdFromEnvironmentId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import {
-  createContactsFromCSV,
-  deleteContact,
-  getContactAttributeKeys,
-  getContacts,
-  getOrganizationIdFromContactId,
-} from "./lib/contacts";
+import { createContactsFromCSV, deleteContact, getContacts } from "./lib/contacts";
 import {
   ZContactCSVAttributeMap,
   ZContactCSVDuplicateAction,
@@ -33,29 +32,17 @@ export const getContactsAction = authenticatedActionClient
       access: [
         {
           type: "organization",
-          roles: ["owner", "manager", "member"],
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
 
     return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
-  });
-
-export const getContactAttributeKeysAction = authenticatedActionClient
-  .schema(z.object({ environmentId: ZId }))
-  .action(async ({ ctx, parsedInput: { environmentId } }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(environmentId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager", "member"],
-        },
-      ],
-    });
-
-    return getContactAttributeKeys(environmentId);
   });
 
 const ZPersonDeleteAction = z.object({
@@ -65,13 +52,21 @@ const ZPersonDeleteAction = z.object({
 export const deleteContactAction = authenticatedActionClient
   .schema(ZPersonDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
+    const productId = await getProductIdFromContactId(parsedInput.contactId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromContactId(parsedInput.contactId),
+      organizationId,
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId,
         },
       ],
     });

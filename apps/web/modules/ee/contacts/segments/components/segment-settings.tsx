@@ -105,7 +105,7 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      await deleteSegmentAction({ environmentId, segmentId: segment.id });
+      await deleteSegmentAction({ segmentId: segment.id });
 
       setIsDeletingSegment(false);
       toast.success(t("environments.segments.segment_deleted_successfully"));

@@ -7,12 +7,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { TEnvironment } from "@formbricks/types/environment";
-import {
-  DatabaseError,
-  InvalidInputError,
-  OperationNotAllowedError,
-  ResourceNotFoundError,
-} from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
@@ -1311,10 +1306,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       currentSurveySegment.isPrivate &&
       currentSurveySegment.title === currentSurvey.id
     ) {
-      if (currentSurveySegment.surveys.length) {
-        throw new OperationNotAllowedError("Cannot delete a segment that is associated with a survey");
-      }
-
       const segment = await prisma.segment.delete({
         where: {
           id: currentSurveySegment.id,

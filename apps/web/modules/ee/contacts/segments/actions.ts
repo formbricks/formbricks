@@ -3,9 +3,14 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
+  getEnvironmentIdFromSegmentId,
   getEnvironmentIdFromSurveyId,
   getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromSegmentId,
+  getProductIdFromSurveyId,
 } from "@/lib/utils/helper";
 import {
   cloneSegment,
@@ -57,6 +62,11 @@ export const createSegmentAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
       ],
     });
 
@@ -91,6 +101,11 @@ export const updateSegmentAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+        },
       ],
     });
 
@@ -118,6 +133,13 @@ const ZLoadNewSegmentAction = z.object({
 export const loadNewSegmentAction = authenticatedActionClient
   .schema(ZLoadNewSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+
+    if (surveyEnvironmentId !== segmentEnvironmentId) {
+      throw new Error("Segment and survey are not in the same environment");
+    }
+
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -126,6 +148,11 @@ export const loadNewSegmentAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -143,12 +170,12 @@ const ZCloneSegmentAction = z.object({
 export const cloneSegmentAction = authenticatedActionClient
   .schema(ZCloneSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    // const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-    // const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+    const segmentEnvironmentId = await getEnvironmentIdFromSegmentId(parsedInput.segmentId);
 
-    // if (surveyEnvironmentId !== segmentEnvironmentId) {
-    //   throw new Error("Segment and survey are not in the same environment");
-    // }
+    if (surveyEnvironmentId !== segmentEnvironmentId) {
+      throw new Error("Segment and survey are not in the same environment");
+    }
 
     // const organizationId = await getOrganizationIdFromEnvironmentId(surveyEnvironmentId);
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
@@ -161,6 +188,11 @@ export const cloneSegmentAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
+        },
       ],
     });
 
@@ -170,14 +202,14 @@ export const cloneSegmentAction = authenticatedActionClient
   });
 
 const ZDeleteSegmentAction = z.object({
-  environmentId: ZId,
   segmentId: ZId,
 });
 
 export const deleteSegmentAction = authenticatedActionClient
   .schema(ZDeleteSegmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -185,6 +217,11 @@ export const deleteSegmentAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -210,6 +247,11 @@ export const resetSegmentFiltersAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });

@@ -2,7 +2,6 @@ import "server-only";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -12,7 +11,7 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import {
   TContact,
   TContactWithAttributes,
@@ -162,15 +161,6 @@ export const deleteContact = async (contactId: string): Promise<TContact | null>
 
     throw error;
   }
-};
-
-export const getOrganizationIdFromContactId = async (contactId: string) => {
-  const contact = await getContact(contactId);
-  if (!contact) {
-    throw new ResourceNotFoundError("contact", contactId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(contact.environmentId);
 };
 
 export const getContactAttributes = reactCache((contactId: string) =>
@@ -520,8 +510,6 @@ export const createContactsFromCSV = async (
     contactAttributeKeyCache.revalidate({
       environmentId,
     });
-
-    console.log(`createContactsFromCSV took ${Date.now() - startTime}ms`);
 
     return createdContacts;
   } catch (error) {
