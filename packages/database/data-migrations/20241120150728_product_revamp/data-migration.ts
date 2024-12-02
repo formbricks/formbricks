@@ -8,8 +8,8 @@ type Plan = "free" | "startup" | "scale" | "enterprise";
 
 const projectsLimitByPlan: Record<Plan, number | null> = {
   free: 3,
-  startup: 3,
-  scale: 5,
+  startup: null,
+  scale: null,
   enterprise: null,
 };
 
