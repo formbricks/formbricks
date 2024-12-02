@@ -392,7 +392,8 @@ export const MainNavigation = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
-                      await signOut({ callbackUrl: "/auth/login" });
+                      const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
+                      router.push(route.url);
                       await formbricksLogout();
                     }}
                     icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
