@@ -104,8 +104,11 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
       const newLocalStorageConfig = {
         ...restConfig,
         environmentState: {
-          ...rest,
-          project: product,
+          ...parsedConfig.environmentState,
+          data: {
+            ...rest,
+            project: product,
+          },
         },
         filteredSurveys: fixedFilteredSurveys,
       };
