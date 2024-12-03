@@ -21,7 +21,7 @@ import {
   getQuestionDefaults,
   getQuestionNameMap,
 } from "@formbricks/lib/utils/questions";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -41,7 +41,7 @@ interface EditorCardMenuProps {
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
   addCard: (question: any, index?: number) => void;
   cardType: "question" | "ending";
-  product?: TProduct;
+  project?: TProject;
   isCxMode?: boolean;
   locale: string;
 }
@@ -53,7 +53,7 @@ export const EditorCardMenu = ({
   duplicateCard,
   deleteCard,
   moveCard,
-  product,
+  project,
   card,
   updateCard,
   addCard,
@@ -83,7 +83,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as TSurveyQuestion;
 
-    const questionDefaults = getQuestionDefaults(type, product, locale);
+    const questionDefaults = getQuestionDefaults(type, project, locale);
 
     if (
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
@@ -115,7 +115,7 @@ export const EditorCardMenu = ({
   };
 
   const addQuestionCardBelow = (type: TSurveyQuestionTypeEnum) => {
-    const questionDefaults = getQuestionDefaults(type, product, locale);
+    const questionDefaults = getQuestionDefaults(type, project, locale);
 
     addCard(
       {

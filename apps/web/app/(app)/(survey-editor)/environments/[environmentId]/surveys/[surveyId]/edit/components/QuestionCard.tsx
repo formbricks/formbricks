@@ -17,7 +17,7 @@ import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TI18nString,
   TSurvey,
@@ -43,7 +43,7 @@ import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
-  product: TProduct;
+  project: TProject;
   question: TSurveyQuestion;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
@@ -65,7 +65,7 @@ interface QuestionCardProps {
 
 export const QuestionCard = ({
   localSurvey,
-  product,
+  project,
   question,
   questionIdx,
   moveQuestion,
@@ -228,7 +228,7 @@ export const QuestionCard = ({
                 deleteCard={deleteQuestion}
                 moveCard={moveQuestion}
                 card={question}
-                product={product}
+                project={project}
                 updateCard={updateQuestion}
                 addCard={addQuestion}
                 cardType="question"
@@ -358,7 +358,7 @@ export const QuestionCard = ({
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
               localSurvey={localSurvey}
-              product={product}
+              project={project}
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}

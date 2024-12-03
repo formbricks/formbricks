@@ -6,7 +6,7 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const ConfigLayout = async (props) => {
@@ -40,9 +40,9 @@ const ConfigLayout = async (props) => {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const product = await getProductByEnvironmentId(params.environmentId);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   return children;

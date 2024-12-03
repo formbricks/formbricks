@@ -9,7 +9,7 @@ import { ZId } from "@formbricks/types/common";
 import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TPerson } from "@formbricks/types/people";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -37,8 +37,8 @@ import { personCache } from "../person/cache";
 import { getPerson } from "../person/service";
 import { structuredClone } from "../pollyfills/structuredClone";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { productCache } from "../product/cache";
-import { getProductByEnvironmentId } from "../product/service";
+import { projectCache } from "../project/cache";
+import { getProjectByEnvironmentId } from "../project/service";
 import { responseCache } from "../response/cache";
 import { getResponsesByPersonId } from "../response/service";
 import { segmentCache } from "../segment/cache";
@@ -91,7 +91,7 @@ export const selectSurvey = {
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   redirectUrl: true,
-  productOverwrites: true,
+  projectOverwrites: true,
   styling: true,
   surveyClosedMessage: true,
   singleUse: true,
@@ -109,7 +109,7 @@ export const selectSurvey = {
           alias: true,
           createdAt: true,
           updatedAt: true,
-          productId: true,
+          projectId: true,
         },
       },
     },
@@ -965,30 +965,30 @@ export const copySurveyToOtherEnvironment = async (
     const isSameEnvironment = environmentId === targetEnvironmentId;
 
     // Fetch required resources
-    const [existingEnvironment, existingProduct, existingSurvey] = await Promise.all([
+    const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
       getEnvironment(environmentId),
-      getProductByEnvironmentId(environmentId),
+      getProjectByEnvironmentId(environmentId),
       getSurvey(surveyId),
     ]);
 
     if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
-    if (!existingProduct) throw new ResourceNotFoundError("Product", environmentId);
+    if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
 
     let targetEnvironment: TEnvironment | null = null;
-    let targetProduct: TProduct | null = null;
+    let targetProject: TProject | null = null;
 
     if (isSameEnvironment) {
       targetEnvironment = existingEnvironment;
-      targetProduct = existingProduct;
+      targetProject = existingProject;
     } else {
-      [targetEnvironment, targetProduct] = await Promise.all([
+      [targetEnvironment, targetProject] = await Promise.all([
         getEnvironment(targetEnvironmentId),
-        getProductByEnvironmentId(targetEnvironmentId),
+        getProjectByEnvironmentId(targetEnvironmentId),
       ]);
 
       if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetProduct) throw new ResourceNotFoundError("Product", targetEnvironmentId);
+      if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
     }
 
     const {
@@ -1019,12 +1019,12 @@ export const copySurveyToOtherEnvironment = async (
               language: {
                 connectOrCreate: {
                   where: {
-                    productId_code: { code: surveyLanguage.language.code, productId: targetProduct.id },
+                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
                   },
                   create: {
                     code: surveyLanguage.language.code,
                     alias: surveyLanguage.language.alias,
-                    productId: targetProduct.id,
+                    projectId: targetProject.id,
                   },
                 },
               },
@@ -1096,8 +1096,8 @@ export const copySurveyToOtherEnvironment = async (
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
       singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      productOverwrites: existingSurvey.productOverwrites
-        ? structuredClone(existingSurvey.productOverwrites)
+      projectOverwrites: existingSurvey.projectOverwrites
+        ? structuredClone(existingSurvey.projectOverwrites)
         : Prisma.JsonNull,
       styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
       segment: undefined,
@@ -1147,7 +1147,7 @@ export const copySurveyToOtherEnvironment = async (
       }
     }
 
-    const targetProductLanguageCodes = targetProduct.languages.map((language) => language.code);
+    const targetProjectLanguageCodes = targetProject.languages.map((language) => language.code);
     const newSurvey = await prisma.survey.create({
       data: surveyData,
       select: selectSurvey,
@@ -1168,12 +1168,12 @@ export const copySurveyToOtherEnvironment = async (
     let newLanguageCreated = false;
     if (existingSurvey.languages && existingSurvey.languages.length > 0) {
       const targetLanguageCodes = newSurvey.languages.map((lang) => lang.language.code);
-      newLanguageCreated = targetLanguageCodes.length > targetProductLanguageCodes.length;
+      newLanguageCreated = targetLanguageCodes.length > targetProjectLanguageCodes.length;
     }
 
     // Invalidate caches
     if (newLanguageCreated) {
-      productCache.revalidate({ id: targetProduct.id, environmentId: targetEnvironmentId });
+      projectCache.revalidate({ id: targetProject.id, environmentId: targetEnvironmentId });
     }
 
     surveyCache.revalidate({
@@ -1215,10 +1215,10 @@ export const getSyncSurveys = reactCache(
       async () => {
         validateInputs([environmentId, ZId]);
         try {
-          const product = await getProductByEnvironmentId(environmentId);
+          const project = await getProjectByEnvironmentId(environmentId);
 
-          if (!product) {
-            throw new Error("Product not found");
+          if (!project) {
+            throw new Error("Project not found");
           }
 
           const person = personId === "legacy" ? ({ id: "legacy" } as TPerson) : await getPerson(personId);
@@ -1284,8 +1284,8 @@ export const getSyncSurveys = reactCache(
                 return true;
               }
               return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
-            } else if (product.recontactDays !== null) {
-              return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= product.recontactDays;
+            } else if (project.recontactDays !== null) {
+              return diffInDays(new Date(), new Date(latestDisplay.createdAt)) >= project.recontactDays;
             } else {
               return true;
             }
@@ -1350,7 +1350,7 @@ export const getSyncSurveys = reactCache(
           personCache.tag.byId(personId),
           displayCache.tag.byPersonId(personId),
           surveyCache.tag.byEnvironmentId(environmentId),
-          productCache.tag.byEnvironmentId(environmentId),
+          projectCache.tag.byEnvironmentId(environmentId),
           attributeCache.tag.byPersonId(personId),
         ],
       }

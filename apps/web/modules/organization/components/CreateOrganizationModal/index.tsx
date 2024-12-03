@@ -1,7 +1,7 @@
 "use client";
 
-import { createOrganizationAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createOrganizationAction } from "@/modules/organization/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";

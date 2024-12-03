@@ -13,7 +13,7 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },
     {
-      title: t("environments.settings.notifications.weekly_summary_products"),
+      title: t("environments.settings.notifications.weekly_summary_projects"),
       description: t("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday"),
       skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-10 w-128" }, { classes: "h-10 w-128" }],
     },

@@ -26,12 +26,12 @@ export const getTeamsByOrganizationId = reactCache(
             },
           });
 
-          const productTeams = teams.map((team) => ({
+          const projectTeams = teams.map((team) => ({
             id: team.id,
             name: team.name,
           }));
 
-          return productTeams;
+          return projectTeams;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);

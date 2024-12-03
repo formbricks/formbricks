@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSegmentId, getProductIdFromSegmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSegmentId, getProjectIdFromSegmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteSegment, updateSegment } from "@formbricks/lib/segment/service";
 import { ZId } from "@formbricks/types/common";
@@ -24,9 +24,9 @@ export const deleteBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -51,9 +51,9 @@ export const updateBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });

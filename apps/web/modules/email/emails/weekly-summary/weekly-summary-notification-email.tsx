@@ -28,7 +28,7 @@ export function WeeklySummaryNotificationEmail({
       <NotificationHeader
         endDate={endDate}
         endYear={endYear}
-        productName={notificationData.productName}
+        projectName={notificationData.projectName}
         startDate={startDate}
         startYear={startYear}
         locale={locale}

@@ -10,7 +10,7 @@ import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -123,10 +123,10 @@ const Page = async (props: LinkSurveyPageProps) => {
     }
   }
 
-  // get product and person
-  const product = await getProductByEnvironmentId(survey.environmentId);
-  if (!product) {
-    throw new Error("Product not found");
+  // get project and person
+  const project = await getProjectByEnvironmentId(survey.environmentId);
+  if (!project) {
+    throw new Error("Project not found");
   }
 
   const attributeClasses = await getAttributeClasses(survey.environmentId);
@@ -165,7 +165,7 @@ const Page = async (props: LinkSurveyPageProps) => {
     return (
       <PinScreen
         surveyId={survey.id}
-        product={product}
+        project={project}
         userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
@@ -187,7 +187,7 @@ const Page = async (props: LinkSurveyPageProps) => {
   return survey ? (
     <LinkSurvey
       survey={survey}
-      product={product}
+      project={project}
       userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}

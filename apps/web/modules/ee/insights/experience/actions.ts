@@ -5,8 +5,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromInsightId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromInsightId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromInsightId,
 } from "@/lib/utils/helper";
 import { checkAIPermission } from "@/modules/ee/insights/actions";
 import { z } from "zod";
@@ -35,9 +35,9 @@ export const getEnvironmentInsightsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -70,9 +70,9 @@ export const getStatsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -101,8 +101,8 @@ export const updateInsightAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "productTeam",
-            productId: await getProductIdFromInsightId(parsedInput.insightId),
+            type: "projectTeam",
+            projectId: await getProjectIdFromInsightId(parsedInput.insightId),
             minPermission: "readWrite",
           },
         ],

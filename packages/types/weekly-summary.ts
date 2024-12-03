@@ -36,7 +36,7 @@ export const ZWeeklySummaryNotificationResponse = z.object({
   environmentId: z.string(),
   currentDate: z.date(),
   lastWeekDate: z.date(),
-  productName: z.string(),
+  projectName: z.string(),
   surveys: z.array(ZWeeklySummaryNotificationDataSurvey),
   insights: ZWeeklySummaryInsights,
 });
@@ -94,11 +94,11 @@ export const ZWeeklyEmailOrganizationData = z.object({
 
 export type TWeeklyEmailOrganizationData = z.infer<typeof ZWeeklyEmailOrganizationData>;
 
-export const ZWeeklySummaryProductData = z.object({
+export const ZWeeklySummaryProjectData = z.object({
   id: z.string(),
   name: z.string(),
   environments: z.array(ZWeeklySummaryEnvironmentData),
   organization: ZWeeklyEmailOrganizationData,
 });
 
-export type TWeeklySummaryProductData = z.infer<typeof ZWeeklySummaryProductData>;
+export type TWeeklySummaryProjectData = z.infer<typeof ZWeeklySummaryProjectData>;

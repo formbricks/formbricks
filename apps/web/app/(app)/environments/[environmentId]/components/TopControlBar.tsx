@@ -1,5 +1,5 @@
 import { TopControlButtons } from "@/app/(app)/environments/[environmentId]/components/TopControlButtons";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -8,14 +8,14 @@ interface SideBarProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   membershipRole?: TOrganizationRole;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }
 
 export const TopControlBar = ({
   environment,
   environments,
   membershipRole,
-  productPermission,
+  projectPermission,
 }: SideBarProps) => {
   return (
     <div className="fixed inset-0 top-0 z-30 flex h-14 w-full items-center justify-end bg-slate-50 px-6">
@@ -26,7 +26,7 @@ export const TopControlBar = ({
             environments={environments}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             membershipRole={membershipRole}
-            productPermission={productPermission}
+            projectPermission={projectPermission}
           />
         </div>
       </div>
