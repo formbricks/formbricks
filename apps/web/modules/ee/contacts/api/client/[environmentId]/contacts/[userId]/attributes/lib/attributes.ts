@@ -38,13 +38,13 @@ export const updateAttributes = async (
   contactId: string,
   userId: string,
   environmentId: string,
-  contactAttributes: TContactAttributes
+  contactAttributesParam: TContactAttributes
 ): Promise<boolean> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
     [environmentId, ZId],
-    [contactAttributes, ZContactAttributes]
+    [contactAttributesParam, ZContactAttributes]
   );
 
   const contactAttributeKeys = await getContactAttributeKeys(environmentId);
@@ -53,6 +53,35 @@ export const updateAttributes = async (
   const upsertOperations: Promise<any>[] = [];
   const createOperations: Promise<any>[] = [];
   const newAttributes: { key: string; value: string }[] = [];
+
+  let contactAttributes = { ...contactAttributesParam };
+
+  const emailContactAttributeKey = await prisma.contactAttributeKey.findFirst({
+    where: { key: "email", environmentId },
+  });
+
+  if (emailContactAttributeKey) {
+    const emailContactAttributes = await prisma.contactAttribute.findMany({
+      where: {
+        attributeKeyId: emailContactAttributeKey.id,
+      },
+      select: {
+        value: true,
+      },
+    });
+
+    // if the user supplies an email, we need to ensure that it is unique
+    const { email, ...rest } = contactAttributesParam;
+
+    if (email) {
+      const emailExists = emailContactAttributes.some((attr) => attr.value === email);
+
+      if (emailExists) {
+        // if the email already exists, we need to remove it from the attributes
+        contactAttributes = { ...rest };
+      }
+    }
+  }
 
   for (const [key, value] of Object.entries(contactAttributes)) {
     const contactAttributeKeyId = contactAttributeKeyMap.get(key);

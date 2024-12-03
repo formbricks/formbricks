@@ -316,7 +316,7 @@ export const initialize = async (
             configInput.apiHost,
             configInput.environmentId,
             configInput.userId,
-            { ...configInput.attributes, tmkc: "hall", userId: "bhenchod kya kar raha hai" }
+            configInput.attributes
           );
 
           if (res.ok !== true) {

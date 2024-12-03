@@ -7,8 +7,8 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { displayCache } from "@formbricks/lib/display/cache";
-import { productCache } from "@formbricks/lib/product/cache";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { projectCache } from "@formbricks/lib/project/cache";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { anySurveyHasFilters } from "@formbricks/lib/survey/utils";
@@ -29,7 +29,7 @@ export const getSyncSurveys = reactCache(
       async () => {
         validateInputs([environmentId, ZId]);
         try {
-          const product = await getProductByEnvironmentId(environmentId);
+          const product = await getProjectByEnvironmentId(environmentId);
 
           if (!product) {
             throw new Error("Product not found");
@@ -167,7 +167,7 @@ export const getSyncSurveys = reactCache(
           contactCache.tag.byId(contactId),
           displayCache.tag.byContactId(contactId),
           surveyCache.tag.byEnvironmentId(environmentId),
-          productCache.tag.byEnvironmentId(environmentId),
+          projectCache.tag.byEnvironmentId(environmentId),
           contactAttributeCache.tag.byContactId(contactId),
         ],
       }

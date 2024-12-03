@@ -155,7 +155,6 @@ const Page = async (props: LinkSurveyPageProps) => {
       <PinScreen
         surveyId={survey.id}
         project={project}
-        userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
@@ -177,7 +176,6 @@ const Page = async (props: LinkSurveyPageProps) => {
     <LinkSurvey
       survey={survey}
       project={project}
-      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}

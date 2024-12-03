@@ -103,12 +103,8 @@ async function runMigration(): Promise<void> {
         }
       }
 
-      const totalEnvironmentsCleaned =
-        Object.keys(deletionSummary).filter((envId) => deletionSummary[envId].length > 0).length ?? 0;
-
       // 4. Return summary of what was cleaned up
       const summary = {
-        totalEnvironmentsCleaned,
         totalDuplicateAttributesRemoved: Object.values(deletionSummary).reduce(
           (acc, env) => acc + env.reduce((sum, item) => sum + item.deletedAttributeIds.length, 0),
           0

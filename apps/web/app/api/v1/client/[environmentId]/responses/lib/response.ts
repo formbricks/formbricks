@@ -169,6 +169,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
             limits: {
+              projects: null,
               monthly: {
                 responses: responsesLimit,
                 miu: null,

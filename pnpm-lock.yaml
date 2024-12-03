@@ -151,7 +151,7 @@ importers:
         version: 8.12.1
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.41)
+        version: 10.4.20(postcss@8.4.49)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -501,7 +501,7 @@ importers:
         version: 3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.13(typescript@5.4.5))(zod@3.23.8)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.49)
+        version: 10.4.20(postcss@8.4.41)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
@@ -659,12 +659,18 @@ importers:
       '@types/markdown-it':
         specifier: 14.1.2
         version: 14.1.2
+      '@types/nodemailer':
+        specifier: 6.4.17
+        version: 6.4.17
       '@types/papaparse':
         specifier: 5.3.14
         version: 5.3.14
       '@types/qrcode':
         specifier: 1.5.5
         version: 1.5.5
+      nodemailer:
+        specifier: 6.9.16
+        version: 6.9.16
 
   packages/api:
     devDependencies:
@@ -909,7 +915,7 @@ importers:
         version: 5.0.7
       next-auth:
         specifier: 4.24.10
-        version: 4.24.10(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+        version: 4.24.10(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(nodemailer@6.9.16)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       posthog-node:
         specifier: 4.1.0
         version: 4.1.0
@@ -5685,6 +5691,9 @@ packages:
   '@types/node@22.3.0':
     resolution: {integrity: sha512-nrWpWVaDZuaVc5X84xJ0vNrLvomM205oQyLsRt7OHNZbSHslcWsvgFR7O7hire2ZonjLrWBbedmotmIlJDVd6g==}
 
+  '@types/nodemailer@6.4.17':
+    resolution: {integrity: sha512-I9CCaIp6DTldEg7vyUTZi8+9Vo0hi1/T8gv3C89yk1rSAAzoKQ8H8ki/jBYJSFoH/BisgLP8tkZMlQ91CIquww==}
+
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
 
@@ -10369,6 +10378,10 @@ packages:
   node-stream-zip@1.15.0:
     resolution: {integrity: sha512-LN4fydt9TqhZhThkZIVQnF9cwjU3qmUH9h78Mx/K7d3VvfRqqwthLwJEUOEL0QPZ0XQmNN7be5Ggit5+4dq3Bw==}
     engines: {node: '>=0.12.0'}
+
+  nodemailer@6.9.16:
+    resolution: {integrity: sha512-psAuZdTIRN08HKVd/E8ObdV6NO7NTBY3KsC30F7M4H1OnmLCUNaS56FpYxyb26zWLSyYF9Ozch9KYHhHegsiOQ==}
+    engines: {node: '>=6.0.0'}
 
   nopt@7.2.1:
     resolution: {integrity: sha512-taM24ViiimT/XntxbPyJQzCG+p4EKOpgD3mxFwW38mGjVUrfERQOeY4EDHjdnptttfHuHQXFx+lTP08Q+mLa/w==}
@@ -19717,6 +19730,10 @@ snapshots:
     dependencies:
       undici-types: 6.18.2
 
+  '@types/nodemailer@6.4.17':
+    dependencies:
+      '@types/node': 22.3.0
+
   '@types/normalize-package-data@2.4.4': {}
 
   '@types/papaparse@5.3.14':
@@ -25422,7 +25439,7 @@ snapshots:
 
   new-github-issue-url@0.2.1: {}
 
-  next-auth@4.24.10(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
+  next-auth@4.24.10(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(nodemailer@6.9.16)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
       '@babel/runtime': 7.26.0
       '@panva/hkdf': 1.2.1
@@ -25436,6 +25453,8 @@ snapshots:
       react: 19.0.0-rc-ed15d500-20241110
       react-dom: 19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110)
       uuid: 8.3.2
+    optionalDependencies:
+      nodemailer: 6.9.16
 
   next-intl@3.20.0(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110):
     dependencies:
@@ -25583,6 +25602,8 @@ snapshots:
       vm-browserify: 1.1.2
 
   node-stream-zip@1.15.0: {}
+
+  nodemailer@6.9.16: {}
 
   nopt@7.2.1:
     dependencies:

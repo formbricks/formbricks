@@ -68,7 +68,7 @@ export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
 export const ZWeeklySummaryEnvironmentData = z.object({
   id: z.string(),
   surveys: z.array(ZWeeklySummarySurveyData),
-  contactAttributeKeys: z.array(ZContactAttributeKey),
+  attributeKeys: z.array(ZContactAttributeKey),
 });
 
 export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;

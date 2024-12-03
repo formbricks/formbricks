@@ -4,7 +4,7 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -16,7 +16,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { CreateSegmentModal } from "./components/create-segment-modal";
 
 export const SegmentsPage = async ({
@@ -29,7 +29,7 @@ export const SegmentsPage = async ({
   const [session, environment, product, segments, contactAttributeKeys, organization] = await Promise.all([
     getServerSession(authOptions),
     getEnvironment(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
     getSegments(params.environmentId),
     getContactAttributeKeys(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
@@ -57,7 +57,7 @@ export const SegmentsPage = async ({
   );
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const productPermission = await getProjectPermissionByUserId(session.user.id, product.id);
   const { hasReadAccess } = getTeamPermissionFlags(productPermission);
 
   const isReadOnly = isMember && hasReadAccess;

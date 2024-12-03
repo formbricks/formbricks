@@ -86,6 +86,15 @@ export const getOrganizationIdFromContactId = async (contactId: string) => {
   return await getOrganizationIdFromEnvironmentId(contact.environmentId);
 };
 
+export const getProjectIdFromContactId = async (contactId: string) => {
+  const contact = await getContact(contactId);
+  if (!contact) {
+    throw new ResourceNotFoundError("contact", contactId);
+  }
+
+  return await getProjectIdFromEnvironmentId(contact.environmentId);
+};
+
 export const getOrganizationIdFromTagId = async (tagId: string) => {
   const tag = await getTag(tagId);
   if (!tag) {

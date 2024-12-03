@@ -5,8 +5,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromContactId,
   getOrganizationIdFromEnvironmentId,
-  getProductIdFromContactId,
-  getProductIdFromEnvironmentId,
+  getProjectIdFromContactId,
+  getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
@@ -35,9 +35,9 @@ export const getContactsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -53,7 +53,7 @@ export const deleteContactAction = authenticatedActionClient
   .schema(ZPersonDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
-    const productId = await getProductIdFromContactId(parsedInput.contactId);
+    const projectId = await getProjectIdFromContactId(parsedInput.contactId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -64,9 +64,9 @@ export const deleteContactAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId,
+          projectId,
         },
       ],
     });
@@ -93,8 +93,8 @@ export const createContactsFromCSVAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],
