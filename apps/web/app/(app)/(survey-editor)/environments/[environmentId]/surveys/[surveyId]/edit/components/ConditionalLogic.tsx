@@ -191,7 +191,8 @@ export function ConditionalLogic({
           name="logicJumps"
           size="sm"
           variant="secondary"
-          EndIcon={PlusIcon}
+          icon={PlusIcon}
+          iconPlacement="end"
           onClick={addLogic}>
           {t("environments.surveys.edit.add_logic")}
         </Button>

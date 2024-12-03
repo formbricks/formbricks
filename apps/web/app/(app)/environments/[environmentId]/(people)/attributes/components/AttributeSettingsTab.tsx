@@ -94,8 +94,8 @@ export const AttributeSettingsTab = async ({
                 className="ml-3"
                 variant="secondary"
                 onClick={handleArchiveToggle}
-                StartIcon={attributeClass.archived ? ArchiveIcon : ArchiveXIcon}
-                startIconClassName="h-4 w-4"
+                icon={attributeClass.archived ? ArchiveIcon : ArchiveXIcon}
+                iconPlacement="start"
                 disabled={isReadOnly}>
                 {attributeClass.archived ? (
                   <span>{t("common.unarchive")}</span>

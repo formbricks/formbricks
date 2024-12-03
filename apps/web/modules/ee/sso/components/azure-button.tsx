@@ -34,10 +34,9 @@ export const AzureButton = ({ inviteUrl, directRedirect = false, lastUsed }: Azu
 
   return (
     <Button
-      size="base"
       type="button"
-      EndIcon={MicrosoftIcon}
-      startIconClassName="ml-2"
+      icon={MicrosoftIcon}
+      iconPlacement="end"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">

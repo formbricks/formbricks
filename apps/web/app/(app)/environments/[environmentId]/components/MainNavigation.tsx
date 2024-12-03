@@ -271,7 +271,6 @@ export const MainNavigation = ({
               <Button
                 variant="minimal"
                 size="icon"
-                tooltipSide="right"
                 onClick={toggleSidebar}
                 className={cn(
                   "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"

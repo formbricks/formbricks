@@ -247,8 +247,8 @@ export const BasicSegmentSettings = ({
                   onClick={() => {
                     setIsDeleteSegmentModalOpen(true);
                   }}
-                  EndIcon={Trash2}
-                  endIconClassName="p-0.5">
+                  icon={Trash2}
+                  iconPlacement="end">
                   {t("common.delete")}
                 </Button>
                 <Button

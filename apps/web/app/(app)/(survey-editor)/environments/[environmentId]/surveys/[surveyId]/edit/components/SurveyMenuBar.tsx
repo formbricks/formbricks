@@ -319,7 +319,8 @@ export const SurveyMenuBar = ({
               size="sm"
               variant="secondary"
               className="h-full"
-              StartIcon={ArrowLeftIcon}
+              icon={ArrowLeftIcon}
+              iconPlacement="start"
               onClick={() => {
                 handleBack();
               }}>
@@ -391,7 +392,7 @@ export const SurveyMenuBar = ({
                 setAudiencePrompt(false);
                 setActiveId("settings");
               }}
-              EndIcon={SettingsIcon}>
+              icon={SettingsIcon}>
               {t("environments.surveys.edit.continue_to_settings")}
             </Button>
           )}

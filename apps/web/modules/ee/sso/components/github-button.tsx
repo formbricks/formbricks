@@ -25,10 +25,9 @@ export const GithubButton = ({ inviteUrl, lastUsed }: GithubButtonProps) => {
 
   return (
     <Button
-      size="base"
       type="button"
-      EndIcon={GithubIcon}
-      startIconClassName="ml-2"
+      icon={GithubIcon}
+      iconPlacement="end"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">

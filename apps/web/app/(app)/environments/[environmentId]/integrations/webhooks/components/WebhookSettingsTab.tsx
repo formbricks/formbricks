@@ -215,7 +215,8 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
                 type="button"
                 variant="warn"
                 onClick={() => setOpenDeleteDialog(true)}
-                StartIcon={TrashIcon}
+                icon={TrashIcon}
+                iconPlacement="start"
                 className="mr-3">
                 {t("common.delete")}
               </Button>

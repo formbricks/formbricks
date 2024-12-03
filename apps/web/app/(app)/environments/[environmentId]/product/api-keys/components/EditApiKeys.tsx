@@ -7,7 +7,6 @@ import { FilesIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
 import { TApiKey } from "@formbricks/types/api-keys";
 import { TUserLocale } from "@formbricks/types/user";
@@ -126,8 +125,7 @@ export const EditAPIKeys = ({
                       size="icon"
                       variant="minimal"
                       onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}
-                      StartIcon={TrashIcon}
-                      startIconClassName={cn("h-5 w-5 text-slate-700", isReadOnly && "opacity-50")}
+                      icon={TrashIcon}
                     />
                   </div>
                 )}

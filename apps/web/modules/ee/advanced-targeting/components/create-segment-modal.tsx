@@ -123,7 +123,8 @@ export function CreateSegmentModal({ environmentId, attributeClasses, segments }
   return (
     <>
       <Button
-        EndIcon={PlusIcon}
+        icon={PlusIcon}
+        iconPlacement="end"
         onClick={() => {
           setOpen(true);
         }}

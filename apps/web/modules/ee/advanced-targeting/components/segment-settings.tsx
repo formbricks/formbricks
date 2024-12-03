@@ -222,8 +222,8 @@ export function SegmentSettings({
             {!isReadOnly && (
               <>
                 <Button
-                  EndIcon={Trash2}
-                  endIconClassName="p-0.5"
+                  icon={Trash2}
+                  iconPlacement="end"
                   loading={isDeletingSegment}
                   onClick={() => {
                     setIsDeleteSegmentModalOpen(true);

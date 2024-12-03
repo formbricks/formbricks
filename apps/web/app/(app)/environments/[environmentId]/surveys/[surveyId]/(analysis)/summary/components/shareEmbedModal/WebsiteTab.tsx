@@ -57,7 +57,8 @@ const StaticTab = ({ surveyUrl }) => {
             navigator.clipboard.writeText(iframeCode);
             toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
           }}
-          EndIcon={CopyIcon}>
+          icon={CopyIcon}
+          iconPlacement="end">
           {t("common.copy_code")}
         </Button>
       </div>

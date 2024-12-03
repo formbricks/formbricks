@@ -55,7 +55,8 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       href="https://formbricks.com/docs/app-surveys/user-identification"
       variant="secondary"
       target="_blank"
-      EndIcon={CircleHelpIcon}>
+      icon={CircleHelpIcon}
+      iconPlacement="end">
       {t("environments.people.how_to_add_people")}
     </Button>
   );

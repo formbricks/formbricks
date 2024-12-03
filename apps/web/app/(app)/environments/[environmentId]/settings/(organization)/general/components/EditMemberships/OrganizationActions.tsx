@@ -78,7 +78,8 @@ export const OrganizationActions = ({
       <div className="mb-4 flex justify-end space-x-2 text-right">
         {role !== "owner" && isMultiOrgEnabled && (
           <Button
-            EndIcon={XIcon}
+            icon={XIcon}
+            iconPlacement="end"
             variant="secondary"
             size="sm"
             onClick={() => setLeaveOrganizationModalOpen(true)}>

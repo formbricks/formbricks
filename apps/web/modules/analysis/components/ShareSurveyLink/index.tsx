@@ -73,7 +73,6 @@ export const ShareSurveyLink = ({
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
-          size="base"
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
           onClick={() => {
@@ -85,11 +84,11 @@ export const ShareSurveyLink = ({
             }
             window.open(previewUrl, "_blank");
           }}
-          EndIcon={SquareArrowOutUpRight}>
+          icon={SquareArrowOutUpRight}
+          iconPlacement="end">
           {t("common.preview")}
         </Button>
         <Button
-          size="base"
           variant="secondary"
           title={t("environments.surveys.copy_survey_link_to_clipboard")}
           aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
@@ -97,7 +96,8 @@ export const ShareSurveyLink = ({
             navigator.clipboard.writeText(surveyUrl);
             toast.success(t("common.copied_to_clipboard"));
           }}
-          EndIcon={Copy}>
+          icon={Copy}
+          iconPlacement="end">
           {t("common.copy")}
         </Button>
         {survey.singleUse?.enabled && (

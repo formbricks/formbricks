@@ -216,7 +216,8 @@ export const ActionSettingsTab = ({
                   type="button"
                   variant="warn"
                   onClick={() => setOpenDeleteDialog(true)}
-                  StartIcon={TrashIcon}
+                  icon={TrashIcon}
+                  iconPlacement="start"
                   className="mr-3"
                   id="deleteActionModalTrigger">
                   {t("common.delete")}

@@ -59,7 +59,8 @@ const Page = async (props) => {
       href="https://formbricks.com/docs/app-surveys/user-identification#setting-custom-user-attributes"
       variant="secondary"
       target="_blank"
-      EndIcon={CircleHelpIcon}>
+      icon={CircleHelpIcon}
+      iconPlacement="end">
       {t("environments.attributes.how_to_add_attributes")}
     </Button>
   );

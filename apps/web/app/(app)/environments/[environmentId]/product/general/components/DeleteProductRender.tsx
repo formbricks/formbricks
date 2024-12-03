@@ -46,7 +46,7 @@ export const DeleteProductRender = ({
   return (
     <div>
       {!isDeleteDisabled && (
-        <div>
+        <div className="space-y-2">
           <p className="text-sm text-slate-900">
             {t(
               "environments.product.general.delete_product_name_includes_surveys_responses_people_and_more",
@@ -56,11 +56,7 @@ export const DeleteProductRender = ({
             )}{" "}
             <strong>{t("environments.product.general.this_action_cannot_be_undone")}</strong>
           </p>
-          <Button
-            disabled={isDeleteDisabled}
-            variant="warn"
-            className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
-            onClick={() => setIsDeleteDialogOpen(true)}>
+          <Button disabled={isDeleteDisabled} variant="warn" onClick={() => setIsDeleteDialogOpen(true)}>
             {t("common.delete")}
           </Button>
         </div>

@@ -48,7 +48,8 @@ export const EmbedView = ({
             variant="minimal"
             className="focus:ring-0"
             onClick={handleInitialPageButton}
-            StartIcon={ArrowLeftIcon}>
+            icon={ArrowLeftIcon}
+            iconPlacement="start">
             {t("common.back")}
           </Button>
         </div>
@@ -58,8 +59,8 @@ export const EmbedView = ({
           <div className={cn("col-span-1 hidden flex-col gap-3 border-r border-slate-200 p-4 lg:flex")}>
             {tabs.map((tab) => (
               <Button
-                StartIcon={tab.icon}
-                startIconClassName="h-4 w-4"
+                icon={tab.icon}
+                iconPlacement="start"
                 variant="minimal"
                 key={tab.id}
                 onClick={() => setActiveId(tab.id)}

@@ -151,7 +151,7 @@ importers:
         version: 8.12.1
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.41)
+        version: 10.4.20(postcss@8.4.47)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -501,7 +501,7 @@ importers:
         version: 3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@4.2.19))(svelte@4.2.19)(vue@3.5.11(typescript@5.4.5))(zod@3.23.8)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.47)
+        version: 10.4.20(postcss@8.4.41)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3

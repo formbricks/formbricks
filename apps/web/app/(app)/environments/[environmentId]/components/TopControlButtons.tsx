@@ -41,24 +41,22 @@ export const TopControlButtons = ({
         <Button
           variant="minimal"
           size="icon"
+          icon={MessageCircleQuestionIcon}
           tooltip={t("common.share_feedback")}
           className="h-fit w-fit bg-slate-50 p-1"
           onClick={() => {
             formbricks.track("Top Menu: Product Feedback");
-          }}>
-          <MessageCircleQuestionIcon className="h-5 w-5" strokeWidth={1.5} />
-        </Button>
+          }}></Button>
       )}
       <Button
         variant="minimal"
         size="icon"
         tooltip={t("common.account")}
+        icon={CircleUserIcon}
         className="h-fit w-fit bg-slate-50 p-1"
         onClick={() => {
           router.push(`/environments/${environment.id}/settings/profile`);
-        }}>
-        <CircleUserIcon strokeWidth={1.5} className="h-5 w-5" />
-      </Button>
+        }}></Button>
       {isBilling || isReadOnly ? (
         <></>
       ) : (
@@ -67,11 +65,10 @@ export const TopControlButtons = ({
           size="icon"
           tooltip={t("common.new_survey")}
           className="h-fit w-fit p-1"
+          icon={PlusIcon}
           onClick={() => {
             router.push(`/environments/${environment.id}/surveys/templates`);
-          }}>
-          <PlusIcon strokeWidth={1.5} className="h-5 w-5" />
-        </Button>
+          }}></Button>
       )}
     </div>
   );

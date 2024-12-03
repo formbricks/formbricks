@@ -87,7 +87,11 @@ const Page = async (props: SurveyTemplateProps) => {
   const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
-      <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
+      <Button
+        size="sm"
+        href={`/environments/${environment.id}/surveys/templates`}
+        icon={PlusIcon}
+        variant="primary">
         {t("environments.surveys.new_survey")}
       </Button>
     );

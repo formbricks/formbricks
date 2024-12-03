@@ -189,7 +189,8 @@ export const VerifyEmail = ({
               className="mt-6"
               size="sm"
               onClick={handleGoBackClick}
-              StartIcon={ArrowLeft}>
+              icon={ArrowLeft}
+              iconPlacement="start">
               {t("common.back")}
             </Button>
           </div>

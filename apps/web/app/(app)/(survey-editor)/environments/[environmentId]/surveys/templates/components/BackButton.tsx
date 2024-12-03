@@ -12,7 +12,8 @@ export const BackButton = () => {
     <Button
       variant="secondary"
       size="sm"
-      StartIcon={ArrowLeftIcon}
+      icon={ArrowLeftIcon}
+      iconPlacement="start"
       onClick={() => {
         router.back();
       }}>

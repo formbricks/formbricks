@@ -168,8 +168,8 @@ export const SurveyFilters = ({
               localStorage.removeItem("surveyFilters");
             }}
             className="h-8"
-            EndIcon={X}
-            endIconClassName="h-4 w-4">
+            icon={X}
+            iconPlacement="end">
             {t("common.clear_filters")}
           </Button>
         )}

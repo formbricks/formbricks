@@ -99,7 +99,8 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
             variant="minimal"
             onClick={() => setMembersCount((count) => count + 1)}
             type="button"
-            StartIcon={PlusIcon}>
+            icon={PlusIcon}
+            iconPlacement="start">
             {t("setup.invite.add_another_member")}
           </Button>
 

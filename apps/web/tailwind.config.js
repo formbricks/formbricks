@@ -41,19 +41,17 @@ module.exports = {
         error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
         borderColor: {
-          primary: "var(--formbricks-border-primary, #e0e0e0)",
+          primary: "#0f172a",
           secondary: "var(--formbricks-border-secondary, #0f172a)",
           disabled: "var(--formbricks-border-disabled, #ececec)",
         },
         labelColor: {
-          primary: "var(--formbricks-label-primary, #0f172a)",
-          secondary: "var(--formbricks-label-secondary, #384258)",
-          disabled: "var(--formbricks-label-disabled, #bdbdbd)",
+          primary: "#fefefe",
+          secondary: "#384258",
         },
         fill: {
-          primary: "var(--formbricks-fill-primary, #fefefe)",
-          secondary: "var(--formbricks-fill-secondary, #0f172a)",
-          disabled: "var(--formbricks-fill-disabled, #e0e0e0)",
+          primary: "#0f172a",
+          secondary: "#E2E8F0",
         },
       },
       keyframes: {

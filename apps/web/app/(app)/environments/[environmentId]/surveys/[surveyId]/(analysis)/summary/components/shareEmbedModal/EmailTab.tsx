@@ -62,7 +62,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               navigator.clipboard.writeText(emailHtml);
             }}
             className="shrink-0"
-            EndIcon={CopyIcon}>
+            icon={CopyIcon}
+            iconPlacement="end">
             {t("common.copy_code")}
           </Button>
         ) : (
@@ -72,7 +73,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               title="send preview email"
               aria-label="send preview email"
               onClick={() => sendPreviewEmail()}
-              EndIcon={MailIcon}
+              icon={MailIcon}
+              iconPlacement="end"
               className="shrink-0">
               {t("environments.surveys.summary.send_preview")}
             </Button>
@@ -84,7 +86,8 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
-          EndIcon={Code2Icon}
+          icon={Code2Icon}
+          iconPlacement="end"
           className="shrink-0">
           {showEmbed
             ? t("environments.surveys.summary.hide_embed_code")

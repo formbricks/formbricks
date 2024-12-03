@@ -118,7 +118,7 @@ export const BasicCreateSegmentModal = ({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)} icon={PlusIcon} iconPlacement="end">
         {t("common.create_segment")}
       </Button>
 

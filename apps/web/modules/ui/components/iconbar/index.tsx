@@ -29,7 +29,7 @@ export const IconBar = ({ actions }: IconBarProps) => {
               variant="minimal"
               className="border-none hover:bg-slate-50"
               size="icon"
-              StartIcon={action.icon}
+              icon={action.icon}
               tooltip={action.tooltip}
               onClick={action.onClick}
               aria-label={action.tooltip}

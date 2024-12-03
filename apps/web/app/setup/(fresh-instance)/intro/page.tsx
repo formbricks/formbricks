@@ -29,7 +29,7 @@ const Page = async () => {
           })}
         </p>
       </div>
-      <Button size="base" href="/setup/signup" className="mt-6">
+      <Button href="/setup/signup" className="mt-6">
         {t("setup.intro.get_started")}
       </Button>
 

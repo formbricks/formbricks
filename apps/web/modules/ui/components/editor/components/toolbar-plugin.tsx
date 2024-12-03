@@ -502,7 +502,8 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
               color="minimal"
               variant="minimal"
               type="button"
-              StartIcon={Bold}
+              icon={Bold}
+              iconPlacement="start"
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
               }}
@@ -514,7 +515,8 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
               color="minimal"
               variant="minimal"
               type="button"
-              StartIcon={Italic}
+              icon={Italic}
+              iconPlacement="start"
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
               }}
@@ -527,7 +529,8 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
                 color="minimal"
                 variant="minimal"
                 type="button"
-                StartIcon={Link}
+                icon={Link}
+                iconPlacement="start"
                 onClick={insertLink}
                 className={isLink ? "bg-subtle active-button" : "inactive-button"}
               />

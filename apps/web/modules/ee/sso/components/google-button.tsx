@@ -25,10 +25,9 @@ export const GoogleButton = ({ inviteUrl, lastUsed }: GoogleButtonProps) => {
 
   return (
     <Button
-      size="base"
       type="button"
-      EndIcon={GoogleIcon}
-      startIconClassName="ml-3"
+      icon={GoogleIcon}
+      iconPlacement="end"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">

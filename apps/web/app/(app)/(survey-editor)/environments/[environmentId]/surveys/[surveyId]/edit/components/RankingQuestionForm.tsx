@@ -226,7 +226,8 @@ export const RankingQuestionForm = ({
             <Button
               size="sm"
               variant="secondary"
-              EndIcon={PlusIcon}
+              icon={PlusIcon}
+              iconPlacement="end"
               type="button"
               disabled={question.choices?.length >= 25}
               onClick={() => addOption()}>

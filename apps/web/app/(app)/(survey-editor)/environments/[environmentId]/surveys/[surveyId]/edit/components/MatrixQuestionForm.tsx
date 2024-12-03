@@ -191,7 +191,8 @@ export const MatrixQuestionForm = ({
               variant="secondary"
               size="sm"
               className="mt-3"
-              StartIcon={PlusIcon}
+              icon={PlusIcon}
+              iconPlacement="start"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("row");
@@ -234,7 +235,8 @@ export const MatrixQuestionForm = ({
               variant="secondary"
               size="sm"
               className="mt-3"
-              StartIcon={PlusIcon}
+              icon={PlusIcon}
+              iconPlacement="start"
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("column");

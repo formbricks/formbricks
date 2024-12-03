@@ -22,7 +22,7 @@ export const AddActionModal = ({ environmentId, actionClasses, isReadOnly }: Add
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)} icon={PlusIcon} iconPlacement="end">
         {t("common.add_action")}
       </Button>
       <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>

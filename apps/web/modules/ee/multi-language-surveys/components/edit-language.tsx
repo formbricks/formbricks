@@ -162,7 +162,7 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === product.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary" StartIcon={PlusIcon}>
+      <Button onClick={onClick} size="sm" variant="secondary" icon={PlusIcon} iconPlacement="start">
         {t("environments.product.languages.add_language")}
       </Button>
     ) : null;
