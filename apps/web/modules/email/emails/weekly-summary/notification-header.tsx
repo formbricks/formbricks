@@ -3,7 +3,7 @@ import React from "react";
 import { translateEmailText } from "../../lib/utils";
 
 interface NotificationHeaderProps {
-  productName: string;
+  projectName: string;
   startDate: string;
   endDate: string;
   startYear: number;
@@ -12,7 +12,7 @@ interface NotificationHeaderProps {
 }
 
 export function NotificationHeader({
-  productName,
+  projectName,
   startDate,
   endDate,
   startYear,
@@ -42,7 +42,7 @@ export function NotificationHeader({
         </div>
         <div className="float-right">
           <Text className="m-0 text-right font-semibold">
-            {translateEmailText("notification_header_weekly_report_for", locale)} {productName}
+            {translateEmailText("notification_header_weekly_report_for", locale)} {projectName}
           </Text>
           {getNotificationHeaderimePeriod()}
         </div>

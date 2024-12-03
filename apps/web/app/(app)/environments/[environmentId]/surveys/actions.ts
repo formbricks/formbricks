@@ -6,12 +6,12 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromSurveyId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getEnvironment } from "@/lib/utils/services";
 import { z } from "zod";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { copySurveyToOtherEnvironment, deleteSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
 import { ZId } from "@formbricks/types/common";
@@ -34,9 +34,9 @@ export const getSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -72,9 +72,9 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: sourceEnvironment.productId,
+          projectId: sourceEnvironment.projectId,
         },
       ],
     });
@@ -88,9 +88,9 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: targetEnvironment.productId,
+          projectId: targetEnvironment.projectId,
         },
       ],
     });
@@ -103,12 +103,12 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
     );
   });
 
-const ZGetProductsByEnvironmentIdAction = z.object({
+const ZGetProjectsByEnvironmentIdAction = z.object({
   environmentId: ZId,
 });
 
-export const getProductsByEnvironmentIdAction = authenticatedActionClient
-  .schema(ZGetProductsByEnvironmentIdAction)
+export const getProjectsByEnvironmentIdAction = authenticatedActionClient
+  .schema(ZGetProjectsByEnvironmentIdAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
@@ -120,14 +120,14 @@ export const getProductsByEnvironmentIdAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
 
-    return await getUserProducts(ctx.user.id, organizationId);
+    return await getUserProjects(ctx.user.id, organizationId);
   });
 
 const ZDeleteSurveyAction = z.object({
@@ -146,8 +146,8 @@ export const deleteSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -173,8 +173,8 @@ export const generateSingleUseIdAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -204,9 +204,9 @@ export const getSurveysAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

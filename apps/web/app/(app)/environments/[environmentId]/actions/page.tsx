@@ -3,7 +3,7 @@ import { ActionClassDataRow } from "@/app/(app)/environments/[environmentId]/act
 import { ActionTableHeading } from "@/app/(app)/environments/[environmentId]/actions/components/ActionTableHeading";
 import { AddActionModal } from "@/app/(app)/environments/[environmentId]/actions/components/AddActionModal";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -16,7 +16,7 @@ import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const metadata: Metadata = {
@@ -27,10 +27,10 @@ const Page = async (props) => {
   const params = await props.params;
   const session = await getServerSession(authOptions);
   const t = await getTranslations();
-  const [actionClasses, organization, product] = await Promise.all([
+  const [actionClasses, organization, project] = await Promise.all([
     getActionClasses(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
   ]);
   const locale = await findMatchingLocale();
 
@@ -42,11 +42,11 @@ const Page = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
-  const environments = await getEnvironments(product.id);
+  const environments = await getEnvironments(project.id);
   const currentEnvironment = environments.find((env) => env.id === params.environmentId);
 
   if (!currentEnvironment) {
@@ -60,9 +60,9 @@ const Page = async (props) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session?.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, project.id);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);

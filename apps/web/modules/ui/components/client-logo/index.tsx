@@ -5,23 +5,23 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 
 interface ClientLogoProps {
   environmentId?: string;
-  product: TProduct;
+  project: TProject;
   previewSurvey?: boolean;
 }
 
-export const ClientLogo = ({ environmentId, product, previewSurvey = false }: ClientLogoProps) => {
+export const ClientLogo = ({ environmentId, project, previewSurvey = false }: ClientLogoProps) => {
   const t = useTranslations();
   return (
     <div
       className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
-      style={{ backgroundColor: product.logo?.bgColor }}>
+      style={{ backgroundColor: project.logo?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link
-          href={`/environments/${environmentId}/product/look`}
+          href={`/environments/${environmentId}/project/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
@@ -30,9 +30,9 @@ export const ClientLogo = ({ environmentId, product, previewSurvey = false }: Cl
           />
         </Link>
       )}
-      {product.logo?.url ? (
+      {project.logo?.url ? (
         <Image
-          src={product.logo?.url}
+          src={project.logo?.url}
           className={cn(
             previewSurvey ? "max-h-12" : "max-h-16 md:max-h-20",
             "w-auto max-w-40 rounded-lg object-contain p-1 md:max-w-56"
@@ -43,7 +43,7 @@ export const ClientLogo = ({ environmentId, product, previewSurvey = false }: Cl
         />
       ) : (
         <Link
-          href={`/environments/${environmentId}/product/look`}
+          href={`/environments/${environmentId}/project/look`}
           onClick={(e) => {
             if (!environmentId) {
               e.preventDefault();

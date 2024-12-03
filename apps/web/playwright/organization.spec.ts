@@ -159,17 +159,17 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(page.getByRole("cell", { name: "No members found" })).toBeHidden();
 
-    await expect(page.getByRole("button", { name: "Products" })).toBeVisible();
-    await page.getByRole("button", { name: "Products" }).click();
+    await expect(page.getByRole("button", { name: "Projects" })).toBeVisible();
+    await page.getByRole("button", { name: "Projects" }).click();
 
     await expect(
       page.getByRole("cell", {
-        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+        name: "You haven't added any projects yet. Assign a project to the team to grant access to its members.",
       })
     ).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Add Product" })).toBeVisible();
-    await page.getByRole("button", { name: "Add Product" }).click();
+    await expect(page.getByRole("button", { name: "Add Project" })).toBeVisible();
+    await page.getByRole("button", { name: "Add Project" }).click();
 
     await page.locator("#multi-select-dropdown").click();
     await page.locator(".option-1").click();
@@ -178,7 +178,7 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(
       page.getByRole("cell", {
-        name: "You haven't added any products yet. Assign a product to the team to grant access to its members.",
+        name: "You haven't added any projects yet. Assign a project to the team to grant access to its members.",
       })
     ).toBeHidden();
 
@@ -240,7 +240,7 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(
       page.getByRole("cell", {
-        name: "You don’t have any teams yet. Create your first team to manage product access for members of your organization.",
+        name: "You don’t have any teams yet. Create your first team to manage project access for members of your organization.",
       })
     ).toBeVisible();
   });

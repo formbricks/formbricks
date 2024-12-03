@@ -12,7 +12,7 @@ import { environmentCache } from "@formbricks/lib/environment/cache";
 import { integrationCache } from "@formbricks/lib/integration/cache";
 import { inviteCache } from "@formbricks/lib/invite/cache";
 import { personCache } from "@formbricks/lib/person/cache";
-import { productCache } from "@formbricks/lib/product/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { segmentCache } from "@formbricks/lib/segment/cache";
@@ -119,7 +119,7 @@ export const getAttributeClass = reactCache(
 );
 
 export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<{ productId: string } | null> =>
+  async (environmentId: string): Promise<{ projectId: string } | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -130,7 +130,7 @@ export const getEnvironment = reactCache(
               id: environmentId,
             },
             select: {
-              productId: true,
+              projectId: true,
             },
           });
           return environment;
@@ -210,13 +210,13 @@ export const getInvite = reactCache(
     )()
 );
 
-export const getLanguage = async (languageId: string): Promise<{ productId: string }> => {
+export const getLanguage = async (languageId: string): Promise<{ projectId: string }> => {
   try {
     validateInputs([languageId, ZId]);
 
     const language = await prisma.language.findFirst({
       where: { id: languageId },
-      select: { productId: true },
+      select: { projectId: true },
     });
 
     if (!language) {
@@ -261,20 +261,20 @@ export const getPerson = reactCache(
     )()
 );
 
-export const getProduct = reactCache(
-  async (productId: string): Promise<{ organizationId: string } | null> =>
+export const getProject = reactCache(
+  async (projectId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
-        let productPrisma;
+        let projectPrisma;
         try {
-          productPrisma = await prisma.product.findUnique({
+          projectPrisma = await prisma.project.findUnique({
             where: {
-              id: productId,
+              id: projectId,
             },
             select: { organizationId: true },
           });
 
-          return productPrisma;
+          return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
@@ -282,9 +282,9 @@ export const getProduct = reactCache(
           throw error;
         }
       },
-      [`utils-getProduct-${productId}`],
+      [`utils-getProject-${projectId}`],
       {
-        tags: [productCache.tag.byId(productId)],
+        tags: [projectCache.tag.byId(projectId)],
       }
     )()
 );
@@ -561,17 +561,17 @@ export const getDocument = reactCache(
     )()
 );
 
-export const isProductPartOfOrganization = async (
+export const isProjectPartOfOrganization = async (
   organizationId: string,
-  productId: string
+  projectId: string
 ): Promise<boolean> => {
   try {
-    const product = await getProduct(productId);
-    if (!product) {
-      throw new ResourceNotFoundError("Product", productId);
+    const project = await getProject(projectId);
+    if (!project) {
+      throw new ResourceNotFoundError("Project", projectId);
     }
 
-    return product.organizationId === organizationId;
+    return project.organizationId === organizationId;
   } catch (error) {
     throw error;
   }

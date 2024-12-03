@@ -9,7 +9,7 @@ import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
-const ProductOnboardingLayout = async (props) => {
+const ProjectOnboardingLayout = async (props) => {
   const params = await props.params;
 
   const { children } = props;
@@ -50,4 +50,4 @@ const ProductOnboardingLayout = async (props) => {
   );
 };
 
-export default ProductOnboardingLayout;
+export default ProjectOnboardingLayout;

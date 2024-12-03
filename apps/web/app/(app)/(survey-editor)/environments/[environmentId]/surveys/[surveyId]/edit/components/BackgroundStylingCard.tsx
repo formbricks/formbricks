@@ -9,7 +9,7 @@ import { CheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { SurveyBgSelectorTab } from "./SurveyBgSelectorTab";
 
@@ -21,7 +21,7 @@ interface BackgroundStylingCardProps {
   disabled?: boolean;
   environmentId: string;
   isUnsplashConfigured: boolean;
-  form: UseFormReturn<TProductStyling | TSurveyStyling>;
+  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 }
 
 export const BackgroundStylingCard = ({

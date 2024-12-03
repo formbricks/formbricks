@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
-import { TSurvey, TSurveyProductOverwrites } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
 import { Placement } from "./Placement";
 
 interface SurveyPlacementCardProps {
@@ -26,17 +26,17 @@ export const SurveyPlacementCard = ({
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
-  const { productOverwrites } = localSurvey ?? {};
-  const { placement, clickOutsideClose, darkOverlay } = productOverwrites ?? {};
+  const { projectOverwrites } = localSurvey ?? {};
+  const { placement, clickOutsideClose, darkOverlay } = projectOverwrites ?? {};
 
-  const setProductOverwrites = (productOverwrites: TSurveyProductOverwrites) => {
-    setLocalSurvey({ ...localSurvey, productOverwrites });
+  const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites) => {
+    setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
   };
 
   const togglePlacement = () => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
+    if (setProjectOverwrites) {
+      setProjectOverwrites({
+        ...projectOverwrites,
         placement: !!placement ? null : "bottomRight",
         clickOutsideClose: false,
         darkOverlay: false,
@@ -45,9 +45,9 @@ export const SurveyPlacementCard = ({
   };
 
   const handlePlacementChange = (placement: TPlacement) => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
+    if (setProjectOverwrites) {
+      setProjectOverwrites({
+        ...projectOverwrites,
         placement,
       });
     }
@@ -56,18 +56,18 @@ export const SurveyPlacementCard = ({
   const handleOverlay = (overlayType: string) => {
     const darkOverlay = overlayType === "dark";
 
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
+    if (setProjectOverwrites) {
+      setProjectOverwrites({
+        ...projectOverwrites,
         darkOverlay,
       });
     }
   };
 
   const handleClickOutsideClose = (clickOutsideClose: boolean) => {
-    if (setProductOverwrites) {
-      setProductOverwrites({
-        ...productOverwrites,
+    if (setProjectOverwrites) {
+      setProjectOverwrites({
+        ...projectOverwrites,
         clickOutsideClose,
       });
     }
@@ -141,7 +141,7 @@ export const SurveyPlacementCard = ({
             <div>
               <p className="text-xs text-slate-500">
                 {t("environments.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`/environments/${environmentId}/product/look`} target="_blank">
+                <Link href={`/environments/${environmentId}/project/look`} target="_blank">
                   <span className="underline">
                     {t("environments.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
                   </span>

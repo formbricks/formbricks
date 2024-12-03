@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
   DropdownMenu,
@@ -14,14 +15,13 @@ import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { cn } from "@formbricks/lib/cn";
 import {
   QUESTIONS_ICON_MAP,
   getCXQuestionNameMap,
   getQuestionDefaults,
   getQuestionNameMap,
 } from "@formbricks/lib/utils/questions";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -41,7 +41,7 @@ interface EditorCardMenuProps {
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
   addCard: (question: any, index?: number) => void;
   cardType: "question" | "ending";
-  product?: TProduct;
+  project?: TProject;
   isCxMode?: boolean;
   locale: string;
 }
@@ -53,7 +53,7 @@ export const EditorCardMenu = ({
   duplicateCard,
   deleteCard,
   moveCard,
-  product,
+  project,
   card,
   updateCard,
   addCard,
@@ -83,7 +83,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as TSurveyQuestion;
 
-    const questionDefaults = getQuestionDefaults(type, product, locale);
+    const questionDefaults = getQuestionDefaults(type, project, locale);
 
     if (
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
@@ -115,7 +115,7 @@ export const EditorCardMenu = ({
   };
 
   const addQuestionCardBelow = (type: TSurveyQuestionTypeEnum) => {
-    const questionDefaults = getQuestionDefaults(type, product, locale);
+    const questionDefaults = getQuestionDefaults(type, project, locale);
 
     addCard(
       {
@@ -141,52 +141,62 @@ export const EditorCardMenu = ({
   };
 
   return (
-    <div className="flex space-x-2">
-      <ArrowUpIcon
-        className={cn(
-          "h-4 cursor-pointer text-slate-500",
-          cardIdx === 0 ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
-        )}
+    <div className="flex">
+      <Button
+        variant="minimal"
+        size="icon"
+        StartIcon={ArrowUpIcon}
+        tooltip={t("common.move_up")}
+        disabled={cardIdx === 0}
         onClick={(e) => {
           if (cardIdx !== 0) {
             e.stopPropagation();
             moveCard(cardIdx, true);
           }
         }}
+        className="disabled:border-none"
       />
-      <ArrowDownIcon
-        className={cn(
-          "h-4 cursor-pointer text-slate-500",
-          lastCard ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
-        )}
+      <Button
+        variant="minimal"
+        size="icon"
+        StartIcon={ArrowDownIcon}
+        tooltip={t("common.move_down")}
+        disabled={lastCard}
         onClick={(e) => {
           if (!lastCard) {
             e.stopPropagation();
             moveCard(cardIdx, false);
           }
         }}
+        className="disabled:border-none"
       />
-      <CopyIcon
-        className="h-4 cursor-pointer text-slate-500 hover:text-slate-600"
+      <Button
+        variant="minimal"
+        size="icon"
+        StartIcon={CopyIcon}
+        tooltip={t("common.duplicate")}
         onClick={(e) => {
           e.stopPropagation();
           duplicateCard(cardIdx);
         }}
+        className="disabled:border-none"
       />
-      <TrashIcon
-        className={cn(
-          "h-4 cursor-pointer text-slate-500",
-          isDeleteDisabled ? "cursor-not-allowed opacity-50" : "hover:text-slate-600"
-        )}
+      <Button
+        variant="minimal"
+        size="icon"
+        StartIcon={TrashIcon}
+        tooltip={t("common.delete")}
+        disabled={isDeleteDisabled}
         onClick={(e) => {
           e.stopPropagation();
           if (isDeleteDisabled) return;
           deleteCard(cardIdx);
         }}
+        className="disabled:border-none"
       />
       <DropdownMenu>
-        <DropdownMenuTrigger>
-          <EllipsisIcon className="h-4 w-4 text-slate-500 hover:text-slate-600" />
+        <DropdownMenuTrigger className="h-10 w-10 rounded-lg border border-transparent p-2 hover:border-slate-200">
+          <EllipsisIcon className="mx-auto h-4 w-4 text-slate-700 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
