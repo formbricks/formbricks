@@ -18,6 +18,7 @@ export const updateAttribute = async (
     {
       changed: boolean;
       message: string;
+      details?: Record<string, string>;
     },
     NetworkError | ForbiddenError
   >
@@ -64,13 +65,23 @@ export const updateAttribute = async (
     });
   }
 
+  if (res.data.details) {
+    Object.entries(res.data.details).forEach(([key, value]) => {
+      logger.debug(`${key}: ${value}`);
+    });
+  }
+
   if (res.data.changed) {
     logger.debug("Attribute updated in Formbricks");
+
     return {
       ok: true,
       value: {
         changed: true,
         message: "Attribute updated in Formbricks",
+        ...(res.data.details && {
+          details: res.data.details,
+        }),
       },
     };
   }
@@ -80,6 +91,9 @@ export const updateAttribute = async (
     value: {
       changed: false,
       message: "Attribute not updated in Formbricks",
+      ...(res.data.details && {
+        details: res.data.details,
+      }),
     },
   };
 };
@@ -109,6 +123,12 @@ export const updateAttributes = async (
   const res = await api.client.attribute.update({ userId, attributes: updatedAttributes });
 
   if (res.ok) {
+    if (res.data.details) {
+      Object.entries(res.data.details).forEach(([key, value]) => {
+        logger.debug(`${key}: ${value}`);
+      });
+    }
+
     return ok(updatedAttributes);
   } else {
     // @ts-expect-error

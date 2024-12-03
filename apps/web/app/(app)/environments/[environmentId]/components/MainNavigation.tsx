@@ -65,7 +65,6 @@ interface NavigationProps {
   organization: TOrganization;
   products: TProduct[];
   isMultiOrgEnabled: boolean;
-  isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
 }
@@ -79,7 +78,6 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   membershipRole,
   isFormbricksCloud,
-  isContactsEnabled,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();

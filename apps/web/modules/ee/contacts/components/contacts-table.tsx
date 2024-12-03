@@ -119,8 +119,11 @@ export const ContactsTable = ({
           return acc;
         }, {}) as Record<string, true>;
 
+      const userIdVisibility = data.findIndex((contact) => contact.userId) !== -1;
+
       setColumnVisibility({
         ...initialVisibility,
+        userId: userIdVisibility,
         select: true,
         email: true,
         firstName: true,
@@ -131,6 +134,7 @@ export const ContactsTable = ({
     if (savedExpandedSettings !== null) {
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environmentId]);
 
   // Save settings to localStorage when they change

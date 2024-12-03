@@ -14,7 +14,12 @@ export class AttributeAPI {
 
   async update(
     attributeUpdateInput: Omit<TAttributeUpdateInput, "environmentId">
-  ): Promise<Result<{ changed: boolean; message: string }, NetworkError | Error | ForbiddenError>> {
+  ): Promise<
+    Result<
+      { changed: boolean; message: string; details?: Record<string, string> },
+      NetworkError | Error | ForbiddenError
+    >
+  > {
     // transform all attributes to string if attributes are present into a new attributes copy
     const attributes: Record<string, string> = {};
     for (const key in attributeUpdateInput.attributes) {

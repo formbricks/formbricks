@@ -217,8 +217,6 @@ export const createContactsFromCSV = async (
   duplicateContactsAction: "skip" | "update" | "overwrite",
   attributeMap: Record<string, string>
 ): Promise<TContact[]> => {
-  const startTime = Date.now();
-
   validateInputs(
     [csvData, ZContactCSVUploadResponse],
     [environmentId, ZId],

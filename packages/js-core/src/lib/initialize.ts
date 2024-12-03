@@ -234,29 +234,6 @@ export const initialize = async (
     config.resetConfig();
     logger.debug("Syncing.");
 
-    let updatedAttributes: TAttributes | null = null;
-    if (configInput.attributes) {
-      if (configInput.userId) {
-        const res = await updateAttributes(
-          configInput.apiHost,
-          configInput.environmentId,
-          configInput.userId,
-          configInput.attributes
-        );
-
-        if (res.ok !== true) {
-          if (res.error.code === "forbidden") {
-            logger.error(`Authorization error: ${res.error.responseMessage}`);
-          }
-          return err(res.error);
-        }
-
-        updatedAttributes = res.value;
-      } else {
-        updatedAttributes = { ...configInput.attributes };
-      }
-    }
-
     try {
       const environmentState = await fetchEnvironmentState(
         {
@@ -265,6 +242,7 @@ export const initialize = async (
         },
         false
       );
+
       const personState = configInput.userId
         ? await fetchPersonState(
             {
@@ -277,6 +255,29 @@ export const initialize = async (
         : DEFAULT_PERSON_STATE_NO_USER_ID;
 
       const filteredSurveys = filterSurveys(environmentState, personState);
+
+      let updatedAttributes: TAttributes | null = null;
+      if (configInput.attributes) {
+        if (configInput.userId) {
+          const res = await updateAttributes(
+            configInput.apiHost,
+            configInput.environmentId,
+            configInput.userId,
+            { ...configInput.attributes, tmkc: "hall", userId: "bhenchod kya kar raha hai" }
+          );
+
+          if (res.ok !== true) {
+            if (res.error.code === "forbidden") {
+              logger.error(`Authorization error: ${res.error.responseMessage}`);
+            }
+            return err(res.error);
+          }
+
+          updatedAttributes = res.value;
+        } else {
+          updatedAttributes = { ...configInput.attributes };
+        }
+      }
 
       config.update({
         apiHost: configInput.apiHost,

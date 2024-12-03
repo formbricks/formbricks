@@ -45,9 +45,11 @@ export const PUT = async (
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
-    const { userId: userIdAttr, ...updatedAttributes } = parsedInput.data.attributes;
+    const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = parsedInput.data.attributes;
 
-    let contact = await prisma.contact.findFirst({
+    // ignore userId and id
+
+    const contact = await prisma.contact.findFirst({
       where: {
         environmentId,
         attributes: { some: { attributeKey: { key: "userId", environmentId }, value: userId } },
@@ -56,32 +58,7 @@ export const PUT = async (
     });
 
     if (!contact) {
-      // return responses.notFoundResponse("PersonByUserId", userId, true);
-      // HOTFIX: create person if not found to work around caching issue
-      contact = await prisma.contact.create({
-        data: {
-          environmentId,
-          attributes: {
-            create: [
-              {
-                attributeKey: {
-                  connect: {
-                    key_environmentId: {
-                      key: "userId",
-                      environmentId,
-                    },
-                  },
-                },
-                value: userId,
-              },
-            ],
-          },
-        },
-        select: {
-          id: true,
-          attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
-        },
-      });
+      return responses.notFoundResponse("contact", userId, true);
     }
 
     const oldAttributes = contact.attributes.reduce(
@@ -112,10 +89,25 @@ export const PUT = async (
 
     await updateAttributes(contact.id, userId, environmentId, updatedAttributes);
 
+    // if userIdAttr or idAttr was in the payload, we need to inform the user that it was ignored
+    const details: Record<string, string> = {};
+    if (userIdAttr) {
+      details.userId = "updating userId is ignored as it is a reserved field and cannot be updated.";
+    }
+
+    if (idAttr) {
+      details.id = "updating id is ignored as it is a reserved field and cannot be updated.";
+    }
+
     return responses.successResponse(
       {
         changed: true,
         message: "The person was successfully updated.",
+        ...(Object.keys(details).length > 0
+          ? {
+              details,
+            }
+          : {}),
       },
       true
     );

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion -- Required for userId */
+ 
 
 /* eslint-disable no-constant-condition -- Required for the while loop */
 
@@ -136,7 +136,6 @@ async function runMigration(): Promise<void> {
       }
 
       const CONTACTS_BATCH_SIZE = 20000;
-      let skipContacts = 0;
       let processedContacts = 0;
 
       // delete userIds for these environments:
@@ -152,7 +151,6 @@ async function runMigration(): Promise<void> {
 
       while (true) {
         const contacts = await tx.contact.findMany({
-          skip: skipContacts,
           take: CONTACTS_BATCH_SIZE,
           select: {
             id: true,
@@ -160,7 +158,7 @@ async function runMigration(): Promise<void> {
             environmentId: true,
           },
           where: {
-            userId: { not: undefined },
+            userId: { not: null },
           },
         });
 
@@ -188,11 +186,23 @@ async function runMigration(): Promise<void> {
 
         // Insert contactAttributes in bulk
         await tx.contactAttribute.createMany({
-          data: contacts.map((contact) => ({
-            contactId: contact.id,
-            value: contact.userId!,
-            attributeKeyId: attributeMap.get(contact.environmentId)!,
-          })),
+          data: contacts.map((contact) => {
+            if (!contact.userId) {
+              throw new Error(`Contact with id ${contact.id} has no userId`);
+            }
+
+            const userIdAttributeKey = attributeMap.get(contact.environmentId);
+
+            if (!userIdAttributeKey) {
+              throw new Error(`Attribute key for userId not found for environment ${contact.environmentId}`);
+            }
+
+            return {
+              contactId: contact.id,
+              value: contact.userId,
+              attributeKeyId: userIdAttributeKey,
+            };
+          }),
         });
 
         await tx.contact.updateMany({
@@ -205,12 +215,15 @@ async function runMigration(): Promise<void> {
         });
 
         processedContacts += contacts.length;
-        skipContacts += contacts.length;
 
         if (processedContacts > 0) {
           console.log(`Processed ${processedContacts.toString()} contacts`);
         }
       }
+
+      const totalContactsAfterMigration = await tx.contact.count();
+
+      console.log("Total contacts after migration:", totalContactsAfterMigration);
 
       // total attributes with userId:
       const totalAttributes = await tx.contactAttribute.count({
@@ -222,6 +235,12 @@ async function runMigration(): Promise<void> {
       });
 
       console.log("Total attributes with userId now:", totalAttributes);
+
+      if (totalContactsAfterMigration !== totalAttributes) {
+        throw new Error(
+          "Data migration failed. Total contacts after migration does not match total attributes with userId"
+        );
+      }
     },
     {
       timeout: TRANSACTION_TIMEOUT,
