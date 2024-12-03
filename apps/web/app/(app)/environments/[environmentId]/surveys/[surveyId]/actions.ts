@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProductIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { z } from "zod";
@@ -33,9 +33,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -65,9 +65,9 @@ export const getSurveyFilterDataAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -114,8 +114,8 @@ export const updateSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.id),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.id),
           minPermission: "readWrite",
         },
       ],

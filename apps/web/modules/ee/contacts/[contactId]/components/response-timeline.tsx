@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
@@ -9,8 +9,8 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { ResponseFeed } from "./response-feed";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { ResponseFeed } from "./response-feed";
 
 interface ResponseTimelineProps {
   surveys: TSurvey[];
@@ -20,7 +20,7 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }
 
 export const ResponseTimeline = ({
@@ -31,7 +31,7 @@ export const ResponseTimeline = ({
   environmentTags,
   contactAttributeKeys,
   locale,
-  productPermission,
+  projectPermission,
 }: ResponseTimelineProps) => {
   const t = useTranslations();
   const [sortedResponses, setSortedResponses] = useState(responses);
@@ -65,7 +65,7 @@ export const ResponseTimeline = ({
         environmentTags={environmentTags}
         contactAttributeKeys={contactAttributeKeys}
         locale={locale}
-        productPermission={productPermission}
+        projectPermission={projectPermission}
       />
     </div>
   );

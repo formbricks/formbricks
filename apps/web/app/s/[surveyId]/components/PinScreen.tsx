@@ -9,13 +9,13 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface PinScreenProps {
   surveyId: string;
-  product: TProduct;
+  project: TProject;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -34,7 +34,7 @@ interface PinScreenProps {
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
-    product,
+    project,
     webAppUrl,
     emailVerificationStatus,
     singleUseId,
@@ -121,7 +121,7 @@ export const PinScreen = (props: PinScreenProps) => {
   return (
     <LinkSurvey
       survey={survey}
-      product={product}
+      project={project}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}

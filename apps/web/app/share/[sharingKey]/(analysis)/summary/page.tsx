@@ -6,7 +6,7 @@ import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 
@@ -23,18 +23,20 @@ const Page = async (props) => {
   if (!survey) {
     throw new Error(t("common.survey_not_found"));
   }
+
   const environmentId = survey.environmentId;
-  const [environment, product] = await Promise.all([
+
+  const [environment, project] = await Promise.all([
     getEnvironment(environmentId),
-    getProductByEnvironmentId(environmentId),
+    getProjectByEnvironmentId(environmentId),
   ]);
 
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);

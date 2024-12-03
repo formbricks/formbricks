@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 
 const tabs = [
   { id: "html", label: "HTML", icon: <Html5Icon /> },
@@ -18,7 +18,7 @@ const tabs = [
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
-  channel: TProductConfigChannel;
+  channel: TProjectConfigChannel;
   widgetSetupCompleted: boolean;
 }
 

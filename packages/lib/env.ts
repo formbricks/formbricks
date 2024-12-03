@@ -45,6 +45,7 @@ export const env = createEnv({
       .optional()
       .or(z.string().refine((str) => str === "")),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
+    INTERCOM_SECRET_KEY: z.string().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     MAIL_FROM: z.string().email().optional(),
     NEXTAUTH_SECRET: z.string().min(1),
@@ -114,6 +115,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+    NEXT_PUBLIC_INTERCOM_APP_ID: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -159,6 +161,7 @@ export const env = createEnv({
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
+    INTERCOM_SECRET_KEY: process.env.INTERCOM_SECRET_KEY,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
     MAIL_FROM: process.env.MAIL_FROM,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
@@ -169,6 +172,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
+    NEXT_PUBLIC_INTERCOM_APP_ID: process.env.NEXT_PUBLIC_INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,

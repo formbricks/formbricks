@@ -7,7 +7,7 @@ import {
   getContactAttributes,
 } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -17,7 +17,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { ResponseSection } from "./components/response-section";
 
@@ -26,20 +26,19 @@ export const SingleContactPage = async (props: {
 }) => {
   const params = await props.params;
   const t = await getTranslations();
-
   const [
     environment,
     environmentTags,
-    product,
+    project,
     session,
     organization,
     contact,
     contactAttributeKeys,
-    attributes,
+    contactAttributes,
   ] = await Promise.all([
     getEnvironment(params.environmentId),
     getTagsByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(params.environmentId),
     getContact(params.contactId),
@@ -47,8 +46,8 @@ export const SingleContactPage = async (props: {
     getContactAttributes(params.contactId),
   ]);
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!environment) {
@@ -70,8 +69,8 @@ export const SingleContactPage = async (props: {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 
@@ -87,7 +86,7 @@ export const SingleContactPage = async (props: {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={getContactIdentifier(attributes)} cta={getDeletePersonButton()} />
+      <PageHeader pageTitle={getContactIdentifier(contactAttributes)} cta={getDeletePersonButton()} />
       <section className="pb-24 pt-6">
         <div className="grid grid-cols-4 gap-x-8">
           <AttributesSection contactId={params.contactId} />

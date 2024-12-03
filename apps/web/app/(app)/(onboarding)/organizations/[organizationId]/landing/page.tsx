@@ -39,8 +39,8 @@ const Page = async (props) => {
       <div className="flex-1">
         <div className="flex h-full flex-col items-center justify-center space-y-12">
           <Header
-            title={t("organizations.landing.no_products_warning_title")}
-            subtitle={t("organizations.landing.no_products_warning_subtitle")}
+            title={t("organizations.landing.no_projects_warning_title")}
+            subtitle={t("organizations.landing.no_projects_warning_subtitle")}
           />
         </div>
       </div>

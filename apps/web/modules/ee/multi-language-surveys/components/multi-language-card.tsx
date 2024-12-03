@@ -15,7 +15,7 @@ import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
@@ -23,7 +23,7 @@ import { SecondaryLanguageSelect } from "./secondary-language-select";
 
 interface MultiLanguageCardProps {
   localSurvey: TSurvey;
-  product: TProduct;
+  project: TProject;
   setLocalSurvey: (survey: TSurvey) => void;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
@@ -44,7 +44,7 @@ export interface ConfirmationModalProps {
 
 export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   activeQuestionId,
-  product,
+  project,
   localSurvey,
   setActiveQuestionId,
   setLocalSurvey,
@@ -120,7 +120,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   };
 
   const handleDefaultLanguageChange = (languageCode: string) => {
-    const language = product.languages.find((lang) => lang.code === languageCode);
+    const language = project.languages.find((lang) => lang.code === languageCode);
     if (language) {
       let languageExists = false;
 
@@ -213,7 +213,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
 
               <Switch
                 checked={isMultiLanguageActivated}
-                disabled={!isMultiLanguageAllowed || product.languages.length === 0}
+                disabled={!isMultiLanguageAllowed || project.languages.length === 0}
                 id="multi-lang-toggle"
                 onClick={() => {
                   handleActivationSwitchLogic();
@@ -238,16 +238,16 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
               />
             ) : (
               <>
-                {product.languages.length <= 1 && (
+                {project.languages.length <= 1 && (
                   <div className="mb-4 text-sm italic text-slate-500">
-                    {product.languages.length === 0
+                    {project.languages.length === 0
                       ? t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")
                       : t(
-                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_product_to_work_with_translations"
+                          "environments.surveys.edit.you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations"
                         )}
                   </div>
                 )}
-                {product.languages.length > 1 && (
+                {project.languages.length > 1 && (
                   <div className="my-4 space-y-4">
                     <div>
                       {isMultiLanguageAllowed && !isMultiLanguageActivated ? (
@@ -262,7 +262,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                         <DefaultLanguageSelect
                           defaultLanguage={defaultLanguage}
                           handleDefaultLanguageChange={handleDefaultLanguageChange}
-                          product={product}
+                          project={project}
                           setConfirmationModalInfo={setConfirmationModalInfo}
                           locale={locale}
                         />
@@ -270,7 +270,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                           <SecondaryLanguageSelect
                             defaultLanguage={defaultLanguage}
                             localSurvey={localSurvey}
-                            product={product}
+                            project={project}
                             setActiveQuestionId={setActiveQuestionId}
                             setSelectedLanguageCode={setSelectedLanguageCode}
                             updateSurveyLanguages={updateSurveyLanguages}
@@ -282,7 +282,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                   </div>
                 )}
 
-                <Link href={`/environments/${environmentId}/product/languages`} target="_blank">
+                <Link href={`/environments/${environmentId}/project/languages`} target="_blank">
                   <Button className="mt-2" size="sm" variant="secondary">
                     {t("environments.surveys.edit.manage_languages")}{" "}
                     <ArrowUpRight className="ml-2 h-4 w-4" />

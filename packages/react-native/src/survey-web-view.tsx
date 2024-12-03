@@ -35,11 +35,11 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const [isSurveyRunning, setIsSurveyRunning] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
 
-  const product = appConfig.get().state.product;
+  const project = appConfig.get().state.project;
   const attributes = appConfig.get().state.attributes;
 
-  const styling = getStyling(product, survey);
-  const isBrandingEnabled = product.inAppSurveyBranding;
+  const styling = getStyling(project, survey);
+  const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
 
   const [surveyState, setSurveyState] = useState(

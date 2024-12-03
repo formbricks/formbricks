@@ -18,7 +18,7 @@ import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface VerifyEmailProps {
@@ -26,8 +26,8 @@ interface VerifyEmailProps {
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
-  styling: TProductStyling;
   contactAttributeKeys: TContactAttributeKey[];
+  styling: TProjectStyling;
   locale: string;
 }
 

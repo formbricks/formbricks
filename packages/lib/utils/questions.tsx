@@ -374,9 +374,9 @@ export const universalQuestionPresets = {
   required: true,
 };
 
-export const getQuestionDefaults = (id: string, product: any, locale: string) => {
+export const getQuestionDefaults = (id: string, project: any, locale: string) => {
   const questionType = getQuestionTypes(locale).find((questionType) => questionType.id === id);
-  return replaceQuestionPresetPlaceholders(questionType?.preset, product);
+  return replaceQuestionPresetPlaceholders(questionType?.preset, project);
 };
 
 export const getTSurveyQuestionTypeEnumName = (id: string, locale: string) => {

@@ -3,7 +3,7 @@ import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyCreateInput,
@@ -56,11 +56,11 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
   },
 ];
 
-export const mockProduct: TProduct = {
+export const mockProject: TProject = {
   id: mockId,
   createdAt: currentDate,
   updatedAt: currentDate,
-  name: "mock Product",
+  name: "mock Project",
   organizationId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
@@ -93,7 +93,7 @@ export const mockEnvironment: TEnvironment = {
   createdAt: currentDate,
   updatedAt: currentDate,
   type: "production",
-  productId: mockId,
+  projectId: mockId,
   appSetupCompleted: false,
 };
 
@@ -202,14 +202,16 @@ export const mockOrganizationOutput: TOrganization = {
   name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
+  isAIEnabled: false,
   billing: {
     stripeCustomerId: null,
     plan: "free",
     period: "monthly",
     limits: {
+      projects: 3,
       monthly: {
-        responses: 500,
-        miu: 1000,
+        responses: 1500,
+        miu: 2000,
       },
     },
     periodStart: currentDate,
@@ -221,7 +223,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -240,7 +242,7 @@ export const mockSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -267,7 +269,7 @@ export const updateSurveyInput: TSurvey = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   styling: null,
   singleUse: null,
   displayPercentage: null,

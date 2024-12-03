@@ -25,7 +25,7 @@ import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TConditionGroup,
   TSingleCondition,
@@ -53,7 +53,7 @@ interface QuestionsViewProps {
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
-  product: TProduct;
+  project: TProject;
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -71,7 +71,7 @@ export const QuestionsView = ({
   setActiveQuestionId,
   localSurvey,
   setLocalSurvey,
-  product,
+  project,
   invalidQuestions,
   setInvalidQuestions,
   setSelectedLanguageCode,
@@ -447,7 +447,7 @@ export const QuestionsView = ({
         collisionDetection={closestCorners}>
         <QuestionsDroppable
           localSurvey={localSurvey}
-          product={product}
+          project={project}
           moveQuestion={moveQuestion}
           updateQuestion={updateQuestion}
           duplicateQuestion={duplicateQuestion}
@@ -466,7 +466,7 @@ export const QuestionsView = ({
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} product={product} isCxMode={isCxMode} locale={locale} />
+      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} locale={locale} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
@@ -523,7 +523,7 @@ export const QuestionsView = ({
 
             <MultiLanguageCard
               localSurvey={localSurvey}
-              product={product}
+              project={project}
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}

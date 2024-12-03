@@ -13,16 +13,16 @@ import {
   getQuestionTypes,
   universalQuestionPresets,
 } from "@formbricks/lib/utils/questions";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
-  product: TProduct;
+  project: TProject;
   isCxMode: boolean;
   locale: string;
 }
 
-export const AddQuestionButton = ({ addQuestion, product, isCxMode, locale }: AddQuestionButtonProps) => {
+export const AddQuestionButton = ({ addQuestion, project, isCxMode, locale }: AddQuestionButtonProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
@@ -60,7 +60,7 @@ export const AddQuestionButton = ({ addQuestion, product, isCxMode, locale }: Ad
             onClick={() => {
               addQuestion({
                 ...universalQuestionPresets,
-                ...getQuestionDefaults(questionType.id, product, locale),
+                ...getQuestionDefaults(questionType.id, project, locale),
                 id: createId(),
                 type: questionType.id,
               });

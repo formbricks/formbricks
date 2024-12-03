@@ -1,22 +1,22 @@
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-export const getStyling = (product: TProduct, survey: TSurvey) => {
-  // allow style overwrite is disabled from the product
-  if (!product.styling.allowStyleOverwrite) {
-    return product.styling;
+export const getStyling = (project: TProject, survey: TSurvey) => {
+  // allow style overwrite is disabled from the project
+  if (!project.styling.allowStyleOverwrite) {
+    return project.styling;
   }
 
-  // allow style overwrite is enabled from the product
-  if (product.styling.allowStyleOverwrite) {
+  // allow style overwrite is enabled from the project
+  if (project.styling.allowStyleOverwrite) {
     // survey style overwrite is disabled
     if (!survey.styling?.overwriteThemeStyling) {
-      return product.styling;
+      return project.styling;
     }
 
     // survey style overwrite is enabled
     return survey.styling;
   }
 
-  return product.styling;
+  return project.styling;
 };

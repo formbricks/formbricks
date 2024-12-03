@@ -117,7 +117,7 @@ export const POST = async (request: Request) => {
         memberships: {
           some: {
             organization: {
-              products: {
+              projects: {
                 some: {
                   environments: {
                     some: { id: environmentId },
@@ -141,9 +141,9 @@ export const POST = async (request: Request) => {
             teamUsers: {
               some: {
                 team: {
-                  productTeams: {
+                  projectTeams: {
                     some: {
-                      product: {
+                      project: {
                         environments: {
                           some: {
                             id: environmentId,

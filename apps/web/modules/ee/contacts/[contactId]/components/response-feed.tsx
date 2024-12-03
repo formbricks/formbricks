@@ -1,7 +1,7 @@
 "use client";
 
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useEffect, useState } from "react";
@@ -23,7 +23,7 @@ interface ResponseTimelineProps {
   environmentTags: TTag[];
   contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }
 
 export const ResponseFeed = ({
@@ -34,7 +34,7 @@ export const ResponseFeed = ({
   environmentTags,
   contactAttributeKeys,
   locale,
-  productPermission,
+  projectPermission,
 }: ResponseTimelineProps) => {
   const [fetchedResponses, setFetchedResponses] = useState(responses);
 
@@ -69,7 +69,7 @@ export const ResponseFeed = ({
             updateResponse={updateResponse}
             contactAttributeKeys={contactAttributeKeys}
             locale={locale}
-            productPermission={productPermission}
+            projectPermission={projectPermission}
           />
         ))
       )}
@@ -87,7 +87,7 @@ const ResponseSurveyCard = ({
   updateResponse,
   contactAttributeKeys,
   locale,
-  productPermission,
+  projectPermission,
 }: {
   response: TResponse;
   surveys: TSurvey[];
@@ -98,7 +98,7 @@ const ResponseSurveyCard = ({
   updateResponse: (responseId: string, response: TResponse) => void;
   contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }) => {
   const survey = surveys.find((survey) => {
     return survey.id === response.surveyId;
@@ -107,7 +107,7 @@ const ResponseSurveyCard = ({
   const { membershipRole } = useMembershipRole(survey?.environmentId || "", user.id);
   const { isMember } = getAccessFlags(membershipRole);
 
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

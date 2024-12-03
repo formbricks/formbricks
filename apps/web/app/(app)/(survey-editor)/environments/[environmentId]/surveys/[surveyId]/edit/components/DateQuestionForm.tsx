@@ -70,7 +70,7 @@ export const DateQuestionForm = ({
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
@@ -93,7 +93,7 @@ export const DateQuestionForm = ({
           <Button
             size="sm"
             className="mt-3"
-            variant="minimal"
+            variant="secondary"
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {

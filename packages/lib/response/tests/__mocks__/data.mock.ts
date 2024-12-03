@@ -503,7 +503,7 @@ export const mockSurvey: TSurvey = {
   displayPercentage: null,
   autoComplete: null,
   isVerifyEmailEnabled: false,
-  productOverwrites: null,
+  projectOverwrites: null,
   styling: null,
   surveyClosedMessage: null,
   singleUse: {

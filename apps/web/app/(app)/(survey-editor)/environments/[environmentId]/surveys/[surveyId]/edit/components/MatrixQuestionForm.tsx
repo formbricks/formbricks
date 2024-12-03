@@ -143,7 +143,7 @@ export const MatrixQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-3"
             type="button"
             onClick={() => {
@@ -160,11 +160,13 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Rows section */}
           <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
-          <div ref={parent}>
+          <div className="mt-2 flex flex-col gap-2" ref={parent}>
             {question.rows.map((_, index) => (
-              <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "row")}>
+              <div
+                className="flex items-center"
+                onKeyDown={(e) => handleKeyDown(e, "row")}
+                key={`row-${index}-${question.rows.length}`}>
                 <QuestionFormInput
-                  key={`row-${index}-${question.rows.length}`}
                   id={`row-${index}`}
                   label={""}
                   localSurvey={localSurvey}
@@ -180,9 +182,16 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.rows.length > 2 && (
-                  <TrashIcon
-                    className="ml-2 mt-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                    onClick={() => handleDeleteLabel("row", index)}
+                  <Button
+                    variant="minimal"
+                    size="icon"
+                    className="ml-2"
+                    StartIcon={TrashIcon}
+                    tooltip={t("common.delete")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteLabel("row", index);
+                    }}
                   />
                 )}
               </div>
@@ -190,7 +199,7 @@ export const MatrixQuestionForm = ({
             <Button
               variant="secondary"
               size="sm"
-              className="mt-3"
+              className="w-fit"
               StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();
@@ -203,11 +212,13 @@ export const MatrixQuestionForm = ({
         <div>
           {/* Columns section */}
           <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
-          <div ref={parent}>
+          <div className="mt-2 flex flex-col gap-2" ref={parent}>
             {question.columns.map((_, index) => (
-              <div className="flex items-center" onKeyDown={(e) => handleKeyDown(e, "column")}>
+              <div
+                className="flex items-center"
+                onKeyDown={(e) => handleKeyDown(e, "column")}
+                key={`column-${index}-${question.columns.length}`}>
                 <QuestionFormInput
-                  key={`column-${index}-${question.columns.length}`}
                   id={`column-${index}`}
                   label={""}
                   localSurvey={localSurvey}
@@ -223,9 +234,16 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.columns.length > 2 && (
-                  <TrashIcon
-                    className="ml-2 mt-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                    onClick={() => handleDeleteLabel("column", index)}
+                  <Button
+                    variant="minimal"
+                    size="icon"
+                    className="ml-2"
+                    StartIcon={TrashIcon}
+                    tooltip={t("common.delete")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleDeleteLabel("column", index);
+                    }}
                   />
                 )}
               </div>
@@ -233,7 +251,7 @@ export const MatrixQuestionForm = ({
             <Button
               variant="secondary"
               size="sm"
-              className="mt-3"
+              className="w-fit"
               StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();

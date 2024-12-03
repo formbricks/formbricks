@@ -1,5 +1,5 @@
 /* eslint-disable -- leacy support workaround for now to avoid rewrite after eslint rules have been changed */
-import { type TLanguage } from "@formbricks/types/product";
+import { type TLanguage } from "@formbricks/types/project";
 import {
   type TI18nString,
   type TSurveyCTAQuestion,

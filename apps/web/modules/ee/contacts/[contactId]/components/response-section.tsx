@@ -1,8 +1,8 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -33,26 +33,26 @@ export const ResponseSection = async ({
 
   const t = await getTranslations();
   if (!session) {
-    throw new Error(t("common.no_session_found"));
+    throw new Error(t("common.session_not_found"));
   }
 
   const user = await getUser(session.user.id);
 
   if (!user) {
-    throw new Error(t("common.no_user_found"));
+    throw new Error(t("common.user_not_found"));
   }
 
   if (!responses) {
     throw new Error(t("environments.contacts.no_responses_found"));
   }
 
-  const product = await getProductByEnvironmentId(environment.id);
+  const project = await getProjectByEnvironmentId(environment.id);
 
-  if (!product) {
-    throw new Error(t("common.no_product_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
   const locale = await findMatchingLocale();
 
@@ -65,7 +65,7 @@ export const ResponseSection = async ({
       environmentTags={environmentTags}
       contactAttributeKeys={contactAttributeKeys}
       locale={locale}
-      productPermission={productPermission}
+      projectPermission={projectPermission}
     />
   );
 };

@@ -1,14 +1,14 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
-  product: TProduct;
+  project: TProject;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;
@@ -33,7 +33,7 @@ export const QuestionsDroppable = ({
   invalidQuestions,
   localSurvey,
   moveQuestion,
-  product,
+  project,
   selectedLanguageCode,
   setActiveQuestionId,
   setSelectedLanguageCode,
@@ -54,7 +54,7 @@ export const QuestionsDroppable = ({
           <QuestionCard
             key={internalQuestionIdMap[question.id]}
             localSurvey={localSurvey}
-            product={product}
+            project={project}
             question={question}
             questionIdx={questionIdx}
             moveQuestion={moveQuestion}
