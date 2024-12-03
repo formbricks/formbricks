@@ -16,6 +16,7 @@ export const GET = async (
   props: { params: Promise<{ environmentId: string; userId: string }> }
 ): Promise<Response> => {
   const params = await props.params;
+
   try {
     const { environmentId, userId } = params;
 
