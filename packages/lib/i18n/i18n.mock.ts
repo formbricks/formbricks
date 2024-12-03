@@ -1,4 +1,3 @@
-import { mockSegment } from "segment/tests/__mocks__/segment.mock";
 import { mockSurveyLanguages } from "survey/tests/__mock__/survey.mock";
 import {
   TSurvey,
@@ -314,7 +313,7 @@ export const mockSurvey: TSurvey = {
   resultShareKey: null,
   triggers: [],
   languages: mockSurveyLanguages,
-  segment: mockSegment,
+  segment: null,
   showLanguageSwitch: null,
 } as unknown as TSurvey;
 

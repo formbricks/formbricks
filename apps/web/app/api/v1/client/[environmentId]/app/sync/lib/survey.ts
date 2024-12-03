@@ -45,9 +45,6 @@ export const getSyncSurveys = reactCache(
             return [];
           }
 
-          // const displays = await getDisplaysByPersonId(contact.id);
-          // const responses = await getResponsesByPersonId(contact.id);
-
           const displays = await prisma.display.findMany({
             where: {
               contactId,
