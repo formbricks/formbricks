@@ -52,6 +52,22 @@ async function runMigration(): Promise<void> {
       await Promise.all(updateOrganizationPromises);
 
       console.log(`Updated ${updateOrganizationPromises.length.toString()} organizations`);
+
+      const updatedemptyConfigProjects = await transactionPrisma.project.updateMany({
+        where: {
+          config: {
+            equals: {},
+          },
+        },
+        data: {
+          config: {
+            channel: null,
+            industry: null,
+          },
+        },
+      });
+
+      console.log(`Updated ${updatedemptyConfigProjects.count.toString()} projects with empty config`);
     },
     {
       timeout: TRANSACTION_TIMEOUT,
