@@ -39,7 +39,7 @@ export const updateAttributes = async (
   userId: string,
   environmentId: string,
   contactAttributesParam: TContactAttributes
-): Promise<boolean> => {
+): Promise<{ success: boolean; details?: Record<string, string> }> => {
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
@@ -55,6 +55,7 @@ export const updateAttributes = async (
   const newAttributes: { key: string; value: string }[] = [];
 
   let contactAttributes = { ...contactAttributesParam };
+  let emailExists = false;
 
   const emailContactAttributeKey = await prisma.contactAttributeKey.findFirst({
     where: { key: "email", environmentId },
@@ -74,7 +75,7 @@ export const updateAttributes = async (
     const { email, ...rest } = contactAttributesParam;
 
     if (email) {
-      const emailExists = emailContactAttributes.some((attr) => attr.value === email);
+      emailExists = emailContactAttributes.some((attr) => attr.value === email);
 
       if (emailExists) {
         // if the email already exists, we need to remove it from the attributes
@@ -129,7 +130,16 @@ export const updateAttributes = async (
 
   if (newAttributes.length === 0) {
     // short-circuit if no new attributes to create
-    return true;
+    return {
+      success: true,
+      ...(emailExists
+        ? {
+            details: {
+              email: "The email already exists for this environment and was not updated.",
+            },
+          }
+        : {}),
+    };
   }
 
   // Check if new attribute classes will exceed the limit
@@ -179,5 +189,14 @@ export const updateAttributes = async (
     environmentId,
   });
 
-  return true;
+  return {
+    success: true,
+    ...(emailExists
+      ? {
+          details: {
+            email: "The email already exists for this environment and was not updated.",
+          },
+        }
+      : {}),
+  };
 };

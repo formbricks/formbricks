@@ -87,7 +87,12 @@ export const PUT = async (
       );
     }
 
-    await updateAttributes(contact.id, userId, environmentId, updatedAttributes);
+    const { details: updateAttrDetails } = await updateAttributes(
+      contact.id,
+      userId,
+      environmentId,
+      updatedAttributes
+    );
 
     // if userIdAttr or idAttr was in the payload, we need to inform the user that it was ignored
     const details: Record<string, string> = {};
@@ -97,6 +102,12 @@ export const PUT = async (
 
     if (idAttr) {
       details.id = "updating id is ignored as it is a reserved field and cannot be updated.";
+    }
+
+    if (updateAttrDetails && Object.keys(updateAttrDetails).length > 0) {
+      Object.entries(updateAttrDetails).forEach(([key, value]) => {
+        details[key] = value;
+      });
     }
 
     return responses.successResponse(

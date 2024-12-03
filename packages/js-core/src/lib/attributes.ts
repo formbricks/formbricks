@@ -67,7 +67,7 @@ export const updateAttribute = async (
 
   if (res.data.details) {
     Object.entries(res.data.details).forEach(([key, value]) => {
-      logger.debug(`${key}: ${value}`);
+      logger.error(`${key}: ${value}`);
     });
   }
 
