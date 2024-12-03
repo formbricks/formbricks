@@ -7,9 +7,9 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromResponseId,
-  getProductIdFromResponseNoteId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromResponseId,
+  getProjectIdFromResponseNoteId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { z } from "zod";
@@ -40,8 +40,8 @@ export const createTagAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
           minPermission: "readWrite",
         },
       ],
@@ -78,8 +78,8 @@ export const createTagToResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
           minPermission: "readWrite",
         },
       ],
@@ -116,8 +116,8 @@ export const deleteTagOnResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromEnvironmentId(responseEnvironmentId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
           minPermission: "readWrite",
         },
       ],
@@ -142,8 +142,8 @@ export const deleteResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromResponseId(parsedInput.responseId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
       ],
@@ -169,8 +169,8 @@ export const updateResponseNoteAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseNoteId(parsedInput.responseNoteId),
           minPermission: "readWrite",
         },
       ],
@@ -195,8 +195,8 @@ export const resolveResponseNoteAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromResponseNoteId(parsedInput.responseNoteId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseNoteId(parsedInput.responseNoteId),
           minPermission: "readWrite",
         },
       ],
@@ -222,8 +222,8 @@ export const createResponseNoteAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromResponseId(parsedInput.responseId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
           minPermission: "readWrite",
         },
       ],
@@ -248,9 +248,9 @@ export const getResponseAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromResponseId(parsedInput.responseId),
+          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
         },
       ],
     });

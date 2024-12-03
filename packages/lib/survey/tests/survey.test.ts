@@ -25,7 +25,7 @@ import {
   mockId,
   mockOrganizationOutput,
   mockPrismaPerson,
-  mockProduct,
+  mockProject,
   mockSurveyOutput,
   mockSurveyWithLogic,
   mockSyncSurveyOutput,
@@ -405,7 +405,7 @@ describe("Tests for duplicateSurvey", () => {
       // @ts-expect-error
       prisma.environment.findUnique.mockResolvedValueOnce(mockEnvironment);
       // @ts-expect-error
-      prisma.product.findFirst.mockResolvedValueOnce(mockProduct);
+      prisma.project.findFirst.mockResolvedValueOnce(mockProject);
       prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
       prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
 
@@ -435,8 +435,8 @@ describe("Tests for duplicateSurvey", () => {
 describe("Tests for getSyncSurveys", () => {
   describe("Happy Path", () => {
     beforeEach(() => {
-      prisma.product.findFirst.mockResolvedValueOnce({
-        ...mockProduct,
+      prisma.project.findFirst.mockResolvedValueOnce({
+        ...mockProject,
         brandColor: null,
         highlightBorderColor: null,
         logo: null,
@@ -470,8 +470,8 @@ describe("Tests for getSyncSurveys", () => {
   describe("Sad Path", () => {
     testInputValidation(getSyncSurveys, "123#", {});
 
-    it("does not find a Product", async () => {
-      prisma.product.findFirst.mockResolvedValueOnce(null);
+    it("does not find a Project", async () => {
+      prisma.project.findFirst.mockResolvedValueOnce(null);
 
       await expect(
         getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })

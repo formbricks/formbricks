@@ -228,7 +228,7 @@ export const FileInput = ({
                 multiple ? (
                   <div className="flex flex-wrap gap-2">
                     {selectedFiles.map((file, idx) => (
-                      <>
+                      <div key={`${id}-${idx}`}>
                         {isImage(file.name) ? (
                           <div className="relative h-24 w-40 overflow-hidden rounded-lg">
                             <Image
@@ -269,7 +269,7 @@ export const FileInput = ({
                             )}
                           </div>
                         )}
-                      </>
+                      </div>
                     ))}
 
                     <Uploader

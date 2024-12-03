@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import type { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageSelectProps {
@@ -70,7 +70,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
           onChange={(e) => {
             setSearchTerm(e.target.value);
           }}
-          placeholder={t("environments.product.languages.search_items")}
+          placeholder={t("environments.project.languages.search_items")}
           ref={inputRef}
           type="text"
           value={searchTerm}

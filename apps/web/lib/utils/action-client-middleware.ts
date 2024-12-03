@@ -1,5 +1,5 @@
-import { getProductPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
@@ -26,9 +26,9 @@ export type TAccess<T extends z.ZodRawShape> =
       roles: TOrganizationRole[];
     }
   | {
-      type: "productTeam";
+      type: "projectTeam";
       minPermission?: TTeamPermission;
-      productId: string;
+      projectId: string;
     }
   | {
       type: "team";
@@ -73,12 +73,12 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
         return true;
       }
     } else {
-      if (accessItem.type === "productTeam") {
-        const productPermission = await getProductPermissionByUserId(userId, accessItem.productId);
+      if (accessItem.type === "projectTeam") {
+        const projectPermission = await getProjectPermissionByUserId(userId, accessItem.projectId);
         if (
-          !productPermission ||
+          !projectPermission ||
           (accessItem.minPermission !== undefined &&
-            teamPermissionWeight[productPermission] < teamPermissionWeight[accessItem.minPermission])
+            teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission])
         ) {
           continue;
         }

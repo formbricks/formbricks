@@ -2,71 +2,26 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getOrganizationProjectsLimit,
+  getRoleManagementPermission,
+} from "@/modules/ee/license-check/lib/utils";
+import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
-import { createProduct } from "@formbricks/lib/product/service";
+import { getOrganization } from "@formbricks/lib/organization/service";
+import { getOrganizationProjectsCount } from "@formbricks/lib/project/service";
 import { updateUser } from "@formbricks/lib/user/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProductUpdateInput } from "@formbricks/types/product";
-import { TUserNotificationSettings } from "@formbricks/types/user";
+import { ZProjectUpdateInput } from "@formbricks/types/project";
 
-const ZCreateOrganizationAction = z.object({
-  organizationName: z.string(),
-});
-
-export const createOrganizationAction = authenticatedActionClient
-  .schema(ZCreateOrganizationAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-    if (!isMultiOrgEnabled)
-      throw new OperationNotAllowedError(
-        "Creating Multiple organization is restricted on your instance of Formbricks"
-      );
-
-    const newOrganization = await createOrganization({
-      name: parsedInput.organizationName,
-    });
-
-    await createMembership(newOrganization.id, ctx.user.id, {
-      role: "owner",
-      accepted: true,
-    });
-
-    const product = await createProduct(newOrganization.id, {
-      name: "My Product",
-    });
-
-    const updatedNotificationSettings: TUserNotificationSettings = {
-      ...ctx.user.notificationSettings,
-      alert: {
-        ...ctx.user.notificationSettings?.alert,
-      },
-      weeklySummary: {
-        ...ctx.user.notificationSettings?.weeklySummary,
-        [product.id]: true,
-      },
-      unsubscribedOrganizationIds: Array.from(
-        new Set([...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []), newOrganization.id])
-      ),
-    };
-
-    await updateUser(ctx.user.id, {
-      notificationSettings: updatedNotificationSettings,
-    });
-
-    return newOrganization;
-  });
-
-const ZCreateProductAction = z.object({
+const ZCreateProjectAction = z.object({
   organizationId: ZId,
-  data: ZProductUpdateInput,
+  data: ZProjectUpdateInput,
 });
 
-export const createProductAction = authenticatedActionClient
-  .schema(ZCreateProductAction)
+export const createProjectAction = authenticatedActionClient
+  .schema(ZCreateProjectAction)
   .action(async ({ parsedInput, ctx }) => {
     const { user } = ctx;
 
@@ -78,20 +33,27 @@ export const createProductAction = authenticatedActionClient
       access: [
         {
           data: parsedInput.data,
-          schema: ZProductUpdateInput,
+          schema: ZProjectUpdateInput,
           type: "organization",
           roles: ["owner", "manager"],
         },
       ],
     });
 
+    const organization = await getOrganization(organizationId);
+
+    if (!organization) {
+      throw new Error("Organization not found");
+    }
+
+    const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+    const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
+
+    if (organizationProjectsCount >= organizationProjectsLimit) {
+      throw new OperationNotAllowedError("Organization project limit reached");
+    }
+
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-      const organization = await getOrganization(organizationId);
-
-      if (!organization) {
-        throw new Error("Organization not found");
-      }
-
       const canDoRoleManagement = await getRoleManagementPermission(organization);
 
       if (!canDoRoleManagement) {
@@ -99,7 +61,7 @@ export const createProductAction = authenticatedActionClient
       }
     }
 
-    const product = await createProduct(parsedInput.organizationId, parsedInput.data);
+    const project = await createProject(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {
       ...user.notificationSettings,
       alert: {
@@ -107,7 +69,7 @@ export const createProductAction = authenticatedActionClient
       },
       weeklySummary: {
         ...user.notificationSettings?.weeklySummary,
-        [product.id]: true,
+        [project.id]: true,
       },
     };
 
@@ -115,5 +77,5 @@ export const createProductAction = authenticatedActionClient
       notificationSettings: updatedNotificationSettings,
     });
 
-    return product;
+    return project;
   });

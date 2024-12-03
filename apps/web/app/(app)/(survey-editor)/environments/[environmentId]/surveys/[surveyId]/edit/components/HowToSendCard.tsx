@@ -175,7 +175,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
                             </p>
                             <p className="text-xs font-normal">
                               <Link
-                                href={`/environments/${environment.id}/product/${option.id}-connection`}
+                                href={`/environments/${environment.id}/project/${option.id}-connection`}
                                 className="underline hover:text-amber-900"
                                 target="_blank">
                                 {t("common.connect_formbricks")}

@@ -5,8 +5,8 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromPersonId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromPersonId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromPersonId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deletePerson, getPeople } from "@formbricks/lib/person/service";
@@ -30,9 +30,9 @@ export const getPersonsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -56,9 +56,9 @@ export const deletePersonAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromPersonId(parsedInput.personId),
+          projectId: await getProjectIdFromPersonId(parsedInput.personId),
         },
       ],
     });

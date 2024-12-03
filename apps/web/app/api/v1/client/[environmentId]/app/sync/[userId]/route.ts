@@ -15,7 +15,7 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { getSyncSurveys } from "@formbricks/lib/survey/service";
 import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
@@ -58,10 +58,10 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    const product = await getProductByEnvironmentId(environmentId);
+    const project = await getProjectByEnvironmentId(environmentId);
 
-    if (!product) {
-      throw new Error("Product not found");
+    if (!project) {
+      throw new Error("Project not found");
     }
 
     if (!environment.appSetupCompleted) {
@@ -91,7 +91,13 @@ export const GET = async (
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
-            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
+            limits: {
+              projects: null,
+              monthly: {
+                responses: monthlyResponseLimit,
+                miu: null,
+              },
+            },
           });
         } catch (error) {
           console.error(`Error sending plan limits reached event to Posthog: ${error}`);
@@ -110,15 +116,15 @@ export const GET = async (
       getActionClasses(environmentId),
     ]);
 
-    if (!product) {
-      throw new Error("Product not found");
+    if (!project) {
+      throw new Error("Project not found");
     }
 
-    const updatedProduct: any = {
-      ...product,
-      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-      ...(product.styling.highlightBorderColor?.light && {
-        highlightBorderColor: product.styling.highlightBorderColor.light,
+    const updatedProject: any = {
+      ...project,
+      brandColor: project.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+      ...(project.styling.highlightBorderColor?.light && {
+        highlightBorderColor: project.styling.highlightBorderColor.light,
       }),
     };
     const attributes = await getAttributes(person.id);
@@ -135,7 +141,7 @@ export const GET = async (
         : [],
       actionClasses,
       language,
-      product: updatedProduct,
+      project: updatedProject,
     };
 
     return responses.successResponse({ ...state }, true);

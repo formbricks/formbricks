@@ -1,4 +1,5 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -70,9 +71,9 @@ export const QuestionOptionChoice = ({
   };
 
   return (
-    <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
+    <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div className={cn("mt-6", choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+      <div className={cn(choice.id === "other" && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
@@ -123,21 +124,35 @@ export const QuestionOptionChoice = ({
           />
         )}
       </div>
-      <div className="mt-6 flex gap-2">
+      <div className="flex gap-2">
         {question.choices && question.choices.length > 2 && (
-          <TrashIcon
-            className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-            onClick={() => deleteChoice(choiceIdx)}
+          <Button
+            variant="secondary"
+            size="icon"
+            icon={TrashIcon}
+            iconPlacement="start"
+            tooltip="Delete choice"
+            aria-label="Delete choice"
+            onClick={(e) => {
+              e.preventDefault();
+              deleteChoice(choiceIdx);
+            }}
           />
         )}
-        <div className="h-4 w-4">
-          {choice.id !== "other" && (
-            <PlusIcon
-              className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => addChoice(choiceIdx)}
-            />
-          )}
-        </div>
+        {choice.id !== "other" && (
+          <Button
+            variant="secondary"
+            size="icon"
+            icon={PlusIcon}
+            iconPlacement="start"
+            tooltip="Add choice below"
+            aria-label="Add choice below"
+            onClick={(e) => {
+              e.preventDefault();
+              addChoice(choiceIdx);
+            }}
+          />
+        )}
       </div>
     </div>
   );

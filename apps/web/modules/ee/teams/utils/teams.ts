@@ -1,9 +1,9 @@
-import { ProductTeamPermission, TeamUserRole } from "@prisma/client";
+import { ProjectTeamPermission, TeamUserRole } from "@prisma/client";
 
 export const TeamPermissionMapping = {
-  [ProductTeamPermission.read]: "Read",
-  [ProductTeamPermission.readWrite]: "Read & write",
-  [ProductTeamPermission.manage]: "Manage",
+  [ProjectTeamPermission.read]: "Read",
+  [ProjectTeamPermission.readWrite]: "Read & write",
+  [ProjectTeamPermission.manage]: "Manage",
 };
 
 export const TeamRoleMapping = {
@@ -21,10 +21,10 @@ export const getTeamAccessFlags = (role?: TeamUserRole | null) => {
   };
 };
 
-export const getTeamPermissionFlags = (permissionLevel?: ProductTeamPermission | null) => {
-  const hasReadAccess = permissionLevel === ProductTeamPermission.read;
-  const hasReadWriteAccess = permissionLevel === ProductTeamPermission.readWrite;
-  const hasManageAccess = permissionLevel === ProductTeamPermission.manage;
+export const getTeamPermissionFlags = (permissionLevel?: ProjectTeamPermission | null) => {
+  const hasReadAccess = permissionLevel === ProjectTeamPermission.read;
+  const hasReadWriteAccess = permissionLevel === ProjectTeamPermission.readWrite;
+  const hasManageAccess = permissionLevel === ProjectTeamPermission.manage;
 
   return {
     hasReadAccess,

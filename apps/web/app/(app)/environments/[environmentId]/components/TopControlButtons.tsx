@@ -1,7 +1,7 @@
 "use client";
 
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
@@ -17,7 +17,7 @@ interface TopControlButtonsProps {
   environments: TEnvironment[];
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
-  productPermission: TTeamPermission | null;
+  projectPermission: TTeamPermission | null;
 }
 
 export const TopControlButtons = ({
@@ -25,13 +25,13 @@ export const TopControlButtons = ({
   environments,
   isFormbricksCloud,
   membershipRole,
-  productPermission,
+  projectPermission,
 }: TopControlButtonsProps) => {
   const t = useTranslations();
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
   const isReadOnly = isMember && hasReadAccess;
 
   return (

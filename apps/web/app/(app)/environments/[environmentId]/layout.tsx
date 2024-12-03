@@ -8,7 +8,7 @@ import { notFound, redirect } from "next/navigation";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { FormbricksClient } from "../../components/FormbricksClient";
@@ -40,9 +40,9 @@ export const EnvLayout = async (props) => {
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const product = await getProductByEnvironmentId(params.environmentId);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(params.environmentId);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);

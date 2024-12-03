@@ -123,7 +123,7 @@ beforeEach(() => {
 
   prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput);
   prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput);
-  prisma.product.findMany.mockResolvedValue([]);
+  prisma.project.findMany.mockResolvedValue([]);
   // @ts-expect-error
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });

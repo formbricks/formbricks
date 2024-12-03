@@ -12,13 +12,13 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: t("environments.product.app-connection.formbricks_sdk_not_connected"),
-      subtitle: t("environments.product.app-connection.formbricks_sdk_not_connected_description"),
+      title: t("environments.project.app-connection.formbricks_sdk_not_connected"),
+      subtitle: t("environments.project.app-connection.formbricks_sdk_not_connected_description"),
     },
     running: {
       icon: CheckIcon,
-      title: t("environments.product.app-connection.receiving_data"),
-      subtitle: t("environments.product.app-connection.formbricks_sdk_connected"),
+      title: t("environments.project.app-connection.receiving_data"),
+      subtitle: t("environments.project.app-connection.formbricks_sdk_connected"),
     },
   };
 

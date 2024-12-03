@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 
@@ -13,7 +13,7 @@ interface StackedCardsContainerProps {
   currentQuestionId: TSurveyQuestionId;
   survey: TSurvey;
   getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
-  styling: TProductStyling | TSurveyStyling;
+  styling: TProjectStyling | TSurveyStyling;
   setQuestionId: (questionId: TSurveyQuestionId) => void;
   shouldResetQuestionId?: boolean;
   fullSizeCards: boolean;

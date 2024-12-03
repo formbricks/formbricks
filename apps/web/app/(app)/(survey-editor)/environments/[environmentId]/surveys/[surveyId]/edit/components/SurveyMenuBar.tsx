@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -36,7 +36,7 @@ interface SurveyMenuBarProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
-  product: TProduct;
+  project: TProject;
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
@@ -52,7 +52,7 @@ export const SurveyMenuBar = ({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  product,
+  project,
   responseCount,
   selectedLanguageCode,
   isCxMode,
@@ -327,7 +327,7 @@ export const SurveyMenuBar = ({
               {t("common.back")}
             </Button>
           )}
-          <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
+          <p className="hidden pl-4 font-semibold md:block">{project.name} / </p>
           <Input
             defaultValue={localSurvey.name}
             onChange={(e) => {

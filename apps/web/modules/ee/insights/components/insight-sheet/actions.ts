@@ -8,9 +8,9 @@ import {
   getOrganizationIdFromDocumentId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromInsightId,
-  getProductIdFromDocumentId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromInsightId,
+  getProjectIdFromDocumentId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromInsightId,
 } from "@/lib/utils/helper";
 import { checkAIPermission } from "@/modules/ee/insights/actions";
 import {
@@ -52,9 +52,9 @@ export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActi
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
+          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -90,9 +90,9 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromInsightId(parsedInput.insightId),
+          projectId: await getProjectIdFromInsightId(parsedInput.insightId),
         },
       ],
     });
@@ -129,9 +129,9 @@ export const updateDocumentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromDocumentId(parsedInput.documentId),
+          projectId: await getProjectIdFromDocumentId(parsedInput.documentId),
         },
       ],
     });

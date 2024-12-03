@@ -1,4 +1,4 @@
-import { TLanguage } from "@formbricks/types/product";
+import { TLanguage } from "@formbricks/types/project";
 import { TI18nString, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { structuredClone } from "../pollyfills/structuredClone";
 

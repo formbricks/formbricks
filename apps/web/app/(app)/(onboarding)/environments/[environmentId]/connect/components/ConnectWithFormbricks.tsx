@@ -7,14 +7,14 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
   webAppUrl: string;
   widgetSetupCompleted: boolean;
-  channel: TProductConfigChannel;
+  channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
