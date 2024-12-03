@@ -4,7 +4,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
@@ -24,10 +23,11 @@ const Page = async (props) => {
   if (!survey) {
     throw new Error(t("common.survey_not_found"));
   }
+
   const environmentId = survey.environmentId;
-  const [environment, attributeClasses, project] = await Promise.all([
+
+  const [environment, project] = await Promise.all([
     getEnvironment(environmentId),
-    getAttributeClasses(environmentId),
     getProjectByEnvironmentId(environmentId),
   ]);
 
@@ -58,7 +58,7 @@ const Page = async (props) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={[]} // not showing any attributes for the sharing page
           isAIEnabled={false} // Disable AI for sharing page for now
           isReadOnly={true}
           locale={DEFAULT_LOCALE}

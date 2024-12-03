@@ -39,7 +39,7 @@ export const fetchPersonState = async (
     logger.debug("No cache option set for sync");
   }
 
-  const url = `${apiHost}/api/v1/client/${environmentId}/identify/people/${userId}`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/identify/contacts/${userId}`;
 
   const response = await fetch(url, fetchOptions);
 
@@ -47,7 +47,7 @@ export const fetchPersonState = async (
     const jsonRes = await response.json();
 
     const error = err({
-      code: "network_error",
+      code: jsonRes.code === "forbidden" ? "forbidden" : "network_error",
       status: response.status,
       message: "Error syncing with backend",
       url: new URL(url),

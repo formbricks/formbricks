@@ -7,7 +7,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -17,7 +17,7 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
@@ -29,7 +29,7 @@ export const EndScreenForm = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   updateSurvey,
   endingCard,
   locale,
@@ -51,7 +51,7 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -65,7 +65,7 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div className="mt-4">
@@ -111,7 +111,7 @@ export const EndScreenForm = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>

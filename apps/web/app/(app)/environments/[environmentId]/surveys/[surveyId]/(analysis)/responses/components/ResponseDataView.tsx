@@ -93,8 +93,8 @@ const mapResponsesToTableData = (
     ),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
     language: response.language,
-    person: response.person,
-    personAttributes: response.personAttributes,
+    person: response.contact,
+    contactAttributes: response.contactAttributes,
   }));
 };
 

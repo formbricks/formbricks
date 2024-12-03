@@ -7,7 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { PlusIcon } from "lucide-react";
-import { Metadata } from "next";
+import { Metadata, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -35,9 +35,10 @@ interface SurveyTemplateProps {
   }>;
 }
 
-const Page = async (props: SurveyTemplateProps) => {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
+const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProps }: SurveyTemplateProps) => {
+  const searchParams = await searchParamsProps;
+  const params = await paramsProps;
+
   const session = await getServerSession(authOptions);
   const project = await getProjectByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
@@ -136,4 +137,4 @@ const Page = async (props: SurveyTemplateProps) => {
   );
 };
 
-export default Page;
+export default SurveysPage as NextPage;

@@ -15,13 +15,6 @@ export const ZAttributeClass = z.object({
   archived: z.boolean(),
 });
 
-export const ZAttributeClassInput = z.object({
-  name: z.string(),
-  description: z.string().optional(),
-  type: z.enum(["code"]),
-  environmentId: z.string(),
-});
-
 export const ZAttributeClassAutomaticInput = z.object({
   name: z.string(),
   description: z.string(),
@@ -37,7 +30,5 @@ export const ZAttributeClassUpdateInput = z.object({
 export type TAttributeClassAutomaticInput = z.infer<typeof ZAttributeClassAutomaticInput>;
 
 export type TAttributeClassUpdateInput = z.infer<typeof ZAttributeClassUpdateInput>;
-
-export type TAttributeClassInput = z.infer<typeof ZAttributeClassInput>;
 
 export type TAttributeClass = z.infer<typeof ZAttributeClass>;

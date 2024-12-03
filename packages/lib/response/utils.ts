@@ -5,8 +5,8 @@ import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
   TResponseTtc,
+  TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
-  TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
@@ -85,22 +85,22 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   }
 
   // For Person Attributes
-  if (filterCriteria?.personAttributes) {
-    const personAttributes: Prisma.ResponseWhereInput[] = [];
+  if (filterCriteria?.contactAttributes) {
+    const contactAttributes: Prisma.ResponseWhereInput[] = [];
 
-    Object.entries(filterCriteria.personAttributes).forEach(([key, val]) => {
+    Object.entries(filterCriteria.contactAttributes).forEach(([key, val]) => {
       switch (val.op) {
         case "equals":
-          personAttributes.push({
-            personAttributes: {
+          contactAttributes.push({
+            contactAttributes: {
               path: [key],
               equals: val.value,
             },
           });
           break;
         case "notEquals":
-          personAttributes.push({
-            personAttributes: {
+          contactAttributes.push({
+            contactAttributes: {
               path: [key],
               not: val.value,
             },
@@ -110,7 +110,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
 
     whereClause.push({
-      AND: personAttributes,
+      AND: contactAttributes,
     });
   }
 
@@ -476,7 +476,7 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
   const userAttributes =
     survey.type === "app"
-      ? Array.from(new Set(responses.map((response) => Object.keys(response.personAttributes ?? {})).flat()))
+      ? Array.from(new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat()))
       : [];
   const variables = survey.variables?.map((variable) => variable.name) || [];
 
@@ -500,8 +500,8 @@ export const getResponsesJson = (
       Timestamp: response.createdAt.toDateString(),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
-      "Formbricks ID (internal)": response.person?.id || "",
-      "User ID": response.person?.userId || "",
+      "Formbricks ID (internal)": response.contact?.id || "",
+      "User ID": response.contact?.userId || "",
       Notes: response.notes.map((note) => `${note.user.name}: ${note.text}`).join("\n"),
       Tags: response.tags.map((tag) => tag.name).join(", "),
     });
@@ -531,7 +531,7 @@ export const getResponsesJson = (
 
     // user attributes
     userAttributes.forEach((attribute) => {
-      jsonData[idx][attribute] = response.personAttributes?.[attribute] || "";
+      jsonData[idx][attribute] = response.contactAttributes?.[attribute] || "";
     });
 
     // hidden fields
@@ -553,18 +553,18 @@ export const getResponsesJson = (
   return jsonData;
 };
 
-export const getResponsePersonAttributes = (
-  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
-): TSurveyPersonAttributes => {
+export const getResponseContactAttributes = (
+  responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
+): TSurveyContactAttributes => {
   try {
-    let attributes: TSurveyPersonAttributes = {};
+    let attributes: TSurveyContactAttributes = {};
 
     responses.forEach((response) => {
-      Object.keys(response.personAttributes ?? {}).forEach((key) => {
-        if (response.personAttributes && attributes[key]) {
-          attributes[key].push(response.personAttributes[key].toString());
-        } else if (response.personAttributes) {
-          attributes[key] = [response.personAttributes[key].toString()];
+      Object.keys(response.contactAttributes ?? {}).forEach((key) => {
+        if (response.contactAttributes && attributes[key]) {
+          attributes[key].push(response.contactAttributes[key].toString());
+        } else if (response.contactAttributes) {
+          attributes[key] = [response.contactAttributes[key].toString()];
         }
       });
     });
@@ -580,7 +580,7 @@ export const getResponsePersonAttributes = (
 };
 
 export const getResponseMeta = (
-  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+  responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
 ): TSurveyMetaFieldFilter => {
   try {
     const meta: { [key: string]: Set<string> } = {};
@@ -622,7 +622,7 @@ export const getResponseMeta = (
 
 export const getResponseHiddenFields = (
   survey: TSurvey,
-  responses: Pick<TResponse, "personAttributes" | "data" | "meta">[]
+  responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
 ): TResponseHiddenFieldsFilter => {
   try {
     const hiddenFields: { [key: string]: Set<string> } = {};

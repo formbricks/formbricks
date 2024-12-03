@@ -15,7 +15,10 @@ import { FormbricksClient } from "../../components/FormbricksClient";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 import { PosthogIdentify } from "./components/PosthogIdentify";
 
-export const EnvLayout = async (props) => {
+const EnvLayout = async (props: {
+  params: Promise<{ environmentId: string }>;
+  children: React.ReactNode;
+}) => {
   const params = await props.params;
 
   const { children } = props;
