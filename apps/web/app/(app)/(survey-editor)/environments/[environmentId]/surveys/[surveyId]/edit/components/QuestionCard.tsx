@@ -189,7 +189,7 @@ export const QuestionCard = ({
               {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                 {QUESTIONS_ICON_MAP[question.type]}
               </div> */}
-              <div className="grow" dir="auto">
+              <div className="flex grow flex-col justify-center" dir="auto">
                 <p className="text-sm font-semibold">
                   {recallToHeadline(
                     question.headline,

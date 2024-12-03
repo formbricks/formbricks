@@ -617,7 +617,8 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Ranking),
   choices: z
     .array(ZSurveyQuestionChoice)
-    .min(2, { message: "Ranking Question must have at least two options" }),
+    .min(2, { message: "Ranking Question must have at least two options" })
+    .max(25, { message: "Ranking Question can have at most 25 options" }),
   otherOptionPlaceholder: ZI18nString.optional(),
   shuffleOption: ZShuffleOption.optional(),
 });
