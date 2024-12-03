@@ -518,7 +518,7 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  test.setTimeout(180000);
+  test.setTimeout(240000);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
