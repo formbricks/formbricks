@@ -7,6 +7,7 @@ export type TEnterpriseLicenseStatus = z.infer<typeof ZEnterpriseLicenseStatus>;
 const ZEnterpriseLicenseFeatures = z.object({
   isMultiOrgEnabled: z.boolean(),
   projects: z.number().nullable(),
+  whitelabel: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
 });

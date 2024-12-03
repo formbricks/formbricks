@@ -48,7 +48,6 @@ export const updateProjectAction = authenticatedActionClient
       if (!organization) {
         throw new Error("Organization not found");
       }
-
       const isWhitelabelEnabled = await getWhitelabelPermission(organization);
 
       if (parsedInput.data.inAppSurveyBranding !== undefined) {
