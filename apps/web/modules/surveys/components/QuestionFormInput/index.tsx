@@ -5,6 +5,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
@@ -619,34 +620,36 @@ export const QuestionFormInput = ({
               )}
             </div>
             {id === "headline" && !isWelcomeCard && (
-              <Button
-                variant="secondary"
-                size="icon"
-                StartIcon={ImagePlusIcon}
-                tooltip={t("environments.surveys.edit.add_photo_or_video")}
-                aria-label="Toggle image uploader"
-                className="ml-2"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowImageUploader((prev) => !prev);
-                }}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Toggle image uploader"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowImageUploader((prev) => !prev);
+                  }}>
+                  <ImagePlusIcon />
+                </Button>
+              </TooltipRenderer>
             )}
             {id === "subheader" && question && question.subheader !== undefined && (
-              <Button
-                variant="secondary"
-                size="icon"
-                StartIcon={TrashIcon}
-                tooltip="Remove description"
-                aria-label="Remove description"
-                className="ml-2"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (updateQuestion) {
-                    updateQuestion(questionIdx, { subheader: undefined });
-                  }
-                }}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Remove description"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (updateQuestion) {
+                      updateQuestion(questionIdx, { subheader: undefined });
+                    }
+                  }}>
+                  <TrashIcon />
+                </Button>
+              </TooltipRenderer>
             )}
           </div>
         </div>

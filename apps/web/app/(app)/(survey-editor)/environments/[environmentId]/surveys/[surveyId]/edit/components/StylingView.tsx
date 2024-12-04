@@ -214,7 +214,7 @@ export const StylingView = ({
                 {overwriteThemeStyling && (
                   <Button
                     type="button"
-                    variant="minimal"
+                    variant="ghost"
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
                     {t("environments.surveys.edit.reset_to_theme_styles")}

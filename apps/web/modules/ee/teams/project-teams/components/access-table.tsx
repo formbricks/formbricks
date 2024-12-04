@@ -122,7 +122,7 @@ export const AccessTable = ({ teams, environmentId, projectId, isOwnerOrManager 
                 {isOwnerOrManager && (
                   <TableCell>
                     <Button
-                      variant="warn"
+                      variant="destructive"
                       size="sm"
                       onClick={() => {
                         setSelectedTeamId(team.id);

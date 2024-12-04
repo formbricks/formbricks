@@ -241,7 +241,7 @@ export const SurveyVariablesCardItem = ({
 
             {mode === "edit" && variable && (
               <Button
-                variant="minimal"
+                variant="ghost"
                 type="button"
                 size="sm"
                 className="whitespace-nowrap"

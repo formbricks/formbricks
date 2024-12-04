@@ -212,8 +212,9 @@ export const UploadContactsCSVButton = ({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)}>
         {t("common.upload")} CSV
+        <PlusIcon />
       </Button>
       <Modal
         open={open}
@@ -381,7 +382,6 @@ export const UploadContactsCSVButton = ({
 
             <Button
               size="sm"
-              variant="primary"
               onClick={handleUpload}
               loading={loading}
               disabled={loading || !csvResponse.length}>

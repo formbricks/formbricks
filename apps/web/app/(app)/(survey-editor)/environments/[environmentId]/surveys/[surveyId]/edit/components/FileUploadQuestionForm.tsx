@@ -257,7 +257,7 @@ export const FileUploadQuestionForm = ({
                     <p className="text-sm text-slate-800">{item}</p>
                     <Button
                       className="inline-flex px-0"
-                      variant="minimal"
+                      variant="ghost"
                       onClick={(e) => removeExtension(e, index)}>
                       <XCircleIcon className="h-4 w-4" />
                     </Button>

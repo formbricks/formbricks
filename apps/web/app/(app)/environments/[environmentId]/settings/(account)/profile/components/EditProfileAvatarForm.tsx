@@ -132,7 +132,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                     type="button"
                     size="sm"
                     className="mr-2"
-                    variant={!!fieldState.error?.message ? "warn" : "secondary"}
+                    variant={!!fieldState.error?.message ? "destructive" : "secondary"}
                     onClick={() => {
                       inputRef.current?.click();
                     }}>
@@ -157,7 +157,12 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                   </Button>
 
                   {imageUrl && (
-                    <Button type="button" className="mr-2" variant="warn" size="sm" onClick={handleRemove}>
+                    <Button
+                      type="button"
+                      className="mr-2"
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleRemove}>
                       {t("environments.settings.profile.remove_image")}
                     </Button>
                   )}

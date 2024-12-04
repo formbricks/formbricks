@@ -62,7 +62,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
       {!isReadOnly && (
         <Button
-          variant="minimal"
+          variant="ghost"
           size="sm"
           className="cursor-pointer p-0"
           onClick={() => {

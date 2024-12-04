@@ -98,7 +98,7 @@ export const TeamProjects = ({
           <CardTitle>{t("environments.settings.teams.team_projects")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
-              <Button variant="primary" size="sm" onClick={() => setOpenAddProjectModal(true)}>
+              <Button size="sm" onClick={() => setOpenAddProjectModal(true)}>
                 {t("environments.settings.teams.add_project")}
               </Button>
             )}
@@ -155,7 +155,7 @@ export const TeamProjects = ({
                       <TableCell>
                         <Button
                           disabled={!isOwnerOrManager}
-                          variant="warn"
+                          variant="destructive"
                           size="sm"
                           onClick={() => {
                             setSelectedProjectId(project.id);

@@ -184,12 +184,8 @@ export const VerifyEmail = ({
             <p className="mt-4 text-center text-sm text-slate-500 lg:text-base">
               {t("s.check_inbox_or_spam")}
             </p>
-            <Button
-              variant="secondary"
-              className="mt-6"
-              size="sm"
-              onClick={handleGoBackClick}
-              StartIcon={ArrowLeft}>
+            <Button variant="secondary" className="mt-6" size="sm" onClick={handleGoBackClick}>
+              <ArrowLeft />
               {t("common.back")}
             </Button>
           </div>

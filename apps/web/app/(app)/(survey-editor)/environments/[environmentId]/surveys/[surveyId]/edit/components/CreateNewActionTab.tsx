@@ -254,7 +254,7 @@ export const CreateNewActionTab = ({
           </div>
           <div className="flex justify-end pt-6">
             <div className="flex space-x-2">
-              <Button type="button" variant="minimal" onClick={resetAllStates}>
+              <Button type="button" variant="ghost" onClick={resetAllStates}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" loading={isSubmitting}>
