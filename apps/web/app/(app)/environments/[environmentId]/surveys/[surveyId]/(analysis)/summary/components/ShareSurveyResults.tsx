@@ -63,7 +63,7 @@ export const ShareSurveyResults = ({
                 {t("environments.surveys.summary.unpublish_from_web")}
               </Button>
               <Button className="text-center" asChild>
-                <Link href={surveyUrl} target="_blank">
+                <Link href={surveyUrl} target="_blank" rel="noopener noreferrer">
                   {t("environments.surveys.summary.view_site")}
                 </Link>
               </Button>
