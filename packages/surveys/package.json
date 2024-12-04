@@ -13,6 +13,7 @@
   "source": "src/index.ts",
   "main": "dist/index.umd.cjs",
   "module": "dist/index.js",
+  "type": "module",
   "types": "dist/index.d.ts",
   "files": [
     "dist"

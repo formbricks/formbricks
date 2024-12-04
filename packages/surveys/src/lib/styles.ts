@@ -5,7 +5,7 @@ import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
-import editorCss from "@formbricks/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
+import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 export const addStylesToDom = () => {
