@@ -3,6 +3,7 @@
 import {
   deleteMembership,
   getMembershipsByUserId,
+  getOrganizationOwnerCount,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -94,16 +95,23 @@ export const deleteMembershipAction = authenticatedActionClient
       throw new AuthenticationError("You cannot delete yourself from the organization");
     }
 
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+    const membership = await getMembershipByUserIdOrganizationId(
+      parsedInput.userId,
+      parsedInput.organizationId
+    );
 
     if (!membership) {
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    const memberships = await getMembershipsByUserId(ctx.user.id);
-    const isLastOwner = memberships?.filter((m) => m.role === "owner").length === 1;
-    if (membership.role === "owner" && isLastOwner) {
-      throw new ValidationError("You cannot delete the last owner of the organization");
+    const isOwner = membership.role === "owner";
+
+    if (isOwner) {
+      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
+
+      if (ownerCount <= 1) {
+        throw new ValidationError("You cannot delete the last owner of the organization");
+      }
     }
 
     return await deleteMembership(parsedInput.userId, parsedInput.organizationId);

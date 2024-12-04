@@ -5,8 +5,8 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useState } from "preact/hooks";
-import { useCallback } from "react";
+import { RefObject } from "preact";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TResponseData } from "@formbricks/types/responses";
 import { TResponseTtc } from "@formbricks/types/responses";
@@ -45,7 +45,15 @@ export const OpenTextQuestion = ({
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
-  useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
+  useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
+
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isCurrent && autoFocusEnabled && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [isCurrent, autoFocusEnabled]);
 
   const handleInputChange = (inputValue: string) => {
     onChange({ [question.id]: inputValue });
@@ -59,16 +67,6 @@ export const OpenTextQuestion = ({
     textarea.style.height = `${newHeight}px`;
     textarea.style.overflow = newHeight >= maxHeight ? "auto" : "hidden";
   };
-
-  const openTextRef = useCallback(
-    (currentElement: HTMLInputElement | HTMLTextAreaElement | null) => {
-      // will focus on current element when the question ID matches the current question
-      if (question.id && currentElement && autoFocusEnabled && question.id === currentQuestionId) {
-        currentElement.focus();
-      }
-    },
-    [question.id, autoFocusEnabled, currentQuestionId]
-  );
 
   return (
     <form
@@ -95,7 +93,8 @@ export const OpenTextQuestion = ({
           <div className="fb-mt-4">
             {question.longAnswer === false ? (
               <input
-                ref={openTextRef}
+                ref={inputRef as RefObject<HTMLInputElement>}
+                autoFocus={isCurrent && autoFocusEnabled}
                 tabIndex={isCurrent ? 0 : -1}
                 name={question.id}
                 id={question.id}
@@ -112,8 +111,9 @@ export const OpenTextQuestion = ({
               />
             ) : (
               <textarea
-                ref={openTextRef}
+                ref={inputRef as RefObject<HTMLTextAreaElement>}
                 rows={3}
+                autoFocus={isCurrent && autoFocusEnabled}
                 name={question.id}
                 tabIndex={isCurrent ? 0 : -1}
                 aria-label="textarea"
