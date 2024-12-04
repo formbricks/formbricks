@@ -2,7 +2,7 @@
 
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromActionClassId, getProductIdFromActionClassId } from "@/lib/utils/helper";
+import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
@@ -27,9 +27,9 @@ export const deleteActionClassAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
     });
@@ -59,9 +59,9 @@ export const updateActionClassAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
     });
@@ -89,9 +89,9 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromActionClassId(parsedInput.actionClassId),
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
     });

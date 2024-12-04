@@ -3,7 +3,7 @@
 import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProductIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { getIsAIEnabled, getIsOrganizationAIReady } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
@@ -45,8 +45,8 @@ export const generateInsightsForSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],

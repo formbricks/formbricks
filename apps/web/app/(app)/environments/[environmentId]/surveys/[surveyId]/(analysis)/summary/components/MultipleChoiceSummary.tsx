@@ -5,8 +5,8 @@ import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -24,7 +24,7 @@ interface MultipleChoiceSummaryProps {
   environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -40,7 +40,7 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
   locale,
 }: MultipleChoiceSummaryProps) => {
@@ -73,7 +73,7 @@ export const MultipleChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           questionSummary.type === "multipleChoiceMulti" ? (
@@ -138,11 +138,11 @@ export const MultipleChoiceSummary = ({
                           <span>{otherValue.value}</span>
                         </div>
                       )}
-                      {surveyType === "app" && otherValue.person && (
+                      {surveyType === "app" && otherValue.contact && (
                         <Link
                           href={
-                            otherValue.person.id
-                              ? `/environments/${environmentId}/people/${otherValue.person.id}`
+                            otherValue.contact.id
+                              ? `/environments/${environmentId}/contacts/${otherValue.contact.id}`
                               : { pathname: null }
                           }
                           key={idx}
@@ -151,8 +151,10 @@ export const MultipleChoiceSummary = ({
                             <span>{otherValue.value}</span>
                           </div>
                           <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
-                            {otherValue.person.id && <PersonAvatar personId={otherValue.person.id} />}
-                            <span>{getPersonIdentifier(otherValue.person, otherValue.personAttributes)}</span>
+                            {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
+                            <span>
+                              {getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}
+                            </span>
                           </div>
                         </Link>
                       )}

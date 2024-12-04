@@ -12,7 +12,7 @@ import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { mixColor } from "@formbricks/lib/utils/colors";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 type FormStylingSettingsProps = {
@@ -20,7 +20,7 @@ type FormStylingSettingsProps = {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSettingsPage?: boolean;
   disabled?: boolean;
-  form: UseFormReturn<TProductStyling | TSurveyStyling>;
+  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 };
 
 export const FormStylingSettings = ({

@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { replaceRecallInfoWithUnderline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TSurvey,
   TSurveyHiddenFields,
@@ -51,7 +51,7 @@ interface RecallItemSelectProps {
   recallItems: TSurveyRecallItem[];
   selectedLanguageCode: string;
   hiddenFields: TSurveyHiddenFields;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const RecallItemSelect = ({
@@ -61,7 +61,7 @@ export const RecallItemSelect = ({
   setShowRecallItemSelect,
   recallItems,
   selectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
 }: RecallItemSelectProps) => {
   const [searchValue, setSearchValue] = useState("");
   const isNotAllowedQuestionType = (question: TSurveyQuestion): boolean => {
@@ -96,16 +96,16 @@ export const RecallItemSelect = ({
 
   const attributeClassRecallItems = useMemo(() => {
     if (localSurvey.type !== "app") return [];
-    return attributeClasses
-      .filter((attributeClass) => !recallItemIds.includes(attributeClass.name.replaceAll(" ", "nbsp")))
-      .map((attributeClass) => {
+    return contactAttributeKeys
+      .filter((attributeKey) => !recallItemIds.includes(attributeKey.key.replaceAll(" ", "nbsp")))
+      .map((attributeKey) => {
         return {
-          id: attributeClass.name.replaceAll(" ", "nbsp"),
-          label: attributeClass.name,
+          id: attributeKey.key.replaceAll(" ", "nbsp"),
+          label: attributeKey.name ?? attributeKey.key,
           type: "attributeClass" as const,
         };
       });
-  }, [attributeClasses]);
+  }, [contactAttributeKeys]);
 
   const variableRecallItems = useMemo(() => {
     if (localSurvey.variables.length) {

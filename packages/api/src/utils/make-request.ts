@@ -1,5 +1,5 @@
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { type NetworkError } from "@formbricks/types/errors";
+import { type ForbiddenError, type NetworkError } from "@formbricks/types/errors";
 import type { ApiErrorResponse, ApiResponse, ApiSuccessResponse } from "../types";
 
 export const makeRequest = async <T>(
@@ -7,7 +7,7 @@ export const makeRequest = async <T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: unknown
-): Promise<Result<T, NetworkError | Error>> => {
+): Promise<Result<T, NetworkError | Error | ForbiddenError>> => {
   const url = new URL(apiHost + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
 
@@ -27,7 +27,7 @@ export const makeRequest = async <T>(
   if (!response.ok) {
     const errorResponse = json as ApiErrorResponse;
     return err({
-      code: "network_error",
+      code: errorResponse.code === "forbidden" ? "forbidden" : "network_error",
       status: response.status,
       message: errorResponse.message || "Something went wrong",
       url,

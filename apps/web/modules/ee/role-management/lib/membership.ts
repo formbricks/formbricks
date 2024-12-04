@@ -4,7 +4,7 @@ import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { organizationCache } from "@formbricks/lib/organization/cache";
-import { productCache } from "@formbricks/lib/product/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -74,7 +74,7 @@ export const updateMembership = async (
       organizationId,
     });
 
-    productCache.revalidate({
+    projectCache.revalidate({
       userId,
     });
 

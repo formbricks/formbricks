@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 
 const LandingLayout = async (props) => {
   const params = await props.params;
@@ -21,11 +21,11 @@ const LandingLayout = async (props) => {
     return notFound();
   }
 
-  const products = await getUserProducts(session.user.id, params.organizationId);
+  const projects = await getUserProjects(session.user.id, params.organizationId);
 
-  if (products.length !== 0) {
-    const firstProduct = products[0];
-    const environments = await getEnvironments(firstProduct.id);
+  if (projects.length !== 0) {
+    const firstProject = projects[0];
+    const environments = await getEnvironments(firstProject.id);
     const prodEnvironment = environments.find((e) => e.type === "production");
 
     if (prodEnvironment) {
