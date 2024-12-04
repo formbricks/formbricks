@@ -1,7 +1,3 @@
-import { useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -10,6 +6,10 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -41,7 +41,7 @@ export function NPSQuestion({
 }: NPSQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
@@ -74,7 +74,9 @@ export function NPSQuestion({
       }}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -93,8 +95,12 @@ export function NPSQuestion({
                     <label
                       key={number}
                       tabIndex={isCurrent ? 0 : -1}
-                      onMouseOver={() => { setHoveredNumber(number); }}
-                      onMouseLeave={() => { setHoveredNumber(-1); }}
+                      onMouseOver={() => {
+                        setHoveredNumber(number);
+                      }}
+                      onMouseLeave={() => {
+                        setHoveredNumber(-1);
+                      }}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
                         if (e.key === " ") {
@@ -113,9 +119,11 @@ export function NPSQuestion({
                           : "fb-h fb-leading-10",
                         hoveredNumber === number ? "fb-bg-accent-bg" : ""
                       )}>
-                      {question.isColorCodingEnabled ? <div
-                        className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
-                      /> : null}
+                      {question.isColorCodingEnabled ? (
+                        <div
+                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
+                        />
+                      ) : null}
                       <input
                         type="radio"
                         id={number.toString()}
@@ -123,7 +131,9 @@ export function NPSQuestion({
                         value={number}
                         checked={value === number}
                         className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-                        onClick={() => { handleClick(number); }}
+                        onClick={() => {
+                          handleClick(number);
+                        }}
                         required={question.required}
                         tabIndex={-1}
                       />

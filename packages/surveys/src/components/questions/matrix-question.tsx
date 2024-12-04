@@ -1,8 +1,3 @@
-import { type JSX } from "preact";
-import { useCallback, useMemo, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -11,6 +6,11 @@ import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
+import { type JSX } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -40,7 +40,7 @@ export function MatrixQuestion({
   currentQuestionId,
 }: MatrixQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
   const rowShuffleIdx = useMemo(() => {
@@ -49,7 +49,7 @@ export function MatrixQuestion({
     }
     return question.rows.map((_, id) => id);
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to recompute when the shuffleOption changes
   }, [question.shuffleOption, question.rows.length]);
 
   const questionRows = useMemo(() => {
@@ -70,9 +70,9 @@ export function MatrixQuestion({
         Object.entries(value).length !== 0
           ? { ...value }
           : question.rows.reduce((obj: Record<string, string>, key: TI18nString) => {
-            obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
-            return obj;
-          }, {});
+              obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
+              return obj;
+            }, {});
 
       responseValue[row] = responseValue[row] === column ? "" : column;
 
@@ -119,7 +119,9 @@ export function MatrixQuestion({
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -156,8 +158,7 @@ export function MatrixQuestion({
                             getLocalizedValue(column, languageCode),
                             getLocalizedValue(row, languageCode)
                           );
-                        }
-                        }
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === " ") {
                             e.preventDefault();
@@ -181,7 +182,7 @@ export function MatrixQuestion({
                             checked={
                               typeof value === "object" && !Array.isArray(value)
                                 ? value[getLocalizedValue(row, languageCode)] ===
-                                getLocalizedValue(column, languageCode)
+                                  getLocalizedValue(column, languageCode)
                                 : false
                             }
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
@@ -200,7 +201,7 @@ export function MatrixQuestion({
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => { }}
+          onClick={() => {}}
           tabIndex={isCurrent ? 0 : -1}
         />
         {!isFirstQuestion && (

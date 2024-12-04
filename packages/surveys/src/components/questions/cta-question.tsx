@@ -1,7 +1,3 @@
-import { useState } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -9,6 +5,10 @@ import { HtmlBody } from "@/components/general/html-body";
 import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useState } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -39,7 +39,7 @@ export function CTAQuestion({
   currentQuestionId,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
@@ -47,7 +47,9 @@ export function CTAQuestion({
     <div key={question.id}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}

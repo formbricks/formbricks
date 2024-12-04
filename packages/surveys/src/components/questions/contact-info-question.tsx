@@ -1,7 +1,3 @@
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -10,6 +6,10 @@ import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ContactInfoQuestionProps {
   question: TSurveyContactInfoQuestion;
@@ -42,7 +42,7 @@ export function ContactInfoQuestion({
   autoFocusEnabled,
 }: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
@@ -97,7 +97,7 @@ export function ContactInfoQuestion({
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
-      onSubmit({ [question.id]: safeValue ?? [] }, updatedTtc);
+      onSubmit({ [question.id]: safeValue }, updatedTtc);
     }
   };
 
@@ -115,7 +115,9 @@ export function ContactInfoQuestion({
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -135,7 +137,7 @@ export function ContactInfoQuestion({
 
                 // if all fields are optional and the question is required, then the fields should be required
                 if (
-                  fields.filter((field) => field.show).every((field) => !field.required) &&
+                  fields.filter((currField) => currField.show).every((currField) => !currField.required) &&
                   question.required
                 ) {
                   return true;
@@ -161,7 +163,9 @@ export function ContactInfoQuestion({
                     value={safeValue[index] || ""}
                     className="fb-py-3"
                     type={inputType}
-                    onChange={(e) => { handleChange(field.id, e.currentTarget.value ?? ""); }}
+                    onChange={(e) => {
+                      handleChange(field.id, e.currentTarget.value);
+                    }}
                     tabIndex={isCurrent ? 0 : -1}
                   />
                 )
@@ -176,7 +180,6 @@ export function ContactInfoQuestion({
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => { }}
         />
         {!isFirstQuestion && (
           <BackButton

@@ -1,11 +1,11 @@
+import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 
 interface AutoCloseProps {
   survey: TSurvey;
-  onClose: () => void;
+  onClose?: () => void;
   offset: number;
   children: React.ReactNode;
 }
@@ -24,7 +24,7 @@ export function AutoCloseWrapper({ survey, onClose, children, offset }: AutoClos
     }
     setCountDownActive(true);
     timeoutRef.current = setTimeout(() => {
-      onClose();
+      onClose?.();
       setCountDownActive(false);
     }, survey.autoClose * 1000);
   };
@@ -40,12 +40,14 @@ export function AutoCloseWrapper({ survey, onClose, children, offset }: AutoClos
   useEffect(() => {
     startCountdown();
     return stopCountdown;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to run this effect on every render
   }, [survey.autoClose]);
 
   return (
     <div className="fb-h-full fb-w-full">
-      {survey.autoClose && showAutoCloseProgressBar ? <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} /> : null}
+      {survey.autoClose && showAutoCloseProgressBar ? (
+        <AutoCloseProgressBar autoCloseTimeout={survey.autoClose} />
+      ) : null}
       <div onClick={stopCountdown} onMouseOver={stopCountdown} className="fb-h-full fb-w-full">
         {children}
       </div>

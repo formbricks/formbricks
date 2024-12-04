@@ -1,14 +1,14 @@
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Headline } from "@/components/general/headline";
-import { SubmitButton } from "@/components/buttons/submit-button";
 import { BackButton } from "../buttons/back-button";
 import { FileInput } from "../general/file-input";
 import { Subheader } from "../general/subheader";
@@ -46,7 +46,7 @@ export function FileUploadQuestion({
   currentQuestionId,
 }: FileUploadQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
 
@@ -72,7 +72,9 @@ export function FileUploadQuestion({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}

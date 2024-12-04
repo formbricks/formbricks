@@ -1,8 +1,3 @@
-import { useEffect, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
@@ -10,6 +5,11 @@ import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import {
   ConfusedFace,
   FrowningFace,
@@ -54,7 +54,7 @@ export function RatingQuestion({
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
@@ -73,16 +73,20 @@ export function RatingQuestion({
   };
 
   function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
-    return <input
-      type="radio"
-      id={id}
-      name="rating"
-      value={number}
-      className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-      onClick={() => { handleSelect(number); }}
-      required={question.required}
-      checked={value === number}
-    />
+    return (
+      <input
+        type="radio"
+        id={id}
+        name="rating"
+        value={number}
+        className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
+        onClick={() => {
+          handleSelect(number);
+        }}
+        required={question.required}
+        checked={value === number}
+      />
+    );
   }
 
   useEffect(() => {
@@ -102,7 +106,6 @@ export function RatingQuestion({
     if (range - idx < 2) return "fb-bg-emerald-100";
     if (range - idx < 3) return "fb-bg-orange-100";
     return "fb-bg-rose-100";
-
   };
 
   return (
@@ -117,7 +120,9 @@ export function RatingQuestion({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -134,8 +139,12 @@ export function RatingQuestion({
                 {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
                   <span
                     key={number}
-                    onMouseOver={() => { setHoveredNumber(number); }}
-                    onMouseLeave={() => { setHoveredNumber(0); }}
+                    onMouseOver={() => {
+                      setHoveredNumber(number);
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredNumber(0);
+                    }}
                     className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                     {question.scale === "number" ? (
                       <label
@@ -158,9 +167,11 @@ export function RatingQuestion({
                           question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
                           "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
-                        {question.isColorCodingEnabled ? <div
-                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
-                        /> : null}
+                        {question.isColorCodingEnabled ? (
+                          <div
+                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                          />
+                        ) : null}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -176,14 +187,18 @@ export function RatingQuestion({
                           }
                         }}
                         className={cn(
-                          number <= hoveredNumber || number <= (value!)
+                          number <= hoveredNumber || number <= value!
                             ? "fb-text-amber-400"
                             : "fb-text-[#8696AC]",
                           hoveredNumber === number ? "fb-text-amber-400" : "",
                           "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
                         )}
-                        onFocus={() => { setHoveredNumber(number); }}
-                        onBlur={() => { setHoveredNumber(0); }}>
+                        onFocus={() => {
+                          setHoveredNumber(number);
+                        }}
+                        onBlur={() => {
+                          setHoveredNumber(0);
+                        }}>
                         <HiddenRadioInput number={number} id={number.toString()} />
                         <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -211,8 +226,12 @@ export function RatingQuestion({
                             document.getElementById(number.toString())?.focus();
                           }
                         }}
-                        onFocus={() => { setHoveredNumber(number); }}
-                        onBlur={() => { setHoveredNumber(0); }}>
+                        onFocus={() => {
+                          setHoveredNumber(number);
+                        }}
+                        onBlur={() => {
+                          setHoveredNumber(0);
+                        }}>
                         <HiddenRadioInput number={number} id={number.toString()} />
                         <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
                           <RatingSmiley
@@ -284,7 +303,6 @@ const getSmileyColor = (range: number, idx: number) => {
   if (range - idx < 3) return "fb-fill-emerald-100";
   if (range - idx < 4) return "fb-fill-orange-100";
   return "fb-fill-rose-100";
-
 };
 
 const getActiveSmileyColor = (range: number, idx: number) => {
@@ -300,7 +318,6 @@ const getActiveSmileyColor = (range: number, idx: number) => {
   if (range - idx < 3) return "fb-fill-emerald-300";
   if (range - idx < 4) return "fb-fill-orange-300";
   return "fb-fill-rose-300";
-
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {

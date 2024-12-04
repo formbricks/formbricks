@@ -6,7 +6,7 @@ export function GlobeIcon({ className }: GlobeIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      className={`lucide lucide-globe ${className}`}
+      className={`lucide lucide-globe ${className ? className.toString() : ""}`}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

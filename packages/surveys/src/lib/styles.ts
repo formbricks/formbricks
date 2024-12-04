@@ -1,11 +1,11 @@
+import global from "@/styles/global.css?inline";
+import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
 import editorCss from "@formbricks/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
-import global from "@/styles/global.css?inline";
-import preflight from "@/styles/preflight.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 export const addStylesToDom = () => {
@@ -73,7 +73,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
-  appendCssVariable("border-radius", `${roundness}px`);
+  appendCssVariable("border-radius", `${roundness.toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
 
   if (styling.questionColor?.light) {

@@ -1,14 +1,3 @@
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
-import { type SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
-import type {
-  TResponseData,
-  TResponseDataValue,
-  TResponseTtc,
-  TResponseVariables,
-} from "@formbricks/types/responses";
-import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/ending-card";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
 import { LanguageSwitch } from "@/components/general/language-switch";
@@ -21,6 +10,17 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
+import { type SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseVariables,
+} from "@formbricks/types/responses";
+import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -31,11 +31,11 @@ export function Survey({
   survey,
   styling,
   isBrandingEnabled,
-  onDisplay = () => { },
-  onResponse = () => { },
-  onClose = () => { },
-  onFinished = () => { },
-  onRetry = () => { },
+  onDisplay,
+  onResponse,
+  onClose,
+  onFinished,
+  onRetry,
   isRedirectDisabled = false,
   prefillResponseData,
   skipPrefilled,
@@ -60,7 +60,7 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
-  const autoFocusEnabled = autoFocus !== undefined ? autoFocus : window.self === window.top;
+  const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
   const [questionId, setQuestionId] = useState(() => {
     if (startAtQuestionId) {
@@ -69,7 +69,6 @@ export function Survey({
       return "start";
     }
     return localSurvey.questions[0]?.id;
-
   });
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -98,7 +97,6 @@ export function Survey({
       return styling.cardArrangement?.linkSurveys ?? "straight";
     }
     return styling.cardArrangement?.appSurveys ?? "straight";
-
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
@@ -109,13 +107,12 @@ export function Survey({
       return localSurvey.questions.find((q) => q.id === prevQuestionId);
     }
     return localSurvey.questions.find((q) => q.id === questionId);
-
   }, [questionId, localSurvey, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
-    return offset === 0 && localSurvey.type !== "link" && (clickOutside === undefined ? true : clickOutside);
+    return offset === 0 && localSurvey.type !== "link" && (clickOutside ?? true);
   };
   const getShowLanguageSwitch = (offset: number) => {
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
@@ -130,9 +127,9 @@ export function Survey({
 
   useEffect(() => {
     // call onDisplay when component is mounted
-    onDisplay();
+    onDisplay?.();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- onDisplay should only be called once
   }, []);
 
   useEffect(() => {
@@ -292,7 +289,7 @@ export function Survey({
 
     onChange(responseData);
     onChangeVariables(calculatedVariables);
-    onResponse({
+    onResponse?.({
       data: responseData,
       ttc,
       finished,
@@ -303,7 +300,7 @@ export function Survey({
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
-      onFinished();
+      onFinished?.();
     }
     if (nextQuestionId) {
       setQuestionId(nextQuestionId);

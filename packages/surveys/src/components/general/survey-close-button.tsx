@@ -1,5 +1,5 @@
 interface SurveyCloseButtonProps {
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export function SurveyCloseButton({ onClose }: SurveyCloseButtonProps) {

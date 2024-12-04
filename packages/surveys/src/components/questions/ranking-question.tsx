@@ -1,3 +1,11 @@
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { cn, getShuffledChoicesIds } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -7,14 +15,6 @@ import type {
   TSurveyQuestionId,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/back-button";
-import { SubmitButton } from "@/components/buttons/submit-button";
-import { Headline } from "@/components/general/headline";
-import { QuestionMedia } from "@/components/general/question-media";
-import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { cn, getShuffledChoicesIds } from "@/lib/utils";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
@@ -50,18 +50,19 @@ export function RankingQuestion({
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
-    } return question.choices.map((choice) => choice.id);
+    }
+    return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.choices.length]);
 
   const [parent] = useAutoAnimate();
 
   const [error, setError] = useState<string | null>(null);
-  const isMediaAvailable = question.imageUrl || question.videoUrl;
+  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 
-  const [localValue, setLocalValue] = useState<string[]>(value || []);
+  const [localValue, setLocalValue] = useState<string[]>(value ?? []);
 
   const sortedItems = useMemo(() => {
     return localValue
@@ -74,7 +75,6 @@ export function RankingQuestion({
       return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
     }
     return question.choices.filter((c) => !localValue.includes(c.id));
-
   }, [question.choices, question.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
 
   const handleItemClick = useCallback(
@@ -144,7 +144,9 @@ export function RankingQuestion({
     <form onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
+          {isMediaAvailable ? (
+            <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />
+          ) : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -180,7 +182,9 @@ export function RankingQuestion({
                       autoFocus={idx === 0 && autoFocusEnabled}>
                       <div
                         className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group"
-                        onClick={() => { handleItemClick(item); }}>
+                        onClick={() => {
+                          handleItemClick(item);
+                        }}>
                         <span
                           className={cn(
                             "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
@@ -194,58 +198,64 @@ export function RankingQuestion({
                           {getLocalizedValue(item.label, languageCode)}
                         </div>
                       </div>
-                      {isSorted ? <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
-                        <button
-                          tabIndex={-1}
-                          type="button"
-                          onClick={() => { handleMove(item.id, "up"); }}
-                          className={cn(
-                            "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
-                            isFirst
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
-                          )}
-                          disabled={isFirst}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-chevron-up">
-                            <path d="m18 15-6-6-6 6" />
-                          </svg>
-                        </button>
-                        <button
-                          tabIndex={-1}
-                          type="button"
-                          onClick={() => { handleMove(item.id, "down"); }}
-                          className={cn(
-                            "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
-                            isLast
-                              ? "fb-opacity-30 fb-cursor-not-allowed"
-                              : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
-                          )}
-                          disabled={isLast}>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="20"
-                            height="20"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="lucide lucide-chevron-down">
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </button>
-                      </div> : null}
+                      {isSorted ? (
+                        <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                          <button
+                            tabIndex={-1}
+                            type="button"
+                            onClick={() => {
+                              handleMove(item.id, "up");
+                            }}
+                            className={cn(
+                              "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                              isFirst
+                                ? "fb-opacity-30 fb-cursor-not-allowed"
+                                : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                            )}
+                            disabled={isFirst}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-chevron-up">
+                              <path d="m18 15-6-6-6 6" />
+                            </svg>
+                          </button>
+                          <button
+                            tabIndex={-1}
+                            type="button"
+                            onClick={() => {
+                              handleMove(item.id, "down");
+                            }}
+                            className={cn(
+                              "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                              isLast
+                                ? "fb-opacity-30 fb-cursor-not-allowed"
+                                : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                            )}
+                            disabled={isLast}>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="lucide lucide-chevron-down">
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 })}

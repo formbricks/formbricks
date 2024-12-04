@@ -1,11 +1,11 @@
-import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
-import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
+import { useEffect } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
+import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
 import { Headline } from "./headline";
 import { HtmlBody } from "./html-body";
 
@@ -97,7 +97,6 @@ export function WelcomeCard({
       }
       // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
       return `less than ${(minutes + 1).toString()} minutes`;
-
     }
     // If there are no remaining seconds, just return the number of minutes
     return `${minutes.toString()} minutes`;
@@ -107,7 +106,7 @@ export function WelcomeCard({
   const showResponseCount = survey.welcomeCard.showResponseCount;
 
   const handleSubmit = () => {
-    onSubmit({ "welcomeCard": "clicked" }, {});
+    onSubmit({ welcomeCard: "clicked" }, {});
   };
 
   useEffect(() => {
@@ -127,18 +126,20 @@ export function WelcomeCard({
       document.removeEventListener("keydown", handleEnter);
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only want to run this effect when isCurrent changes
   }, [isCurrent]);
 
   return (
     <div>
       <ScrollableContainer>
         <div>
-          {fileUrl ? <img
-            src={fileUrl}
-            className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
-            alt="Company Logo"
-          /> : null}
+          {fileUrl ? (
+            <img
+              src={fileUrl}
+              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              alt="Company Logo"
+            />
+          ) : null}
 
           <Headline
             headline={replaceRecallInfo(
@@ -163,7 +164,11 @@ export function WelcomeCard({
           tabIndex={isCurrent ? 0 : -1}
           onClick={handleSubmit}
           type="button"
-          onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+            }
+          }}
         />
       </div>
 

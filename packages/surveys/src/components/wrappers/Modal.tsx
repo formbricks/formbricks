@@ -1,7 +1,7 @@
+import { cn } from "@/lib/utils";
 import { type VNode } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type TPlacement } from "@formbricks/types/common";
-import { cn } from "@/lib/utils";
 
 interface ModalProps {
   children: VNode;
@@ -42,8 +42,8 @@ export function Modal({ children, isOpen, placement, clickOutside, darkOverlay, 
   }, [show, clickOutside, onClose, isCenter]);
 
   // This classes will be applied only when screen size is greater than sm, hence sm is common prefix for all
-  const getPlacementStyle = (placement: TPlacement) => {
-    switch (placement) {
+  const getPlacementStyle = (contentPlacement: TPlacement) => {
+    switch (contentPlacement) {
       case "bottomRight":
         return "sm:fb-bottom-3 sm:fb-right-3";
       case "topRight":
@@ -71,11 +71,9 @@ export function Modal({ children, isOpen, placement, clickOutside, darkOverlay, 
       <div
         className={cn(
           "fb-relative fb-h-full fb-w-full",
-          isCenter
-            ? darkOverlay
-              ? "fb-bg-slate-700/80"
-              : "fb-bg-white/50"
-            : "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out"
+          !isCenter ? "fb-bg-none fb-transition-all fb-duration-500 fb-ease-in-out" : "",
+          isCenter && darkOverlay ? "fb-bg-slate-700/80" : "",
+          isCenter && !darkOverlay ? "fb-bg-white/50" : ""
         )}>
         <div
           ref={modalRef}

@@ -41,6 +41,7 @@
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@preact/preset-vite": "2.9.0",
+    "@types/react": "18.3.11",
     "autoprefixer": "10.4.20",
     "concurrently": "8.2.2",
     "isomorphic-dompurify": "2.14.0",
@@ -55,6 +56,7 @@
     "vite-tsconfig-paths": "5.0.1"
   },
   "dependencies": {
-    "@formkit/auto-animate": "0.8.2"
+    "@formkit/auto-animate": "0.8.2",
+    "react-calendar": "5.1.0"
   }
 }

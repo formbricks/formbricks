@@ -11,7 +11,7 @@ export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const shuffle = (array: any[]) => {
+const shuffle = (array: unknown[]) => {
   for (let i = 0; i < array.length; i++) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];

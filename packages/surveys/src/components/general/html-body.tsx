@@ -1,6 +1,7 @@
+import { cn } from "@/lib/utils";
+import DOMPurify from "isomorphic-dompurify";
 import { useEffect, useState } from "react";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { cn } from "@/lib/utils";
 
 interface HtmlBodyProps {
   htmlString?: string;
@@ -12,9 +13,7 @@ export function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
 
   useEffect(() => {
     if (htmlString) {
-      import("isomorphic-dompurify").then((DOMPurify) => {
-        setSafeHtml(DOMPurify.sanitize(htmlString, { ADD_ATTR: ["target"] }));
-      });
+      setSafeHtml(DOMPurify.sanitize(htmlString, { ADD_ATTR: ["target"] }));
     }
   }, [htmlString]);
 

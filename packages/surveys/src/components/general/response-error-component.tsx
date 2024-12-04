@@ -1,12 +1,12 @@
+import { SubmitButton } from "@/components/buttons/submit-button";
 import { processResponseData } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { SubmitButton } from "@/components/buttons/submit-button";
 
 interface ResponseErrorComponentProps {
   questions: TSurveyQuestion[];
   responseData: TResponseData;
-  onRetry: () => void;
+  onRetry?: () => void;
 }
 
 export function ResponseErrorComponent({ questions, responseData, onRetry }: ResponseErrorComponentProps) {
@@ -26,8 +26,8 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
             const response = responseData[question.id];
             if (!response) return;
             return (
-              <div className="fb-flex fb-flex-col">
-                <span className="fb-text-sm fb-leading-6 fb-text-slate-900">{`Question ${index + 1}`}</span>
+              <div className="fb-flex fb-flex-col" key={`response-${index.toString()}`}>
+                <span className="fb-text-sm fb-leading-6 fb-text-slate-900">{`Question ${(index + 1).toString()}`}</span>
                 <span className="fb-mt-1 fb-text-sm fb-font-semibold fb-leading-6 fb-text-slate-900">
                   {processResponseData(response)}
                 </span>
@@ -37,7 +37,14 @@ export function ResponseErrorComponent({ questions, responseData, onRetry }: Res
         </div>
       </div>
       <div className="fb-mt-4 fb-flex fb-flex-1 fb-flex-row fb-items-center fb-justify-end fb-space-x-2">
-        <SubmitButton tabIndex={2} buttonLabel="Retry" isLastQuestion={false} onClick={() => { onRetry(); }} />
+        <SubmitButton
+          tabIndex={2}
+          buttonLabel="Retry"
+          isLastQuestion={false}
+          onClick={() => {
+            onRetry?.();
+          }}
+        />
       </div>
     </div>
   );

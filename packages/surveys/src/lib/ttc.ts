@@ -4,18 +4,17 @@ import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 export const getUpdatedTtc = (ttc: TResponseTtc, questionId: TSurveyQuestionId, time: number) => {
   // Check if the question ID already exists
-  if (ttc.hasOwnProperty(questionId)) {
+  if (questionId in ttc) {
     return {
       ...ttc,
       [questionId]: ttc[questionId] + time,
     };
-  } 
-    // If the question ID does not exist, add it to the object
-    return {
-      ...ttc,
-      [questionId]: time,
-    };
-  
+  }
+  // If the question ID does not exist, add it to the object
+  return {
+    ...ttc,
+    [questionId]: time,
+  };
 };
 
 export const useTtc = (
