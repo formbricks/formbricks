@@ -13,7 +13,7 @@ import { ValidationError } from "@formbricks/types/errors";
 export const updateProjectBranding = async (
   projectId: string,
   inputProject: TProjectUpdateBrandingInput
-): Promise<Boolean> => {
+): Promise<boolean> => {
   validateInputs([projectId, ZId], [inputProject, ZProjectUpdateBrandingInput]);
   try {
     const updatedProject = await prisma.project.update({
