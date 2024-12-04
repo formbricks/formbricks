@@ -1,12 +1,12 @@
-import { useEffect } from "preact/hooks";
+import { useEffect } from "preact/hooks"
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurvey, type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { LoadingSpinner } from "@/components/general/LoadingSpinner";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { LoadingSpinner } from "@/components/general/loading-spinner";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
 
@@ -99,10 +99,10 @@ export function EndingCard({
                 headline={
                   endingCard.type === "endScreen"
                     ? replaceRecallInfo(
-                        getLocalizedValue(endingCard.headline, languageCode),
-                        responseData,
-                        variablesData
-                      )
+                      getLocalizedValue(endingCard.headline, languageCode),
+                      responseData,
+                      variablesData
+                    )
                     : "Respondants will not see this card"
                 }
                 questionId="EndingCard"
@@ -111,26 +111,26 @@ export function EndingCard({
                 subheader={
                   endingCard.type === "endScreen"
                     ? replaceRecallInfo(
-                        getLocalizedValue(endingCard.subheader, languageCode),
-                        responseData,
-                        variablesData
-                      )
+                      getLocalizedValue(endingCard.subheader, languageCode),
+                      responseData,
+                      variablesData
+                    )
                     : "They will be forwarded immediately"
                 }
                 questionId="EndingCard"
               />
               {endingCard.type === "endScreen" && endingCard.buttonLabel ? <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
-                  <SubmitButton
-                    buttonLabel={replaceRecallInfo(
-                      getLocalizedValue(endingCard.buttonLabel, languageCode),
-                      responseData,
-                      variablesData
-                    )}
-                    isLastQuestion={false}
-                    focus={isCurrent ? autoFocusEnabled : false}
-                    onClick={handleSubmit}
-                  />
-                </div> : null}
+                <SubmitButton
+                  buttonLabel={replaceRecallInfo(
+                    getLocalizedValue(endingCard.buttonLabel, languageCode),
+                    responseData,
+                    variablesData
+                  )}
+                  isLastQuestion={false}
+                  focus={isCurrent ? autoFocusEnabled : false}
+                  onClick={handleSubmit}
+                />
+              </div> : null}
             </div>
           </>
         ) : (

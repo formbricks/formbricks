@@ -2,11 +2,11 @@ import { useCallback, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { HtmlBody } from "@/components/general/HtmlBody";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { HtmlBody } from "@/components/general/html-body";
+import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 

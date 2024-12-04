@@ -1,5 +1,5 @@
 import { type SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
-import { Survey } from "./Survey";
+import { Survey } from "./survey";
 
 export function SurveyInline(props: SurveyInlineProps) {
   return (

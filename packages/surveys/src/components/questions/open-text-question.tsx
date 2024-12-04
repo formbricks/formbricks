@@ -1,13 +1,13 @@
 import { type RefObject } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TResponseData , type TResponseTtc } from "@formbricks/types/responses";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
@@ -139,7 +139,7 @@ export function OpenTextQuestion({
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
+          onClick={() => { }}
         />
         {!isFirstQuestion && (
           <BackButton

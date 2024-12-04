@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks"
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
@@ -64,14 +64,14 @@ export function MultipleChoiceMultiQuestion({
   useEffect(() => {
     setOtherSelected(
       Boolean(value) &&
-        ((Array.isArray(value) ? value : [value])).some((item) => {
-          return !getChoicesWithoutOtherLabels().includes(item);
-        })
+      ((Array.isArray(value) ? value : [value])).some((item) => {
+        return !getChoicesWithoutOtherLabels().includes(item);
+      })
     );
     setOtherValue(
       (Array.isArray(value) &&
         value.filter((v) => !question.choices.find((c) => c.label[languageCode] === v))[0]) ||
-        ""
+      ""
     );
   }, [question.id, getChoicesWithoutOtherLabels, question.choices, value, languageCode]);
 
@@ -116,9 +116,9 @@ export function MultipleChoiceMultiQuestion({
           return questionChoiceLabels.includes(v);
         });
         onChange({ [question.id]: [...newValue, item] }); return;
-      } 
-        onChange({ [question.id]: [...value, item] }); return;
-      
+      }
+      onChange({ [question.id]: [...value, item] }); return;
+
     }
     onChange({ [question.id]: [item] }); // if not array, make it an array
   };
@@ -215,63 +215,63 @@ export function MultipleChoiceMultiQuestion({
                   );
                 })}
                 {otherOption ? <label
-                    tabIndex={isCurrent ? 0 : -1}
-                    className={cn(
-                      value.includes(getLocalizedValue(otherOption.label, languageCode))
-                        ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
-                        : "fb-border-border",
-                      "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
-                    )}
-                    onKeyDown={(e) => {
-                      // Accessibility: if spacebar was pressed pass this down to the input
-                      if (e.key === " ") {
-                        if (otherSelected) return;
-                        document.getElementById(otherOption.id)?.click();
-                        document.getElementById(otherOption.id)?.focus();
-                      }
-                    }}>
-                    <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
-                      <input
-                        type="checkbox"
-                        tabIndex={-1}
-                        id={otherOption.id}
-                        name={question.id}
-                        value={getLocalizedValue(otherOption.label, languageCode)}
-                        className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
-                        aria-labelledby={`${otherOption.id}-label`}
-                        onChange={() => {
-                          setOtherSelected(!otherSelected);
-                          if (!value.includes(otherValue)) {
-                            addItem(otherValue);
-                          } else {
-                            removeItem(otherValue);
-                          }
-                        }}
-                        checked={otherSelected}
-                      />
-                      <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
-                        {getLocalizedValue(otherOption.label, languageCode)}
-                      </span>
-                    </span>
-                    {otherSelected ? <input
-                        ref={otherSpecify}
-                        dir="auto"
-                        id={`${otherOption.id}-label`}
-                        name={question.id}
-                        tabIndex={isCurrent ? 0 : -1}
-                        value={otherValue}
-                        onChange={(e) => {
-                          setOtherValue(e.currentTarget.value);
-                          addItem(e.currentTarget.value);
-                        }}
-                        className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
-                        placeholder={
-                          getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                  tabIndex={isCurrent ? 0 : -1}
+                  className={cn(
+                    value.includes(getLocalizedValue(otherOption.label, languageCode))
+                      ? "fb-border-brand fb-bg-input-bg-selected fb-z-10"
+                      : "fb-border-border",
+                    "fb-text-heading focus-within:fb-border-brand fb-bg-input-bg focus-within:fb-bg-input-bg-selected hover:fb-bg-input-bg-selected fb-rounded-custom fb-relative fb-flex fb-cursor-pointer fb-flex-col fb-border fb-p-4 focus:fb-outline-none"
+                  )}
+                  onKeyDown={(e) => {
+                    // Accessibility: if spacebar was pressed pass this down to the input
+                    if (e.key === " ") {
+                      if (otherSelected) return;
+                      document.getElementById(otherOption.id)?.click();
+                      document.getElementById(otherOption.id)?.focus();
+                    }
+                  }}>
+                  <span className="fb-flex fb-items-center fb-text-sm" dir="auto">
+                    <input
+                      type="checkbox"
+                      tabIndex={-1}
+                      id={otherOption.id}
+                      name={question.id}
+                      value={getLocalizedValue(otherOption.label, languageCode)}
+                      className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
+                      aria-labelledby={`${otherOption.id}-label`}
+                      onChange={() => {
+                        setOtherSelected(!otherSelected);
+                        if (!value.includes(otherValue)) {
+                          addItem(otherValue);
+                        } else {
+                          removeItem(otherValue);
                         }
-                        required={question.required}
-                        aria-labelledby={`${otherOption.id}-label`}
-                      /> : null}
-                  </label> : null}
+                      }}
+                      checked={otherSelected}
+                    />
+                    <span id={`${otherOption.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
+                      {getLocalizedValue(otherOption.label, languageCode)}
+                    </span>
+                  </span>
+                  {otherSelected ? <input
+                    ref={otherSpecify}
+                    dir="auto"
+                    id={`${otherOption.id}-label`}
+                    name={question.id}
+                    tabIndex={isCurrent ? 0 : -1}
+                    value={otherValue}
+                    onChange={(e) => {
+                      setOtherValue(e.currentTarget.value);
+                      addItem(e.currentTarget.value);
+                    }}
+                    className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
+                    placeholder={
+                      getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                    }
+                    required={question.required}
+                    aria-labelledby={`${otherOption.id}-label`}
+                  /> : null}
+                </label> : null}
               </div>
             </fieldset>
           </div>

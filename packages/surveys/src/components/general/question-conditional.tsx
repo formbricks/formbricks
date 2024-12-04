@@ -8,21 +8,21 @@ import {
   type TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { AddressQuestion } from "@/components/questions/AddressQuestion";
-import { CTAQuestion } from "@/components/questions/CTAQuestion";
-import { CalQuestion } from "@/components/questions/CalQuestion";
-import { ConsentQuestion } from "@/components/questions/ConsentQuestion";
-import { ContactInfoQuestion } from "@/components/questions/ContactInfoQuestion";
-import { DateQuestion } from "@/components/questions/DateQuestion";
-import { FileUploadQuestion } from "@/components/questions/FileUploadQuestion";
-import { MatrixQuestion } from "@/components/questions/MatrixQuestion";
-import { MultipleChoiceMultiQuestion } from "@/components/questions/MultipleChoiceMultiQuestion";
-import { MultipleChoiceSingleQuestion } from "@/components/questions/MultipleChoiceSingleQuestion";
-import { NPSQuestion } from "@/components/questions/NPSQuestion";
-import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
-import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
-import { RankingQuestion } from "@/components/questions/RankingQuestion";
-import { RatingQuestion } from "@/components/questions/RatingQuestion";
+import { AddressQuestion } from "@/components/questions/address-question";
+import { CTAQuestion } from "@/components/questions/cta-question";
+import { CalQuestion } from "@/components/questions/cal-question";
+import { ConsentQuestion } from "@/components/questions/consent-question";
+import { ContactInfoQuestion } from "@/components/questions/contact-info-question";
+import { DateQuestion } from "@/components/questions/date-question";
+import { FileUploadQuestion } from "@/components/questions/file-upload-question";
+import { MatrixQuestion } from "@/components/questions/matrix-question";
+import { MultipleChoiceMultiQuestion } from "@/components/questions/multiple-choice-multi-question";
+import { MultipleChoiceSingleQuestion } from "@/components/questions/multiple-choice-single-question";
+import { NPSQuestion } from "@/components/questions/nps-question";
+import { OpenTextQuestion } from "@/components/questions/open-text-question";
+import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
+import { RankingQuestion } from "@/components/questions/ranking-question";
+import { RatingQuestion } from "@/components/questions/rating-question";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;

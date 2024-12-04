@@ -3,10 +3,10 @@ import type { JSX } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
@@ -21,8 +21,8 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "../general/Smileys";
-import { Subheader } from "../general/Subheader";
+} from "../general/mileys";
+import { Subheader } from "../general/subheader";
 
 interface RatingQuestionProps {
   question: TSurveyRatingQuestion;
@@ -73,7 +73,7 @@ export function RatingQuestion({
   };
 
   function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
-  return <input
+    return <input
       type="radio"
       id={id}
       name="rating"
@@ -83,7 +83,7 @@ export function RatingQuestion({
       required={question.required}
       checked={value === number}
     />
-}
+  }
 
   useEffect(() => {
     setHoveredNumber(0);
@@ -98,11 +98,11 @@ export function RatingQuestion({
       if (range - idx < 1) return "fb-bg-emerald-100";
       if (range - idx < 2) return "fb-bg-orange-100";
       return "fb-bg-rose-100";
-    } 
-      if (range - idx < 2) return "fb-bg-emerald-100";
-      if (range - idx < 3) return "fb-bg-orange-100";
-      return "fb-bg-rose-100";
-    
+    }
+    if (range - idx < 2) return "fb-bg-emerald-100";
+    if (range - idx < 3) return "fb-bg-orange-100";
+    return "fb-bg-rose-100";
+
   };
 
   return (
@@ -159,8 +159,8 @@ export function RatingQuestion({
                           "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
                         {question.isColorCodingEnabled ? <div
-                            className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
-                          /> : null}
+                          className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
+                        /> : null}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -280,11 +280,11 @@ const getSmileyColor = (range: number, idx: number) => {
     if (range - idx < 2) return "fb-fill-emerald-100";
     if (range - idx < 3) return "fb-fill-orange-100";
     return "fb-fill-rose-100";
-  } 
-    if (range - idx < 3) return "fb-fill-emerald-100";
-    if (range - idx < 4) return "fb-fill-orange-100";
-    return "fb-fill-rose-100";
-  
+  }
+  if (range - idx < 3) return "fb-fill-emerald-100";
+  if (range - idx < 4) return "fb-fill-orange-100";
+  return "fb-fill-rose-100";
+
 };
 
 const getActiveSmileyColor = (range: number, idx: number) => {
@@ -296,11 +296,11 @@ const getActiveSmileyColor = (range: number, idx: number) => {
     if (range - idx < 2) return "fb-fill-emerald-300";
     if (range - idx < 3) return "fb-fill-orange-300";
     return "fb-fill-rose-300";
-  } 
-    if (range - idx < 3) return "fb-fill-emerald-300";
-    if (range - idx < 4) return "fb-fill-orange-300";
-    return "fb-fill-rose-300";
-  
+  }
+  if (range - idx < 3) return "fb-fill-emerald-300";
+  if (range - idx < 4) return "fb-fill-orange-300";
+  return "fb-fill-rose-300";
+
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {

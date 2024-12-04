@@ -1,7 +1,7 @@
 import React from "preact/compat";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { AutoCloseProgressBar } from "@/components/general/AutoCloseProgressBar";
+import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 
 interface AutoCloseProps {
   survey: TSurvey;

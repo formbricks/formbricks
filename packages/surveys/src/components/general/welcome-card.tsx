@@ -2,12 +2,12 @@ import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { SubmitButton } from "@/components/buttons/submit-button";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
-import { Headline } from "./Headline";
-import { HtmlBody } from "./HtmlBody";
+import { Headline } from "./headline";
+import { HtmlBody } from "./html-body";
 
 interface WelcomeCardProps {
   headline?: TI18nString;
@@ -94,10 +94,10 @@ export function WelcomeCard({
       if (minutes === 0) {
         // If less than 1 minute, return 'less than 1 minute'
         return "less than 1 minute";
-      } 
-        // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
-        return `less than ${minutes + 1} minutes`;
-      
+      }
+      // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
+      return `less than ${minutes + 1} minutes`;
+
     }
     // If there are no remaining seconds, just return the number of minutes
     return `${minutes} minutes`;
@@ -135,10 +135,10 @@ export function WelcomeCard({
       <ScrollableContainer>
         <div>
           {fileUrl ? <img
-              src={fileUrl}
-              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
-              alt="Company Logo"
-            /> : null}
+            src={fileUrl}
+            className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+            alt="Company Logo"
+          /> : null}
 
           <Headline
             headline={replaceRecallInfo(

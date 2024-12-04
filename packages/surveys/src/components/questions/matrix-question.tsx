@@ -3,11 +3,11 @@ import { useCallback, useMemo, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
@@ -46,9 +46,9 @@ export function MatrixQuestion({
   const rowShuffleIdx = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledRowIndices(question.rows.length, question.shuffleOption);
-    } 
-      return question.rows.map((_, id) => id);
-    
+    }
+    return question.rows.map((_, id) => id);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.rows.length]);
 
@@ -70,9 +70,9 @@ export function MatrixQuestion({
         Object.entries(value).length !== 0
           ? { ...value }
           : question.rows.reduce((obj: Record<string, string>, key: TI18nString) => {
-              obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
-              return obj;
-            }, {});
+            obj[getLocalizedValue(key, languageCode)] = ""; // Initialize each row key with an empty string
+            return obj;
+          }, {});
 
       responseValue[row] = responseValue[row] === column ? "" : column;
 
@@ -151,11 +151,12 @@ export function MatrixQuestion({
                         key={columnIndex}
                         tabIndex={isCurrent ? 0 : -1}
                         className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
-                        onClick={() =>
-                          { handleSelect(
+                        onClick={() => {
+                          handleSelect(
                             getLocalizedValue(column, languageCode),
                             getLocalizedValue(row, languageCode)
-                          ); }
+                          );
+                        }
                         }
                         onKeyDown={(e) => {
                           if (e.key === " ") {
@@ -180,7 +181,7 @@ export function MatrixQuestion({
                             checked={
                               typeof value === "object" && !Array.isArray(value)
                                 ? value[getLocalizedValue(row, languageCode)] ===
-                                  getLocalizedValue(column, languageCode)
+                                getLocalizedValue(column, languageCode)
                                 : false
                             }
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
@@ -199,7 +200,7 @@ export function MatrixQuestion({
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
+          onClick={() => { }}
           tabIndex={isCurrent ? 0 : -1}
         />
         {!isFirstQuestion && (

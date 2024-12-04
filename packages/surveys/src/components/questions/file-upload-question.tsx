@@ -6,12 +6,12 @@ import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Headline } from "@/components/general/Headline";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { BackButton } from "../buttons/BackButton";
-import { FileInput } from "../general/FileInput";
-import { Subheader } from "../general/Subheader";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Headline } from "@/components/general/headline";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { BackButton } from "../buttons/back-button";
+import { FileInput } from "../general/file-input";
+import { Subheader } from "../general/subheader";
 
 interface FileUploadQuestionProps {
   question: TSurveyFileUploadQuestion;
@@ -64,10 +64,10 @@ export function FileUploadQuestion({
             alert("Please upload a file");
           }
         } else if (value) {
-            onSubmit({ [question.id]: value }, updatedTtcObj);
-          } else {
-            onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
-          }
+          onSubmit({ [question.id]: value }, updatedTtcObj);
+        } else {
+          onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
+        }
       }}
       className="fb-w-full">
       <ScrollableContainer>

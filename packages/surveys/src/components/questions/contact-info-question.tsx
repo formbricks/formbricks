@@ -1,25 +1,25 @@
-import { useMemo, useRef, useState } from "preact/hooks";
-import { useCallback } from "react";
+import { useCallback, useMemo, useRef, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { Input } from "@/components/general/Input";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { Input } from "@/components/general/input";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
-interface AddressQuestionProps {
-  question: TSurveyAddressQuestion;
+interface ContactInfoQuestionProps {
+  question: TSurveyContactInfoQuestion;
   value?: string[];
   onChange: (responseData: TResponseData) => void;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   onBack: () => void;
   isFirstQuestion: boolean;
   isLastQuestion: boolean;
+  autoFocus?: boolean;
   languageCode: string;
   ttc: TResponseTtc;
   setTtc: (ttc: TResponseTtc) => void;
@@ -27,7 +27,7 @@ interface AddressQuestionProps {
   autoFocusEnabled: boolean;
 }
 
-export function AddressQuestion({
+export function ContactInfoQuestion({
   question,
   value,
   onChange,
@@ -40,46 +40,41 @@ export function AddressQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: AddressQuestionProps) {
+}: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
-  const safeValue = useMemo(() => {
-    return Array.isArray(value) ? value : ["", "", "", "", "", ""];
-  }, [value]);
   const isCurrent = question.id === currentQuestionId;
+  const safeValue = useMemo(() => {
+    return Array.isArray(value) ? value : ["", "", "", "", ""];
+  }, [value]);
 
   const fields = [
     {
-      id: "addressLine1",
-      placeholder: "Address Line 1",
-      ...question.addressLine1,
+      id: "firstName",
+      placeholder: "First Name",
+      ...question.firstName,
     },
     {
-      id: "addressLine2",
-      placeholder: "Address Line 2",
-      ...question.addressLine2,
+      id: "lastName",
+      placeholder: "Last Name",
+      ...question.lastName,
     },
     {
-      id: "city",
-      placeholder: "City",
-      ...question.city,
+      id: "email",
+      placeholder: "Email",
+      ...question.email,
     },
     {
-      id: "state",
-      placeholder: "State",
-      ...question.state,
+      id: "phone",
+      placeholder: "Phone",
+      ...question.phone,
     },
     {
-      id: "zip",
-      placeholder: "Zip",
-      ...question.zip,
-    },
-    {
-      id: "country",
-      placeholder: "Country",
-      ...question.country,
+      id: "company",
+      placeholder: "Company",
+      ...question.company,
     },
   ];
 
@@ -98,7 +93,7 @@ export function AddressQuestion({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue.length === 6 && safeValue.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = safeValue.length === 5 && safeValue.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
@@ -106,7 +101,7 @@ export function AddressQuestion({
     }
   };
 
-  const addressRef = useCallback(
+  const contactInfoRef = useCallback(
     (currentElement: HTMLInputElement | null) => {
       // will focus on current element when the question ID matches the current question
       if (question.id && currentElement && autoFocusEnabled && question.id === currentQuestionId) {
@@ -149,17 +144,24 @@ export function AddressQuestion({
                 return false;
               };
 
+              let inputType = "text";
+              if (field.id === "email") {
+                inputType = "email";
+              } else if (field.id === "phone") {
+                inputType = "number";
+              }
+
               return (
                 field.show && (
                   <Input
+                    ref={index === 0 ? contactInfoRef : null}
                     key={field.id}
                     placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
                     required={isFieldRequired()}
                     value={safeValue[index] || ""}
                     className="fb-py-3"
-                    type={field.id === "email" ? "email" : "text"}
+                    type={inputType}
                     onChange={(e) => { handleChange(field.id, e.currentTarget.value ?? ""); }}
-                    ref={index === 0 ? addressRef : null}
                     tabIndex={isCurrent ? 0 : -1}
                   />
                 )
@@ -168,14 +170,14 @@ export function AddressQuestion({
           </div>
         </div>
       </ScrollableContainer>
+
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
         <SubmitButton
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
+          onClick={() => { }}
         />
-        <div />
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}

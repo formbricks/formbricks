@@ -9,14 +9,14 @@ import type {
   TResponseVariables,
 } from "@formbricks/types/responses";
 import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { EndingCard } from "@/components/general/EndingCard";
-import { FormbricksBranding } from "@/components/general/FormbricksBranding";
-import { LanguageSwitch } from "@/components/general/LanguageSwitch";
-import { ProgressBar } from "@/components/general/ProgressBar";
-import { QuestionConditional } from "@/components/general/QuestionConditional";
-import { ResponseErrorComponent } from "@/components/general/ResponseErrorComponent";
-import { SurveyCloseButton } from "@/components/general/SurveyCloseButton";
-import { WelcomeCard } from "@/components/general/WelcomeCard";
+import { EndingCard } from "@/components/general/ending-card";
+import { FormbricksBranding } from "@/components/general/formbricks-branding";
+import { LanguageSwitch } from "@/components/general/language-switch";
+import { ProgressBar } from "@/components/general/progress-bar";
+import { QuestionConditional } from "@/components/general/question-conditional";
+import { ResponseErrorComponent } from "@/components/general/response-error-component";
+import { SurveyCloseButton } from "@/components/general/survey-close-button";
+import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { parseRecallInformation } from "@/lib/recall";
@@ -31,11 +31,11 @@ export function Survey({
   survey,
   styling,
   isBrandingEnabled,
-  onDisplay = () => {},
-  onResponse = () => {},
-  onClose = () => {},
-  onFinished = () => {},
-  onRetry = () => {},
+  onDisplay = () => { },
+  onResponse = () => { },
+  onClose = () => { },
+  onFinished = () => { },
+  onRetry = () => { },
   isRedirectDisabled = false,
   prefillResponseData,
   skipPrefilled,
@@ -67,9 +67,9 @@ export function Survey({
       return startAtQuestionId;
     } else if (localSurvey.welcomeCard.enabled) {
       return "start";
-    } 
-      return localSurvey.questions[0]?.id;
-    
+    }
+    return localSurvey.questions[0]?.id;
+
   });
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
@@ -96,9 +96,9 @@ export function Survey({
   const cardArrangement = useMemo(() => {
     if (localSurvey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
-    } 
-      return styling.cardArrangement?.appSurveys ?? "straight";
-    
+    }
+    return styling.cardArrangement?.appSurveys ?? "straight";
+
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
@@ -107,9 +107,9 @@ export function Survey({
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
       return localSurvey.questions.find((q) => q.id === prevQuestionId);
-    } 
-      return localSurvey.questions.find((q) => q.id === questionId);
-    
+    }
+    return localSurvey.questions.find((q) => q.id === questionId);
+
   }, [questionId, localSurvey, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -452,14 +452,14 @@ export function Survey({
 
   return (
     <StackedCardsContainer
-        cardArrangement={cardArrangement}
-        currentQuestionId={questionId}
-        getCardContent={getCardContent}
-        survey={localSurvey}
-        styling={styling}
-        setQuestionId={setQuestionId}
-        shouldResetQuestionId={shouldResetQuestionId}
-        fullSizeCards={fullSizeCards}
-      />
+      cardArrangement={cardArrangement}
+      currentQuestionId={questionId}
+      getCardContent={getCardContent}
+      survey={localSurvey}
+      styling={styling}
+      setQuestionId={setQuestionId}
+      shouldResetQuestionId={shouldResetQuestionId}
+      fullSizeCards={fullSizeCards}
+    />
   );
 }

@@ -1,7 +1,7 @@
 import { useState } from "preact/hooks";
 import { type SurveyModalProps } from "@formbricks/types/formbricks-surveys";
 import { Modal } from "@/components/wrappers/Modal";
-import { Survey } from "./Survey";
+import { Survey } from "./survey";
 
 export function SurveyModal({
   survey,
@@ -14,7 +14,7 @@ export function SurveyModal({
   getSetIsResponseSendingFinished,
   onResponse,
   onClose,
-  onFinished = () => {},
+  onFinished = () => { },
   onFileUpload,
   onRetry,
   isRedirectDisabled = false,

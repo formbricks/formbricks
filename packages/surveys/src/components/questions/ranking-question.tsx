@@ -7,11 +7,11 @@ import type {
   TSurveyQuestionId,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { Subheader } from "@/components/general/Subheader";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
+import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
@@ -72,9 +72,9 @@ export function RankingQuestion({
   const unsortedItems = useMemo(() => {
     if (question.shuffleOption === "all" && sortedItems.length === 0) {
       return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
-    } 
-      return question.choices.filter((c) => !localValue.includes(c.id));
-    
+    }
+    return question.choices.filter((c) => !localValue.includes(c.id));
+
   }, [question.choices, question.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
 
   const handleItemClick = useCallback(
@@ -195,57 +195,57 @@ export function RankingQuestion({
                         </div>
                       </div>
                       {isSorted ? <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
-                          <button
-                            tabIndex={-1}
-                            type="button"
-                            onClick={() => { handleMove(item.id, "up"); }}
-                            className={cn(
-                              "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
-                              isFirst
-                                ? "fb-opacity-30 fb-cursor-not-allowed"
-                                : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
-                            )}
-                            disabled={isFirst}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-chevron-up">
-                              <path d="m18 15-6-6-6 6" />
-                            </svg>
-                          </button>
-                          <button
-                            tabIndex={-1}
-                            type="button"
-                            onClick={() => { handleMove(item.id, "down"); }}
-                            className={cn(
-                              "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
-                              isLast
-                                ? "fb-opacity-30 fb-cursor-not-allowed"
-                                : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
-                            )}
-                            disabled={isLast}>
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-chevron-down">
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          </button>
-                        </div> : null}
+                        <button
+                          tabIndex={-1}
+                          type="button"
+                          onClick={() => { handleMove(item.id, "up"); }}
+                          className={cn(
+                            "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
+                            isFirst
+                              ? "fb-opacity-30 fb-cursor-not-allowed"
+                              : "hover:fb-bg-black/5 fb-rounded-tr-custom fb-transition-colors"
+                          )}
+                          disabled={isFirst}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-chevron-up">
+                            <path d="m18 15-6-6-6 6" />
+                          </svg>
+                        </button>
+                        <button
+                          tabIndex={-1}
+                          type="button"
+                          onClick={() => { handleMove(item.id, "down"); }}
+                          className={cn(
+                            "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
+                            isLast
+                              ? "fb-opacity-30 fb-cursor-not-allowed"
+                              : "hover:fb-bg-black/5 fb-rounded-br-custom fb-transition-colors"
+                          )}
+                          disabled={isLast}>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-chevron-down">
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </button>
+                      </div> : null}
                     </div>
                   );
                 })}
