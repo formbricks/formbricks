@@ -167,7 +167,7 @@ export function MultipleChoiceSingleQuestion({
                             onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
                           }}
                           checked={value === getLocalizedValue(choice.label, languageCode)}
-                          required={question.required ? idx === 0 : null}
+                          required={question.required ? idx === 0 : undefined}
                         />
                         <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                           {getLocalizedValue(choice.label, languageCode)}

@@ -32,8 +32,11 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
 
   return (
     <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
-      {isLoading ? <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" /> : null}
-      {imgUrl ? <img
+      {isLoading ? (
+        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
+      ) : null}
+      {imgUrl ? (
+        <img
           key={imgUrl}
           src={imgUrl}
           alt={altText}
@@ -41,19 +44,25 @@ export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           onLoad={() => {
             setIsLoading(false);
           }}
-        /> : null}
-      {videoUrlWithParams ? <div className="fb-relative">
+        />
+      ) : null}
+      {videoUrlWithParams ? (
+        <div className="fb-relative">
           <div className="fb-rounded-custom fb-bg-black">
             <iframe
               src={videoUrlWithParams}
               title="Question Video"
               frameBorder="0"
               className="fb-rounded-custom fb-aspect-video fb-w-full"
-              onLoad={() => { setIsLoading(false); }}
+              onLoad={() => {
+                setIsLoading(false);
+              }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin" />
+              referrerpolicy="strict-origin-when-cross-origin"
+            />
           </div>
-        </div> : null}
+        </div>
+      ) : null}
       <a
         href={imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"

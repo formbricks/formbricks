@@ -104,7 +104,7 @@ export function DateQuestion({
   useEffect(() => {
     if (datePickerOpen) {
       if (!selectedDate) setSelectedDate(new Date());
-      const input = document.querySelector(".react-date-picker__inputGroup__input")!;
+      const input = document.querySelector(".react-date-picker__inputGroup__input")! as HTMLInputElement;
       if (input) {
         input.focus();
       }

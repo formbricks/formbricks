@@ -95,7 +95,7 @@ export function OpenTextQuestion({
             {question.longAnswer === false ? (
               <input
                 ref={inputRef as RefObject<HTMLInputElement>}
-                autoFocus={isCurrent ? autoFocusEnabled : null}
+                autoFocus={isCurrent ? autoFocusEnabled : undefined}
                 tabIndex={isCurrent ? 0 : -1}
                 name={question.id}
                 id={question.id}
@@ -116,7 +116,7 @@ export function OpenTextQuestion({
               <textarea
                 ref={inputRef as RefObject<HTMLTextAreaElement>}
                 rows={3}
-                autoFocus={isCurrent ? autoFocusEnabled : null}
+                autoFocus={isCurrent ? autoFocusEnabled : undefined}
                 name={question.id}
                 tabIndex={isCurrent ? 0 : -1}
                 aria-label="textarea"
