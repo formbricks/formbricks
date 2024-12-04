@@ -1,7 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./TemplateTags";
@@ -11,7 +11,7 @@ interface TemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick?: (template: TTemplate) => void;
-  product: TProduct;
+  project: TProject;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];
@@ -23,7 +23,7 @@ export const Template = ({
   activeTemplate,
   setActiveTemplate,
   onTemplateClick = () => {},
-  product,
+  project,
   createSurvey,
   loading,
   selectedFilter,
@@ -33,7 +33,7 @@ export const Template = ({
   return (
     <div
       onClick={() => {
-        const newTemplate = replacePresetPlaceholders(template, product);
+        const newTemplate = replacePresetPlaceholders(template, project);
         if (noPreview) {
           createSurvey(newTemplate);
           return;

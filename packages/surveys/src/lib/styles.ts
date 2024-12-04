@@ -3,7 +3,7 @@ import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import { TProductStyling } from "@formbricks/types/product";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
@@ -18,7 +18,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TSurveyStyling }) => {
+export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }) => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 

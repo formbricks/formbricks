@@ -92,6 +92,14 @@ interface NetworkError {
   url: URL;
 }
 
+interface ForbiddenError {
+  code: "forbidden";
+  message: string;
+  responseMessage?: string;
+  status: number;
+  url: URL;
+}
+
 export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
 
 export {
@@ -106,4 +114,4 @@ export {
   AuthenticationError,
   AuthorizationError,
 };
-export type { NetworkError };
+export type { NetworkError, ForbiddenError };

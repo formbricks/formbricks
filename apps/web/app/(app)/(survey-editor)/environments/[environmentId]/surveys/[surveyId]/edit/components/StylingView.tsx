@@ -16,7 +16,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { BackgroundStylingCard } from "./BackgroundStylingCard";
 import { CardStylingSettings } from "./CardStylingSettings";
@@ -24,7 +24,7 @@ import { FormStylingSettings } from "./FormStylingSettings";
 
 interface StylingViewProps {
   environment: TEnvironment;
-  product: TProduct;
+  project: TProject;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
@@ -39,7 +39,7 @@ interface StylingViewProps {
 export const StylingView = ({
   colors,
   environment,
-  product,
+  project,
   localSurvey,
   setLocalSurvey,
   setStyling,
@@ -52,7 +52,7 @@ export const StylingView = ({
   const t = useTranslations();
 
   const form = useForm<TSurveyStyling>({
-    defaultValues: localSurvey.styling ?? product.styling,
+    defaultValues: localSurvey.styling ?? project.styling,
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
@@ -64,8 +64,8 @@ export const StylingView = ({
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const onResetThemeStyling = () => {
-    const { styling: productStyling } = product;
-    const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+    const { styling: projectStyling } = project;
+    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
 
     setStyling({
       ...baseStyling,
@@ -101,12 +101,12 @@ export const StylingView = ({
     });
   }, [setLocalSurvey]);
 
-  const defaultProductStyling = useMemo(() => {
-    const { styling: productStyling } = product;
-    const { allowStyleOverwrite, ...baseStyling } = productStyling ?? {};
+  const defaultProjectStyling = useMemo(() => {
+    const { styling: projectStyling } = project;
+    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
 
     return baseStyling;
-  }, [product]);
+  }, [project]);
 
   const handleOverwriteToggle = (value: boolean) => {
     // survey styling from the server is surveyStyling, it could either be set or not
@@ -114,12 +114,12 @@ export const StylingView = ({
 
     setOverwriteThemeStyling(value);
 
-    // if the toggle is turned on, we set the local styling to the product styling
+    // if the toggle is turned on, we set the local styling to the project styling
     if (value) {
       if (!styling) {
-        // copy the product styling to the survey styling
+        // copy the project styling to the survey styling
         setStyling({
-          ...defaultProductStyling,
+          ...defaultProjectStyling,
           overwriteThemeStyling: true,
         });
         return;
@@ -129,23 +129,23 @@ export const StylingView = ({
       if (localStylingChanges) {
         setStyling(localStylingChanges);
       }
-      // if there are no local styling changes, we set the styling to the product styling
+      // if there are no local styling changes, we set the styling to the project styling
       else {
         setStyling({
-          ...defaultProductStyling,
+          ...defaultProjectStyling,
           overwriteThemeStyling: true,
         });
       }
     }
 
-    // if the toggle is turned off, we store the local styling changes and set the styling to the product styling
+    // if the toggle is turned off, we store the local styling changes and set the styling to the project styling
     else {
       // copy the styling to localStylingChanges
       setLocalStylingChanges(styling);
 
-      // copy the product styling to the survey styling
+      // copy the project styling to the survey styling
       setStyling({
-        ...defaultProductStyling,
+        ...defaultProjectStyling,
         overwriteThemeStyling: false,
       });
     }
@@ -184,7 +184,7 @@ export const StylingView = ({
             open={formStylingOpen}
             setOpen={setFormStylingOpen}
             disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
           />
 
           <CardStylingSettings
@@ -192,8 +192,8 @@ export const StylingView = ({
             setOpen={setCardStylingOpen}
             surveyType={localSurvey.type}
             disabled={!overwriteThemeStyling}
-            product={product}
-            form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+            project={project}
+            form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
           />
 
           {localSurvey.type === "link" && (
@@ -204,7 +204,7 @@ export const StylingView = ({
               colors={colors}
               disabled={!overwriteThemeStyling}
               isUnsplashConfigured={isUnsplashConfigured}
-              form={form as UseFormReturn<TProductStyling | TSurveyStyling>}
+              form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
             />
           )}
 
@@ -225,7 +225,7 @@ export const StylingView = ({
               <p className="text-sm text-slate-500">
                 {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link
-                  href={`/environments/${environment.id}/product/look`}
+                  href={`/environments/${environment.id}/project/look`}
                   target="_blank"
                   className="font-semibold underline">
                   {t("common.look_and_feel")}

@@ -1,7 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslations } from "next-intl";
-import type { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageSelect } from "./language-select";
 

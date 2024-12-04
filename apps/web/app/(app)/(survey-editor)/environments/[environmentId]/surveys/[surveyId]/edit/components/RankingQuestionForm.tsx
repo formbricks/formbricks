@@ -12,7 +12,7 @@ import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type JSX, useEffect, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionOptionChoice } from "./QuestionOptionChoice";
@@ -26,7 +26,7 @@ interface RankingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -38,7 +38,7 @@ export const RankingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: RankingQuestionFormProps): JSX.Element => {
   const t = useTranslations();
@@ -131,7 +131,7 @@ export const RankingQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -149,7 +149,7 @@ export const RankingQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -158,7 +158,7 @@ export const RankingQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-3"
             type="button"
             onClick={() => {
@@ -195,7 +195,7 @@ export const RankingQuestionForm = ({
               updateQuestion(questionIdx, { choices: newChoices });
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col" ref={parent}>
+              <div className="flex flex-col gap-2" ref={parent}>
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
                     <QuestionOptionChoice
@@ -214,7 +214,7 @@ export const RankingQuestionForm = ({
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
-                      attributeClasses={attributeClasses}
+                      contactAttributeKeys={contactAttributeKeys}
                       locale={locale}
                     />
                   ))}

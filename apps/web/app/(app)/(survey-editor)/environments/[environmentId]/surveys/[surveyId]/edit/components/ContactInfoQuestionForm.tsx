@@ -8,7 +8,7 @@ import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -21,7 +21,7 @@ interface ContactInfoQuestionFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -33,7 +33,7 @@ export const ContactInfoQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: ContactInfoQuestionFormProps): JSX.Element => {
   const t = useTranslations();
@@ -99,7 +99,7 @@ export const ContactInfoQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -117,7 +117,7 @@ export const ContactInfoQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -126,7 +126,7 @@ export const ContactInfoQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-4"
             type="button"
             onClick={() => {

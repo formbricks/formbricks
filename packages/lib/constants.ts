@@ -196,14 +196,14 @@ export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR"];
 
 // Billing constants
 
-export enum PRODUCT_FEATURE_KEYS {
+export enum PROJECT_FEATURE_KEYS {
   FREE = "free",
   STARTUP = "startup",
   SCALE = "scale",
   ENTERPRISE = "enterprise",
 }
 
-export enum STRIPE_PRODUCT_NAMES {
+export enum STRIPE_PROJECT_NAMES {
   STARTUP = "Formbricks Startup",
   SCALE = "Formbricks Scale",
   ENTERPRISE = "Formbricks Enterprise",
@@ -218,14 +218,17 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
 
 export const BILLING_LIMITS = {
   FREE: {
+    PROJECTS: 3,
     RESPONSES: 1500,
     MIU: 2000,
   },
   STARTUP: {
+    PROJECTS: 3,
     RESPONSES: 5000,
     MIU: 7500,
   },
   SCALE: {
+    PROJECTS: 5,
     RESPONSES: 10000,
     MIU: 30000,
   },

@@ -1,5 +1,5 @@
 import { PrismaClient, SurveyType } from "@prisma/client";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 
 const prisma = new PrismaClient();
 
@@ -44,7 +44,7 @@ const main = async () => {
         }
 
         // Determine the channel based on the survey types, default to null
-        let channel: TProductConfigChannel = null;
+        let channel: TProjectConfigChannel = null;
 
         if (surveyTypes.size === 0 || surveyTypes.size === 3) {
           // if there are no surveys or all 3 types of surveys (website, app, and link) are present, set channel to null

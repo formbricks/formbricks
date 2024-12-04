@@ -11,9 +11,9 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TResponse,
   TResponseData,
@@ -30,8 +30,7 @@ let setResponseData = (_: TResponseData) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
-  product: TProduct;
-  userId?: string;
+  project: TProject;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -39,7 +38,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -50,8 +49,7 @@ interface LinkSurveyProps {
 
 export const LinkSurvey = ({
   survey,
-  product,
-  userId,
+  project,
   emailVerificationStatus,
   singleUseId,
   singleUseResponse,
@@ -59,7 +57,7 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
-  attributeClasses,
+  contactAttributeKeys,
   isEmbed,
   IMPRINT_URL,
   PRIVACY_URL,
@@ -96,8 +94,8 @@ export const LinkSurvey = ({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   let surveyState = useMemo(() => {
-    return new SurveyState(survey.id, singleUseId, responseId, userId);
-  }, [survey.id, singleUseId, responseId, userId]);
+    return new SurveyState(survey.id, singleUseId, responseId);
+  }, [survey.id, singleUseId, responseId]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
@@ -173,8 +171,8 @@ export const LinkSurvey = ({
           survey={survey}
           isErrorComponent={true}
           languageCode={languageCode}
-          styling={product.styling}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
+          styling={project.styling}
           locale={locale}
         />
       );
@@ -185,31 +183,31 @@ export const LinkSurvey = ({
         singleUseId={suId ?? ""}
         survey={survey}
         languageCode={languageCode}
-        styling={product.styling}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
+        styling={project.styling}
         locale={locale}
       />
     );
   }
 
   const determineStyling = () => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
+    // allow style overwrite is disabled from the project
+    if (!project.styling.allowStyleOverwrite) {
+      return project.styling;
     }
 
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the project
+    if (project.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
+        return project.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return product.styling;
+    return project.styling;
   };
 
   const handleResetSurvey = () => {
@@ -219,7 +217,7 @@ export const LinkSurvey = ({
 
   return (
     <LinkSurveyWrapper
-      product={product}
+      project={project}
       survey={survey}
       isPreview={isPreview}
       handleResetSurvey={handleResetSurvey}
@@ -233,7 +231,7 @@ export const LinkSurvey = ({
         survey={survey}
         styling={determineStyling()}
         languageCode={languageCode}
-        isBrandingEnabled={product.linkSurveyBranding}
+        isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
         getSetIsError={(f: (value: boolean) => void) => {
           setIsError = f;
@@ -258,7 +256,6 @@ export const LinkSurvey = ({
 
             const res = await api.client.display.create({
               surveyId: survey.id,
-              ...(userId && { userId }),
             });
 
             if (!res.ok) {

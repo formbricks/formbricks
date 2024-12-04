@@ -46,7 +46,7 @@ const Page = async (props) => {
 
   const paidFeatures = [
     {
-      title: t("environments.product.languages.multi_language_surveys"),
+      title: t("environments.project.languages.multi_language_surveys"),
       comingSoon: false,
       onRequest: false,
     },

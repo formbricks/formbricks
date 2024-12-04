@@ -7,7 +7,6 @@ import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/uti
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
-import { getAttributes } from "@formbricks/lib/attribute/service";
 import { cache } from "@formbricks/lib/cache";
 import { CRON_SECRET, IS_AI_CONFIGURED } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
@@ -20,6 +19,7 @@ import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
+import { getContactAttributes } from "./lib/contact-attribute";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -44,7 +44,7 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
-  const attributes = response.person?.id ? await getAttributes(response.person?.id) : {};
+  const contactAttributes = response.contact?.id ? await getContactAttributes(response.contact?.id) : {};
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
@@ -107,7 +107,7 @@ export const POST = async (request: Request) => {
     }
 
     if (integrations.length > 0) {
-      await handleIntegrations(integrations, inputValidation.data, survey, attributes);
+      await handleIntegrations(integrations, inputValidation.data, survey, contactAttributes);
     }
 
     // Fetch users with notifications in a single query
@@ -117,7 +117,7 @@ export const POST = async (request: Request) => {
         memberships: {
           some: {
             organization: {
-              products: {
+              projects: {
                 some: {
                   environments: {
                     some: { id: environmentId },
@@ -141,9 +141,9 @@ export const POST = async (request: Request) => {
             teamUsers: {
               some: {
                 team: {
-                  productTeams: {
+                  projectTeams: {
                     some: {
-                      product: {
+                      project: {
                         environments: {
                           some: {
                             id: environmentId,
@@ -217,7 +217,7 @@ export const POST = async (request: Request) => {
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                attributes,
+                contactAttributes,
                 response.data,
                 response.variables
               );

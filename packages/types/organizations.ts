@@ -8,6 +8,7 @@ export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeri
 
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
+  projects: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
     miu: z.number().nullable(),
@@ -21,6 +22,7 @@ export const ZOrganizationBilling = z.object({
   plan: ZOrganizationBillingPlan.default("free"),
   period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
+    projects: 3,
     monthly: {
       responses: 1500,
       miu: 2000,

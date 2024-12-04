@@ -16,7 +16,7 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           where: {
             userId,
             organization: {
-              products: {
+              projects: {
                 some: {
                   environments: {
                     some: {
@@ -42,9 +42,9 @@ export const hasUserEnvironmentAccess = async (userId: string, environmentId: st
           where: {
             userId,
             team: {
-              productTeams: {
+              projectTeams: {
                 some: {
-                  product: {
+                  project: {
                     environments: {
                       some: {
                         id: environmentId,

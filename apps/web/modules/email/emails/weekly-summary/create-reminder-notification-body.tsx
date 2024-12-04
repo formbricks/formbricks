@@ -19,7 +19,7 @@ export function CreateReminderNotificationBody({
     <Container>
       <Text>
         {translateEmailText("weekly_summary_create_reminder_notification_body_text", locale, {
-          productName: notificationData.productName,
+          projectName: notificationData.projectName,
         })}
       </Text>
       <Text className="pt-4 font-bold">

@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -23,7 +23,7 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -35,7 +35,7 @@ export const EditWelcomeCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: EditWelcomeCardProps) => {
   const t = useTranslations();
@@ -136,7 +136,7 @@ export const EditWelcomeCard = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -173,7 +173,7 @@ export const EditWelcomeCard = ({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
-                    attributeClasses={attributeClasses}
+                    contactAttributeKeys={contactAttributeKeys}
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                   />

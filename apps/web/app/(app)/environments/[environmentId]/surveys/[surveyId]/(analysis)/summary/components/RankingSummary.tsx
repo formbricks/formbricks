@@ -1,5 +1,5 @@
 import { useTranslations } from "next-intl";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -9,7 +9,7 @@ interface RankingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRanking;
   surveyType: TSurveyType;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -17,7 +17,7 @@ export const RankingSummary = ({
   questionSummary,
   surveyType,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: RankingSummaryProps) => {
   // sort by count and transform to array
@@ -31,7 +31,7 @@ export const RankingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">

@@ -95,7 +95,7 @@ export const organizations = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "My Product",
+      projectName: "My Project",
     },
   ],
 };

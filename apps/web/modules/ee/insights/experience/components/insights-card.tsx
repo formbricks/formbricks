@@ -8,7 +8,7 @@ import { InsightView } from "./insight-view";
 interface InsightsCardProps {
   environmentId: string;
   insightsPerPage: number;
-  productName: string;
+  projectName: string;
   statsFrom?: Date;
   documentsPerPage: number;
   locale: TUserLocale;
@@ -17,7 +17,7 @@ interface InsightsCardProps {
 export const InsightsCard = ({
   statsFrom,
   environmentId,
-  productName,
+  projectName,
   insightsPerPage: insightsLimit,
   documentsPerPage,
   locale,
@@ -26,7 +26,7 @@ export const InsightsCard = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{t("environments.experience.insights_for_product", { productName })}</CardTitle>
+        <CardTitle>{t("environments.experience.insights_for_project", { projectName })}</CardTitle>
         <CardDescription>{t("environments.experience.insights_description")}</CardDescription>
       </CardHeader>
       <CardContent>
