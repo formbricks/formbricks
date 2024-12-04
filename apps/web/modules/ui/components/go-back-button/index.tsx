@@ -12,8 +12,6 @@ export const GoBackButton = ({ url }: { url?: string }) => {
     <Button
       size="sm"
       variant="secondary"
-      icon={ArrowLeftIcon}
-      iconPlacement="start"
       onClick={() => {
         if (url) {
           router.push(url);
@@ -21,6 +19,7 @@ export const GoBackButton = ({ url }: { url?: string }) => {
         }
         router.back();
       }}>
+      <ArrowLeftIcon />
       {t("common.back")}
     </Button>
   );

@@ -95,12 +95,8 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
             />
           ))}
 
-          <Button
-            variant="minimal"
-            onClick={() => setMembersCount((count) => count + 1)}
-            type="button"
-            icon={PlusIcon}
-            iconPlacement="start">
+          <Button variant="ghost" onClick={() => setMembersCount((count) => count + 1)} type="button">
+            <PlusIcon />
             {t("setup.invite.add_another_member")}
           </Button>
 
@@ -114,7 +110,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
               disabled={isSubmitting}>
               {t("setup.invite.continue")}
             </Button>
-            <Button type="button" variant="minimal" className="flex w-80 justify-center" onClick={handleSkip}>
+            <Button type="button" variant="ghost" className="flex w-80 justify-center" onClick={handleSkip}>
               {t("setup.invite.skip")}
             </Button>
           </div>

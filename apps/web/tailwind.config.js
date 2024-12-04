@@ -40,18 +40,21 @@ module.exports = {
         focus: "var(--formbricks-focus, #1982fc)",
         error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
-        borderColor: {
-          primary: "#0f172a",
-          secondary: "var(--formbricks-border-secondary, #0f172a)",
-          disabled: "var(--formbricks-border-disabled, #ececec)",
+        primary: {
+          DEFAULT: "#0f172a",
+          foreground: "#fefefe",
         },
-        labelColor: {
-          primary: "#fefefe",
-          secondary: "#384258",
+        destructive: {
+          DEFAULT: "#FF6B6B", // A softer, coral-like red
+          foreground: "#FFF5F5",
         },
-        fill: {
-          primary: "#0f172a",
-          secondary: "#E2E8F0",
+        secondary: {
+          DEFAULT: "#f1f5f9",
+          foreground: "#0f172a",
+        },
+        accent: {
+          DEFAULT: "#f4f6f8", // light gray background
+          foreground: "#0f172a", // same as primary default for consistency
         },
       },
       keyframes: {

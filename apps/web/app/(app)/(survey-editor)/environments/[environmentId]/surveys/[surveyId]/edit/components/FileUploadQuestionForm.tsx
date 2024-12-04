@@ -11,9 +11,10 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
+import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -28,7 +29,7 @@ interface FileUploadFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isFormbricksCloud: boolean;
   locale: TUserLocale;
 }
@@ -42,7 +43,7 @@ export const FileUploadQuestionForm = ({
   project,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   isFormbricksCloud,
   locale,
 }: FileUploadFormProps): JSX.Element => {
@@ -140,7 +141,7 @@ export const FileUploadQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div ref={parent}>
@@ -157,7 +158,7 @@ export const FileUploadQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -256,7 +257,7 @@ export const FileUploadQuestionForm = ({
                     <p className="text-sm text-slate-800">{item}</p>
                     <Button
                       className="inline-flex px-0"
-                      variant="minimal"
+                      variant="ghost"
                       onClick={(e) => removeExtension(e, index)}>
                       <XCircleIcon className="h-4 w-4" />
                     </Button>

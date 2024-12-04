@@ -8,7 +8,7 @@ import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
@@ -29,7 +29,7 @@ interface SurveyEditorProps {
   project: TProject;
   environment: TEnvironment;
   actionClasses: TActionClass[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
   membershipRole?: TOrganizationRole;
@@ -52,7 +52,7 @@ export const SurveyEditor = ({
   project,
   environment,
   actionClasses,
-  attributeClasses,
+  contactAttributeKeys,
   segments,
   responseCount,
   membershipRole,
@@ -184,7 +184,7 @@ export const SurveyEditor = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               plan={plan}
               isCxMode={isCxMode}
               locale={locale}
@@ -213,12 +213,11 @@ export const SurveyEditor = ({
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               segments={segments}
               responseCount={responseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
-              isFormbricksCloud={isFormbricksCloud}
               locale={locale}
               projectPermission={projectPermission}
             />

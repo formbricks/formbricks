@@ -124,12 +124,9 @@ export const EditAPIKeys = ({
                 </div>
                 {!isReadOnly && (
                   <div className="col-span-1 text-center">
-                    <Button
-                      size="icon"
-                      variant="minimal"
-                      onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}
-                      icon={TrashIcon}
-                    />
+                    <Button size="icon" variant="ghost" onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
+                      <TrashIcon />
+                    </Button>
                   </div>
                 )}
               </div>

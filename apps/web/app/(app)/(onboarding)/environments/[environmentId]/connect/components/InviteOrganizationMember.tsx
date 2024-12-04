@@ -108,7 +108,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
               <Button
                 id="onboarding-inapp-invite-have-a-look-first"
                 className="text-slate-400"
-                variant="minimal"
+                variant="ghost"
                 onClick={(e) => {
                   e.preventDefault();
                   finishOnboarding();

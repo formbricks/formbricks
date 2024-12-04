@@ -3,6 +3,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface ConfirmationPageProps {
@@ -28,8 +29,10 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
             {t("billing_confirmation.thanks_for_upgrading")}
           </p>
         </div>
-        <Button className="w-full justify-center" href={`/environments/${environmentId}/settings/billing`}>
-          {t("billing_confirmation.back_to_billing_overview")}
+        <Button className="w-full justify-center">
+          <Link href={`/environments/${environmentId}/settings/billing`}>
+            {t("billing_confirmation.back_to_billing_overview")}
+          </Link>
         </Button>
       </div>
     </div>

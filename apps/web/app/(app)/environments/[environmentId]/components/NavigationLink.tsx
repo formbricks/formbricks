@@ -53,7 +53,7 @@ export const NavigationLink = ({
             {children}
             <span
               className={cn(
-                "ml-2 transition-opacity duration-100",
+                "ml-2 flex transition-opacity duration-100",
                 isTextVisible ? "opacity-0" : "opacity-100"
               )}>
               {linkText}

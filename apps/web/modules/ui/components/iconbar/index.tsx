@@ -1,3 +1,4 @@
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { LucideIcon } from "lucide-react";
 import { Button } from "../button";
 
@@ -25,15 +26,16 @@ export const IconBar = ({ actions }: IconBarProps) => {
         .filter((action) => action.isVisible)
         .map((action, index) => (
           <span key={`${action.tooltip}-${index}`}>
-            <Button
-              variant="minimal"
-              className="border-none hover:bg-slate-50"
-              size="icon"
-              icon={action.icon}
-              tooltip={action.tooltip}
-              onClick={action.onClick}
-              aria-label={action.tooltip}
-            />
+            <TooltipRenderer tooltipContent={action.tooltip}>
+              <Button
+                variant="ghost"
+                className="border-none hover:bg-slate-50"
+                size="icon"
+                onClick={action.onClick}
+                aria-label={action.tooltip}>
+                <action.icon />
+              </Button>
+            </TooltipRenderer>
           </span>
         ))}
     </div>

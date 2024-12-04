@@ -56,7 +56,10 @@ export const DeleteProjectRender = ({
             )}{" "}
             <strong>{t("environments.project.general.this_action_cannot_be_undone")}</strong>
           </p>
-          <Button disabled={isDeleteDisabled} variant="warn" onClick={() => setIsDeleteDialogOpen(true)}>
+          <Button
+            disabled={isDeleteDisabled}
+            variant="destructive"
+            onClick={() => setIsDeleteDialogOpen(true)}>
             {t("common.delete")}
           </Button>
         </div>

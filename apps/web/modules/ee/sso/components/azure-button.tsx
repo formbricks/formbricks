@@ -35,12 +35,11 @@ export const AzureButton = ({ inviteUrl, directRedirect = false, lastUsed }: Azu
   return (
     <Button
       type="button"
-      icon={MicrosoftIcon}
-      iconPlacement="end"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">
       {t("auth.continue_with_azure")}
+      <MicrosoftIcon />
       {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );

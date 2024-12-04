@@ -1,12 +1,13 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -36,7 +37,7 @@ interface ChoiceProps {
     updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
   ) => void;
   surveyLanguageCodes: string[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -55,7 +56,7 @@ export const QuestionOptionChoice = ({
   question,
   surveyLanguageCodes,
   updateQuestion,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: ChoiceProps) => {
   const t = useTranslations();
@@ -97,7 +98,7 @@ export const QuestionOptionChoice = ({
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
         {choice.id === "other" && (
@@ -119,39 +120,39 @@ export const QuestionOptionChoice = ({
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         )}
       </div>
       <div className="flex gap-2">
         {question.choices && question.choices.length > 2 && (
-          <Button
-            variant="secondary"
-            size="icon"
-            icon={TrashIcon}
-            iconPlacement="start"
-            tooltip="Delete choice"
-            aria-label="Delete choice"
-            onClick={(e) => {
-              e.preventDefault();
-              deleteChoice(choiceIdx);
-            }}
-          />
+          <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Delete choice"
+              onClick={(e) => {
+                e.preventDefault();
+                deleteChoice(choiceIdx);
+              }}>
+              <TrashIcon />
+            </Button>
+          </TooltipRenderer>
         )}
         {choice.id !== "other" && (
-          <Button
-            variant="secondary"
-            size="icon"
-            icon={PlusIcon}
-            iconPlacement="start"
-            tooltip="Add choice below"
-            aria-label="Add choice below"
-            onClick={(e) => {
-              e.preventDefault();
-              addChoice(choiceIdx);
-            }}
-          />
+          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Add choice below"
+              onClick={(e) => {
+                e.preventDefault();
+                addChoice(choiceIdx);
+              }}>
+              <PlusIcon />
+            </Button>
+          </TooltipRenderer>
         )}
       </div>
     </div>

@@ -162,7 +162,8 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
     isEditing && languages.length === project.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary" icon={PlusIcon} iconPlacement="start">
+      <Button onClick={onClick} size="sm" variant="secondary">
+        <PlusIcon />
         {t("environments.project.languages.add_language")}
       </Button>
     ) : null;
@@ -234,7 +235,7 @@ const EditSaveButtons: React.FC<{
       <Button onClick={onSave} size="sm">
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="minimal">
+      <Button onClick={onCancel} size="sm" variant="ghost">
         {t("common.cancel")}
       </Button>
     </div>

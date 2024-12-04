@@ -3,8 +3,8 @@ import { Button } from "@/modules/ui/components/button";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuestionSummaryHiddenFields } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -54,15 +54,15 @@ export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: Hi
             key={response.value}
             className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
             <div className="pl-4 md:pl-6">
-              {response.person ? (
+              {response.contact ? (
                 <Link
                   className="ph-no-capture group flex items-center"
-                  href={`/environments/${environment.id}/people/${response.person.id}`}>
+                  href={`/environments/${environment.id}/contacts/${response.contact.id}`}>
                   <div className="hidden md:flex">
-                    <PersonAvatar personId={response.person.id} />
+                    <PersonAvatar personId={response.contact.id} />
                   </div>
                   <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                    {getPersonIdentifier(response.person, response.personAttributes)}
+                    {getContactIdentifier(response.contact, response.contactAttributes)}
                   </p>
                 </Link>
               ) : (

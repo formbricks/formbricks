@@ -12,11 +12,10 @@ export const BackButton = () => {
     <Button
       variant="secondary"
       size="sm"
-      icon={ArrowLeftIcon}
-      iconPlacement="start"
       onClick={() => {
         router.back();
       }}>
+      <ArrowLeftIcon />
       {t("common.back")}
     </Button>
   );

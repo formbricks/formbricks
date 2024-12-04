@@ -83,10 +83,9 @@ export const ShareSurveyLink = ({
               previewUrl += "?preview=true";
             }
             window.open(previewUrl, "_blank");
-          }}
-          icon={SquareArrowOutUpRight}
-          iconPlacement="end">
+          }}>
           {t("common.preview")}
+          <SquareArrowOutUpRight />
         </Button>
         <Button
           variant="secondary"
@@ -95,10 +94,9 @@ export const ShareSurveyLink = ({
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
             toast.success(t("common.copied_to_clipboard"));
-          }}
-          icon={Copy}
-          iconPlacement="end">
+          }}>
           {t("common.copy")}
+          <Copy />
         </Button>
         {survey.singleUse?.enabled && (
           <Button

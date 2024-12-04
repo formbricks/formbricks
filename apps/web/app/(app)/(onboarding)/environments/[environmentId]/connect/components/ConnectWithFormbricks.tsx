@@ -85,13 +85,12 @@ export const ConnectWithFormbricks = ({
       </div>
       <Button
         id="finishOnboarding"
-        variant={widgetSetupCompleted ? "primary" : "minimal"}
-        onClick={handleFinishOnboarding}
-        iconPlacement="end"
-        icon={ArrowRight}>
+        variant={widgetSetupCompleted ? "default" : "ghost"}
+        onClick={handleFinishOnboarding}>
         {widgetSetupCompleted
           ? t("environments.connect.finish_onboarding")
           : t("environments.connect.i_dont_know_how_to_do_it")}
+        <ArrowRight />
       </Button>
     </div>
   );

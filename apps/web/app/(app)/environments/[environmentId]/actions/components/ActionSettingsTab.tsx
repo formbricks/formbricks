@@ -14,6 +14,7 @@ import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -214,18 +215,19 @@ export const ActionSettingsTab = ({
               {!isReadOnly && actionClass.type !== "automatic" && (
                 <Button
                   type="button"
-                  variant="warn"
+                  variant="destructive"
                   onClick={() => setOpenDeleteDialog(true)}
-                  icon={TrashIcon}
-                  iconPlacement="start"
                   className="mr-3"
                   id="deleteActionModalTrigger">
+                  <TrashIcon />
                   {t("common.delete")}
                 </Button>
               )}
 
-              <Button variant="secondary" href="https://formbricks.com/docs/actions/no-code" target="_blank">
-                {t("common.read_docs")}
+              <Button variant="secondary" asChild>
+                <Link href="https://formbricks.com/docs/actions/no-code" target="_blank">
+                  {t("common.read_docs")}
+                </Link>
               </Button>
             </div>
 

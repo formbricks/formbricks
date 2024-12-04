@@ -5,6 +5,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
@@ -29,7 +30,7 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -71,7 +72,7 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -92,7 +93,7 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: QuestionFormInputProps) => {
   const t = useTranslations();
@@ -177,7 +178,7 @@ export const QuestionFormInput = ({
           getLocalizedValue(text, usedLanguageCode),
           localSurvey,
           usedLanguageCode,
-          attributeClasses
+          contactAttributeKeys
         )
       : []
   );
@@ -205,7 +206,7 @@ export const QuestionFormInput = ({
             getLocalizedValue(text, usedLanguageCode),
             localSurvey,
             usedLanguageCode,
-            attributeClasses
+            contactAttributeKeys
           )
         : []
     );
@@ -234,7 +235,7 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
         usedLanguageCode
       ];
       filterRecallItems(remainingText);
@@ -411,13 +412,13 @@ export const QuestionFormInput = ({
         localSurvey,
         false,
         usedLanguageCode,
-        attributeClasses
+        contactAttributeKeys
       );
 
       setText(modifiedHeadlineWithName);
       setShowFallbackInput(true);
     },
-    [attributeClasses, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
+    [contactAttributeKeys, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
   );
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
@@ -503,7 +504,7 @@ export const QuestionFormInput = ({
       localSurvey,
       false,
       usedLanguageCode,
-      attributeClasses
+      contactAttributeKeys
     );
 
     setText(valueTI18nString);
@@ -585,7 +586,7 @@ export const QuestionFormInput = ({
                 aria-label={label}
                 autoComplete={showRecallItemSelect ? "off" : "on"}
                 value={
-                  recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+                  recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
                     usedLanguageCode
                   ]
                 }
@@ -619,36 +620,36 @@ export const QuestionFormInput = ({
               )}
             </div>
             {id === "headline" && !isWelcomeCard && (
-              <Button
-                variant="secondary"
-                size="icon"
-                icon={ImagePlusIcon}
-                iconPlacement="start"
-                tooltip={t("environments.surveys.edit.add_photo_or_video")}
-                aria-label="Toggle image uploader"
-                className="ml-2"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setShowImageUploader((prev) => !prev);
-                }}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Toggle image uploader"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowImageUploader((prev) => !prev);
+                  }}>
+                  <ImagePlusIcon />
+                </Button>
+              </TooltipRenderer>
             )}
             {id === "subheader" && question && question.subheader !== undefined && (
-              <Button
-                variant="secondary"
-                size="icon"
-                icon={TrashIcon}
-                iconPlacement="start"
-                tooltip="Remove description"
-                aria-label="Remove description"
-                className="ml-2"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (updateQuestion) {
-                    updateQuestion(questionIdx, { subheader: undefined });
-                  }
-                }}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Remove description"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (updateQuestion) {
+                      updateQuestion(questionIdx, { subheader: undefined });
+                    }
+                  }}>
+                  <TrashIcon />
+                </Button>
+              </TooltipRenderer>
             )}
           </div>
         </div>
@@ -661,14 +662,14 @@ export const QuestionFormInput = ({
             recallItems={recallItems}
             selectedLanguageCode={usedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         )}
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-slate-500">
           <strong>{t("environments.project.languages.translate")}:</strong>{" "}
-          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
+          {recallToHeadline(value, localSurvey, false, "default", contactAttributeKeys)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (

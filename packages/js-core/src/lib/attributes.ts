@@ -1,5 +1,6 @@
 import { FormbricksAPI } from "@formbricks/api";
 import { TAttributes } from "@formbricks/types/attributes";
+import { ForbiddenError } from "@formbricks/types/errors";
 import { Config } from "./config";
 import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
@@ -17,8 +18,9 @@ export const updateAttribute = async (
     {
       changed: boolean;
       message: string;
+      details?: Record<string, string>;
     },
-    Error | NetworkError
+    NetworkError | ForbiddenError
   >
 > => {
   const { apiHost, environmentId } = config.get();
@@ -29,7 +31,7 @@ export const updateAttribute = async (
       code: "network_error",
       status: 500,
       message: "Missing userId",
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      url: `${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`,
       responseMessage: "Missing userId",
     });
   }
@@ -53,22 +55,33 @@ export const updateAttribute = async (
         },
       };
     }
+
     return err({
-      code: "network_error",
-      status: 500,
-      message: res.error.message ?? `Error updating person with userId ${userId}`,
-      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      code: (res.error as ForbiddenError).code ?? "network_error",
+      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
+      message: `Error updating person with userId ${userId}`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`),
       responseMessage: res.error.message,
+    });
+  }
+
+  if (res.data.details) {
+    Object.entries(res.data.details).forEach(([key, value]) => {
+      logger.error(`${key}: ${value}`);
     });
   }
 
   if (res.data.changed) {
     logger.debug("Attribute updated in Formbricks");
+
     return {
       ok: true,
       value: {
         changed: true,
         message: "Attribute updated in Formbricks",
+        ...(res.data.details && {
+          details: res.data.details,
+        }),
       },
     };
   }
@@ -78,6 +91,9 @@ export const updateAttribute = async (
     value: {
       changed: false,
       message: "Attribute not updated in Formbricks",
+      ...(res.data.details && {
+        details: res.data.details,
+      }),
     },
   };
 };
@@ -87,7 +103,7 @@ export const updateAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TAttributes
-): Promise<Result<TAttributes, NetworkError>> => {
+): Promise<Result<TAttributes, NetworkError | ForbiddenError>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
@@ -107,6 +123,12 @@ export const updateAttributes = async (
   const res = await api.client.attribute.update({ userId, attributes: updatedAttributes });
 
   if (res.ok) {
+    if (res.data.details) {
+      Object.entries(res.data.details).forEach(([key, value]) => {
+        logger.debug(`${key}: ${value}`);
+      });
+    }
+
     return ok(updatedAttributes);
   } else {
     // @ts-expect-error
@@ -116,10 +138,10 @@ export const updateAttributes = async (
     }
 
     return err({
-      code: "network_error",
-      status: 500,
+      code: (res.error as ForbiddenError).code ?? "network_error",
+      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
       message: `Error updating person with userId ${userId}`,
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
       responseMessage: res.error.message,
     });
   }
@@ -172,6 +194,11 @@ export const setAttributeInApp = async (
     }
 
     return okVoid();
+  } else {
+    const error = result.error;
+    if (error && error.code === "forbidden") {
+      logger.error(`Authorization error: ${error.responseMessage}`);
+    }
   }
 
   return err(result.error as NetworkError);

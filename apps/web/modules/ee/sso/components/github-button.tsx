@@ -26,12 +26,11 @@ export const GithubButton = ({ inviteUrl, lastUsed }: GithubButtonProps) => {
   return (
     <Button
       type="button"
-      icon={GithubIcon}
-      iconPlacement="end"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">
       {t("auth.continue_with_github")}
+      <GithubIcon />
       {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );

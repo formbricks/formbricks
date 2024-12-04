@@ -476,7 +476,6 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
                   return (
                     <DropdownMenuItem key={key}>
                       <Button
-                        color="minimal"
                         type="button"
                         onClick={() => format(key)}
                         className={cn(
@@ -499,41 +498,35 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
         <>
           {!props.excludedToolbarItems?.includes("bold") && (
             <Button
-              color="minimal"
-              variant="minimal"
+              variant="ghost"
               type="button"
-              icon={Bold}
-              iconPlacement="start"
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
               }}
-              className={isBold ? "bg-subtle active-button" : "inactive-button"}
-            />
+              className={isBold ? "bg-subtle active-button" : "inactive-button"}>
+              <Bold />
+            </Button>
           )}
           {!props.excludedToolbarItems?.includes("italic") && (
             <Button
-              color="minimal"
-              variant="minimal"
+              variant="ghost"
               type="button"
-              icon={Italic}
-              iconPlacement="start"
               onClick={() => {
                 editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
               }}
-              className={isItalic ? "bg-subtle active-button" : "inactive-button"}
-            />
+              className={isItalic ? "bg-subtle active-button" : "inactive-button"}>
+              <Italic />
+            </Button>
           )}
           {!props.excludedToolbarItems?.includes("link") && (
             <>
               <Button
-                color="minimal"
-                variant="minimal"
+                variant="ghost"
                 type="button"
-                icon={Link}
-                iconPlacement="start"
                 onClick={insertLink}
-                className={isLink ? "bg-subtle active-button" : "inactive-button"}
-              />
+                className={isLink ? "bg-subtle active-button" : "inactive-button"}>
+                <Link />
+              </Button>
               {isLink &&
                 createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}{" "}
             </>

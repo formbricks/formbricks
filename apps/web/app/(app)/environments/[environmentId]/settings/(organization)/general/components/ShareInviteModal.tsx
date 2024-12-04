@@ -63,10 +63,9 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
                 toast.success(t("common.copied_to_clipboard"));
               }}
               title={t("environments.settings.general.copy_invite_link_to_clipboard")}
-              aria-label="Copy invite link to clipboard"
-              icon={CopyIcon}
-              iconPlacement="end">
+              aria-label="Copy invite link to clipboard">
               {t("common.copy_link")}
+              <CopyIcon />
             </Button>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -319,11 +319,10 @@ export const SurveyMenuBar = ({
               size="sm"
               variant="secondary"
               className="h-full"
-              icon={ArrowLeftIcon}
-              iconPlacement="start"
               onClick={() => {
                 handleBack();
               }}>
+              <ArrowLeftIcon />
               {t("common.back")}
             </Button>
           )}
@@ -391,9 +390,9 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
-              }}
-              icon={SettingsIcon}>
+              }}>
               {t("environments.surveys.edit.continue_to_settings")}
+              <SettingsIcon />
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -416,7 +415,7 @@ export const SurveyMenuBar = ({
           mainText={t("environments.surveys.edit.unsaved_changes_warning")}
           confirmBtnLabel={t("common.save")}
           declineBtnLabel={t("common.discard")}
-          declineBtnVariant="warn"
+          declineBtnVariant="destructive"
           onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();

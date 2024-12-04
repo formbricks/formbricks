@@ -3,6 +3,7 @@ import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -46,13 +47,15 @@ const Page = async (props) => {
         <ContentLayout
           headline={t("auth.invite.happy_to_have_you")}
           description={t("auth.invite.happy_to_have_you_description")}>
-          <Button
-            variant="secondary"
-            href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-            {t("auth.invite.create_account")}
+          <Button variant="secondary" asChild>
+            <Link href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
+              {t("auth.invite.create_account")}
+            </Link>
           </Button>
-          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
-            {t("auth.invite.login")}
+          <Button asChild>
+            <Link href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
+              {t("auth.invite.login")}
+            </Link>
           </Button>
         </ContentLayout>
       );
@@ -61,10 +64,12 @@ const Page = async (props) => {
         <ContentLayout
           headline={t("auth.invite.email_does_not_match")}
           description={t("auth.invite.email_does_not_match_description")}>
-          <Button variant="secondary" href="/support">
-            {t("auth.invite.contact_support")}
+          <Button variant="secondary" asChild>
+            <Link href="/support">{t("auth.invite.contact_support")}</Link>
           </Button>
-          <Button href="/">{t("auth.invite.go_to_app")}</Button>
+          <Button asChild>
+            <Link href="/">{t("auth.invite.go_to_app")}</Link>
+          </Button>
         </ContentLayout>
       );
     } else {
@@ -98,7 +103,9 @@ const Page = async (props) => {
         <ContentLayout
           headline={t("auth.invite.welcome_to_organization")}
           description={t("auth.invite.welcome_to_organization_description")}>
-          <Button href="/">{t("auth.invite.go_to_app")}</Button>
+          <Button asChild>
+            <Link href="/">{t("auth.invite.go_to_app")}</Link>
+          </Button>
         </ContentLayout>
       );
     }

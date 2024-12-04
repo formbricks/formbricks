@@ -72,7 +72,7 @@ export const getSurveyFilterDataAction = authenticatedActionClient
       ],
     });
 
-    const [tags, { personAttributes: attributes, meta, hiddenFields }] = await Promise.all([
+    const [tags, { contactAttributes: attributes, meta, hiddenFields }] = await Promise.all([
       getTagsByEnvironmentId(survey.environmentId),
       getResponseFilteringValues(parsedInput.surveyId),
     ]);

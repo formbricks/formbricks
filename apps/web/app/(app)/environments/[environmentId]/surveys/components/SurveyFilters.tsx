@@ -167,10 +167,9 @@ export const SurveyFilters = ({
               setSurveyFilters(initialFilters);
               localStorage.removeItem("surveyFilters");
             }}
-            className="h-8"
-            icon={X}
-            iconPlacement="end">
+            className="h-8">
             {t("common.clear_filters")}
+            <X />
           </Button>
         )}
       </div>

@@ -13,7 +13,7 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["outline", "primary", "secondary", "minimal", "warn", "link"],
+      options: ["outline", "default", "secondary", "ghost", "destructive", "link"],
     },
     size: { control: "select", options: ["sm", "lg", "fab", "icon"] },
   },
@@ -28,7 +28,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     children: "Button",
-    variant: "primary",
+    variant: "default",
   },
 };
 
@@ -42,21 +42,21 @@ export const Secondary: Story = {
 export const Minimal: Story = {
   args: {
     children: "Button",
-    variant: "minimal",
+    variant: "ghost",
   },
 };
 
 export const Warn: Story = {
   args: {
     children: "Button",
-    variant: "warn",
+    variant: "destructive",
   },
 };
 
 export const Loading: Story = {
   args: {
     children: "Button",
-    variant: "primary",
+    variant: "default",
     loading: true,
   },
 };

@@ -137,7 +137,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
 
             <div>
               <Button
-                variant="warn"
+                variant="destructive"
                 size="sm"
                 className="font-medium text-slate-50 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent"
                 onClick={() => setOpenDeleteTagDialog(true)}>

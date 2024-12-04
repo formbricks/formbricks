@@ -5,6 +5,7 @@ import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -115,13 +116,10 @@ export const OnboardingSetupInstructions = ({
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
               {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
             </CodeBlock>
-            <Button
-              id="onboarding-inapp-connect-read-npm-docs"
-              className="mt-3"
-              variant="secondary"
-              href={`https://formbricks.com/docs/${channel}-surveys/framework-guides`}
-              target="_blank">
-              {t("common.read_docs")}
+            <Button id="onboarding-inapp-connect-read-npm-docs" className="mt-3" variant="secondary" asChild>
+              <Link href={`https://formbricks.com/docs/${channel}-surveys/framework-guides`} target="_blank">
+                {t("common.read_docs")}
+              </Link>
             </Button>
           </div>
         ) : activeTab === "html" ? (
@@ -138,7 +136,7 @@ export const OnboardingSetupInstructions = ({
             <div className="mt-4 flex justify-between space-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
-                variant={widgetSetupCompleted ? "secondary" : "primary"}
+                variant={widgetSetupCompleted ? "secondary" : "default"}
                 onClick={() => {
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys
@@ -147,12 +145,13 @@ export const OnboardingSetupInstructions = ({
                 }}>
                 {t("common.copy_code")}
               </Button>
-              <Button
-                id="onboarding-inapp-connect-step-by-step-manual"
-                variant="secondary"
-                href={`https://formbricks.com/docs/${channel}-surveys/framework-guides#html`}
-                target="_blank">
-                {t("common.step_by_step_manual")}
+
+              <Button id="onboarding-inapp-connect-step-by-step-manual" variant="secondary" asChild>
+                <Link
+                  href={`https://formbricks.com/docs/${channel}-surveys/framework-guides#html`}
+                  target="_blank">
+                  {t("common.step_by_step_manual")}
+                </Link>
               </Button>
             </div>
           </div>

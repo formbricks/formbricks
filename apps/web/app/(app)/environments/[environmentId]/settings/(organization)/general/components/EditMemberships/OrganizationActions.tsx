@@ -77,13 +77,9 @@ export const OrganizationActions = ({
     <>
       <div className="mb-4 flex justify-end space-x-2 text-right">
         {role !== "owner" && isMultiOrgEnabled && (
-          <Button
-            icon={XIcon}
-            iconPlacement="end"
-            variant="secondary"
-            size="sm"
-            onClick={() => setLeaveOrganizationModalOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setLeaveOrganizationModalOpen(true)}>
             {t("environments.settings.general.leave_organization")}
+            <XIcon />
           </Button>
         )}
         {isMultiOrgEnabled && (

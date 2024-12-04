@@ -61,10 +61,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
               navigator.clipboard.writeText(emailHtml);
             }}
-            className="shrink-0"
-            icon={CopyIcon}
-            iconPlacement="end">
+            className="shrink-0">
             {t("common.copy_code")}
+            <CopyIcon />
           </Button>
         ) : (
           <>
@@ -73,10 +72,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               title="send preview email"
               aria-label="send preview email"
               onClick={() => sendPreviewEmail()}
-              icon={MailIcon}
-              iconPlacement="end"
               className="shrink-0">
               {t("environments.surveys.summary.send_preview")}
+              <MailIcon />
             </Button>
           </>
         )}
@@ -86,12 +84,11 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
-          icon={Code2Icon}
-          iconPlacement="end"
           className="shrink-0">
           {showEmbed
             ? t("environments.surveys.summary.hide_embed_code")
             : t("environments.surveys.summary.view_embed_code")}
+          <Code2Icon />
         </Button>
       </div>
       {showEmbed ? (
