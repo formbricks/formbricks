@@ -11,6 +11,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Table } from "@tanstack/react-table";
 import { SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { DataTableSettingsModalItem } from "./data-table-settings-modal-item";
 
@@ -40,6 +41,8 @@ export const DataTableSettingsModal = <T,>({
     })
   );
 
+  const tableColumns = useMemo(() => table.getAllColumns(), [table]);
+
   return (
     <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={true}>
       <div className="flex h-full flex-col rounded-lg">
@@ -65,7 +68,7 @@ export const DataTableSettingsModal = <T,>({
             <SortableContext items={columnOrder} strategy={verticalListSortingStrategy}>
               {columnOrder.map((columnId) => {
                 if (columnId === "select" || columnId === "createdAt") return;
-                const column = table.getAllColumns().find((column) => column.id === columnId);
+                const column = tableColumns.find((column) => column.id === columnId);
                 if (!column) return null;
                 return <DataTableSettingsModalItem column={column} key={column.id} survey={survey} />;
               })}

@@ -81,7 +81,14 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true, projects: 3, twoFactorAuth: true, sso: true, whitelabel: true },
+        features: {
+          isMultiOrgEnabled: true,
+          twoFactorAuth: true,
+          sso: true,
+          contacts: true,
+          projects: 3,
+          whitelabel: true,
+        },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -144,6 +151,7 @@ export const getEnterpriseLicense = async (): Promise<{
           twoFactorAuth: false,
           sso: false,
           whitelabel: true,
+          contacts: false,
         },
         lastChecked: new Date(),
       };
@@ -285,16 +293,6 @@ export const getRoleManagementPermission = async (organization: TOrganization): 
   return false;
 };
 
-export const getAdvancedTargetingPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD)
-    return (
-      organization.billing.plan === PROJECT_FEATURE_KEYS.SCALE ||
-      organization.billing.plan === PROJECT_FEATURE_KEYS.ENTERPRISE
-    );
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
-  else return false;
-};
-
 export const getBiggerUploadFileSizePermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
@@ -323,6 +321,16 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.isMultiOrgEnabled;
+};
+
+export const getIsContactsEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.contacts : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.contacts;
 };
 
 export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {

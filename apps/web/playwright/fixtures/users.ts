@@ -91,6 +91,16 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                                   },
                                 ],
                               },
+                              attributeKeys: {
+                                create: [
+                                  {
+                                    name: "userId",
+                                    key: "userId",
+                                    isUnique: true,
+                                    type: "default",
+                                  },
+                                ],
+                              },
                             },
                             {
                               type: "production",
@@ -100,6 +110,16 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                                     name: "New Session",
                                     description: "Gets fired when a new session is created",
                                     type: "automatic",
+                                  },
+                                ],
+                              },
+                              attributeKeys: {
+                                create: [
+                                  {
+                                    name: "userId",
+                                    key: "userId",
+                                    isUnique: true,
+                                    type: "default",
                                   },
                                 ],
                               },

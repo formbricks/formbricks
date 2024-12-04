@@ -1,6 +1,6 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -19,7 +19,7 @@ interface QuestionsDraggableProps {
   setSelectedLanguageCode: (language: string) => void;
   invalidQuestions: string[] | null;
   internalQuestionIdMap: Record<string, string>;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -39,7 +39,7 @@ export const QuestionsDroppable = ({
   setSelectedLanguageCode,
   updateQuestion,
   internalQuestionIdMap,
-  attributeClasses,
+  contactAttributeKeys,
   addQuestion,
   isFormbricksCloud,
   isCxMode,
@@ -67,7 +67,7 @@ export const QuestionsDroppable = ({
             setActiveQuestionId={setActiveQuestionId}
             lastQuestion={questionIdx === localSurvey.questions.length - 1}
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             addQuestion={addQuestion}
             isFormbricksCloud={isFormbricksCloud}
             isCxMode={isCxMode}

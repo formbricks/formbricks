@@ -5,7 +5,7 @@ import { type TActionClassNoCodeConfig } from "../types/action-classes";
 import { type TIntegrationConfig } from "../types/integration";
 import { type TOrganizationBilling } from "../types/organizations";
 import { type TProjectConfig, type TProjectStyling } from "../types/project";
-import { type TResponseData, type TResponseMeta, type TResponsePersonAttributes } from "../types/responses";
+import { type TResponseContactAttributes, type TResponseData, type TResponseMeta } from "../types/responses";
 import { type TBaseFilters } from "../types/segment";
 import {
   type TSurveyClosedMessage,
@@ -18,7 +18,7 @@ import {
   type TSurveyVariables,
   type TSurveyWelcomeCard,
 } from "../types/surveys/types";
-import { type TUserLocale, type TUserNotificationSettings } from "../types/user";
+import type { TUserLocale, TUserNotificationSettings } from "../types/user";
 import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "./types/survey-follow-up";
 
 declare global {
@@ -29,7 +29,7 @@ declare global {
     export type ProjectConfig = TProjectConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
-    export type ResponsePersonAttributes = TResponsePersonAttributes;
+    export type ResponseContactAttributes = TResponseContactAttributes;
     export type SurveyWelcomeCard = TSurveyWelcomeCard;
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyEnding = TSurveyEnding;

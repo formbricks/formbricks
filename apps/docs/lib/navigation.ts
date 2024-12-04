@@ -32,7 +32,6 @@ export const navigation: Array<NavGroup> = [
         title: "Features",
         children: [
           { title: "Data Prefilling", href: "/link-surveys/data-prefilling" },
-          { title: "Identify Users", href: "/link-surveys/user-identification" },
           { title: "Single Use Links", href: "/link-surveys/single-use-links" },
           { title: "Source Tracking", href: "/link-surveys/source-tracking" },
           { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },

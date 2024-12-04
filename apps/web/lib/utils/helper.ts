@@ -1,14 +1,13 @@
 import {
   getActionClass,
   getApiKey,
-  getAttributeClass,
+  getContact,
   getDocument,
   getEnvironment,
   getInsight,
   getIntegration,
   getInvite,
   getLanguage,
-  getPerson,
   getProject,
   getResponse,
   getResponseNote,
@@ -78,13 +77,22 @@ export const getOrganizationIdFromResponseId = async (responseId: string) => {
   return await getOrganizationIdFromSurveyId(response.surveyId);
 };
 
-export const getOrganizationIdFromPersonId = async (personId: string) => {
-  const person = await getPerson(personId);
-  if (!person) {
-    throw new ResourceNotFoundError("person", personId);
+export const getOrganizationIdFromContactId = async (contactId: string) => {
+  const contact = await getContact(contactId);
+  if (!contact) {
+    throw new ResourceNotFoundError("contact", contactId);
   }
 
-  return await getOrganizationIdFromEnvironmentId(person.environmentId);
+  return await getOrganizationIdFromEnvironmentId(contact.environmentId);
+};
+
+export const getProjectIdFromContactId = async (contactId: string) => {
+  const contact = await getContact(contactId);
+  if (!contact) {
+    throw new ResourceNotFoundError("contact", contactId);
+  }
+
+  return await getProjectIdFromEnvironmentId(contact.environmentId);
 };
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
@@ -103,15 +111,6 @@ export const getOrganizationIdFromResponseNoteId = async (responseNoteId: string
   }
 
   return await getOrganizationIdFromResponseId(responseNote.responseId);
-};
-
-export const getOrganizationIdFromAttributeClassId = async (attributeClassId: string) => {
-  const attributeClass = await getAttributeClass(attributeClassId);
-  if (!attributeClass) {
-    throw new ResourceNotFoundError("attributeClass", attributeClassId);
-  }
-
-  return await getOrganizationIdFromEnvironmentId(attributeClass.environmentId);
 };
 
 export const getOrganizationIdFromSegmentId = async (segmentId: string) => {
@@ -295,13 +294,13 @@ export const getProjectIdFromResponseNoteId = async (responseNoteId: string) => 
   return await getProjectIdFromResponseId(responseNote.responseId);
 };
 
-export const getProjectIdFromPersonId = async (personId: string) => {
-  const person = await getPerson(personId);
-  if (!person) {
-    throw new ResourceNotFoundError("person", personId);
+export const getProductIdFromContactId = async (contactId: string) => {
+  const contact = await getContact(contactId);
+  if (!contact) {
+    throw new ResourceNotFoundError("contact", contactId);
   }
 
-  return await getProjectIdFromEnvironmentId(person.environmentId);
+  return await getProjectIdFromEnvironmentId(contact.environmentId);
 };
 
 export const getProjectIdFromDocumentId = async (documentId: string) => {
@@ -366,4 +365,15 @@ export const getEnvironmentIdFromTagId = async (tagId: string) => {
   }
 
   return tag.environmentId;
+};
+
+export const isStringMatch = (query: string, value: string): boolean => {
+  // lowercase both query and value
+  // replace all spaces with empty string
+  // replace all underscores with empty string
+  // replace all dashes with empty string
+  const queryModified = query.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
+  const valueModified = value.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
+
+  return valueModified.includes(queryModified);
 };

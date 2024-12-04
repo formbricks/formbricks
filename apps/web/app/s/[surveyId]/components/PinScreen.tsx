@@ -8,7 +8,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -16,7 +16,6 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 interface PinScreenProps {
   surveyId: string;
   project: TProject;
-  userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -26,7 +25,7 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   locale: string;
   isPreview: boolean;
@@ -38,7 +37,6 @@ export const PinScreen = (props: PinScreenProps) => {
     project,
     webAppUrl,
     emailVerificationStatus,
-    userId,
     singleUseId,
     singleUseResponse,
     IMPRINT_URL,
@@ -46,7 +44,7 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
-    attributeClasses,
+    contactAttributeKeys,
     isEmbed,
     locale,
     isPreview,
@@ -124,14 +122,13 @@ export const PinScreen = (props: PinScreenProps) => {
     <LinkSurvey
       survey={survey}
       project={project}
-      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

@@ -1,8 +1,8 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
-import { ZAttributes } from "../attributes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
+import { ZContactAttributes } from "../contact-attribute";
 import { ZInsight } from "../insights";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
@@ -2238,13 +2238,13 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
   insights: z.array(ZInsight),
@@ -2267,13 +2267,13 @@ export const ZSurveyQuestionSummaryMultipleChoice = z.object({
         .array(
           z.object({
             value: z.string(),
-            person: z
+            contact: z
               .object({
                 id: ZId,
                 userId: z.string(),
               })
               .nullable(),
-            personAttributes: ZAttributes.nullable(),
+            contactAttributes: ZContactAttributes.nullable(),
           })
         )
         .optional(),
@@ -2385,13 +2385,13 @@ export const ZSurveyQuestionSummaryDate = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.string(),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
 });
@@ -2407,13 +2407,13 @@ export const ZSurveyQuestionSummaryFileUpload = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
 });
@@ -2459,13 +2459,13 @@ export const ZSurveyQuestionSummaryHiddenFields = z.object({
     z.object({
       updatedAt: z.date(),
       value: z.string(),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
 });
@@ -2481,13 +2481,13 @@ export const ZSurveyQuestionSummaryAddress = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
 });
@@ -2503,13 +2503,13 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
       id: z.string(),
       updatedAt: z.date(),
       value: z.array(z.string()),
-      person: z
+      contact: z
         .object({
           id: ZId,
           userId: z.string(),
         })
         .nullable(),
-      personAttributes: ZAttributes.nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
     })
   ),
 });
@@ -2529,13 +2529,13 @@ export const ZSurveyQuestionSummaryRanking = z.object({
         .array(
           z.object({
             value: z.string(),
-            person: z
+            contact: z
               .object({
                 id: ZId,
                 userId: z.string(),
               })
               .nullable(),
-            personAttributes: ZAttributes.nullable(),
+            contactAttributes: ZContactAttributes.nullable(),
           })
         )
         .optional(),

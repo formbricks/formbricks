@@ -308,8 +308,8 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
-              personAttributes: response.personAttributes,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
             });
           }
         });
@@ -366,8 +366,8 @@ export const getQuestionSummary = async (
                 } else if (isOthersEnabled) {
                   otherValues.push({
                     value,
-                    person: response.person,
-                    personAttributes: response.personAttributes,
+                    contact: response.contact,
+                    contactAttributes: response.contactAttributes,
                   });
                 }
                 hasValidAnswer = true;
@@ -381,8 +381,8 @@ export const getQuestionSummary = async (
               } else if (isOthersEnabled) {
                 otherValues.push({
                   value: answer,
-                  person: response.person,
-                  personAttributes: response.personAttributes,
+                  contact: response.contact,
+                  contactAttributes: response.contactAttributes,
                 });
               }
               hasValidAnswer = true;
@@ -650,8 +650,8 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
-              personAttributes: response.personAttributes,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
             });
           }
         });
@@ -675,8 +675,8 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
-              personAttributes: response.personAttributes,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
             });
           }
         });
@@ -791,8 +791,8 @@ export const getQuestionSummary = async (
               id: response.id,
               updatedAt: response.updatedAt,
               value: answer,
-              person: response.person,
-              personAttributes: response.personAttributes,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
             });
           }
         });
@@ -868,8 +868,8 @@ export const getQuestionSummary = async (
         values.push({
           updatedAt: response.updatedAt,
           value: answer,
-          person: response.person,
-          personAttributes: response.personAttributes,
+          contact: response.contact,
+          contactAttributes: response.contactAttributes,
         });
       }
     });

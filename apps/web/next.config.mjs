@@ -239,6 +239,26 @@ const nextConfig = {
         source: "/api/v1/client/:environmentId/app/people/:userId",
         destination: "/api/v1/client/:environmentId/identify/people/:userId",
       },
+      {
+        source: "/api/v1/client/:environmentId/identify/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/contacts/:userId",
+      },
+      {
+        source: "/api/v1/client/:environmentId/people/:userId/attributes",
+        destination: "/api/v1/client/:environmentId/contacts/:userId/attributes",
+      },
+      {
+        source: "/api/v1/management/people/:id*",
+        destination: "/api/v1/management/contacts/:id*",
+      },
+      {
+        source: "/api/v1/management/attribute-classes",
+        destination: "/api/v1/management/contact-attribute-keys",
+      },
+      {
+        source: "/api/v1/management/attribute-classes/:id*",
+        destination: "/api/v1/management/contact-attribute-keys/:id*",
+      },
     ];
   },
   env: {
@@ -255,6 +275,7 @@ if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
 if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+    bodySizeLimit: "2mb",
   };
 }
 
