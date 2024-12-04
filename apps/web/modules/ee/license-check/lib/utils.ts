@@ -266,7 +266,7 @@ export const getSurveyFollowUpsPermission = async (organization: TOrganization):
 export const getWhitelabelPermission = async (organization: TOrganization): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.whitelabel : false;
+    return previousResult?.features?.whitelabel ?? false;
   }
 
   if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {

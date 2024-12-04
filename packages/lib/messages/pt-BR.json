@@ -885,7 +885,7 @@
         "app_survey_placement": "Posicionamento da Pesquisa no App",
         "app_survey_placement_settings_description": "Mude onde as pesquisas serão exibidas no seu app ou site.",
         "centered_modal_overlay_color": "Cor de sobreposição modal centralizada",
-        "elimiante_branding_with_whitelabel": "Elimine a marca Formbricks e ative opções adicionais de personalização de marca branca.",
+        "eliminate_branding_with_whitelabel": "Elimine a marca Formbricks e ative opções adicionais de personalização de marca branca.",
         "enable_custom_styling": "Ativar estilo personalizado",
         "enable_custom_styling_description": "Permitir que os usuários alterem esse tema no editor de pesquisa.",
         "failed_to_remove_logo": "Falha ao remover o logo",

@@ -58,7 +58,7 @@ export const BrandingSettingsCard = async ({
         <EmptyContent
           icon={<FolderIcon className="h-6 w-6 text-slate-900" />}
           title={t("environments.project.look.remove_branding_with_a_higher_plan")}
-          description={t("environments.project.look.elimiante_branding_with_whitelabel")}
+          description={t("environments.project.look.eliminate_branding_with_whitelabel")}
           buttons={buttons}
         />
       )}

@@ -885,7 +885,7 @@
         "app_survey_placement": "App Survey Placement",
         "app_survey_placement_settings_description": "Change where surveys will be shown in your web app or website.",
         "centered_modal_overlay_color": "Centered modal overlay color",
-        "elimiante_branding_with_whitelabel": "Eliminate Formbricks branding and enable additional white-label customization options.",
+        "eliminate_branding_with_whitelabel": "Eliminate Formbricks branding and enable additional white-label customization options.",
         "enable_custom_styling": "Enable custom styling",
         "enable_custom_styling_description": "Allow users to override this theme in the survey editor.",
         "failed_to_remove_logo": "Failed to remove the logo",
