@@ -7,7 +7,7 @@ import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import {
@@ -21,7 +21,7 @@ import {
   SmilingFaceWithSmilingEyes,
   TiredFace,
   WearyFace,
-} from "../general/mileys";
+} from "../general/smileys";
 import { Subheader } from "../general/subheader";
 
 interface RatingQuestionProps {

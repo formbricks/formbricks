@@ -3,7 +3,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
 import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
 import { Headline } from "./headline";
@@ -96,11 +96,11 @@ export function WelcomeCard({
         return "less than 1 minute";
       }
       // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
-      return `less than ${minutes + 1} minutes`;
+      return `less than ${(minutes + 1).toString()} minutes`;
 
     }
     // If there are no remaining seconds, just return the number of minutes
-    return `${minutes} minutes`;
+    return `${minutes.toString()} minutes`;
   };
 
   const timeToFinish = survey.welcomeCard.timeToFinish;

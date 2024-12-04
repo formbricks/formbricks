@@ -5,7 +5,7 @@ import { type TResponseData, type TResponseTtc } from "@formbricks/types/respons
 import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Headline } from "@/components/general/headline";
 import { SubmitButton } from "@/components/buttons/submit-button";

@@ -17,8 +17,8 @@ import { QuestionConditional } from "@/components/general/question-conditional";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
 import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
-import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
-import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
+import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
+import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 

@@ -13,7 +13,7 @@ export function RedirectCountDown({ redirectUrl, isRedirectDisabled }: RedirectC
   useEffect(() => {
     let interval: NodeJS.Timeout | undefined;
     if (redirectUrl) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setTimeRemaining((prevTime) => {
           if (prevTime <= 0) {
             clearInterval(interval);

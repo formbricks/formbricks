@@ -17,10 +17,12 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
 
   const calculateProgress = useCallback(
     (index: number, questionsLength: number) => {
-      if (questionsLength === 0) return 0;
-      if (index === -1) index = 0;
+      let idx = index;
 
-      const elementIdx = calculateElementIdx(survey, index);
+      if (questionsLength === 0) return 0;
+      if (index === -1) idx = 0;
+
+      const elementIdx = calculateElementIdx(survey, idx);
       return elementIdx / questionsLength;
     },
     [survey]

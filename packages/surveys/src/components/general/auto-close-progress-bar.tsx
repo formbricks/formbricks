@@ -9,7 +9,7 @@ export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarP
         key={autoCloseTimeout}
         className="fb-bg-brand fb-z-20 fb-h-2 fb-rounded-full"
         style={{
-          animation: `shrink-width-to-zero ${autoCloseTimeout}s linear forwards`,
+          animation: `shrink-width-to-zero ${autoCloseTimeout.toString()}s linear forwards`,
         }} />
     </div>
   );

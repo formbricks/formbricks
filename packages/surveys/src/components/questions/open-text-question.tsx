@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface OpenTextQuestionProps {

@@ -8,7 +8,7 @@ import { CalEmbed } from "@/components/general/cal-embed";
 import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CalQuestionProps {

@@ -7,7 +7,7 @@ import { SubmitButton } from "@/components/buttons/submit-button";
 import { Headline } from "@/components/general/headline";
 import { HtmlBody } from "@/components/general/html-body";
 import { QuestionMedia } from "@/components/general/question-media";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface CTAQuestionProps {

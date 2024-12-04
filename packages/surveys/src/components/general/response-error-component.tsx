@@ -1,7 +1,7 @@
-import { processResponseData }@/components/buttons / submit - button;
+import { processResponseData } from "@formbricks/lib/responses";
 import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
+import { SubmitButton } from "@/components/buttons/submit-button";
 
 interface ResponseErrorComponentProps {
   questions: TSurveyQuestion[];

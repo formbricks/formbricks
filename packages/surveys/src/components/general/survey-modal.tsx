@@ -1,6 +1,6 @@
 import { useState } from "preact/hooks";
 import { type SurveyModalProps } from "@formbricks/types/formbricks-surveys";
-import { Modal } from "@/components/wrappers/Modal";
+import { Modal } from "@/components/wrappers/modal";
 import { Survey } from "./survey";
 
 export function SurveyModal({
@@ -34,7 +34,7 @@ export function SurveyModal({
     }, 1000); // wait for animation to finish}
   };
 
-  const highlightBorderColor = styling.highlightBorderColor?.light || null;
+  const highlightBorderColor = styling.highlightBorderColor?.light ?? null;
 
   return (
     <div id="fbjs" className="fb-formbricks-form">

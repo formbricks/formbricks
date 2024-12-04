@@ -7,7 +7,7 @@ import { Headline } from "@/components/general/headline";
 import { LoadingSpinner } from "@/components/general/loading-spinner";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { replaceRecallInfo } from "@/lib/recall";
 
 interface EndingCardProps {
@@ -34,7 +34,7 @@ export function EndingCard({
   variablesData,
 }: EndingCardProps) {
   const media =
-    endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
+    endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
     ) : null;
   const checkmark = (
@@ -84,7 +84,7 @@ export function EndingCard({
       document.removeEventListener("keydown", handleEnter);
     };
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when isCurrent changes
   }, [isCurrent]);
 
   return (
@@ -92,7 +92,7 @@ export function EndingCard({
       <div className="fb-text-center">
         {isResponseSendingFinished ? (
           <>
-            {endingCard.type === "endScreen" && (media || checkmark)}
+            {endingCard.type === "endScreen" && (media ?? checkmark)}
             <div>
               <Headline
                 alignTextCenter
