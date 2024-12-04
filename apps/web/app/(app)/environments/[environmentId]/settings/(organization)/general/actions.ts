@@ -95,16 +95,23 @@ export const deleteMembershipAction = authenticatedActionClient
       throw new AuthenticationError("You cannot delete yourself from the organization");
     }
 
-    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+    const membership = await getMembershipByUserIdOrganizationId(
+      parsedInput.userId,
+      parsedInput.organizationId
+    );
 
     if (!membership) {
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
+    const isOwner = membership.role === "owner";
 
-    if (ownerCount <= 1) {
-      throw new ValidationError("You cannot delete the last owner of the organization");
+    if (isOwner) {
+      const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
+
+      if (ownerCount <= 1) {
+        throw new ValidationError("You cannot delete the last owner of the organization");
+      }
     }
 
     return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
