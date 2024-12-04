@@ -1,3 +1,7 @@
+import { useCallback, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData , type TResponseTtc } from "@formbricks/types/responses";
+import { type TSurveyCalQuestion, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { CalEmbed } from "@/components/general/CalEmbed";
@@ -6,11 +10,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
-import { TSurveyCalQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CalQuestionProps {
   question: TSurveyCalQuestion;
@@ -27,7 +26,7 @@ interface CalQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const CalQuestion = ({
+export function CalQuestion({
   question,
   value,
   onChange,
@@ -39,7 +38,7 @@ export const CalQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: CalQuestionProps) => {
+}: CalQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
@@ -71,7 +70,7 @@ export const CalQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -81,10 +80,8 @@ export const CalQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <>
-            {errorMessage && <span className="fb-text-red-500">{errorMessage}</span>}
+          {errorMessage ? <span className="fb-text-red-500">{errorMessage}</span> : null}
             <CalEmbed key={question.id} question={question} onSuccessfulBooking={onSuccessfulBooking} />
-          </>
         </div>
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
@@ -95,7 +92,7 @@ export const CalQuestion = ({
             tabIndex={isCurrent ? 0 : -1}
           />
         )}
-        <div></div>
+        <div />
         {!isFirstQuestion && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
@@ -108,4 +105,4 @@ export const CalQuestion = ({
       </div>
     </form>
   );
-};
+}

@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,10 +10,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceMultiProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -26,7 +26,7 @@ interface MultipleChoiceMultiProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const MultipleChoiceMultiQuestion = ({
+export function MultipleChoiceMultiQuestion({
   question,
   value,
   onChange,
@@ -39,7 +39,7 @@ export const MultipleChoiceMultiQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-}: MultipleChoiceMultiProps) => {
+}: MultipleChoiceMultiProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -47,7 +47,7 @@ export const MultipleChoiceMultiQuestion = ({
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
-    } else return question.choices.map((choice) => choice.id);
+    } return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
@@ -63,9 +63,9 @@ export const MultipleChoiceMultiQuestion = ({
 
   useEffect(() => {
     setOtherSelected(
-      !!value &&
-        ((Array.isArray(value) ? value : [value]) as string[]).some((item) => {
-          return getChoicesWithoutOtherLabels().includes(item) === false;
+      Boolean(value) &&
+        ((Array.isArray(value) ? value : [value])).some((item) => {
+          return !getChoicesWithoutOtherLabels().includes(item);
         })
     );
     setOtherValue(
@@ -115,19 +115,19 @@ export const MultipleChoiceMultiQuestion = ({
         const newValue = value.filter((v) => {
           return questionChoiceLabels.includes(v);
         });
-        return onChange({ [question.id]: [...newValue, item] });
-      } else {
-        return onChange({ [question.id]: [...value, item] });
-      }
+        onChange({ [question.id]: [...newValue, item] }); return;
+      } 
+        onChange({ [question.id]: [...value, item] }); return;
+      
     }
-    return onChange({ [question.id]: [item] }); // if not array, make it an array
+    onChange({ [question.id]: [item] }); // if not array, make it an array
   };
 
   const removeItem = (item: string) => {
     if (Array.isArray(value)) {
-      return onChange({ [question.id]: value.filter((i) => i !== item) });
+      onChange({ [question.id]: value.filter((i) => i !== item) }); return;
     }
-    return onChange({ [question.id]: [] }); // if not array, make it an array
+    onChange({ [question.id]: [] }); // if not array, make it an array
   };
 
   return (
@@ -135,7 +135,7 @@ export const MultipleChoiceMultiQuestion = ({
       key={question.id}
       onSubmit={(e) => {
         e.preventDefault();
-        const newValue = (value as string[])?.filter((item) => {
+        const newValue = (value).filter((item) => {
           return getChoicesWithoutOtherLabels().includes(item) || item === otherValue;
         }); // filter out all those values which are either in getChoicesWithoutOtherLabels() (i.e. selected by checkbox) or the latest entered otherValue
         onChange({ [question.id]: newValue });
@@ -146,7 +146,7 @@ export const MultipleChoiceMultiQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -191,7 +191,7 @@ export const MultipleChoiceMultiQuestion = ({
                           className="fb-border-brand fb-text-brand fb-h-4 fb-w-4 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           aria-labelledby={`${choice.id}-label`}
                           onChange={(e) => {
-                            if ((e.target as HTMLInputElement)?.checked) {
+                            if ((e.target as HTMLInputElement).checked) {
                               addItem(getLocalizedValue(choice.label, languageCode));
                             } else {
                               removeItem(getLocalizedValue(choice.label, languageCode));
@@ -214,8 +214,7 @@ export const MultipleChoiceMultiQuestion = ({
                     </label>
                   );
                 })}
-                {otherOption && (
-                  <label
+                {otherOption ? <label
                     tabIndex={isCurrent ? 0 : -1}
                     className={cn(
                       value.includes(getLocalizedValue(otherOption.label, languageCode))
@@ -254,8 +253,7 @@ export const MultipleChoiceMultiQuestion = ({
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
-                    {otherSelected && (
-                      <input
+                    {otherSelected ? <input
                         ref={otherSpecify}
                         dir="auto"
                         id={`${otherOption.id}-label`}
@@ -272,10 +270,8 @@ export const MultipleChoiceMultiQuestion = ({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
-                      />
-                    )}
-                  </label>
-                )}
+                      /> : null}
+                  </label> : null}
               </div>
             </fieldset>
           </div>
@@ -302,4 +298,4 @@ export const MultipleChoiceMultiQuestion = ({
       </div>
     </form>
   );
-};
+}

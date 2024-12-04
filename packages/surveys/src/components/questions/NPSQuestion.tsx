@@ -1,3 +1,7 @@
+import { useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,10 +10,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyNPSQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface NPSQuestionProps {
   question: TSurveyNPSQuestion;
@@ -26,7 +26,7 @@ interface NPSQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const NPSQuestion = ({
+export function NPSQuestion({
   question,
   value,
   onChange,
@@ -38,7 +38,7 @@ export const NPSQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: NPSQuestionProps) => {
+}: NPSQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -74,7 +74,7 @@ export const NPSQuestion = ({
       }}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -93,8 +93,8 @@ export const NPSQuestion = ({
                     <label
                       key={number}
                       tabIndex={isCurrent ? 0 : -1}
-                      onMouseOver={() => setHoveredNumber(number)}
-                      onMouseLeave={() => setHoveredNumber(-1)}
+                      onMouseOver={() => { setHoveredNumber(number); }}
+                      onMouseLeave={() => { setHoveredNumber(-1); }}
                       onKeyDown={(e) => {
                         // Accessibility: if spacebar was pressed pass this down to the input
                         if (e.key === " ") {
@@ -113,11 +113,9 @@ export const NPSQuestion = ({
                           : "fb-h fb-leading-10",
                         hoveredNumber === number ? "fb-bg-accent-bg" : ""
                       )}>
-                      {question.isColorCodingEnabled && (
-                        <div
+                      {question.isColorCodingEnabled ? <div
                           className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getNPSOptionColor(idx)}`}
-                        />
-                      )}
+                        /> : null}
                       <input
                         type="radio"
                         id={number.toString()}
@@ -125,7 +123,7 @@ export const NPSQuestion = ({
                         value={number}
                         checked={value === number}
                         className="fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-                        onClick={() => handleClick(number)}
+                        onClick={() => { handleClick(number); }}
                         required={question.required}
                         tabIndex={-1}
                       />
@@ -164,4 +162,4 @@ export const NPSQuestion = ({
       </div>
     </form>
   );
-};
+}

@@ -1,3 +1,7 @@
+import { useEffect, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,10 +10,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface PictureSelectionProps {
   question: TSurveyPictureSelectionQuestion;
@@ -26,7 +26,7 @@ interface PictureSelectionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const PictureSelectionQuestion = ({
+export function PictureSelectionQuestion({
   question,
   value,
   onChange,
@@ -38,7 +38,7 @@ export const PictureSelectionQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: PictureSelectionProps) => {
+}: PictureSelectionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
@@ -53,7 +53,7 @@ export const PictureSelectionQuestion = ({
       values = [item];
     }
 
-    return onChange({ [question.id]: values });
+    onChange({ [question.id]: values });
   };
 
   const removeItem = (item: string) => {
@@ -65,7 +65,7 @@ export const PictureSelectionQuestion = ({
       values = [];
     }
 
-    return onChange({ [question.id]: values });
+    onChange({ [question.id]: values });
   };
 
   const handleChange = (id: string) => {
@@ -97,7 +97,7 @@ export const PictureSelectionQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -124,7 +124,7 @@ export const PictureSelectionQuestion = ({
                         document.getElementById(choice.id)?.focus();
                       }
                     }}
-                    onClick={() => handleChange(choice.id)}
+                    onClick={() => { handleChange(choice.id); }}
                     className={cn(
                       "fb-relative fb-w-full fb-cursor-pointer fb-overflow-hidden fb-border fb-rounded-custom focus:fb-outline-none fb-aspect-[4/3] fb-min-h-[7rem] fb-max-h-[50vh] focus:fb-border-brand focus:fb-border-4 group/image",
                       Array.isArray(value) && value.includes(choice.id)
@@ -143,7 +143,7 @@ export const PictureSelectionQuestion = ({
                       target="_blank"
                       title="Open in new tab"
                       rel="noreferrer"
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => { e.stopPropagation(); }}
                       className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-whitespace-nowrap fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -153,9 +153,9 @@ export const PictureSelectionQuestion = ({
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="1"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        class="lucide lucide-expand">
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="lucide lucide-expand">
                         <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
                         <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
                         <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
@@ -216,4 +216,4 @@ export const PictureSelectionQuestion = ({
       </div>
     </form>
   );
-};
+}

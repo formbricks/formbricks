@@ -1,4 +1,4 @@
-import { JSX } from "preact";
+import { type JSX } from "preact";
 import { useCallback } from "preact/hooks";
 
 interface SubmitButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
@@ -7,7 +7,7 @@ interface SubmitButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
   focus?: boolean;
 }
 
-export const SubmitButton = ({
+export function SubmitButton({
   buttonLabel,
   isLastQuestion,
   tabIndex = 1,
@@ -16,7 +16,7 @@ export const SubmitButton = ({
   disabled,
   type,
   ...props
-}: SubmitButtonProps) => {
+}: SubmitButtonProps) {
   const buttonRef = useCallback(
     (currentButton: HTMLButtonElement | null) => {
       if (currentButton && focus) {
@@ -42,4 +42,4 @@ export const SubmitButton = ({
       {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
     </button>
   );
-};
+}

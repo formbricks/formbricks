@@ -1,3 +1,14 @@
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
+import { type SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
+import type {
+  TResponseData,
+  TResponseDataValue,
+  TResponseTtc,
+  TResponseVariables,
+} from "@formbricks/types/responses";
+import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { EndingCard } from "@/components/general/EndingCard";
 import { FormbricksBranding } from "@/components/general/FormbricksBranding";
 import { LanguageSwitch } from "@/components/general/LanguageSwitch";
@@ -10,24 +21,13 @@ import { AutoCloseWrapper } from "@/components/wrappers/AutoCloseWrapper";
 import { StackedCardsContainer } from "@/components/wrappers/StackedCardsContainer";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
-import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
-import type {
-  TResponseData,
-  TResponseDataValue,
-  TResponseTtc,
-  TResponseVariables,
-} from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
   variables: TResponseVariables;
 }
 
-export const Survey = ({
+export function Survey({
   survey,
   styling,
   isBrandingEnabled,
@@ -52,7 +52,7 @@ export const Survey = ({
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
-}: SurveyBaseProps) => {
+}: SurveyBaseProps) {
   const [localSurvey, setlocalSurvey] = useState<TSurvey>(survey);
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
@@ -67,14 +67,14 @@ export const Survey = ({
       return startAtQuestionId;
     } else if (localSurvey.welcomeCard.enabled) {
       return "start";
-    } else {
-      return localSurvey?.questions[0]?.id;
-    }
+    } 
+      return localSurvey.questions[0]?.id;
+    
   });
   const [showError, setShowError] = useState(false);
   // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
-    getSetIsResponseSendingFinished ? false : true
+    !getSetIsResponseSendingFinished
   );
   const [selectedLanguage, setselectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
@@ -82,10 +82,10 @@ export const Survey = ({
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
-    return localSurvey.variables.reduce((acc, variable) => {
+    return localSurvey.variables.reduce<TResponseVariables>((acc, variable) => {
       acc[variable.id] = variable.value;
       return acc;
-    }, {} as TResponseVariables);
+    }, {});
   });
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
@@ -96,9 +96,9 @@ export const Survey = ({
   const cardArrangement = useMemo(() => {
     if (localSurvey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
-    } else {
+    } 
       return styling.cardArrangement?.appSurveys ?? "straight";
-    }
+    
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
@@ -107,9 +107,9 @@ export const Survey = ({
       const newHistory = [...history];
       const prevQuestionId = newHistory.pop();
       return localSurvey.questions.find((q) => q.id === prevQuestionId);
-    } else {
+    } 
       return localSurvey.questions.find((q) => q.id === questionId);
-    }
+    
   }, [questionId, localSurvey, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -171,8 +171,8 @@ export const Survey = ({
     setselectedLanguage(languageCode);
   }, [languageCode]);
 
-  let currIdxTemp = currentQuestionIndex;
-  let currQuesTemp = currentQuestion;
+  const currIdxTemp = currentQuestionIndex;
+  const currQuesTemp = currentQuestion;
 
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
@@ -316,7 +316,7 @@ export const Survey = ({
   const onBack = (): void => {
     let prevQuestionId;
     // use history if available
-    if (history?.length > 0) {
+    if (history.length > 0) {
       const newHistory = [...history];
       prevQuestionId = newHistory.pop();
       setHistory(newHistory);
@@ -403,7 +403,7 @@ export const Survey = ({
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstQuestion={question.id === localSurvey?.questions[0]?.id}
+              isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
               isLastQuestion={question.id === localSurvey.questions[localSurvey.questions.length - 1].id}
@@ -442,8 +442,8 @@ export const Survey = ({
             {content()}
           </div>
           <div className="fb-mx-6 fb-mb-10 fb-mt-2 fb-space-y-3 sm:fb-mb-6 sm:fb-mt-6">
-            {isBrandingEnabled && <FormbricksBranding />}
-            {showProgressBar && <ProgressBar survey={localSurvey} questionId={questionId} />}
+            {isBrandingEnabled ? <FormbricksBranding /> : null}
+            {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : null}
           </div>
         </div>
       </AutoCloseWrapper>
@@ -451,8 +451,7 @@ export const Survey = ({
   };
 
   return (
-    <>
-      <StackedCardsContainer
+    <StackedCardsContainer
         cardArrangement={cardArrangement}
         currentQuestionId={questionId}
         getCardContent={getCardContent}
@@ -462,6 +461,5 @@ export const Survey = ({
         shouldResetQuestionId={shouldResetQuestionId}
         fullSizeCards={fullSizeCards}
       />
-    </>
   );
-};
+}

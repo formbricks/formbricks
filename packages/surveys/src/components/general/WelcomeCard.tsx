@@ -1,11 +1,11 @@
+import { useEffect } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
+import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
-import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc, TResponseVariables } from "@formbricks/types/responses";
-import { TI18nString, TSurvey } from "@formbricks/types/surveys/types";
 import { Headline } from "./Headline";
 import { HtmlBody } from "./HtmlBody";
 
@@ -24,7 +24,7 @@ interface WelcomeCardProps {
   variablesData: TResponseVariables;
 }
 
-const TimerIcon = () => {
+function TimerIcon() {
   return (
     <div className="fb-mr-1">
       <svg
@@ -32,16 +32,16 @@ const TimerIcon = () => {
         width="16"
         height="16"
         fill="currentColor"
-        class="bi bi-stopwatch"
+        className="bi bi-stopwatch"
         viewBox="0 0 16 16">
         <path d="M8.5 5.6a.5.5 0 1 0-1 0v2.9h-3a.5.5 0 0 0 0 1H8a.5.5 0 0 0 .5-.5V5.6z" />
         <path d="M6.5 1A.5.5 0 0 1 7 .5h2a.5.5 0 0 1 0 1v.57c1.36.196 2.594.78 3.584 1.64a.715.715 0 0 1 .012-.013l.354-.354-.354-.353a.5.5 0 0 1 .707-.708l1.414 1.415a.5.5 0 1 1-.707.707l-.353-.354-.354.354a.512.512 0 0 1-.013.012A7 7 0 1 1 7 2.071V1.5a.5.5 0 0 1-.5-.5zM8 3a6 6 0 1 0 .001 12A6 6 0 0 0 8 3z" />
       </svg>
     </div>
   );
-};
+}
 
-const UsersIcon = () => {
+function UsersIcon() {
   return (
     <div className="fb-mr-1">
       <svg
@@ -50,7 +50,7 @@ const UsersIcon = () => {
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        class="fb-h-4 fb-w-4">
+        className="fb-h-4 fb-w-4">
         <path
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -59,9 +59,9 @@ const UsersIcon = () => {
       </svg>
     </div>
   );
-};
+}
 
-export const WelcomeCard = ({
+export function WelcomeCard({
   headline,
   html,
   fileUrl,
@@ -74,7 +74,7 @@ export const WelcomeCard = ({
   isCurrent,
   responseData,
   variablesData,
-}: WelcomeCardProps) => {
+}: WelcomeCardProps) {
   const calculateTimeToComplete = () => {
     let idx = calculateElementIdx(survey, 0);
     if (idx === 0.5) {
@@ -94,10 +94,10 @@ export const WelcomeCard = ({
       if (minutes === 0) {
         // If less than 1 minute, return 'less than 1 minute'
         return "less than 1 minute";
-      } else {
+      } 
         // If more than 1 minute, return 'less than X minutes', where X is minutes + 1
         return `less than ${minutes + 1} minutes`;
-      }
+      
     }
     // If there are no remaining seconds, just return the number of minutes
     return `${minutes} minutes`;
@@ -107,7 +107,7 @@ export const WelcomeCard = ({
   const showResponseCount = survey.welcomeCard.showResponseCount;
 
   const handleSubmit = () => {
-    onSubmit({ ["welcomeCard"]: "clicked" }, {});
+    onSubmit({ "welcomeCard": "clicked" }, {});
   };
 
   useEffect(() => {
@@ -134,13 +134,11 @@ export const WelcomeCard = ({
     <div>
       <ScrollableContainer>
         <div>
-          {fileUrl && (
-            <img
+          {fileUrl ? <img
               src={fileUrl}
               className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
               alt="Company Logo"
-            />
-          )}
+            /> : null}
 
           <Headline
             headline={replaceRecallInfo(
@@ -194,4 +192,4 @@ export const WelcomeCard = ({
       ) : null}
     </div>
   );
-};
+}

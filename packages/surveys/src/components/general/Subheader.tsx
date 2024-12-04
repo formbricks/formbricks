@@ -1,11 +1,11 @@
-import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface SubheaderProps {
   subheader?: string;
   questionId: TSurveyQuestionId;
 }
 
-export const Subheader = ({ subheader, questionId }: SubheaderProps) => {
+export function Subheader({ subheader, questionId }: SubheaderProps) {
   return (
     <p
       htmlFor={questionId}
@@ -14,4 +14,4 @@ export const Subheader = ({ subheader, questionId }: SubheaderProps) => {
       {subheader}
     </p>
   );
-};
+}

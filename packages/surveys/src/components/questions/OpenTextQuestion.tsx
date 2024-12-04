@@ -1,3 +1,8 @@
+import { type RefObject } from "preact";
+import { useEffect, useRef, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData , type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -5,12 +10,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { RefObject } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyOpenTextQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface OpenTextQuestionProps {
   question: TSurveyOpenTextQuestion;
@@ -28,7 +27,7 @@ interface OpenTextQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const OpenTextQuestion = ({
+export function OpenTextQuestion({
   question,
   value,
   onChange,
@@ -41,7 +40,7 @@ export const OpenTextQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-}: OpenTextQuestionProps) => {
+}: OpenTextQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
@@ -60,7 +59,7 @@ export const OpenTextQuestion = ({
   };
 
   const handleInputResize = (event: { target: any }) => {
-    let maxHeight = 160; // 8 lines
+    const maxHeight = 160; // 8 lines
     const textarea = event.target;
     textarea.style.height = "auto";
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
@@ -80,7 +79,7 @@ export const OpenTextQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -94,17 +93,17 @@ export const OpenTextQuestion = ({
             {question.longAnswer === false ? (
               <input
                 ref={inputRef as RefObject<HTMLInputElement>}
-                autoFocus={isCurrent && autoFocusEnabled}
+                autoFocus={isCurrent ? autoFocusEnabled : null}
                 tabIndex={isCurrent ? 0 : -1}
                 name={question.id}
                 id={question.id}
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
                 dir="auto"
-                step={"any"}
+                step="any"
                 required={question.required}
-                value={value ? (value as string) : ""}
+                value={value ? (value) : ""}
                 type={question.inputType}
-                onInput={(e) => handleInputChange(e.currentTarget.value)}
+                onInput={(e) => { handleInputChange(e.currentTarget.value); }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
                 pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
@@ -113,7 +112,7 @@ export const OpenTextQuestion = ({
               <textarea
                 ref={inputRef as RefObject<HTMLTextAreaElement>}
                 rows={3}
-                autoFocus={isCurrent && autoFocusEnabled}
+                autoFocus={isCurrent ? autoFocusEnabled : null}
                 name={question.id}
                 tabIndex={isCurrent ? 0 : -1}
                 aria-label="textarea"
@@ -121,7 +120,7 @@ export const OpenTextQuestion = ({
                 placeholder={getLocalizedValue(question.placeholder, languageCode)}
                 dir="auto"
                 required={question.required}
-                value={value as string}
+                value={value}
                 type={question.inputType}
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
@@ -156,4 +155,4 @@ export const OpenTextQuestion = ({
       </div>
     </form>
   );
-};
+}

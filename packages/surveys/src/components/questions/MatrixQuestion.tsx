@@ -1,3 +1,8 @@
+import { type JSX } from "preact";
+import { useCallback, useMemo, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,11 +11,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { getShuffledRowIndices } from "@/lib/utils";
-import { JSX } from "preact";
-import { useCallback, useMemo, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TI18nString, TSurveyMatrixQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MatrixQuestionProps {
   question: TSurveyMatrixQuestion;
@@ -26,7 +26,7 @@ interface MatrixQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const MatrixQuestion = ({
+export function MatrixQuestion({
   question,
   value,
   onChange,
@@ -38,7 +38,7 @@ export const MatrixQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: MatrixQuestionProps) => {
+}: MatrixQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -46,9 +46,9 @@ export const MatrixQuestion = ({
   const rowShuffleIdx = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledRowIndices(question.rows.length, question.shuffleOption);
-    } else {
+    } 
       return question.rows.map((_, id) => id);
-    }
+    
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.rows.length]);
 
@@ -87,7 +87,7 @@ export const MatrixQuestion = ({
   );
 
   const handleSubmit = useCallback(
-    (e: JSX.TargetedEvent<HTMLFormElement, Event>) => {
+    (e: JSX.TargetedEvent<HTMLFormElement>) => {
       e.preventDefault();
       const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
       setTtc(updatedTtc);
@@ -119,7 +119,7 @@ export const MatrixQuestion = ({
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -133,14 +133,14 @@ export const MatrixQuestion = ({
             <table className="fb-no-scrollbar fb-min-w-full fb-table-auto fb-border-collapse fb-text-sm">
               <thead>
                 <tr>
-                  <th className="fb-px-4 fb-py-2"></th>
+                  <th className="fb-px-4 fb-py-2" />
                   {columnsHeaders}
                 </tr>
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
                   // Table rows
-                  <tr className={`${rowIndex % 2 === 0 ? "bg-input-bg" : ""}`}>
+                  <tr className={rowIndex % 2 === 0 ? "bg-input-bg" : ""}>
                     <td
                       className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
                       dir="auto">
@@ -152,10 +152,10 @@ export const MatrixQuestion = ({
                         tabIndex={isCurrent ? 0 : -1}
                         className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() =>
-                          handleSelect(
+                          { handleSelect(
                             getLocalizedValue(column, languageCode),
                             getLocalizedValue(row, languageCode)
-                          )
+                          ); }
                         }
                         onKeyDown={(e) => {
                           if (e.key === " ") {
@@ -212,4 +212,4 @@ export const MatrixQuestion = ({
       </div>
     </form>
   );
-};
+}

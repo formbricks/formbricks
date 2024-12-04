@@ -1,3 +1,7 @@
+import { useCallback, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -5,10 +9,6 @@ import { HtmlBody } from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyConsentQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ConsentQuestionProps {
   question: TSurveyConsentQuestion;
@@ -25,7 +25,7 @@ interface ConsentQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const ConsentQuestion = ({
+export function ConsentQuestion({
   question,
   value,
   onChange,
@@ -38,7 +38,7 @@ export const ConsentQuestion = ({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: ConsentQuestionProps) => {
+}: ConsentQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
@@ -66,7 +66,7 @@ export const ConsentQuestion = ({
       }}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -123,7 +123,7 @@ export const ConsentQuestion = ({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        <div></div>
+        <div />
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
@@ -139,4 +139,4 @@ export const ConsentQuestion = ({
       </div>
     </form>
   );
-};
+}

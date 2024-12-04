@@ -1,7 +1,7 @@
-import { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
+import { type SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { Survey } from "./Survey";
 
-export const SurveyInline = (props: SurveyInlineProps) => {
+export function SurveyInline(props: SurveyInlineProps) {
   return (
     <div
       id="fbjs"
@@ -13,4 +13,4 @@ export const SurveyInline = (props: SurveyInlineProps) => {
       <Survey {...props} />
     </div>
   );
-};
+}

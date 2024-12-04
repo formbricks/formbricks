@@ -1,9 +1,9 @@
-import { Modal } from "@/components/wrappers/Modal";
 import { useState } from "preact/hooks";
-import { SurveyModalProps } from "@formbricks/types/formbricks-surveys";
+import { type SurveyModalProps } from "@formbricks/types/formbricks-surveys";
+import { Modal } from "@/components/wrappers/Modal";
 import { Survey } from "./Survey";
 
-export const SurveyModal = ({
+export function SurveyModal({
   survey,
   isBrandingEnabled,
   getSetIsError,
@@ -22,7 +22,7 @@ export const SurveyModal = ({
   responseCount,
   styling,
   hiddenFieldsRecord,
-}: SurveyModalProps) => {
+}: SurveyModalProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -34,7 +34,7 @@ export const SurveyModal = ({
     }, 1000); // wait for animation to finish}
   };
 
-  const highlightBorderColor = styling?.highlightBorderColor?.light || null;
+  const highlightBorderColor = styling.highlightBorderColor?.light || null;
 
   return (
     <div id="fbjs" className="fb-formbricks-form">
@@ -58,7 +58,7 @@ export const SurveyModal = ({
             setTimeout(
               () => {
                 const firstEnabledEnding = survey.endings[0];
-                if (firstEnabledEnding?.type !== "redirectToUrl") {
+                if (firstEnabledEnding.type !== "redirectToUrl") {
                   close();
                 }
               },
@@ -78,4 +78,4 @@ export const SurveyModal = ({
       </Modal>
     </div>
   );
-};
+}

@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TCardArrangementOptions } from "@formbricks/types/styling";
-import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TProjectStyling } from "@formbricks/types/project";
+import { type TCardArrangementOptions } from "@formbricks/types/styling";
+import { type TSurvey, type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/utils";
 
 // offset = 0 -> Current question card
 // offset < 0 -> Question cards that are already answered
@@ -19,7 +19,7 @@ interface StackedCardsContainerProps {
   fullSizeCards: boolean;
 }
 
-export const StackedCardsContainer = ({
+export function StackedCardsContainer({
   cardArrangement,
   currentQuestionId,
   survey,
@@ -28,7 +28,7 @@ export const StackedCardsContainer = ({
   setQuestionId,
   shouldResetQuestionId = true,
   fullSizeCards = false,
-}: StackedCardsContainerProps) => {
+}: StackedCardsContainerProps) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor =
     survey.styling?.highlightBorderColor?.light || styling.highlightBorderColor?.light;
@@ -87,7 +87,7 @@ export const StackedCardsContainer = ({
       survey.type === "link" || !highlightBorderColor ? cardBorderColor : highlightBorderColor;
     return {
       ...baseStyle,
-      borderColor: borderColor,
+      borderColor,
     };
   }, [survey.type, cardBorderColor, highlightBorderColor]);
 
@@ -127,7 +127,7 @@ export const StackedCardsContainer = ({
         }
         resizeObserver.current = new ResizeObserver((entries) => {
           for (const entry of entries) {
-            setCardHeight(entry.contentRect.height + "px");
+            setCardHeight(`${entry.contentRect.height  }px`);
             setCardWidth(entry.contentRect.width);
           }
         });
@@ -143,7 +143,7 @@ export const StackedCardsContainer = ({
   // Reset question progress, when card arrangement changes
   useEffect(() => {
     if (shouldResetQuestionId) {
-      setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+      setQuestionId(survey.welcomeCard.enabled ? "start" : survey.questions[0]?.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardArrangement]);
@@ -154,7 +154,7 @@ export const StackedCardsContainer = ({
     // Preserve original height
     else if (offset < 0) return "initial";
     // Assign the height of the foremost card to all cards behind it
-    else return cardHeight;
+    return cardHeight;
   };
 
   const getBottomStyles = () => {
@@ -170,8 +170,8 @@ export const StackedCardsContainer = ({
       onMouseEnter={() => {
         setHovered(true);
       }}
-      onMouseLeave={() => setHovered(false)}>
-      <div style={{ height: cardHeight }}></div>
+      onMouseLeave={() => { setHovered(false); }}>
+      <div style={{ height: cardHeight }} />
       {cardArrangement === "simple" ? (
         <div
           id={`questionCard-${questionIdxTemp}`}
@@ -197,7 +197,7 @@ export const StackedCardsContainer = ({
                 key={questionIdxTemp}
                 style={{
                   zIndex: 1000 - questionIdxTemp,
-                  transform: `${calculateCardTransform(offset)}`,
+                  transform: calculateCardTransform(offset),
                   opacity: isHidden ? 0 : (100 - 0 * offset) / 100,
                   height: fullSizeCards ? "100%" : getCardHeight(offset),
                   transitionDuration: "600ms",
@@ -215,4 +215,4 @@ export const StackedCardsContainer = ({
       )}
     </div>
   );
-};
+}

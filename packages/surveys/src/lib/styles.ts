@@ -1,11 +1,11 @@
-import global from "@/styles/global.css?inline";
-import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
+import { type TProjectStyling } from "@formbricks/types/project";
+import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import editorCss from "@formbricks/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
+import global from "@/styles/global.css?inline";
+import preflight from "@/styles/preflight.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 export const addStylesToDom = () => {
@@ -45,9 +45,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   appendCssVariable("focus-color", styling.brandColor?.light);
-  if (!!styling.brandColor?.light) {
+  if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
-    appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");
+    appendCssVariable("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
   } else {
     // If the brand color is undefined, default to white
     appendCssVariable("brand-text-color", "#ffffff");
@@ -62,13 +62,13 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
-    appendCssVariable("placeholder-color", mixColor(styling.questionColor?.light, "#ffffff", 0.3));
+    appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
   }
 
   appendCssVariable("border-color", styling.inputBorderColor?.light);
 
   if (styling.inputBorderColor?.light) {
-    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor?.light, "#000000", 0.1));
+    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
   }
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
@@ -80,19 +80,19 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     let signatureColor = "";
     let brandingColor = "";
 
-    if (isLight(styling.questionColor?.light)) {
-      signatureColor = mixColor(styling.questionColor?.light, "#000000", 0.2);
-      brandingColor = mixColor(styling.questionColor?.light, "#000000", 0.3);
+    if (isLight(styling.questionColor.light)) {
+      signatureColor = mixColor(styling.questionColor.light, "#000000", 0.2);
+      brandingColor = mixColor(styling.questionColor.light, "#000000", 0.3);
     } else {
-      signatureColor = mixColor(styling.questionColor?.light, "#ffffff", 0.2);
-      brandingColor = mixColor(styling.questionColor?.light, "#ffffff", 0.3);
+      signatureColor = mixColor(styling.questionColor.light, "#ffffff", 0.2);
+      brandingColor = mixColor(styling.questionColor.light, "#ffffff", 0.3);
     }
 
     appendCssVariable("signature-text-color", signatureColor);
     appendCssVariable("branding-text-color", brandingColor);
   }
 
-  if (!!styling.inputColor?.light) {
+  if (styling.inputColor?.light) {
     if (
       styling.inputColor.light === "#fff" ||
       styling.inputColor.light === "#ffffff" ||
@@ -102,7 +102,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        mixColor(styling.inputColor?.light, "#000000", 0.025)
+        mixColor(styling.inputColor.light, "#000000", 0.025)
       );
     }
   }

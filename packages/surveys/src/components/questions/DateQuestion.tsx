@@ -1,3 +1,9 @@
+import { useEffect, useMemo, useState } from "preact/hooks";
+import DatePicker from "react-date-picker";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,12 +12,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useState } from "preact/hooks";
-import DatePicker from "react-date-picker";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import "../../styles/date-picker.css";
 
 interface DateQuestionProps {
@@ -30,8 +30,8 @@ interface DateQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-const CalendarIcon = () => (
-  <svg
+function CalendarIcon() {
+  return <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
     height="24"
@@ -41,7 +41,7 @@ const CalendarIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="lucide lucide-calendar-days">
+    className="lucide lucide-calendar-days">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -53,10 +53,10 @@ const CalendarIcon = () => (
     <path d="M12 18h.01" />
     <path d="M16 18h.01" />
   </svg>
-);
+}
 
-const CalendarCheckIcon = () => (
-  <svg
+function CalendarCheckIcon() {
+  return <svg
     xmlns="http://www.w3.org/2000/svg"
     width="24"
     height="24"
@@ -66,16 +66,16 @@ const CalendarCheckIcon = () => (
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
-    class="lucide lucide-calendar-check">
+    className="lucide lucide-calendar-check">
     <path d="M8 2v4" />
     <path d="M16 2v4" />
     <rect width="18" height="18" x="3" y="4" rx="2" />
     <path d="M3 10h18" />
     <path d="m9 16 2 2 4-4" />
   </svg>
-);
+}
 
-export const DateQuestion = ({
+export function DateQuestion({
   question,
   value,
   onSubmit,
@@ -87,7 +87,7 @@ export const DateQuestion = ({
   setTtc,
   ttc,
   currentQuestionId,
-}: DateQuestionProps) => {
+}: DateQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -100,7 +100,7 @@ export const DateQuestion = ({
   useEffect(() => {
     if (datePickerOpen) {
       if (!selectedDate) setSelectedDate(new Date());
-      const input = document.querySelector(".react-date-picker__inputGroup__input") as HTMLInputElement;
+      const input = document.querySelector(".react-date-picker__inputGroup__input")!;
       if (input) {
         input.focus();
       }
@@ -108,7 +108,7 @@ export const DateQuestion = ({
   }, [datePickerOpen, selectedDate]);
 
   useEffect(() => {
-    if (!!selectedDate) {
+    if (selectedDate) {
       if (hideInvalid) {
         setHideInvalid(false);
       }
@@ -142,7 +142,7 @@ export const DateQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -152,7 +152,7 @@ export const DateQuestion = ({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className={"fb-text-red-600"}>
+          <div className="fb-text-red-600">
             <span>{errorMessage}</span>
           </div>
           <div
@@ -161,7 +161,7 @@ export const DateQuestion = ({
             <div className="fb-relative">
               {!datePickerOpen && (
                 <div
-                  onClick={() => setDatePickerOpen(true)}
+                  onClick={() => { setDatePickerOpen(true); }}
                   tabIndex={isCurrent ? 0 : -1}
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
@@ -235,8 +235,8 @@ export const DateQuestion = ({
                   // active date class
                   if (
                     date.getDate() === selectedDate?.getDate() &&
-                    date.getMonth() === selectedDate?.getMonth() &&
-                    date.getFullYear() === selectedDate?.getFullYear()
+                    date.getMonth() === selectedDate.getMonth() &&
+                    date.getFullYear() === selectedDate.getFullYear()
                   ) {
                     return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
                   }
@@ -273,4 +273,4 @@ export const DateQuestion = ({
       </div>
     </form>
   );
-};
+}

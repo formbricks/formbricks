@@ -1,3 +1,12 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useCallback, useMemo, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type {
+  TSurveyQuestionChoice,
+  TSurveyQuestionId,
+  TSurveyRankingQuestion,
+} from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,15 +15,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useCallback, useMemo, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type {
-  TSurveyQuestionChoice,
-  TSurveyQuestionId,
-  TSurveyRankingQuestion,
-} from "@formbricks/types/surveys/types";
 
 interface RankingQuestionProps {
   question: TSurveyRankingQuestion;
@@ -31,7 +31,7 @@ interface RankingQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const RankingQuestion = ({
+export function RankingQuestion({
   question,
   value,
   onChange,
@@ -44,13 +44,13 @@ export const RankingQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-}: RankingQuestionProps) => {
+}: RankingQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
-    } else return question.choices.map((choice) => choice.id);
+    } return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.choices.length]);
 
@@ -72,9 +72,9 @@ export const RankingQuestion = ({
   const unsortedItems = useMemo(() => {
     if (question.shuffleOption === "all" && sortedItems.length === 0) {
       return shuffledChoicesIds.map((id) => question.choices.find((c) => c.id === id));
-    } else {
+    } 
       return question.choices.filter((c) => !localValue.includes(c.id));
-    }
+    
   }, [question.choices, question.shuffleOption, localValue, sortedItems, shuffledChoicesIds]);
 
   const handleItemClick = useCallback(
@@ -144,7 +144,7 @@ export const RankingQuestion = ({
     <form onSubmit={handleSubmit} className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -180,7 +180,7 @@ export const RankingQuestion = ({
                       autoFocus={idx === 0 && autoFocusEnabled}>
                       <div
                         className="fb-flex fb-gap-x-4 fb-px-4 fb-items-center fb-grow fb-h-full group"
-                        onClick={() => handleItemClick(item)}>
+                        onClick={() => { handleItemClick(item); }}>
                         <span
                           className={cn(
                             "fb-w-6 fb-grow-0 fb-h-6 fb-flex fb-items-center fb-justify-center fb-rounded-full fb-text-xs fb-font-semibold fb-border-brand fb-border",
@@ -194,12 +194,11 @@ export const RankingQuestion = ({
                           {getLocalizedValue(item.label, languageCode)}
                         </div>
                       </div>
-                      {isSorted && (
-                        <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
+                      {isSorted ? <div className="fb-flex fb-flex-col fb-h-full fb-grow-0 fb-border-l fb-border-border">
                           <button
                             tabIndex={-1}
                             type="button"
-                            onClick={() => handleMove(item.id, "up")}
+                            onClick={() => { handleMove(item.id, "up"); }}
                             className={cn(
                               "fb-px-2 fb-flex fb-flex-1 fb-items-center fb-justify-center",
                               isFirst
@@ -224,7 +223,7 @@ export const RankingQuestion = ({
                           <button
                             tabIndex={-1}
                             type="button"
-                            onClick={() => handleMove(item.id, "down")}
+                            onClick={() => { handleMove(item.id, "down"); }}
                             className={cn(
                               "fb-px-2 fb-flex-1 fb-border-t fb-border-border fb-flex fb-items-center fb-justify-center",
                               isLast
@@ -246,15 +245,14 @@ export const RankingQuestion = ({
                               <path d="m6 9 6 6 6-6" />
                             </svg>
                           </button>
-                        </div>
-                      )}
+                        </div> : null}
                     </div>
                   );
                 })}
               </div>
             </fieldset>
           </div>
-          {error && <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div>}
+          {error ? <div className="fb-text-red-500 fb-mt-2 fb-text-sm">{error}</div> : null}
         </div>
       </ScrollableContainer>
 
@@ -274,4 +272,4 @@ export const RankingQuestion = ({
       </div>
     </form>
   );
-};
+}

@@ -1,3 +1,7 @@
+import { useCallback, useMemo, useRef, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,10 +10,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface ContactInfoQuestionProps {
   question: TSurveyContactInfoQuestion;
@@ -27,7 +27,7 @@ interface ContactInfoQuestionProps {
   autoFocusEnabled: boolean;
 }
 
-export const ContactInfoQuestion = ({
+export function ContactInfoQuestion({
   question,
   value,
   onChange,
@@ -40,7 +40,7 @@ export const ContactInfoQuestion = ({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: ContactInfoQuestionProps) => {
+}: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
@@ -83,7 +83,7 @@ export const ContactInfoQuestion = ({
       if (field.id === fieldId) {
         return fieldValue;
       }
-      const existingValue = safeValue?.[fields.findIndex((f) => f.id === field.id)] || "";
+      const existingValue = safeValue[fields.findIndex((f) => f.id === field.id)] || "";
       return field.show ? existingValue : "";
     });
     onChange({ [question.id]: newValue });
@@ -93,7 +93,7 @@ export const ContactInfoQuestion = ({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue?.length === 5 && safeValue.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = safeValue.length === 5 && safeValue.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
@@ -115,7 +115,7 @@ export const ContactInfoQuestion = ({
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -126,7 +126,7 @@ export const ContactInfoQuestion = ({
             questionId={question.id}
           />
 
-          <div className={`fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full`}>
+          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {
@@ -158,10 +158,10 @@ export const ContactInfoQuestion = ({
                     key={field.id}
                     placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
                     required={isFieldRequired()}
-                    value={safeValue?.[index] || ""}
+                    value={safeValue[index] || ""}
                     className="fb-py-3"
                     type={inputType}
-                    onChange={(e) => handleChange(field.id, e?.currentTarget?.value ?? "")}
+                    onChange={(e) => { handleChange(field.id, e.currentTarget.value ?? ""); }}
                     tabIndex={isCurrent ? 0 : -1}
                   />
                 )
@@ -192,4 +192,4 @@ export const ContactInfoQuestion = ({
       </div>
     </form>
   );
-};
+}

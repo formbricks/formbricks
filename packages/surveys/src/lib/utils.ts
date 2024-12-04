@@ -1,10 +1,10 @@
 import {
-  TShuffleOption,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
+  type TShuffleOption,
+  type TSurvey,
+  type TSurveyLogic,
+  type TSurveyLogicAction,
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
 } from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
@@ -20,7 +20,7 @@ const shuffle = (array: any[]) => {
 
 export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
   // Create an array with numbers from 0 to n-1
-  let array = Array.from(Array(n).keys());
+  const array = Array.from(Array(n).keys());
 
   if (shuffleOption === "all") {
     shuffle(array);

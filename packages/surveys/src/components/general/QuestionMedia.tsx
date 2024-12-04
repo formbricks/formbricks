@@ -17,7 +17,7 @@ const getVideoUrlWithParams = (videoUrl: string): string => {
       "?title=false&transcript=false&speed=false&quality_selector=false&progress_bar=false&pip=false&fullscreen=false&cc=false&chromecast=false"
     );
   else if (isLoomUrl) return videoUrl.concat("?hide_share=true&hideEmbedTopBar=true&hide_title=true");
-  else return videoUrl;
+  return videoUrl;
 };
 
 interface QuestionMediaProps {
@@ -26,17 +26,14 @@ interface QuestionMediaProps {
   altText?: string;
 }
 
-export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) => {
+export function QuestionMedia({ imgUrl, videoUrl, altText = "Image" }: QuestionMediaProps) {
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
   const [isLoading, setIsLoading] = useState(true);
 
   return (
     <div className="fb-group/image fb-relative fb-mb-4 fb-block fb-min-h-40 fb-rounded-md">
-      {isLoading && (
-        <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" />
-      )}
-      {imgUrl && (
-        <img
+      {isLoading ? <div className="fb-absolute fb-inset-auto fb-flex fb-h-full fb-w-full fb-animate-pulse fb-items-center fb-justify-center fb-rounded-md fb-bg-slate-200" /> : null}
+      {imgUrl ? <img
           key={imgUrl}
           src={imgUrl}
           alt={altText}
@@ -44,24 +41,21 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           onLoad={() => {
             setIsLoading(false);
           }}
-        />
-      )}
-      {videoUrlWithParams && (
-        <div className="fb-relative">
+        /> : null}
+      {videoUrlWithParams ? <div className="fb-relative">
           <div className="fb-rounded-custom fb-bg-black">
             <iframe
               src={videoUrlWithParams}
               title="Question Video"
-              frameborder="0"
+              frameBorder="0"
               className="fb-rounded-custom fb-aspect-video fb-w-full"
-              onLoad={() => setIsLoading(false)}
+              onLoad={() => { setIsLoading(false); }}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"></iframe>
+              referrerPolicy="strict-origin-when-cross-origin" />
           </div>
-        </div>
-      )}
+        </div> : null}
       <a
-        href={!!imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
+        href={imgUrl ? imgUrl : parseVideoUrl(videoUrl ?? "")}
         target="_blank"
         rel="noreferrer"
         className="fb-absolute fb-bottom-2 fb-right-2 fb-flex fb-items-center fb-gap-2 fb-rounded-md fb-bg-slate-800 fb-bg-opacity-40 fb-p-1.5 fb-text-white fb-opacity-0 fb-backdrop-blur-lg fb-transition fb-duration-300 fb-ease-in-out hover:fb-bg-opacity-65 group-hover/image:fb-opacity-100">
@@ -75,7 +69,7 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
           strokeWidth="1"
           strokeLinecap="round"
           strokeLinejoin="round"
-          class="lucide lucide-expand">
+          className="lucide lucide-expand">
           <path d="m21 21-6-6m6 6v-4.8m0 4.8h-4.8" />
           <path d="M3 16.2V21m0 0h4.8M3 21l6-6" />
           <path d="M21 7.8V3m0 0h-4.8M21 3l-6 6" />
@@ -84,4 +78,4 @@ export const QuestionMedia = ({ imgUrl, videoUrl, altText = "Image" }: QuestionM
       </a>
     </div>
   );
-};
+}

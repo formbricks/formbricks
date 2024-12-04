@@ -1,3 +1,7 @@
+import { useEffect } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TSurvey, type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
 import { LoadingSpinner } from "@/components/general/LoadingSpinner";
@@ -5,10 +9,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
-import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
   survey: TSurvey;
@@ -22,7 +22,7 @@ interface EndingCardProps {
   variablesData: TResponseVariables;
 }
 
-export const EndingCard = ({
+export function EndingCard({
   survey,
   endingCard,
   isRedirectDisabled,
@@ -32,7 +32,7 @@ export const EndingCard = ({
   languageCode,
   responseData,
   variablesData,
-}: EndingCardProps) => {
+}: EndingCardProps) {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl || endingCard.videoUrl) ? (
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
@@ -45,14 +45,14 @@ export const EndingCard = ({
         viewBox="0 0 24 24"
         strokeWidth="1.5"
         stroke="currentColor"
-        class="fb-h-24 fb-w-24">
+        className="fb-h-24 fb-w-24">
         <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]"></span>
+      <span className="fb-bg-brand fb-mb-[10px] fb-inline-block fb-h-1 fb-w-16 fb-rounded-[100%]" />
     </div>
   );
 
@@ -95,7 +95,7 @@ export const EndingCard = ({
             {endingCard.type === "endScreen" && (media || checkmark)}
             <div>
               <Headline
-                alignTextCenter={true}
+                alignTextCenter
                 headline={
                   endingCard.type === "endScreen"
                     ? replaceRecallInfo(
@@ -119,8 +119,7 @@ export const EndingCard = ({
                 }
                 questionId="EndingCard"
               />
-              {endingCard.type === "endScreen" && endingCard.buttonLabel && (
-                <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
+              {endingCard.type === "endScreen" && endingCard.buttonLabel ? <div className="fb-mt-6 fb-flex fb-w-full fb-flex-col fb-items-center fb-justify-center fb-space-y-4">
                   <SubmitButton
                     buttonLabel={replaceRecallInfo(
                       getLocalizedValue(endingCard.buttonLabel, languageCode),
@@ -131,8 +130,7 @@ export const EndingCard = ({
                     focus={isCurrent ? autoFocusEnabled : false}
                     onClick={handleSubmit}
                   />
-                </div>
-              )}
+                </div> : null}
             </div>
           </>
         ) : (
@@ -146,4 +144,4 @@ export const EndingCard = ({
       </div>
     </ScrollableContainer>
   );
-};
+}

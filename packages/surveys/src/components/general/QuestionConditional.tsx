@@ -1,3 +1,13 @@
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
+import {
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
+  type TSurveyQuestionId,
+  TSurveyQuestionTypeEnum,
+} from "@formbricks/types/surveys/types";
 import { AddressQuestion } from "@/components/questions/AddressQuestion";
 import { CTAQuestion } from "@/components/questions/CTAQuestion";
 import { CalQuestion } from "@/components/questions/CalQuestion";
@@ -13,16 +23,6 @@ import { OpenTextQuestion } from "@/components/questions/OpenTextQuestion";
 import { PictureSelectionQuestion } from "@/components/questions/PictureSelectionQuestion";
 import { RankingQuestion } from "@/components/questions/RankingQuestion";
 import { RatingQuestion } from "@/components/questions/RatingQuestion";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
-import {
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyQuestionId,
-  TSurveyQuestionTypeEnum,
-} from "@formbricks/types/surveys/types";
 
 interface QuestionConditionalProps {
   question: TSurveyQuestion;
@@ -43,7 +43,7 @@ interface QuestionConditionalProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const QuestionConditional = ({
+export function QuestionConditional({
   question,
   value,
   onChange,
@@ -60,7 +60,7 @@ export const QuestionConditional = ({
   onFileUpload,
   autoFocusEnabled,
   currentQuestionId,
-}: QuestionConditionalProps) => {
+}: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
     choices: TSurveyQuestionChoice[]
@@ -316,4 +316,4 @@ export const QuestionConditional = ({
       autoFocusEnabled={autoFocusEnabled}
     />
   ) : null;
-};
+}

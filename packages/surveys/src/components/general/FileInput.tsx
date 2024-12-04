@@ -1,11 +1,11 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useMemo, useState } from "preact/hooks";
-import { JSXInternal } from "preact/src/jsx";
+import { type JSXInternal } from "preact/src/jsx";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
-import { TAllowedFileExtension } from "@formbricks/types/common";
-import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TAllowedFileExtension } from "@formbricks/types/common";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
 
 interface FileInputProps {
   allowedFileExtensions?: TAllowedFileExtension[];
@@ -20,7 +20,7 @@ interface FileInputProps {
 
 const FILE_LIMIT = 25;
 
-export const FileInput = ({
+export function FileInput({
   allowedFileExtensions,
   surveyId,
   onFileUpload,
@@ -29,7 +29,7 @@ export const FileInput = ({
   maxSizeInMB,
   allowMultipleFiles,
   htmlFor = "",
-}: FileInputProps) => {
+}: FileInputProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
@@ -63,10 +63,10 @@ export const FileInput = ({
     const validFiles = Array.from(files).filter((file) => {
       const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
       if (allowedFileExtensions) {
-        return allowedFileExtensions?.includes(fileExtension);
-      } else {
+        return allowedFileExtensions.includes(fileExtension);
+      } 
         return true;
-      }
+      
     });
 
     const filteredFiles: File[] = [];
@@ -84,7 +84,7 @@ export const FileInput = ({
         new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result);
+          reader.onload = () => { resolve(reader.result); };
           reader.onerror = reject;
         });
 
@@ -158,7 +158,7 @@ export const FileInput = ({
 
   return (
     <div
-      className={`fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800`}>
+      className="fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
       <div ref={parent}>
         {fileUrls?.map((fileUrl, index) => {
           const fileName = getOriginalFileNameFromUrl(fileUrl);
@@ -175,7 +175,7 @@ export const FileInput = ({
                     strokeWidth={1}
                     stroke="currentColor"
                     className="fb-text-heading fb-h-5"
-                    onClick={(e) => handleDeleteFile(index, e)}>
+                    onClick={(e) => { handleDeleteFile(index, e); }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
                 </div>
@@ -205,17 +205,14 @@ export const FileInput = ({
       </div>
 
       <div>
-        {isUploading && (
-          <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
+        {isUploading ? <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
             <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
               Uploading...
             </label>
-          </div>
-        )}
+          </div> : null}
 
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
-          {showUploader && (
-            <div
+          {showUploader ? <div
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
@@ -256,10 +253,9 @@ export const FileInput = ({
                 }}
                 multiple={allowMultipleFiles}
               />
-            </div>
-          )}
+            </div> : null}
         </label>
       </div>
     </div>
   );
-};
+}

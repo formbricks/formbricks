@@ -1,13 +1,13 @@
-import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { cn } from "@/lib/utils";
 
 interface HtmlBodyProps {
   htmlString?: string;
   questionId: TSurveyQuestionId;
 }
 
-export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
+export function HtmlBody({ htmlString, questionId }: HtmlBodyProps) {
   const [safeHtml, setSafeHtml] = useState("");
 
   useEffect(() => {
@@ -29,4 +29,4 @@ export const HtmlBody = ({ htmlString, questionId }: HtmlBodyProps) => {
       dir="auto"
     />
   );
-};
+}

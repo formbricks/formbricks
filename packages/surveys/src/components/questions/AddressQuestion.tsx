@@ -1,3 +1,8 @@
+import { useMemo, useRef, useState } from "preact/hooks";
+import { useCallback } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,11 +11,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useMemo, useRef, useState } from "preact/hooks";
-import { useCallback } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface AddressQuestionProps {
   question: TSurveyAddressQuestion;
@@ -27,7 +27,7 @@ interface AddressQuestionProps {
   autoFocusEnabled: boolean;
 }
 
-export const AddressQuestion = ({
+export function AddressQuestion({
   question,
   value,
   onChange,
@@ -40,7 +40,7 @@ export const AddressQuestion = ({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
-}: AddressQuestionProps) => {
+}: AddressQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
@@ -88,7 +88,7 @@ export const AddressQuestion = ({
       if (field.id === fieldId) {
         return fieldValue;
       }
-      const existingValue = safeValue?.[fields.findIndex((f) => f.id === field.id)] || "";
+      const existingValue = safeValue[fields.findIndex((f) => f.id === field.id)] || "";
       return field.show ? existingValue : "";
     });
     onChange({ [question.id]: newValue });
@@ -98,7 +98,7 @@ export const AddressQuestion = ({
     e.preventDefault();
     const updatedTtc = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
     setTtc(updatedTtc);
-    const containsAllEmptyStrings = safeValue?.length === 6 && safeValue.every((item) => item.trim() === "");
+    const containsAllEmptyStrings = safeValue.length === 6 && safeValue.every((item) => item.trim() === "");
     if (containsAllEmptyStrings) {
       onSubmit({ [question.id]: [] }, updatedTtc);
     } else {
@@ -120,7 +120,7 @@ export const AddressQuestion = ({
     <form key={question.id} onSubmit={handleSubmit} className="fb-w-full" ref={formRef}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -131,7 +131,7 @@ export const AddressQuestion = ({
             questionId={question.id}
           />
 
-          <div className={`fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full`}>
+          <div className="fb-flex fb-flex-col fb-space-y-2 fb-mt-4 fb-w-full">
             {fields.map((field, index) => {
               const isFieldRequired = () => {
                 if (field.required) {
@@ -155,10 +155,10 @@ export const AddressQuestion = ({
                     key={field.id}
                     placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
                     required={isFieldRequired()}
-                    value={safeValue?.[index] || ""}
+                    value={safeValue[index] || ""}
                     className="fb-py-3"
                     type={field.id === "email" ? "email" : "text"}
-                    onChange={(e) => handleChange(field.id, e?.currentTarget?.value ?? "")}
+                    onChange={(e) => { handleChange(field.id, e.currentTarget.value ?? ""); }}
                     ref={index === 0 ? addressRef : null}
                     tabIndex={isCurrent ? 0 : -1}
                   />
@@ -175,7 +175,7 @@ export const AddressQuestion = ({
           isLastQuestion={isLastQuestion}
           onClick={() => {}}
         />
-        <div></div>
+        <div />
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
@@ -190,4 +190,4 @@ export const AddressQuestion = ({
       </div>
     </form>
   );
-};
+}

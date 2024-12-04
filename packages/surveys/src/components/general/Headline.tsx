@@ -1,4 +1,4 @@
-import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface HeadlineProps {
   headline?: string;
@@ -7,12 +7,12 @@ interface HeadlineProps {
   alignTextCenter?: boolean;
 }
 
-export const Headline = ({
+export function Headline({
   headline,
   questionId,
   required = true,
   alignTextCenter = false,
-}: HeadlineProps) => {
+}: HeadlineProps) {
   return (
     <label
       htmlFor={questionId}
@@ -31,4 +31,4 @@ export const Headline = ({
       </div>
     </label>
   );
-};
+}

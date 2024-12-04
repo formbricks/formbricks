@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData , type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -5,11 +9,6 @@ import { HtmlBody } from "@/components/general/HtmlBody";
 import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
-import { useState } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData } from "@formbricks/types/responses";
-import { TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface CTAQuestionProps {
   question: TSurveyCTAQuestion;
@@ -26,7 +25,7 @@ interface CTAQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const CTAQuestion = ({
+export function CTAQuestion({
   question,
   onSubmit,
   onChange,
@@ -38,7 +37,7 @@ export const CTAQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-}: CTAQuestionProps) => {
+}: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
@@ -48,7 +47,7 @@ export const CTAQuestion = ({
     <div key={question.id}>
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -66,7 +65,7 @@ export const CTAQuestion = ({
             tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
-                window?.open(question.buttonUrl, "_blank")?.focus();
+                window.open(question.buttonUrl, "_blank")?.focus();
               }
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -106,4 +105,4 @@ export const CTAQuestion = ({
       </div>
     </div>
   );
-};
+}

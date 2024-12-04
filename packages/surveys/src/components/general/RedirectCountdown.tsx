@@ -7,7 +7,7 @@ interface RedirectCountDownProps {
   isRedirectDisabled: boolean;
 }
 
-export const RedirectCountDown = ({ redirectUrl, isRedirectDisabled }: RedirectCountDownProps) => {
+export function RedirectCountDown({ redirectUrl, isRedirectDisabled }: RedirectCountDownProps) {
   const [timeRemaining, setTimeRemaining] = useState(REDIRECT_TIMEOUT);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export const RedirectCountDown = ({ redirectUrl, isRedirectDisabled }: RedirectC
     }
 
     // Clean up the interval when the component is unmounted
-    return () => clearInterval(interval);
+    return () => { clearInterval(interval); };
   }, [redirectUrl, isRedirectDisabled]);
 
   if (!redirectUrl) return null;
@@ -41,4 +41,4 @@ export const RedirectCountDown = ({ redirectUrl, isRedirectDisabled }: RedirectC
       </div>
     </div>
   );
-};
+}

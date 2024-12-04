@@ -1,7 +1,7 @@
-import { cn } from "@/lib/utils";
-import { VNode } from "preact";
+import { type VNode } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { TPlacement } from "@formbricks/types/common";
+import { type TPlacement } from "@formbricks/types/common";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   children: VNode;
@@ -13,7 +13,7 @@ interface ModalProps {
   onClose: () => void;
 }
 
-export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, onClose }: ModalProps) => {
+export function Modal({ children, isOpen, placement, clickOutside, darkOverlay, onClose }: ModalProps) {
   const [show, setShow] = useState(false);
   const isCenter = placement === "center";
   const modalRef = useRef(null);
@@ -89,4 +89,4 @@ export const Modal = ({ children, isOpen, placement, clickOutside, darkOverlay, 
       </div>
     </div>
   );
-};
+}

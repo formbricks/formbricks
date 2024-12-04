@@ -1,3 +1,7 @@
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -6,10 +10,6 @@ import { Subheader } from "@/components/general/Subheader";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn, getShuffledChoicesIds } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyMultipleChoiceQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface MultipleChoiceSingleProps {
   question: TSurveyMultipleChoiceQuestion;
@@ -26,7 +26,7 @@ interface MultipleChoiceSingleProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const MultipleChoiceSingleQuestion = ({
+export function MultipleChoiceSingleQuestion({
   question,
   value,
   onChange,
@@ -39,7 +39,7 @@ export const MultipleChoiceSingleQuestion = ({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
-}: MultipleChoiceSingleProps) => {
+}: MultipleChoiceSingleProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
@@ -49,7 +49,7 @@ export const MultipleChoiceSingleQuestion = ({
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
-    } else return question.choices.map((choice) => choice.id);
+    } return question.choices.map((choice) => choice.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
@@ -109,7 +109,7 @@ export const MultipleChoiceSingleQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -164,7 +164,7 @@ export const MultipleChoiceSingleQuestion = ({
                             onChange({ [question.id]: getLocalizedValue(choice.label, languageCode) });
                           }}
                           checked={value === getLocalizedValue(choice.label, languageCode)}
-                          required={question.required && idx === 0}
+                          required={question.required ? idx === 0 : null}
                         />
                         <span id={`${choice.id}-label`} className="fb-ml-3 fb-mr-3 fb-grow fb-font-medium">
                           {getLocalizedValue(choice.label, languageCode)}
@@ -173,8 +173,7 @@ export const MultipleChoiceSingleQuestion = ({
                     </label>
                   );
                 })}
-                {otherOption && (
-                  <label
+                {otherOption ? <label
                     dir="auto"
                     tabIndex={isCurrent ? 0 : -1}
                     className={cn(
@@ -214,8 +213,7 @@ export const MultipleChoiceSingleQuestion = ({
                         {getLocalizedValue(otherOption.label, languageCode)}
                       </span>
                     </span>
-                    {otherSelected && (
-                      <input
+                    {otherSelected ? <input
                         ref={otherSpecify}
                         id={`${otherOption.id}-label`}
                         dir="auto"
@@ -230,10 +228,8 @@ export const MultipleChoiceSingleQuestion = ({
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}
-                      />
-                    )}
-                  </label>
-                )}
+                      /> : null}
+                  </label> : null}
               </div>
             </fieldset>
           </div>
@@ -259,4 +255,4 @@ export const MultipleChoiceSingleQuestion = ({
       </div>
     </form>
   );
-};
+}

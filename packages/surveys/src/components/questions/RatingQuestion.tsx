@@ -1,3 +1,8 @@
+import { useEffect, useState } from "preact/hooks";
+import type { JSX } from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { BackButton } from "@/components/buttons/BackButton";
 import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { Headline } from "@/components/general/Headline";
@@ -5,11 +10,6 @@ import { QuestionMedia } from "@/components/general/QuestionMedia";
 import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "preact/hooks";
-import type { JSX } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyQuestionId, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import {
   ConfusedFace,
   FrowningFace,
@@ -39,7 +39,7 @@ interface RatingQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const RatingQuestion = ({
+export function RatingQuestion({
   question,
   value,
   onChange,
@@ -51,7 +51,7 @@ export const RatingQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: RatingQuestionProps) => {
+}: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -72,18 +72,18 @@ export const RatingQuestion = ({
     }, 250);
   };
 
-  const HiddenRadioInput = ({ number, id }: { number: number; id?: string }) => (
-    <input
+  function HiddenRadioInput({ number, id }: { number: number; id?: string }) {
+  return <input
       type="radio"
       id={id}
       name="rating"
       value={number}
       className="fb-invisible fb-absolute fb-left-0 fb-h-full fb-w-full fb-cursor-pointer fb-opacity-0"
-      onClick={() => handleSelect(number)}
+      onClick={() => { handleSelect(number); }}
       required={question.required}
       checked={value === number}
     />
-  );
+}
 
   useEffect(() => {
     setHoveredNumber(0);
@@ -98,11 +98,11 @@ export const RatingQuestion = ({
       if (range - idx < 1) return "fb-bg-emerald-100";
       if (range - idx < 2) return "fb-bg-orange-100";
       return "fb-bg-rose-100";
-    } else {
+    } 
       if (range - idx < 2) return "fb-bg-emerald-100";
       if (range - idx < 3) return "fb-bg-orange-100";
       return "fb-bg-rose-100";
-    }
+    
   };
 
   return (
@@ -117,7 +117,7 @@ export const RatingQuestion = ({
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -134,8 +134,8 @@ export const RatingQuestion = ({
                 {Array.from({ length: question.range }, (_, i) => i + 1).map((number, i, a) => (
                   <span
                     key={number}
-                    onMouseOver={() => setHoveredNumber(number)}
-                    onMouseLeave={() => setHoveredNumber(0)}
+                    onMouseOver={() => { setHoveredNumber(number); }}
+                    onMouseLeave={() => { setHoveredNumber(0); }}
                     className="fb-bg-survey-bg fb-flex-1 fb-text-center fb-text-sm">
                     {question.scale === "number" ? (
                       <label
@@ -158,11 +158,9 @@ export const RatingQuestion = ({
                           question.isColorCodingEnabled ? "fb-min-h-[47px]" : "fb-min-h-[41px]",
                           "fb-text-heading focus:fb-border-brand fb-relative fb-flex fb-w-full fb-cursor-pointer fb-items-center fb-justify-center fb-overflow-hidden fb-border-b fb-border-l fb-border-t focus:fb-border-2 focus:fb-outline-none"
                         )}>
-                        {question.isColorCodingEnabled && (
-                          <div
+                        {question.isColorCodingEnabled ? <div
                             className={`fb-absolute fb-left-0 fb-top-0 fb-h-[6px] fb-w-full ${getRatingNumberOptionColor(question.range, number)}`}
-                          />
-                        )}
+                          /> : null}
                         <HiddenRadioInput number={number} id={number.toString()} />
                         {number}
                       </label>
@@ -178,14 +176,14 @@ export const RatingQuestion = ({
                           }
                         }}
                         className={cn(
-                          number <= hoveredNumber || number <= (value as number)
+                          number <= hoveredNumber || number <= (value!)
                             ? "fb-text-amber-400"
                             : "fb-text-[#8696AC]",
                           hoveredNumber === number ? "fb-text-amber-400" : "",
                           "fb-relative fb-flex fb-max-h-16 fb-min-h-9 fb-cursor-pointer fb-justify-center focus:fb-outline-none"
                         )}
-                        onFocus={() => setHoveredNumber(number)}
-                        onBlur={() => setHoveredNumber(0)}>
+                        onFocus={() => { setHoveredNumber(number); }}
+                        onBlur={() => { setHoveredNumber(0); }}>
                         <HiddenRadioInput number={number} id={number.toString()} />
                         <div className="fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain">
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -213,8 +211,8 @@ export const RatingQuestion = ({
                             document.getElementById(number.toString())?.focus();
                           }
                         }}
-                        onFocus={() => setHoveredNumber(number)}
-                        onBlur={() => setHoveredNumber(0)}>
+                        onFocus={() => { setHoveredNumber(number); }}
+                        onBlur={() => { setHoveredNumber(0); }}>
                         <HiddenRadioInput number={number} id={number.toString()} />
                         <div className={cn("fb-h-full fb-w-full fb-max-w-[74px] fb-object-contain")}>
                           <RatingSmiley
@@ -249,7 +247,7 @@ export const RatingQuestion = ({
             isLastQuestion={isLastQuestion}
           />
         )}
-        <div></div>
+        <div />
         {!isFirstQuestion && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
@@ -264,7 +262,7 @@ export const RatingQuestion = ({
       </div>
     </form>
   );
-};
+}
 
 interface RatingSmileyProps {
   active: boolean;
@@ -282,11 +280,11 @@ const getSmileyColor = (range: number, idx: number) => {
     if (range - idx < 2) return "fb-fill-emerald-100";
     if (range - idx < 3) return "fb-fill-orange-100";
     return "fb-fill-rose-100";
-  } else {
+  } 
     if (range - idx < 3) return "fb-fill-emerald-100";
     if (range - idx < 4) return "fb-fill-orange-100";
     return "fb-fill-rose-100";
-  }
+  
 };
 
 const getActiveSmileyColor = (range: number, idx: number) => {
@@ -298,11 +296,11 @@ const getActiveSmileyColor = (range: number, idx: number) => {
     if (range - idx < 2) return "fb-fill-emerald-300";
     if (range - idx < 3) return "fb-fill-orange-300";
     return "fb-fill-rose-300";
-  } else {
+  } 
     if (range - idx < 3) return "fb-fill-emerald-300";
     if (range - idx < 4) return "fb-fill-orange-300";
     return "fb-fill-rose-300";
-  }
+  
 };
 
 const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean, addColors: boolean) => {

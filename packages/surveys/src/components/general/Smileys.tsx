@@ -1,5 +1,4 @@
-import type { JSX } from "preact";
-import { FunctionComponent } from "preact";
+import type { JSX , type FunctionComponent } from "preact";
 
 export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
@@ -468,4 +467,4 @@ export const GrinningSquintingFace: FunctionComponent<JSX.HTMLAttributes<SVGCirc
   );
 };
 
-export let icons = [<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg"></svg>];
+export const icons = [<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg" />];

@@ -1,14 +1,14 @@
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
-import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TResponseData, TResponseTtc } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
 import type { TSurveyFileUploadQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getUpdatedTtc, useTtc } from "@/lib/ttc";
+import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { Headline } from "@/components/general/Headline";
+import { SubmitButton } from "@/components/buttons/SubmitButton";
 import { BackButton } from "../buttons/BackButton";
 import { FileInput } from "../general/FileInput";
 import { Subheader } from "../general/Subheader";
@@ -30,7 +30,7 @@ interface FileUploadQuestionProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const FileUploadQuestion = ({
+export function FileUploadQuestion({
   question,
   value,
   onChange,
@@ -44,7 +44,7 @@ export const FileUploadQuestion = ({
   ttc,
   setTtc,
   currentQuestionId,
-}: FileUploadQuestionProps) => {
+}: FileUploadQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
@@ -63,18 +63,16 @@ export const FileUploadQuestion = ({
           } else {
             alert("Please upload a file");
           }
-        } else {
-          if (value) {
+        } else if (value) {
             onSubmit({ [question.id]: value }, updatedTtcObj);
           } else {
             onSubmit({ [question.id]: "skipped" }, updatedTtcObj);
           }
-        }
       }}
       className="fb-w-full">
       <ScrollableContainer>
         <div>
-          {isMediaAvailable && <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} />}
+          {isMediaAvailable ? <QuestionMedia imgUrl={question.imageUrl} videoUrl={question.videoUrl} /> : null}
           <Headline
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
@@ -95,12 +93,12 @@ export const FileUploadQuestion = ({
                 onChange({ [question.id]: "skipped" });
               }
             }}
-            fileUrls={value as string[]}
+            fileUrls={value}
             allowMultipleFiles={question.allowMultipleFiles}
-            {...(!!question.allowedFileExtensions
+            {...(question.allowedFileExtensions
               ? { allowedFileExtensions: question.allowedFileExtensions }
               : {})}
-            {...(!!question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
+            {...(question.maxSizeInMB ? { maxSizeInMB: question.maxSizeInMB } : {})}
           />
         </div>
       </ScrollableContainer>
@@ -122,4 +120,4 @@ export const FileUploadQuestion = ({
       </div>
     </form>
   );
-};
+}

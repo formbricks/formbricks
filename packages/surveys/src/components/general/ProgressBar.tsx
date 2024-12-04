@@ -1,6 +1,6 @@
-import { calculateElementIdx } from "@/lib/utils";
 import { useCallback, useMemo } from "preact/hooks";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { calculateElementIdx } from "@/lib/utils";
 import { Progress } from "./Progress";
 
 interface ProgressBarProps {
@@ -8,7 +8,7 @@ interface ProgressBarProps {
   questionId: TSurveyQuestionId;
 }
 
-export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
+export function ProgressBar({ survey, questionId }: ProgressBarProps) {
   const currentQuestionIdx = useMemo(
     () => survey.questions.findIndex((q) => q.id === questionId),
     [survey, questionId]
@@ -35,10 +35,10 @@ export const ProgressBar = ({ survey, questionId }: ProgressBarProps) => {
       return 0;
     } else if (endingCardIds.includes(questionId)) {
       return 1;
-    } else {
+    } 
       return progressArray[currentQuestionIdx];
-    }
+    
   }, [questionId, endingCardIds, progressArray, currentQuestionIdx]);
 
   return <Progress progress={progressValue} />;
-};
+}
