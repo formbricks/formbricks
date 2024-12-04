@@ -29,14 +29,10 @@ export const ConfirmationPage = ({ environmentId }: ConfirmationPageProps) => {
             {t("billing_confirmation.thanks_for_upgrading")}
           </p>
         </div>
-<Button
-  asChild
-  className="w-full justify-center"
->
-  <Link href={`/environments/${environmentId}/settings/billing`}>
-    {t("billing_confirmation.back_to_billing_overview")}
-  </Link>
-</Button>
+        <Button asChild className="w-full justify-center">
+          <Link href={`/environments/${environmentId}/settings/billing`}>
+            {t("billing_confirmation.back_to_billing_overview")}
+          </Link>
         </Button>
       </div>
     </div>
