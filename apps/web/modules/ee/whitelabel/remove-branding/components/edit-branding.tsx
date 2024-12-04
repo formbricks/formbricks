@@ -1,12 +1,13 @@
 "use client";
 
-import { updateProjectAction } from "@/modules/projects/settings/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateProjectBrandingAction } from "@/modules/ee/whitelabel/remove-branding/actions";
+import { TProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TProjectUpdateInput } from "@formbricks/types/project";
 
 interface EditBrandingProps {
   type: "linkSurvey" | "appSurvey";
@@ -21,24 +22,26 @@ export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBra
   const [updatingBranding, setUpdatingBranding] = useState(false);
 
   const toggleBranding = async () => {
-    try {
-      setUpdatingBranding(true);
-      const newBrandingState = !isBrandingEnabled;
-      setIsBrandingEnabled(newBrandingState);
-      let inputProject: Partial<TProjectUpdateInput> = {
-        [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
-      };
-      await updateProjectAction({ projectId, data: inputProject });
+    setUpdatingBranding(true);
+    const newBrandingState = !isBrandingEnabled;
+    setIsBrandingEnabled(newBrandingState);
+
+    let inputProject: TProjectUpdateBrandingInput = {
+      [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
+    };
+    const updateBrandingResponse = await updateProjectBrandingAction({ projectId, data: inputProject });
+
+    if (updateBrandingResponse?.data) {
       toast.success(
         newBrandingState
           ? t("environments.project.look.formbricks_branding_shown")
           : t("environments.project.look.formbricks_branding_hidden")
       );
-    } catch (error) {
-      toast.error(`Error: ${error.message}`);
-    } finally {
-      setUpdatingBranding(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateBrandingResponse);
+      toast.error(errorMessage);
     }
+    setUpdatingBranding(false);
   };
 
   return (

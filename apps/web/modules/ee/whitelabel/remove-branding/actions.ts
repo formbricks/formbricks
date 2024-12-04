@@ -4,19 +4,19 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
 import { getWhitelabelPermission } from "@/modules/ee/license-check/lib/utils";
-import { updateProject } from "@/modules/projects/settings/lib/project";
+import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
+import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZProjectUpdateInput } from "@formbricks/types/project";
 
 const ZUpdateProjectAction = z.object({
   projectId: ZId,
-  data: ZProjectUpdateInput,
+  data: ZProjectUpdateBrandingInput,
 });
 
-export const updateProjectAction = authenticatedActionClient
+export const updateProjectBrandingAction = authenticatedActionClient
   .schema(ZUpdateProjectAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromProjectId(parsedInput.projectId);
@@ -26,8 +26,6 @@ export const updateProjectAction = authenticatedActionClient
       organizationId,
       access: [
         {
-          schema: ZProjectUpdateInput,
-          data: parsedInput.data,
           type: "organization",
           roles: ["owner", "manager"],
         },
@@ -63,5 +61,5 @@ export const updateProjectAction = authenticatedActionClient
       }
     }
 
-    return await updateProject(parsedInput.projectId, parsedInput.data);
+    return await updateProjectBranding(parsedInput.projectId, parsedInput.data);
   });
