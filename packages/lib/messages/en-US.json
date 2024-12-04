@@ -25,7 +25,6 @@
       "reset_password": "Reset password"
     },
     "invite": {
-      "contact_support": "Contact support",
       "create_account": "Create an account",
       "email_does_not_match": "Ooops! Wrong email 🤦",
       "email_does_not_match_description": "The email in the invitation does not match yours.",

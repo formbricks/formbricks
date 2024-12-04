@@ -25,7 +25,6 @@
       "reset_password": "Passwort zurücksetzen"
     },
     "invite": {
-      "contact_support": "Support kontaktieren",
       "create_account": "Konto erstellen",
       "email_does_not_match": "Ooops! Falsche E-Mail-Adresse",
       "email_does_not_match_description": "Die E-Mail-Adresse aus der Einladung stimmt nicht mit der E-Mail-Adresse deines Kontos überein.",

@@ -25,7 +25,6 @@
       "reset_password": "Redefinir senha"
     },
     "invite": {
-      "contact_support": "Fale com o suporte",
       "create_account": "Cria uma conta",
       "email_does_not_match": "Opa! Email errado 🤦",
       "email_does_not_match_description": "O email no convite não bate com o seu.",

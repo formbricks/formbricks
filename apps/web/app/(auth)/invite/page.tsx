@@ -64,9 +64,6 @@ const Page = async (props) => {
         <ContentLayout
           headline={t("auth.invite.email_does_not_match")}
           description={t("auth.invite.email_does_not_match_description")}>
-          <Button variant="secondary" asChild>
-            <Link href="/support">{t("auth.invite.contact_support")}</Link>
-          </Button>
           <Button asChild>
             <Link href="/">{t("auth.invite.go_to_app")}</Link>
           </Button>
