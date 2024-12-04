@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ organizationId: string }> }) => {
@@ -22,14 +22,14 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  // redirect to first product's production environment
-  const products = await getUserProducts(session.user.id, organizationId);
-  if (products.length === 0) {
+  // redirect to first project's production environment
+  const projects = await getUserProjects(session.user.id, organizationId);
+  if (projects.length === 0) {
     return redirect(`/organizations/${organizationId}/landing`);
   }
 
-  const firstProduct = products[0];
-  const environments = await getEnvironments(firstProduct.id);
+  const firstProject = projects[0];
+  const environments = await getEnvironments(firstProject.id);
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
 

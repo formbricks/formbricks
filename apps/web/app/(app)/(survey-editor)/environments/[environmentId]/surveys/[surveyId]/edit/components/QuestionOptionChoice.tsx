@@ -1,11 +1,12 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -35,7 +36,7 @@ interface ChoiceProps {
     updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
   ) => void;
   surveyLanguageCodes: string[];
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -54,7 +55,7 @@ export const QuestionOptionChoice = ({
   question,
   surveyLanguageCodes,
   updateQuestion,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: ChoiceProps) => {
   const t = useTranslations();
@@ -70,9 +71,9 @@ export const QuestionOptionChoice = ({
   };
 
   return (
-    <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
+    <div className="flex w-full items-center gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
-      <div className={cn("mt-6", choice.id === "other" && "invisible")} {...listeners} {...attributes}>
+      <div className={cn(choice.id === "other" && "invisible")} {...listeners} {...attributes}>
         <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
       </div>
 
@@ -96,7 +97,7 @@ export const QuestionOptionChoice = ({
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
         {choice.id === "other" && (
@@ -118,26 +119,38 @@ export const QuestionOptionChoice = ({
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         )}
       </div>
-      <div className="mt-6 flex gap-2">
+      <div className="flex gap-2">
         {question.choices && question.choices.length > 2 && (
-          <TrashIcon
-            className="h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-            onClick={() => deleteChoice(choiceIdx)}
+          <Button
+            variant="secondary"
+            size="icon"
+            StartIcon={TrashIcon}
+            tooltip="Delete choice"
+            aria-label="Delete choice"
+            onClick={(e) => {
+              e.preventDefault();
+              deleteChoice(choiceIdx);
+            }}
           />
         )}
-        <div className="h-4 w-4">
-          {choice.id !== "other" && (
-            <PlusIcon
-              className="h-full w-full cursor-pointer text-slate-400 hover:text-slate-500"
-              onClick={() => addChoice(choiceIdx)}
-            />
-          )}
-        </div>
+        {choice.id !== "other" && (
+          <Button
+            variant="secondary"
+            size="icon"
+            StartIcon={PlusIcon}
+            tooltip="Add choice below"
+            aria-label="Add choice below"
+            onClick={(e) => {
+              e.preventDefault();
+              addChoice(choiceIdx);
+            }}
+          />
+        )}
       </div>
     </div>
   );

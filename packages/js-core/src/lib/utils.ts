@@ -167,7 +167,7 @@ export const filterSurveys = (
   environmentState: TJsEnvironmentState,
   personState: TJsPersonState
 ): TJsEnvironmentStateSurvey[] => {
-  const { product, surveys } = environmentState.data;
+  const { project, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = personState.data;
 
   if (!displays) {
@@ -216,9 +216,9 @@ export const filterSurveys = (
       }
       return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
     }
-    // use recontactDays of the product if survey does not have recontactDays
-    else if (product.recontactDays !== null) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= product.recontactDays;
+    // use recontactDays of the project if survey does not have recontactDays
+    else if (project.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
     }
     // if no recontactDays is set, show the survey
     else {

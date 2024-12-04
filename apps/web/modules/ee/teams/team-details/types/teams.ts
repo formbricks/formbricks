@@ -1,4 +1,4 @@
-import { ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { z } from "zod";
 
@@ -28,16 +28,16 @@ export const ZOrganizationMember = z.object({
 });
 export type TOrganizationMember = z.infer<typeof ZOrganizationMember>;
 
-export const TTeamProduct = z.object({
+export const TTeamProject = z.object({
   id: z.string(),
   name: z.string(),
   permission: ZTeamPermission,
 });
-export type TTeamProduct = z.infer<typeof TTeamProduct>;
+export type TTeamProject = z.infer<typeof TTeamProject>;
 
-export const ZOrganizationProduct = z.object({
+export const ZOrganizationProject = z.object({
   id: z.string(),
   name: z.string(),
 });
 
-export type TOrganizationProduct = z.infer<typeof ZOrganizationProduct>;
+export type TOrganizationProject = z.infer<typeof ZOrganizationProject>;

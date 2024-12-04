@@ -1,7 +1,7 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -17,7 +17,7 @@ import {
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
-import { getUserProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
 
 interface EnvironmentLayoutProps {
@@ -47,13 +47,13 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     throw new Error(t("common.environment_not_found"));
   }
 
-  const [products, environments] = await Promise.all([
-    getUserProducts(user.id, organization.id),
-    getEnvironments(environment.productId),
+  const [projects, environments] = await Promise.all([
+    getUserProjects(user.id, organization.id),
+    getEnvironments(environment.projectId),
   ]);
 
-  if (!products || !environments || !organizations) {
-    throw new Error(t("environments.products_environments_organizations_not_found"));
+  if (!projects || !environments || !organizations) {
+    throw new Error(t("environments.projects_environments_organizations_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -62,10 +62,10 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, environment.productId);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
 
-  if (isMember && !productPermission) {
-    throw new Error(t("common.product_permission_not_found"));
+  if (isMember && !projectPermission) {
+    throw new Error(t("common.project_permission_not_found"));
   }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
@@ -79,6 +79,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
       getMonthlyOrganizationResponseCount(organization.id),
     ]);
   }
+
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -105,18 +107,20 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           environment={environment}
           organization={organization}
           organizations={organizations}
-          products={products}
+          projects={projects}
+          organizationProjectsLimit={organizationProjectsLimit}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isLicenseActive={active}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
             membershipRole={membershipRole}
-            productPermission={productPermission}
+            projectPermission={projectPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

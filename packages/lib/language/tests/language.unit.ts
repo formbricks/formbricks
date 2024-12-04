@@ -4,7 +4,7 @@ import {
   mockLanguageId,
   mockLanguageInput,
   mockLanguageUpdate,
-  mockProductId,
+  mockProjectId,
   mockUpdatedLanguage,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
@@ -23,7 +23,7 @@ describe("Tests for createLanguage service", () => {
     it("Creates a new Language", async () => {
       prismaMock.language.create.mockResolvedValue(mockLanguage);
 
-      const language = await createLanguage(mockProductId, mockEnvironmentId, mockLanguageInput);
+      const language = await createLanguage(mockProjectId, mockEnvironmentId, mockLanguageInput);
       expect(language).toEqual(mockLanguage);
     });
   });
@@ -40,7 +40,7 @@ describe("Tests for createLanguage service", () => {
 
       prismaMock.language.create.mockRejectedValue(errToThrow);
 
-      await expect(createLanguage(mockProductId, mockEnvironmentId, mockLanguageInput)).rejects.toThrow(
+      await expect(createLanguage(mockProjectId, mockEnvironmentId, mockLanguageInput)).rejects.toThrow(
         DatabaseError
       );
     });
@@ -49,7 +49,7 @@ describe("Tests for createLanguage service", () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.language.create.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(createLanguage(mockProductId, mockEnvironmentId, mockLanguageInput)).rejects.toThrow(
+      await expect(createLanguage(mockProjectId, mockEnvironmentId, mockLanguageInput)).rejects.toThrow(
         Error
       );
     });
@@ -99,7 +99,7 @@ describe("Tests for deleteLanguage", () => {
     it("Deletes a Language", async () => {
       prismaMock.language.delete.mockResolvedValue(mockLanguage);
 
-      const language = await deleteLanguage(mockLanguageId, mockProductId);
+      const language = await deleteLanguage(mockLanguageId, mockProjectId);
       expect(language).toEqual(mockLanguage);
     });
   });
@@ -115,14 +115,14 @@ describe("Tests for deleteLanguage", () => {
 
       prismaMock.language.delete.mockRejectedValue(errToThrow);
 
-      await expect(deleteLanguage(mockLanguageId, mockProductId)).rejects.toThrow(DatabaseError);
+      await expect(deleteLanguage(mockLanguageId, mockProjectId)).rejects.toThrow(DatabaseError);
     });
 
     it("Throws a generic Error for other exceptions", async () => {
       const mockErrorMessage = "Mock error message";
       prismaMock.language.delete.mockRejectedValue(new Error(mockErrorMessage));
 
-      await expect(deleteLanguage(mockLanguageId, mockProductId)).rejects.toThrow(Error);
+      await expect(deleteLanguage(mockLanguageId, mockProjectId)).rejects.toThrow(Error);
     });
   });
 });

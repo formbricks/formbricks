@@ -2,7 +2,7 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import type { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/project";
 import type { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageToggleProps {

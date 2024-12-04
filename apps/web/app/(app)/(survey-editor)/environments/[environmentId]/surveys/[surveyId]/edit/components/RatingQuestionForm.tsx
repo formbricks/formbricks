@@ -6,7 +6,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { Dropdown } from "./RatingTypeDropdown";
@@ -20,7 +20,7 @@ interface RatingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -32,7 +32,7 @@ export const RatingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: RatingQuestionFormProps) => {
   const t = useTranslations();
@@ -50,13 +50,13 @@ export const RatingQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
       <div ref={parent}>
         {question.subheader !== undefined && (
-          <div className="mt-2 inline-flex w-full items-center">
+          <div className="inline-flex w-full items-center">
             <div className="w-full">
               <QuestionFormInput
                 id="subheader"
@@ -68,7 +68,7 @@ export const RatingQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                attributeClasses={attributeClasses}
+                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -77,7 +77,7 @@ export const RatingQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-3"
             type="button"
             onClick={() => {
@@ -131,7 +131,7 @@ export const RatingQuestionForm = ({
         </div>
       </div>
 
-      <div className="mt-3 flex justify-between gap-8">
+      <div className="flex justify-between gap-8">
         <div className="flex-1">
           <QuestionFormInput
             id="lowerLabel"
@@ -144,7 +144,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -160,7 +160,7 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -180,7 +180,7 @@ export const RatingQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               locale={locale}
             />
           </div>

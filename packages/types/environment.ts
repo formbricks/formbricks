@@ -5,7 +5,7 @@ export const ZEnvironment = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
   type: z.enum(["development", "production"]),
-  productId: z.string(),
+  projectId: z.string(),
   appSetupCompleted: z.boolean(),
 });
 
@@ -19,7 +19,7 @@ export type TEnvironmentId = z.infer<typeof ZEnvironmentId>;
 
 export const ZEnvironmentUpdateInput = z.object({
   type: z.enum(["development", "production"]),
-  productId: z.string(),
+  projectId: z.string(),
   appSetupCompleted: z.boolean(),
 });
 

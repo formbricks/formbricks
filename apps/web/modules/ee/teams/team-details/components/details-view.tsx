@@ -1,13 +1,13 @@
 "use client";
 
 import { TeamMembers } from "@/modules/ee/teams/team-details/components/team-members";
-import { TeamProducts } from "@/modules/ee/teams/team-details/components/team-products";
+import { TeamProjects } from "@/modules/ee/teams/team-details/components/team-projects";
 import { TeamSettings } from "@/modules/ee/teams/team-details/components/team-settings";
 import {
   TOrganizationMember,
-  TOrganizationProduct,
+  TOrganizationProject,
   TTeam,
-  TTeamProduct,
+  TTeamProject,
 } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
@@ -22,8 +22,8 @@ interface DetailsViewProps {
   membershipRole?: TOrganizationRole;
   organizationMembers: TOrganizationMember[];
   teamRole: TTeamRole | null;
-  products: TTeamProduct[];
-  organizationProducts: TOrganizationProduct[];
+  projects: TTeamProject[];
+  organizationProjects: TOrganizationProject[];
 }
 
 export const DetailsView = ({
@@ -32,11 +32,11 @@ export const DetailsView = ({
   membershipRole,
   organizationMembers,
   teamRole,
-  products,
-  organizationProducts,
+  projects,
+  organizationProjects,
 }: DetailsViewProps) => {
   const t = useTranslations();
-  const [activeId, setActiveId] = useState<"members" | "settings" | "products">("members");
+  const [activeId, setActiveId] = useState<"members" | "settings" | "projects">("members");
 
   const navigation = [
     {
@@ -45,9 +45,9 @@ export const DetailsView = ({
       onClick: () => setActiveId("members"),
     },
     {
-      id: "products",
-      label: t("common.products"),
-      onClick: () => setActiveId("products"),
+      id: "projects",
+      label: t("common.projects"),
+      onClick: () => setActiveId("projects"),
     },
     {
       id: "settings",
@@ -73,11 +73,11 @@ export const DetailsView = ({
           teamRole={teamRole}
         />
       )}
-      {activeId === "products" && (
-        <TeamProducts
-          organizationProducts={organizationProducts}
+      {activeId === "projects" && (
+        <TeamProjects
+          organizationProjects={organizationProjects}
           membershipRole={membershipRole}
-          products={products}
+          projects={projects}
           teamId={team.id}
         />
       )}

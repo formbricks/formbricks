@@ -66,7 +66,7 @@ export const sync = async (params: TJsRNSyncParams, appConfig: RNConfig, noCache
     const state: TJsRNState = {
       surveys: syncResult.data.surveys,
       actionClasses: syncResult.data.actionClasses,
-      product: syncResult.data.product,
+      project: syncResult.data.project,
       attributes,
     };
 

@@ -1,14 +1,15 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { createResponse } from "./lib/response";
 
 interface Context {
   params: Promise<{
@@ -58,6 +59,13 @@ export const POST = async (request: Request, context: Context): Promise<Response
     undefined;
 
   const responseInputData = responseInputValidation.data;
+
+  if (responseInputData.userId) {
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
+    }
+  }
 
   // get and check survey
   const survey = await getSurvey(responseInputData.surveyId);

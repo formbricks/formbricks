@@ -2,7 +2,7 @@ import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZAttributes } from "./attributes";
 import { ZId } from "./common";
-import { ZProduct } from "./product";
+import { ZProject } from "./project";
 import { ZResponseHiddenFieldValue, ZResponseUpdate } from "./responses";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurvey } from "./surveys/types";
@@ -34,7 +34,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     triggers: true,
     displayPercentage: true,
     delay: true,
-    productOverwrites: true,
+    projectOverwrites: true,
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
@@ -45,7 +45,7 @@ export const ZJsRNStateSync = z.object({
   userId: z.string().optional(),
   surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProduct,
+  project: ZProject,
   language: z.string().optional(),
 });
 
@@ -55,7 +55,7 @@ export const ZJsRNState = z.object({
   attributes: ZAttributes,
   surveys: z.array(ZJsEnvironmentStateSurvey),
   actionClasses: z.array(ZActionClass),
-  product: ZProduct,
+  project: ZProject,
 });
 
 export type TJsRNState = z.infer<typeof ZJsRNState>;
@@ -90,7 +90,6 @@ export const ZJsRNSyncParams = z.object({
 });
 
 export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
-
 export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   id: true,
   key: true,
@@ -101,7 +100,7 @@ export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
 
 export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
 
-export const ZJsEnvironmentStateProduct = ZProduct.pick({
+export const ZJsEnvironmentStateProject = ZProject.pick({
   id: true,
   recontactDays: true,
   clickOutsideClose: true,
@@ -111,14 +110,14 @@ export const ZJsEnvironmentStateProduct = ZProduct.pick({
   styling: true,
 });
 
-export type TJsEnvironmentStateProduct = z.infer<typeof ZJsEnvironmentStateProduct>;
+export type TJsEnvironmentStateProject = z.infer<typeof ZJsEnvironmentStateProject>;
 
 export const ZJsEnvironmentState = z.object({
   expiresAt: z.date(),
   data: z.object({
     surveys: z.array(ZJsEnvironmentStateSurvey),
     actionClasses: z.array(ZJsEnvironmentStateActionClass),
-    product: ZJsEnvironmentStateProduct,
+    project: ZJsEnvironmentStateProject,
   }),
 });
 
@@ -150,7 +149,7 @@ export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
 export const ZJsPersonIdentifyInput = z.object({
   environmentId: z.string().cuid(),
-  userId: z.string().optional(),
+  userId: z.string(),
 });
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsPersonIdentifyInput>;
@@ -199,9 +198,32 @@ export const ZJsPeopleUserIdInput = z.object({
   userId: z.string().min(1).max(255),
 });
 
-export const ZJsPeopleUpdateAttributeInput = z.object({
+export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
 });
+
+export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;
+
+export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
+
+export const ZJsPeopleAttributeInput = z.object({
+  key: z.string(),
+  value: z.string(),
+});
+
+export type TJsPeopleAttributeInput = z.infer<typeof ZJsPeopleAttributeInput>;
+
+export const ZJsActionInput = z.object({
+  environmentId: z.string().cuid2(),
+  userId: z.string().optional(),
+  name: z.string(),
+});
+
+export type TJsActionInput = z.infer<typeof ZJsActionInput>;
+
+export const ZJsWesbiteActionInput = ZJsActionInput.omit({ userId: true });
+
+export type TJsWesbiteActionInput = z.infer<typeof ZJsWesbiteActionInput>;
 
 export const ZJsEnvironmentSyncParams = z.object({
   environmentId: z.string().cuid(),

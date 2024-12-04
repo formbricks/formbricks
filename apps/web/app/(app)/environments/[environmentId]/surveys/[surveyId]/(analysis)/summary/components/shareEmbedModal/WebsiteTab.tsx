@@ -94,7 +94,7 @@ const PopupTab = ({ environmentId }) => {
         <li>
           {t("common.follow_these")}{" "}
           <Link
-            href={`/environments/${environmentId}/product/website-connection`}
+            href={`/environments/${environmentId}/project/website-connection`}
             target="_blank"
             className="decoration-brand-dark font-medium underline underline-offset-2">
             {t("environments.surveys.summary.setup_instructions")}
