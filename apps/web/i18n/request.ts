@@ -8,10 +8,9 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 export default getRequestConfig(async () => {
   const session = await getServerSession(authOptions);
   const locale = session ? await getUserLocale(session.user?.id) : await findMatchingLocale();
-  // Lazy load the locale-specific messages
-  const messages = await import(`@formbricks/lib/messages/${locale ?? DEFAULT_LOCALE}.json`).then(
-    (module) => module.default
-  );
+
+  // Change dynamic import to require to ensure the JSON is included in the build
+  const messages = require(`@formbricks/lib/messages/${locale ?? DEFAULT_LOCALE}.json`);
 
   return {
     locale,
