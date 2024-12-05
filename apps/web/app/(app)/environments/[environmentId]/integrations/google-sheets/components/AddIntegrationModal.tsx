@@ -295,7 +295,7 @@ export const AddIntegrationModal = ({
               {selectedIntegration ? (
                 <Button
                   type="button"
-                  variant="warn"
+                  variant="destructive"
                   loading={isDeleting}
                   onClick={() => {
                     deleteLink();
@@ -305,7 +305,7 @@ export const AddIntegrationModal = ({
               ) : (
                 <Button
                   type="button"
-                  variant="minimal"
+                  variant="ghost"
                   onClick={() => {
                     setOpen(false);
                     resetForm();

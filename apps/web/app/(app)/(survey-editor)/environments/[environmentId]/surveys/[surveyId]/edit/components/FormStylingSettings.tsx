@@ -140,10 +140,10 @@ export const FormStylingSettings = ({
               type="button"
               variant="secondary"
               size="sm"
-              EndIcon={SparklesIcon}
               className="w-fit"
               onClick={() => suggestColors()}>
               {t("environments.surveys.edit.suggest_colors")}
+              <SparklesIcon />
             </Button>
           </div>
 

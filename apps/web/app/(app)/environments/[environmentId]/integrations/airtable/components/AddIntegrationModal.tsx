@@ -379,11 +379,11 @@ export const AddIntegrationModal = ({
                   }}
                   type="button"
                   loading={isLoading}
-                  variant="warn">
+                  variant="destructive">
                   {t("common.delete")}
                 </Button>
               ) : (
-                <Button type="button" loading={isLoading} variant="minimal" onClick={handleClose}>
+                <Button type="button" loading={isLoading} variant="ghost" onClick={handleClose}>
                   {t("common.cancel")}
                 </Button>
               )}

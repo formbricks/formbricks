@@ -1,6 +1,4 @@
 {
-  "include": [".", "../types/*.d.ts", "../../apps/web/lib/cache/contact-attribute-key.ts", "../../apps/web/modules/utils/hooks"],
-  "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
   "compilerOptions": {
     "baseUrl": ".",
     "downlevelIteration": true,
@@ -14,5 +12,12 @@
     ],
     "strictNullChecks": true
   },
+  "exclude": ["dist", "build", "node_modules", "../../packages/types/surveys.d.ts"],
   "extends": "@formbricks/config-typescript/nextjs.json",
+  "include": [
+    ".",
+    "../types/*.d.ts",
+    "../../apps/web/lib/cache/contact-attribute-key.ts",
+    "../../apps/web/modules/utils/hooks"
+  ]
 }

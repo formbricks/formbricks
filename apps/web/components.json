@@ -8,7 +8,7 @@
     "utils": "@/modules/ui/lib/utils"
   },
   "rsc": true,
-  "style": "default",
+  "style": "new-york",
   "tailwind": {
     "baseColor": "slate",
     "config": "tailwind.config.js",

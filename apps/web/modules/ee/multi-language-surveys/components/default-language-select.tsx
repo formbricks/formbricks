@@ -52,7 +52,7 @@ export function DefaultLanguageSelect({
                 onConfirm: () => {
                   handleDefaultLanguageChange(languageCode);
                 },
-                buttonVariant: "primary",
+                buttonVariant: "default",
               });
             }}
             value={`${defaultLanguage?.code}`}>
