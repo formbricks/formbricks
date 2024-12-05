@@ -78,7 +78,6 @@ export const SurveyEditor = ({
   const [localProject, setLocalProject] = useState<TProject>(project);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
-  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProject = useCallback(async () => {
     const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
@@ -212,8 +211,6 @@ export const SurveyEditor = ({
               project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
-              localStylingChanges={localStylingChanges}
-              setLocalStylingChanges={setLocalStylingChanges}
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
             />

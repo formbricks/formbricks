@@ -11,8 +11,8 @@ export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
 export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
-  linkSurveys: ZCardArrangementOptions,
-  appSurveys: ZCardArrangementOptions,
+  linkSurveys: ZCardArrangementOptions.default("straight"),
+  appSurveys: ZCardArrangementOptions.default("straight"),
 });
 
 export const ZSurveyStylingBackground = z

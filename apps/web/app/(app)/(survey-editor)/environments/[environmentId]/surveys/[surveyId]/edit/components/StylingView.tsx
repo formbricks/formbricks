@@ -29,8 +29,6 @@ interface StylingViewProps {
   colors: string[];
   styling: TSurveyStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
-  localStylingChanges: TSurveyStyling | null;
-  setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
 }
@@ -42,8 +40,6 @@ export const StylingView = ({
   localSurvey,
   setStyling,
   styling,
-  localStylingChanges,
-  setLocalStylingChanges,
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
@@ -140,10 +136,6 @@ export const StylingView = ({
         return;
       }
 
-      // if there are local styling changes, we set the styling to the local styling changes that were previously stored
-      if (localStylingChanges) {
-        setStyling(localStylingChanges);
-      }
       // if there are no local styling changes, we set the styling to the project styling
       else {
         setStyling({
@@ -155,9 +147,6 @@ export const StylingView = ({
 
     // if the toggle is turned off, we store the local styling changes and set the styling to the project styling
     else {
-      // copy the styling to localStylingChanges
-      setLocalStylingChanges(styling);
-
       // copy the project styling to the survey styling
       setStyling({
         ...defaultProjectStyling,
