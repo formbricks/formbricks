@@ -133,8 +133,9 @@ export const QuestionFilterComboBox = ({
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
                 {typeof filterComboBoxValue !== "string" &&
-                  filterComboBoxValue?.map((o) => (
+                  filterComboBoxValue?.map((o, index) => (
                     <button
+                      key={`${o}-${index}`}
                       type="button"
                       onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
                       className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
