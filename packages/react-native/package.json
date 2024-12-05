@@ -45,7 +45,7 @@
     "@formbricks/types": "workspace:*",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@types/react": "18.3.11",
-    "react": "19.0.0-rc-ed15d500-20241110",
+    "react": "18.3.1",
     "react-native": "0.74.5",
     "terser": "5.31.3",
     "vite": "5.4.8",

@@ -52,17 +52,6 @@ export const initialize = async (
     });
   }
 
-  // if userId and attributes are available, set them in backend
-  let updatedAttributes: TAttributes | null = null;
-  if (c.userId && c.attributes) {
-    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
-
-    if (!res.ok) {
-      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
-    }
-    updatedAttributes = res.data;
-  }
-
   let existingConfig: TJsRNConfig | undefined;
   try {
     existingConfig = appConfig.get();
@@ -114,6 +103,17 @@ export const initialize = async (
 
   // todo: update attributes
   // update attributes in config
+  // if userId and attributes are available, set them in backend
+  let updatedAttributes: TAttributes | null = null;
+  if (c.userId && c.attributes) {
+    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+    if (!res.ok) {
+      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
+    }
+    updatedAttributes = res.data;
+  }
+
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
     appConfig.update({
       environmentId: appConfig.get().environmentId,
