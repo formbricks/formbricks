@@ -519,6 +519,7 @@
       "does_not_contain": "Does not contain",
       "does_not_exactly_match": "Does not exactly match",
       "eg_clicked_download": "E.g. Clicked Download",
+      "eg_download_cta_click_on_home": "e.g. download_cta_click_on_home",
       "eg_install_app": "E.g. Install App",
       "eg_user_clicked_download_button": "E.g. User clicked Download Button",
       "ends_with": "Ends with",
