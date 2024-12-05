@@ -223,15 +223,14 @@ export function SegmentSettings({
             {!isReadOnly && (
               <>
                 <Button
-                  EndIcon={Trash2}
-                  endIconClassName="p-0.5"
                   loading={isDeletingSegment}
                   onClick={() => {
                     setIsDeleteSegmentModalOpen(true);
                   }}
                   type="button"
-                  variant="warn">
+                  variant="destructive">
                   {t("common.delete")}
+                  <Trash2 />
                 </Button>
                 <Button
                   disabled={isSaveDisabled}

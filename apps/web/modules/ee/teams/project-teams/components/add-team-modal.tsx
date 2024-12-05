@@ -83,7 +83,7 @@ export const AddTeamModal = ({ open, setOpen, teamOptions, projectId }: AddTeamM
             }}>
             {t("common.cancel")}
           </Button>
-          <Button variant="primary" disabled={isLoading} loading={isLoading} type="submit">
+          <Button disabled={isLoading} loading={isLoading} type="submit">
             {t("common.add")}
           </Button>
         </div>

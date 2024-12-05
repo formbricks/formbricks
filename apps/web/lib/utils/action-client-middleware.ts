@@ -20,21 +20,21 @@ const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }>
 
 export type TAccess<T extends z.ZodRawShape> =
   | {
-    type: "organization";
-    schema?: z.ZodObject<T>;
-    data?: z.ZodObject<T>["_output"];
-    roles: TOrganizationRole[];
-  }
+      type: "organization";
+      schema?: z.ZodObject<T>;
+      data?: z.ZodObject<T>["_output"];
+      roles: TOrganizationRole[];
+    }
   | {
-    type: "projectTeam";
-    minPermission?: TTeamPermission;
-    projectId: string;
-  }
+      type: "projectTeam";
+      minPermission?: TTeamPermission;
+      projectId: string;
+    }
   | {
-    type: "team";
-    minPermission?: TTeamRole;
-    teamId: string;
-  };
+      type: "team";
+      minPermission?: TTeamRole;
+      teamId: string;
+    };
 
 const teamPermissionWeight = {
   read: 1,

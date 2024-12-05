@@ -261,7 +261,7 @@ export function TargetingCard({
                         }
                       }}
                       size="sm"
-                      variant="minimal">
+                      variant="ghost">
                       {t("common.cancel")}
                     </Button>
                   ) : null}
@@ -341,7 +341,7 @@ export function TargetingCard({
                         setSegmentEditorViewOnly(false);
                       }}
                       size="sm"
-                      variant={isSegmentUsedInOtherSurveys ? "minimal" : "secondary"}>
+                      variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
                       {t("environments.segments.edit_segment")}
                       <PencilIcon className="ml-2 h-3 w-3" />
                     </Button>
