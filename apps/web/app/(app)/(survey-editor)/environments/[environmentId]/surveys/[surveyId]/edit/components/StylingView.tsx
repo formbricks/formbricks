@@ -26,7 +26,6 @@ interface StylingViewProps {
   environment: TEnvironment;
   project: TProject;
   localSurvey: TSurvey;
-  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
   styling: TSurveyStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
@@ -41,7 +40,6 @@ export const StylingView = ({
   environment,
   project,
   localSurvey,
-  setLocalSurvey,
   setStyling,
   styling,
   localStylingChanges,
@@ -90,16 +88,33 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    form.watch((data: TSurveyStyling) => {
-      setLocalSurvey((prev) => ({
-        ...prev,
-        styling: {
-          ...prev.styling,
-          ...data,
-        },
-      }));
+    const subscription = form.watch((_, { name }) => {
+      if (name) {
+        const fieldValue = form.getValues(name);
+        // Split the path into parts (e.g., "brandColor.light" -> ["brandColor", "light"])
+        const pathParts = name.split(".");
+
+        if (pathParts.length > 1) {
+          // Handle nested fields
+          setStyling((prev) => ({
+            ...prev,
+            [pathParts[0]]: {
+              ...prev?.[pathParts[0]],
+              [pathParts[1]]: fieldValue,
+            },
+          }));
+        } else {
+          // Handle top-level fields
+          setStyling((prev) => ({
+            ...prev,
+            [name]: fieldValue,
+          }));
+        }
+      }
     });
-  }, [setLocalSurvey]);
+
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;

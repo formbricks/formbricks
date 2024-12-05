@@ -77,7 +77,7 @@ export const SurveyEditor = ({
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<TProject>(project);
 
-  const [styling, setStyling] = useState(localSurvey?.styling);
+  const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
   const fetchLatestProject = useCallback(async () => {
@@ -88,6 +88,19 @@ export const SurveyEditor = ({
   }, [localProject.id]);
 
   useDocumentVisibility(fetchLatestProject);
+
+  useEffect(() => {
+    if (styling && localSurvey) {
+      setLocalSurvey((prev) =>
+        prev
+          ? {
+              ...prev,
+              styling,
+            }
+          : null
+      );
+    }
+  }, [styling]);
 
   useEffect(() => {
     if (survey) {
@@ -196,7 +209,6 @@ export const SurveyEditor = ({
               colors={colors}
               environment={environment}
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
               project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
