@@ -5,6 +5,7 @@ import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -45,9 +46,11 @@ const Page = async (props: InvitePageProps) => {
       <InviteOrganizationMember organization={organization} environmentId={params.environmentId} />
       <Button
         className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
-        variant="minimal"
-        href={`/environments/${params.environmentId}/`}>
-        <XIcon className="h-7 w-7" strokeWidth={1.5} />
+        variant="ghost"
+        asChild>
+        <Link href={`/environments/${params.environmentId}`}>
+          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+        </Link>
       </Button>
     </div>
   );

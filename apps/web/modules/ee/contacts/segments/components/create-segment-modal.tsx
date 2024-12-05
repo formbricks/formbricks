@@ -126,12 +126,12 @@ export function CreateSegmentModal({
   return (
     <>
       <Button
-        EndIcon={PlusIcon}
         onClick={() => {
           setOpen(true);
         }}
         size="sm">
         {t("common.create_segment")}
+        <PlusIcon />
       </Button>
 
       <Modal
@@ -242,7 +242,7 @@ export function CreateSegmentModal({
                     handleResetState();
                   }}
                   type="button"
-                  variant="minimal">
+                  variant="ghost">
                   {t("common.cancel")}
                 </Button>
                 <Button

@@ -116,7 +116,7 @@ export const IndividualInviteTab = ({
           <Button
             size="sm"
             type="button"
-            variant="minimal"
+            variant="ghost"
             onClick={() => {
               setOpen(false);
             }}>

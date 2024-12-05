@@ -3,6 +3,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
@@ -44,9 +45,11 @@ const Page = async (props: ConnectPageProps) => {
       />
       <Button
         className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
-        variant="minimal"
-        href={`/environments/${environment.id}/`}>
-        <XIcon className="h-7 w-7" strokeWidth={1.5} />
+        variant="ghost"
+        asChild>
+        <Link href={`/environments/${environment.id}`}>
+          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+        </Link>
       </Button>
     </div>
   );

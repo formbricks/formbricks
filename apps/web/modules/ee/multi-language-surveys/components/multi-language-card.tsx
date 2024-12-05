@@ -38,7 +38,7 @@ export interface ConfirmationModalProps {
   open: boolean;
   title: string;
   buttonText: string;
-  buttonVariant?: "primary" | "warn";
+  buttonVariant?: "default" | "destructive";
   onConfirm: () => void;
 }
 
@@ -156,7 +156,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
           title: t("environments.surveys.edit.remove_translations"),
           text: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
           buttonText: t("environments.surveys.edit.remove_translations"),
-          buttonVariant: "warn",
+          buttonVariant: "destructive",
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
             setIsMultiLanguageActivated(false);
