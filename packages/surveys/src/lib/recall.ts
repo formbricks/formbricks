@@ -23,7 +23,7 @@ export const replaceRecallInfo = (
     let value: string | null = null;
 
     // Fetching value from variables based on recallItemId
-    if (variables[recallItemId] !== undefined) {
+    if (variables[recallItemId]) {
       value = String(variables[recallItemId]) ?? fallback;
     }
 
@@ -55,7 +55,7 @@ export const parseRecallInformation = (
   variables: TResponseVariables
 ) => {
   const modifiedQuestion = structuredClone(question);
-  if (question.headline && question.headline[languageCode].includes("recall:")) {
+  if (question.headline[languageCode].includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,

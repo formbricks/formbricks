@@ -204,7 +204,7 @@ export function StackedCardsContainer({
             return (
               <div
                 ref={(el) => (cardRefs.current[dynamicQuestionIndex] = el)}
-                id={`questionCard-${dynamicQuestionIndex.toString()}`}
+                id={`questionCard-${index.toString()}`}
                 key={dynamicQuestionIndex}
                 style={{
                   zIndex: 1000 - dynamicQuestionIndex,

@@ -14,13 +14,13 @@ import { PictureSelectionQuestion } from "@/components/questions/picture-selecti
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { type TJsFileUploadParams } from "@formbricks/types/js";
-import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
-import { type TUploadFileConfig } from "@formbricks/types/storage";
+import { TJsFileUploadParams } from "@formbricks/types/js";
+import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import {
-  type TSurveyQuestion,
-  type TSurveyQuestionChoice,
-  type TSurveyQuestionId,
+  TSurveyQuestion,
+  TSurveyQuestionChoice,
+  TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 
@@ -43,7 +43,7 @@ interface QuestionConditionalProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export function QuestionConditional({
+export const QuestionConditional = ({
   question,
   value,
   onChange,
@@ -60,9 +60,12 @@ export function QuestionConditional({
   onFileUpload,
   autoFocusEnabled,
   currentQuestionId,
-}: QuestionConditionalProps) {
-  const getResponseValueForRankingQuestion = (val: string[], choices: TSurveyQuestionChoice[]): string[] => {
-    return val
+}: QuestionConditionalProps) => {
+  const getResponseValueForRankingQuestion = (
+    value: string[],
+    choices: TSurveyQuestionChoice[]
+  ): string[] => {
+    return value
       .map((label) => choices.find((choice) => getLocalizedValue(choice.label, languageCode) === label)?.id)
       .filter((id): id is TSurveyQuestionChoice["id"] => id !== undefined);
   };
@@ -75,272 +78,242 @@ export function QuestionConditional({
     }
   }
 
-  if (question.type === TSurveyQuestionTypeEnum.OpenText) {
-    return (
-      <OpenTextQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : ""}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) {
-    return (
-      <MultipleChoiceSingleQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : undefined}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
-    return (
-      <MultipleChoiceMultiQuestion
-        key={question.id}
-        question={question}
-        value={Array.isArray(value) ? value : []}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
-    return (
-      <NPSQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "number" ? value : undefined}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.CTA) {
-    return (
-      <CTAQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : ""}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Rating) {
-    return (
-      <RatingQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "number" ? value : undefined}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Consent) {
-    return (
-      <ConsentQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : ""}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Date) {
-    return (
-      <DateQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : ""}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
-    return (
-      <PictureSelectionQuestion
-        key={question.id}
-        question={question}
-        value={Array.isArray(value) ? value : []}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
-    return (
-      <FileUploadQuestion
-        key={question.id}
-        surveyId={surveyId}
-        question={question}
-        value={Array.isArray(value) ? value : []}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        onFileUpload={onFileUpload}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Cal) {
-    return (
-      <CalQuestion
-        key={question.id}
-        question={question}
-        value={typeof value === "string" ? value : ""}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        autoFocusEnabled={autoFocusEnabled}
-        setTtc={setTtc}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Matrix) {
-    return (
-      <MatrixQuestion
-        question={question}
-        value={typeof value === "object" && !Array.isArray(value) ? value : {}}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Address) {
-    return (
-      <AddressQuestion
-        question={question}
-        value={Array.isArray(value) ? value : undefined}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        currentQuestionId={currentQuestionId}
-        autoFocusEnabled={autoFocusEnabled}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.Ranking) {
-    return (
-      <RankingQuestion
-        question={question}
-        value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        autoFocusEnabled={autoFocusEnabled}
-        currentQuestionId={currentQuestionId}
-      />
-    );
-  } else if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
-    return (
-      <ContactInfoQuestion
-        question={question}
-        value={Array.isArray(value) ? value : undefined}
-        onChange={onChange}
-        onSubmit={onSubmit}
-        onBack={onBack}
-        isFirstQuestion={isFirstQuestion}
-        isLastQuestion={isLastQuestion}
-        languageCode={languageCode}
-        ttc={ttc}
-        setTtc={setTtc}
-        currentQuestionId={currentQuestionId}
-        autoFocusEnabled={autoFocusEnabled}
-      />
-    );
-  } else return null;
-}
+  return question.type === TSurveyQuestionTypeEnum.OpenText ? (
+    <OpenTextQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
+    <MultipleChoiceSingleQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
+    <MultipleChoiceMultiQuestion
+      key={question.id}
+      question={question}
+      value={Array.isArray(value) ? value : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
+    <NPSQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "number" ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
+    <CTAQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
+    <RatingQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "number" ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
+    <ConsentQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Date ? (
+    <DateQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
+    <PictureSelectionQuestion
+      key={question.id}
+      question={question}
+      value={Array.isArray(value) ? value : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
+    <FileUploadQuestion
+      key={question.id}
+      surveyId={surveyId}
+      question={question}
+      value={Array.isArray(value) ? value : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      onFileUpload={onFileUpload}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
+    <CalQuestion
+      key={question.id}
+      question={question}
+      value={typeof value === "string" ? value : ""}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      autoFocusEnabled={autoFocusEnabled}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
+    <MatrixQuestion
+      question={question}
+      value={typeof value === "object" && !Array.isArray(value) ? value : {}}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Address ? (
+    <AddressQuestion
+      question={question}
+      value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
+    <RankingQuestion
+      question={question}
+      value={Array.isArray(value) ? getResponseValueForRankingQuestion(value, question.choices) : []}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      autoFocusEnabled={autoFocusEnabled}
+      currentQuestionId={currentQuestionId}
+    />
+  ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
+    <ContactInfoQuestion
+      question={question}
+      value={Array.isArray(value) ? value : undefined}
+      onChange={onChange}
+      onSubmit={onSubmit}
+      onBack={onBack}
+      isFirstQuestion={isFirstQuestion}
+      isLastQuestion={isLastQuestion}
+      languageCode={languageCode}
+      ttc={ttc}
+      setTtc={setTtc}
+      currentQuestionId={currentQuestionId}
+      autoFocusEnabled={autoFocusEnabled}
+    />
+  ) : null;
+};

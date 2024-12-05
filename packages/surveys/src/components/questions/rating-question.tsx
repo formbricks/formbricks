@@ -325,18 +325,23 @@ const getSmiley = (iconIdx: number, idx: number, range: number, active: boolean,
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "fb-fill-none";
 
   const icons = [
-    <TiredFace className={active ? activeColor : inactiveColor} />,
-    <WearyFace className={active ? activeColor : inactiveColor} />,
-    <PerseveringFace className={active ? activeColor : inactiveColor} />,
-    <FrowningFace className={active ? activeColor : inactiveColor} />,
-    <ConfusedFace className={active ? activeColor : inactiveColor} />,
-    <NeutralFace className={active ? activeColor : inactiveColor} />,
-    <SlightlySmilingFace className={active ? activeColor : inactiveColor} />,
-    <SmilingFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningFaceWithSmilingEyes className={active ? activeColor : inactiveColor} />,
-    <GrinningSquintingFace className={active ? activeColor : inactiveColor} />,
+    <TiredFace key="tired-face" className={active ? activeColor : inactiveColor} />,
+    <WearyFace key="weary-face" className={active ? activeColor : inactiveColor} />,
+    <PerseveringFace key="persevering-face" className={active ? activeColor : inactiveColor} />,
+    <FrowningFace key="frowning-face" className={active ? activeColor : inactiveColor} />,
+    <ConfusedFace key="confused-face" className={active ? activeColor : inactiveColor} />,
+    <NeutralFace key="neutral-face" className={active ? activeColor : inactiveColor} />,
+    <SlightlySmilingFace key="slightly-smiling-face" className={active ? activeColor : inactiveColor} />,
+    <SmilingFaceWithSmilingEyes
+      key="smiling-face-with-smiling-eyes"
+      className={active ? activeColor : inactiveColor}
+    />,
+    <GrinningFaceWithSmilingEyes
+      key="grinning-face-with-smiling-eyes"
+      className={active ? activeColor : inactiveColor}
+    />,
+    <GrinningSquintingFace key="grinning-squinting-face" className={active ? activeColor : inactiveColor} />,
   ];
-
   return icons[iconIdx];
 };
 

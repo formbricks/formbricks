@@ -49,7 +49,7 @@ export function MultipleChoiceMultiQuestion({
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     }
     return question.choices.map((choice) => choice.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- We only want to recompute this when the shuffleOption changes
   }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
   const getChoicesWithoutOtherLabels = useCallback(
@@ -82,8 +82,8 @@ export function MultipleChoiceMultiQuestion({
     }
     if (question.shuffleOption === "none" || question.shuffleOption === undefined) return question.choices;
     return shuffledChoicesIds.map((choiceId) => {
-      const choice = question.choices.find((choice) => {
-        return choice.id === choiceId;
+      const choice = question.choices.find((currentChoice) => {
+        return currentChoice.id === choiceId;
       });
       return choice;
     });

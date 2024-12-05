@@ -60,7 +60,9 @@ export function NPSQuestion({
   };
 
   const getNPSOptionColor = (idx: number) => {
-    return idx > 8 ? "fb-bg-emerald-100" : idx > 6 ? "fb-bg-orange-100" : "fb-bg-rose-100";
+    if (idx > 8) return "fb-bg-emerald-100";
+    if (idx > 6) return "fb-bg-orange-100";
+    return "fb-bg-rose-100";
   };
 
   return (

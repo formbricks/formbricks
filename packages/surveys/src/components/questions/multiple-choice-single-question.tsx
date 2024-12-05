@@ -51,19 +51,19 @@ export function MultipleChoiceSingleQuestion({
       return getShuffledChoicesIds(question.choices, question.shuffleOption);
     }
     return question.choices.map((choice) => choice.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only want to run this effect when question.choices changes
   }, [question.shuffleOption, question.choices.length, question.choices[question.choices.length - 1].id]);
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
 
   const questionChoices = useMemo(() => {
-    if (!question.choices) {
+    if (!question.choices.length) {
       return [];
     }
     if (question.shuffleOption === "none" || question.shuffleOption === undefined) return question.choices;
     return shuffledChoicesIds.map((choiceId) => {
-      const choice = question.choices.find((choice) => {
-        return choice.id === choiceId;
+      const choice = question.choices.find((selectedChoice) => {
+        return selectedChoice.id === choiceId;
       });
       return choice;
     });
@@ -229,7 +229,9 @@ export function MultipleChoiceSingleQuestion({
                         }}
                         className="placeholder:fb-text-placeholder fb-border-border fb-bg-survey-bg fb-text-heading focus:fb-ring-focus fb-rounded-custom fb-mt-3 fb-flex fb-h-10 fb-w-full fb-border fb-px-3 fb-py-2 fb-text-sm focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2 disabled:fb-cursor-not-allowed disabled:fb-opacity-50"
                         placeholder={
-                          getLocalizedValue(question.otherOptionPlaceholder, languageCode) ?? "Please specify"
+                          getLocalizedValue(question.otherOptionPlaceholder, languageCode).length > 0
+                            ? getLocalizedValue(question.otherOptionPlaceholder, languageCode)
+                            : "Please specify"
                         }
                         required={question.required}
                         aria-labelledby={`${otherOption.id}-label`}

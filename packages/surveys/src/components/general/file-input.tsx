@@ -39,7 +39,7 @@ export function FileInput({
       const fileBuffer = await file.arrayBuffer();
       const bufferKB = fileBuffer.byteLength / 1024;
       if (bufferKB > maxSizeInMB * 1024) {
-        alert(`File should be less than ${maxSizeInMB} MB`);
+        alert(`File should be less than ${maxSizeInMB.toString()} MB`);
         return false;
       }
     }
@@ -55,7 +55,7 @@ export function FileInput({
     }
 
     if (allowMultipleFiles && selectedFiles.length + fileArray.length > FILE_LIMIT) {
-      alert(`You can only upload a maximum of ${FILE_LIMIT} files.`);
+      alert(`You can only upload a maximum of ${FILE_LIMIT.toString()} files.`);
       return;
     }
 
@@ -64,9 +64,8 @@ export function FileInput({
       const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
       if (allowedFileExtensions) {
         return allowedFileExtensions.includes(fileExtension);
-      } 
-        return true;
-      
+      }
+      return true;
     });
 
     const filteredFiles: File[] = [];
@@ -84,7 +83,9 @@ export function FileInput({
         new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () => { resolve(reader.result); };
+          reader.onload = () => {
+            resolve(reader.result);
+          };
           reader.onerror = reject;
         });
 
@@ -122,16 +123,16 @@ export function FileInput({
   const handleDragOver = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // @ts-expect-error
+    // @ts-expect-error -- TS does not recognize dataTransfer
     e.dataTransfer.dropEffect = "copy";
   };
 
-  const handleDrop = (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
+  const handleDrop = async (e: JSXInternal.TargetedDragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // @ts-expect-error
-    handleFileSelection(e.dataTransfer.files);
+    // @ts-expect-error -- TS does not recognize dataTransfer
+    await handleFileSelection(e.dataTransfer.files);
   };
 
   const handleDeleteFile = (index: number, event: JSXInternal.TargetedMouseEvent<SVGSVGElement>) => {
@@ -157,8 +158,7 @@ export function FileInput({
   const uniqueHtmlFor = useMemo(() => `selectedFile-${htmlFor}`, [htmlFor]);
 
   return (
-    <div
-      className="fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
+    <div className="fb-items-left fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-relative fb-mt-3 fb-flex fb-w-full fb-flex-col fb-justify-center fb-rounded-lg fb-border-2 fb-border-dashed dark:fb-border-slate-600 dark:fb-bg-slate-700 dark:hover:fb-border-slate-500 dark:hover:fb-bg-slate-800">
       <div ref={parent}>
         {fileUrls?.map((fileUrl, index) => {
           const fileName = getOriginalFileNameFromUrl(fileUrl);
@@ -175,7 +175,9 @@ export function FileInput({
                     strokeWidth={1}
                     stroke="currentColor"
                     className="fb-text-heading fb-h-5"
-                    onClick={(e) => { handleDeleteFile(index, e); }}>
+                    onClick={(e) => {
+                      handleDeleteFile(index, e);
+                    }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
                 </div>
@@ -205,14 +207,17 @@ export function FileInput({
       </div>
 
       <div>
-        {isUploading ? <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
+        {isUploading ? (
+          <div className="fb-inset-0 fb-flex fb-animate-pulse fb-items-center fb-justify-center fb-rounded-lg fb-py-4">
             <label htmlFor={uniqueHtmlFor} className="fb-text-subheading fb-text-sm fb-font-medium">
               Uploading...
             </label>
-          </div> : null}
+          </div>
+        ) : null}
 
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
-          {showUploader ? <div
+          {showUploader ? (
+            <div
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
               tabIndex={1}
               onKeyDown={(e) => {
@@ -248,12 +253,13 @@ export function FileInput({
                 onChange={async (e) => {
                   const inputElement = e.target as HTMLInputElement;
                   if (inputElement.files) {
-                    handleFileSelection(inputElement.files);
+                    await handleFileSelection(inputElement.files);
                   }
                 }}
                 multiple={allowMultipleFiles}
               />
-            </div> : null}
+            </div>
+          ) : null}
         </label>
       </div>
     </div>

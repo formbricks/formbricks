@@ -1,7 +1,7 @@
+import { Progress } from "@/components/general/progress";
+import { calculateElementIdx } from "@/lib/utils";
 import { useCallback, useMemo } from "preact/hooks";
 import { type TSurvey, type TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { calculateElementIdx } from "@/lib/utils";
-import { Progress } from "./progress";
 
 interface ProgressBarProps {
   survey: TSurvey;
@@ -39,7 +39,6 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
       return 1;
     }
     return progressArray[currentQuestionIdx];
-
   }, [questionId, endingCardIds, progressArray, currentQuestionIdx]);
 
   return <Progress progress={progressValue} />;

@@ -44,7 +44,7 @@ export function MatrixQuestion({
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
   const rowShuffleIdx = useMemo(() => {
-    if (question.shuffleOption) {
+    if (question.shuffleOption !== "none") {
       return getShuffledRowIndices(question.rows.length, question.shuffleOption);
     }
     return question.rows.map((_, id) => id);
@@ -53,10 +53,10 @@ export function MatrixQuestion({
   }, [question.shuffleOption, question.rows.length]);
 
   const questionRows = useMemo(() => {
-    if (!question.rows) {
+    if (!question.rows.length) {
       return [];
     }
-    if (question.shuffleOption === "none" || question.shuffleOption === undefined) {
+    if (question.shuffleOption === "none") {
       return question.rows;
     }
     return rowShuffleIdx.map((shuffledIdx) => {
@@ -142,7 +142,7 @@ export function MatrixQuestion({
               <tbody>
                 {questionRows.map((row, rowIndex) => (
                   // Table rows
-                  <tr className={rowIndex % 2 === 0 ? "bg-input-bg" : ""}>
+                  <tr className={rowIndex % 2 === 0 ? "bg-input-bg" : ""} key={`row-${rowIndex.toString()}`}>
                     <td
                       className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
                       dir="auto">
@@ -150,7 +150,7 @@ export function MatrixQuestion({
                     </td>
                     {question.columns.map((column, columnIndex) => (
                       <td
-                        key={columnIndex}
+                        key={`column-${columnIndex.toString()}`}
                         tabIndex={isCurrent ? 0 : -1}
                         className={`fb-outline-brand fb-px-4 fb-py-2 fb-text-slate-800 ${columnIndex === question.columns.length - 1 ? "fb-rounded-r-custom" : ""}`}
                         onClick={() => {
@@ -176,7 +176,7 @@ export function MatrixQuestion({
                             type="radio"
                             tabIndex={-1}
                             required={question.required}
-                            id={`${row}-${column}`}
+                            id={`row${rowIndex.toString()}-column${columnIndex.toString()}`}
                             name={getLocalizedValue(row, languageCode)}
                             value={getLocalizedValue(column, languageCode)}
                             checked={
@@ -201,7 +201,6 @@ export function MatrixQuestion({
         <SubmitButton
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => {}}
           tabIndex={isCurrent ? 0 : -1}
         />
         {!isFirstQuestion && (

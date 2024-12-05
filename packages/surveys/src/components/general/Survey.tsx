@@ -181,11 +181,11 @@ export function Survey({
     setCurrentVariables(updatedVariables);
   };
 
-  const makeQuestionsRequired = (questionIds: string[]): void => {
+  const makeQuestionsRequired = (requiredQuestionIds: string[]): void => {
     setlocalSurvey((prevSurvey) => ({
       ...prevSurvey,
       questions: prevSurvey.questions.map((question) => {
-        if (questionIds.includes(question.id)) {
+        if (requiredQuestionIds.includes(question.id)) {
           return {
             ...question,
             required: true,
@@ -196,8 +196,11 @@ export function Survey({
     }));
   };
 
-  const pushVariableState = (questionId: TSurveyQuestionId) => {
-    setVariableStack((prevStack) => [...prevStack, { questionId, variables: { ...currentVariables } }]);
+  const pushVariableState = (currentQuestionId: TSurveyQuestionId) => {
+    setVariableStack((prevStack) => [
+      ...prevStack,
+      { questionId: currentQuestionId, variables: { ...currentVariables } },
+    ]);
   };
 
   const popVariableState = () => {
@@ -267,18 +270,18 @@ export function Survey({
     }
 
     // Return the first jump target if found, otherwise go to the next question or ending
-    const nextQuestionId = firstJumpTarget || questions[currentQuestionIndex + 1]?.id || firstEndingId;
+    const nextQuestionId = firstJumpTarget ?? questions[currentQuestionIndex + 1]?.id ?? firstEndingId;
 
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
 
-  const onSubmit = (responseData: TResponseData, ttc: TResponseTtc) => {
-    const questionId = Object.keys(responseData)[0];
+  const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+    const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
 
-    pushVariableState(questionId);
+    pushVariableState(respondedQuestionId);
 
-    const { nextQuestionId, calculatedVariables } = evaluateLogicAndGetNextQuestionId(responseData);
+    const { nextQuestionId, calculatedVariables } = evaluateLogicAndGetNextQuestionId(surveyResponseData);
     const finished =
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
@@ -287,11 +290,11 @@ export function Survey({
       ? localSurvey.endings.find((ending) => ending.id === nextQuestionId)?.id
       : undefined;
 
-    onChange(responseData);
+    onChange(surveyResponseData);
     onChangeVariables(calculatedVariables);
     onResponse?.({
-      data: responseData,
-      ttc,
+      data: surveyResponseData,
+      ttc: responsettc,
       finished,
       variables: calculatedVariables,
       language: selectedLanguage,
@@ -306,7 +309,7 @@ export function Survey({
       setQuestionId(nextQuestionId);
     }
     // add to history
-    setHistory([...history, questionId]);
+    setHistory([...history, respondedQuestionId]);
     setLoadingElement(false);
   };
 
@@ -327,11 +330,11 @@ export function Survey({
   };
 
   const getQuestionPrefillData = (
-    questionId: TSurveyQuestionId,
+    prefillQuestionId: TSurveyQuestionId,
     offset: number
   ): TResponseDataValue | undefined => {
     if (offset === 0 && prefillResponseData) {
-      return prefillResponseData[questionId];
+      return prefillResponseData[prefillQuestionId];
     }
     return undefined;
   };
@@ -388,7 +391,7 @@ export function Survey({
       } else {
         const question = localSurvey.questions[questionIdx];
         return (
-          question && (
+          Boolean(question) && (
             <QuestionConditional
               key={question.id}
               surveyId={localSurvey.id}
