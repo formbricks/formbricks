@@ -90,7 +90,7 @@ export const SurveyMenuBar = ({
     return () => {
       window.removeEventListener("beforeunload", handleWindowClose);
     };
-  }, [localSurvey, survey]);
+  }, [localSurvey, survey, t]);
 
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {

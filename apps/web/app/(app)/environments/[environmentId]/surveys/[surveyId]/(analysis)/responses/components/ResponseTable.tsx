@@ -77,26 +77,6 @@ export const ResponseTable = ({
   // Generate columns
   const columns = generateResponseTableColumns(survey, isExpanded ?? false, isReadOnly, t);
 
-  // Load saved settings from localStorage
-  useEffect(() => {
-    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
-    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
-    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
-
-    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
-      setColumnOrder(JSON.parse(savedColumnOrder));
-    } else {
-      setColumnOrder(table.getAllLeafColumns().map((d) => d.id));
-    }
-
-    if (savedColumnVisibility) {
-      setColumnVisibility(JSON.parse(savedColumnVisibility));
-    }
-    if (savedExpandedSettings !== null) {
-      setIsExpanded(JSON.parse(savedExpandedSettings));
-    }
-  }, [survey.id]);
-
   // Save settings to localStorage when they change
   useEffect(() => {
     if (columnOrder.length > 0) {
@@ -120,7 +100,7 @@ export const ResponseTable = ({
   // Memoize table data and columns
   const tableData: TResponseTableData[] = useMemo(
     () => (isFetchingFirstPage ? Array(10).fill({}) : data),
-    [data]
+    [data, isFetchingFirstPage]
   );
   const tableColumns = useMemo(
     () =>
@@ -134,7 +114,7 @@ export const ResponseTable = ({
             ),
           }))
         : columns,
-    [columns, data]
+    [columns, isFetchingFirstPage]
   );
 
   // React Table instance
@@ -159,6 +139,28 @@ export const ResponseTable = ({
       },
     },
   });
+
+  const defaultColumnOrder = useMemo(() => table.getAllLeafColumns().map((d) => d.id), [table]);
+
+  // Modified useEffect
+  useEffect(() => {
+    const savedColumnOrder = localStorage.getItem(`${survey.id}-columnOrder`);
+    const savedColumnVisibility = localStorage.getItem(`${survey.id}-columnVisibility`);
+    const savedExpandedSettings = localStorage.getItem(`${survey.id}-rowExpand`);
+
+    if (savedColumnOrder && JSON.parse(savedColumnOrder).length > 0) {
+      setColumnOrder(JSON.parse(savedColumnOrder));
+    } else {
+      setColumnOrder(defaultColumnOrder);
+    }
+
+    if (savedColumnVisibility) {
+      setColumnVisibility(JSON.parse(savedColumnVisibility));
+    }
+    if (savedExpandedSettings !== null) {
+      setIsExpanded(JSON.parse(savedExpandedSettings));
+    }
+  }, [survey.id, defaultColumnOrder]);
 
   // Handle column drag end
   const handleDragEnd = (event: DragEndEvent) => {
@@ -244,9 +246,7 @@ export const ResponseTable = ({
 
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
-            <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              {t("common.load_more")}
-            </Button>
+            <Button onClick={fetchNextPage}>{t("common.load_more")}</Button>
           </div>
         )}
 
