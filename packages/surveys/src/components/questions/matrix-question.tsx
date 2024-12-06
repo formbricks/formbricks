@@ -40,7 +40,7 @@ export function MatrixQuestion({
   currentQuestionId,
 }: MatrixQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
   const rowShuffleIdx = useMemo(() => {

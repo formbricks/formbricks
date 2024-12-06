@@ -169,9 +169,6 @@ export function Survey({
     setselectedLanguage(languageCode);
   }, [languageCode]);
 
-  const currIdxTemp = currentQuestionIndex;
-  const currQuesTemp = currentQuestion;
-
   const onChange = (responseDataUpdate: TResponseData) => {
     const updatedResponseData = { ...responseData, ...responseDataUpdate };
     setResponseData(updatedResponseData);
@@ -224,7 +221,7 @@ export function Survey({
     if (questionId === "start")
       return { nextQuestionId: questions[0]?.id || firstEndingId, calculatedVariables: {} };
 
-    if (!currQuesTemp) throw new Error("Question not found");
+    if (!currentQuestion) throw new Error("Question not found");
 
     let firstJumpTarget: string | undefined;
     const allRequiredQuestionIds: string[] = [];
@@ -232,8 +229,8 @@ export function Survey({
     let calculationResults = { ...currentVariables };
     const localResponseData = { ...responseData, ...data };
 
-    if (currQuesTemp.logic && currQuesTemp.logic.length > 0) {
-      for (const logic of currQuesTemp.logic) {
+    if (currentQuestion.logic && currentQuestion.logic.length > 0) {
+      for (const logic of currentQuestion.logic) {
         if (
           evaluateLogic(
             localSurvey,
@@ -261,8 +258,8 @@ export function Survey({
     }
 
     // Use logicFallback if no jump target was set
-    if (!firstJumpTarget && currQuesTemp.logicFallback) {
-      firstJumpTarget = currQuesTemp.logicFallback;
+    if (!firstJumpTarget && currentQuestion.logicFallback) {
+      firstJumpTarget = currentQuestion.logicFallback;
     }
 
     // Make all collected questions required
@@ -323,7 +320,7 @@ export function Survey({
       setHistory(newHistory);
     } else {
       // otherwise go back to previous question in array
-      prevQuestionId = localSurvey.questions[currIdxTemp - 1]?.id;
+      prevQuestionId = localSurvey.questions[currentQuestionIndex - 1]?.id;
     }
     popVariableState();
     if (!prevQuestionId) throw new Error("Question not found");

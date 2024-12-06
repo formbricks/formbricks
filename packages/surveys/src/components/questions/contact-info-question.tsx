@@ -42,7 +42,7 @@ export function ContactInfoQuestion({
   autoFocusEnabled,
 }: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;

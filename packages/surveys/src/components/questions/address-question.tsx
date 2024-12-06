@@ -42,7 +42,7 @@ export function AddressQuestion({
   autoFocusEnabled,
 }: AddressQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const formRef = useRef<HTMLFormElement>(null);
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const safeValue = useMemo(() => {

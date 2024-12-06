@@ -18,8 +18,6 @@ export function Modal({ children, isOpen, placement, clickOutside, darkOverlay, 
   const isCenter = placement === "center";
   const modalRef = useRef(null);
 
-  console.log("acd");
-
   useEffect(() => {
     setShow(isOpen);
   }, [isOpen]);

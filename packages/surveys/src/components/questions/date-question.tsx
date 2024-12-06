@@ -94,7 +94,7 @@ export function DateQuestion({
 }: DateQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -242,6 +242,7 @@ export function DateQuestion({
                   }
                   // active date class
                   if (
+                    selectedDate &&
                     date.getDate() === selectedDate?.getDate() &&
                     date.getMonth() === selectedDate.getMonth() &&
                     date.getFullYear() === selectedDate.getFullYear()

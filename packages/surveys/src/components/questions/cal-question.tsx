@@ -40,7 +40,7 @@ export function CalQuestion({
   currentQuestionId,
 }: CalQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const [errorMessage, setErrorMessage] = useState("");
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, question.id === currentQuestionId);
   const isCurrent = question.id === currentQuestionId;

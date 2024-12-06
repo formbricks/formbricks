@@ -58,7 +58,7 @@ export function RankingQuestion({
   const [parent] = useAutoAnimate();
 
   const [error, setError] = useState<string | null>(null);
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
 
   useTtc(question.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 

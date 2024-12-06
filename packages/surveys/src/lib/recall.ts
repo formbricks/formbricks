@@ -23,7 +23,7 @@ export const replaceRecallInfo = (
     let value: string | null = null;
 
     // Fetching value from variables based on recallItemId
-    if (variables[recallItemId]) {
+    if (variables[recallItemId] !== undefined) {
       value = String(variables[recallItemId]) ?? fallback;
     }
 

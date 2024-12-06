@@ -44,7 +44,7 @@ export function MultipleChoiceSingleQuestion({
   const [otherSelected, setOtherSelected] = useState(false);
   const otherSpecify = useRef<HTMLInputElement | null>(null);
   const choicesContainerRef = useRef<HTMLDivElement | null>(null);
-  const isMediaAvailable = question.imageUrl ?? question.videoUrl;
+  const isMediaAvailable = question.imageUrl || question.videoUrl;
   const isCurrent = question.id === currentQuestionId;
   const shuffledChoicesIds = useMemo(() => {
     if (question.shuffleOption) {
