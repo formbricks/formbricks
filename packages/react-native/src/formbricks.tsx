@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-import { type TJsReactNativeConfigInput } from "@formbricks/types/js";
+import { type TJsRNConfigInput } from "@formbricks/types/js";
 import { Logger } from "../../js-core/src/lib/logger";
 import { init } from "./lib";
 import { SurveyStore } from "./lib/survey-store";
 import { SurveyWebView } from "./survey-web-view";
 
 interface FormbricksProps {
-  initConfig: TJsReactNativeConfigInput;
+  initConfig: TJsRNConfigInput;
 }
 const surveyStore = SurveyStore.getInstance();
 const logger = Logger.getInstance();
