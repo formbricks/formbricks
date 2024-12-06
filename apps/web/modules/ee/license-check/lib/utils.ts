@@ -81,7 +81,14 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       // first call
       const newResult = {
         active: true,
-        features: { isMultiOrgEnabled: true, twoFactorAuth: true, sso: true, contacts: true, projects: 3 },
+        features: {
+          isMultiOrgEnabled: true,
+          twoFactorAuth: true,
+          sso: true,
+          contacts: true,
+          projects: 3,
+          whitelabel: true,
+        },
         lastChecked: currentTime,
       };
       await setPreviousResult(newResult);
@@ -140,10 +147,11 @@ export const getEnterpriseLicense = async (): Promise<{
         active: false,
         features: {
           isMultiOrgEnabled: false,
+          projects: 3,
           twoFactorAuth: false,
           sso: false,
+          whitelabel: true,
           contacts: false,
-          projects: 3,
         },
         lastChecked: new Date(),
       };
@@ -249,22 +257,26 @@ export const fetchLicense = reactCache(
     )()
 );
 
-export const getRemoveInAppBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return true;
-  return false;
-};
-
-export const getRemoveLinkBrandingPermission = (organization: TOrganization): boolean => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return true;
-  return false;
-};
-
 export const getSurveyFollowUpsPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
   else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
   return false;
+};
+
+export const getWhitelabelPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult?.features?.whitelabel ?? false;
+  }
+
+  if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {
+    return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
+  } else {
+    const licenseFeatures = await getLicenseFeatures();
+    if (!licenseFeatures) return false;
+
+    return licenseFeatures.whitelabel;
+  }
 };
 
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {

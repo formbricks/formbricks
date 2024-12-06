@@ -8,6 +8,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   isMultiOrgEnabled: z.boolean(),
   contacts: z.boolean(),
   projects: z.number().nullable(),
+  whitelabel: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
 });
