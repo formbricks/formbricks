@@ -92,6 +92,7 @@ export interface TIso639Language {
     "en-US": string;
     "de-DE": string;
     "pt-BR": string;
+    "fr-FR": string;
   };
 }
 
@@ -102,6 +103,7 @@ export const iso639Languages = [
       "en-US": "Afar",
       "de-DE": "Afar",
       "pt-BR": "Afar",
+      "fr-FR": "Afar",
     },
   },
   {
@@ -110,6 +112,7 @@ export const iso639Languages = [
       "en-US": "Abkhazian",
       "de-DE": "Abchasisch",
       "pt-BR": "Abcásio",
+      "fr-FR": "Abkhaze",
     },
   },
   {
@@ -118,6 +121,7 @@ export const iso639Languages = [
       "en-US": "Avestan",
       "de-DE": "Avestisch",
       "pt-BR": "Avestano",
+      "fr-FR": "Avestique",
     },
   },
   {
@@ -126,6 +130,7 @@ export const iso639Languages = [
       "en-US": "Afrikaans",
       "de-DE": "Afrikaans",
       "pt-BR": "Afrikâner",
+      "fr-FR": "Afrikaans",
     },
   },
   {
@@ -134,6 +139,7 @@ export const iso639Languages = [
       "en-US": "Akan",
       "de-DE": "Akan",
       "pt-BR": "Akan",
+      "fr-FR": "Akan",
     },
   },
   {
@@ -142,6 +148,7 @@ export const iso639Languages = [
       "en-US": "Amharic",
       "de-DE": "Amharisch",
       "pt-BR": "Amárico",
+      "fr-FR": "Amharique",
     },
   },
   {
@@ -150,6 +157,7 @@ export const iso639Languages = [
       "en-US": "Aragonese",
       "de-DE": "Aragonesisch",
       "pt-BR": "Aragonês",
+      "fr-FR": "Aragonês",
     },
   },
   {
@@ -158,6 +166,7 @@ export const iso639Languages = [
       "en-US": "Arabic",
       "de-DE": "Arabisch",
       "pt-BR": "Árabe",
+      "fr-FR": "Arabe",
     },
   },
   {
@@ -166,6 +175,7 @@ export const iso639Languages = [
       "en-US": "Assamese",
       "de-DE": "Assamesisch",
       "pt-BR": "Assamês",
+      "fr-FR": "Assamais",
     },
   },
   {
@@ -174,6 +184,7 @@ export const iso639Languages = [
       "en-US": "Avaric",
       "de-DE": "Avarisch",
       "pt-BR": "Avaric",
+      "fr-FR": "Avaric",
     },
   },
   {
@@ -182,6 +193,7 @@ export const iso639Languages = [
       "en-US": "Aymara",
       "de-DE": "Aymara",
       "pt-BR": "Aymara",
+      "fr-FR": "Aymara",
     },
   },
   {
@@ -190,6 +202,7 @@ export const iso639Languages = [
       "en-US": "Azerbaijani",
       "de-DE": "Aserbaidschanisch",
       "pt-BR": "Azerbaijano",
+      "fr-FR": "Azerbaïdjanais",
     },
   },
   {
@@ -198,6 +211,7 @@ export const iso639Languages = [
       "en-US": "Bashkir",
       "de-DE": "Baschkirisch",
       "pt-BR": "Basco",
+      "fr-FR": "Bashkir",
     },
   },
   {
@@ -206,6 +220,7 @@ export const iso639Languages = [
       "en-US": "Belarusian",
       "de-DE": "Weißrussisch",
       "pt-BR": "Bielorrusso",
+      "fr-FR": "Biélorusse",
     },
   },
   {
@@ -214,6 +229,7 @@ export const iso639Languages = [
       "en-US": "Bulgarian",
       "de-DE": "Bulgarisch",
       "pt-BR": "Búlgaro",
+      "fr-FR": "Bulgare",
     },
   },
   {
@@ -222,6 +238,7 @@ export const iso639Languages = [
       "en-US": "Bihari languages",
       "de-DE": "Biharische Sprachen",
       "pt-BR": "Bihari",
+      "fr-FR": "Bihari",
     },
   },
   {
@@ -230,6 +247,7 @@ export const iso639Languages = [
       "en-US": "Bislama",
       "de-DE": "Bislama",
       "pt-BR": "Bislama",
+      "fr-FR": "Bislama",
     },
   },
   {
@@ -238,6 +256,7 @@ export const iso639Languages = [
       "en-US": "Bambara",
       "de-DE": "Bambara",
       "pt-BR": "Bambara",
+      "fr-FR": "Bambara",
     },
   },
   {
@@ -246,6 +265,7 @@ export const iso639Languages = [
       "en-US": "Bengali",
       "de-DE": "Bengali",
       "pt-BR": "Bengali",
+      "fr-FR": "Bengali",
     },
   },
   {
@@ -254,6 +274,7 @@ export const iso639Languages = [
       "en-US": "Tibetan",
       "de-DE": "Tibetisch",
       "pt-BR": "Tibetano",
+      "fr-FR": "Tibétain",
     },
   },
   {
@@ -262,6 +283,7 @@ export const iso639Languages = [
       "en-US": "Breton",
       "de-DE": "Bretonisch",
       "pt-BR": "Breton",
+      "fr-FR": "Breton",
     },
   },
   {
@@ -270,6 +292,7 @@ export const iso639Languages = [
       "en-US": "Bosnian",
       "de-DE": "Bosnisch",
       "pt-BR": "Bósnio",
+      "fr-FR": "Bosnien",
     },
   },
   {
@@ -278,6 +301,7 @@ export const iso639Languages = [
       "en-US": "Catalan; Valencian",
       "de-DE": "Katalanisch; Valencisch",
       "pt-BR": "Catalão; Valenciano",
+      "fr-FR": "Catalan; Valencian",
     },
   },
   {
@@ -286,6 +310,7 @@ export const iso639Languages = [
       "en-US": "Chechen",
       "de-DE": "Tschetschenisch",
       "pt-BR": "Checheno",
+      "fr-FR": "Tchechen",
     },
   },
   {
@@ -294,6 +319,7 @@ export const iso639Languages = [
       "en-US": "Chamorro",
       "de-DE": "Chamorro",
       "pt-BR": "Chamorro",
+      "fr-FR": "Chamorro",
     },
   },
   {
@@ -302,6 +328,7 @@ export const iso639Languages = [
       "en-US": "Corsican",
       "de-DE": "Korsisch",
       "pt-BR": "Corsican",
+      "fr-FR": "Corsican",
     },
   },
   {
@@ -310,6 +337,7 @@ export const iso639Languages = [
       "en-US": "Cree",
       "de-DE": "Cree",
       "pt-BR": "Cree",
+      "fr-FR": "Cree",
     },
   },
   {
@@ -318,6 +346,7 @@ export const iso639Languages = [
       "en-US": "Czech",
       "de-DE": "Tschechisch",
       "pt-BR": "Tcheco",
+      "fr-FR": "Tcheque",
     },
   },
   {
@@ -327,6 +356,8 @@ export const iso639Languages = [
       "de-DE": "Kirchenslawisch; Altbulgarisch; Kirchenslawisch; Altbulgarisch; Altkirchliches Slawisch",
       "pt-BR":
         "Slavônico eclesiástico; Antigo eslavônico; Sânscrito eclesiástico; Antigo búlgaro; Antigo sânscrito eclesiástico",
+      "fr-FR":
+        "Slavon épiscopal; Ancien slave; Sanscrit épiscopal; Ancien bulgare; Ancien sanscrit épiscopal",
     },
   },
   {
@@ -335,6 +366,7 @@ export const iso639Languages = [
       "en-US": "Chuvash",
       "de-DE": "Tschuwaschisch",
       "pt-BR": "Tchuvasco",
+      "fr-FR": "Tchuvasche",
     },
   },
   {
@@ -343,6 +375,7 @@ export const iso639Languages = [
       "en-US": "Welsh",
       "de-DE": "Walisisch",
       "pt-BR": "Galês",
+      "fr-FR": "Gallois",
     },
   },
   {
@@ -351,6 +384,7 @@ export const iso639Languages = [
       "en-US": "Danish",
       "de-DE": "Dänisch",
       "pt-BR": "Dinamarquês",
+      "fr-FR": "Danois",
     },
   },
   {
@@ -359,6 +393,7 @@ export const iso639Languages = [
       "en-US": "German",
       "de-DE": "Deutsch",
       "pt-BR": "Alemão",
+      "fr-FR": "Allemand",
     },
   },
   {
@@ -367,6 +402,7 @@ export const iso639Languages = [
       "en-US": "Divehi; Dhivehi; Maldivian",
       "de-DE": "Divehi; Dhivehi; Maldivisch",
       "pt-BR": "Divehi; Dhivehi; Maldiviano",
+      "fr-FR": "Divehi; Dhivehi; Maldivien",
     },
   },
   {
@@ -375,6 +411,7 @@ export const iso639Languages = [
       "en-US": "Dzongkha",
       "de-DE": "Dzongkha",
       "pt-BR": "Dzongkha",
+      "fr-FR": "Dzongkha",
     },
   },
   {
@@ -383,6 +420,7 @@ export const iso639Languages = [
       "en-US": "Ewe",
       "de-DE": "Ewe",
       "pt-BR": "Ewe",
+      "fr-FR": "Ewe",
     },
   },
   {
@@ -391,6 +429,7 @@ export const iso639Languages = [
       "en-US": "Greek, Modern (1453-)",
       "de-DE": "Griechisch, Modern (ab 1453)",
       "pt-BR": "Grego moderno (1453-)",
+      "fr-FR": "Grec moderne (après 1453)",
     },
   },
   {
@@ -399,6 +438,7 @@ export const iso639Languages = [
       "en-US": "English",
       "de-DE": "Englisch",
       "pt-BR": "Inglês",
+      "fr-FR": "Anglais",
     },
   },
   {
@@ -407,6 +447,7 @@ export const iso639Languages = [
       "en-US": "Esperanto",
       "de-DE": "Esperanto",
       "pt-BR": "Esperanto",
+      "fr-FR": "Esperanto",
     },
   },
   {
@@ -415,6 +456,7 @@ export const iso639Languages = [
       "en-US": "Spanish; Castilian",
       "de-DE": "Spanisch; Kastilisch",
       "pt-BR": "Espanhol; Castelao",
+      "fr-FR": "Espagnol; Castillan",
     },
   },
   {
@@ -423,6 +465,7 @@ export const iso639Languages = [
       "en-US": "Estonian",
       "de-DE": "Estnisch",
       "pt-BR": "Estoniano",
+      "fr-FR": "Estonien",
     },
   },
   {
@@ -431,6 +474,7 @@ export const iso639Languages = [
       "en-US": "Basque",
       "de-DE": "Baskisch",
       "pt-BR": "Basco",
+      "fr-FR": "Basque",
     },
   },
   {
@@ -439,6 +483,7 @@ export const iso639Languages = [
       "en-US": "Persian",
       "de-DE": "Persisch",
       "pt-BR": "Persa",
+      "fr-FR": "Persan",
     },
   },
   {
@@ -447,6 +492,7 @@ export const iso639Languages = [
       "en-US": "Fulah",
       "de-DE": "Fulah",
       "pt-BR": "Fulah",
+      "fr-FR": "Fulah",
     },
   },
   {
@@ -455,6 +501,7 @@ export const iso639Languages = [
       "en-US": "Finnish",
       "de-DE": "Finnisch",
       "pt-BR": "Finlandês",
+      "fr-FR": "Finlandais",
     },
   },
   {
@@ -463,6 +510,7 @@ export const iso639Languages = [
       "en-US": "Fijian",
       "de-DE": "Fidschianisch",
       "pt-BR": "Fijiano",
+      "fr-FR": "Fijien",
     },
   },
   {
@@ -471,6 +519,7 @@ export const iso639Languages = [
       "en-US": "Faroese",
       "de-DE": "Färöisch",
       "pt-BR": "Feroês",
+      "fr-FR": "Féroïen",
     },
   },
   {
@@ -479,6 +528,7 @@ export const iso639Languages = [
       "en-US": "French",
       "de-DE": "Französisch",
       "pt-BR": "Francês",
+      "fr-FR": "Français",
     },
   },
   {
@@ -487,6 +537,7 @@ export const iso639Languages = [
       "en-US": "Western Frisian",
       "de-DE": "Westfriesisch",
       "pt-BR": "Frísio ocidental",
+      "fr-FR": "Frison occidental",
     },
   },
   {
@@ -495,6 +546,7 @@ export const iso639Languages = [
       "en-US": "Irish",
       "de-DE": "Irischer",
       "pt-BR": "Irlandês",
+      "fr-FR": "Irlandais",
     },
   },
   {
@@ -503,6 +555,7 @@ export const iso639Languages = [
       "en-US": "Gaelic; Scottish Gaelic",
       "de-DE": "Gälisch; Schottisch Gälisch",
       "pt-BR": "Gaelico escocês; Gaélico escocês",
+      "fr-FR": "Gaélique écossais; Gaélique écossais",
     },
   },
   {
@@ -511,6 +564,7 @@ export const iso639Languages = [
       "en-US": "Galician",
       "de-DE": "Galicisch",
       "pt-BR": "Galego",
+      "fr-FR": "Galicien",
     },
   },
   {
@@ -519,6 +573,7 @@ export const iso639Languages = [
       "en-US": "Guarani",
       "de-DE": "Guarani",
       "pt-BR": "Guarani",
+      "fr-FR": "Guarani",
     },
   },
   {
@@ -527,6 +582,7 @@ export const iso639Languages = [
       "en-US": "Gujarati",
       "de-DE": "Gujarati",
       "pt-BR": "Gujarati",
+      "fr-FR": "Gujarati",
     },
   },
   {
@@ -535,6 +591,7 @@ export const iso639Languages = [
       "en-US": "Manx",
       "de-DE": "Manx",
       "pt-BR": "Manx",
+      "fr-FR": "Manx",
     },
   },
   {
@@ -543,6 +600,7 @@ export const iso639Languages = [
       "en-US": "Hausa",
       "de-DE": "Hausa",
       "pt-BR": "Hausa",
+      "fr-FR": "Hausa",
     },
   },
   {
@@ -551,6 +609,7 @@ export const iso639Languages = [
       "en-US": "Hebrew",
       "de-DE": "Hebräisch",
       "pt-BR": "Hebraico",
+      "fr-FR": "Hébreu",
     },
   },
   {
@@ -559,6 +618,7 @@ export const iso639Languages = [
       "en-US": "Hindi",
       "de-DE": "Hindi",
       "pt-BR": "Hindi",
+      "fr-FR": "Hindi",
     },
   },
   {
@@ -567,6 +627,7 @@ export const iso639Languages = [
       "en-US": "Hiri Motu",
       "de-DE": "Hiri Motu",
       "pt-BR": "Hiri Motu",
+      "fr-FR": "Hiri Motu",
     },
   },
   {
@@ -575,6 +636,7 @@ export const iso639Languages = [
       "en-US": "Croatian",
       "de-DE": "Kroatisch",
       "pt-BR": "Croata",
+      "fr-FR": "Croate",
     },
   },
   {
@@ -583,6 +645,7 @@ export const iso639Languages = [
       "en-US": "Haitian; Haitian Creole",
       "de-DE": "Haitian; Haitian Creole",
       "pt-BR": "Haitiano; Crioulo haitiano",
+      "fr-FR": "Haïtien; Créole haïtien",
     },
   },
   {
@@ -591,6 +654,7 @@ export const iso639Languages = [
       "en-US": "Hungarian",
       "de-DE": "Ungarisch",
       "pt-BR": "Húngaro",
+      "fr-FR": "Hongrois",
     },
   },
   {
@@ -599,6 +663,7 @@ export const iso639Languages = [
       "en-US": "Armenian",
       "de-DE": "Armenisch",
       "pt-BR": "Armênio",
+      "fr-FR": "Arménien",
     },
   },
   {
@@ -607,6 +672,7 @@ export const iso639Languages = [
       "en-US": "Herero",
       "de-DE": "Herero",
       "pt-BR": "Herero",
+      "fr-FR": "Herero",
     },
   },
   {
@@ -615,6 +681,7 @@ export const iso639Languages = [
       "en-US": "Interlingua (International Auxiliary Language Association)",
       "de-DE": "Interlingua (Internationaler Hilfssprachverband)",
       "pt-BR": "Interlingua (Associação Internacional de Línguas Auxiliares)",
+      "fr-FR": "Interlingua (Association internationale des langues auxiliaires)",
     },
   },
   {
@@ -623,6 +690,7 @@ export const iso639Languages = [
       "en-US": "Indonesian",
       "de-DE": "Indonesisch",
       "pt-BR": "Indonésio",
+      "fr-FR": "Indonésien",
     },
   },
   {
@@ -631,6 +699,7 @@ export const iso639Languages = [
       "en-US": "Interlingue; Occidental",
       "de-DE": "Interlingue; Occidental",
       "pt-BR": "Interlingue; Ocidental",
+      "fr-FR": "Interlingue; Ocidental",
     },
   },
   {
@@ -639,6 +708,7 @@ export const iso639Languages = [
       "en-US": "Igbo",
       "de-DE": "Igbo",
       "pt-BR": "Igbo",
+      "fr-FR": "Igbo",
     },
   },
   {
@@ -647,6 +717,7 @@ export const iso639Languages = [
       "en-US": "Sichuan Yi; Nuosu",
       "de-DE": "Sichuan Yi; Nuosu",
       "pt-BR": "Sichuan Yi; Nuosu",
+      "fr-FR": "Sichuan Yi; Nuosu",
     },
   },
   {
@@ -655,6 +726,7 @@ export const iso639Languages = [
       "en-US": "Inupiaq",
       "de-DE": "Inupiaq",
       "pt-BR": "Inupiaq",
+      "fr-FR": "Inupiaq",
     },
   },
   {
@@ -663,6 +735,7 @@ export const iso639Languages = [
       "en-US": "Ido",
       "de-DE": "Ido",
       "pt-BR": "Ido",
+      "fr-FR": "Ido",
     },
   },
   {
@@ -671,6 +744,7 @@ export const iso639Languages = [
       "en-US": "Icelandic",
       "de-DE": "Isländisch",
       "pt-BR": "Islandês",
+      "fr-FR": "Islandais",
     },
   },
   {
@@ -679,6 +753,7 @@ export const iso639Languages = [
       "en-US": "Italian",
       "de-DE": "Italienisch",
       "pt-BR": "Italiano",
+      "fr-FR": "Italien",
     },
   },
   {
@@ -687,6 +762,7 @@ export const iso639Languages = [
       "en-US": "Inuktitut",
       "de-DE": "Inuktitut",
       "pt-BR": "Inuktitut",
+      "fr-FR": "Inuktitut",
     },
   },
   {
@@ -695,6 +771,7 @@ export const iso639Languages = [
       "en-US": "Japanese",
       "de-DE": "Japanisch",
       "pt-BR": "Japonês",
+      "fr-FR": "Japonais",
     },
   },
   {
@@ -703,6 +780,7 @@ export const iso639Languages = [
       "en-US": "Javanese",
       "de-DE": "Javanisch",
       "pt-BR": "Javonês",
+      "fr-FR": "Javanais",
     },
   },
   {
@@ -711,6 +789,7 @@ export const iso639Languages = [
       "en-US": "Georgian",
       "de-DE": "Georgisch",
       "pt-BR": "Georgiano",
+      "fr-FR": "Géorgien",
     },
   },
   {
@@ -719,6 +798,7 @@ export const iso639Languages = [
       "en-US": "Kongo",
       "de-DE": "Kongo",
       "pt-BR": "Kongo",
+      "fr-FR": "Kongo",
     },
   },
   {
@@ -727,6 +807,7 @@ export const iso639Languages = [
       "en-US": "Kikuyu; Gikuyu",
       "de-DE": "Kikuyu; Gikuyu",
       "pt-BR": "Kikuyu; Gikuyu",
+      "fr-FR": "Kikuyu; Gikuyu",
     },
   },
   {
@@ -735,6 +816,7 @@ export const iso639Languages = [
       "en-US": "Kuanyama; Kwanyama",
       "de-DE": "Kuanyama; Kwanyama",
       "pt-BR": "Kuanyama; Kwanyama",
+      "fr-FR": "Kuanyama; Kwanyama",
     },
   },
   {
@@ -743,6 +825,7 @@ export const iso639Languages = [
       "en-US": "Kazakh",
       "de-DE": "Kasachisch",
       "pt-BR": "Cazaque",
+      "fr-FR": "Kazakh",
     },
   },
   {
@@ -751,6 +834,7 @@ export const iso639Languages = [
       "en-US": "Kalaallisut; Greenlandic",
       "de-DE": "Kalaallisut; Grönländisch",
       "pt-BR": "Kalaallisut; Groelândico",
+      "fr-FR": "Kalaallisut; Groenlandais",
     },
   },
   {
@@ -759,6 +843,7 @@ export const iso639Languages = [
       "en-US": "Central Khmer",
       "de-DE": "Zentral-Khmer",
       "pt-BR": "Khmer central",
+      "fr-FR": "Khmer central",
     },
   },
   {
@@ -767,6 +852,7 @@ export const iso639Languages = [
       "en-US": "Kannada",
       "de-DE": "Kannada",
       "pt-BR": "Canarês",
+      "fr-FR": "Kannada",
     },
   },
   {
@@ -775,6 +861,7 @@ export const iso639Languages = [
       "en-US": "Korean",
       "de-DE": "Koreanisch",
       "pt-BR": "Coreano",
+      "fr-FR": "Coréen",
     },
   },
   {
@@ -783,6 +870,7 @@ export const iso639Languages = [
       "en-US": "Kanuri",
       "de-DE": "Kanuri",
       "pt-BR": "Kanuri",
+      "fr-FR": "Kanuri",
     },
   },
   {
@@ -791,6 +879,7 @@ export const iso639Languages = [
       "en-US": "Kashmiri",
       "de-DE": "Kashmiri",
       "pt-BR": "Kashmiri",
+      "fr-FR": "Kashmiri",
     },
   },
   {
@@ -799,6 +888,7 @@ export const iso639Languages = [
       "en-US": "Kurdish",
       "de-DE": "Kurdisch",
       "pt-BR": "Curdo",
+      "fr-FR": "Kurde",
     },
   },
   {
@@ -807,6 +897,7 @@ export const iso639Languages = [
       "en-US": "Komi",
       "de-DE": "Komi",
       "pt-BR": "Komi",
+      "fr-FR": "Komi",
     },
   },
   {
@@ -815,6 +906,7 @@ export const iso639Languages = [
       "en-US": "Cornish",
       "de-DE": "Kornisch",
       "pt-BR": "Cornualles",
+      "fr-FR": "Cornouaillois",
     },
   },
   {
@@ -823,6 +915,7 @@ export const iso639Languages = [
       "en-US": "Kirghiz; Kyrgyz",
       "de-DE": "Kirgisisch; Kirgisischer",
       "pt-BR": "Kirguiz; Quirguiz",
+      "fr-FR": "Kirghiz; Kyrgyz",
     },
   },
   {
@@ -831,6 +924,7 @@ export const iso639Languages = [
       "en-US": "Latin",
       "de-DE": "Lateinisch",
       "pt-BR": "Latim",
+      "fr-FR": "Latin",
     },
   },
   {
@@ -839,6 +933,7 @@ export const iso639Languages = [
       "en-US": "Luxembourgish; Letzeburgesch",
       "de-DE": "Luxemburgisch; Letzeburgesch",
       "pt-BR": "Luxemburguês; Luxemburguês",
+      "fr-FR": "Luxembourgeois; Letzeburgesch",
     },
   },
   {
@@ -847,6 +942,7 @@ export const iso639Languages = [
       "en-US": "Ganda",
       "de-DE": "Ganda",
       "pt-BR": "Ganda",
+      "fr-FR": "Ganda",
     },
   },
   {
@@ -855,6 +951,7 @@ export const iso639Languages = [
       "en-US": "Limburgan; Limburger; Limburgish",
       "de-DE": "Limburgisch; Limburger; Limburgish",
       "pt-BR": "Limburguês; Limburguês; Limburguês",
+      "fr-FR": "Limbourgeois; Limbourgeois; Limbourgeois",
     },
   },
   {
@@ -863,6 +960,7 @@ export const iso639Languages = [
       "en-US": "Lingala",
       "de-DE": "Lingala",
       "pt-BR": "Lingala",
+      "fr-FR": "Lingala",
     },
   },
   {
@@ -871,6 +969,7 @@ export const iso639Languages = [
       "en-US": "Lao",
       "de-DE": "Lao",
       "pt-BR": "Lao",
+      "fr-FR": "Lao",
     },
   },
   {
@@ -879,6 +978,7 @@ export const iso639Languages = [
       "en-US": "Lithuanian",
       "de-DE": "Litauisch",
       "pt-BR": "Lituano",
+      "fr-FR": "Lituanien",
     },
   },
   {
@@ -887,6 +987,7 @@ export const iso639Languages = [
       "en-US": "Luba-Katanga",
       "de-DE": "Luba-Katanga",
       "pt-BR": "Luba-Katanga",
+      "fr-FR": "Luba-Katanga",
     },
   },
   {
@@ -895,6 +996,7 @@ export const iso639Languages = [
       "en-US": "Latvian",
       "de-DE": "Lettisch",
       "pt-BR": "Letão",
+      "fr-FR": "Letton",
     },
   },
   {
@@ -903,6 +1005,7 @@ export const iso639Languages = [
       "en-US": "Malagasy",
       "de-DE": "Malagasy",
       "pt-BR": "Malagasy",
+      "fr-FR": "Malagasy",
     },
   },
   {
@@ -911,6 +1014,7 @@ export const iso639Languages = [
       "en-US": "Marshallese",
       "de-DE": "Marshallese",
       "pt-BR": "Marshallês",
+      "fr-FR": "Marshallese",
     },
   },
   {
@@ -919,6 +1023,7 @@ export const iso639Languages = [
       "en-US": "Maori",
       "de-DE": "Maori",
       "pt-BR": "Maori",
+      "fr-FR": "Maori",
     },
   },
   {
@@ -927,6 +1032,7 @@ export const iso639Languages = [
       "en-US": "Macedonian",
       "de-DE": "Mazedonisch",
       "pt-BR": "Macedônio",
+      "fr-FR": "Macédonien",
     },
   },
   {
@@ -935,6 +1041,7 @@ export const iso639Languages = [
       "en-US": "Malayalam",
       "de-DE": "Malayalam",
       "pt-BR": "Malayalam",
+      "fr-FR": "Malayalam",
     },
   },
   {
@@ -943,6 +1050,7 @@ export const iso639Languages = [
       "en-US": "Mongolian",
       "de-DE": "Mongolisch",
       "pt-BR": "Mongol",
+      "fr-FR": "Mongol",
     },
   },
   {
@@ -951,6 +1059,7 @@ export const iso639Languages = [
       "en-US": "Marathi",
       "de-DE": "Marathi",
       "pt-BR": "Marati",
+      "fr-FR": "Marathi",
     },
   },
   {
@@ -959,6 +1068,7 @@ export const iso639Languages = [
       "en-US": "Malay",
       "de-DE": "Malay",
       "pt-BR": "Malaio",
+      "fr-FR": "Malais",
     },
   },
   {
@@ -967,6 +1077,7 @@ export const iso639Languages = [
       "en-US": "Maltese",
       "de-DE": "Maltesisch",
       "pt-BR": "Maltês",
+      "fr-FR": "Maltès",
     },
   },
   {
@@ -975,6 +1086,7 @@ export const iso639Languages = [
       "en-US": "Burmese",
       "de-DE": "Birmanisch",
       "pt-BR": "Birmanês",
+      "fr-FR": "Birman",
     },
   },
   {
@@ -983,6 +1095,7 @@ export const iso639Languages = [
       "en-US": "Nauru",
       "de-DE": "Nauru",
       "pt-BR": "Nauru",
+      "fr-FR": "Nauru",
     },
   },
   {
@@ -991,6 +1104,7 @@ export const iso639Languages = [
       "en-US": "Bokmål, Norwegian; Norwegian Bokmål",
       "de-DE": "Bokmål, Norwegisch; Norwegische Bokmål",
       "pt-BR": "Bokmål, Norueguês; Bokmål Norueguês",
+      "fr-FR": "Bokmål, Norvégien; Bokmål Norvégien",
     },
   },
   {
@@ -999,6 +1113,7 @@ export const iso639Languages = [
       "en-US": "Ndebele, North; North Ndebele",
       "de-DE": "Ndebele, Nord; Nord Ndebele",
       "pt-BR": "Ndebele, Norte; Norte Ndebele",
+      "fr-FR": "Ndebele, Nord; Nord Ndebele",
     },
   },
   {
@@ -1007,6 +1122,7 @@ export const iso639Languages = [
       "en-US": "Nepali",
       "de-DE": "Nepali",
       "pt-BR": "Nepali",
+      "fr-FR": "Népalais",
     },
   },
   {
@@ -1015,6 +1131,7 @@ export const iso639Languages = [
       "en-US": "Ndonga",
       "de-DE": "Ndonga",
       "pt-BR": "Ndonga",
+      "fr-FR": "Ndonga",
     },
   },
   {
@@ -1023,6 +1140,7 @@ export const iso639Languages = [
       "en-US": "Dutch; Flemish",
       "de-DE": "Holländisch; Flämisch",
       "pt-BR": "Holandês; Flamengo",
+      "fr-FR": "Néerlandais; Flamand",
     },
   },
   {
@@ -1031,6 +1149,7 @@ export const iso639Languages = [
       "en-US": "Norwegian Nynorsk; Nynorsk, Norwegian",
       "de-DE": "Norwegische Nynorsk; Nynorsk, Norwegisch",
       "pt-BR": "Norwegian Nynorsk; Nynorsk, Norueguês",
+      "fr-FR": "Norvégien Nynorsk; Nynorsk, Norvégien",
     },
   },
   {
@@ -1039,6 +1158,7 @@ export const iso639Languages = [
       "en-US": "Norwegian",
       "de-DE": "Norwegisch",
       "pt-BR": "Norueguês",
+      "fr-FR": "Norvégien",
     },
   },
   {
@@ -1047,6 +1167,7 @@ export const iso639Languages = [
       "en-US": "Ndebele, South; South Ndebele",
       "de-DE": "Ndebele, Süd; Süd Ndebele",
       "pt-BR": "Ndebele, Sul; Sul Ndebele",
+      "fr-FR": "Ndebele, Sud; Sud Ndebele",
     },
   },
   {
@@ -1055,6 +1176,7 @@ export const iso639Languages = [
       "en-US": "Navajo; Navaho",
       "de-DE": "Navajo; Navaho",
       "pt-BR": "Navajo; Navaho",
+      "fr-FR": "Navajo; Navaho",
     },
   },
   {
@@ -1063,6 +1185,7 @@ export const iso639Languages = [
       "en-US": "Chichewa; Chewa; Nyanja",
       "de-DE": "Chichewa; Chewa; Nyanja",
       "pt-BR": "Chichewa; Chewa; Nyanja",
+      "fr-FR": "Chichewa; Chewa; Nyanja",
     },
   },
   {
@@ -1071,6 +1194,7 @@ export const iso639Languages = [
       "en-US": "Occitan (post 1500)",
       "de-DE": "Occitan (post 1500)",
       "pt-BR": "Occitano (pós 1500)",
+      "fr-FR": "Occitan (post 1500)",
     },
   },
   {
@@ -1079,6 +1203,7 @@ export const iso639Languages = [
       "en-US": "Ojibwa",
       "de-DE": "Ojibwa",
       "pt-BR": "Ojibwa",
+      "fr-FR": "Ojibwa",
     },
   },
   {
@@ -1087,6 +1212,7 @@ export const iso639Languages = [
       "en-US": "Oromo",
       "de-DE": "Oromo",
       "pt-BR": "Oromo",
+      "fr-FR": "Oromo",
     },
   },
   {
@@ -1095,6 +1221,7 @@ export const iso639Languages = [
       "en-US": "Oriya",
       "de-DE": "Oriya",
       "pt-BR": "Oriya",
+      "fr-FR": "Oriya",
     },
   },
   {
@@ -1103,6 +1230,7 @@ export const iso639Languages = [
       "en-US": "Ossetian; Ossetic",
       "de-DE": "Ossetian; Ossetic",
       "pt-BR": "Ossetiano; Ossético",
+      "fr-FR": "Ossète; Ossète",
     },
   },
   {
@@ -1111,6 +1239,7 @@ export const iso639Languages = [
       "en-US": "Panjabi; Punjabi",
       "de-DE": "Panjabi; Punjabi",
       "pt-BR": "Panjabi; Punjabi",
+      "fr-FR": "Panjabi; Punjabi",
     },
   },
   {
@@ -1119,6 +1248,7 @@ export const iso639Languages = [
       "en-US": "Pali",
       "de-DE": "Pali",
       "pt-BR": "Pali",
+      "fr-FR": "Pali",
     },
   },
   {
@@ -1127,6 +1257,7 @@ export const iso639Languages = [
       "en-US": "Polish",
       "de-DE": "Polnisch",
       "pt-BR": "Polonês",
+      "fr-FR": "Polonais",
     },
   },
   {
@@ -1135,6 +1266,7 @@ export const iso639Languages = [
       "en-US": "Pushto; Pashto",
       "de-DE": "Pushto; Pashto",
       "pt-BR": "Pushto; Pashto",
+      "fr-FR": "Poushto; Pashto",
     },
   },
   {
@@ -1143,6 +1275,7 @@ export const iso639Languages = [
       "en-US": "Portuguese",
       "de-DE": "Portugiesisch",
       "pt-BR": "Português",
+      "fr-FR": "Portugais",
     },
   },
   {
@@ -1151,6 +1284,7 @@ export const iso639Languages = [
       "en-US": "Quechua",
       "de-DE": "Quechua",
       "pt-BR": "Quechua",
+      "fr-FR": "Quechua",
     },
   },
   {
@@ -1159,6 +1293,7 @@ export const iso639Languages = [
       "en-US": "Romansh",
       "de-DE": "Rämisch",
       "pt-BR": "Romeno",
+      "fr-FR": "Romansh",
     },
   },
   {
@@ -1167,6 +1302,7 @@ export const iso639Languages = [
       "en-US": "Rundi",
       "de-DE": "Rundi",
       "pt-BR": "Rundi",
+      "fr-FR": "Rundi",
     },
   },
   {
@@ -1175,6 +1311,7 @@ export const iso639Languages = [
       "en-US": "Romanian; Moldavian; Moldovan",
       "de-DE": "Rumänisch; Moldauisch; Moldauisch",
       "pt-BR": "Romeno; Moldavo; Moldavo",
+      "fr-FR": "Roumain; Moldave; Moldave",
     },
   },
   {
@@ -1183,6 +1320,7 @@ export const iso639Languages = [
       "en-US": "Russian",
       "de-DE": "Russisch",
       "pt-BR": "Russo",
+      "fr-FR": "Russe",
     },
   },
   {
@@ -1191,6 +1329,7 @@ export const iso639Languages = [
       "en-US": "Kinyarwanda",
       "de-DE": "Kinyarwanda",
       "pt-BR": "Kinyarwanda",
+      "fr-FR": "Kinyarwanda",
     },
   },
   {
@@ -1199,6 +1338,7 @@ export const iso639Languages = [
       "en-US": "Sanskrit",
       "de-DE": "Sanskrit",
       "pt-BR": "Sânscrito",
+      "fr-FR": "Sanskrit",
     },
   },
   {
@@ -1207,6 +1347,7 @@ export const iso639Languages = [
       "en-US": "Sardinian",
       "de-DE": "Sardisch",
       "pt-BR": "Sardo",
+      "fr-FR": "Sardien",
     },
   },
   {
@@ -1215,6 +1356,7 @@ export const iso639Languages = [
       "en-US": "Sindhi",
       "de-DE": "Sindhi",
       "pt-BR": "Sindhi",
+      "fr-FR": "Sindhi",
     },
   },
   {
@@ -1223,6 +1365,7 @@ export const iso639Languages = [
       "en-US": "Northern Sami",
       "de-DE": "Nordischer Sami",
       "pt-BR": "Sami do Norte",
+      "fr-FR": "Sami du Nord",
     },
   },
   {
@@ -1231,6 +1374,7 @@ export const iso639Languages = [
       "en-US": "Sango",
       "de-DE": "Sango",
       "pt-BR": "Sango",
+      "fr-FR": "Sango",
     },
   },
   {
@@ -1239,6 +1383,7 @@ export const iso639Languages = [
       "en-US": "Sinhala; Sinhalese",
       "de-DE": "Sinhala; Sinhalese",
       "pt-BR": "Sinhala; Sinhalese",
+      "fr-FR": "Sinhala; Sinhalese",
     },
   },
   {
@@ -1247,6 +1392,7 @@ export const iso639Languages = [
       "en-US": "Slovak",
       "de-DE": "Slowakisch",
       "pt-BR": "Eslovaco",
+      "fr-FR": "Slovaque",
     },
   },
   {
@@ -1255,6 +1401,7 @@ export const iso639Languages = [
       "en-US": "Slovenian",
       "de-DE": "Slowenisch",
       "pt-BR": "Esloveno",
+      "fr-FR": "Slovène",
     },
   },
   {
@@ -1263,6 +1410,7 @@ export const iso639Languages = [
       "en-US": "Samoan",
       "de-DE": "Samoan",
       "pt-BR": "Samoano",
+      "fr-FR": "Samoan",
     },
   },
   {
@@ -1271,6 +1419,7 @@ export const iso639Languages = [
       "en-US": "Shona",
       "de-DE": "Shona",
       "pt-BR": "Shona",
+      "fr-FR": "Shona",
     },
   },
   {
@@ -1279,6 +1428,7 @@ export const iso639Languages = [
       "en-US": "Somali",
       "de-DE": "Somali",
       "pt-BR": "Somali",
+      "fr-FR": "Somali",
     },
   },
   {
@@ -1287,6 +1437,7 @@ export const iso639Languages = [
       "en-US": "Albanian",
       "de-DE": "Albanisch",
       "pt-BR": "Albânico",
+      "fr-FR": "Albanais",
     },
   },
   {
@@ -1295,6 +1446,7 @@ export const iso639Languages = [
       "en-US": "Serbian",
       "de-DE": "Serbisch",
       "pt-BR": "Sérvio",
+      "fr-FR": "Serbe",
     },
   },
   {
@@ -1303,6 +1455,7 @@ export const iso639Languages = [
       "en-US": "Swati",
       "de-DE": "Swati",
       "pt-BR": "Swati",
+      "fr-FR": "Swati",
     },
   },
   {
@@ -1311,6 +1464,7 @@ export const iso639Languages = [
       "en-US": "Sotho, Southern",
       "de-DE": "Sotho, Süd",
       "pt-BR": "Sotho, Sul",
+      "fr-FR": "Sotho, Sud",
     },
   },
   {
@@ -1319,6 +1473,7 @@ export const iso639Languages = [
       "en-US": "Sundanese",
       "de-DE": "Sundanesisch",
       "pt-BR": "Sundanês",
+      "fr-FR": "Sundanais",
     },
   },
   {
@@ -1327,6 +1482,7 @@ export const iso639Languages = [
       "en-US": "Swedish",
       "de-DE": "Schwedisch",
       "pt-BR": "Sueco",
+      "fr-FR": "Suédois",
     },
   },
   {
@@ -1335,6 +1491,7 @@ export const iso639Languages = [
       "en-US": "Swahili",
       "de-DE": "Swahili",
       "pt-BR": "Swahili",
+      "fr-FR": "Swahili",
     },
   },
   {
@@ -1343,6 +1500,7 @@ export const iso639Languages = [
       "en-US": "Tamil",
       "de-DE": "Tamil",
       "pt-BR": "Tâmil",
+      "fr-FR": "Tamoul",
     },
   },
   {
@@ -1351,6 +1509,7 @@ export const iso639Languages = [
       "en-US": "Telugu",
       "de-DE": "Telugu",
       "pt-BR": "Telugu",
+      "fr-FR": "Telugu",
     },
   },
   {
@@ -1359,6 +1518,7 @@ export const iso639Languages = [
       "en-US": "Tajik",
       "de-DE": "Tadschikisch",
       "pt-BR": "Tajique",
+      "fr-FR": "Tadjik",
     },
   },
   {
@@ -1367,6 +1527,7 @@ export const iso639Languages = [
       "en-US": "Thai",
       "de-DE": "Thai",
       "pt-BR": "Tailandês",
+      "fr-FR": "Thaïlandais",
     },
   },
   {
@@ -1375,6 +1536,7 @@ export const iso639Languages = [
       "en-US": "Tigrinya",
       "de-DE": "Tigrinya",
       "pt-BR": "Tigrinya",
+      "fr-FR": "Tigrinya",
     },
   },
   {
@@ -1383,6 +1545,7 @@ export const iso639Languages = [
       "en-US": "Turkmen",
       "de-DE": "Turkmenisch",
       "pt-BR": "Turcomano",
+      "fr-FR": "Turkmène",
     },
   },
   {
@@ -1391,6 +1554,7 @@ export const iso639Languages = [
       "en-US": "Tagalog",
       "de-DE": "Tagalog",
       "pt-BR": "Tagalo",
+      "fr-FR": "Tagalog",
     },
   },
   {
@@ -1399,6 +1563,7 @@ export const iso639Languages = [
       "en-US": "Tswana",
       "de-DE": "Tswana",
       "pt-BR": "Tswana",
+      "fr-FR": "Tswana",
     },
   },
   {
@@ -1407,6 +1572,7 @@ export const iso639Languages = [
       "en-US": "Tonga (Tonga Islands)",
       "de-DE": "Tonga (Tonga-Inseln)",
       "pt-BR": "Tonga (Ilhas Tonga)",
+      "fr-FR": "Tonga (Îles Tonga)",
     },
   },
   {
@@ -1415,6 +1581,7 @@ export const iso639Languages = [
       "en-US": "Turkish",
       "de-DE": "Türkisch",
       "pt-BR": "Turco",
+      "fr-FR": "Turc",
     },
   },
   {
@@ -1423,6 +1590,7 @@ export const iso639Languages = [
       "en-US": "Tsonga",
       "de-DE": "Tsonga",
       "pt-BR": "Tsonga",
+      "fr-FR": "Tsonga",
     },
   },
   {
@@ -1431,6 +1599,7 @@ export const iso639Languages = [
       "en-US": "Tatar",
       "de-DE": "Tatarisch",
       "pt-BR": "Tatar",
+      "fr-FR": "Tatar",
     },
   },
   {
@@ -1439,6 +1608,7 @@ export const iso639Languages = [
       "en-US": "Twi",
       "de-DE": "Twi",
       "pt-BR": "Twi",
+      "fr-FR": "Twi",
     },
   },
   {
@@ -1447,6 +1617,7 @@ export const iso639Languages = [
       "en-US": "Tahitian",
       "de-DE": "Tahitisch",
       "pt-BR": "Tahitiano",
+      "fr-FR": "Tahitien",
     },
   },
   {
@@ -1455,6 +1626,7 @@ export const iso639Languages = [
       "en-US": "Uighur; Uyghur",
       "de-DE": "Uighur; Uyghur",
       "pt-BR": "Uigur; Uigur",
+      "fr-FR": "Uigur; Uigur",
     },
   },
   {
@@ -1463,6 +1635,7 @@ export const iso639Languages = [
       "en-US": "Ukrainian",
       "de-DE": "Ukrainisch",
       "pt-BR": "Ucraniano",
+      "fr-FR": "Ukrainien",
     },
   },
   {
@@ -1471,6 +1644,7 @@ export const iso639Languages = [
       "en-US": "Urdu",
       "de-DE": "Urdu",
       "pt-BR": "Urdu",
+      "fr-FR": "Urdu",
     },
   },
   {
@@ -1479,6 +1653,7 @@ export const iso639Languages = [
       "en-US": "Uzbek",
       "de-DE": "Usbekisch",
       "pt-BR": "Usbeque",
+      "fr-FR": "Ouzbek",
     },
   },
   {
@@ -1487,6 +1662,7 @@ export const iso639Languages = [
       "en-US": "Venda",
       "de-DE": "Venda",
       "pt-BR": "Venda",
+      "fr-FR": "Venda",
     },
   },
   {
@@ -1495,6 +1671,7 @@ export const iso639Languages = [
       "en-US": "Vietnamese",
       "de-DE": "Vietnamesisch",
       "pt-BR": "Vietnamita",
+      "fr-FR": "Vietnamien",
     },
   },
   {
@@ -1503,6 +1680,7 @@ export const iso639Languages = [
       "en-US": "Volapük",
       "de-DE": "Volapük",
       "pt-BR": "Volapük",
+      "fr-FR": "Volapük",
     },
   },
   {
@@ -1511,6 +1689,7 @@ export const iso639Languages = [
       "en-US": "Walloon",
       "de-DE": "Wallonisch",
       "pt-BR": "Valão",
+      "fr-FR": "Valon",
     },
   },
   {
@@ -1519,6 +1698,7 @@ export const iso639Languages = [
       "en-US": "Wolof",
       "de-DE": "Wolof",
       "pt-BR": "Wolof",
+      "fr-FR": "Wolof",
     },
   },
   {
@@ -1527,6 +1707,7 @@ export const iso639Languages = [
       "en-US": "Xhosa",
       "de-DE": "Xhosa",
       "pt-BR": "Xhosa",
+      "fr-FR": "Xhosa",
     },
   },
   {
@@ -1535,6 +1716,7 @@ export const iso639Languages = [
       "en-US": "Yiddish",
       "de-DE": "Jiddisch",
       "pt-BR": "Iídiche",
+      "fr-FR": "Yiddish",
     },
   },
   {
@@ -1543,6 +1725,7 @@ export const iso639Languages = [
       "en-US": "Yoruba",
       "de-DE": "Yoruba",
       "pt-BR": "Iorubá",
+      "fr-FR": "Yoruba",
     },
   },
   {
@@ -1551,6 +1734,7 @@ export const iso639Languages = [
       "en-US": "Zhuang; Chuang",
       "de-DE": "Zhuang; Chuang",
       "pt-BR": "Zhuang; Chuang",
+      "fr-FR": "Zhuang; Chuang",
     },
   },
   {
@@ -1559,6 +1743,7 @@ export const iso639Languages = [
       "en-US": "Chinese (Simplified)",
       "de-DE": "Chinesisch (Vereinfacht)",
       "pt-BR": "Chinês (Simplificado)",
+      "fr-FR": "Chinois (Simplifié)",
     },
   },
   {
@@ -1567,6 +1752,7 @@ export const iso639Languages = [
       "en-US": "Chinese (Traditional)",
       "de-DE": "Chinesisch (Traditionell)",
       "pt-BR": "Chinês (Tradicional)",
+      "fr-FR": "Chinois (Traditionnel)",
     },
   },
   {
@@ -1575,6 +1761,7 @@ export const iso639Languages = [
       "en-US": "Zulu",
       "de-DE": "Zulu",
       "pt-BR": "Zulu",
+      "fr-FR": "Zulu",
     },
   },
 ];
@@ -1629,6 +1816,7 @@ export const appLanguages = [
       "en-US": "English (US)",
       "de-DE": "Englisch (US)",
       "pt-BR": "Inglês (EUA)",
+      "fr-FR": "Anglais (États-Unis)",
     },
   },
   {
@@ -1637,6 +1825,7 @@ export const appLanguages = [
       "en-US": "German",
       "de-DE": "Deutsch",
       "pt-BR": "Alemão",
+      "fr-FR": "Allemand",
     },
   },
   {
@@ -1645,6 +1834,16 @@ export const appLanguages = [
       "en-US": "Portuguese (Brazil)",
       "de-DE": "Portugiesisch (Brasilien)",
       "pt-BR": "Português (Brasil)",
+      "fr-FR": "Portugais (Brésil)",
+    },
+  },
+  {
+    code: "fr-FR",
+    label: {
+      "en-US": "French",
+      "de-DE": "Französisch",
+      "pt-BR": "Francês",
+      "fr-FR": "Français",
     },
   },
 ];

@@ -12,7 +12,7 @@ interface Tab {
   isPro?: boolean;
 }
 
-interface QuestionsAudienceTabsProps {
+interface SurveyEditorTabsProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
@@ -20,15 +20,16 @@ interface QuestionsAudienceTabsProps {
   isSurveyFollowUpsAllowed: boolean;
 }
 
-export const QuestionsAudienceTabs = ({
+export const SurveyEditorTabs = ({
   activeId,
   setActiveId,
   isStylingTabVisible,
   isCxMode,
   isSurveyFollowUpsAllowed = false,
-}: QuestionsAudienceTabsProps) => {
-  const tabs: Tab[] = useMemo(
-    () => [
+}: SurveyEditorTabsProps) => {
+  const t = useTranslations();
+  const tabsComputed = useMemo(() => {
+    const tabs: Tab[] = [
       {
         id: "questions",
         label: "common.questions",
@@ -50,17 +51,13 @@ export const QuestionsAudienceTabs = ({
         icon: <MailIcon className="h-5 w-5" />,
         isPro: !isSurveyFollowUpsAllowed,
       },
-    ],
-    [isSurveyFollowUpsAllowed]
-  );
+    ];
 
-  const t = useTranslations();
-  const tabsComputed = useMemo(() => {
     if (isStylingTabVisible) {
       return tabs;
     }
     return tabs.filter((tab) => tab.id !== "styling");
-  }, [isStylingTabVisible]);
+  }, [isStylingTabVisible, isSurveyFollowUpsAllowed]);
 
   // Hide settings tab in CX mode
   let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
