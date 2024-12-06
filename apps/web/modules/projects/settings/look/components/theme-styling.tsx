@@ -195,7 +195,7 @@ export const ThemeStyling = ({
                 survey={getPreviewSurvey(locale) as TSurvey}
                 project={{
                   ...project,
-                  styling: form.getValues(),
+                  styling: form.watch(),
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

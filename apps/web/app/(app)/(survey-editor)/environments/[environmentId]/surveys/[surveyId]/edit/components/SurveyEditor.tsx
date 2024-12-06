@@ -77,8 +77,7 @@ export const SurveyEditor = ({
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<TProject>(project);
 
-  const [styling, setStyling] = useState(localSurvey?.styling);
-  const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
+  const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
 
   const fetchLatestProject = useCallback(async () => {
     const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
@@ -88,6 +87,19 @@ export const SurveyEditor = ({
   }, [localProject.id]);
 
   useDocumentVisibility(fetchLatestProject);
+
+  useEffect(() => {
+    if (styling && localSurvey) {
+      setLocalSurvey((prev) =>
+        prev
+          ? {
+              ...prev,
+              styling,
+            }
+          : null
+      );
+    }
+  }, [styling]);
 
   useEffect(() => {
     if (survey) {
@@ -196,12 +208,9 @@ export const SurveyEditor = ({
               colors={colors}
               environment={environment}
               localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
               project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
-              localStylingChanges={localStylingChanges}
-              setLocalStylingChanges={setLocalStylingChanges}
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
             />
