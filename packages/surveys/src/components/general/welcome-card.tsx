@@ -4,8 +4,9 @@ import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx } from "@/lib/utils";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseTtc, type TResponseVariables } from "@formbricks/types/responses";
-import { type TI18nString, type TSurvey } from "@formbricks/types/surveys/types";
+import { type TI18nString } from "@formbricks/types/surveys/types";
 import { Headline } from "./headline";
 import { HtmlBody } from "./html-body";
 
@@ -15,7 +16,7 @@ interface WelcomeCardProps {
   fileUrl?: string;
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
   languageCode: string;
   responseCount?: number;
   autoFocusEnabled: boolean;

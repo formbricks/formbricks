@@ -1,6 +1,6 @@
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type TShuffleOption,
-  type TSurvey,
   type TSurveyLogic,
   type TSurveyLogicAction,
   type TSurveyQuestion,
@@ -61,7 +61,7 @@ export const getShuffledChoicesIds = (
   return shuffledChoices.map((choice) => choice.id);
 };
 
-export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number): number => {
+export const calculateElementIdx = (survey: TJsEnvironmentStateSurvey, currentQustionIdx: number): number => {
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);

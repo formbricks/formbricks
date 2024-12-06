@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
-import { type TSurvey, type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
 
 // offset = 0 -> Current question card
 // offset < 0 -> Question cards that are already answered
@@ -11,7 +12,7 @@ import { type TSurvey, type TSurveyQuestionId, type TSurveyStyling } from "@form
 interface StackedCardsContainerProps {
   cardArrangement: TCardArrangementOptions;
   currentQuestionId: TSurveyQuestionId;
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
   getCardContent: (questionIdxTemp: number, offset: number) => JSX.Element | undefined;
   styling: TProjectStyling | TSurveyStyling;
   setQuestionId: (questionId: TSurveyQuestionId) => void;

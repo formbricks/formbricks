@@ -7,15 +7,12 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
-import {
-  type TSurvey,
-  type TSurveyEndScreenCard,
-  type TSurveyRedirectUrlCard,
-} from "@formbricks/types/surveys/types";
+import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
   endingCard: TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   isRedirectDisabled: boolean;
   isResponseSendingFinished: boolean;
