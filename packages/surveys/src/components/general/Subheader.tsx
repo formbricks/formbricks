@@ -6,8 +6,6 @@ interface SubheaderProps {
 }
 
 export function Subheader({ subheader, questionId }: SubheaderProps) {
-  console.log("acd");
-
   return (
     <p
       htmlFor={questionId}

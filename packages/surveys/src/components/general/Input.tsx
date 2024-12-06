@@ -5,8 +5,6 @@ export interface InputProps extends HTMLAttributes<HTMLInputElement> {
   className?: string;
 }
 export const Input = forwardRef<HTMLInputElement, InputProps>(({ className, ...props }, ref) => {
-  console.log("acd");
-
   return (
     <input
       {...props}
