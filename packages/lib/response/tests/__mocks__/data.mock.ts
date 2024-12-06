@@ -400,6 +400,9 @@ export const mockSurveySummaryOutput = {
         inputType: "text",
         required: false,
         type: TSurveyQuestionTypeEnum.OpenText,
+        charLimit: {
+          enabled: false,
+        },
       },
       responseCount: 0,
       samples: [],

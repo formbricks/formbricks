@@ -18225,7 +18225,7 @@ snapshots:
       chalk: 4.1.2
       execa: 5.1.1
       fast-glob: 3.3.2
-      fast-xml-parser: 4.4.1
+      fast-xml-parser: 4.5.0
       logkitty: 0.7.1
     transitivePeerDependencies:
       - encoding
@@ -18236,7 +18236,7 @@ snapshots:
       chalk: 4.1.2
       execa: 5.1.1
       fast-glob: 3.3.2
-      fast-xml-parser: 4.4.1
+      fast-xml-parser: 4.5.0
       ora: 5.4.1
     transitivePeerDependencies:
       - encoding

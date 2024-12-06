@@ -51,6 +51,9 @@ const NPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("nps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
@@ -58,6 +61,9 @@ const NPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("nps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -156,6 +162,9 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
         buttonLabel: { default: "Send" },
         placeholder: { default: "Type your answer here..." },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -242,6 +251,9 @@ const CSATSurvey = (locale: string): TXMTemplate => {
         required: false,
         placeholder: { default: translate("csat_survey_question_2_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: reusableQuestionIds[2],
@@ -250,6 +262,9 @@ const CSATSurvey = (locale: string): TXMTemplate => {
         required: false,
         placeholder: { default: translate("csat_survey_question_3_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -278,6 +293,9 @@ const CESSurvey = (locale: string): TXMTemplate => {
         required: true,
         placeholder: { default: translate("cess_survey_question_2_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -376,6 +394,9 @@ const SmileysRatingSurvey = (locale: string): TXMTemplate => {
         buttonLabel: { default: translate("smileys_survey_question_3_button_label", locale) },
         placeholder: { default: translate("smileys_survey_question_3_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -403,6 +424,9 @@ const eNPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("enps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
@@ -410,6 +434,9 @@ const eNPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("enps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };

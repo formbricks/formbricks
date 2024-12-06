@@ -1,13 +1,15 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { JSX } from "react";
+import { JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -52,16 +54,34 @@ export const OpenQuestionForm = ({
   const t = useTranslations();
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
+
+  const [showCharLimits, setShowCharLimits] = useState(question.inputType === "text");
+
   const handleInputChange = (inputType: TSurveyOpenTextQuestionInputType) => {
     const updatedAttributes = {
       inputType: inputType,
       placeholder: createI18nString(getPlaceholderByInputType(inputType), surveyLanguageCodes),
       longAnswer: inputType === "text" ? question.longAnswer : false,
+      charLimit: {
+        min: undefined,
+        max: undefined,
+      },
     };
+    setIsCharLimitEnabled(false);
+    setShowCharLimits(inputType === "text");
     updateQuestion(questionIdx, updatedAttributes);
   };
 
   const [parent] = useAutoAnimate();
+  const [isCharLimitEnabled, setIsCharLimitEnabled] = useState(false);
+
+  useEffect(() => {
+    if (question?.charLimit?.min !== undefined || question?.charLimit?.max !== undefined) {
+      setIsCharLimitEnabled(true);
+    } else {
+      setIsCharLimitEnabled(false);
+    }
+  }, []);
 
   return (
     <form>
@@ -145,6 +165,70 @@ export const OpenQuestionForm = ({
             handleOptionChange={handleInputChange} // Use the merged function
           />
         </div>
+      </div>
+      <div className="mt-3">
+        {showCharLimits && (
+          <AdvancedOptionToggle
+            isChecked={isCharLimitEnabled}
+            onToggle={(checked: boolean) => {
+              setIsCharLimitEnabled(checked);
+              updateQuestion(questionIdx, {
+                charLimit: {
+                  enabled: checked,
+                  min: undefined,
+                  max: undefined,
+                },
+              });
+            }}
+            htmlId="charLimit"
+            description={t("environments.surveys.edit.character_limit_toggle_description")}
+            childBorder
+            title={t("environments.surveys.edit.character_limit_toggle_title")}
+            customContainerClass="p-0">
+            <div className="flex gap-4 p-4">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="minLength">{t("common.minimum")}</Label>
+                <Input
+                  id="minLength"
+                  name="minLength"
+                  type="number"
+                  min={0}
+                  value={question?.charLimit?.min || ""}
+                  aria-label={t("common.minimum")}
+                  className="bg-white"
+                  onChange={(e) =>
+                    updateQuestion(questionIdx, {
+                      charLimit: {
+                        ...question?.charLimit,
+                        min: e.target.value ? parseInt(e.target.value) : undefined,
+                      },
+                    })
+                  }
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="maxLength">{t("common.maximum")}</Label>
+                <Input
+                  id="maxLength"
+                  name="maxLength"
+                  type="number"
+                  min={0}
+                  aria-label={t("common.maximum")}
+                  value={question?.charLimit?.max || ""}
+                  className="bg-white"
+                  onChange={(e) =>
+                    updateQuestion(questionIdx, {
+                      charLimit: {
+                        ...question?.charLimit,
+                        max: e.target.value ? parseInt(e.target.value) : undefined,
+                      },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </AdvancedOptionToggle>
+        )}
       </div>
     </form>
   );
