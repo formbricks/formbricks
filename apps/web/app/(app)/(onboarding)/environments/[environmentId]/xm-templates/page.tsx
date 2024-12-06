@@ -6,6 +6,7 @@ import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId, getUserProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -49,9 +50,11 @@ const Page = async (props: XMTemplatePageProps) => {
       {projects.length >= 2 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
-          variant="minimal"
-          href={`/environments/${environment.id}/surveys`}>
-          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          variant="ghost"
+          asChild>
+          <Link href={`/environments/${environment.id}/surveys`}>
+            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          </Link>
         </Button>
       )}
     </div>

@@ -6,6 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { ArrowLeftIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 
 interface PanelInfoViewProps {
   disableBack: boolean;
@@ -18,11 +19,8 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
     <div className="h-full overflow-hidden text-slate-900">
       {!disableBack && (
         <div className="border-b border-slate-200 py-2">
-          <Button
-            variant="minimal"
-            className="focus:ring-0"
-            onClick={handleInitialPageButton}
-            StartIcon={ArrowLeftIcon}>
+          <Button variant="ghost" onClick={handleInitialPageButton}>
+            <ArrowLeftIcon />
             {t("common.back")}
           </Button>
         </div>
@@ -86,11 +84,10 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
               {t("environments.surveys.summary.how_to_create_a_panel_step_4_description")}
             </p>
           </div>
-          <Button
-            className="justify-center"
-            href="https://formbricks.com/docs/link-surveys/market-research-panel"
-            target="_blank">
-            {t("common.get_started")}
+          <Button className="justify-center" asChild>
+            <Link href="https://formbricks.com/docs/link-surveys/market-research-panel" target="_blank">
+              {t("common.get_started")}
+            </Link>
           </Button>
         </div>
       </div>

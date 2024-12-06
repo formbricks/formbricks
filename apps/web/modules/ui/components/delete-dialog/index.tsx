@@ -48,7 +48,7 @@ export const DeleteDialog = ({
           }}>
           {useSaveInsteadOfCancel ? t("common.save") : t("common.cancel")}
         </Button>
-        <Button variant="warn" onClick={onDelete} loading={isDeleting} disabled={disabled}>
+        <Button variant="destructive" onClick={onDelete} loading={isDeleting} disabled={disabled}>
           {t("common.delete")}
         </Button>
       </div>

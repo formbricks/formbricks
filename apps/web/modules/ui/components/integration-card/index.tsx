@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import Link from "next/link";
 
 interface CardProps {
   connectText?: string;
@@ -55,18 +56,17 @@ export const Card: React.FC<CardProps> = ({
     <p className="text-xs text-slate-500">{description}</p>
     <div className="mt-4 flex space-x-2">
       {connectHref && (
-        <Button disabled={disabled} href={connectHref} target={connectNewTab ? "_blank" : "_self"} size="sm">
-          {connectText}
+        <Button disabled={disabled} size="sm">
+          <Link href={connectHref} target={connectNewTab ? "_blank" : "_self"}>
+            {connectText}
+          </Link>
         </Button>
       )}
       {docsHref && (
-        <Button
-          disabled={disabled}
-          href={docsHref}
-          target={docsNewTab ? "_blank" : "_self"}
-          size="sm"
-          variant="secondary">
-          {docsText}
+        <Button disabled={disabled} size="sm" variant="secondary">
+          <Link href={docsHref} target={docsNewTab ? "_blank" : "_self"}>
+            {docsText}
+          </Link>
         </Button>
       )}
     </div>

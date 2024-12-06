@@ -180,7 +180,7 @@ export const SaveAsNewSegmentModal = ({
             <div className="flex space-x-2">
               <Button
                 type="button"
-                variant="minimal"
+                variant="ghost"
                 onClick={() => {
                   handleReset();
                 }}>

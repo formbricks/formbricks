@@ -249,7 +249,7 @@ export function SegmentEditor({
                     if (viewOnly) return;
                     handleDeleteResource(groupId);
                   }}
-                  variant="minimal">
+                  variant="ghost">
                   <Trash2 className={cn("h-4 w-4 cursor-pointer", viewOnly && "cursor-not-allowed")} />
                 </Button>
               </div>

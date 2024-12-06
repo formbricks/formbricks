@@ -62,7 +62,7 @@ export const DeleteOrganization = ({
           <Button
             size="sm"
             disabled={isDeleteDisabled}
-            variant="warn"
+            variant="destructive"
             className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
             onClick={() => setIsDeleteDialogOpen(true)}>
             {t("common.delete")}

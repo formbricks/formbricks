@@ -287,13 +287,13 @@ export const AddChannelMappingModal = ({
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
               {selectedIntegration ? (
-                <Button type="button" variant="warn" loading={isDeleting} onClick={deleteLink}>
+                <Button type="button" variant="destructive" loading={isDeleting} onClick={deleteLink}>
                   {t("common.delete")}
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  variant="minimal"
+                  variant="ghost"
                   onClick={() => {
                     setOpen(false);
                     resetForm();

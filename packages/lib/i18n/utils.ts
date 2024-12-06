@@ -1591,7 +1591,7 @@ export const getLanguageLabel = (languageCode: string, locale: string): string |
 // Iterates over the object recursively and adds empty strings for new language keys
 export const addMultiLanguageLabels = (object: any, languageSymbols: string[]): any => {
   // Helper function to add language keys to a multi-language object
-  function addLanguageKeys(obj: { default: string;[key: string]: string }) {
+  function addLanguageKeys(obj: { default: string; [key: string]: string }) {
     languageSymbols.forEach((lang) => {
       if (!obj.hasOwnProperty(lang)) {
         obj[lang] = ""; // Add empty string for new language keys
