@@ -1,4 +1,6 @@
 export function Progress({ progress }: { progress: number }) {
+  console.log("acd");
+
   return (
     <div className="fb-bg-accent-bg fb-h-2 fb-w-full fb-overflow-hidden fb-rounded-full">
       <div
