@@ -90,7 +90,7 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    form.watch((data: TSurveyStyling) => {
+    const subscription = form.watch((data: TSurveyStyling) => {
       setLocalSurvey((prev) => ({
         ...prev,
         styling: {
@@ -99,7 +99,9 @@ export const StylingView = ({
         },
       }));
     });
-  }, [setLocalSurvey]);
+
+    return () => subscription.unsubscribe();
+  }, [form, setLocalSurvey]);
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;
