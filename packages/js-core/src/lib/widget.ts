@@ -2,10 +2,14 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
-import { TJsFileUploadParams, TJsPersonState, TJsTrackProperties } from "@formbricks/types/js";
+import {
+  TJsEnvironmentStateSurvey,
+  TJsFileUploadParams,
+  TJsPersonState,
+  TJsTrackProperties,
+} from "@formbricks/types/js";
 import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { Config } from "./config";
 import { CONTAINER_ID } from "./constants";
 import { Logger } from "./logger";
@@ -28,7 +32,7 @@ export const setIsSurveyRunning = (value: boolean) => {
 };
 
 export const triggerSurvey = async (
-  survey: TSurvey,
+  survey: TJsEnvironmentStateSurvey,
   action?: string,
   properties?: TJsTrackProperties
 ): Promise<void> => {
@@ -50,7 +54,7 @@ export const triggerSurvey = async (
 };
 
 const renderWidget = async (
-  survey: TSurvey,
+  survey: TJsEnvironmentStateSurvey,
   action?: string,
   hiddenFields: TResponseHiddenFieldValue = {}
 ) => {

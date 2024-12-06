@@ -260,7 +260,7 @@ export const putFileToLocalStorage = async (
 
     const uploadPath = `${rootDir}/${environmentId}/${accessType}/${fileName}`;
 
-    const buffer = Buffer.from(fileBuffer);
+    const buffer = Buffer.from(fileBuffer as unknown as WithImplicitCoercion<string>);
     const bufferBytes = buffer.byteLength;
 
     const maxSize = IS_FORMBRICKS_CLOUD
@@ -276,7 +276,7 @@ export const putFileToLocalStorage = async (
       throw err;
     }
 
-    await writeFile(uploadPath, buffer);
+    await writeFile(uploadPath, buffer as unknown as any);
   } catch (err) {
     throw err;
   }

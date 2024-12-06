@@ -1,4 +1,4 @@
-import { type TSurvey } from "@formbricks/types/surveys/types";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type InvalidCodeError,
   type NetworkError,
@@ -14,7 +14,7 @@ import { SurveyStore } from "./survey-store";
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
-export const triggerSurvey = (survey: TSurvey): void => {
+export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);

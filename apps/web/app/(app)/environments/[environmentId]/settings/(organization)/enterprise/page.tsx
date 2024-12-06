@@ -187,8 +187,8 @@ const Page = async (props) => {
                 )}
               </p>
               <Button asChild>
-                <Link 
-                  href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5" 
+                <Link
+                  href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
                   target="_blank"
                   rel="noopener noreferrer">
                   {t("environments.settings.enterprise.request_30_day_trial_license")}
