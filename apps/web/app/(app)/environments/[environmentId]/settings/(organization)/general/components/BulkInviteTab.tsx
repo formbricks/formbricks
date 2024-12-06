@@ -116,7 +116,7 @@ export const BulkInviteTab = ({
             href="/sample-csv/formbricks-organization-members-template.csv"
             target="_blank"
             rel="noopener noreferrer">
-            <Button variant="minimal" size="sm">
+            <Button variant="ghost" size="sm">
               {t("common.download")} CSV template
             </Button>
           </Link>

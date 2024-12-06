@@ -69,7 +69,7 @@ export const FollowUpsView = ({
     <div className="mt-12 space-y-4 p-5">
       <div className="flex justify-end">
         {surveyFollowUps.length ? (
-          <Button variant="primary" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
+          <Button size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
             + {t("environments.surveys.edit.follow_ups_new")}
           </Button>
         ) : null}
@@ -90,11 +90,7 @@ export const FollowUpsView = ({
               </p>
             </div>
 
-            <Button
-              className="w-fit"
-              variant="primary"
-              size="sm"
-              onClick={() => setAddFollowUpModalOpen(true)}>
+            <Button className="w-fit" size="sm" onClick={() => setAddFollowUpModalOpen(true)}>
               {t("environments.surveys.edit.follow_ups_new")}
             </Button>
           </div>

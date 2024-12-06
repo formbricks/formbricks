@@ -15,7 +15,7 @@ import {
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -43,16 +43,20 @@ export const ShareEmbedSurvey = ({
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
   const t = useTranslations();
-  const tabs = [
-    { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
-    { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
-    {
-      id: "link",
-      label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
-      icon: LinkIcon,
-    },
-    { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
-  ].filter((tab) => !(survey.type === "link" && tab.id === "app"));
+  const tabs = useMemo(
+    () =>
+      [
+        { id: "email", label: t("environments.surveys.summary.embed_in_an_email"), icon: MailIcon },
+        { id: "webpage", label: t("environments.surveys.summary.embed_on_website"), icon: Code2Icon },
+        {
+          id: "link",
+          label: `${isSingleUseLinkSurvey ? t("environments.surveys.summary.single_use_links") : t("environments.surveys.summary.share_the_link")}`,
+          icon: LinkIcon,
+        },
+        { id: "app", label: t("environments.surveys.summary.embed_in_app"), icon: SmartphoneIcon },
+      ].filter((tab) => !(survey.type === "link" && tab.id === "app")),
+    [t, isSingleUseLinkSurvey, survey.type]
+  );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
@@ -62,7 +66,7 @@ export const ShareEmbedSurvey = ({
     if (survey.type !== "link") {
       setActiveId(tabs[3].id);
     }
-  }, [survey.type]);
+  }, [survey.type, tabs]);
 
   useEffect(() => {
     if (open) {

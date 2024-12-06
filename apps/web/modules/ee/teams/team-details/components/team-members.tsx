@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { InfoIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -103,12 +104,12 @@ export const TeamMembers = ({
           <CardTitle>{t("environments.settings.teams.team_members")}</CardTitle>
           <div className="flex gap-2">
             {isOwnerOrManager && (
-              <Button variant="secondary" size="sm" href="../general">
-                {t("environments.settings.teams.invite_member")}
+              <Button variant="secondary" size="sm" asChild>
+                <Link href="../general">{t("environments.settings.teams.invite_member")}</Link>
               </Button>
             )}
             {canPerformRoleManagement && (
-              <Button variant="primary" size="sm" onClick={() => setOpenAddMemberModal(true)}>
+              <Button size="sm" onClick={() => setOpenAddMemberModal(true)}>
                 {t("environments.settings.teams.add_member")}
               </Button>
             )}
@@ -186,7 +187,7 @@ export const TeamMembers = ({
                         {(teamMember.id !== currentUserId ||
                           (teamMember.id === currentUserId && isOwnerOrManager)) && (
                           <Button
-                            variant="warn"
+                            variant="destructive"
                             size="sm"
                             onClick={() => {
                               setSelectedTeamMemberId(teamMember.id);

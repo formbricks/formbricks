@@ -5,6 +5,7 @@ import { Header } from "@/modules/ui/components/header";
 import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserProjects } from "@formbricks/lib/project/service";
 
@@ -59,9 +60,11 @@ const Page = async (props: ChannelPageProps) => {
       {projects.length >= 1 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
-          variant="minimal"
-          href={"/"}>
-          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          variant="ghost"
+          asChild>
+          <Link href={"/"}>
+            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          </Link>
         </Button>
       )}
     </div>

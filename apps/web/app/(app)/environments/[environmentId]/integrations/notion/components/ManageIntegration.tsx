@@ -122,12 +122,8 @@ export const ManageIntegration = ({
           </div>
         </div>
       )}
-      <Button
-        variant="minimal"
-        onClick={() => setIsDeleteIntegrationModalOpen(true)}
-        className="mt-4"
-        StartIcon={Trash2Icon}
-        startIconClassName="h-5 w-5 mr-2">
+      <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
+        <Trash2Icon />
         {t("environments.integrations.delete_integration")}
       </Button>
 

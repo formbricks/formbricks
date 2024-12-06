@@ -41,7 +41,7 @@ export const getProjectForEnvironmentState = reactCache(
           throw error;
         }
       },
-      [`getProductForEnvironmentState-${environmentId}`],
+      [`getProjectForEnvironmentState-${environmentId}`],
       {
         tags: [projectCache.tag.byEnvironmentId(environmentId)],
       }

@@ -56,7 +56,7 @@ export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
       <PopoverTrigger asChild>
         {formattedDate ? (
           <Button
-            variant={"minimal"}
+            variant={"ghost"}
             className={cn(
               "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal transition-all ease-in hover:bg-slate-300",
               !formattedDate && "text-muted-foreground bg-slate-800"
@@ -67,7 +67,7 @@ export const DatePicker = ({ date, updateSurveyDate }: DatePickerProps) => {
           </Button>
         ) : (
           <Button
-            variant={"minimal"}
+            variant={"ghost"}
             className={cn(
               "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal hover:bg-slate-300",
               !formattedDate && "text-muted-foreground"

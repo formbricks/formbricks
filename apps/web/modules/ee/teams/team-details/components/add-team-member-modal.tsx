@@ -86,7 +86,7 @@ export const AddTeamMemberModal = ({
             }}>
             {t("common.cancel")}
           </Button>
-          <Button variant="primary" disabled={isLoading} loading={isLoading} type="submit">
+          <Button disabled={isLoading} loading={isLoading} type="submit">
             {t("common.add")}
           </Button>
         </div>
