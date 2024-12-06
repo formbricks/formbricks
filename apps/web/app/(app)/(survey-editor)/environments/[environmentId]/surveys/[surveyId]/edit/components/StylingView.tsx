@@ -27,9 +27,12 @@ interface StylingViewProps {
   environment: TEnvironment;
   project: TProject;
   localSurvey: TSurvey;
+  setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
   styling: TSurveyStyling | null;
   setStyling: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
+  localStylingChanges: TSurveyStyling | null;
+  setLocalStylingChanges: React.Dispatch<React.SetStateAction<TSurveyStyling | null>>;
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
 }
@@ -39,8 +42,11 @@ export const StylingView = ({
   environment,
   project,
   localSurvey,
+  setLocalSurvey,
   setStyling,
   styling,
+  localStylingChanges,
+  setLocalStylingChanges,
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
@@ -84,33 +90,16 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    const subscription = form.watch((_, { name }) => {
-      if (name) {
-        const fieldValue = form.getValues(name);
-        // Split the path into parts (e.g., "brandColor.light" -> ["brandColor", "light"])
-        const pathParts = name.split(".");
-
-        if (pathParts.length > 1) {
-          // Handle nested fields
-          setStyling((prev) => ({
-            ...prev,
-            [pathParts[0]]: {
-              ...prev?.[pathParts[0]],
-              [pathParts[1]]: fieldValue,
-            },
-          }));
-        } else {
-          // Handle top-level fields
-          setStyling((prev) => ({
-            ...prev,
-            [name]: fieldValue,
-          }));
-        }
-      }
+    form.watch((data: TSurveyStyling) => {
+      setLocalSurvey((prev) => ({
+        ...prev,
+        styling: {
+          ...prev.styling,
+          ...data,
+        },
+      }));
     });
-
-    return () => subscription.unsubscribe();
-  }, [form]);
+  }, [setLocalSurvey]);
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;
@@ -136,6 +125,10 @@ export const StylingView = ({
         return;
       }
 
+      // if there are local styling changes, we set the styling to the local styling changes that were previously stored
+      if (localStylingChanges) {
+        setStyling(localStylingChanges);
+      }
       // if there are no local styling changes, we set the styling to the project styling
       else {
         setStyling({
@@ -147,6 +140,9 @@ export const StylingView = ({
 
     // if the toggle is turned off, we store the local styling changes and set the styling to the project styling
     else {
+      // copy the styling to localStylingChanges
+      setLocalStylingChanges(styling);
+
       // copy the project styling to the survey styling
       setStyling({
         ...defaultProjectStyling,
