@@ -6727,6 +6727,9 @@ export const getCustomSurveyTemplate = (locale: string): TTemplate => ({
         buttonLabel: { default: translate("next", locale) },
         required: true,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       } as TSurveyOpenTextQuestion,
     ],
   },

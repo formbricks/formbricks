@@ -175,16 +175,10 @@ export const OpenQuestionForm = ({
               updateQuestion(questionIdx, {
                 charLimit: {
                   enabled: checked,
+                  min: undefined,
+                  max: undefined,
                 },
               });
-              if (!checked) {
-                updateQuestion(questionIdx, {
-                  charLimit: {
-                    min: undefined,
-                    max: undefined,
-                  },
-                });
-              }
             }}
             htmlId="charLimit"
             description={t("environments.surveys.edit.character_limit_toggle_description")}

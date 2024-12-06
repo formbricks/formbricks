@@ -507,7 +507,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   if (
     data.charLimit.min !== undefined &&
     data.charLimit.max !== undefined &&
-    data.charLimit.min >= data.charLimit.max
+    data.charLimit.min > data.charLimit.max
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
