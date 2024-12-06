@@ -8,7 +8,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,
@@ -25,6 +24,7 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
+import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -35,12 +35,12 @@ const Page = async (props) => {
     NOTION_AUTH_URL &&
     NOTION_REDIRECT_URI
   );
-  const [session, surveys, notionIntegration, environment, attributeClasses] = await Promise.all([
+  const [session, surveys, notionIntegration, environment, contactAttributeKeys] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "notion"),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -89,7 +89,7 @@ const Page = async (props) => {
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
     </PageContentWrapper>

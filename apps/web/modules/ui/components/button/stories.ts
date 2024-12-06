@@ -13,9 +13,9 @@ const meta = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["highlight", "primary", "secondary", "minimal", "warn", "alert"],
+      options: ["outline", "default", "secondary", "ghost", "destructive", "link"],
     },
-    size: { control: "select", options: ["base", "sm", "lg", "fab", "icon"] },
+    size: { control: "select", options: ["sm", "lg", "fab", "icon"] },
   },
   // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
   args: { onClick: fn() },
@@ -28,7 +28,7 @@ type Story = StoryObj<typeof meta>;
 export const Primary: Story = {
   args: {
     children: "Button",
-    variant: "primary",
+    variant: "default",
   },
 };
 
@@ -42,35 +42,21 @@ export const Secondary: Story = {
 export const Minimal: Story = {
   args: {
     children: "Button",
-    variant: "minimal",
-  },
-};
-
-export const Highlight: Story = {
-  args: {
-    children: "Button",
-    variant: "highlight",
+    variant: "ghost",
   },
 };
 
 export const Warn: Story = {
   args: {
     children: "Button",
-    variant: "warn",
-  },
-};
-
-export const Alert: Story = {
-  args: {
-    children: "Button",
-    variant: "alert",
+    variant: "destructive",
   },
 };
 
 export const Loading: Story = {
   args: {
     children: "Button",
-    variant: "primary",
+    variant: "default",
     loading: true,
   },
 };

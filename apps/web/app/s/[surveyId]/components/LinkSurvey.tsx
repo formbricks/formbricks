@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProject } from "@formbricks/types/project";
 import {
@@ -31,7 +31,6 @@ let setResponseData = (_: TResponseData) => {};
 interface LinkSurveyProps {
   survey: TSurvey;
   project: TProject;
-  userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: TResponse;
@@ -39,7 +38,7 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -51,7 +50,6 @@ interface LinkSurveyProps {
 export const LinkSurvey = ({
   survey,
   project,
-  userId,
   emailVerificationStatus,
   singleUseId,
   singleUseResponse,
@@ -59,7 +57,7 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
-  attributeClasses,
+  contactAttributeKeys,
   isEmbed,
   IMPRINT_URL,
   PRIVACY_URL,
@@ -96,8 +94,8 @@ export const LinkSurvey = ({
 
   // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
   let surveyState = useMemo(() => {
-    return new SurveyState(survey.id, singleUseId, responseId, userId);
-  }, [survey.id, singleUseId, responseId, userId]);
+    return new SurveyState(survey.id, singleUseId, responseId);
+  }, [survey.id, singleUseId, responseId]);
 
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
@@ -173,8 +171,8 @@ export const LinkSurvey = ({
           survey={survey}
           isErrorComponent={true}
           languageCode={languageCode}
+          contactAttributeKeys={contactAttributeKeys}
           styling={project.styling}
-          attributeClasses={attributeClasses}
           locale={locale}
         />
       );
@@ -185,8 +183,8 @@ export const LinkSurvey = ({
         singleUseId={suId ?? ""}
         survey={survey}
         languageCode={languageCode}
+        contactAttributeKeys={contactAttributeKeys}
         styling={project.styling}
-        attributeClasses={attributeClasses}
         locale={locale}
       />
     );
@@ -258,7 +256,6 @@ export const LinkSurvey = ({
 
             const res = await api.client.display.create({
               surveyId: survey.id,
-              ...(userId && { userId }),
             });
 
             if (!res.ok) {

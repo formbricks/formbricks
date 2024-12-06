@@ -239,7 +239,7 @@ export const ThemeStyling = ({
               <Button
                 type="button"
                 size="sm"
-                variant="minimal"
+                variant="ghost"
                 className="flex items-center gap-2"
                 onClick={() => setConfirmResetStylingModalOpen(true)}>
                 {t("common.reset_to_default")}

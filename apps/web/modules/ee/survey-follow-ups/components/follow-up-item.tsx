@@ -2,6 +2,7 @@ import { FollowUpModal } from "@/modules/ee/survey-follow-ups/components/follow-
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
@@ -103,16 +104,17 @@ export const FollowUpItem = ({
         </div>
 
         <div className="absolute right-4 top-4">
-          <Button
-            variant="minimal"
-            size="icon"
-            tooltip={t("common.delete")}
-            onClick={async (e) => {
-              e.stopPropagation();
-              setDeleteFollowUpModalOpen(true);
-            }}>
-            <TrashIcon className="h-4 w-4 text-slate-500" />
-          </Button>
+          <TooltipRenderer tooltipContent={t("common.delete")}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={async (e) => {
+                e.stopPropagation();
+                setDeleteFollowUpModalOpen(true);
+              }}>
+              <TrashIcon className="h-4 w-4 text-slate-500" />
+            </Button>
+          </TooltipRenderer>
         </div>
       </div>
 
@@ -161,7 +163,7 @@ export const FollowUpItem = ({
         }}
         text={t("environments.surveys.edit.follow_ups_delete_modal_text")}
         title={t("environments.surveys.edit.follow_ups_delete_modal_title")}
-        buttonVariant="warn"
+        buttonVariant="destructive"
       />
     </>
   );

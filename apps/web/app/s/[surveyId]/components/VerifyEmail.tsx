@@ -17,7 +17,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -26,8 +26,8 @@ interface VerifyEmailProps {
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
+  contactAttributeKeys: TContactAttributeKey[];
   styling: TProjectStyling;
-  attributeClasses: TAttributeClass[];
   locale: string;
 }
 
@@ -42,7 +42,7 @@ export const VerifyEmail = ({
   singleUseId,
   languageCode,
   styling,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: VerifyEmailProps) => {
   const t = useTranslations();
@@ -53,8 +53,8 @@ export const VerifyEmail = ({
     resolver: zodResolver(ZVerifyEmailInput),
   });
   survey = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", attributeClasses);
-  }, [survey, attributeClasses]);
+    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
+  }, [survey, contactAttributeKeys]);
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);
@@ -184,12 +184,8 @@ export const VerifyEmail = ({
             <p className="mt-4 text-center text-sm text-slate-500 lg:text-base">
               {t("s.check_inbox_or_spam")}
             </p>
-            <Button
-              variant="secondary"
-              className="mt-6"
-              size="sm"
-              onClick={handleGoBackClick}
-              StartIcon={ArrowLeft}>
+            <Button variant="secondary" className="mt-6" size="sm" onClick={handleGoBackClick}>
+              <ArrowLeft />
               {t("common.back")}
             </Button>
           </div>

@@ -1,7 +1,9 @@
 import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import {
-  getAdvancedTargetingPermission,
+  getIsContactsEnabled,
   getMultiLanguagePermission,
   getSurveyFollowUpsPermission,
 } from "@/modules/ee/license-check/lib/utils";
@@ -11,7 +13,6 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
@@ -25,7 +26,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSegments } from "@formbricks/lib/segment/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { SurveyEditor } from "./components/SurveyEditor";
@@ -47,7 +47,7 @@ const Page = async (props) => {
     project,
     environment,
     actionClasses,
-    attributeClasses,
+    contactAttributeKeys,
     responseCount,
     organization,
     session,
@@ -57,7 +57,7 @@ const Page = async (props) => {
     getProjectByEnvironmentId(params.environmentId),
     getEnvironment(params.environmentId),
     getActionClasses(params.environmentId),
-    getAttributeClasses(params.environmentId, undefined, { skipArchived: true }),
+    getContactAttributeKeys(params.environmentId),
     getResponseCountBySurveyId(params.surveyId),
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -86,7 +86,7 @@ const Page = async (props) => {
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
 
-  const isUserTargetingAllowed = await getAdvancedTargetingPermission(organization);
+  const isUserTargetingAllowed = await getIsContactsEnabled();
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
 
@@ -96,7 +96,7 @@ const Page = async (props) => {
     !survey ||
     !environment ||
     !actionClasses ||
-    !attributeClasses ||
+    !contactAttributeKeys ||
     !project ||
     !userEmail ||
     isSurveyCreationDeletionDisabled
@@ -112,7 +112,7 @@ const Page = async (props) => {
       project={project}
       environment={environment}
       actionClasses={actionClasses}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
       membershipRole={currentUserMembership?.role}
       projectPermission={projectPermission}

@@ -8,7 +8,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
@@ -18,17 +17,19 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
+import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {
   const params = await props.params;
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
+
   const t = await getTranslations();
-  const [session, surveys, slackIntegration, environment, attributeClasses] = await Promise.all([
+  const [session, surveys, slackIntegration, environment, contactAttributeKeys] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "slack"),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -73,7 +74,7 @@ const Page = async (props) => {
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
       </div>

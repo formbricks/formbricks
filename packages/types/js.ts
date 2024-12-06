@@ -118,7 +118,6 @@ export const ZJsPersonState = z.object({
   data: z.object({
     userId: z.string().nullable(),
     segments: z.array(ZId), // segment ids the person belongs to
-    // displays: z.array(z.string()), // displayed survey ids
     displays: z.array(
       z.object({
         surveyId: ZId,
@@ -134,7 +133,7 @@ export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
 export const ZJsPersonIdentifyInput = z.object({
   environmentId: z.string().cuid(),
-  userId: z.string().optional(),
+  userId: z.string(),
 });
 
 export type TJsPersonIdentifyInput = z.infer<typeof ZJsPersonIdentifyInput>;
@@ -192,11 +191,11 @@ export const ZJsPeopleUserIdInput = z.object({
   userId: z.string().min(1).max(255),
 });
 
-export const ZJsPeopleUpdateAttributeInput = z.object({
+export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
 });
 
-export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsPeopleUpdateAttributeInput>;
+export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;
 
 export type TJsPeopleUserIdInput = z.infer<typeof ZJsPeopleUserIdInput>;
 

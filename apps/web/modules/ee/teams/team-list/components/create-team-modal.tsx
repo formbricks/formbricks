@@ -82,7 +82,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
             }}>
             {t("common.cancel")}
           </Button>
-          <Button variant="primary" disabled={!teamName || isLoading} loading={isLoading} type="submit">
+          <Button disabled={!teamName || isLoading} loading={isLoading} type="submit">
             {t("environments.settings.teams.create")}
           </Button>
         </div>

@@ -240,7 +240,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
             <div className="flex space-x-2">
               <Button
                 type="button"
-                variant="minimal"
+                variant="ghost"
                 onClick={() => {
                   setOpenWithStates(false);
                 }}>

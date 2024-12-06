@@ -62,7 +62,7 @@ interface NavigationProps {
   organization: TOrganization;
   projects: TProject[];
   isMultiOrgEnabled: boolean;
-  isFormbricksCloud?: boolean;
+  isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
@@ -75,8 +75,8 @@ export const MainNavigation = ({
   user,
   projects,
   isMultiOrgEnabled,
-  isFormbricksCloud = true,
   membershipRole,
+  isFormbricksCloud,
   organizationProjectsLimit,
   isLicenseActive,
 }: NavigationProps) => {
@@ -160,13 +160,10 @@ export const MainNavigation = ({
         isHidden: false,
       },
       {
-        name: t("common.people"),
-        href: `/environments/${environment.id}/people`,
+        href: `/environments/${environment.id}/contacts`,
+        name: t("common.contacts"),
         icon: UserIcon,
-        isActive:
-          pathname?.includes("/people") ||
-          pathname?.includes("/segments") ||
-          pathname?.includes("/attributes"),
+        isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
       },
       {
         name: t("common.actions"),
@@ -187,7 +184,7 @@ export const MainNavigation = ({
         isActive: pathname?.includes("/project"),
       },
     ],
-    [environment.id, pathname, isMember]
+    [t, environment.id, pathname]
   );
 
   const dropdownNavigation = [
@@ -262,9 +259,8 @@ export const MainNavigation = ({
                 </Link>
               )}
               <Button
-                variant="minimal"
+                variant="ghost"
                 size="icon"
-                tooltipSide="right"
                 onClick={toggleSidebar}
                 className={cn(
                   "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
