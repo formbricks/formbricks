@@ -7,12 +7,7 @@ interface HeadlineProps {
   alignTextCenter?: boolean;
 }
 
-export function Headline({
-  headline,
-  questionId,
-  required = true,
-  alignTextCenter = false,
-}: HeadlineProps) {
+export function Headline({ headline, questionId, required = true, alignTextCenter = false }: HeadlineProps) {
   return (
     <label
       htmlFor={questionId}
