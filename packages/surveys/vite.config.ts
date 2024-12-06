@@ -1,14 +1,12 @@
 import preact from "@preact/preset-vite";
 import { resolve } from "path";
-import { ConfigEnv, defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import dts from "vite-plugin-dts";
+import tsconfigPaths from "vite-tsconfig-paths";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
-const config = async ({ mode }: ConfigEnv) => {
+const config = ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-
-  // Dynamically import vite-tsconfig-paths
-  const tsconfigPaths = await import("vite-tsconfig-paths");
 
   return defineConfig({
     define: {
@@ -32,7 +30,7 @@ const config = async ({ mode }: ConfigEnv) => {
     plugins: [
       preact(),
       dts({ rollupTypes: true }),
-      tsconfigPaths.default(), // Use .default() for ESM imports
+      tsconfigPaths(),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
     ],
   });

@@ -5,6 +5,7 @@
   "private": true,
   "description": "Formbricks-surveys is a helper library to embed surveys into your application.",
   "homepage": "https://formbricks.com",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"

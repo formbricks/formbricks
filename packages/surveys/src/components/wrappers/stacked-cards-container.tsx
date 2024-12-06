@@ -193,7 +193,7 @@ export function StackedCardsContainer({
           {getCardContent(questionIdxTemp, 0)}
         </div>
       ) : (
-        Boolean(questionIdxTemp) &&
+        questionIdxTemp !== undefined &&
         [prevQuestionIdx, currentQuestionIdx, nextQuestionIdx, nextQuestionIdx + 1].map(
           (dynamicQuestionIndex, index) => {
             const hasEndingCard = survey.endings.length > 0;
