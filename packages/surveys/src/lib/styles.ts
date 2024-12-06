@@ -18,7 +18,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }) => {
+export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 

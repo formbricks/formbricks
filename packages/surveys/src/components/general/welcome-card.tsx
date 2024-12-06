@@ -170,23 +170,23 @@ export function WelcomeCard({
           }}
         />
       </div>
-      {timeToFinish && !showResponseCount && (
+      {timeToFinish && !showResponseCount ? (
         <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
           <p className="fb-pt-1 fb-text-xs">
             <span> Takes {calculateTimeToComplete()} </span>
           </p>
         </div>
-      )}
-      {showResponseCount && !timeToFinish && responseCount && responseCount > 3 && (
+      ) : null}
+      {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
         <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <UsersIcon />
           <p className="fb-pt-1 fb-text-xs">
             <span>{`${responseCount.toString()} people responded`}</span>
           </p>
         </div>
-      )}
-      {timeToFinish && showResponseCount && (
+      ) : null}
+      {timeToFinish && showResponseCount ? (
         <div className="fb-items-center fb-text-subheading fb-my-4 fb-ml-6 fb-flex">
           <TimerIcon />
           <p className="fb-pt-1 fb-text-xs">
@@ -196,7 +196,7 @@ export function WelcomeCard({
             </span>
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

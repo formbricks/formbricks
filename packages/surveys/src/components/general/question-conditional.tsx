@@ -14,13 +14,13 @@ import { PictureSelectionQuestion } from "@/components/questions/picture-selecti
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TJsFileUploadParams } from "@formbricks/types/js";
+import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
 import {
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
-  TSurveyQuestionId,
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
+  type TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 
@@ -43,7 +43,7 @@ interface QuestionConditionalProps {
   currentQuestionId: TSurveyQuestionId;
 }
 
-export const QuestionConditional = ({
+export function QuestionConditional({
   question,
   value,
   onChange,
@@ -60,7 +60,7 @@ export const QuestionConditional = ({
   onFileUpload,
   autoFocusEnabled,
   currentQuestionId,
-}: QuestionConditionalProps) => {
+}: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
     choices: TSurveyQuestionChoice[]
@@ -316,4 +316,4 @@ export const QuestionConditional = ({
       autoFocusEnabled={autoFocusEnabled}
     />
   ) : null;
-};
+}

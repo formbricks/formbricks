@@ -3,6 +3,7 @@
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "emitDeclarationOnly": true,
+    "forceConsistentCasingInFileNames": false,
     "isolatedModules": true,
     "jsx": "react-jsx",
     "jsxImportSource": "preact",
