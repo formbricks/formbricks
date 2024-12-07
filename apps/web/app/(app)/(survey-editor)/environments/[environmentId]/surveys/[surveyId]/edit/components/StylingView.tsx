@@ -15,6 +15,7 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -52,7 +53,7 @@ export const StylingView = ({
   const t = useTranslations();
 
   const form = useForm<TSurveyStyling>({
-    defaultValues: localSurvey.styling ?? project.styling,
+    defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
@@ -64,8 +65,7 @@ export const StylingView = ({
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const onResetThemeStyling = () => {
-    const { styling: projectStyling } = project;
-    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
+    const { allowStyleOverwrite, ...baseStyling } = project.styling ?? {};
 
     setStyling({
       ...baseStyling,
