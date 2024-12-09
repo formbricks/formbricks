@@ -3,7 +3,7 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
-import { getWhitelabelPermission } from "@/modules/ee/license-check/lib/utils";
+import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateProjectBranding } from "@/modules/ee/whitelabel/remove-branding/lib/project";
 import { ZProjectUpdateBrandingInput } from "@/modules/ee/whitelabel/remove-branding/types/project";
 import { z } from "zod";
@@ -46,7 +46,7 @@ export const updateProjectBrandingAction = authenticatedActionClient
       if (!organization) {
         throw new Error("Organization not found");
       }
-      const isWhitelabelEnabled = await getWhitelabelPermission(organization);
+      const isWhitelabelEnabled = await getRemoveBrandingPermission(organization);
 
       if (parsedInput.data.inAppSurveyBranding !== undefined) {
         if (!isWhitelabelEnabled) {

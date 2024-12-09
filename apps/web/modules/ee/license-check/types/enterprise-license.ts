@@ -9,6 +9,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   contacts: z.boolean(),
   projects: z.number().nullable(),
   whitelabel: z.boolean(),
+  removeBranding: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
 });

@@ -2,8 +2,8 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getMultiLanguagePermission,
+  getRemoveBrandingPermission,
   getRoleManagementPermission,
-  getWhitelabelPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -43,7 +43,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error(t("common.organization_not_found"));
   }
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
-  const isWhitelabelEnabled = await getWhitelabelPermission(organization);
+  const isWhitelabelEnabled = await getRemoveBrandingPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);

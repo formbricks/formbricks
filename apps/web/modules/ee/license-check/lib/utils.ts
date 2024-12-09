@@ -88,6 +88,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           contacts: true,
           projects: 3,
           whitelabel: true,
+          removeBranding: true,
         },
         lastChecked: currentTime,
       };
@@ -150,7 +151,8 @@ export const getEnterpriseLicense = async (): Promise<{
           projects: 3,
           twoFactorAuth: false,
           sso: false,
-          whitelabel: true,
+          whitelabel: false,
+          removeBranding: false,
           contacts: false,
         },
         lastChecked: new Date(),
@@ -263,10 +265,10 @@ export const getSurveyFollowUpsPermission = async (organization: TOrganization):
   return false;
 };
 
-export const getWhitelabelPermission = async (organization: TOrganization): Promise<boolean> => {
+export const getRemoveBrandingPermission = async (organization: TOrganization): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult?.features?.whitelabel ?? false;
+    return previousResult?.features?.removeBranding ?? false;
   }
 
   if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {
@@ -275,7 +277,7 @@ export const getWhitelabelPermission = async (organization: TOrganization): Prom
     const licenseFeatures = await getLicenseFeatures();
     if (!licenseFeatures) return false;
 
-    return licenseFeatures.whitelabel;
+    return licenseFeatures.removeBranding;
   }
 };
 
