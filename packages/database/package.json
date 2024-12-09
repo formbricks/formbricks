@@ -15,20 +15,15 @@
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
     "db:push": "prisma db push --accept-data-loss",
     "db:up": "docker compose up -d",
-    "db:setup": "pnpm db:up && pnpm db:migrate:dev",
+    "db:setup": "pnpm db:up && pnpm db:migrate:dev && pnpm apply-data-migrations",
     "db:start": "pnpm db:setup",
     "db:down": "docker compose down",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
     "build": "pnpm generate",
-    "data-migration:xm": "ts-node ./data-migrations/20241010133706_xm_user_identification/data-migration.ts",
-    "data-migration:xm-segments": "ts-node ./data-migrations/20241021123456_xm_segment_migration/data-migration.ts",
-    "data-migration:xm-attribute-removal": "ts-node ./data-migrations/20241024123456_xm_attribute_removal/data-migration.ts",
-    "data-migration:update-org-limits": "ts-node ./data-migrations/20241118123456_update_org_limits/data-migration.ts",
-    "data-migration:product-revamp": "ts-node ./data-migrations/20241120150728_product_revamp/data-migration.ts",
     "generate-data-migration": "ts-node ./scripts/generate-data-migration.ts",
-    "apply-data-migrations": "ts-node ./scripts/apply-data-migrations.ts"
+    "apply-data-migrations": "dotenv -e ../../.env -- ts-node ./scripts/apply-data-migrations.ts"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",

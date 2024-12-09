@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 const migrationRunner = new MigrationRunner(prisma);
 
 export async function applyDataMigrations(): Promise<void> {
-  const migrations = [
+  const dataMigrations = [
     xmUserIdentification,
     xmSegmentMigration,
     xmAttributeRemoval,
@@ -19,7 +19,7 @@ export async function applyDataMigrations(): Promise<void> {
   ];
 
   try {
-    await migrationRunner.runMigrations(migrations);
+    await migrationRunner.runMigrations(dataMigrations);
   } catch (error) {
     console.error("Migration failed:", error);
     process.exit(1);

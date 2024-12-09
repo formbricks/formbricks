@@ -22,20 +22,20 @@ export class MigrationRunner {
     this.prisma = prisma;
   }
 
-  async runMigrations(migrations: DataMigrationScript[]): Promise<void> {
-    console.log(`Starting migrations: ${migrations.length.toString()} to run`);
+  async runMigrations(dataMigrations: DataMigrationScript[]): Promise<void> {
+    console.log(`Starting data migrations: ${dataMigrations.length.toString()} to run`);
     const startTime = Date.now();
 
-    for (const migration of migrations) {
-      await this.runSingleMigration(migration);
+    for (const dataMigration of dataMigrations) {
+      await this.runSingleMigration(dataMigration);
     }
 
     const endTime = Date.now();
-    console.log(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+    console.log(`All data migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
   }
 
   private async runSingleMigration(migration: DataMigrationScript): Promise<void> {
-    console.log(`Running migration: ${migration.name}`);
+    console.log(`Running data migration: ${migration.name}`);
 
     try {
       await this.prisma.$transaction(
@@ -46,7 +46,7 @@ export class MigrationRunner {
           });
 
           if (existingMigration?.applied) {
-            console.log(`Migration ${migration.name} already completed. Skipping.`);
+            console.log(`Data migration ${migration.name} already completed. Skipping...`);
             return;
           }
 
@@ -75,13 +75,13 @@ export class MigrationRunner {
             },
           });
 
-          console.log(`Migration ${migration.name} completed successfully`);
+          console.log(`Data migration ${migration.name} completed successfully`);
         },
         { timeout: this.TRANSACTION_TIMEOUT }
       );
     } catch (error) {
       // Record migration failure
-      console.error(`Migration ${migration.name} failed:`, error);
+      console.error(`Data migration ${migration.name} failed:`, error);
       throw error;
     }
   }
