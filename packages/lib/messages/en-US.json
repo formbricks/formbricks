@@ -348,6 +348,7 @@
     "show": "Show",
     "show_response_count": "Show response count",
     "shown": "Shown",
+    "size": "Size",
     "skipped": "Skipped",
     "skips": "Skips",
     "some_files_failed_to_upload": "Some files failed to upload",
@@ -935,7 +936,9 @@
         "add_existing_team": "Add existing team",
         "create_new_team": "Create new team",
         "manage": "Manage",
+        "manage_teams": "Manage teams",
         "no_teams_found": "No teams found",
+        "only_organization_owners_and_managers_can_manage_teams": "Only organization owners and managers can manage teams.",
         "permission": "Permission",
         "read": "Read",
         "read_write": "Read & write",
@@ -943,7 +946,7 @@
         "remove_access_confirmation": "Are you sure you want to remove access for this team?",
         "select_teams": "Select teams",
         "team_name": "Team Name",
-        "team_settings_description": "Teams and their members can access this project and its surveys. Organization owners and managers can grant this access."
+        "team_settings_description": "See which teams can access this project."
       }
     },
     "projects_environments_organizations_not_found": "Projects, environments or organizations not found",

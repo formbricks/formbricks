@@ -13,7 +13,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getTeamsByOrganizationId, getTeamsByProjectId } from "./lib/teams";
+import { getTeamsByProjectId } from "./lib/teams";
 
 export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslations();
@@ -46,12 +46,6 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
     throw new Error(t("common.teams_not_found"));
   }
 
-  const organizationTeams = await getTeamsByOrganizationId(organization.id);
-
-  if (!organizationTeams) {
-    throw new Error(t("common.organization_teams_not_found"));
-  }
-
   const isOwnerOrManager = isOwner || isManager;
 
   return (
@@ -66,7 +60,6 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
       </PageHeader>
       <AccessView
         environmentId={params.environmentId}
-        organizationTeams={organizationTeams}
         teams={teams}
         project={project}
         isOwnerOrManager={isOwnerOrManager}
