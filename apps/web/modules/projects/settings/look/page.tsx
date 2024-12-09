@@ -43,7 +43,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error(t("common.organization_not_found"));
   }
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
-  const isWhitelabelEnabled = await getRemoveBrandingPermission(organization);
+  const canRemoveBranding = await getRemoveBrandingPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
@@ -90,7 +90,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         <EditPlacementForm project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
       <BrandingSettingsCard
-        isWhitelabelEnabled={isWhitelabelEnabled}
+        canRemoveBranding={canRemoveBranding}
         project={project}
         environmentId={params.environmentId}
         isReadOnly={isReadOnly}

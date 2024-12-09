@@ -46,16 +46,16 @@ export const updateProjectBrandingAction = authenticatedActionClient
       if (!organization) {
         throw new Error("Organization not found");
       }
-      const isWhitelabelEnabled = await getRemoveBrandingPermission(organization);
+      const canRemoveBranding = await getRemoveBrandingPermission(organization);
 
       if (parsedInput.data.inAppSurveyBranding !== undefined) {
-        if (!isWhitelabelEnabled) {
+        if (!canRemoveBranding) {
           throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
         }
       }
 
       if (parsedInput.data.linkSurveyBranding !== undefined) {
-        if (!isWhitelabelEnabled) {
+        if (!canRemoveBranding) {
           throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
         }
       }

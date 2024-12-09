@@ -8,14 +8,14 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TProject } from "@formbricks/types/project";
 
 interface BrandingSettingsCardProps {
-  isWhitelabelEnabled: boolean;
+  canRemoveBranding: boolean;
   project: TProject;
   environmentId: string;
   isReadOnly: boolean;
 }
 
 export const BrandingSettingsCard = async ({
-  isWhitelabelEnabled,
+  canRemoveBranding,
   project,
   environmentId,
   isReadOnly,
@@ -39,7 +39,7 @@ export const BrandingSettingsCard = async ({
     <SettingsCard
       title={t("environments.project.look.formbricks_branding")}
       description={t("environments.project.look.formbricks_branding_settings_description")}>
-      {isWhitelabelEnabled ? (
+      {canRemoveBranding ? (
         <div className="space-y-4">
           <EditBranding
             type="linkSurvey"
