@@ -1,4 +1,4 @@
-import type { TActionClass } from "@formbricks/types/action-classes";
+import { TJsEnvironmentStateActionClass } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "./errors";
@@ -65,7 +65,7 @@ const checkClickMatch = (event: MouseEvent) => {
 
   const targetElement = event.target as HTMLElement;
 
-  noCodeClickActionClasses.forEach((action: TActionClass) => {
+  noCodeClickActionClasses.forEach((action: TJsEnvironmentStateActionClass) => {
     if (evaluateNoCodeConfigClick(targetElement, action)) {
       trackNoCodeAction(action.name).then((res) => {
         match(

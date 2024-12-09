@@ -19,7 +19,7 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsRNStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -174,7 +174,7 @@ export const GET = async (
     let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
-    let state: TJsAppStateSync = {
+    let state: TJsRNStateSync = {
       surveys: !isAppSurveyResponseLimitReached
         ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, contactAttributes))
         : [],

@@ -14,13 +14,14 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import type {
   TResponseData,
   TResponseDataValue,
   TResponseTtc,
   TResponseVariables,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -53,7 +54,7 @@ export const Survey = ({
   fullSizeCards = false,
   autoFocus,
 }: SurveyBaseProps) => {
-  const [localSurvey, setlocalSurvey] = useState<TSurvey>(survey);
+  const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {

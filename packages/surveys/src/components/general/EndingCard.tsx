@@ -7,11 +7,12 @@ import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
 import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import { TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface EndingCardProps {
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
   endingCard: TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   isRedirectDisabled: boolean;
   isResponseSendingFinished: boolean;
