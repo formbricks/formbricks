@@ -147,8 +147,8 @@ export const LOGIN_RATE_LIMIT = {
 };
 
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 5 * 60, // 5 minutes
-  allowedPerInterval: 200,
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
 };
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
