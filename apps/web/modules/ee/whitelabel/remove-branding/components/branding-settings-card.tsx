@@ -2,7 +2,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { EmptyContent, ModalButton } from "@/modules/ui/components/empty-content";
-import { FolderIcon } from "lucide-react";
+import { KeyIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TProject } from "@formbricks/types/project";
@@ -56,7 +56,7 @@ export const BrandingSettingsCard = async ({
         </div>
       ) : (
         <EmptyContent
-          icon={<FolderIcon className="h-6 w-6 text-slate-900" />}
+          icon={<KeyIcon className="h-6 w-6 text-slate-900" />}
           title={t("environments.project.look.remove_branding_with_a_higher_plan")}
           description={t("environments.project.look.eliminate_branding_with_whitelabel")}
           buttons={buttons}
