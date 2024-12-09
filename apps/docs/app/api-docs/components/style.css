@@ -1,21 +1,29 @@
+:root[data-theme="light"] {
+  --text-color: rgb(51, 65, 85);
+}
+
+:root[data-theme="dark"] {
+  --text-color: rgb(203, 213, 225);
+}
+
 h5,
 .sc-dhCplO,
 .sc-dpBQxM {
-  color: rgb(203, 213, 225) !important;
+  color: var(--text-color) !important;
 }
 
 .tab-success,
 .react-tabs__tab,
 .tab-error {
   background-color: transparent !important;
-  border: 1px solid rgb(203, 213, 225) !important;
+  border: 1px solid var(--text-color) !important;
   margin: 10px 5px !important;
 }
 
 .sc-dwGkES,
 .sc-ePpfBx {
   background-color: rgb(24, 24, 27) !important;
-  border: 1px solid rgb(203, 213, 225) !important;
+  border: 1px solid var(--text-color) !important;
 }
 .sc-ePpfBx,
 .corVrN {

@@ -1008,6 +1008,9 @@ importers:
       '@formkit/auto-animate':
         specifier: 0.8.2
         version: 0.8.2
+      react-calendar:
+        specifier: 5.1.0
+        version: 5.1.0(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
     devDependencies:
       '@calcom/embed-snippet':
         specifier: 1.3.0
@@ -1027,6 +1030,9 @@ importers:
       '@preact/preset-vite':
         specifier: 2.9.0
         version: 2.9.0(@babel/core@7.25.2)(preact@10.23.2)(vite@5.4.8(@types/node@22.3.0)(terser@5.31.6))
+      '@types/react':
+        specifier: 18.3.11
+        version: 18.3.11
       autoprefixer:
         specifier: 10.4.20
         version: 10.4.20(postcss@8.4.41)
