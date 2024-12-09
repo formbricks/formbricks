@@ -214,7 +214,7 @@ export const PricingCard = ({
           plan: t(plan.name),
           price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
         })}
-        buttonVariant="primary"
+        buttonVariant="default"
         buttonLoading={loading}
         closeOnOutsideClick={false}
         hideCloseButton

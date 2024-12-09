@@ -88,7 +88,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
             <div className="flex space-x-2">
               <Button
                 type="button"
-                variant="minimal"
+                variant="ghost"
                 onClick={() => {
                   setOpen(false);
                 }}>

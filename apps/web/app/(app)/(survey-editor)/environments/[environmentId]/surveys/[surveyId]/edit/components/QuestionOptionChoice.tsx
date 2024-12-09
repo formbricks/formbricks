@@ -1,5 +1,6 @@
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
@@ -126,30 +127,32 @@ export const QuestionOptionChoice = ({
       </div>
       <div className="flex gap-2">
         {question.choices && question.choices.length > 2 && (
-          <Button
-            variant="secondary"
-            size="icon"
-            StartIcon={TrashIcon}
-            tooltip="Delete choice"
-            aria-label="Delete choice"
-            onClick={(e) => {
-              e.preventDefault();
-              deleteChoice(choiceIdx);
-            }}
-          />
+          <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Delete choice"
+              onClick={(e) => {
+                e.preventDefault();
+                deleteChoice(choiceIdx);
+              }}>
+              <TrashIcon />
+            </Button>
+          </TooltipRenderer>
         )}
         {choice.id !== "other" && (
-          <Button
-            variant="secondary"
-            size="icon"
-            StartIcon={PlusIcon}
-            tooltip="Add choice below"
-            aria-label="Add choice below"
-            onClick={(e) => {
-              e.preventDefault();
-              addChoice(choiceIdx);
-            }}
-          />
+          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              aria-label="Add choice below"
+              onClick={(e) => {
+                e.preventDefault();
+                addChoice(choiceIdx);
+              }}>
+              <PlusIcon />
+            </Button>
+          </TooltipRenderer>
         )}
       </div>
     </div>

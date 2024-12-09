@@ -69,7 +69,7 @@ export const ProjectSwitcher = ({
         {
           text:
             organization.billing.plan === "free"
-              ? t("environments.settings.billing.start_free_trial")
+              ? t("common.start_free_trial")
               : t("environments.settings.billing.upgrade"),
           onClick: () => {
             setOpenLimitModal(false);
@@ -104,7 +104,7 @@ export const ProjectSwitcher = ({
         {
           text:
             organization.billing.plan === "free"
-              ? t("environments.settings.billing.start_free_trial")
+              ? t("common.start_free_trial")
               : t("environments.settings.billing.get_in_touch"),
           href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
           onClick: () => setOpenLimitModal(false),

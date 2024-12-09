@@ -15,7 +15,7 @@ import {
   getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -82,14 +82,14 @@ export const SummaryPage = ({
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [selectedFilter, dateRange]
+    [selectedFilter, dateRange, survey]
   );
 
   // Use a ref to keep the latest state and props
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
 
-  const getResponseCount = () => {
+  const getResponseCount = useCallback(() => {
     if (isSharingPage)
       return getResponseCountBySurveySharingKeyAction({
         sharingKey,
@@ -99,9 +99,9 @@ export const SummaryPage = ({
       surveyId,
       filterCriteria: latestFiltersRef.current,
     });
-  };
+  }, [isSharingPage, sharingKey, surveyId]);
 
-  const getSummary = () => {
+  const getSummary = useCallback(() => {
     if (isSharingPage)
       return getSummaryBySurveySharingKeyAction({
         sharingKey,
@@ -112,37 +112,39 @@ export const SummaryPage = ({
       surveyId,
       filterCriteria: latestFiltersRef.current,
     });
-  };
+  }, [isSharingPage, sharingKey, surveyId]);
 
-  const handleInitialData = async (isInitialLoad = false) => {
-    if (isInitialLoad) {
-      setIsLoading(true);
-    }
-
-    try {
-      const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
-        getResponseCount(),
-        getSummary(),
-      ]);
-
-      const responseCount = updatedResponseCountData?.data ?? 0;
-      const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
-
-      // Update the state with new data
-      setResponseCount(responseCount);
-      setSurveySummary(surveySummary);
-    } catch (error) {
-      console.error(error);
-    } finally {
+  const handleInitialData = useCallback(
+    async (isInitialLoad = false) => {
       if (isInitialLoad) {
-        setIsLoading(false);
+        setIsLoading(true);
       }
-    }
-  };
+
+      try {
+        const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
+          getResponseCount(),
+          getSummary(),
+        ]);
+
+        const responseCount = updatedResponseCountData?.data ?? 0;
+        const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+
+        setResponseCount(responseCount);
+        setSurveySummary(surveySummary);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isInitialLoad) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [getResponseCount, getSummary]
+  );
 
   useEffect(() => {
     handleInitialData(true);
-  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
+  }, [filters, isSharingPage, sharingKey, surveyId, handleInitialData]);
 
   useIntervalWhenFocused(
     () => {

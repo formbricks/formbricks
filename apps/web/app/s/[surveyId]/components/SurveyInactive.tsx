@@ -42,8 +42,8 @@ export const SurveyInactive = async ({
             : descriptions[status]}
         </p>
         {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
-          <Button className="mt-2" href="https://formbricks.com">
-            {t("s.create_your_own")}
+          <Button className="mt-2" asChild>
+            <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
           </Button>
         )}
       </div>
