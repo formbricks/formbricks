@@ -20,7 +20,8 @@ import {
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
-export const SignupPage = async ({ searchParams }) => {
+export const SignupPage = async ({ searchParams: searchParamsProps }) => {
+  const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
   const locale = await findMatchingLocale();
