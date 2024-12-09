@@ -173,7 +173,13 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       const organizationHasOnlyOneMember = organizationMemberships.length === 1;
       const currentUserIsOrganizationOwner = role === "owner";
 
-      if (organizationHasOnlyOneMember || (organizationHasOnlyOneMember && currentUserIsOrganizationOwner)) {
+      // Count how many owners are in the organization
+      const numberOfOwners = organizationMemberships.filter(
+        (membership) => membership.role === "owner"
+      ).length;
+      const isLastOwner = currentUserIsOrganizationOwner && numberOfOwners === 1;
+
+      if (organizationHasOnlyOneMember || isLastOwner) {
         await deleteOrganization(organizationId);
       }
     }
