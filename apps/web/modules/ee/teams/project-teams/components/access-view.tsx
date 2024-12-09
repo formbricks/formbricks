@@ -5,16 +5,14 @@ import { AccessTable } from "@/modules/ee/teams/project-teams/components/access-
 import { ManageTeam } from "@/modules/ee/teams/project-teams/components/manage-team";
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/teams";
 import { useTranslations } from "next-intl";
-import { TProject } from "@formbricks/types/project";
 
 interface AccessViewProps {
-  project: TProject;
   teams: TProjectTeam[];
   environmentId: string;
   isOwnerOrManager: boolean;
 }
 
-export const AccessView = ({ project, teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
+export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
   const t = useTranslations();
   return (
     <>
@@ -24,12 +22,7 @@ export const AccessView = ({ project, teams, environmentId, isOwnerOrManager }: 
         <div className="mb-4 flex justify-end">
           <ManageTeam environmentId={environmentId} isOwnerOrManager={isOwnerOrManager} />
         </div>
-        <AccessTable
-          teams={teams}
-          projectId={project.id}
-          environmentId={environmentId}
-          isOwnerOrManager={isOwnerOrManager}
-        />
+        <AccessTable teams={teams} />
       </SettingsCard>
     </>
   );

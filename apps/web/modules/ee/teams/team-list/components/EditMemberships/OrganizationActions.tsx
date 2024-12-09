@@ -5,7 +5,6 @@ import {
   leaveOrganizationAction,
 } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
 import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
@@ -42,7 +41,6 @@ export const OrganizationActions = ({
   const router = useRouter();
   const t = useTranslations();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
-  const [isCreateOrganizationModalOpen, setCreateOrganizationModalOpen] = useState(false);
   const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -82,30 +80,18 @@ export const OrganizationActions = ({
             <XIcon />
           </Button>
         )}
-        {isMultiOrgEnabled && (
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => {
-              setCreateOrganizationModalOpen(true);
-            }}>
-            {t("environments.settings.general.create_new_organization")}
-          </Button>
-        )}
+
         {!isInviteDisabled && isUserManagerOrOwner && (
           <Button
             size="sm"
+            variant="secondary"
             onClick={() => {
               setAddMemberModalOpen(true);
             }}>
-            {t("environments.settings.general.add_member")}
+            {t("environments.settings.teams.invite_member")}
           </Button>
         )}
       </div>
-      <CreateOrganizationModal
-        open={isCreateOrganizationModalOpen}
-        setOpen={(val) => setCreateOrganizationModalOpen(val)}
-      />
       <AddMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}

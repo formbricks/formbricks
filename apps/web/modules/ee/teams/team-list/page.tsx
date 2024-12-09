@@ -1,8 +1,8 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { MembersView } from "@/modules/ee/teams/team-list/components/members-view";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
-import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
@@ -34,12 +34,6 @@ export const TeamsPage = async (props) => {
     notFound();
   }
 
-  const teams = await getTeams(session.user.id, organization.id);
-
-  if (!teams) {
-    throw new Error(t("common.teams_not_found"));
-  }
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
@@ -51,8 +45,13 @@ export const TeamsPage = async (props) => {
           canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
+      <MembersView
+        membershipRole={currentUserMembership?.role}
+        organization={organization}
+        currentUserId={session.user.id}
+        environmentId={params.environmentId}
+      />
       <TeamsView
-        teams={teams}
         organizationId={organization.id}
         membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}

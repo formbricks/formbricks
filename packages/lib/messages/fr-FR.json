@@ -1224,7 +1224,7 @@
         "create_new_team": "Créer une nouvelle équipe",
         "delete_team": "Supprimer l'équipe",
         "empty_project_message": "Vous n'avez pas encore ajouté de projets. Assignez un projet à l'équipe pour accorder l'accès à ses membres.",
-        "empty_teams_state": "Vous n'avez pas encore d'équipes. Créez votre première équipe pour gérer l'accès aux projets pour les membres de votre organisation.",
+        "empty_teams_state": "Créez votre première équipe.",
         "enter_team_name": "Entrez le nom de l'équipe",
         "invite_member": "Inviter un membre",
         "join_team": "Rejoindre l'équipe",
@@ -1232,6 +1232,7 @@
         "leave_team": "Quitter l'équipe",
         "leave_team_confirmation": "Es-tu sûr de vouloir quitter cette équipe ?",
         "manage": "Gérer",
+        "manage_team": "Gérer l'équipe",
         "member_removed_successfully": "Membre supprimé avec succès",
         "members_added_successfully": "Membres ajoutés avec succès",
         "no_members_found": "Aucun membre trouvé",
@@ -1258,6 +1259,8 @@
         "team_name": "Nom de l'équipe",
         "team_name_description": "Donnez à votre équipe un nom descriptif.",
         "team_projects": "Projets d'équipe",
+        "teams": "Équipes",
+        "teams_description": "Attribuez des membres à des équipes et donnez aux équipes accès aux projets.",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "Cette action ne peut pas être annulée. Si c'est parti, c'est parti.",
         "your_team": "Votre Équipe"
       }

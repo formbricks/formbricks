@@ -4,16 +4,12 @@ import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/teams";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 
 interface AccessTableProps {
   teams: TProjectTeam[];
-  environmentId: string;
-  projectId: string;
-  isOwnerOrManager: boolean;
 }
 
-export const AccessTable = ({ teams, environmentId, isOwnerOrManager }: AccessTableProps) => {
+export const AccessTable = ({ teams }: AccessTableProps) => {
   const t = useTranslations();
 
   return (
@@ -40,15 +36,9 @@ export const AccessTable = ({ teams, environmentId, isOwnerOrManager }: AccessTa
           )}
           {teams.map((team) => (
             <TableRow key={team.id} className="border-slate-200">
-              <TableCell className="font-medium">
-                {isOwnerOrManager ? (
-                  <Link href={`/environments/${environmentId}/settings/teams/${team.id}`}>{team.name}</Link>
-                ) : (
-                  team.name
-                )}
-              </TableCell>
+              <TableCell className="font-medium">{team.name}</TableCell>
               <TableCell>
-                {team.memberCount} {team.memberCount === 1 ? "member" : "members"}{" "}
+                {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
               </TableCell>
               <TableCell>
                 <p className="capitalize">{TeamPermissionMapping[team.permission]}</p>

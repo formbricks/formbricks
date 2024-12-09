@@ -1,6 +1,6 @@
-import { MembersInfo } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MembersInfo";
 import { getMembersByOrganizationId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { MembersInfo } from "@/modules/ee/teams/team-list/components/EditMemberships/MembersInfo";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";

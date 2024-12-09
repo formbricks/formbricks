@@ -14,7 +14,7 @@ export const CreateTeamButton = ({ organizationId }: CreateTeamButtonProps) => {
   const [openCreateTeamModal, setOpenCreateTeamModal] = useState<boolean>(false);
   return (
     <>
-      <Button size="sm" onClick={() => setOpenCreateTeamModal(true)}>
+      <Button size="sm" variant="secondary" onClick={() => setOpenCreateTeamModal(true)}>
         {t("environments.settings.teams.create_new_team")}
       </Button>
       {openCreateTeamModal && (

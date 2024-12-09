@@ -58,12 +58,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
           canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
-      <AccessView
-        environmentId={params.environmentId}
-        teams={teams}
-        project={project}
-        isOwnerOrManager={isOwnerOrManager}
-      />
+      <AccessView environmentId={params.environmentId} teams={teams} isOwnerOrManager={isOwnerOrManager} />
     </PageContentWrapper>
   );
 };

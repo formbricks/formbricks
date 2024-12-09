@@ -1224,7 +1224,7 @@
         "create_new_team": "Neues Team erstellen",
         "delete_team": "Team löschen",
         "empty_project_message": "Du hast noch keine Projekte hinzugefügt. Weise dem Team ein Projekt zu, um den Mitgliedern Zugriff zu gewähren.",
-        "empty_teams_state": "Du hast noch keine Teams. Erstelle dein erstes Team, um den Zugriff auf Projekte für die Mitglieder deiner Organisation zu verwalten.",
+        "empty_teams_state": "Erstelle dein erstes Team.",
         "enter_team_name": "Teamname eingeben",
         "invite_member": "Mitglied einladen",
         "join_team": "Team beitreten",
@@ -1232,6 +1232,7 @@
         "leave_team": "Team verlassen",
         "leave_team_confirmation": "Bist Du sicher, dass Du dieses Team verlassen möchtest?",
         "manage": "Verwalten",
+        "manage_team": "Team verwalten",
         "member_removed_successfully": "Mitglied erfolgreich entfernt",
         "members_added_successfully": "Mitglieder erfolgreich hinzugefügt",
         "no_members_found": "Keine Mitglieder gefunden",
@@ -1258,6 +1259,8 @@
         "team_name": "Teamname",
         "team_name_description": "Geben Sie Ihrem Team einen beschreibenden Namen.",
         "team_projects": "Teamprojekte",
+        "teams": "Teams",
+        "teams_description": "Mitglieder in Teams einteilen und Teams Zugriff auf Projekte gewähren.",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "Diese Aktion kann nicht rückgängig gemacht werden. Wenn es weg ist, ist es weg.",
         "your_team": "Dein Team"
       }
