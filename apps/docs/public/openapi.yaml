@@ -151,11 +151,9 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "surveyId": "{{surveyId}}",
-                    "userId": "{{userId}}" // OPTIONAL
-                }
+              example:
+                surveyId: "{{surveyId}}"
+                userId: "{{userId}} (optional)"
       parameters:
         - name: environmentId
           in: path
@@ -297,11 +295,9 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "userId":"{{userId}}", // OPTIONAL
-                    "responseId":"{{responseId}}" // OPTIONAL
-                }
+              example:
+                userId: "{{userId}} (optional)"
+                responseId: "{{responseId}} (optional)"
       parameters:
         - name: environmentId
           in: path
@@ -712,21 +708,17 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "surveyId": "{{surveyId}}",
-                    "userId": "{{userId}}", // OPTIONAL
-                    "finished": false,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzaw": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    },
-                    "meta":{ // Optional
-                        "source":"Postman API",
-                        "url":"https://postman.com",
-                        "action":"test action"
-                    }
-                }
+              example:
+                surveyId: "{{surveyId}}"
+                userId: "{{userId}} (optional)"
+                finished: false
+                data:
+                  hs8yd14l9h8u353tjmv6rzaw: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                meta:
+                  source: Postman API
+                  url: https://postman.com
+                  action: test action
       parameters:
         - name: environmentId
           in: path
@@ -910,14 +902,11 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "finished": true,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzawqqq": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    }
-                }
+              example:
+                finished: true
+                data:
+                  hs8yd14l9h8u353tjmv6rzawqqq: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
       parameters:
         - name: responseId
           in: path
@@ -1181,19 +1170,15 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "environmentId": "{{environmentId}}",
-                    "name": "My Action from Postman",
-                    "type": "code",
-                    "description": "From API Docs", // OPTIONAL
-                    "noCodeConfig": { // OPTIONAL
-                        "type": "innerHtml",
-                        "innerHtml": {
-                            "value": "sign-up"
-                        }
-                    }
-                }
+              example:
+                environmentId: "{{environmentId}}"
+                name: "My Action from Postman"
+                type: "code"
+                description: "From API Docs (optional)"
+                noCodeConfig:
+                  type: "innerHtml"
+                  innerHtml:
+                    value: "sign-up"
       parameters:
         - name: x-api-key
           in: header
@@ -3040,19 +3025,15 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "finished": true,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzawqqq": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    },
-                    "ttc": { // OPTIONAL
-                        "hs8yd14l9h8u353tjmv6rzawqqq": 120,
-                        "tcgls0063n8ri7dtrbnepcmz": 190
-                    },
-                    "language": "en" // OPTIONAL
-                }
+              example:
+                finished: true
+                data:
+                  hs8yd14l9h8u353tjmv6rzawqqq: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                  ttc:
+                    hs8yd14l9h8u353tjmv6rzawqqq: 120
+                    tcgls0063n8ri7dtrbnepcmz: 190
+                  language: en
       parameters:
         - name: x-api-key
           in: header
