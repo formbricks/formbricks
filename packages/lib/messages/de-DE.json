@@ -26,7 +26,7 @@
     },
     "invite": {
       "create_account": "Konto erstellen",
-      "email_does_not_match": "Ooops! Falsche E-Mail-Adresse",
+      "email_does_not_match": "Ooops! Falsche E-Mail-Adresse 🤦",
       "email_does_not_match_description": "Die E-Mail-Adresse aus der Einladung stimmt nicht mit der E-Mail-Adresse deines Kontos überein.",
       "go_to_app": "Zur App gehen",
       "happy_to_have_you": "Schön, dass Du da bist 🤗",
