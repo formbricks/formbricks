@@ -468,7 +468,7 @@
     "onboarding_invite_email_create_account": "Créez un compte pour rejoindre l'organisation de {inviterName}.",
     "onboarding_invite_email_done": "Fait ✅",
     "onboarding_invite_email_get_started_in_minutes": "Commencez en quelques minutes",
-    "onboarding_invite_email_heading": "Salut 👋",
+    "onboarding_invite_email_heading": "Salut ",
     "password_changed_email_heading": "Mot de passe changé",
     "password_changed_email_text": "Votre mot de passe a été changé avec succès.",
     "survey_response_finished_email_congrats": "Félicitations, vous avez reçu une nouvelle réponse à votre enquête ! Quelqu'un vient de compléter votre enquête : {surveyName}",
@@ -577,6 +577,7 @@
         "headline": "Qui est votre ingénieur préféré ?",
         "invite_message": "Message d'invitation",
         "invite_message_content": "Je m'intéresse à Formbricks pour réaliser des enquêtes ciblées. Peux-tu m'aider à le configurer ? 🙏",
+        "invite_sent_successfully": "Invitation envoyée avec succès",
         "subtitle": "Invitez votre collègue féru de technologie à vous aider avec la configuration."
       },
       "subtitle": "Ça prend moins de 4 minutes.",
