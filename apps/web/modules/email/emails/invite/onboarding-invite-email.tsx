@@ -9,7 +9,6 @@ interface OnboardingInviteEmailProps {
   inviterName: string;
   verifyLink: string;
   locale: string;
-  inviteeName: string;
 }
 
 export function OnboardingInviteEmail({
@@ -17,14 +16,11 @@ export function OnboardingInviteEmail({
   inviterName,
   verifyLink,
   locale,
-  inviteeName,
 }: OnboardingInviteEmailProps): React.JSX.Element {
   return (
     <EmailTemplate>
       <Container>
-        <Heading>
-          {translateEmailText("onboarding_invite_email_heading", locale)} {inviteeName} 👋
-        </Heading>
+        <Heading>{translateEmailText("onboarding_invite_email_heading", locale)} 👋</Heading>
         <Text>{inviteMessage}</Text>
         <Text className="font-medium">
           {translateEmailText("onboarding_invite_email_get_started_in_minutes", locale)}

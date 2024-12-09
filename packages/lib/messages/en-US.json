@@ -466,7 +466,7 @@
     "onboarding_invite_email_create_account": "Create an account to join {inviterName}'s organization.",
     "onboarding_invite_email_done": "Done ✅",
     "onboarding_invite_email_get_started_in_minutes": "Get Started in Minutes",
-    "onboarding_invite_email_heading": "Hey ",
+    "onboarding_invite_email_heading": "Hey 👋",
     "password_changed_email_heading": "Password changed",
     "password_changed_email_text": "Your password has been changed successfully.",
     "survey_response_finished_email_congrats": "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
@@ -575,7 +575,6 @@
         "headline": "Who is your favorite engineer?",
         "invite_message": "Invite Message",
         "invite_message_content": "I'm looking into Formbricks to run targeted surveys. Can you help me set it up? 🙏",
-        "invite_sent_successfully": "Invite sent successfully",
         "subtitle": "Invite your tech-savvy co-worker to help with the setup."
       },
       "subtitle": "It takes less than 4 minutes.",

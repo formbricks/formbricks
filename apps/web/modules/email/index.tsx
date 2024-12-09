@@ -137,9 +137,7 @@ export const sendInviteMemberEmail = async (
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
-    const html = await render(
-      OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale, inviteeName })
-    );
+    const html = await render(OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale }));
     await sendEmail({
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
