@@ -27,7 +27,8 @@
     "data-migration:xm-attribute-removal": "ts-node ./data-migrations/20241024123456_xm_attribute_removal/data-migration.ts",
     "data-migration:update-org-limits": "ts-node ./data-migrations/20241118123456_update_org_limits/data-migration.ts",
     "data-migration:product-revamp": "ts-node ./data-migrations/20241120150728_product_revamp/data-migration.ts",
-    "generate-data-migration": "ts-node ./scripts/generate-data-migration.ts"
+    "generate-data-migration": "ts-node ./scripts/generate-data-migration.ts",
+    "apply-data-migrations": "ts-node ./scripts/apply-data-migrations.ts"
   },
   "dependencies": {
     "@prisma/client": "5.20.0",
