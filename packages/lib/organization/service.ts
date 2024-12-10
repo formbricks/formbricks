@@ -15,7 +15,6 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
-import { membershipCache } from "../membership/cache";
 import { getProjects } from "../project/service";
 import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
@@ -452,7 +451,7 @@ export const getOrganizationsWhereUserIsSingleOwner = reactCache(
       },
       [`getOrganizationsWhereUserIsSingleOwner-${userId}`],
       {
-        tags: [organizationCache.tag.byUserId(userId), membershipCache.tag.byUserId(userId)],
+        tags: [organizationCache.tag.byUserId(userId)],
       }
     )()
 );
