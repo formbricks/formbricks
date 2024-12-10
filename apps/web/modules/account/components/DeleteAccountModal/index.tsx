@@ -38,7 +38,7 @@ export const DeleteAccountModal = ({
     try {
       setDeleting(true);
       await deleteUserAction();
-      formbricksLogout();
+      await formbricksLogout();
       // redirect to account deletion survey in Formbricks Cloud
       if (isFormbricksCloud) {
         await signOut({ redirect: true });
