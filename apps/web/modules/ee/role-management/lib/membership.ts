@@ -54,6 +54,15 @@ export const updateMembership = async (
       });
     }
 
+    const organizationMembers = await prisma.membership.findMany({
+      where: {
+        organizationId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
     teamCache.revalidate({
       userId,
       organizationId,
@@ -65,8 +74,10 @@ export const updateMembership = async (
       });
     });
 
-    organizationCache.revalidate({
-      userId,
+    organizationMembers.forEach((member) => {
+      organizationCache.revalidate({
+        userId: member.userId,
+      });
     });
 
     membershipCache.revalidate({

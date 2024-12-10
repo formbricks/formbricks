@@ -30,6 +30,7 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
         user={user}
         isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
+        organizationsWithSingleOwner={[]}
       />
       <Button onClick={() => setIsModalOpen(true)}>{t("setup.organization.create.delete_account")}</Button>
     </div>
