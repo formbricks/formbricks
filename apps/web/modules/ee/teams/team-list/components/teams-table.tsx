@@ -57,7 +57,9 @@ export const TeamsTable = ({ teams, organizationId, isOwnerOrManager }: YourTeam
                   {team.memberCount} {team.memberCount === 1 ? t("common.member") : t("common.members")}
                 </TableCell>
                 <TableCell>
-                  <Badge text={t("environments.settings.teams.your_team")} type="success" size={"tiny"} />
+                  <Badge variant="success" size={"tiny"}>
+                    {t("environments.settings.teams.your_team")}
+                  </Badge>
                 </TableCell>
                 <TableCell className="flex justify-end">
                   <Button size="sm" variant="secondary" onClick={() => {}}>

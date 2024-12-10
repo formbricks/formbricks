@@ -77,28 +77,20 @@ export const FollowUpItem = ({
           }}>
           <h3 className="text-slate-900">{followUp.name}</h3>
           <div className="flex space-x-2">
-            <Badge
-              size="normal"
-              text={
-                followUp.trigger.type === "response"
-                  ? t("environments.surveys.edit.follow_ups_item_response_tag")
-                  : t("environments.surveys.edit.follow_ups_item_ending_tag")
-              }
-              type="gray"
-            />
+            <Badge size="normal" variant="gray">
+              {followUp.trigger.type === "response"
+                ? t("environments.surveys.edit.follow_ups_item_response_tag")
+                : t("environments.surveys.edit.follow_ups_item_ending_tag")}
+            </Badge>
 
-            <Badge
-              size="normal"
-              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
-              type="gray"
-            />
+            <Badge size="normal" variant="gray">
+              {t("environments.surveys.edit.follow_ups_item_send_email_tag")}
+            </Badge>
 
             {isEmailToInvalid || isEndingInvalid ? (
-              <Badge
-                size="normal"
-                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
-                type="warning"
-              />
+              <Badge size="normal" variant="warning">
+                {t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
+              </Badge>
             ) : null}
           </div>
         </div>

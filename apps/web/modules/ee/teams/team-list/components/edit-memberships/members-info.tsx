@@ -66,9 +66,13 @@ export const MembersInfo = async ({
           <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
             {isInvitee(member) &&
               (isInviteExpired(member) ? (
-                <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
+                <Badge className="mr-2" variant="gray" size="tiny">
+                  Expired
+                </Badge>
               ) : (
-                <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
+                <Badge className="mr-2" variant="warning" size="tiny">
+                  Pending
+                </Badge>
               ))}
 
             <MemberActions

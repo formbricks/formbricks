@@ -81,7 +81,7 @@ export function FancyMultiSelect<T extends SelectOption>(props: FancyMultiSelect
       <div className="border-input ring-offset-background focus-within:ring-ring group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2">
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
-            <Badge key={option.value} type="gray" size="tiny">
+            <Badge key={option.value} variant="gray" size="tiny">
               {option.label}
               <button
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"

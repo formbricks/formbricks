@@ -258,11 +258,12 @@ export const CardStylingSettings = ({
                         onCheckedChange={(checked) => field.onChange(checked)}
                       />
                     </FormControl>
-
                     <div>
                       <FormLabel>
                         {t("environments.surveys.edit.hide_logo")}
-                        <Badge text={t("common.link_surveys")} type="gray" size="normal" />
+                        <Badge variant="gray" size="normal">
+                          {t("common.link_surveys")}
+                        </Badge>
                       </FormLabel>
                       <FormDescription>
                         {t("environments.surveys.edit.hide_the_logo_in_this_specific_survey")}

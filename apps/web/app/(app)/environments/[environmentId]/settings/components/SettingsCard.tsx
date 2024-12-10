@@ -29,8 +29,17 @@ export const SettingsCard = ({
         <div className="flex">
           <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">
-            {beta && <Badge text="Beta" size="normal" type="warning" />}
-            {soon && <Badge text="coming soon" size="normal" type="success" />}
+            {beta && (
+              <Badge size="normal" variant="warning">
+                Beta
+              </Badge>
+            )}
+            {soon && (
+              <Badge size="normal" variant="success">
+                {" "}
+                coming soon
+              </Badge>
+            )}
           </div>
         </div>
         <p className="mt-1 text-sm text-slate-500">{description}</p>

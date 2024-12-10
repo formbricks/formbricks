@@ -151,12 +151,9 @@ export const PricingTable = ({
               {t("environments.settings.billing.current_plan")}:{" "}
               {capitalizeFirstLetter(organization.billing.plan)}
               {cancellingOn && (
-                <Badge
-                  className="mx-2"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
-                  size="normal"
-                  type="warning"
-                />
+                <Badge className="mx-2" size="normal" variant="warning">
+                  {`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                </Badge>
               )}
             </h2>
 
@@ -191,11 +188,9 @@ export const PricingTable = ({
               )}
 
               {responsesUnlimitedCheck && (
-                <Badge
-                  text={t("environments.settings.billing.unlimited_responses")}
-                  type="success"
-                  size="normal"
-                />
+                <Badge variant="success" size="normal">
+                  {t("environments.settings.billing.unlimited_responses")}
+                </Badge>
               )}
             </div>
 
@@ -218,7 +213,9 @@ export const PricingTable = ({
               )}
 
               {peopleUnlimitedCheck && (
-                <Badge text={t("environments.settings.billing.unlimited_miu")} type="success" size="normal" />
+                <Badge variant="success" size="normal">
+                  {t("environments.settings.billing.unlimited_miu")}
+                </Badge>
               )}
             </div>
 
@@ -239,11 +236,9 @@ export const PricingTable = ({
               )}
 
               {projectsUnlimitedCheck && (
-                <Badge
-                  text={t("environments.settings.billing.unlimited_projects")}
-                  type="success"
-                  size="normal"
-                />
+                <Badge variant="success" size="normal">
+                  {t("environments.settings.billing.unlimited_projects")}
+                </Badge>
               )}
             </div>
           </div>

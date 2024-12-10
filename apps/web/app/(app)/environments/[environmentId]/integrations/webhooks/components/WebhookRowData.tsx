@@ -80,7 +80,9 @@ export const WebhookRowData = ({
         </div>
       </div>
       <div className="col-span-1 my-auto text-center text-sm text-slate-800">
-        <Badge text={capitalizeFirstLetter(webhook.source) || t("common.user")} type="gray" size="tiny" />
+        <Badge variant="gray" size="tiny">
+          {capitalizeFirstLetter(webhook.source) || t("common.user")}
+        </Badge>
       </div>
       <div className="col-span-4 my-auto text-center text-sm text-slate-800">
         {renderSelectedSurveysText(webhook, surveys)}

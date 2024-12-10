@@ -146,12 +146,9 @@ export const SurveyAnalysisCTA = ({
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
-        <Badge
-          text={t("environments.surveys.summary.results_are_public")}
-          type="warning"
-          size="normal"
-          className="rounded-lg"
-        />
+        <Badge variant="warning" size="normal" className="rounded-lg">
+          {t("environments.surveys.summary.results_are_public")}
+        </Badge>
       )}
 
       {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (

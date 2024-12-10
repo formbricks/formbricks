@@ -112,5 +112,9 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" text={capitalizeFirstLetter(memberRole)} type="gray" />;
+  return (
+    <Badge size="tiny" variant="gray">
+      {capitalizeFirstLetter(memberRole)}
+    </Badge>
+  );
 }
