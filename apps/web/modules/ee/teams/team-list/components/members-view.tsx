@@ -1,8 +1,8 @@
-import { getMembershipsByUserId } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
-import { EditMemberships } from "@/modules/ee/teams/team-list/components/EditMemberships";
-import { OrganizationActions } from "@/modules/ee/teams/team-list/components/EditMemberships/OrganizationActions";
+import { EditMemberships } from "@/modules/ee/teams/team-list/components/edit-memberships";
+import { OrganizationActions } from "@/modules/ee/teams/team-list/components/edit-memberships/organization-actions";
+import { getMembershipsByUserId } from "@/modules/ee/teams/team-list/lib/membership";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";

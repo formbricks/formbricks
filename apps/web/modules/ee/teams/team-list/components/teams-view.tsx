@@ -1,5 +1,5 @@
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
-import { getTeams } from "@/modules/ee/teams/team-list/lib/teams";
+import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getTranslations } from "next-intl/server";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";

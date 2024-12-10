@@ -1,13 +1,13 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createInviteTokenAction,
   deleteInviteAction,
   deleteMembershipAction,
   resendInviteAction,
-} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
-import { ShareInviteModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/ShareInviteModal";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+} from "@/modules/ee/teams/team-list/actions";
+import { ShareInviteModal } from "@/modules/ee/teams/team-list/components/invite-member/ShareInviteModal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";

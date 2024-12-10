@@ -3,10 +3,10 @@
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { useTranslations } from "next-intl";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { BulkInviteTab } from "./BulkInviteTab";
-import { IndividualInviteTab } from "./IndividualInviteTab";
+import { BulkInviteTab } from "./bulk-invite-tab";
+import { IndividualInviteTab } from "./individual-invite-tab";
 
-interface AddMemberModalProps {
+interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
@@ -15,14 +15,14 @@ interface AddMemberModalProps {
   environmentId: string;
 }
 
-export const AddMemberModal = ({
+export const InviteMemberModal = ({
   open,
   setOpen,
   onSubmit,
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-}: AddMemberModalProps) => {
+}: InviteMemberModalProps) => {
   const t = useTranslations();
   const tabs = [
     {

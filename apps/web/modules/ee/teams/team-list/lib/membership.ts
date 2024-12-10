@@ -10,37 +10,8 @@ import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
-import { TMember, TMembership } from "@formbricks/types/memberships";
-
-export const getOrganizationOwnerCount = reactCache(
-  async (organizationId: string): Promise<number> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZString]);
-
-        try {
-          const ownersCount = await prisma.membership.count({
-            where: {
-              organizationId,
-              role: "owner",
-            },
-          });
-
-          return ownersCount;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getOrganizationOwnerCount-${organizationId}`],
-      {
-        tags: [membershipCache.tag.byOrganizationId(organizationId)],
-      }
-    )()
-);
+import { TMember } from "@formbricks/types/memberships";
+import { TMembership } from "@formbricks/types/memberships";
 
 export const getMembersByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> =>
@@ -87,6 +58,36 @@ export const getMembersByOrganizationId = reactCache(
         }
       },
       [`getMembersByOrganizationId-${organizationId}-${page}`],
+      {
+        tags: [membershipCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
+export const getOrganizationOwnerCount = reactCache(
+  async (organizationId: string): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString]);
+
+        try {
+          const ownersCount = await prisma.membership.count({
+            where: {
+              organizationId,
+              role: "owner",
+            },
+          });
+
+          return ownersCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getOrganizationOwnerCount-${organizationId}`],
       {
         tags: [membershipCache.tag.byOrganizationId(organizationId)],
       }

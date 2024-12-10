@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  inviteUserAction,
-  leaveOrganizationAction,
-} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/actions";
-import { AddMemberModal } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AddMemberModal";
+import { inviteUserAction, leaveOrganizationAction } from "@/modules/ee/teams/team-list/actions";
+import { InviteMemberModal } from "@/modules/ee/teams/team-list/components/invite-member/invite-member-modal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
@@ -92,7 +89,7 @@ export const OrganizationActions = ({
           </Button>
         )}
       </div>
-      <AddMemberModal
+      <InviteMemberModal
         open={isAddMemberModalOpen}
         setOpen={setAddMemberModalOpen}
         onSubmit={handleAddMembers}

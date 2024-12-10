@@ -1,6 +1,6 @@
 import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
-import { MemberActions } from "@/modules/ee/teams/team-list/components/EditMemberships/MemberActions";
+import { MemberActions } from "@/modules/ee/teams/team-list/components/edit-memberships/member-actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
