@@ -15,6 +15,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { BILLING_LIMITS, ITEMS_PER_PAGE, PROJECT_FEATURE_KEYS } from "../constants";
 import { environmentCache } from "../environment/cache";
+import { membershipCache } from "../membership/cache";
 import { getProjects } from "../project/service";
 import { updateUser } from "../user/service";
 import { validateInputs } from "../utils/validate";
@@ -407,3 +408,51 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
     throw error;
   }
 };
+
+export const getOrganizationsWhereUserIsSingleOwner = reactCache(
+  async (userId: string): Promise<TOrganization[]> =>
+    cache(
+      async () => {
+        validateInputs([userId, ZString]);
+        try {
+          const orgs = await prisma.organization.findMany({
+            where: {
+              memberships: {
+                some: {
+                  userId,
+                  role: "owner",
+                },
+              },
+            },
+            select: {
+              ...select,
+              memberships: {
+                where: {
+                  role: "owner",
+                },
+              },
+            },
+          });
+
+          // Filter to only include orgs where there is exactly one owner
+          const filteredOrgs = orgs
+            .filter((org) => org.memberships.length === 1)
+            .map((org) => ({
+              ...org,
+              memberships: undefined, // Remove memberships from the return object to match TOrganization type
+            }));
+
+          return filteredOrgs;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getOrganizationsWhereUserIsSingleOwner-${userId}`],
+      {
+        tags: [organizationCache.tag.byUserId(userId), membershipCache.tag.byUserId(userId)],
+      }
+    )()
+);

@@ -8,7 +8,7 @@ import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
@@ -32,11 +32,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-
-  if (!membership) {
-    throw new Error(t("common.membership_not_found"));
-  }
+  const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(session.user.id);
 
   const user = session && session.user ? await getUser(session.user.id) : null;
 
@@ -78,7 +74,12 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           <SettingsCard
             title={t("environments.settings.profile.delete_account")}
             description={t("environments.settings.profile.confirm_delete_account")}>
-            <DeleteAccount session={session} IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD} user={user} />
+            <DeleteAccount
+              session={session}
+              IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+              user={user}
+              organizationsWithSingleOwner={organizationsWithSingleOwner}
+            />
           </SettingsCard>
           <SettingsId title={t("common.profile")} id={user.id}></SettingsId>
         </div>

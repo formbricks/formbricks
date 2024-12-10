@@ -7,7 +7,7 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { deleteOrganization } from "../organization/service";
+import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
@@ -150,38 +150,10 @@ export const deleteUser = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
   try {
-    const currentUserMemberships = await prisma.membership.findMany({
-      where: {
-        userId: id,
-      },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            memberships: true,
-          },
-        },
-      },
-    });
+    const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(id);
 
-    for (const currentUserMembership of currentUserMemberships) {
-      const organizationMemberships = currentUserMembership.organization.memberships;
-      const role = currentUserMembership.role;
-      const organizationId = currentUserMembership.organizationId;
-
-      const organizationHasOnlyOneMember = organizationMemberships.length === 1;
-      const currentUserIsOrganizationOwner = role === "owner";
-
-      // Count how many owners are in the organization
-      const numberOfOwners = organizationMemberships.filter(
-        (membership) => membership.role === "owner"
-      ).length;
-      const isLastOwner = currentUserIsOrganizationOwner && numberOfOwners === 1;
-
-      if (organizationHasOnlyOneMember || isLastOwner) {
-        await deleteOrganization(organizationId);
-      }
+    for (const organization of organizationsWithSingleOwner) {
+      await deleteOrganization(organization.id);
     }
 
     const deletedUser = await deleteUserById(id);
