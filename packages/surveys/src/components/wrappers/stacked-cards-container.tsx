@@ -31,9 +31,12 @@ export function StackedCardsContainer({
   fullSizeCards = false,
 }: StackedCardsContainerProps) {
   const [hovered, setHovered] = useState(false);
-  const highlightBorderColor =
-    survey.styling?.highlightBorderColor?.light ?? styling.highlightBorderColor?.light;
-  const cardBorderColor = survey.styling?.cardBorderColor?.light ?? styling.cardBorderColor?.light;
+  const highlightBorderColor = survey.styling?.overwriteThemeStyling
+    ? survey.styling?.highlightBorderColor?.light
+    : styling.highlightBorderColor?.light;
+  const cardBorderColor = survey.styling?.overwriteThemeStyling
+    ? survey.styling?.cardBorderColor?.light
+    : styling.cardBorderColor?.light;
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");

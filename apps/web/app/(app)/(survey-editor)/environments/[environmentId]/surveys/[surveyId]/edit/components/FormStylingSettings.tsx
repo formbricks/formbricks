@@ -65,7 +65,7 @@ export const FormStylingSettings = ({
       setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));
     }
 
-    if (!highlightBorderColor) {
+    if (highlightBorderColor) {
       setHighlightBorderColor(brandColor);
     }
   };

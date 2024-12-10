@@ -1,7 +1,7 @@
+import { cn } from "@/lib/utils";
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo } from "preact/hooks";
 import { type TSurveyCalQuestion } from "@formbricks/types/surveys/types";
-import { cn } from "@/lib/utils";
 
 interface CalEmbedProps {
   question: TSurveyCalQuestion;
@@ -43,7 +43,9 @@ export function CalEmbed({ question, onSuccessfulBooking }: CalEmbedProps) {
 
   useEffect(() => {
     // remove any existing cal-inline elements
-    document.querySelectorAll("cal-inline").forEach((el) => { el.remove(); });
+    document.querySelectorAll("cal-inline").forEach((el) => {
+      el.remove();
+    });
     cal("init", { calOrigin: question.calHost ? `https://${question.calHost}` : "https://cal.com" });
     cal("inline", {
       elementOrSelector: "#fb-cal-embed",

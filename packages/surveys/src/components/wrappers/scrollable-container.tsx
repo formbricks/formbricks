@@ -1,6 +1,6 @@
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
-import { cn } from "@/lib/utils";
 
 interface ScrollableContainerProps {
   children: JSX.Element;
@@ -26,7 +26,9 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
   const toggleOverflow = (hide: boolean) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (hide) {
-      timeoutRef.current = setTimeout(() => { setIsOverflowHidden(true); }, 1000);
+      timeoutRef.current = setTimeout(() => {
+        setIsOverflowHidden(true);
+      }, 1000);
     } else {
       setIsOverflowHidden(false);
       checkScroll();
@@ -37,7 +39,9 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
     const element = containerRef.current;
     if (!element) return;
 
-    const handleScroll = () => { checkScroll(); };
+    const handleScroll = () => {
+      checkScroll();
+    };
     element.addEventListener("scroll", handleScroll);
 
     return () => {
@@ -64,8 +68,12 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
           "fb-overflow-auto fb-px-4 fb-pb-1",
           isOverflowHidden ? "fb-no-scrollbar" : "fb-bg-survey-bg"
         )}
-        onMouseEnter={() => { toggleOverflow(false); }}
-        onMouseLeave={() => { toggleOverflow(true); }}>
+        onMouseEnter={() => {
+          toggleOverflow(false);
+        }}
+        onMouseLeave={() => {
+          toggleOverflow(true);
+        }}>
         {children}
       </div>
       {!isAtBottom && (

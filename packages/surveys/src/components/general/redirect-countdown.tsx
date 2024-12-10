@@ -28,7 +28,9 @@ export function RedirectCountDown({ redirectUrl, isRedirectDisabled }: RedirectC
     }
 
     // Clean up the interval when the component is unmounted
-    return () => { clearInterval(interval); };
+    return () => {
+      clearInterval(interval);
+    };
   }, [redirectUrl, isRedirectDisabled]);
 
   if (!redirectUrl) return null;
