@@ -68,18 +68,7 @@ export const isValidDateString = (value: string) => {
   return date;
 };
 
-export const getFormattedDate = (date: Date) => {
-  return date.toLocaleString(undefined, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-export const getFormattedTime = (date: Date) => {
-  return date.toLocaleString(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
+export const getFormattedDateTimeString = (date: Date): string => {
+  const dateString = new Date(date);
+  return dateString.toISOString().slice(0, 19).replace("T", " ");
 };
