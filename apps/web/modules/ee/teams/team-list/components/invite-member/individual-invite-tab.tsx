@@ -5,6 +5,8 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { FancyMultiSelect } from "@/modules/ui/components/multi-select/fancy-multi-select";
+import { H1 } from "@/modules/ui/components/typography";
 import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
@@ -60,72 +62,72 @@ export const IndividualInviteTab = ({
     reset();
   };
   return (
-    <form onSubmit={handleSubmit(submitEventClass)}>
-      <div className="flex justify-between rounded-lg">
-        <div className="w-full space-y-4">
-          <div>
-            <Label htmlFor="memberNameInput">{t("common.full_name")}</Label>
-            <Input
-              id="memberNameInput"
-              placeholder="Hans Wurst"
-              {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
-            />
-            {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
-          </div>
-          <div>
-            <Label htmlFor="memberEmailInput">{t("common.email")}</Label>
-            <Input
-              id="memberEmailInput"
-              type="email"
-              placeholder="hans@wurst.com"
-              {...register("email", { required: true })}
-            />
-          </div>
-          <div>
-            <AddMemberRole
-              control={control}
-              canDoRoleManagement={canDoRoleManagement}
-              isFormbricksCloud={isFormbricksCloud}
-            />
-            {watch("role") === "member" && (
-              <Alert className="mt-2" variant="info">
-                <AlertDescription>
-                  {t("environments.settings.general.member_role_info_message")}
-                </AlertDescription>
-              </Alert>
-            )}
-            {!canDoRoleManagement &&
-              (isFormbricksCloud ? (
-                <UpgradePlanNotice
-                  message={t("environments.settings.general.upgrade_plan_notice_message")}
-                  url={`/environments/${environmentId}/settings/billing`}
-                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_cloud")}
-                />
-              ) : (
-                <UpgradePlanNotice
-                  message={t("environments.settings.general.upgrade_plan_notice_message")}
-                  url={`/environments/${environmentId}/settings/enterprise`}
-                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_enterprise")}
-                />
-              ))}
-          </div>
-        </div>
+    <form onSubmit={handleSubmit(submitEventClass)} className="flex flex-col gap-6">
+      <div className="flex flex-col space-y-2">
+        <Label htmlFor="memberNameInput">{t("common.full_name")}</Label>
+        <Input
+          id="memberNameInput"
+          placeholder="e.g. Bob"
+          {...register("name", { required: true, validate: (value) => value.trim() !== "" })}
+        />
+        {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>}
       </div>
-      <div className="flex justify-end pt-4">
-        <div className="flex space-x-2">
-          <Button
-            size="sm"
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setOpen(false);
-            }}>
-            {t("common.cancel")}
-          </Button>
-          <Button type="submit" size="sm" loading={isSubmitting}>
-            {t("environments.settings.general.send_invitation")}
-          </Button>
-        </div>
+      <div className="flex flex-col space-y-2">
+        <Label htmlFor="memberEmailInput">{t("common.email")}</Label>
+        <Input
+          id="memberEmailInput"
+          type="email"
+          placeholder="e.g. bob@work.com"
+          {...register("email", { required: true })}
+        />
+      </div>
+      <div>
+        <AddMemberRole
+          control={control}
+          canDoRoleManagement={canDoRoleManagement}
+          isFormbricksCloud={isFormbricksCloud}
+        />
+        {watch("role") === "member" && (
+          <Alert className="mt-2" variant="info">
+            <AlertDescription>{t("environments.settings.general.member_role_info_message")}</AlertDescription>
+          </Alert>
+        )}
+      </div>
+
+      <FancyMultiSelect
+        options={[
+          { value: "owner", label: "Owner" },
+          { value: "member", label: "Member" },
+        ]}
+      />
+
+      {!canDoRoleManagement &&
+        (isFormbricksCloud ? (
+          <UpgradePlanNotice
+            message={t("environments.settings.teams.upgrade_plan_notice_message")}
+            url={`/environments/${environmentId}/settings/billing`}
+            textForUrl={t("environments.settings.teams.upgrade_plan_notice_text_for_url_cloud")}
+          />
+        ) : (
+          <UpgradePlanNotice
+            message={t("environments.settings.teams.upgrade_plan_notice_message")}
+            url={`/environments/${environmentId}/settings/enterprise`}
+            textForUrl={t("environments.settings.teams.upgrade_plan_notice_text_for_url_enterprise")}
+          />
+        ))}
+      <div className="flex justify-between">
+        <Button
+          size="default"
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setOpen(false);
+          }}>
+          {t("common.cancel")}
+        </Button>
+        <Button type="submit" size="default" loading={isSubmitting}>
+          {t("common.invite")}
+        </Button>
       </div>
     </form>
   );

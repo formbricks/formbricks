@@ -1,7 +1,13 @@
 "use client";
 
+import { Modal } from "@/modules/ui/components/modal";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
+import { H3, H4, Muted } from "@/modules/ui/components/typography";
+import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { cn } from "@formbricks/lib/cn";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { BulkInviteTab } from "./bulk-invite-tab";
 import { IndividualInviteTab } from "./individual-invite-tab";
@@ -23,42 +29,75 @@ export const InviteMemberModal = ({
   isFormbricksCloud,
   environmentId,
 }: InviteMemberModalProps) => {
+  const [type, setType] = useState<"individual" | "bulk">("individual");
+
   const t = useTranslations();
-  const tabs = [
-    {
-      title: t("environments.settings.general.individual_invite"),
-      children: (
-        <IndividualInviteTab
-          setOpen={setOpen}
-          environmentId={environmentId}
-          onSubmit={onSubmit}
-          canDoRoleManagement={canDoRoleManagement}
-          isFormbricksCloud={isFormbricksCloud}
-        />
-      ),
-    },
-    {
-      title: t("environments.settings.general.bulk_invite"),
-      children: (
-        <BulkInviteTab
-          setOpen={setOpen}
-          onSubmit={onSubmit}
-          canDoRoleManagement={canDoRoleManagement}
-          isFormbricksCloud={isFormbricksCloud}
-        />
-      ),
-    },
-  ];
+
+  const tabs = {
+    individual: (
+      <IndividualInviteTab
+        setOpen={setOpen}
+        environmentId={environmentId}
+        onSubmit={onSubmit}
+        canDoRoleManagement={canDoRoleManagement}
+        isFormbricksCloud={isFormbricksCloud}
+      />
+    ),
+    bulk: (
+      <BulkInviteTab
+        setOpen={setOpen}
+        onSubmit={onSubmit}
+        canDoRoleManagement={canDoRoleManagement}
+        isFormbricksCloud={isFormbricksCloud}
+      />
+    ),
+  };
 
   return (
-    <>
-      <ModalWithTabs
-        open={open}
-        setOpen={setOpen}
-        tabs={tabs}
-        label={t("environments.settings.general.invite_organization_member")}
-        closeOnOutsideClick={true}
-      />
-    </>
+    <Modal
+      open={open}
+      setOpen={setOpen}
+      noPadding
+      closeOnOutsideClick={false}
+      className="overflow-auto"
+      size="md"
+      hideCloseButton>
+      <div className="sticky top-0 flex h-full flex-col rounded-lg">
+        <button
+          className={cn(
+            "absolute right-0 top-0 hidden pr-4 pt-4 text-slate-400 hover:text-slate-500 focus:outline-none focus:ring-0 sm:block"
+          )}
+          onClick={() => {
+            setOpen(false);
+          }}>
+          <XIcon className="h-6 w-6 rounded-md bg-white" />
+          <span className="sr-only">Close</span>
+        </button>
+        <div className="rounded-t-lg bg-slate-100">
+          <div className="flex w-full items-center justify-between p-6">
+            <div className="flex items-center space-x-2">
+              <div>
+                <H4>{t("environments.settings.teams.invite_member")}</H4>
+                <Muted className="text-slate-500">
+                  {t("environments.settings.teams.invite_member_description")}
+                </Muted>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-6 p-6">
+        <TabToggle
+          id="type"
+          options={[
+            { value: "individual", label: t("environments.settings.teams.individual") },
+            { value: "bulk", label: t("environments.settings.teams.bulk_invite") },
+          ]}
+          onChange={(inviteType) => setType(inviteType)}
+          defaultSelected={type}
+        />
+        {tabs[type]}
+      </div>
+    </Modal>
   );
 };

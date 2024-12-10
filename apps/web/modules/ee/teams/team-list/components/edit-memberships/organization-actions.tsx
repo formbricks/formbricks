@@ -38,7 +38,7 @@ export const OrganizationActions = ({
   const router = useRouter();
   const t = useTranslations();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
-  const [isAddMemberModalOpen, setAddMemberModalOpen] = useState(false);
+  const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLeaveOrganization = async () => {
@@ -55,7 +55,7 @@ export const OrganizationActions = ({
     }
   };
 
-  const handleAddMembers = async (data: TInvitee[]) => {
+  const handleInviteMembers = async (data: TInvitee[]) => {
     try {
       await Promise.all(
         data.map(async ({ name, email, role }) => {
@@ -83,16 +83,16 @@ export const OrganizationActions = ({
             size="sm"
             variant="secondary"
             onClick={() => {
-              setAddMemberModalOpen(true);
+              setInviteMemberModalOpen(true);
             }}>
             {t("environments.settings.teams.invite_member")}
           </Button>
         )}
       </div>
       <InviteMemberModal
-        open={isAddMemberModalOpen}
-        setOpen={setAddMemberModalOpen}
-        onSubmit={handleAddMembers}
+        open={isInviteMemberModalOpen}
+        setOpen={setInviteMemberModalOpen}
+        onSubmit={handleInviteMembers}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}

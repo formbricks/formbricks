@@ -1,13 +1,13 @@
 import { cn } from "@formbricks/lib/cn";
 
-interface BadgeProps {
-  text: string;
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  text?: string;
   type: "warning" | "success" | "error" | "gray";
   size: "tiny" | "normal" | "large";
   className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => {
+export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, ...props }) => {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-emerald-100",
@@ -38,7 +38,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => 
   const textSize = size === "large" ? "text-sm" : "text-xs";
 
   return (
-    <span
+    <div
       className={cn(
         "inline-flex cursor-default items-center rounded-full border font-medium",
         bgColor[type],
@@ -47,8 +47,9 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => 
         padding[size],
         textSize,
         className
-      )}>
+      )}
+      {...props}>
       {text}
-    </span>
+    </div>
   );
 };

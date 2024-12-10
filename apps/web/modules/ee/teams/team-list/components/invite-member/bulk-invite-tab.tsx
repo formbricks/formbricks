@@ -82,7 +82,7 @@ export const BulkInviteTab = ({
   return (
     <div className="space-y-4">
       <div
-        className="relative flex h-52 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-slate-300 bg-slate-50 transition-colors hover:bg-slate-100"
+        className="relative flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 transition-colors hover:bg-slate-100"
         onClick={() => fileInputRef.current?.click()}>
         {csvFile ? (
           <XIcon
@@ -109,18 +109,27 @@ export const BulkInviteTab = ({
           </Alert>
         )}
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <Button
+          size="default"
+          type="button"
+          variant="outline"
+          onClick={() => {
+            setOpen(false);
+          }}>
+          {t("common.cancel")}
+        </Button>
         <div className="flex space-x-2">
           <Link
             download
             href="/sample-csv/formbricks-organization-members-template.csv"
             target="_blank"
             rel="noopener noreferrer">
-            <Button variant="ghost" size="sm">
+            <Button variant="secondary" size="default">
               {t("common.download")} CSV template
             </Button>
           </Link>
-          <Button onClick={onImport} size="sm" disabled={!csvFile}>
+          <Button onClick={onImport} size="default" disabled={!csvFile}>
             {t("common.import")}
           </Button>
         </div>

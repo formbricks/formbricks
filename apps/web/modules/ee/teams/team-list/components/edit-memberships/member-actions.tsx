@@ -7,7 +7,7 @@ import {
   deleteMembershipAction,
   resendInviteAction,
 } from "@/modules/ee/teams/team-list/actions";
-import { ShareInviteModal } from "@/modules/ee/teams/team-list/components/invite-member/ShareInviteModal";
+import { ShareInviteModal } from "@/modules/ee/teams/team-list/components/invite-member/share-invite-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
