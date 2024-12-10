@@ -189,6 +189,7 @@ const ZInviteUserAction = z.object({
   email: z.string(),
   name: z.string(),
   role: ZOrganizationRole,
+  teamIds: z.array(z.string()),
 });
 
 export const inviteUserAction = authenticatedActionClient
@@ -232,6 +233,7 @@ export const inviteUserAction = authenticatedActionClient
         email: parsedInput.email,
         name: parsedInput.name,
         role: parsedInput.role,
+        teamIds: parsedInput.teamIds,
       },
       currentUserId: ctx.user.id,
     });

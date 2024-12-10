@@ -3,6 +3,7 @@ import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/
 import { EditMemberships } from "@/modules/ee/teams/team-list/components/edit-memberships";
 import { OrganizationActions } from "@/modules/ee/teams/team-list/components/edit-memberships/organization-actions";
 import { getMembershipsByUserId } from "@/modules/ee/teams/team-list/lib/membership";
+import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -47,6 +48,12 @@ export const MembersView = async ({
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(currentUserId, organization.id);
 
+  const teams = await getTeamsByOrganizationId(organization.id);
+
+  if (!teams) {
+    throw new Error(t("common.teams_not_found"));
+  }
+
   return (
     <SettingsCard
       title={t("environments.settings.general.manage_members")}
@@ -62,6 +69,7 @@ export const MembersView = async ({
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          teams={teams}
         />
       )}
 

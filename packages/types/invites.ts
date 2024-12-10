@@ -19,6 +19,7 @@ export const ZInvitee = z.object({
   email: z.string().email(),
   name: ZUserName,
   role: ZOrganizationRole,
+  teamIds: z.array(z.string()),
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
 

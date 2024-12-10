@@ -15,7 +15,7 @@ import { Controller } from "react-hook-form";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
-  control: Control<{ name: string; email: string; role: TOrganizationRole }>;
+  control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
 }

@@ -214,7 +214,7 @@ export const inviteUser = async ({
   validateInputs([organizationId, ZString], [invitee, ZInvitee]);
 
   try {
-    const { name, email, role } = invitee;
+    const { name, email, role, teamIds } = invitee;
 
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
@@ -230,6 +230,17 @@ export const inviteUser = async ({
       if (member) {
         throw new ValidationError("User is already a member of this organization");
       }
+    }
+
+    const teams = await prisma.team.findMany({
+      where: {
+        id: { in: teamIds },
+        organizationId,
+      },
+    });
+
+    if (teams.length !== teamIds.length) {
+      throw new ValidationError("Invalid teamIds");
     }
 
     const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days

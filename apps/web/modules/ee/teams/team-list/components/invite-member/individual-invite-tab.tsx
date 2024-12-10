@@ -1,12 +1,12 @@
 "use client";
 
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { FancyMultiSelect } from "@/modules/ui/components/multi-select/fancy-multi-select";
-import { H1 } from "@/modules/ui/components/typography";
+import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
@@ -19,6 +19,7 @@ import { ZUserName } from "@formbricks/types/user";
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
+  teams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -27,6 +28,7 @@ interface IndividualInviteTabProps {
 export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
+  teams,
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
@@ -35,6 +37,7 @@ export const IndividualInviteTab = ({
     name: ZUserName,
     email: z.string().email("Invalid email address"),
     role: ZOrganizationRole,
+    teamIds: z.array(z.string()),
   });
 
   type TFormData = z.infer<typeof ZFormSchema>;
@@ -46,6 +49,7 @@ export const IndividualInviteTab = ({
     reset,
     control,
     watch,
+    setValue,
     formState: { isSubmitting, errors },
   } = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
@@ -61,6 +65,12 @@ export const IndividualInviteTab = ({
     setOpen(false);
     reset();
   };
+
+  const teamOptions = teams.map((team) => ({
+    label: team.name,
+    value: team.id,
+  }));
+
   return (
     <form onSubmit={handleSubmit(submitEventClass)} className="flex flex-col gap-6">
       <div className="flex flex-col space-y-2">
@@ -94,11 +104,12 @@ export const IndividualInviteTab = ({
         )}
       </div>
 
-      <FancyMultiSelect
-        options={[
-          { value: "owner", label: "Owner" },
-          { value: "member", label: "Member" },
-        ]}
+      <MultiSelect
+        value={watch("teamIds")}
+        options={teamOptions}
+        onChange={(teamIds) => {
+          setValue("teamIds", teamIds);
+        }}
       />
 
       {!canDoRoleManagement &&

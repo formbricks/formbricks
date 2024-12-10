@@ -1,5 +1,6 @@
 "use client";
 
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { Modal } from "@/modules/ui/components/modal";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
@@ -16,6 +17,7 @@ interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
+  teams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -25,6 +27,7 @@ export const InviteMemberModal = ({
   open,
   setOpen,
   onSubmit,
+  teams,
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
@@ -41,6 +44,7 @@ export const InviteMemberModal = ({
         onSubmit={onSubmit}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
+        teams={teams}
       />
     ),
     bulk: (
@@ -59,7 +63,7 @@ export const InviteMemberModal = ({
       setOpen={setOpen}
       noPadding
       closeOnOutsideClick={false}
-      className="overflow-auto"
+      className="overflow-visible"
       size="md"
       hideCloseButton>
       <div className="sticky top-0 flex h-full flex-col rounded-lg">

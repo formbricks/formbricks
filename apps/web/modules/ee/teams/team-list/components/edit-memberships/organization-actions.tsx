@@ -2,6 +2,7 @@
 
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/ee/teams/team-list/actions";
 import { InviteMemberModal } from "@/modules/ee/teams/team-list/components/invite-member/invite-member-modal";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
@@ -17,6 +18,7 @@ type OrganizationActionsProps = {
   isUserManagerOrOwner: boolean;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
+  teams: TOrganizationTeam[];
   isInviteDisabled: boolean;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
@@ -28,6 +30,7 @@ export const OrganizationActions = ({
   isUserManagerOrOwner,
   role,
   organization,
+  teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
   canDoRoleManagement,
@@ -58,8 +61,8 @@ export const OrganizationActions = ({
   const handleInviteMembers = async (data: TInvitee[]) => {
     try {
       await Promise.all(
-        data.map(async ({ name, email, role }) => {
-          await inviteUserAction({ organizationId: organization.id, email, name, role });
+        data.map(async ({ name, email, role, teamIds }) => {
+          await inviteUserAction({ organizationId: organization.id, email, name, role, teamIds });
         })
       );
       toast.success(t("environments.settings.general.member_invited_successfully"));
@@ -96,6 +99,7 @@ export const OrganizationActions = ({
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
+        teams={teams}
       />
 
       <CustomDialog

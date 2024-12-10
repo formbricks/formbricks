@@ -195,8 +195,8 @@ export const ProjectSettings = ({
                       <div>
                         <MultiSelect
                           value={field.value}
-                          onChange={(teamIds) => field.onChange(teamIds)}
                           options={organizationTeamsOptions}
+                          onChange={(teamIds) => field.onChange(teamIds)}
                         />
                         {error?.message && <FormError className="text-left">{error.message}</FormError>}
                       </div>
