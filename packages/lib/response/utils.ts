@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { getFormattedDateTimeString } from "utils/datetime";
 import {
   TResponse,
   TResponseFilterCriteria,
@@ -13,6 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
+import { getFormattedDateTimeString } from "../utils/datetime";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
