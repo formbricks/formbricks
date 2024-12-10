@@ -160,6 +160,9 @@ const mockQuestion: TSurveyQuestion = {
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",
+  charLimit: {
+    enabled: false,
+  },
 };
 
 const mockWelcomeCard: TSurveyWelcomeCard = {
@@ -310,6 +313,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite color?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "cdu9vgtmmd9b24l35pp9bodk",
@@ -335,6 +341,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite food?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "uwlm6kazj5pbt6licpa1hw5c",
@@ -366,6 +375,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite movie?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "dpi3zipezuo1idplztb1abes",
@@ -427,6 +439,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "number",
       headline: { default: "Select your age group:" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "o6n73uq9rysih9mpcbzlehfs",

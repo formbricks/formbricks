@@ -9,10 +9,12 @@ import { inviteUser } from "@formbricks/lib/invite/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZUserName } from "@formbricks/types/user";
 
 const ZInviteOrganizationMemberAction = z.object({
   organizationId: ZId,
   email: z.string(),
+  name: ZUserName,
   role: ZOrganizationRole,
   inviteMessage: z.string(),
 });
@@ -38,7 +40,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       organizationId: parsedInput.organizationId,
       invitee: {
         email: parsedInput.email,
-        name: "",
+        name: parsedInput.name,
         role: parsedInput.role,
       },
       currentUserId: ctx.user.id,
@@ -49,7 +51,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         invite.id,
         parsedInput.email,
         ctx.user.name ?? "",
-        "",
+        parsedInput.name,
         true, // is onboarding invite
         parsedInput.inviteMessage,
         ctx.user.locale
