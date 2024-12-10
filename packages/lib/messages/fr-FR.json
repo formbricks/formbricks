@@ -767,6 +767,7 @@
         "source": "Source",
         "test_endpoint": "Point de test",
         "triggers": "Déclencheurs",
+        "webhook_added_successfully": "Webhook ajouté avec succès",
         "webhook_delete_confirmation": "Êtes-vous sûr de vouloir supprimer ce Webhook ? Cela arrêtera l'envoi de toute notification future.",
         "webhook_deleted_successfully": "Webhook supprimé avec succès",
         "webhook_name_placeholder": "Optionnel : Étiquetez votre webhook pour une identification facile",
