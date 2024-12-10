@@ -4,8 +4,7 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
 import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
-import { getFormattedDate } from "@formbricks/lib/utils/datetime";
-import { getFormattedTime } from "@formbricks/lib/utils/datetime";
+import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -64,7 +63,7 @@ const processDataForIntegration = async (
   }
   if (includeCreatedAt) {
     const date = new Date(data.response.createdAt);
-    values[0].push(`${getFormattedDate(date)} ${getFormattedTime(date)}`);
+    values[0].push(`${getFormattedDateTimeString(date)}`);
     values[1].push("Created At");
   }
 

@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { getFormattedDateTimeString } from "utils/datetime";
 import {
   TResponse,
   TResponseFilterCriteria,
@@ -497,7 +498,7 @@ export const getResponsesJson = (
     jsonData.push({
       "No.": idx + 1,
       "Response ID": response.id,
-      Timestamp: response.createdAt.toDateString(),
+      Timestamp: getFormattedDateTimeString(response.createdAt),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",
