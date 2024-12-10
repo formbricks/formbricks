@@ -2,8 +2,8 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
 import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
+import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 export const replaceRecallInfo = (
   text: string,
@@ -55,7 +55,7 @@ export const parseRecallInformation = (
   variables: TResponseVariables
 ) => {
   const modifiedQuestion = structuredClone(question);
-  if (question.headline && question.headline[languageCode]?.includes("recall:")) {
+  if (question.headline[languageCode].includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,
@@ -64,7 +64,7 @@ export const parseRecallInformation = (
   }
   if (
     question.subheader &&
-    question.subheader[languageCode]?.includes("recall:") &&
+    question.subheader[languageCode].includes("recall:") &&
     modifiedQuestion.subheader
   ) {
     modifiedQuestion.subheader[languageCode] = replaceRecallInfo(

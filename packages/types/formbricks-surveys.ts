@@ -1,12 +1,12 @@
-import type { TJsFileUploadParams } from "./js";
-import type { TProductStyling } from "./product";
+import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "./js";
+import type { TProjectStyling } from "./project";
 import type { TResponseData, TResponseUpdate } from "./responses";
 import type { TUploadFileConfig } from "./storage";
-import type { TSurvey, TSurveyStyling } from "./surveys/types";
+import type { TSurveyStyling } from "./surveys/types";
 
 export interface SurveyBaseProps {
-  survey: TSurvey;
-  styling: TSurveyStyling | TProductStyling;
+  survey: TJsEnvironmentStateSurvey;
+  styling: TSurveyStyling | TProjectStyling;
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;

@@ -1,17 +1,23 @@
 "use client";
 
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
+import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type JSX, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
-import { extractLanguageCodes, getEnabledLanguages, getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { createI18nString } from "@formbricks/lib/i18n/utils";
+import {
+  createI18nString,
+  extractLanguageCodes,
+  getEnabledLanguages,
+  getLocalizedValue,
+} from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import {
@@ -24,7 +30,7 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -66,7 +72,7 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -87,7 +93,7 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: QuestionFormInputProps) => {
   const t = useTranslations();
@@ -172,7 +178,7 @@ export const QuestionFormInput = ({
           getLocalizedValue(text, usedLanguageCode),
           localSurvey,
           usedLanguageCode,
-          attributeClasses
+          contactAttributeKeys
         )
       : []
   );
@@ -200,7 +206,7 @@ export const QuestionFormInput = ({
             getLocalizedValue(text, usedLanguageCode),
             localSurvey,
             usedLanguageCode,
-            attributeClasses
+            contactAttributeKeys
           )
         : []
     );
@@ -229,7 +235,7 @@ export const QuestionFormInput = ({
     // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
     const processInput = (): JSX.Element[] => {
       const parts: JSX.Element[] = [];
-      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+      let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
         usedLanguageCode
       ];
       filterRecallItems(remainingText);
@@ -406,13 +412,13 @@ export const QuestionFormInput = ({
         localSurvey,
         false,
         usedLanguageCode,
-        attributeClasses
+        contactAttributeKeys
       );
 
       setText(modifiedHeadlineWithName);
       setShowFallbackInput(true);
     },
-    [attributeClasses, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
+    [contactAttributeKeys, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
   );
 
   // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
@@ -498,7 +504,7 @@ export const QuestionFormInput = ({
       localSurvey,
       false,
       usedLanguageCode,
-      attributeClasses
+      contactAttributeKeys
     );
 
     setText(valueTI18nString);
@@ -515,9 +521,11 @@ export const QuestionFormInput = ({
   return (
     <div className="w-full">
       <div className="w-full">
-        <div className="mb-2 mt-3">
-          <Label htmlFor={id}>{label}</Label>
-        </div>
+        {label && (
+          <div className="mb-2 mt-3">
+            <Label htmlFor={id}>{label}</Label>
+          </div>
+        )}
 
         <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
           {showImageUploader && id === "headline" && (
@@ -578,7 +586,7 @@ export const QuestionFormInput = ({
                 aria-label={label}
                 autoComplete={showRecallItemSelect ? "off" : "on"}
                 value={
-                  recallToHeadline(text, localSurvey, false, usedLanguageCode, attributeClasses)[
+                  recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
                     usedLanguageCode
                   ]
                 }
@@ -612,21 +620,36 @@ export const QuestionFormInput = ({
               )}
             </div>
             {id === "headline" && !isWelcomeCard && (
-              <ImagePlusIcon
-                aria-label="Toggle image uploader"
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => setShowImageUploader((prev) => !prev)}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Toggle image uploader"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowImageUploader((prev) => !prev);
+                  }}>
+                  <ImagePlusIcon />
+                </Button>
+              </TooltipRenderer>
             )}
             {id === "subheader" && question && question.subheader !== undefined && (
-              <TrashIcon
-                className="ml-2 h-4 w-4 cursor-pointer text-slate-400 hover:text-slate-500"
-                onClick={() => {
-                  if (updateQuestion) {
-                    updateQuestion(questionIdx, { subheader: undefined });
-                  }
-                }}
-              />
+              <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  aria-label="Remove description"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (updateQuestion) {
+                      updateQuestion(questionIdx, { subheader: undefined });
+                    }
+                  }}>
+                  <TrashIcon />
+                </Button>
+              </TooltipRenderer>
             )}
           </div>
         </div>
@@ -639,19 +662,19 @@ export const QuestionFormInput = ({
             recallItems={recallItems}
             selectedLanguageCode={usedLanguageCode}
             hiddenFields={localSurvey.hiddenFields}
-            attributeClasses={attributeClasses}
+            contactAttributeKeys={contactAttributeKeys}
           />
         )}
       </div>
       {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
         <div className="mt-1 text-xs text-slate-500">
-          <strong>{t("environments.product.languages.translate")}:</strong>{" "}
-          {recallToHeadline(value, localSurvey, false, "default", attributeClasses)["default"]}
+          <strong>{t("environments.project.languages.translate")}:</strong>{" "}
+          {recallToHeadline(value, localSurvey, false, "default", contactAttributeKeys)["default"]}
         </div>
       )}
       {usedLanguageCode === "default" && localSurvey.languages?.length > 1 && isTranslationIncomplete && (
         <div className="mt-1 text-xs text-red-400">
-          {t("environments.product.languages.incomplete_translations")}
+          {t("environments.project.languages.incomplete_translations")}
         </div>
       )}
     </div>

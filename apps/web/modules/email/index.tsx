@@ -43,8 +43,8 @@ interface SendEmailDataProps {
   html: string;
 }
 
-const getEmailSubject = (productName: string): string => {
-  return `${productName} User Insights - Last Week by Formbricks`;
+const getEmailSubject = (projectName: string): string => {
+  return `${projectName} User Insights - Last Week by Formbricks`;
 };
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<void> => {
@@ -137,7 +137,9 @@ export const sendInviteMemberEmail = async (
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
-    const html = await render(OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale }));
+    const html = await render(
+      OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale, inviteeName })
+    );
     await sendEmail({
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
@@ -175,7 +177,7 @@ export const sendResponseFinishedEmail = async (
   responseCount: number,
   locale: string
 ): Promise<void> => {
-  const personEmail = response.personAttributes?.email;
+  const personEmail = response.contactAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {
@@ -269,7 +271,7 @@ export const sendWeeklySummaryNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.productName),
+    subject: getEmailSubject(notificationData.projectName),
     html,
   });
 };
@@ -301,7 +303,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.productName),
+    subject: getEmailSubject(notificationData.projectName),
     html,
   });
 };

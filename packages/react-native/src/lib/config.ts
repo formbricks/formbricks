@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- Required for error logging */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import type { TJsAppConfigUpdateInput, TJsRNConfig } from "@formbricks/types/js";
+import type { TJsRNConfig, TJsRNConfigUpdateInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 
 export class RNConfig {
@@ -27,7 +27,7 @@ export class RNConfig {
     return RNConfig.instance;
   }
 
-  public update(newConfig: TJsAppConfigUpdateInput): void {
+  public update(newConfig: TJsRNConfigUpdateInput): void {
     this.config = {
       ...this.config,
       ...newConfig,

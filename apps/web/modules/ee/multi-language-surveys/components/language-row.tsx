@@ -1,7 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslations } from "next-intl";
-import type { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageSelect } from "./language-select";
 
@@ -34,7 +34,7 @@ export function LanguageRow({ language, isEditing, onLanguageChange, onDelete, l
         value={language.alias || ""}
       />
       {language.id !== "new" && isEditing ? (
-        <Button className="w-fit" onClick={onDelete} size="sm" variant="warn">
+        <Button className="w-fit" onClick={onDelete} size="sm" variant="destructive">
           {t("common.remove")}
         </Button>
       ) : null}

@@ -2,7 +2,7 @@
 
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
+import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -36,7 +36,7 @@ interface SurveyMenuBarProps {
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
-  product: TProduct;
+  project: TProject;
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
@@ -52,7 +52,7 @@ export const SurveyMenuBar = ({
   activeId,
   setActiveId,
   setInvalidQuestions,
-  product,
+  project,
   responseCount,
   selectedLanguageCode,
   isCxMode,
@@ -90,7 +90,7 @@ export const SurveyMenuBar = ({
     return () => {
       window.removeEventListener("beforeunload", handleWindowClose);
     };
-  }, [localSurvey, survey]);
+  }, [localSurvey, survey, t]);
 
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
@@ -319,14 +319,14 @@ export const SurveyMenuBar = ({
               size="sm"
               variant="secondary"
               className="h-full"
-              StartIcon={ArrowLeftIcon}
               onClick={() => {
                 handleBack();
               }}>
+              <ArrowLeftIcon />
               {t("common.back")}
             </Button>
           )}
-          <p className="hidden pl-4 font-semibold md:block">{product.name} / </p>
+          <p className="hidden pl-4 font-semibold md:block">{project.name} / </p>
           <Input
             defaultValue={localSurvey.name}
             onChange={(e) => {
@@ -390,9 +390,9 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
-              }}
-              EndIcon={SettingsIcon}>
+              }}>
               {t("environments.surveys.edit.continue_to_settings")}
+              <SettingsIcon />
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -415,7 +415,7 @@ export const SurveyMenuBar = ({
           mainText={t("environments.surveys.edit.unsaved_changes_warning")}
           confirmBtnLabel={t("common.save")}
           declineBtnLabel={t("common.discard")}
-          declineBtnVariant="warn"
+          declineBtnVariant="destructive"
           onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();

@@ -14,7 +14,7 @@ import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TProduct, TProductStyling } from "@formbricks/types/product";
+import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
 type CardStylingSettingsProps = {
@@ -23,8 +23,8 @@ type CardStylingSettingsProps = {
   isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  product: TProduct;
-  form: UseFormReturn<TProductStyling | TSurveyStyling>;
+  project: TProject;
+  form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 };
 
 export const CardStylingSettings = ({
@@ -32,14 +32,14 @@ export const CardStylingSettings = ({
   surveyType,
   disabled,
   open,
-  product,
+  project,
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
   const t = useTranslations();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
-  const isLogoVisible = !!product.logo?.url;
+  const isLogoVisible = !!project.logo?.url;
 
   const linkCardArrangement = form.watch("cardArrangement.linkSurveys") ?? "straight";
   const appCardArrangement = form.watch("cardArrangement.appSurveys") ?? "straight";

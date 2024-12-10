@@ -55,95 +55,94 @@ model Webhook {
   @@index([environmentId])
 }
 
-model Attribute {
-  id               String         @id @default(cuid())
-  createdAt        DateTime       @default(now()) @map(name: "created_at")
-  updatedAt        DateTime       @updatedAt @map(name: "updated_at")
-  attributeClass   AttributeClass @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
-  attributeClassId String
-  person           Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String
-  value            String
+model ContactAttribute {
+  id             String              @id @default(cuid())
+  createdAt      DateTime            @default(now()) @map(name: "created_at")
+  updatedAt      DateTime            @updatedAt @map(name: "updated_at")
+  attributeKey   ContactAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId String
+  contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId      String
+  value          String
 
-  @@unique([personId, attributeClassId])
+  @@unique([contactId, attributeKeyId])
+  @@index([attributeKeyId, value])
 }
 
-enum AttributeType {
-  code
-  noCode
-  automatic
+enum ContactAttributeType {
+  default
+  custom
 }
 
-model AttributeClass {
+model ContactAttributeKey {
   id               String                  @id @default(cuid())
   createdAt        DateTime                @default(now()) @map(name: "created_at")
   updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  name             String
+  isUnique         Boolean                 @default(false)
+  key              String
+  name             String?
   description      String?
-  archived         Boolean                 @default(false)
-  type             AttributeType
+  type             ContactAttributeType    @default(custom)
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
-  attributes       Attribute[]
+  attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]
 
-  @@unique([name, environmentId])
+  @@unique([key, environmentId])
   @@index([environmentId, createdAt])
-  @@index([environmentId, archived])
 }
 
-model Person {
-  id            String      @id @default(cuid())
-  userId        String
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+model Contact {
+  id            String             @id @default(cuid())
+  userId        String?
+  createdAt     DateTime           @default(now()) @map(name: "created_at")
+  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   responses     Response[]
-  attributes    Attribute[]
+  attributes    ContactAttribute[]
   displays      Display[]
 
-  @@unique([environmentId, userId])
   @@index([environmentId])
 }
 
 model Response {
-  id               String            @id @default(cuid())
-  createdAt        DateTime          @default(now()) @map(name: "created_at")
-  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
-  finished         Boolean           @default(false)
-  endingId         String?
-  survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId         String
-  person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String?
-  notes            ResponseNote[]
+  id                String            @id @default(cuid())
+  createdAt         DateTime          @default(now()) @map(name: "created_at")
+  updatedAt         DateTime          @updatedAt @map(name: "updated_at")
+  finished          Boolean           @default(false)
+  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId          String
+  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId         String?
+  endingId          String?
+  notes             ResponseNote[]
   /// @zod.custom(imports.ZResponseData)
   /// [ResponseData]
-  data             Json              @default("{}")
+  data              Json              @default("{}")
   /// @zod.custom(imports.ZResponseVariables)
   /// [ResponseVariables]
-  variables        Json              @default("{}")
+  variables         Json              @default("{}")
   /// @zod.custom(imports.ZResponseTtc)
   /// [ResponseTtc]
-  ttc              Json              @default("{}")
+  ttc               Json              @default("{}")
   /// @zod.custom(imports.ZResponseMeta)
   /// [ResponseMeta]
-  meta             Json              @default("{}")
-  tags             TagsOnResponses[]
-  /// @zod.custom(imports.ZResponsePersonAttributes)
-  /// [ResponsePersonAttributes]
-  personAttributes Json?
+  meta              Json              @default("{}")
+  tags              TagsOnResponses[]
+  /// @zod.custom(imports.ZResponseContactAttributes)
+  /// [ResponseContactAttributes]
+  contactAttributes Json?
   // singleUseId, used to prevent multiple responses
-  singleUseId      String?
-  language         String?
-  documents        Document[]
-  displayId        String?           @unique
-  display          Display?          @relation(fields: [displayId], references: [id])
+  singleUseId       String?
+  language          String?
+  documents         Document[]
+  displayId         String?           @unique
+  display           Display?          @relation(fields: [displayId], references: [id])
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([personId, createdAt]) // to determine monthly identified users (persons)
+  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 
@@ -204,14 +203,14 @@ model Display {
   updatedAt  DateTime       @updatedAt @map(name: "updated_at")
   survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId   String
-  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId   String?
+  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
   responseId String?        @unique //deprecated
   status     DisplayStatus?
   response   Response?
 
   @@index([surveyId])
-  @@index([personId, createdAt])
+  @@index([contactId, createdAt])
 }
 
 model SurveyTrigger {
@@ -233,19 +232,19 @@ enum SurveyAttributeFilterCondition {
 }
 
 model SurveyAttributeFilter {
-  id               String                         @id @default(cuid())
-  createdAt        DateTime                       @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                       @updatedAt @map(name: "updated_at")
-  attributeClass   AttributeClass                 @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
-  attributeClassId String
-  survey           Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId         String
-  condition        SurveyAttributeFilterCondition
-  value            String
+  id             String                         @id @default(cuid())
+  createdAt      DateTime                       @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                       @updatedAt @map(name: "updated_at")
+  attributeKey   ContactAttributeKey            @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId String
+  survey         Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String
+  condition      SurveyAttributeFilterCondition
+  value          String
 
-  @@unique([surveyId, attributeClassId])
+  @@unique([surveyId, attributeKeyId])
   @@index([surveyId])
-  @@index([attributeClassId])
+  @@index([attributeKeyId])
 }
 
 enum SurveyType {
@@ -311,9 +310,9 @@ model Survey {
   segmentId           String?
   segment             Segment?                @relation(fields: [segmentId], references: [id])
 
-  /// @zod.custom(imports.ZSurveyProductOverwrites)
-  /// [SurveyProductOverwrites]
-  productOverwrites Json?
+  /// @zod.custom(imports.ZSurveyProjectOverwrites)
+  /// [SurveyProjectOverwrites]
+  projectOverwrites Json?
 
   /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
@@ -407,18 +406,18 @@ model Integration {
 }
 
 model Environment {
-  id                   String           @id @default(cuid())
-  createdAt            DateTime         @default(now()) @map(name: "created_at")
-  updatedAt            DateTime         @updatedAt @map(name: "updated_at")
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now()) @map(name: "created_at")
+  updatedAt            DateTime              @updatedAt @map(name: "updated_at")
   type                 EnvironmentType
-  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId            String
-  widgetSetupCompleted Boolean          @default(false)
-  appSetupCompleted    Boolean          @default(false)
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  widgetSetupCompleted Boolean               @default(false)
+  appSetupCompleted    Boolean               @default(false)
   surveys              Survey[]
-  people               Person[]
+  contacts             Contact[]
   actionClasses        ActionClass[]
-  attributeClasses     AttributeClass[]
+  attributeKeys        ContactAttributeKey[]
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
@@ -427,7 +426,7 @@ model Environment {
   documents            Document[]
   insights             Insight[]
 
-  @@index([productId])
+  @@index([projectId])
 }
 
 enum WidgetPlacement {
@@ -438,7 +437,7 @@ enum WidgetPlacement {
   center
 }
 
-model Product {
+model Project {
   id                   String          @id @default(cuid())
   createdAt            DateTime        @default(now()) @map(name: "created_at")
   updatedAt            DateTime        @updatedAt @map(name: "updated_at")
@@ -448,11 +447,11 @@ model Product {
   environments         Environment[]
   brandColor           String? // deprecated; use styling.brandColor instead
   highlightBorderColor String? // deprecated
-  /// @zod.custom(imports.ZProductStyling)
+  /// @zod.custom(imports.ZProjectStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
-  /// @zod.custom(imports.ZProductConfig)
-  /// [ProductConfig]
+  /// @zod.custom(imports.ZProjectConfig)
+  /// [ProjectConfig]
   config               Json            @default("{}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
@@ -464,7 +463,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
-  productTeams         ProductTeam[]
+  projectTeams         ProjectTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -476,7 +475,7 @@ model Organization {
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   name        String
   memberships Membership[]
-  products    Product[]
+  projects    Project[]
   /// @zod.custom(imports.ZOrganizationBilling)
   /// [OrganizationBilling]
   billing     Json
@@ -667,11 +666,11 @@ model Language {
   updatedAt       DateTime         @updatedAt @map(name: "updated_at")
   code            String
   alias           String?
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
   surveyLanguages SurveyLanguage[]
 
-  @@unique([productId, code])
+  @@unique([projectId, code])
 }
 
 model SurveyLanguage {
@@ -749,10 +748,10 @@ model Team {
   createdAt      DateTime      @default(now()) @map(name: "created_at")
   updatedAt      DateTime      @updatedAt @map(name: "updated_at")
   name           String
-  organizationId String        @map(name: "organization_id")
+  organizationId String
   organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   teamUsers      TeamUser[]
-  productTeams   ProductTeam[]
+  projectTeams   ProjectTeam[]
 
   @@unique([organizationId, name])
 }
@@ -765,9 +764,9 @@ enum TeamUserRole {
 model TeamUser {
   createdAt DateTime     @default(now()) @map(name: "created_at")
   updatedAt DateTime     @updatedAt @map(name: "updated_at")
-  teamId    String       @map(name: "team_id")
+  teamId    String
   team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  userId    String       @map(name: "user_id")
+  userId    String
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      TeamUserRole
 
@@ -775,21 +774,21 @@ model TeamUser {
   @@index([userId])
 }
 
-enum ProductTeamPermission {
+enum ProjectTeamPermission {
   read
   readWrite
   manage
 }
 
-model ProductTeam {
+model ProjectTeam {
   createdAt  DateTime              @default(now()) @map(name: "created_at")
   updatedAt  DateTime              @updatedAt @map(name: "updated_at")
-  productId  String                @map(name: "product_id")
-  product    Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
-  teamId     String                @map(name: "team_id")
+  projectId  String
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamId     String
   team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  permission ProductTeamPermission @default(read)
+  permission ProjectTeamPermission @default(read)
 
-  @@id([productId, teamId])
+  @@id([projectId, teamId])
   @@index([teamId])
 }

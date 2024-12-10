@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProduct } from "@formbricks/types/product";
+import type { TLanguage, TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import {
   createLanguageAction,
@@ -20,7 +20,7 @@ import { LanguageLabels } from "./language-labels";
 import { LanguageRow } from "./language-row";
 
 interface EditLanguageProps {
-  product: TProduct;
+  project: TProject;
   locale: TUserLocale;
   isReadOnly: boolean;
 }
@@ -36,19 +36,19 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
     .map((language) => language.alias!.toLowerCase().trim());
 
   if (languageCodes.includes("")) {
-    toast.error(t("environments.product.languages.please_select_a_language"), { duration: 2000 });
+    toast.error(t("environments.project.languages.please_select_a_language"), { duration: 2000 });
     return false;
   }
 
   // Check for duplicates within the languageCodes and languageAliases
   if (checkIfDuplicateExists(languageAliases) || checkIfDuplicateExists(languageCodes)) {
-    toast.error(t("environments.product.languages.duplicate_language_or_language_id"), { duration: 4000 });
+    toast.error(t("environments.project.languages.duplicate_language_or_language_id"), { duration: 4000 });
     return false;
   }
 
   // Check if any alias matches the identifier of any added languages
   if (languageCodes.some((code) => languageAliases.includes(code))) {
-    toast.error(t("environments.product.languages.conflict_between_identifier_and_alias"), {
+    toast.error(t("environments.project.languages.conflict_between_identifier_and_alias"), {
       duration: 6000,
     });
     return false;
@@ -57,7 +57,7 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
   // Check if the chosen alias matches an ISO identifier of a language that hasn’t been added
   for (const alias of languageAliases) {
     if (iso639Languages.some((language) => language.alpha2 === alias && !languageCodes.includes(alias))) {
-      toast.error(t("environments.product.languages.conflict_between_selected_alias_and_another_language"), {
+      toast.error(t("environments.project.languages.conflict_between_selected_alias_and_another_language"), {
         duration: 6000,
       });
       return false;
@@ -67,9 +67,9 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
   return true;
 };
 
-export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps) {
+export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
   const t = useTranslations();
-  const [languages, setLanguages] = useState<TLanguage[]>(product.languages);
+  const [languages, setLanguages] = useState<TLanguage[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -79,8 +79,8 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
   });
 
   useEffect(() => {
-    setLanguages(product.languages);
-  }, [product.languages]);
+    setLanguages(project.languages);
+  }, [project.languages]);
 
   const handleAddLanguage = () => {
     const newLanguage = { id: "new", createdAt: new Date(), updatedAt: new Date(), code: "", alias: "" };
@@ -102,14 +102,14 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: `${t("environments.product.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.product.languages.remove_language_from_surveys_to_remove_it_from_product")}`,
+            text: `${t("environments.project.languages.cannot_remove_language_warning")}:\n\n${surveyList}\n\n${t("environments.project.languages.remove_language_from_surveys_to_remove_it_from_project")}`,
             isButtonDisabled: true,
           });
         } else {
           setConfirmationModal({
             isOpen: true,
             languageId,
-            text: t("environments.product.languages.delete_language_confirmation"),
+            text: t("environments.project.languages.delete_language_confirmation"),
             isButtonDisabled: false,
           });
         }
@@ -124,9 +124,9 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
 
   const performLanguageDeletion = async (languageId: string) => {
     try {
-      await deleteLanguageAction({ languageId, productId: product.id });
+      await deleteLanguageAction({ languageId, projectId: project.id });
       setLanguages((prev) => prev.filter((lang) => lang.id !== languageId));
-      toast.success(t("environments.product.languages.language_deleted_successfully"));
+      toast.success(t("environments.project.languages.language_deleted_successfully"));
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch (err) {
@@ -136,7 +136,7 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
   };
 
   const handleCancelChanges = async () => {
-    setLanguages(product.languages);
+    setLanguages(project.languages);
     setIsEditing(false);
   };
 
@@ -146,24 +146,25 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
       languages.map((lang) => {
         return lang.id === "new"
           ? createLanguageAction({
-              productId: product.id,
+              projectId: project.id,
               languageInput: { code: lang.code, alias: lang.alias },
             })
           : updateLanguageAction({
-              productId: product.id,
+              projectId: project.id,
               languageId: lang.id,
               languageInput: { code: lang.code, alias: lang.alias },
             });
       })
     );
-    toast.success(t("environments.product.languages.languages_updated_successfully"));
+    toast.success(t("environments.project.languages.languages_updated_successfully"));
     setIsEditing(false);
   };
 
   const AddLanguageButton: React.FC<{ onClick: () => void }> = ({ onClick }) =>
-    isEditing && languages.length === product.languages.length ? (
-      <Button onClick={onClick} size="sm" variant="secondary" StartIcon={PlusIcon}>
-        {t("environments.product.languages.add_language")}
+    isEditing && languages.length === project.languages.length ? (
+      <Button onClick={onClick} size="sm" variant="secondary">
+        <PlusIcon />
+        {t("environments.project.languages.add_language")}
       </Button>
     ) : null;
 
@@ -191,7 +192,7 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
           </>
         ) : (
           <p className="text-sm italic text-slate-500">
-            {t("environments.product.languages.no_language_found")}
+            {t("environments.project.languages.no_language_found")}
           </p>
         )}
         <AddLanguageButton onClick={handleAddLanguage} />
@@ -208,7 +209,7 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
         />
       )}
       <ConfirmationModal
-        buttonText={t("environments.product.languages.remove_language")}
+        buttonText={t("environments.project.languages.remove_language")}
         isButtonDisabled={confirmationModal.isButtonDisabled}
         onConfirm={() => performLanguageDeletion(confirmationModal.languageId)}
         open={confirmationModal.isOpen}
@@ -216,7 +217,7 @@ export function EditLanguage({ product, locale, isReadOnly }: EditLanguageProps)
           setConfirmationModal((prev) => ({ ...prev, isOpen: !prev.isOpen }));
         }}
         text={confirmationModal.text}
-        title={t("environments.product.languages.remove_language")}
+        title={t("environments.project.languages.remove_language")}
       />
     </div>
   );
@@ -234,12 +235,12 @@ const EditSaveButtons: React.FC<{
       <Button onClick={onSave} size="sm">
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="minimal">
+      <Button onClick={onCancel} size="sm" variant="ghost">
         {t("common.cancel")}
       </Button>
     </div>
   ) : (
     <Button className="w-fit" onClick={onEdit} size="sm">
-      {t("environments.product.languages.edit_languages")}
+      {t("environments.project.languages.edit_languages")}
     </Button>
   );

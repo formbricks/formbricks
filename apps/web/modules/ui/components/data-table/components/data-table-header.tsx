@@ -26,7 +26,6 @@ export const DataTableHeader = <T,>({ header, setIsTableSettingsModalOpen }: Dat
     whiteSpace: "nowrap",
     width: header.column.getSize(),
     zIndex: isDragging ? 1 : 0,
-
     ...(header.column.id === "select" ? getCommonPinningStyles(header.column) : {}),
   };
 

@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import type { TLanguage } from "@formbricks/types/product";
+import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageSelectProps {
@@ -59,7 +59,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         className="flex h-full w-full justify-between border border-slate-200 px-3 py-2"
         disabled={disabled}
         onClick={toggleDropdown}
-        variant="minimal">
+        variant="ghost">
         <span className="mr-2">{selectedOption?.label[locale] ?? t("common.select")}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>
@@ -70,7 +70,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
           onChange={(e) => {
             setSearchTerm(e.target.value);
           }}
-          placeholder={t("environments.product.languages.search_items")}
+          placeholder={t("environments.project.languages.search_items")}
           ref={inputRef}
           type="text"
           value={searchTerm}

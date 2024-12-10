@@ -6,8 +6,8 @@ import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { ReactNode } from "react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -41,10 +41,11 @@ export const SingleResponseCardHeader = ({
   setDeleteDialogOpen,
   locale,
 }: SingleResponseCardHeaderProps) => {
-  const t = useTranslations();
-  const displayIdentifier = response.person
-    ? getPersonIdentifier(response.person, response.personAttributes)
+  const displayIdentifier = response.contact
+    ? getContactIdentifier(response.contact, response.contactAttributes)
     : null;
+
+  const t = useTranslations();
   const environmentId = survey.environmentId;
   const canResponseBeDeleted = response.finished
     ? true
@@ -66,7 +67,7 @@ export const SingleResponseCardHeader = ({
   };
 
   const renderTooltip = Boolean(
-    (response.personAttributes && Object.keys(response.personAttributes).length > 0) ||
+    (response.contactAttributes && Object.keys(response.contactAttributes).length > 0) ||
       (response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0)
   );
 
@@ -80,18 +81,20 @@ export const SingleResponseCardHeader = ({
           <span>{response.singleUseId}</span>
         </div>
       )}
-      {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
+      {response.contactAttributes && Object.keys(response.contactAttributes).length > 0 && (
         <div>
           <p className="py-1 font-bold text-slate-700">
             {t("environments.surveys.responses.person_attributes")}:
           </p>
-          {Object.keys(response.personAttributes).map((key) => (
+          {Object.keys(response.contactAttributes).map((key) => (
             <p
               key={key}
               className="truncate"
-              title={`${key}: ${response.personAttributes && response.personAttributes[key]}`}>
+              title={`${key}: ${response.contactAttributes && response.contactAttributes[key]}`}>
               {key}:{" "}
-              <span className="font-bold">{response.personAttributes && response.personAttributes[key]}</span>
+              <span className="font-bold">
+                {response.contactAttributes && response.contactAttributes[key]}
+              </span>
             </p>
           ))}
         </div>
@@ -99,7 +102,7 @@ export const SingleResponseCardHeader = ({
 
       {response.meta.userAgent && Object.keys(response.meta.userAgent).length > 0 && (
         <div className="text-slate-600">
-          {response.personAttributes && Object.keys(response.personAttributes).length > 0 && (
+          {response.contactAttributes && Object.keys(response.contactAttributes).length > 0 && (
             <hr className="my-2 border-slate-200" />
           )}
           <p className="py-1 font-bold text-slate-700">{t("environments.surveys.responses.device_info")}:</p>
@@ -154,19 +157,19 @@ export const SingleResponseCardHeader = ({
           {pageType === "response" && (
             <TooltipRenderer shouldRender={renderTooltip} tooltipContent={tooltipContent}>
               <div className="group">
-                {response.person?.id ? (
+                {response.contact?.id ? (
                   user ? (
                     <Link
                       className="flex items-center"
-                      href={`/environments/${environmentId}/people/${response.person.id}`}>
-                      <PersonAvatar personId={response.person.id} />
+                      href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
+                      <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                         {displayIdentifier}
                       </h3>
                     </Link>
                   ) : (
                     <div className="flex items-center">
-                      <PersonAvatar personId={response.person.id} />
+                      <PersonAvatar personId={response.contact.id} />
                       <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
                         {displayIdentifier}
                       </h3>

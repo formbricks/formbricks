@@ -56,9 +56,9 @@ const StaticTab = ({ surveyUrl }) => {
           onClick={() => {
             navigator.clipboard.writeText(iframeCode);
             toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
-          }}
-          EndIcon={CopyIcon}>
+          }}>
           {t("common.copy_code")}
+          <CopyIcon />
         </Button>
       </div>
       <div className="prose prose-slate max-w-full">
@@ -94,7 +94,7 @@ const PopupTab = ({ environmentId }) => {
         <li>
           {t("common.follow_these")}{" "}
           <Link
-            href={`/environments/${environmentId}/product/website-connection`}
+            href={`/environments/${environmentId}/project/website-connection`}
             target="_blank"
             className="decoration-brand-dark font-medium underline underline-offset-2">
             {t("environments.surveys.summary.setup_instructions")}

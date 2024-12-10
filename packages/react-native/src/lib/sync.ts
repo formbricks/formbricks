@@ -4,7 +4,7 @@
 import type { TAttributes } from "@formbricks/types/attributes";
 import { type Result, err, ok } from "@formbricks/types/error-handlers";
 import type { NetworkError } from "@formbricks/types/errors";
-import type { TJsAppState, TJsAppStateSync, TJsRNSyncParams } from "@formbricks/types/js";
+import type { TJsRNState, TJsRNStateSync, TJsRNSyncParams } from "@formbricks/types/js";
 import { Logger } from "../../../js-core/src/lib/logger";
 import type { RNConfig } from "./config";
 
@@ -15,7 +15,7 @@ let syncIntervalId: number | null = null;
 const syncWithBackend = async (
   { apiHost, environmentId, userId }: TJsRNSyncParams,
   noCache: boolean
-): Promise<Result<TJsAppStateSync, NetworkError>> => {
+): Promise<Result<TJsRNStateSync, NetworkError>> => {
   try {
     const fetchOptions: RequestInit = {};
 
@@ -37,10 +37,10 @@ const syncWithBackend = async (
         message: "Error syncing with backend",
         url,
         responseMessage: jsonRes.message,
-      }) as Result<TJsAppStateSync, NetworkError>;
+      }) as Result<TJsRNStateSync, NetworkError>;
     }
 
-    const data = (await response.json()) as { data: TJsAppStateSync };
+    const data = (await response.json()) as { data: TJsRNStateSync };
     const { data: state } = data;
 
     return ok(state);
@@ -63,10 +63,10 @@ export const sync = async (params: TJsRNSyncParams, appConfig: RNConfig, noCache
       attributes.language = syncResult.data.language;
     }
 
-    const state: TJsAppState = {
+    const state: TJsRNState = {
       surveys: syncResult.data.surveys,
       actionClasses: syncResult.data.actionClasses,
-      product: syncResult.data.product,
+      project: syncResult.data.project,
       attributes,
     };
 

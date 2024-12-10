@@ -7,14 +7,14 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
   webAppUrl: string;
   widgetSetupCompleted: boolean;
-  channel: TProductConfigChannel;
+  channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
@@ -85,12 +85,12 @@ export const ConnectWithFormbricks = ({
       </div>
       <Button
         id="finishOnboarding"
-        variant={widgetSetupCompleted ? "primary" : "minimal"}
-        onClick={handleFinishOnboarding}
-        EndIcon={ArrowRight}>
+        variant={widgetSetupCompleted ? "default" : "ghost"}
+        onClick={handleFinishOnboarding}>
         {widgetSetupCompleted
           ? t("environments.connect.finish_onboarding")
           : t("environments.connect.i_dont_know_how_to_do_it")}
+        <ArrowRight />
       </Button>
     </div>
   );

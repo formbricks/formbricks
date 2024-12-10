@@ -221,7 +221,6 @@ export const LoginForm = ({
             )}
             {emailAuthEnabled && (
               <Button
-                size="base"
                 onClick={() => {
                   if (!showLogin) {
                     setShowLogin(true);

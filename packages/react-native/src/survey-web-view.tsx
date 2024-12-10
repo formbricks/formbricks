@@ -10,10 +10,9 @@ import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import type { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
-import type { TJsFileUploadParams } from "@formbricks/types/js";
+import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { Logger } from "../../js-core/src/lib/logger";
 import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
 import { appConfig } from "./lib/config";
@@ -27,7 +26,7 @@ logger.configure({ logLevel: "debug" });
 const surveyStore = SurveyStore.getInstance();
 
 interface SurveyWebViewProps {
-  survey: TSurvey;
+  survey: TJsEnvironmentStateSurvey;
 }
 
 export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | undefined {
@@ -35,11 +34,11 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const [isSurveyRunning, setIsSurveyRunning] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
 
-  const product = appConfig.get().state.product;
+  const project = appConfig.get().state.project;
   const attributes = appConfig.get().state.attributes;
 
-  const styling = getStyling(product, survey);
-  const isBrandingEnabled = product.inAppSurveyBranding;
+  const styling = getStyling(project, survey);
+  const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
 
   const [surveyState, setSurveyState] = useState(

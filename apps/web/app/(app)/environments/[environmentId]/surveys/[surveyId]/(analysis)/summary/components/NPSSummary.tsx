@@ -1,6 +1,6 @@
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslations } from "next-intl";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -15,7 +15,7 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
   setFilter: (
     questionId: TSurveyQuestionId,
@@ -29,7 +29,7 @@ interface NPSSummaryProps {
 export const NPSSummary = ({
   questionSummary,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   setFilter,
   locale,
 }: NPSSummaryProps) => {
@@ -72,7 +72,7 @@ export const NPSSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">

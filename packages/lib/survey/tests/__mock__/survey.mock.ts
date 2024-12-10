@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyCreateInput,
@@ -13,7 +14,7 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { selectPerson } from "../../../person/service";
+import { selectContact } from "../../../person/service";
 import { selectSurvey } from "../../service";
 
 const currentDate = new Date();
@@ -56,11 +57,11 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
   },
 ];
 
-export const mockProduct: TProduct = {
+export const mockProject: TProject = {
   id: mockId,
   createdAt: currentDate,
   updatedAt: currentDate,
-  name: "mock Product",
+  name: "mock Project",
   organizationId: mockId,
   brandColor: "#000000",
   highlightBorderColor: "#000000",
@@ -93,7 +94,7 @@ export const mockEnvironment: TEnvironment = {
   createdAt: currentDate,
   updatedAt: currentDate,
   type: "production",
-  productId: mockId,
+  projectId: mockId,
   appSetupCompleted: false,
 };
 
@@ -117,7 +118,7 @@ export const mockUser: TUser = {
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{
-  include: typeof selectPerson;
+  include: typeof selectContact;
 }> = {
   id: mockId,
   userId: mockId,
@@ -143,12 +144,13 @@ export const mockActionClass: TActionClass = {
   ...commonMockProperties,
 };
 
-export const mockAttributeClass: TAttributeClass = {
+export const mockContactAttributeKey: TContactAttributeKey = {
   id: mockId,
   name: "mock attribute class",
-  type: "code",
+  key: "mock attribute class",
+  type: "custom",
   description: "mock action class",
-  archived: false,
+  isUnique: false,
   ...commonMockProperties,
 };
 
@@ -158,6 +160,9 @@ const mockQuestion: TSurveyQuestion = {
   headline: { default: "Question Text", de: "Fragetext" },
   required: false,
   inputType: "text",
+  charLimit: {
+    enabled: false,
+  },
 };
 
 const mockWelcomeCard: TSurveyWelcomeCard = {
@@ -202,14 +207,16 @@ export const mockOrganizationOutput: TOrganization = {
   name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
+  isAIEnabled: false,
   billing: {
     stripeCustomerId: null,
     plan: "free",
     period: "monthly",
     limits: {
+      projects: 3,
       monthly: {
-        responses: 500,
-        miu: 1000,
+        responses: 1500,
+        miu: 2000,
       },
     },
     periodStart: currentDate,
@@ -221,7 +228,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -240,7 +247,7 @@ export const mockSurveyOutput: SurveyMock = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   displayPercentage: null,
@@ -267,7 +274,7 @@ export const updateSurveyInput: TSurvey = {
   status: "inProgress",
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
-  productOverwrites: null,
+  projectOverwrites: null,
   styling: null,
   singleUse: null,
   displayPercentage: null,
@@ -306,6 +313,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite color?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "cdu9vgtmmd9b24l35pp9bodk",
@@ -331,6 +341,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite food?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "uwlm6kazj5pbt6licpa1hw5c",
@@ -362,6 +375,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "text",
       headline: { default: "What is your favorite movie?" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "dpi3zipezuo1idplztb1abes",
@@ -423,6 +439,9 @@ export const mockSurveyWithLogic: TSurvey = {
       inputType: "number",
       headline: { default: "Select your age group:" },
       required: true,
+      charLimit: {
+        enabled: false,
+      },
       logic: [
         {
           id: "o6n73uq9rysih9mpcbzlehfs",

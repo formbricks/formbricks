@@ -13,14 +13,14 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 
 interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-  currentProductChannel: TProductConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
 }
 
 const creatorOptions: TFilterOption[] = [
@@ -57,7 +57,7 @@ const sortOptions: TSortOption[] = [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProductChannel,
+  currentProjectChannel,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
@@ -146,7 +146,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProductChannel !== "link" && (
+        {currentProjectChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}
@@ -167,10 +167,9 @@ export const SurveyFilters = ({
               setSurveyFilters(initialFilters);
               localStorage.removeItem("surveyFilters");
             }}
-            className="h-8"
-            EndIcon={X}
-            endIconClassName="h-4 w-4">
+            className="h-8">
             {t("common.clear_filters")}
+            <X />
           </Button>
         )}
       </div>

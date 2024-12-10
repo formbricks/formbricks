@@ -15,10 +15,10 @@ import {
   getSummaryBySurveySharingKeyAction,
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -47,7 +47,7 @@ interface SummaryPageProps {
   webAppUrl: string;
   user?: TUser;
   totalResponseCount: number;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
@@ -60,7 +60,7 @@ export const SummaryPage = ({
   surveyId,
   webAppUrl,
   totalResponseCount,
-  attributeClasses,
+  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
   locale,
@@ -82,14 +82,14 @@ export const SummaryPage = ({
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
-    [selectedFilter, dateRange]
+    [selectedFilter, dateRange, survey]
   );
 
   // Use a ref to keep the latest state and props
   const latestFiltersRef = useRef(filters);
   latestFiltersRef.current = filters;
 
-  const getResponseCount = () => {
+  const getResponseCount = useCallback(() => {
     if (isSharingPage)
       return getResponseCountBySurveySharingKeyAction({
         sharingKey,
@@ -99,9 +99,9 @@ export const SummaryPage = ({
       surveyId,
       filterCriteria: latestFiltersRef.current,
     });
-  };
+  }, [isSharingPage, sharingKey, surveyId]);
 
-  const getSummary = () => {
+  const getSummary = useCallback(() => {
     if (isSharingPage)
       return getSummaryBySurveySharingKeyAction({
         sharingKey,
@@ -112,37 +112,39 @@ export const SummaryPage = ({
       surveyId,
       filterCriteria: latestFiltersRef.current,
     });
-  };
+  }, [isSharingPage, sharingKey, surveyId]);
 
-  const handleInitialData = async (isInitialLoad = false) => {
-    if (isInitialLoad) {
-      setIsLoading(true);
-    }
-
-    try {
-      const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
-        getResponseCount(),
-        getSummary(),
-      ]);
-
-      const responseCount = updatedResponseCountData?.data ?? 0;
-      const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
-
-      // Update the state with new data
-      setResponseCount(responseCount);
-      setSurveySummary(surveySummary);
-    } catch (error) {
-      console.error(error);
-    } finally {
+  const handleInitialData = useCallback(
+    async (isInitialLoad = false) => {
       if (isInitialLoad) {
-        setIsLoading(false);
+        setIsLoading(true);
       }
-    }
-  };
+
+      try {
+        const [updatedResponseCountData, updatedSurveySummary] = await Promise.all([
+          getResponseCount(),
+          getSummary(),
+        ]);
+
+        const responseCount = updatedResponseCountData?.data ?? 0;
+        const surveySummary = updatedSurveySummary?.data ?? initialSurveySummary;
+
+        setResponseCount(responseCount);
+        setSurveySummary(surveySummary);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (isInitialLoad) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [getResponseCount, getSummary]
+  );
 
   useEffect(() => {
     handleInitialData(true);
-  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
+  }, [filters, isSharingPage, sharingKey, surveyId, handleInitialData]);
 
   useIntervalWhenFocused(
     () => {
@@ -154,8 +156,8 @@ export const SummaryPage = ({
   );
 
   const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", attributeClasses);
-  }, [survey, attributeClasses]);
+    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
+  }, [survey, contactAttributeKeys]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -185,7 +187,7 @@ export const SummaryPage = ({
         survey={surveyMemoized}
         environment={environment}
         totalResponseCount={totalResponseCount}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         isAIEnabled={isAIEnabled}
         documentsPerPage={documentsPerPage}
         locale={locale}

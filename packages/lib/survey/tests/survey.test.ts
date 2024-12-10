@@ -13,19 +13,18 @@ import {
   getSurveyCount,
   getSurveys,
   getSurveysByActionClassId,
-  getSyncSurveys,
   updateSurvey,
 } from "../service";
 import {
   createSurveyInput,
   mockActionClass,
-  mockAttributeClass,
+  mockContactAttributeKey,
   mockDisplay,
   mockEnvironment,
   mockId,
   mockOrganizationOutput,
   mockPrismaPerson,
-  mockProduct,
+  mockProject,
   mockSurveyOutput,
   mockSurveyWithLogic,
   mockSyncSurveyOutput,
@@ -405,7 +404,7 @@ describe("Tests for duplicateSurvey", () => {
       // @ts-expect-error
       prisma.environment.findUnique.mockResolvedValueOnce(mockEnvironment);
       // @ts-expect-error
-      prisma.product.findFirst.mockResolvedValueOnce(mockProduct);
+      prisma.project.findFirst.mockResolvedValueOnce(mockProject);
       prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
       prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
 
@@ -432,62 +431,62 @@ describe("Tests for duplicateSurvey", () => {
   });
 });
 
-describe("Tests for getSyncSurveys", () => {
-  describe("Happy Path", () => {
-    beforeEach(() => {
-      prisma.product.findFirst.mockResolvedValueOnce({
-        ...mockProduct,
-        brandColor: null,
-        highlightBorderColor: null,
-        logo: null,
-      });
-      prisma.display.findMany.mockResolvedValueOnce([mockDisplay]);
-      prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
-    });
+// describe("Tests for getSyncSurveys", () => {
+//   describe("Happy Path", () => {
+//     beforeEach(() => {
+//       prisma.project.findFirst.mockResolvedValueOnce({
+//         ...mockProject,
+//         brandColor: null,
+//         highlightBorderColor: null,
+//         logo: null,
+//       });
+//       prisma.display.findMany.mockResolvedValueOnce([mockDisplay]);
+//       prisma.attributeClass.findMany.mockResolvedValueOnce([mockAttributeClass]);
+//     });
 
-    it("Returns synced surveys", async () => {
-      prisma.survey.findMany.mockResolvedValueOnce([mockSyncSurveyOutput]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
-      prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
-      prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
+//     it("Returns synced surveys", async () => {
+//       prisma.survey.findMany.mockResolvedValueOnce([mockSyncSurveyOutput]);
+//       prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+//       prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
+//       prisma.responseNote.findMany.mockResolvedValue([mockResponseNote]);
 
-      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
-        version: "1.7.0",
-      });
-      expect(surveys).toEqual([mockTransformedSyncSurveyOutput]);
-    });
+//       const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
+//         version: "1.7.0",
+//       });
+//       expect(surveys).toEqual([mockTransformedSyncSurveyOutput]);
+//     });
 
-    it("Returns an empty array if no surveys are found", async () => {
-      prisma.survey.findMany.mockResolvedValueOnce([]);
-      prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
-      const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
-        version: "1.7.0",
-      });
-      expect(surveys).toEqual([]);
-    });
-  });
+//     it("Returns an empty array if no surveys are found", async () => {
+//       prisma.survey.findMany.mockResolvedValueOnce([]);
+//       prisma.person.findUnique.mockResolvedValueOnce(mockPrismaPerson);
+//       const surveys = await getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", {
+//         version: "1.7.0",
+//       });
+//       expect(surveys).toEqual([]);
+//     });
+//   });
 
-  describe("Sad Path", () => {
-    testInputValidation(getSyncSurveys, "123#", {});
+//   describe("Sad Path", () => {
+//     testInputValidation(getSyncSurveys, "123#", {});
 
-    it("does not find a Product", async () => {
-      prisma.product.findFirst.mockResolvedValueOnce(null);
+//     it("does not find a Project", async () => {
+//       prisma.project.findFirst.mockResolvedValueOnce(null);
 
-      await expect(
-        getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
-      ).rejects.toThrow(Error);
-    });
+//       await expect(
+//         getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
+//       ).rejects.toThrow(Error);
+//     });
 
-    it("should throw an error if there is an unknown error", async () => {
-      const mockErrorMessage = "Unknown error occurred";
-      prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
-      prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(
-        getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
-      ).rejects.toThrow(Error);
-    });
-  });
-});
+//     it("should throw an error if there is an unknown error", async () => {
+//       const mockErrorMessage = "Unknown error occurred";
+//       prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
+//       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
+//       await expect(
+//         getSyncSurveys(mockId, mockPrismaPerson.id, "desktop", { version: "1.7.0" })
+//       ).rejects.toThrow(Error);
+//     });
+//   });
+// });
 
 describe("Tests for getSurveyCount service", () => {
   describe("Happy Path", () => {

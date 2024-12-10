@@ -1,22 +1,23 @@
 import { SurveysList } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyList";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { PlusIcon } from "lucide-react";
-import { Metadata } from "next";
+import { Metadata, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -35,11 +36,12 @@ interface SurveyTemplateProps {
   }>;
 }
 
-const Page = async (props: SurveyTemplateProps) => {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
+const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProps }: SurveyTemplateProps) => {
+  const searchParams = await searchParamsProps;
+  const params = await paramsProps;
+
   const session = await getServerSession(authOptions);
-  const product = await getProductByEnvironmentId(params.environmentId);
+  const project = await getProjectByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   const t = await getTranslations();
   if (!session) {
@@ -51,21 +53,21 @@ const Page = async (props: SurveyTemplateProps) => {
     throw new Error(t("common.user_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const prefilledFilters = [product?.config.channel, product.config.industry, searchParams.role ?? null];
+  const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 
@@ -80,15 +82,18 @@ const Page = async (props: SurveyTemplateProps) => {
 
   const surveyCount = await getSurveyCount(params.environmentId);
 
-  const environments = await getEnvironments(product.id);
+  const environments = await getEnvironments(project.id);
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
-  const currentProductChannel = product.config.channel ?? null;
+  const currentProjectChannel = project.config.channel ?? null;
   const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
-      <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
-        {t("environments.surveys.new_survey")}
+      <Button size="sm" asChild>
+        <Link href={`/environments/${environment.id}/surveys/templates`}>
+          {t("environments.surveys.new_survey")}
+          <PlusIcon />
+        </Link>
       </Button>
     );
   };
@@ -105,7 +110,7 @@ const Page = async (props: SurveyTemplateProps) => {
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
-            currentProductChannel={currentProductChannel}
+            currentProjectChannel={currentProjectChannel}
             locale={locale}
           />
         </>
@@ -126,7 +131,7 @@ const Page = async (props: SurveyTemplateProps) => {
           </h1>
           <TemplateList
             environment={environment}
-            product={product}
+            project={project}
             user={user}
             prefilledFilters={prefilledFilters}
           />
@@ -136,4 +141,4 @@ const Page = async (props: SurveyTemplateProps) => {
   );
 };
 
-export default Page;
+export default SurveysPage as NextPage;

@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationSlack,
@@ -30,7 +30,7 @@ interface AddChannelMappingModalProps {
   slackIntegration: TIntegrationSlack;
   channels: TIntegrationItem[];
   selectedIntegration?: (TIntegrationSlackConfigData & { index: number }) | null;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddChannelMappingModal = ({
@@ -41,7 +41,7 @@ export const AddChannelMappingModal = ({
   channels,
   slackIntegration,
   selectedIntegration,
-  attributeClasses,
+  contactAttributeKeys,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
   const t = useTranslations();
@@ -246,27 +246,27 @@ export const AddChannelMappingModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(selectedSurvey, "default", attributeClasses)?.questions?.map(
-                          (question) => (
-                            <div key={question.id} className="my-1 flex items-center space-x-2">
-                              <label htmlFor={question.id} className="flex cursor-pointer items-center">
-                                <Checkbox
-                                  type="button"
-                                  id={question.id}
-                                  value={question.id}
-                                  className="bg-white"
-                                  checked={selectedQuestions.includes(question.id)}
-                                  onCheckedChange={() => {
-                                    handleCheckboxChange(question.id);
-                                  }}
-                                />
-                                <span className="ml-2">
-                                  {getLocalizedValue(question.headline, "default")}
-                                </span>
-                              </label>
-                            </div>
-                          )
-                        )}
+                        {replaceHeadlineRecall(
+                          selectedSurvey,
+                          "default",
+                          contactAttributeKeys
+                        )?.questions?.map((question) => (
+                          <div key={question.id} className="my-1 flex items-center space-x-2">
+                            <label htmlFor={question.id} className="flex cursor-pointer items-center">
+                              <Checkbox
+                                type="button"
+                                id={question.id}
+                                value={question.id}
+                                className="bg-white"
+                                checked={selectedQuestions.includes(question.id)}
+                                onCheckedChange={() => {
+                                  handleCheckboxChange(question.id);
+                                }}
+                              />
+                              <span className="ml-2">{getLocalizedValue(question.headline, "default")}</span>
+                            </label>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -287,13 +287,13 @@ export const AddChannelMappingModal = ({
           <div className="flex justify-end border-t border-slate-200 p-6">
             <div className="flex space-x-2">
               {selectedIntegration ? (
-                <Button type="button" variant="warn" loading={isDeleting} onClick={deleteLink}>
+                <Button type="button" variant="destructive" loading={isDeleting} onClick={deleteLink}>
                   {t("common.delete")}
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  variant="minimal"
+                  variant="ghost"
                   onClick={() => {
                     setOpen(false);
                     resetForm();

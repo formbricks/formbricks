@@ -37,13 +37,18 @@ export const SurveyCard = ({
 }: SurveyCardProps) => {
   const isSurveyCreationDeletionDisabled = isReadOnly;
   const t = useTranslations();
-  const surveyStatusLabel = useMemo(() => {
-    if (survey.status === "inProgress") return t("common.in_progress");
-    else if (survey.status === "scheduled") return t("common.scheduled");
-    else if (survey.status === "completed") return t("common.completed");
-    else if (survey.status === "draft") return t("common.draft");
-    else if (survey.status === "paused") return t("common.paused");
-  }, [survey]);
+  const surveyStatusLabel =
+    survey.status === "inProgress"
+      ? t("common.in_progress")
+      : survey.status === "scheduled"
+        ? t("common.scheduled")
+        : survey.status === "completed"
+          ? t("common.completed")
+          : survey.status === "draft"
+            ? t("common.draft")
+            : survey.status === "paused"
+              ? t("common.paused")
+              : undefined;
 
   const [singleUseId, setSingleUseId] = useState<string | undefined>();
 

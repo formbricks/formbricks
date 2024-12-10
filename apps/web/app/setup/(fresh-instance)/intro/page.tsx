@@ -1,6 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Intro",
@@ -29,8 +30,8 @@ const Page = async () => {
           })}
         </p>
       </div>
-      <Button size="base" href="/setup/signup" className="mt-6">
-        {t("setup.intro.get_started")}
+      <Button className="mt-6" asChild>
+        <Link href="/setup/signup">{t("setup.intro.get_started")}</Link>
       </Button>
 
       <p className="pt-6 text-xs text-slate-400">{t("setup.intro.made_with_love_in_kiel")}</p>

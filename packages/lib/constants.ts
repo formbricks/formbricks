@@ -147,8 +147,8 @@ export const LOGIN_RATE_LIMIT = {
 };
 
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 5 * 60, // 5 minutes
-  allowedPerInterval: 200,
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
 };
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
@@ -192,18 +192,18 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR"];
 
 // Billing constants
 
-export enum PRODUCT_FEATURE_KEYS {
+export enum PROJECT_FEATURE_KEYS {
   FREE = "free",
   STARTUP = "startup",
   SCALE = "scale",
   ENTERPRISE = "enterprise",
 }
 
-export enum STRIPE_PRODUCT_NAMES {
+export enum STRIPE_PROJECT_NAMES {
   STARTUP = "Formbricks Startup",
   SCALE = "Formbricks Scale",
   ENTERPRISE = "Formbricks Enterprise",
@@ -218,14 +218,17 @@ export enum STRIPE_PRICE_LOOKUP_KEYS {
 
 export const BILLING_LIMITS = {
   FREE: {
+    PROJECTS: 3,
     RESPONSES: 1500,
     MIU: 2000,
   },
   STARTUP: {
+    PROJECTS: 3,
     RESPONSES: 5000,
     MIU: 7500,
   },
   SCALE: {
+    PROJECTS: 5,
     RESPONSES: 10000,
     MIU: 30000,
   },

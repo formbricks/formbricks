@@ -6,8 +6,8 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
-import { useEffect, useState } from "react";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { useCallback, useEffect, useState } from "react";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
@@ -20,7 +20,7 @@ interface SlackWrapperProps {
   surveys: TSurvey[];
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -30,7 +30,7 @@ export const SlackWrapper = ({
   surveys,
   slackIntegration,
   webAppUrl,
-  attributeClasses,
+  contactAttributeKeys,
   locale,
 }: SlackWrapperProps) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? slackIntegration.config?.key : false);
@@ -41,7 +41,7 @@ export const SlackWrapper = ({
     (TIntegrationSlackConfigData & { index: number }) | null
   >(null);
 
-  const getSlackChannels = async () => {
+  const getSlackChannels = useCallback(async () => {
     const getSlackChannelsResponse = await getSlackChannelsAction({ environmentId: environment.id });
 
     if (
@@ -55,11 +55,11 @@ export const SlackWrapper = ({
     if (getSlackChannelsResponse?.data) {
       setSlackChannels(getSlackChannelsResponse.data);
     }
-  };
+  }, [environment.id]);
 
   useEffect(() => {
     getSlackChannels();
-  }, []);
+  }, [getSlackChannels]);
 
   const handleSlackAuthorization = async () => {
     authorize(environment.id, webAppUrl).then((url: string) => {
@@ -79,7 +79,7 @@ export const SlackWrapper = ({
         channels={slackChannels}
         slackIntegration={slackIntegration}
         selectedIntegration={selectedIntegration}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
       />
       <ManageIntegration
         environment={environment}

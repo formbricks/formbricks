@@ -11,7 +11,7 @@ type ConfirmationModalProps = {
   text: string;
   buttonText: string;
   isButtonDisabled?: boolean;
-  buttonVariant?: "warn" | "primary";
+  buttonVariant?: "destructive" | "default";
   buttonLoading?: boolean;
   closeOnOutsideClick?: boolean;
   hideCloseButton?: boolean;
@@ -25,7 +25,7 @@ export const ConfirmationModal = ({
   text,
   buttonText,
   isButtonDisabled = false,
-  buttonVariant = "warn",
+  buttonVariant = "destructive",
   buttonLoading = false,
   closeOnOutsideClick = true,
   hideCloseButton,
@@ -48,7 +48,7 @@ export const ConfirmationModal = ({
       </div>
 
       <div className="mt-4 space-x-2 text-right">
-        <Button variant="minimal" onClick={() => setOpen(false)}>
+        <Button variant="ghost" onClick={() => setOpen(false)}>
           {t("common.cancel")}
         </Button>
         <Button

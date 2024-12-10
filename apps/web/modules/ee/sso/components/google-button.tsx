@@ -25,14 +25,12 @@ export const GoogleButton = ({ inviteUrl, lastUsed }: GoogleButtonProps) => {
 
   return (
     <Button
-      size="base"
       type="button"
-      EndIcon={GoogleIcon}
-      startIconClassName="ml-3"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">
       {t("auth.continue_with_google")}
+      <GoogleIcon />
       {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
