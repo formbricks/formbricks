@@ -4,6 +4,7 @@
 import type { DataMigrationScript } from "../../types/migration-runner";
 
 export const xmUserIdentification: DataMigrationScript = {
+  type: "data",
   id: "n2u5d3wmcw1t2h8a4vgfu2y9",
   name: "xmUserIdentification",
   run: async ({ tx }) => {

@@ -4,6 +4,7 @@ import { xmUserIdentification } from "../data-migrations/20241209104738_xm_user_
 import { xmAttributeRemoval } from "../data-migrations/20241209111404_xm_attribute_removal/data-migration";
 import { updateOrgLimits } from "../data-migrations/20241209111525_update_org_limits/data-migration";
 import { productRevamp } from "../data-migrations/20241209111725_product_revamp/data-migration";
+import { testField } from "../data-migrations/20241209211719_test_field/data-migration";
 import { MigrationRunner } from "../types/migration-runner";
 
 const prisma = new PrismaClient();
@@ -16,6 +17,7 @@ export async function applyDataMigrations(): Promise<void> {
     xmAttributeRemoval,
     updateOrgLimits,
     productRevamp,
+    ...testField,
   ];
 
   try {

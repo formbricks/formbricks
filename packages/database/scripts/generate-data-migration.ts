@@ -1,4 +1,3 @@
- 
 import fs from "node:fs";
 import path from "node:path";
 import readline from "node:readline";
@@ -82,6 +81,7 @@ function getTemplateContent(migrationName: string): string {
 import type { DataMigrationScript } from "../../types/migration-runner";
 
 export const ${migrationName}: DataMigrationScript = {
+  type: "data",
   id: "${migrationId}",
   name: "${migrationName}",
   run: async ({ tx }) => {

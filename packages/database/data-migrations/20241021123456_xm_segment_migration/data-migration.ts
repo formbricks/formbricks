@@ -47,6 +47,7 @@ const findAndReplace = (filters: any): any => {
 };
 
 export const xmSegmentMigration: DataMigrationScript = {
+  type: "data",
   id: "s644oyyqccstfdeejc4fluye",
   name: "xmSegmentMigration",
   run: async ({ tx }) => {

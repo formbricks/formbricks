@@ -2,6 +2,7 @@
 import type { DataMigrationScript } from "../../types/migration-runner";
 
 export const xmAttributeRemoval: DataMigrationScript = {
+  type: "data",
   id: "mq9x7rjdnq0saxoli9pl9b3o",
   name: "xmAttributeRemoval",
   run: async ({ tx }) => {
