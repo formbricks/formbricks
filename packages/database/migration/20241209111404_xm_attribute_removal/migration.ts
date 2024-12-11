@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
+import { Prisma } from "@prisma/client";
 import type { DataMigrationScript } from "../../types/migration-runner";
 
 export const xmAttributeRemoval: DataMigrationScript = {
@@ -7,41 +8,28 @@ export const xmAttributeRemoval: DataMigrationScript = {
   name: "xmAttributeRemoval",
   run: async ({ tx }) => {
     // Your migration script goes here
-    const emailAttributes = await tx.contactAttribute.findMany({
-      where: {
-        attributeKey: {
-          key: "email",
-        },
-      },
-      select: {
-        id: true,
-        value: true,
-        contact: {
-          select: {
-            id: true,
-            environmentId: true,
-            createdAt: true,
-          },
-        },
-        createdAt: true,
-      },
-      orderBy: {
-        createdAt: "asc", // Keep oldest attribute
-      },
-    });
+    const emailAttributes: {
+      id: string;
+      value: string;
+      contactId: string;
+      environmentId: string;
+      contactCreatedAt: Date;
+      attributeCreatedAt: Date;
+    }[] =
+      await tx.$queryRaw`SELECT ca.id, ca.value, c.id AS "contactId", c."environmentId", c.created_at AS "contactCreatedAt", ca.created_at AS "attributeCreatedAt"
+       FROM "ContactAttribute" ca
+       JOIN "Contact" c ON ca."contactId" = c.id
+       JOIN "ContactAttributeKey" ak ON ca."attributeKeyId" = ak.id
+       WHERE ak.key = 'email'
+       ORDER BY ca.created_at ASC`;
 
-    // 2. Group by environment and email
     const emailsByEnvironment: Record<
-      //  environmentId key
       string,
-      // email record
       Record<string, { id: string; contactId: string; createdAt: Date }[]>
     > = {};
 
-    // Group attributes by environment and email
     for (const attr of emailAttributes) {
-      const { environmentId } = attr.contact;
-      const email = attr.value;
+      const { environmentId, value: email, id, contactId, attributeCreatedAt } = attr;
 
       if (!emailsByEnvironment[environmentId]) {
         emailsByEnvironment[environmentId] = {};
@@ -52,13 +40,12 @@ export const xmAttributeRemoval: DataMigrationScript = {
       }
 
       emailsByEnvironment[environmentId][email].push({
-        id: attr.id,
-        contactId: attr.contact.id,
-        createdAt: attr.createdAt,
+        id,
+        contactId,
+        createdAt: new Date(attributeCreatedAt),
       });
     }
 
-    // 3. Identify and delete duplicates
     const deletionSummary: Record<
       string,
       {
@@ -73,21 +60,12 @@ export const xmAttributeRemoval: DataMigrationScript = {
 
       for (const [email, attributes] of Object.entries(emailGroups)) {
         if (attributes.length > 1) {
-          // Sort by createdAt to ensure we keep the oldest
           attributes.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-          // Keep the first (oldest) attribute and delete the rest
           const [kept, ...duplicates] = attributes;
           const duplicateIds = duplicates.map((d) => d.id);
 
-          // Delete duplicate attributes
-          await tx.contactAttribute.deleteMany({
-            where: {
-              id: {
-                in: duplicateIds,
-              },
-            },
-          });
+          await tx.$executeRaw`DELETE FROM "ContactAttribute" WHERE id IN (${Prisma.join(duplicateIds)})`;
 
           deletionSummary[environmentId].push({
             email,
@@ -98,7 +76,6 @@ export const xmAttributeRemoval: DataMigrationScript = {
       }
     }
 
-    // 4. Return summary of what was cleaned up
     const summary = {
       totalDuplicateAttributesRemoved: Object.values(deletionSummary).reduce(
         (acc, env) => acc + env.reduce((sum, item) => sum + item.deletedAttributeIds.length, 0),

@@ -36,112 +36,59 @@ export const updateOrgLimits: DataMigrationScript = {
   name: "updateOrgLimits",
   run: async ({ tx }) => {
     // Your migration script goes here
-    const organizations = (await tx.organization.findMany({
-      where: {
-        OR: [
-          {
-            AND: [
-              {
-                billing: {
-                  path: ["plan"],
-                  equals: "free",
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "miu"],
-                  not: 2000,
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "responses"],
-                  not: 1500,
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              {
-                billing: {
-                  path: ["plan"],
-                  equals: "startup",
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "miu"],
-                  not: 7500,
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "responses"],
-                  not: 5000,
-                },
-              },
-            ],
-          },
-          {
-            AND: [
-              {
-                billing: {
-                  path: ["plan"],
-                  equals: "scale",
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "miu"],
-                  not: 30000,
-                },
-              },
-              {
-                billing: {
-                  path: ["limits", "monthly", "responses"],
-                  not: 10000,
-                },
-              },
-            ],
-          },
-        ],
-      },
-      select: {
-        id: true,
-        billing: true,
-      },
-    })) as TOrganization[];
+    // Find organizations that need updates
+    const organizations = await tx.$queryRaw<TOrganization[]>`
+      SELECT id, billing
+      FROM "Organization"
+      WHERE
+        (
+          (billing->>'plan' = 'free' AND
+          (
+            (billing->'limits'->'monthly'->>'miu')::numeric != 2000 OR
+            (billing->'limits'->'monthly'->>'responses')::numeric != 1500
+          )
+          )
+          OR
+          (
+            (billing->>'plan' = 'startup' AND
+            (
+              (billing->'limits'->'monthly'->>'miu')::numeric != 7500 OR
+              (billing->'limits'->'monthly'->>'responses')::numeric != 5000
+            )
+            )
+          )
+          OR
+          (
+            (billing->>'plan' = 'scale' AND
+            (
+              (billing->'limits'->'monthly'->>'miu')::numeric != 30000 OR
+              (billing->'limits'->'monthly'->>'responses')::numeric != 10000
+            )
+            )
+          )
+        )
+    `;
 
     const updationPromises = [];
 
+    // Batch update organizations
     for (const organization of organizations) {
       const plan = organization.billing.plan;
       const limits = BILLING_LIMITS[plan];
 
-      let billing = organization.billing;
-
-      billing = {
-        ...billing,
+      const updatedBilling = {
+        ...organization.billing,
         limits: {
-          ...billing.limits,
+          ...organization.billing.limits,
           monthly: {
-            ...billing.limits.monthly,
+            ...organization.billing.limits.monthly,
             responses: limits.RESPONSES,
             miu: limits.MIU,
           },
         },
       };
 
-      const updatePromise = tx.organization.update({
-        where: {
-          id: organization.id,
-        },
-        data: {
-          billing,
-        },
-      });
-
+      const updatePromise = tx.$executeRaw`UPDATE "Organization" SET billing = ${updatedBilling}::jsonb WHERE id = ${organization.id}`;
       updationPromises.push(updatePromise);
     }
 

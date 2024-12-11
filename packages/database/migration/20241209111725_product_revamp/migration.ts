@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import type { DataMigrationScript } from "../../types/migration-runner";
 
 type Plan = "free" | "startup" | "scale" | "enterprise";
@@ -17,54 +16,49 @@ export const productRevamp: DataMigrationScript = {
   run: async ({ tx }) => {
     // Your migration script goes here
 
-    const organizations = await tx.organization.findMany({
-      where: {
+    const organizations = await tx.$queryRaw<
+      {
+        id: string;
         billing: {
-          path: ["limits", "projects"],
-          equals: Prisma.DbNull,
-        },
-      },
-      select: {
-        id: true,
-        billing: true,
-      },
-    });
+          plan: Plan;
+          limits: {
+            monthly: {
+              responses: number;
+              miu: number;
+            };
+            projects: number | null;
+          };
+        };
+      }[]
+    >`SELECT id, billing FROM "Organization" WHERE (billing->'limits'->>'projects') IS NULL`;
 
-    const updateOrganizationPromises = organizations.map((org) =>
-      tx.organization.update({
-        where: {
-          id: org.id,
+    const updateOrganizationPromises = organizations.map((org) => {
+      const updatedBilling = {
+        ...org.billing,
+        limits: {
+          ...org.billing.limits,
+          projects: projectsLimitByPlan[org.billing.plan],
         },
-        data: {
-          billing: {
-            ...org.billing,
-            limits: {
-              ...org.billing.limits,
-              projects: projectsLimitByPlan[org.billing.plan as Plan],
-            },
-          },
-        },
-      })
-    );
+      };
+
+      return tx.$executeRaw`UPDATE "Organization" SET billing = ${updatedBilling}::jsonb WHERE id = ${org.id}`;
+    });
 
     await Promise.all(updateOrganizationPromises);
 
     console.log(`Updated ${updateOrganizationPromises.length.toString()} organizations`);
 
-    const updatedemptyConfigProjects = await tx.project.updateMany({
-      where: {
-        config: {
-          equals: {},
-        },
-      },
-      data: {
-        config: {
-          channel: null,
-          industry: null,
-        },
-      },
-    });
+    const updatedEmptyConfigProjects: number | undefined = await tx.$executeRaw`
+          UPDATE "Project"
+          SET config = jsonb_set(
+              jsonb_set(config, '{channel}', 'null'::jsonb, true),
+              '{industry}', 'null'::jsonb, true
+          )
+          WHERE config = '{}';
+        `;
 
-    console.log(`Updated ${updatedemptyConfigProjects.count.toString()} projects with empty config`);
+    console.log(
+      `Updated ${updatedEmptyConfigProjects ? updatedEmptyConfigProjects.toString() : "0"} projects with empty config`
+    );
   },
 };

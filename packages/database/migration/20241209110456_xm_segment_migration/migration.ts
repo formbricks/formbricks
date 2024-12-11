@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call -- required for any type */
+
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- required for any type */
 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- required for any type */
@@ -10,27 +12,24 @@ export const isResourceFilter = (resource: any): boolean => {
 };
 
 const findAndReplace = (filters: any): any => {
-  const newFilters: any[] = [];
+  const newFilters: any = [];
   for (const filter of filters) {
     if (isResourceFilter(filter.resource)) {
       let { root } = filter.resource;
-      if (root.type === "attribute") {
-        if (root.attributeClassName as string) {
-          root = {
-            type: "attribute",
-            contactAttributeKey: root.attributeClassName,
-          };
+      if (root.type === "attribute" && root.attributeClassName) {
+        root = {
+          type: "attribute",
+          contactAttributeKey: root.attributeClassName,
+        };
+        const newFilter = {
+          ...filter.resource,
+          root,
+        };
 
-          const newFilter = {
-            ...filter.resource,
-            root,
-          };
-
-          newFilters.push({
-            ...filter,
-            resource: newFilter,
-          });
-        }
+        newFilters.push({
+          ...filter,
+          resource: newFilter,
+        });
       } else {
         newFilters.push(filter);
       }
