@@ -412,11 +412,11 @@ enum DataMigrationStatus {
 }
 
 model DataMigration {
-  id         String    @id @default(cuid())
-  startedAt  DateTime  @default(now()) @map(name: "started_at")
-  finishedAt DateTime? @map(name: "finished_at")
-  applied    Boolean   @default(false)
-  name       String    @unique
+  id         String              @id @default(cuid())
+  startedAt  DateTime            @default(now()) @map(name: "started_at")
+  finishedAt DateTime?           @map(name: "finished_at")
+  name       String              @unique
+  status     DataMigrationStatus
 }
 
 model Environment {
