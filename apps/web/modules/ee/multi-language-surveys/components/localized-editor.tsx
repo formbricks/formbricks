@@ -69,7 +69,6 @@ export function LocalizedEditor({
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          if (!value) return;
           const translatedHtml = {
             ...value,
             [selectedLanguageCode]: v,
