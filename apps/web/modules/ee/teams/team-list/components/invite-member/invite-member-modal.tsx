@@ -2,9 +2,8 @@
 
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
 import { Modal } from "@/modules/ui/components/modal";
-import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
-import { H3, H4, Muted } from "@/modules/ui/components/typography";
+import { H4, Muted } from "@/modules/ui/components/typography";
 import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";

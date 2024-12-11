@@ -1,4 +1,6 @@
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
+import { getMembersByOrganizationId } from "@/modules/ee/teams/team-list/lib/membership";
+import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getTranslations } from "next-intl/server";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -22,5 +24,17 @@ export const TeamsView = async ({ organizationId, membershipRole, currentUserId 
 
   const isOwnerOrManager = isOwner || isManager;
 
-  return <TeamsTable teams={teams} isOwnerOrManager={isOwnerOrManager} organizationId={organizationId} />;
+  const orgMembers = await getMembersByOrganizationId(organizationId);
+
+  const orgProjects = await getProjectsByOrganizationId(organizationId);
+
+  return (
+    <TeamsTable
+      teams={teams}
+      isOwnerOrManager={isOwnerOrManager}
+      organizationId={organizationId}
+      orgMembers={orgMembers}
+      orgProjects={orgProjects}
+    />
+  );
 };

@@ -9,11 +9,11 @@ const meta = {
     layout: "centered",
   },
   argTypes: {
-    type: {
+    variant: {
       control: "select",
       options: ["warning", "success", "error", "gray"],
     },
-    size: { control: "select", options: ["small", "normal", "large"] },
+    size: { control: "select", options: ["tiny", "normal", "large"] },
     className: { control: "text" },
   },
 } satisfies Meta<typeof Badge>;
@@ -24,96 +24,96 @@ type Story = StoryObj<typeof meta>;
 
 export const Warning: Story = {
   args: {
-    text: "Warning",
-    type: "warning",
+    children: "Warning",
+    variant: "warning",
     size: "normal",
   },
 };
 
 export const Success: Story = {
   args: {
-    text: "Success",
-    type: "success",
+    children: "Success",
+    variant: "success",
     size: "normal",
   },
 };
 
 export const Error: Story = {
   args: {
-    text: "Error",
-    type: "error",
+    children: "Error",
+    variant: "error",
     size: "normal",
   },
 };
 
 export const Gray: Story = {
   args: {
-    text: "Gray",
-    type: "gray",
+    children: "Gray",
+    variant: "gray",
     size: "normal",
   },
 };
 
 export const LargeWarning: Story = {
   args: {
-    text: "Warning",
-    type: "warning",
+    children: "Warning",
+    variant: "warning",
     size: "large",
   },
 };
 
 export const LargeSuccess: Story = {
   args: {
-    text: "Success",
-    type: "success",
+    children: "Success",
+    variant: "success",
     size: "large",
   },
 };
 
 export const LargeError: Story = {
   args: {
-    text: "Error",
-    type: "error",
+    children: "Error",
+    variant: "error",
     size: "large",
   },
 };
 
 export const LargeGray: Story = {
   args: {
-    text: "Gray",
-    type: "gray",
+    children: "Gray",
+    variant: "gray",
     size: "large",
   },
 };
 
 export const TinyWarning: Story = {
   args: {
-    text: "Warning",
-    type: "warning",
+    children: "Warning",
+    variant: "warning",
     size: "tiny",
   },
 };
 
 export const TinySuccess: Story = {
   args: {
-    text: "Success",
-    type: "success",
+    children: "Success",
+    variant: "success",
     size: "tiny",
   },
 };
 
 export const TinyError: Story = {
   args: {
-    text: "Error",
-    type: "error",
+    children: "Error",
+    variant: "error",
     size: "tiny",
   },
 };
 
 export const TinyGray: Story = {
   args: {
-    text: "Gray",
-    type: "gray",
+    children: "Gray",
+    variant: "gray",
     size: "tiny",
   },
 };

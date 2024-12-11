@@ -1,6 +1,6 @@
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { MembersInfo } from "@/modules/ee/teams/team-list/components/edit-memberships/members-info";
-import { getMembersByOrganizationId } from "@/modules/ee/teams/team-list/lib/membership";
+import { getMembershipByOrganizationId } from "@/modules/ee/teams/team-list/lib/membership";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
@@ -19,7 +19,7 @@ export const EditMemberships = async ({
   currentUserId,
   currentUserMembership: membership,
 }: EditMembershipsProps) => {
-  const members = await getMembersByOrganizationId(organization.id);
+  const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
   const t = await getTranslations();
   const currentUserRole = membership?.role;

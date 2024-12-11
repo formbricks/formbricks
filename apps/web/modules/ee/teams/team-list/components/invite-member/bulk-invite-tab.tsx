@@ -2,6 +2,7 @@
 
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { UploadIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -25,14 +26,10 @@ export const BulkInviteTab = ({
   isFormbricksCloud,
 }: BulkInviteTabProps) => {
   const t = useTranslations();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [csvFile, setCSVFile] = useState<File>();
 
-  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.length) {
-      return;
-    }
-    const file = e.target.files[0];
+  const onFileInputChange = (files: File[]) => {
+    const file = files[0];
     setCSVFile(file);
   };
 
@@ -70,34 +67,48 @@ export const BulkInviteTab = ({
     });
   };
 
-  const removeFile = (event: React.MouseEvent<SVGElement>) => {
-    event.stopPropagation();
+  const removeFile = () => {
     setCSVFile(undefined);
-    // Reset the file input value to ensure it can detect the same file if re-selected
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    onFileInputChange(files);
   };
 
   return (
-    <div className="space-y-4">
-      <div
-        className="relative flex h-20 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-slate-200 transition-colors hover:bg-slate-100"
-        onClick={() => fileInputRef.current?.click()}>
-        {csvFile ? (
-          <XIcon
-            className="absolute right-4 top-4 h-6 w-6 cursor-pointer text-neutral-500"
-            onClick={removeFile}
-          />
-        ) : (
-          <UploadIcon className="h-6 w-6 text-neutral-500" />
+    <>
+      <div className="space-y-4">
+        <Uploader
+          allowedFileExtensions={["csv"]}
+          handleDragOver={handleDragOver}
+          handleDrop={handleDrop}
+          handleUpload={onFileInputChange}
+          id="bulk-invite"
+          multiple={false}
+          name="bulk-invite"
+          disabled={csvFile !== undefined}
+          uploaderClassName="h-20 bg-white border border-slate-200"
+        />
+
+        {csvFile && (
+          <div className="flex items-center space-x-2">
+            <p className="text-sm font-semibold text-slate-900">{csvFile.name}</p>
+            <Button variant="secondary" size="sm" type="button" onClick={removeFile}>
+              <XIcon className="h-4 w-4" />
+            </Button>
+          </div>
         )}
-        <span className="text-sm text-neutral-500">
-          {csvFile ? csvFile.name : t("common.click_here_to_upload")}
-        </span>
-        <input onChange={onFileInputChange} type="file" ref={fileInputRef} accept=".csv" hidden />
-      </div>
-      <div>
+
         {!canDoRoleManagement && (
           <Alert variant="default" className="mt-1.5 flex items-start bg-slate-50">
             <AlertDescription className="ml-2">
@@ -109,6 +120,7 @@ export const BulkInviteTab = ({
           </Alert>
         )}
       </div>
+
       <div className="flex justify-between">
         <Button
           size="default"
@@ -134,6 +146,6 @@ export const BulkInviteTab = ({
           </Button>
         </div>
       </div>
-    </div>
+    </>
   );
 };

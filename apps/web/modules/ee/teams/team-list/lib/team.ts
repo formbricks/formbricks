@@ -1,6 +1,13 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { TOrganizationTeam, TOtherTeam, TUserTeam } from "@/modules/ee/teams/team-list/types/teams";
+import {
+  TOrganizationTeam,
+  TOtherTeam,
+  TTeamDetails,
+  TTeamSettingsFormSchema,
+  TUserTeam,
+  ZTeamSettingsFormSchema,
+} from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
@@ -228,6 +235,138 @@ export const createTeam = async (organizationId: string, name: string): Promise<
     teamCache.revalidate({ organizationId });
 
     return team.id;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const getTeamDetails = reactCache(
+  async (teamId: string): Promise<TTeamDetails | null> =>
+    cache(
+      async () => {
+        validateInputs([teamId, ZId]);
+        try {
+          const team = await prisma.team.findUnique({
+            where: {
+              id: teamId,
+            },
+            select: {
+              id: true,
+              name: true,
+              organizationId: true,
+              teamUsers: {
+                select: {
+                  userId: true,
+                  role: true,
+                  user: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                },
+              },
+              projectTeams: {
+                select: {
+                  projectId: true,
+                  project: {
+                    select: {
+                      name: true,
+                    },
+                  },
+                  permission: true,
+                },
+              },
+            },
+          });
+
+          if (!team) {
+            return null;
+          }
+
+          return {
+            id: team.id,
+            name: team.name,
+            organizationId: team.organizationId,
+            members: team.teamUsers.map((teamUser) => ({
+              userId: teamUser.userId,
+              name: teamUser.user.name,
+              role: teamUser.role,
+            })),
+            projects: team.projectTeams.map((projectTeam) => ({
+              projectId: projectTeam.projectId,
+              projectName: projectTeam.project.name,
+              permission: projectTeam.permission,
+            })),
+          };
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getTeamDetails-${teamId}`],
+      {
+        tags: [teamCache.tag.byId(teamId)],
+      }
+    )()
+);
+
+export const deleteTeam = async (teamId: string): Promise<boolean> => {
+  validateInputs([teamId, ZId]);
+  try {
+    const deletedTeam = await prisma.team.delete({
+      where: {
+        id: teamId,
+      },
+      select: {
+        organizationId: true,
+        projectTeams: {
+          select: {
+            projectId: true,
+          },
+        },
+      },
+    });
+
+    teamCache.revalidate({ id: teamId, organizationId: deletedTeam.organizationId });
+
+    for (const projectTeam of deletedTeam.projectTeams) {
+      teamCache.revalidate({ projectId: projectTeam.projectId });
+    }
+
+    return true;
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
+
+export const updateTeam = async (teamId: string, data: TTeamSettingsFormSchema): Promise<boolean> => {
+  validateInputs([teamId, ZId], [data, ZTeamSettingsFormSchema]);
+  try {
+    const { name, members, projects } = data;
+
+    await prisma.team.update({
+      where: {
+        id: teamId,
+      },
+      data: {
+        name,
+      },
+    });
+
+    teamCache.revalidate({ id: teamId });
+
+    return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

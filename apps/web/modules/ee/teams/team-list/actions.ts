@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { getOrganizationIdFromInviteId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import {
@@ -10,7 +10,8 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/ee/teams/team-list/lib/membership";
-import { createTeam } from "@/modules/ee/teams/team-list/lib/team";
+import { createTeam, deleteTeam, getTeamDetails, updateTeam } from "@/modules/ee/teams/team-list/lib/team";
+import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/teams";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
@@ -297,4 +298,79 @@ export const leaveOrganizationAction = authenticatedActionClient
     }
 
     return await deleteMembership(ctx.user.id, parsedInput.organizationId);
+  });
+
+const ZGetTeamDetailsAction = z.object({
+  teamId: ZId,
+});
+
+export const getTeamDetailsAction = authenticatedActionClient
+  .schema(ZGetTeamDetailsAction)
+  .action(async ({ parsedInput, ctx }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    await checkRoleManagementPermission(organizationId);
+
+    return await getTeamDetails(parsedInput.teamId);
+  });
+
+const ZDeleteTeamAction = z.object({
+  teamId: ZId,
+});
+
+export const deleteTeamAction = authenticatedActionClient
+  .schema(ZDeleteTeamAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    await checkRoleManagementPermission(organizationId);
+    return await deleteTeam(parsedInput.teamId);
+  });
+
+const ZUpdateTeamAction = z.object({
+  teamId: ZId,
+  data: ZTeamSettingsFormSchema,
+});
+
+export const updateTeamAction = authenticatedActionClient
+  .schema(ZUpdateTeamAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    await checkRoleManagementPermission(organizationId);
+
+    return await updateTeam(parsedInput.teamId, parsedInput.data);
   });

@@ -2,6 +2,7 @@ import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { organizationCache } from "@/lib/cache/organization";
 import { teamCache } from "@/lib/cache/team";
+import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/teams";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -13,7 +14,7 @@ import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember } from "@formbricks/types/memberships";
 import { TMembership } from "@formbricks/types/memberships";
 
-export const getMembersByOrganizationId = reactCache(
+export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> =>
     cache(
       async () => {
@@ -57,7 +58,7 @@ export const getMembersByOrganizationId = reactCache(
           throw new UnknownError("Error while fetching members");
         }
       },
-      [`getMembersByOrganizationId-${organizationId}-${page}`],
+      [`getMembershipByOrganizationId-${organizationId}-${page}`],
       {
         tags: [membershipCache.tag.byOrganizationId(organizationId)],
       }
@@ -192,6 +193,50 @@ export const getMembershipsByUserId = reactCache(
       [`getMembershipsByUserId-${userId}-${page}`],
       {
         tags: [membershipCache.tag.byUserId(userId)],
+      }
+    )()
+);
+
+export const getMembersByOrganizationId = reactCache(
+  async (organizationId: string): Promise<TOrganizationMember[]> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString]);
+
+        try {
+          const membersData = await prisma.membership.findMany({
+            where: { organizationId },
+            select: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+              role: true,
+              userId: true,
+            },
+          });
+
+          const members = membersData.map((member) => {
+            return {
+              id: member.userId,
+              name: member.user?.name || "",
+              role: member.role,
+            };
+          });
+
+          return members;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getMembersByOrganizationId-${organizationId}`],
+      {
+        tags: [membershipCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
