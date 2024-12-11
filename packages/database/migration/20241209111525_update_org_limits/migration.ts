@@ -1,4 +1,4 @@
-import type { DataMigrationScript } from "../../types/migration-runner";
+import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 
 type Plan = "free" | "startup" | "scale";
 

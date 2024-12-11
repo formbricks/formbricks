@@ -1,12 +1,12 @@
+import { PrismaClient } from "@prisma/client";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { PrismaClient } from "@prisma/client";
-import { type DataMigrationScript, MigrationRunner } from "../types/migration-runner";
+import { type DataMigrationScript, MigrationRunner } from "./migration-runner";
 
 const prisma = new PrismaClient();
 const migrationRunner = new MigrationRunner(prisma);
 
-const MIGRATIONS_DIR = path.resolve(__dirname, "../migration");
+const MIGRATIONS_DIR = path.resolve(__dirname, "../../migration");
 
 async function loadMigrations(): Promise<DataMigrationScript[]> {
   const migrations: DataMigrationScript[] = [];

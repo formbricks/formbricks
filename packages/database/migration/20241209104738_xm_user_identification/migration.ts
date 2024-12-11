@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
-import type { DataMigrationScript } from "../../types/migration-runner";
+import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 
 export const xmUserIdentification: DataMigrationScript = {
   type: "data",

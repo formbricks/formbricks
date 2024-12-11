@@ -5,7 +5,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- required for any type */
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- required for any type */
-import type { DataMigrationScript } from "../../types/migration-runner";
+import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 
 export const isResourceFilter = (resource: any): boolean => {
   return resource.root !== undefined;

@@ -1,8 +1,8 @@
+import type { Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
-import type { Prisma, PrismaClient } from "@prisma/client";
 
 const execAsync = promisify(exec);
 
@@ -110,9 +110,9 @@ export class MigrationRunner {
       console.log(`Running schema migration: ${migration.name}`);
 
       // Original Prisma migrations directory
-      const originalMigrationsDir = path.resolve(__dirname, "../migrations");
+      const originalMigrationsDir = path.resolve(__dirname, "../../migrations");
       // Temporary migrations directory for controlled migration
-      const tempMigrationsDir = path.resolve(__dirname, "../migration");
+      const tempMigrationsDir = path.resolve(__dirname, "../../migration");
 
       // Ensure prisma migrations directory exists
       if (!fs.existsSync(originalMigrationsDir)) {
