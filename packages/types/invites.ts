@@ -12,6 +12,7 @@ export const ZInvite = z.object({
   createdAt: z.date(),
   expiresAt: z.date(),
   role: ZOrganizationRole,
+  teamIds: z.array(z.string()),
 });
 export type TInvite = z.infer<typeof ZInvite>;
 

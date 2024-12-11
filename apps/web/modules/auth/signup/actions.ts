@@ -5,6 +5,7 @@ import { createUser } from "@/modules/auth/lib/user";
 import { updateUser } from "@/modules/auth/lib/user";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
+import { createTeamMembership } from "@/modules/invite/lib/team";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { getInvite } from "@formbricks/lib/invite/service";
@@ -48,6 +49,10 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
       accepted: true,
       role: invite.role,
     });
+
+    if (invite.teamIds) {
+      await createTeamMembership(invite, user.id);
+    }
 
     await updateUser(user.id, {
       notificationSettings: {

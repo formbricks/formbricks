@@ -41,6 +41,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
         email: parsedInput.email,
         name: "",
         role: "manager",
+        teamIds: [],
       },
       currentUserId: ctx.user.id,
     });

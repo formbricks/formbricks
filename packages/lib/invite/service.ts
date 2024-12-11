@@ -27,6 +27,7 @@ const inviteSelect: Prisma.InviteSelect = {
   createdAt: true,
   expiresAt: true,
   role: true,
+  teamIds: true,
 };
 interface InviteWithCreator extends TInvite {
   creator: {
@@ -232,6 +233,12 @@ export const inviteUser = async ({
       }
     }
 
+    const teamIdsSet = new Set(teamIds);
+
+    if (teamIdsSet.size !== teamIds.length) {
+      throw new ValidationError("teamIds must be unique");
+    }
+
     const teams = await prisma.team.findMany({
       where: {
         id: { in: teamIds },
@@ -255,6 +262,7 @@ export const inviteUser = async ({
         acceptor: user ? { connect: { id: user.id } } : undefined,
         role,
         expiresAt,
+        teamIds: { set: teamIds },
       },
     });
 

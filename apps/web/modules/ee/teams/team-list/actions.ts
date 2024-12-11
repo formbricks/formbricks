@@ -214,7 +214,7 @@ export const inviteUserAction = authenticatedActionClient
       ],
     });
 
-    if (parsedInput.role !== "owner") {
+    if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
       const organization = await getOrganization(parsedInput.organizationId);
       if (!organization) {
         throw new Error("Organization not found");

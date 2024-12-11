@@ -55,6 +55,7 @@ export const IndividualInviteTab = ({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
       role: "owner",
+      teamIds: [],
     },
   });
 
@@ -99,18 +100,22 @@ export const IndividualInviteTab = ({
         />
         {watch("role") === "member" && (
           <Alert className="mt-2" variant="info">
-            <AlertDescription>{t("environments.settings.general.member_role_info_message")}</AlertDescription>
+            <AlertDescription>{t("environments.settings.teams.member_role_info_message")}</AlertDescription>
           </Alert>
         )}
       </div>
 
-      <MultiSelect
-        value={watch("teamIds")}
-        options={teamOptions}
-        onChange={(teamIds) => {
-          setValue("teamIds", teamIds);
-        }}
-      />
+      <div className="flex flex-col space-y-2">
+        <Label htmlFor="memberEmailInput">{t("common.add_to_team")}</Label>
+        <MultiSelect
+          value={watch("teamIds")}
+          options={teamOptions}
+          placeholder={t("environments.settings.teams.team_select_placeholder")}
+          onChange={(teamIds) => {
+            setValue("teamIds", teamIds);
+          }}
+        />
+      </div>
 
       {!canDoRoleManagement &&
         (isFormbricksCloud ? (
