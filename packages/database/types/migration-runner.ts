@@ -56,7 +56,14 @@ export class MigrationRunner {
             `;
 
             if (existingMigration?.[0]?.status === "pending") {
-              console.log(`Data migration ${migration.name} is pending. Skipping...`);
+              console.log(`Data migration ${migration.name} is pending.`);
+              console.log(
+                "Either there is another migration which is currently running or this is an error."
+              );
+              console.log(
+                "If you are sure that there is no migration running, you need to manually resolve the issue."
+              );
+              process.exit(1);
               return;
             }
 
