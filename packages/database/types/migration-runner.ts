@@ -49,9 +49,11 @@ export class MigrationRunner {
         await this.prisma.$transaction(
           async (tx) => {
             // Check if migration has already been run
-            const existingMigration = await tx.dataMigration.findUnique({
-              where: { id: migration.id },
-            });
+
+            const existingMigration: { id: string; applied: boolean } | undefined = await tx.$queryRaw`
+              SELECT * FROM "DataMigration"
+              WHERE id = ${migration.id}
+            `;
 
             if (existingMigration?.applied) {
               console.log(`Data migration ${migration.name} already completed. Skipping...`);
@@ -68,21 +70,12 @@ export class MigrationRunner {
               });
 
               // Mark migration as applied
-              await tx.dataMigration.upsert({
-                where: { id: migration.id },
-                update: {
-                  applied: true,
-                  finishedAt: new Date(),
-                  startedAt: startTime,
-                },
-                create: {
-                  id: migration.id,
-                  name: migration.name,
-                  applied: true,
-                  startedAt: startTime,
-                  finishedAt: new Date(),
-                },
-              });
+              await tx.$queryRaw`
+                INSERT INTO "DataMigration" (id, name, applied, started_at, finished_at)
+                VALUES (${migration.id}, ${migration.name}, true, ${startTime}, ${new Date()})
+                ON CONFLICT (id) DO UPDATE
+                SET name = ${migration.name}, applied = true, started_at = ${startTime}, finished_at = ${new Date()};
+              `;
             }
 
             console.log(`Data migration ${migration.name} completed successfully`);
