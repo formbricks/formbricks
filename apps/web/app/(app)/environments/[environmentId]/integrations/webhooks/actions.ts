@@ -6,6 +6,7 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
   getProjectIdFromEnvironmentId,
+  getProjectIdFromWebhookId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
@@ -58,7 +59,7 @@ export const deleteWebhookAction = authenticatedActionClient
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.id),
+          projectId: await getProjectIdFromWebhookId(parsedInput.id),
         },
       ],
     });
@@ -85,7 +86,7 @@ export const updateWebhookAction = authenticatedActionClient
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.webhookId),
+          projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
         },
       ],
     });
