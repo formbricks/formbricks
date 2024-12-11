@@ -49,18 +49,25 @@ export class MigrationRunner {
         await this.prisma.$transaction(
           async (tx) => {
             // Check if migration has already been run
-
-            const existingMigration: { id: string; applied: boolean } | undefined = await tx.$queryRaw`
-              SELECT * FROM "DataMigration"
+            const existingMigration: { status: "pending" | "applied" | "failed" }[] | undefined = await this
+              .prisma.$queryRaw`
+              SELECT status FROM "DataMigration"
               WHERE id = ${migration.id}
             `;
 
-            if (existingMigration?.applied) {
+            if (existingMigration?.[0]?.status === "pending") {
+              console.log(`Data migration ${migration.name} is pending. Skipping...`);
+              return;
+            }
+
+            if (existingMigration?.[0]?.status === "applied") {
               console.log(`Data migration ${migration.name} already completed. Skipping...`);
               return;
             }
 
-            const startTime = new Date();
+            // create a new data migration entry with pending status
+            await this.prisma
+              .$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
 
             if (migration.run) {
               // Run the actual migration
@@ -70,21 +77,26 @@ export class MigrationRunner {
               });
 
               // Mark migration as applied
-              await tx.$queryRaw`
-                INSERT INTO "DataMigration" (id, name, applied, started_at, finished_at)
-                VALUES (${migration.id}, ${migration.name}, true, ${startTime}, ${new Date()})
-                ON CONFLICT (id) DO UPDATE
-                SET name = ${migration.name}, applied = true, started_at = ${startTime}, finished_at = ${new Date()};
+              await this.prisma.$executeRaw`
+                UPDATE "DataMigration"
+                SET status = 'applied', finished_at = ${new Date()}
+                WHERE id = ${migration.id};
               `;
             }
 
             console.log(`Data migration ${migration.name} completed successfully`);
+            // fake delay:
           },
           { timeout: this.TRANSACTION_TIMEOUT }
         );
       } catch (error) {
         // Record migration failure
         console.error(`Data migration ${migration.name} failed:`, error);
+        // Mark migration as failed
+        await this.prisma.$queryRaw`
+          INSERT INTO "DataMigration" (id, name, status)
+          VALUES (${migration.id}, ${migration.name}, 'failed')
+        `;
         throw error;
       }
     } else {
