@@ -887,7 +887,7 @@
         "app_survey_placement": "Platzierung der Umfragen",
         "app_survey_placement_settings_description": "Ändere, wo Umfragen in deiner App oder Website angezeigt werden.",
         "centered_modal_overlay_color": "Hintergrundfarbe bei Modal-Ansicht",
-        "eliminate_branding_with_whitelabel": "Eliminiere Formbricks Branding und aktiviere zusätzliche White-Label-Anpassungsoptionen.",
+        "eliminate_branding_with_whitelabel": "Entferne Formbricks Branding und aktiviere zusätzliche White-Label-Anpassungsoptionen.",
         "enable_custom_styling": "Eigenes Styling aktivieren",
         "enable_custom_styling_description": "Erlaube Nutzern, dieses Styling im Umfrageditor zu überschreiben.",
         "failed_to_remove_logo": "Logo konnte nicht entfernt werden",
