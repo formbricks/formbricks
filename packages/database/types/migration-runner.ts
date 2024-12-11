@@ -1,7 +1,10 @@
 import { exec } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { promisify } from "node:util";
 import type { Prisma, PrismaClient } from "@prisma/client";
+
+const execAsync = promisify(exec);
 
 export interface DataMigrationContext {
   prisma: PrismaClient;
@@ -97,11 +100,11 @@ export class MigrationRunner {
       // Original Prisma migrations directory
       const originalMigrationsDir = path.resolve(__dirname, "../migrations");
       // Temporary migrations directory for controlled migration
-      const tempMigrationsDir = path.resolve(__dirname, "../temp-migrations");
+      const tempMigrationsDir = path.resolve(__dirname, "../migration");
 
-      // Ensure temp migrations directory exists
-      if (!fs.existsSync(tempMigrationsDir)) {
-        fs.mkdirSync(tempMigrationsDir, { recursive: true });
+      // Ensure prisma migrations directory exists
+      if (!fs.existsSync(originalMigrationsDir)) {
+        fs.mkdirSync(originalMigrationsDir, { recursive: true });
       }
 
       // Copy specific schema migration from temp migrations directory to original migrations directory
@@ -119,27 +122,20 @@ export class MigrationRunner {
       fs.cpSync(sourcePath, destPath, { recursive: true });
 
       // Run Prisma migrate
-      try {
-        console.log("I'm here");
-        // execSync("pnpm prisma migrate dev");
-        exec("pnpm prisma migrate dev", (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Failed to apply schema migration: ${migration.name}`, error);
-            throw error;
-          }
-          console.log(`Successfully applied schema migration: ${migration.name}`);
-
-          console.log(`stdout: ${stdout}`);
-          console.error(`stderr: ${stderr}`);
-        });
-        console.log(`Successfully applied schema migration: ${migration.name}`);
-      } catch (error) {
-        console.error(`Failed to apply schema migration: ${migration.name}`, error);
-        throw error;
-      }
-
-      // Clean up the temp migrations directory
-      fs.rmSync(sourcePath, { recursive: true, force: true });
+      // throws
+      await execAsync("pnpm prisma migrate deploy");
+      console.log(`Successfully applied schema migration: ${migration.name}`);
     }
   }
 }
+
+// async function isSchemaMigrationApplied(migrationName: string, prisma: PrismaClient): Promise<boolean> {
+//   const applied: unknown[] = await prisma.$queryRaw`
+//     SELECT 1
+//     FROM _prisma_migrations
+//     WHERE migration_name = ${migrationName}
+//       AND finished_at IS NOT NULL
+//     LIMIT 1;
+//   `;
+//   return applied.length > 0;
+// }
