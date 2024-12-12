@@ -85,9 +85,8 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./package
 RUN ls node_modules/@prisma/client
 
 # Copy Prisma-specific generated files
-COPY --from=installer node_modules/@prisma/client /home/nextjs/node_modules/@prisma/client
-COPY --from=installer node_modules/.prisma /home/nextjs/node_modules/.prisma
-
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
 
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
