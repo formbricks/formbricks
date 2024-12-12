@@ -92,8 +92,12 @@ RUN ls node_modules/@prisma/client
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
+# Copy only the required packages from installer
+COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+
 # Install ts-node globally
-RUN npm install -g tsx typescript @paralleldrive/cuid2
+RUN npm install -g tsx typescript
 
 # Change to database directory
 # WORKDIR /app/packages/database
