@@ -92,6 +92,7 @@ RUN npm install -g zod zod-prisma prisma-json-types-generator
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g @prisma/client@$PRISMA_VERSION
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
