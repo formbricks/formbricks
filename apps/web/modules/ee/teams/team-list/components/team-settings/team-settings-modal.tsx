@@ -265,7 +265,10 @@ export const TeamSettingsModal = ({
                               </SelectTrigger>
                               <SelectContent>
                                 {memberOpts.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                    id={`member-${index}-option`}>
                                     {option.label}
                                   </SelectItem>
                                 ))}
@@ -366,7 +369,10 @@ export const TeamSettingsModal = ({
                               </SelectTrigger>
                               <SelectContent>
                                 {projectOpts.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
+                                  <SelectItem
+                                    key={option.value}
+                                    value={option.value}
+                                    id={`project-${index}-option`}>
                                     {option.label}
                                   </SelectItem>
                                 ))}
