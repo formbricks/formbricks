@@ -77,3 +77,23 @@ export const ZTeamSettingsFormSchema = z.object({
 });
 
 export type TTeamSettingsFormSchema = z.infer<typeof ZTeamSettingsFormSchema>;
+
+export const ZTeamMember = z.object({
+  role: ZTeamRole,
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  isRoleEditable: z.boolean(),
+});
+
+export type TTeamMember = z.infer<typeof ZTeamMember>;
+
+export const ZTeam = z.object({
+  id: z.string(),
+  name: z.string({ message: "Team name is required" }).trim().min(1, {
+    message: "Team name must be at least 1 character long",
+  }),
+  teamUsers: z.array(ZTeamMember),
+});
+
+export type TTeam = z.infer<typeof ZTeam>;

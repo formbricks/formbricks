@@ -71,7 +71,6 @@ export const TeamSettingsModal = ({
 
   const router = useRouter();
 
-  console.log({ userTeamRole });
   const initialMembers = useMemo(() => {
     const members = team.members.map((member) => ({
       userId: member.userId,
@@ -166,7 +165,6 @@ export const TeamSettingsModal = ({
   const selectedProjectIds = watchProjects.map((p) => p.projectId);
 
   const getMemberOptionsForIndex = (index: number) => {
-    console.log("TeamSettingsModal", watchMembers);
     const currentMemberId = watchMembers[index]?.userId;
     return orgMembers
       .filter((om) => !selectedMemberIds.includes(om?.id) || om?.id === currentMemberId)
@@ -249,7 +247,7 @@ export const TeamSettingsModal = ({
                 {watchMembers.map((member, index) => {
                   const memberOpts = getMemberOptionsForIndex(index);
                   return (
-                    <div key={`member-${member.userId}`} className="flex gap-2.5">
+                    <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
                       <FormField
                         control={control}
                         name={`members.${index}.userId`}
@@ -353,7 +351,7 @@ export const TeamSettingsModal = ({
                 {watchProjects.map((project, index) => {
                   const projectOpts = getProjectOptionsForIndex(index);
                   return (
-                    <div key={`project-${project.projectId}`} className="flex gap-2.5">
+                    <div key={`project-${project.projectId}-${index}`} className="flex gap-2.5">
                       <FormField
                         control={control}
                         name={`projects.${index}.projectId`}

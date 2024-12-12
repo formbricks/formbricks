@@ -3,7 +3,6 @@ import { getMembersByOrganizationId } from "@/modules/ee/teams/team-list/lib/mem
 import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getTranslations } from "next-intl/server";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamsViewProps {
