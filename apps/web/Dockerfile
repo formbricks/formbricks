@@ -78,12 +78,17 @@ COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/we
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+
+
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+# Install ts-node globally
+RUN npm install -g ts-node typescript
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"

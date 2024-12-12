@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "clean": "rimraf .turbo node_modules",
-    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" prisma migrate deploy",
-    "db:migrate:dev": "dotenv -e ../../.env -- pnpm prisma migrate dev",
+    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" prisma generate && npm run apply-data-migrations",
+    "db:migrate:dev": "dotenv -e ../../.env -- prisma migrate dev",
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
     "db:push": "prisma db push --accept-data-loss",
     "db:up": "docker compose up -d",
@@ -39,6 +39,9 @@
     "prisma-dbml-generator": "0.12.0",
     "prisma-json-types-generator": "3.1.1",
     "ts-node": "10.9.2",
+    "vite": "6.0.3",
+    "vite-plugin-dts": "4.3.0",
+    "vite-plugin-node-polyfills": "0.22.0",
     "zod": "3.23.8",
     "zod-prisma": "0.5.4"
   }
