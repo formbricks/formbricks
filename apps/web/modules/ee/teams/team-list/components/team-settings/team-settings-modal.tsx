@@ -340,7 +340,7 @@ export const TeamSettingsModal = ({
                 <span>Add member</span>
               </Button>
               <Muted className="block text-slate-500">
-                Add members to the team and determine their role.
+                {t("environments.settings.teams.add_members_description")}
               </Muted>
             </div>
 
@@ -428,7 +428,7 @@ export const TeamSettingsModal = ({
               </Button>
 
               <Muted className="block text-slate-500">
-                Control which projects the team members can access.
+                {t("environments.settings.teams.add_projects_description")}
               </Muted>
             </div>
 

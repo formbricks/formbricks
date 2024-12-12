@@ -1218,8 +1218,10 @@
       "teams": {
         "add_member": "Add Member",
         "add_members": "Add members",
+        "add_members_description": "Add members to the team and determine their role.",
         "add_project": "Add Project",
         "add_projects": "Add projects",
+        "add_projects_description": "Control which projects the team members can access.",
         "are_you_sure_you_want_to_delete_this_team": "Are you sure you want to delete this team? This also removes the access to all the projects and surveys associated with this team.",
         "bulk_invite": "Bulk Invite",
         "contributor": "Contributor",

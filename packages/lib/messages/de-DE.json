@@ -1218,8 +1218,10 @@
       "teams": {
         "add_member": "Mitglied hinzufügen",
         "add_members": "Mitglieder hinzufügen",
+        "add_members_description": "Füge Mitglieder zum Team hinzu und bestimme ihre Rolle.",
         "add_project": "Projekt hinzufügen",
         "add_projects": "Projekte hinzufügen",
+        "add_projects_description": "Kontrolliere, auf welche Projekte die Teammitglieder zugreifen können.",
         "are_you_sure_you_want_to_delete_this_team": "Sind Sie sicher, dass Sie dieses Team löschen möchten? Dadurch wird auch der Zugriff auf alle Projekte und Umfragen entfernt, die mit diesem Team verbunden sind.",
         "bulk_invite": "Sammel-Einladung",
         "contributor": "Mitwirkender",
