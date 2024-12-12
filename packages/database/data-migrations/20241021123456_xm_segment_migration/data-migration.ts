@@ -18,6 +18,7 @@ const findAndReplace = (filters: TBaseFilters): TBaseFilters => {
       let { root } = filter.resource;
       if (root.type === "attribute") {
         // @ts-expect-error -- Legacy type
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- Legacy type
         if (root.attributeClassName as string) {
           root = {
             type: "attribute",
