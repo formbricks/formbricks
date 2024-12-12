@@ -770,6 +770,7 @@
         "source": "Quelle",
         "test_endpoint": "Test-Endpunkt",
         "triggers": "Auslöser",
+        "webhook_added_successfully": "Webhook wurde erfolgreich hinzugefügt",
         "webhook_delete_confirmation": "Bist Du sicher, dass Du diesen Webhook löschen möchtest? Dadurch werden dir keine weiteren Benachrichtigungen mehr gesendet.",
         "webhook_deleted_successfully": "Webhook erfolgreich gelöscht",
         "webhook_name_placeholder": "Optional: Benenne deinen Webhook zur einfachen Identifizierung",

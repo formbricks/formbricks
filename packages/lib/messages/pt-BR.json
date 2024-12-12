@@ -770,6 +770,7 @@
         "source": "fonte",
         "test_endpoint": "Testar Ponto de Extremidade",
         "triggers": "gatilhos",
+        "webhook_added_successfully": "Webhook adicionado com sucesso",
         "webhook_delete_confirmation": "Tem certeza de que quer deletar esse Webhook? Isso vai parar de te enviar qualquer notificação.",
         "webhook_deleted_successfully": "Webhook deletado com sucesso",
         "webhook_name_placeholder": "Opcional: Dê um nome ao seu webhook para facilitar a identificação",

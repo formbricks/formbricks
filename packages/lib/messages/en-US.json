@@ -770,6 +770,7 @@
         "source": "Source",
         "test_endpoint": "Test Endpoint",
         "triggers": "Triggers",
+        "webhook_added_successfully": "Webhook added successfully",
         "webhook_delete_confirmation": "Are you sure you want to delete this Webhook? This will stop sending you any further notifications.",
         "webhook_deleted_successfully": "Webhook deleted successfully",
         "webhook_name_placeholder": "Optional: Label your webhook for easy identification",
