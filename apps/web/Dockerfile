@@ -89,30 +89,25 @@ COPY /docker/cronjobs /app/docker/cronjobs
 RUN npm install -g ts-node typescript
 
 # Change to database directory
-WORKDIR /app/packages/database
+# WORKDIR /app/packages/database
 
 # # Install Prisma globally
-# RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install prisma@$PRISMA_VERSION && npm install @prisma/client@$PRISMA_VERSION
-# RUN npm install -g zod zod-prisma prisma-json-types-generator
-
-# Additional debugging step
-# RUN ls -l node_modules/@prisma/client
-# RUN node -e "try { console.log(require.resolve('@prisma/client')) } catch(e) { console.error(e) }"
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && cd packages/database && pnpm install prisma@$PRISMA_VERSION && pnpm install @prisma/client@$PRISMA_VERSION
+RUN cd packages/database && pnpm install zod zod-prisma prisma-json-types-generator
 
 # RUN prisma generate
 
 # Install dependencies specifically in this directory
-RUN pnpm install
+# RUN pnpm install
 
 # Generate Prisma client
-RUN pnpm prisma generate
+# RUN pnpm prisma generate
 
 # Verify Prisma client generation
 RUN ls node_modules/@prisma/client
-RUN node -e "console.log(require.resolve('@prisma/client'))"
 
 # Change back to the working directory
-WORKDIR /home/nextjs
+# WORKDIR /home/nextjs
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
