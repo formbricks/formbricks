@@ -100,7 +100,7 @@ RUN npm install -g ts-node typescript
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION @prisma/client@$PRISMA_VERSION
 RUN npm install -g zod zod-prisma prisma-json-types-generator
 
-# RUN prisma generate
+RUN prisma generate
 
 # Install dependencies specifically in this directory
 # RUN pnpm install
