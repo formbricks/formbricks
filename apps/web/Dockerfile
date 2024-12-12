@@ -68,6 +68,11 @@ RUN apk add --no-cache curl \
     # && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
+RUN apk update \
+	&& apk add --no-cache openssl\
+	&& rm -rf /var/lib/apt/lists/* \
+	&& rm -rf /var/cache/apk/*
+
 WORKDIR /home/nextjs
 
 COPY --from=installer /app/apps/web/next.config.mjs .
@@ -92,8 +97,8 @@ RUN npm install -g ts-node typescript
 # WORKDIR /app/packages/database
 
 # # Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && cd packages/database && pnpm install prisma@$PRISMA_VERSION && pnpm install @prisma/client@$PRISMA_VERSION
-RUN cd packages/database && pnpm install zod zod-prisma prisma-json-types-generator
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION @prisma/client@$PRISMA_VERSION
+RUN npm install -g zod zod-prisma prisma-json-types-generator
 
 # RUN prisma generate
 
