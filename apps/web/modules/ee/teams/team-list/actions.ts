@@ -10,7 +10,12 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/ee/teams/team-list/lib/membership";
-import { createTeam, deleteTeam, getTeamDetails, updateTeam } from "@/modules/ee/teams/team-list/lib/team";
+import {
+  createTeam,
+  deleteTeam,
+  getTeamDetails,
+  updateTeamDetails,
+} from "@/modules/ee/teams/team-list/lib/team";
 import { ZTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/teams";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
@@ -354,7 +359,7 @@ const ZUpdateTeamAction = z.object({
   data: ZTeamSettingsFormSchema,
 });
 
-export const updateTeamAction = authenticatedActionClient
+export const updateTeamDetailsAction = authenticatedActionClient
   .schema(ZUpdateTeamAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromTeamId(parsedInput.teamId);
@@ -372,5 +377,5 @@ export const updateTeamAction = authenticatedActionClient
 
     await checkRoleManagementPermission(organizationId);
 
-    return await updateTeam(parsedInput.teamId, parsedInput.data);
+    return await updateTeamDetails(parsedInput.teamId, parsedInput.data);
   });

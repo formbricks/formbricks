@@ -1266,6 +1266,7 @@
         "team_projects": "Team Projects",
         "team_select_placeholder": "Search team name...",
         "team_settings_description": "Manage team members, access rights, and more.",
+        "team_updated_successfully": "Team updated successfully",
         "teams": "Teams",
         "teams_description": "Assign members into teams and give teams access to projects.",
         "this_action_cannot_be_undone_if_it_s_gone_it_s_gone": "This action cannot be undone. If it's gone, it's gone.",
