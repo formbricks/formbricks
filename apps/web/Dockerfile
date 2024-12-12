@@ -93,7 +93,7 @@ COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
 # Install ts-node globally
-RUN npm install -g ts-node typescript
+RUN npm install -g tsx typescript
 
 # Change to database directory
 # WORKDIR /app/packages/database
