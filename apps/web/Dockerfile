@@ -92,6 +92,9 @@ RUN npm install -g ts-node typescript
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION && npm install -g @prisma/client@$PRISMA_VERSION
 RUN npm install -g zod zod-prisma prisma-json-types-generator
 RUN prisma generate
+# Additional debugging step
+RUN ls -l node_modules/@prisma/client
+RUN node -e "try { console.log(require.resolve('@prisma/client')) } catch(e) { console.error(e) }"
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
