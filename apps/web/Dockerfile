@@ -85,10 +85,12 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./package
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+
 # Install ts-node globally
 RUN npm install -g ts-node typescript
+
+# Install Prisma globally
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
