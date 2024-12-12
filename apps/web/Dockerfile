@@ -85,14 +85,12 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./package
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-
 # Install ts-node globally
 RUN npm install -g ts-node typescript
-RUN npm install -g zod zod-prisma prisma-json-types-generator
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g @prisma/client@$PRISMA_VERSION
+RUN cd packages/database && PRISMA_VERSION=$(cat prisma_version.txt) && npm i @prisma/client@PRISMA_VERSION zod zod-prisma prisma-json-types-generator
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
