@@ -89,8 +89,9 @@ COPY /docker/cronjobs /app/docker/cronjobs
 RUN npm install -g ts-node typescript
 
 # Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION && npm install -g @prisma/client@$PRISMA_VERSION
 RUN npm install -g zod zod-prisma prisma-json-types-generator
+RUN prisma generate
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
