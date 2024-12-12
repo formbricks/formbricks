@@ -1,7 +1,7 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
@@ -18,6 +18,7 @@ import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
+  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const params = await props.params;
   const t = await getTranslations();
   const { environmentId } = params;
@@ -79,6 +80,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
               user={user}
               organizationsWithSingleOwner={organizationsWithSingleOwner}
+              isMultiOrgEnabled={isMultiOrgEnabled}
             />
           </SettingsCard>
           <SettingsId title={t("common.profile")} id={user.id}></SettingsId>

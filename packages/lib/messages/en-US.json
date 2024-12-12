@@ -1213,6 +1213,7 @@
         "two_factor_code": "Two-Factor Code",
         "update_personal_info": "Update your personal information",
         "upload_image": "Upload image",
+        "warning_cannot_delete_account": "You are the only owner of this organization. Please transfer ownership to another member first.",
         "warning_cannot_undo": "This cannot be undone",
         "you_must_select_a_file": "You must select a file."
       },
