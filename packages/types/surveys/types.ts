@@ -481,11 +481,13 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
   insightsEnabled: z.boolean().default(false).optional(),
-  charLimit: z.object({
-    enabled: z.boolean().default(false).optional(),
-    min: z.number().optional(),
-    max: z.number().optional(),
-  }),
+  charLimit: z
+    .object({
+      enabled: z.boolean().default(false).optional(),
+      min: z.number().optional(),
+      max: z.number().optional(),
+    })
+    .default({ enabled: false }),
 }).superRefine((data, ctx) => {
   if (data.charLimit.enabled && data.charLimit.min === undefined && data.charLimit.max === undefined) {
     ctx.addIssue({
