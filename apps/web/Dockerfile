@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine3.20 AS base
 
 #
 ## step 1: Prune monorepo
@@ -90,7 +90,7 @@ RUN npm install -g ts-node typescript
 
 # Install Prisma globally
 RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && cd packages/database && npm i @prisma/client@$PRISMA_VERSION zod zod-prisma prisma-json-types-generator
+RUN npm install -g zod zod-prisma prisma-json-types-generator
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
