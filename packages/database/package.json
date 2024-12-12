@@ -23,7 +23,7 @@
     "lint": "eslint ./src --fix",
     "build": "pnpm generate",
     "generate-data-migration": "ts-node ./src/scripts/generate-data-migration.ts",
-    "apply-data-migrations": "npm run generate && ts-node ./src/scripts/apply-data-migrations.ts",
+    "apply-data-migrations": "ts-node ./src/scripts/apply-data-migrations.ts",
     "create-migration": "dotenv -e ../../.env -- ts-node ./src/scripts/create-migration.ts"
   },
   "dependencies": {
