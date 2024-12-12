@@ -8,10 +8,12 @@ import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project
 import {
   TOrganizationMember,
   TTeamDetails,
+  TTeamRole,
   TTeamSettingsFormSchema,
   ZTeamRole,
   ZTeamSettingsFormSchema,
 } from "@/modules/ee/teams/team-list/types/teams";
+import { getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -27,10 +29,13 @@ import { H4, Muted } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamSettingsModalProps {
   open: boolean;
@@ -38,6 +43,9 @@ interface TeamSettingsModalProps {
   team: TTeamDetails;
   orgMembers: TOrganizationMember[];
   orgProjects: TOrganizationProject[];
+  membershipRole?: TOrganizationRole;
+  userTeamRole: TTeamRole | undefined;
+  currentUserId: string;
 }
 
 export const TeamSettingsModal = ({
@@ -46,9 +54,24 @@ export const TeamSettingsModal = ({
   team,
   orgMembers,
   orgProjects,
+  userTeamRole,
+  membershipRole,
+  currentUserId,
 }: TeamSettingsModalProps) => {
   const t = useTranslations();
 
+  const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isOwner || isManager;
+
+  const { isAdmin, isContributor } = getTeamAccessFlags(userTeamRole);
+
+  const isTeamAdminMember = isMember && isAdmin;
+  const isTeamContributorMember = isMember && isContributor;
+
+  const router = useRouter();
+
+  console.log({ userTeamRole });
   const initialMembers = useMemo(() => {
     const members = team.members.map((member) => ({
       userId: member.userId,
@@ -104,6 +127,7 @@ export const TeamSettingsModal = ({
     if (updatedTeamActionResponse?.data) {
       toast.success(t("environments.settings.teams.team_updated_successfully"));
       closeSettingsModal();
+      router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updatedTeamActionResponse);
       toast.error(errorMessage);
@@ -206,7 +230,12 @@ export const TeamSettingsModal = ({
                 <FormItem>
                   <FormLabel>Team name</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Team name" {...field} />
+                    <Input
+                      type="text"
+                      placeholder="Team name"
+                      {...field}
+                      disabled={!isOwnerOrManager && !isTeamAdminMember}
+                    />
                   </FormControl>
                   {error?.message && <FormError className="text-left">{error.message}</FormError>}
                 </FormItem>
@@ -231,6 +260,7 @@ export const TeamSettingsModal = ({
                                 field.onChange(val);
                                 handleMemberSelectionChange(index, val);
                               }}
+                              disabled={!isOwnerOrManager && !isTeamAdminMember}
                               value={member.userId}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select member" />
@@ -260,9 +290,14 @@ export const TeamSettingsModal = ({
                                 const chosenMember = orgMembers.find(
                                   (m) => m.id === watchMembers[index]?.userId
                                 );
-                                return chosenMember
-                                  ? chosenMember.role === "owner" || chosenMember.role === "manager"
-                                  : false;
+                                if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
+
+                                return (
+                                  chosenMember.role === "owner" ||
+                                  chosenMember.role === "manager" ||
+                                  isTeamContributorMember ||
+                                  chosenMember.id === currentUserId
+                                );
                               })()}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select role" />
@@ -286,6 +321,9 @@ export const TeamSettingsModal = ({
                         type="button"
                         variant="secondary"
                         className="shrink-0"
+                        disabled={
+                          !isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)
+                        }
                         onClick={() => handleRemoveMember(index)}>
                         <Trash2Icon className="h-4 w-4" />
                       </Button>
@@ -294,7 +332,12 @@ export const TeamSettingsModal = ({
                 })}
               </div>
 
-              <Button size="default" type="button" variant="secondary" onClick={handleAddMember}>
+              <Button
+                size="default"
+                type="button"
+                variant="secondary"
+                onClick={handleAddMember}
+                disabled={!isOwnerOrManager && !isTeamAdminMember}>
                 <PlusIcon className="h-4 w-4" />
                 <span>Add member</span>
               </Button>
@@ -316,7 +359,10 @@ export const TeamSettingsModal = ({
                         name={`projects.${index}.projectId`}
                         render={({ field, fieldState: { error } }) => (
                           <FormItem className="flex-1">
-                            <Select onValueChange={field.onChange} value={project.projectId || ""}>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={project.projectId}
+                              disabled={!isOwnerOrManager}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select project" />
                               </SelectTrigger>
@@ -338,7 +384,10 @@ export const TeamSettingsModal = ({
                         name={`projects.${index}.permission`}
                         render={({ field }) => (
                           <FormItem className="flex-1">
-                            <Select onValueChange={field.onChange} value={project.permission}>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={project.permission}
+                              disabled={!isOwnerOrManager}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select project role" />
                               </SelectTrigger>
@@ -357,12 +406,12 @@ export const TeamSettingsModal = ({
                           </FormItem>
                         )}
                       />
-
                       <Button
                         size="icon"
                         type="button"
                         variant="secondary"
                         className="shrink-0"
+                        disabled={!isOwnerOrManager}
                         onClick={() => handleRemoveProject(index)}>
                         <Trash2Icon className="h-4 w-4" />
                       </Button>
@@ -370,16 +419,28 @@ export const TeamSettingsModal = ({
                   );
                 })}
               </div>
-              <Button size="default" type="button" variant="secondary" onClick={handleAddProject}>
+              <Button
+                size="default"
+                type="button"
+                variant="secondary"
+                onClick={handleAddProject}
+                disabled={!isOwnerOrManager}>
                 <PlusIcon className="h-4 w-4" />
                 <span>Add project</span>
               </Button>
+
               <Muted className="block text-slate-500">
                 Control which projects the team members can access.
               </Muted>
             </div>
 
-            <DeleteTeam teamId={team.id} onDelete={closeSettingsModal} />
+            <div className="w-max">
+              <DeleteTeam
+                teamId={team.id}
+                onDelete={closeSettingsModal}
+                isOwnerOrManager={isOwnerOrManager}
+              />
+            </div>
             <div className="flex justify-between">
               <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
                 {t("common.cancel")}

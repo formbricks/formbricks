@@ -3,11 +3,11 @@
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
-import { UploadIcon, XIcon } from "lucide-react";
+import { XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { ZInvitees } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";

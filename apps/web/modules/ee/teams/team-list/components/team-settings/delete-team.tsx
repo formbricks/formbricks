@@ -5,6 +5,7 @@ import { TTeam } from "@/modules/ee/teams/team-details/types/teams";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Label } from "@/modules/ui/components/label";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,9 +14,10 @@ import toast from "react-hot-toast";
 interface DeleteTeamProps {
   teamId: TTeam["id"];
   onDelete?: () => void;
+  isOwnerOrManager: boolean;
 }
 
-export const DeleteTeam = ({ teamId, onDelete }: DeleteTeamProps) => {
+export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamProps) => {
   const t = useTranslations();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,19 +40,37 @@ export const DeleteTeam = ({ teamId, onDelete }: DeleteTeamProps) => {
     setIsDeleting(false);
   };
 
+  const DeleteButton = () => (
+    <Button
+      variant="destructive"
+      size="sm"
+      type="button"
+      id="deleteTeamButton"
+      className="w-auto"
+      disabled={!isOwnerOrManager}
+      onClick={() => setIsDeleteDialogOpen(true)}>
+      {t("environments.settings.teams.delete_team")}
+    </Button>
+  );
+
+  if (!isOwnerOrManager) {
+    return (
+      <div className="flex flex-col space-y-2">
+        <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
+        <TooltipRenderer
+          tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}
+          className="w-auto">
+          <DeleteButton />
+        </TooltipRenderer>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="flex w-auto flex-col space-y-2">
-        <Label htmlFor="deleteTeamButton">Danger zone</Label>
-        <Button
-          variant="destructive"
-          size="sm"
-          type="button"
-          id="deleteTeamButton"
-          className="w-max"
-          onClick={() => setIsDeleteDialogOpen(true)}>
-          {t("environments.settings.teams.delete_team")}
-        </Button>
+      <div className="flex flex-col space-y-2">
+        <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
+        <DeleteButton />
       </div>
 
       {isDeleteDialogOpen && (

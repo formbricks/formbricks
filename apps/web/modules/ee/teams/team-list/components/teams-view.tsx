@@ -20,10 +20,6 @@ export const TeamsView = async ({ organizationId, membershipRole, currentUserId 
   if (!teams) {
     throw new Error(t("common.teams_not_found"));
   }
-  const { isOwner, isManager } = getAccessFlags(membershipRole);
-
-  const isOwnerOrManager = isOwner || isManager;
-
   const orgMembers = await getMembersByOrganizationId(organizationId);
 
   const orgProjects = await getProjectsByOrganizationId(organizationId);
@@ -31,10 +27,11 @@ export const TeamsView = async ({ organizationId, membershipRole, currentUserId 
   return (
     <TeamsTable
       teams={teams}
-      isOwnerOrManager={isOwnerOrManager}
+      membershipRole={membershipRole}
       organizationId={organizationId}
       orgMembers={orgMembers}
       orgProjects={orgProjects}
+      currentUserId={currentUserId}
     />
   );
 };

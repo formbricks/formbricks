@@ -1,7 +1,8 @@
 "use client";
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
@@ -9,6 +10,7 @@ import {
   TOrganizationMember,
   TOtherTeam,
   TTeamDetails,
+  TTeamRole,
   TUserTeam,
 } from "@/modules/ee/teams/team-list/types/teams";
 import { Badge } from "@/modules/ui/components/badge";
@@ -16,31 +18,48 @@ import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface YourTeamsProps {
   teams: { userTeams: TUserTeam[]; otherTeams: TOtherTeam[] };
   organizationId: string;
-  isOwnerOrManager: boolean;
   orgMembers: TOrganizationMember[];
   orgProjects: TOrganizationProject[];
+  membershipRole?: TOrganizationRole;
+  currentUserId: string;
 }
 
 export const TeamsTable = ({
   teams,
   organizationId,
-  isOwnerOrManager,
   orgMembers,
   orgProjects,
+  membershipRole,
+  currentUserId,
 }: YourTeamsProps) => {
   const t = useTranslations();
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TTeamDetails>();
+  const [userTeamRole, setUserTeamRole] = useState<TTeamRole | undefined>();
+
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+
+  const isOwnerOrManager = isOwner || isManager;
 
   const handleManageTeam = async (teamId: string) => {
     const teamDetailsResponse = await getTeamDetailsAction({ teamId });
+    const teamRoleResult = await getTeamRoleAction({ teamId });
+
+    setUserTeamRole(teamRoleResult?.data ?? undefined);
+
     if (teamDetailsResponse?.data) {
       setSelectedTeam(teamDetailsResponse.data);
       setOpenSettingsModal(true);
+    } else {
+      const errorMessage = getFormattedErrorMessage(teamDetailsResponse);
+      toast.error(errorMessage);
     }
   };
 
@@ -110,14 +129,16 @@ export const TeamsTable = ({
                   </TableCell>
                   <TableCell></TableCell>
                   <TableCell className="flex justify-end">
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        handleManageTeam(team.id);
-                      }}>
-                      {t("environments.settings.teams.manage_team")}
-                    </Button>
+                    {isOwnerOrManager && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          handleManageTeam(team.id);
+                        }}>
+                        {t("environments.settings.teams.manage_team")}
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -132,6 +153,9 @@ export const TeamsTable = ({
           team={selectedTeam}
           orgMembers={orgMembers}
           orgProjects={orgProjects}
+          membershipRole={membershipRole}
+          userTeamRole={userTeamRole}
+          currentUserId={currentUserId}
         />
       )}
     </>

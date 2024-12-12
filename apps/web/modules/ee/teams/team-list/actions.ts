@@ -5,6 +5,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import { getOrganizationIdFromInviteId, getOrganizationIdFromTeamId } from "@/lib/utils/helper";
 import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
+import { getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import {
   deleteMembership,
   getMembershipsByUserId,
@@ -322,6 +323,11 @@ export const getTeamDetailsAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
+        {
+          teamId: parsedInput.teamId,
+          type: "team",
+          minPermission: "contributor",
+        },
       ],
     });
 
@@ -372,10 +378,25 @@ export const updateTeamDetailsAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
+        {
+          type: "team",
+          teamId: parsedInput.teamId,
+          minPermission: "admin",
+        },
       ],
     });
 
     await checkRoleManagementPermission(organizationId);
 
     return await updateTeamDetails(parsedInput.teamId, parsedInput.data);
+  });
+
+const ZGetTeamRoleAction = z.object({
+  teamId: ZId,
+});
+
+export const getTeamRoleAction = authenticatedActionClient
+  .schema(ZGetTeamRoleAction)
+  .action(async ({ ctx, parsedInput }) => {
+    return await getTeamRoleByTeamIdUserId(parsedInput.teamId, ctx.user.id);
   });
