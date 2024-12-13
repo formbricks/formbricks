@@ -1,8 +1,9 @@
 import { exec } from "node:child_process";
-import fs from "node:fs";
+import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { promisify } from "node:util";
+import { applyMigrations } from "./migration-runner";
 
 const execAsync = promisify(exec);
 
@@ -32,13 +33,10 @@ async function main(): Promise<void> {
   const migrationsDir = path.resolve(__dirname, "../../migrations");
   const customMigrationsDir = path.resolve(__dirname, "../../migration");
 
-  // Ensure custom migrations directory exists
-  if (!fs.existsSync(customMigrationsDir)) {
-    fs.mkdirSync(customMigrationsDir, { recursive: true });
-  }
-
   const migrationNameUnderscored = migrationName.replace(/\s+/g, "_");
-  const migrationToCopy = fs.readdirSync(migrationsDir).find((dir) => dir.includes(migrationNameUnderscored));
+  const migrationToCopy = await fs
+    .readdir(migrationsDir)
+    .then((files) => files.find((dir) => dir.includes(migrationNameUnderscored)));
 
   if (!migrationToCopy) {
     throw new Error(`migration not found: ${migrationName}`);
@@ -46,17 +44,18 @@ async function main(): Promise<void> {
 
   // check if the migrationToCopy is empty:
   const migrationToCopyPath = path.join(migrationsDir, migrationToCopy);
-  const files = fs.readdirSync(migrationToCopyPath);
+  const files = await fs.readdir(migrationToCopyPath);
+
   if (!files.includes("migration.sql")) {
-    fs.rmSync(migrationToCopyPath, { recursive: true, force: true });
+    await fs.rm(migrationToCopyPath, { recursive: true, force: true });
     throw new Error(
       `generated migration directory is empty: ${migrationName}. Please run the migration again.`
     );
   } else {
-    const migrationSQL = fs.readFileSync(path.join(migrationToCopyPath, "migration.sql"), "utf-8");
+    const migrationSQL = await fs.readFile(path.join(migrationToCopyPath, "migration.sql"), "utf-8");
 
     if (migrationSQL === "-- This is an empty migration.") {
-      fs.rmSync(migrationToCopyPath, { recursive: true, force: true });
+      await fs.rm(migrationToCopyPath, { recursive: true, force: true });
       throw new Error(
         "Database schema has not changed. Please make changes to the schema and run the migration again."
       );
@@ -67,10 +66,18 @@ async function main(): Promise<void> {
   const destPath = path.join(customMigrationsDir, migrationToCopy);
 
   // Copy migration folder
-  fs.cpSync(sourcePath, destPath, { recursive: true });
+  await fs.cp(sourcePath, destPath, { recursive: true });
 
   // Delete the migration from the original migrations folder
-  fs.rmSync(sourcePath, { recursive: true, force: true });
+  await fs.rm(sourcePath, { recursive: true, force: true });
+
+  try {
+    await applyMigrations();
+  } catch (err) {
+    console.error("Error applying migrations: ", err);
+    // delete the created migration directories:
+    await fs.rm(destPath, { recursive: true, force: true });
+  }
 }
 
 main().catch((error: unknown) => {

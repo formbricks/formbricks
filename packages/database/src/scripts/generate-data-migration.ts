@@ -67,11 +67,10 @@ function promptForMigrationName(): Promise<string> {
 
 function generateTimestamp(): string {
   const now = new Date();
-  return `${now.getFullYear().toString()}${padZero(now.getMonth() + 1)}${padZero(now.getDate())}${padZero(now.getHours())}${padZero(now.getMinutes())}${padZero(now.getSeconds())}`;
-}
+  // use UTC time to avoid timezone issues
 
-function padZero(value: number): string {
-  return value.toString().padStart(2, "0");
+  const utcTime = now.toISOString().replace(/[-:]/g, "").replace("T", "").replace("Z", "").slice(0, 14);
+  return utcTime;
 }
 
 function getTemplateContent(migrationName: string, fullMigrationName: string): string {

@@ -15,7 +15,7 @@
     "db:migrate:vercel": "if test \"$NEXT_PUBLIC_VERCEL_ENV\" = \"preview\" ; then env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma db push --accept-data-loss ; else env DATABASE_URL=\"$MIGRATE_DATABASE_URL\" prisma migrate deploy ; fi",
     "db:push": "prisma db push --accept-data-loss",
     "db:up": "docker compose up -d",
-    "db:setup": "pnpm db:up && pnpm prisma generate && dotenv -e ../../.env -- pnpm apply-migrations",
+    "db:setup": "pnpm db:up && pnpm prisma generate && pnpm apply-migrations:dev",
     "db:start": "pnpm db:setup",
     "db:down": "docker compose down",
     "format": "prisma format",
@@ -23,6 +23,7 @@
     "lint": "eslint ./src --fix",
     "build": "pnpm generate",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
+    "apply-migrations:dev": "dotenv -e ../../.env -- tsx ./src/scripts/apply-migrations.ts",
     "apply-migrations": "tsx ./src/scripts/apply-migrations.ts",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
