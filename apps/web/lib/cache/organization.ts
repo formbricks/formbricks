@@ -22,21 +22,21 @@ export const organizationCache = {
       return "organizations-count";
     },
   },
-  revalidate({ id, userId, environmentId, count }: RevalidateProps): void {
+  revalidate: ({ id, userId, environmentId, count }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(organizationCache.tag.byId(id));
     }
 
     if (userId) {
-      revalidateTag(this.tag.byUserId(userId));
+      revalidateTag(organizationCache.tag.byUserId(userId));
     }
 
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(organizationCache.tag.byEnvironmentId(environmentId));
     }
 
     if (count) {
-      revalidateTag(this.tag.byCount());
+      revalidateTag(organizationCache.tag.byCount());
     }
   },
 };
