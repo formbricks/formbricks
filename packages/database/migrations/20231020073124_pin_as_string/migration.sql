@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "Survey" ALTER COLUMN "pin" SET DATA TYPE TEXT;
