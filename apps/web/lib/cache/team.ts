@@ -22,18 +22,18 @@ export const teamCache = {
       return `organization-${organizationId}-teams`;
     },
   },
-  revalidate({ id, projectId, userId, organizationId }: RevalidateProps): void {
+  revalidate: ({ id, projectId, userId, organizationId }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(teamCache.tag.byId(id));
     }
     if (projectId) {
-      revalidateTag(this.tag.byProjectId(projectId));
+      revalidateTag(teamCache.tag.byProjectId(projectId));
     }
     if (userId) {
-      revalidateTag(this.tag.byUserId(userId));
+      revalidateTag(teamCache.tag.byUserId(userId));
     }
     if (organizationId) {
-      revalidateTag(this.tag.byOrganizationId(organizationId));
+      revalidateTag(teamCache.tag.byOrganizationId(organizationId));
     }
   },
 };
