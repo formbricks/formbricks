@@ -19,7 +19,7 @@ import {
 } from "@/lib/utils/services";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getFormattedErrorMessage = (result) => {
+export const getFormattedErrorMessage = (result): string => {
   let message = "";
 
   if (result.serverError) {

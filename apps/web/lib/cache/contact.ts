@@ -18,17 +18,17 @@ export const contactCache = {
       return `environments-${environmentId}-contactByUserId-${userId}`;
     },
   },
-  revalidate({ id, environmentId, userId }: RevalidateProps): void {
+  revalidate: ({ id, environmentId, userId }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(contactCache.tag.byId(id));
     }
 
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(contactCache.tag.byEnvironmentId(environmentId));
     }
 
     if (environmentId && userId) {
-      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
+      revalidateTag(contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId));
     }
   },
 };
