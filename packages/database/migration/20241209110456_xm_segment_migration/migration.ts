@@ -48,7 +48,7 @@ const findAndReplace = (filters: any): any => {
 export const xmSegmentMigration: DataMigrationScript = {
   type: "data",
   id: "s644oyyqccstfdeejc4fluye",
-  name: "xmSegmentMigration",
+  name: "20241209110456_xm_segment_migration",
   run: async ({ tx }) => {
     const allSegments = await tx.segment.findMany();
     const updationPromises = [];

@@ -5,7 +5,7 @@ import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 export const xmAttributeRemoval: DataMigrationScript = {
   type: "data",
   id: "mq9x7rjdnq0saxoli9pl9b3o",
-  name: "xmAttributeRemoval",
+  name: "20241209111404_xm_attribute_removal",
   run: async ({ tx }) => {
     // Your migration script goes here
     const emailAttributes: {

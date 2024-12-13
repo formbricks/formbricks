@@ -12,7 +12,7 @@ const projectsLimitByPlan: Record<Plan, number | null> = {
 export const productRevamp: DataMigrationScript = {
   type: "data",
   id: "wq3b8pvrvm70nzmsg2647olq",
-  name: "productRevamp",
+  name: "20241209111725_product_revamp",
   run: async ({ tx }) => {
     // Your migration script goes here
 

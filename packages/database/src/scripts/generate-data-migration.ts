@@ -8,7 +8,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-const migrationsDir = path.resolve(__dirname, "../data-migrations");
+const migrationsDir = path.resolve(__dirname, "../../migration");
 
 async function createMigration(): Promise<void> {
   try {
@@ -30,9 +30,9 @@ async function createMigration(): Promise<void> {
       .replace(/\s+/g, "");
 
     const timestamp = generateTimestamp();
-    const migrationFolder = `${timestamp}_${migrationName}`;
-    const fullMigrationPath = path.join(migrationsDir, migrationFolder);
-    const filePath = path.join(fullMigrationPath, "data-migration.ts");
+    const migrationNameTimestamped = `${timestamp}_${migrationName}`;
+    const fullMigrationPath = path.join(migrationsDir, migrationNameTimestamped);
+    const filePath = path.join(fullMigrationPath, "migration.ts");
 
     // Check if the migration already exists
     if (fs.existsSync(fullMigrationPath)) {
@@ -45,7 +45,7 @@ async function createMigration(): Promise<void> {
     console.log("Created migration directory:", fullMigrationPath);
 
     // Create the migration file
-    fs.writeFileSync(filePath, getTemplateContent(migrationFunctionName));
+    fs.writeFileSync(filePath, getTemplateContent(migrationFunctionName, migrationNameTimestamped));
     console.log(`New migration created: ${filePath}`);
   } catch (error) {
     console.error("Detailed Error:", error);
@@ -74,16 +74,16 @@ function padZero(value: number): string {
   return value.toString().padStart(2, "0");
 }
 
-function getTemplateContent(migrationName: string): string {
+function getTemplateContent(migrationName: string, fullMigrationName: string): string {
   const migrationId = createId();
 
   return `
-import type { DataMigrationScript } from "../../types/migration-runner";
+import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 
 export const ${migrationName}: DataMigrationScript = {
   type: "data",
   id: "${migrationId}",
-  name: "${migrationName}",
+  name: "${fullMigrationName}",
   run: async ({ tx }) => {
     // Your migration script goes here
   }

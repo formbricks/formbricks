@@ -33,7 +33,7 @@ export const BILLING_LIMITS = {
 export const updateOrgLimits: DataMigrationScript = {
   type: "data",
   id: "ax4otbz2f295rit6kn1jeu8l",
-  name: "updateOrgLimits",
+  name: "20241209111525_update_org_limits",
   run: async ({ tx }) => {
     // Your migration script goes here
     // Find organizations that need updates

@@ -8,7 +8,7 @@ import type { DataMigrationScript } from "../../src/scripts/migration-runner";
 export const xmUserIdentification: DataMigrationScript = {
   type: "data",
   id: "n2u5d3wmcw1t2h8a4vgfu2y9",
-  name: "xmUserIdentification",
+  name: "20241209104738_xm_user_identification",
   run: async ({ tx }) => {
     // Check total contacts
     const [{ total_contacts: totalContacts }] = await tx.$queryRaw<[{ total_contacts: number }]>`
