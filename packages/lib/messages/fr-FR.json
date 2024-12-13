@@ -2270,6 +2270,7 @@
     "default_ending_card_button_label": "Créez votre propre enquête",
     "default_ending_card_headline": "Merci !",
     "default_ending_card_subheader": "Nous apprécions vos retours.",
+    "default_welcome_card_button_label": "Suivant",
     "default_welcome_card_headline": "Bienvenue !",
     "default_welcome_card_html": "Merci pour vos retours - allons-y !",
     "docs_feedback_description": "Mesurez la clarté de chaque page de votre documentation pour développeurs.",
