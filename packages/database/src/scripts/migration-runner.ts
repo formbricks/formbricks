@@ -133,8 +133,6 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
       .then(() => true)
       .catch(() => false);
 
-    console.log("originalMigrationsDirExists", originalMigrationsDirExists);
-
     if (!originalMigrationsDirExists) {
       await fs.mkdir(originalMigrationsDir, { recursive: true });
     }
@@ -143,8 +141,6 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
     const migrationToCopy = await fs
       .readdir(customMigrationsDir)
       .then((files) => files.find((dir) => dir.includes(migration.name)));
-
-    console.log("migrationToCopy", migrationToCopy);
 
     if (!migrationToCopy) {
       console.error(`Schema migration not found: ${migration.name}`);
