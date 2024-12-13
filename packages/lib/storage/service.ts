@@ -310,7 +310,11 @@ export const putFile = async (
   }
 };
 
-export const deleteFile = async (environmentId: string, accessType: TAccessType, fileName: string) => {
+export const deleteFile = async (
+  environmentId: string,
+  accessType: TAccessType,
+  fileName: string
+): Promise<{ success: boolean; message: string; code?: number }> => {
   if (!isS3Configured()) {
     try {
       await deleteLocalFile(path.join(UPLOADS_DIR, environmentId, accessType, fileName));
