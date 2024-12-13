@@ -14,13 +14,13 @@ export const membershipCache = {
       return `users-${userId}-memberships`;
     },
   },
-  revalidate({ organizationId, userId }: RevalidateProps): void {
+  revalidate: ({ organizationId, userId }: RevalidateProps): void => {
     if (organizationId) {
-      revalidateTag(this.tag.byOrganizationId(organizationId));
+      revalidateTag(membershipCache.tag.byOrganizationId(organizationId));
     }
 
     if (userId) {
-      revalidateTag(this.tag.byUserId(userId));
+      revalidateTag(membershipCache.tag.byUserId(userId));
     }
   },
 };

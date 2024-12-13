@@ -1,11 +1,14 @@
 import { responses } from "@/app/lib/api/response";
 import { notFound } from "next/navigation";
-import path from "path";
-import { UPLOADS_DIR } from "@formbricks/lib/constants";
-import { isS3Configured } from "@formbricks/lib/constants";
+import path from "node:path";
+import { UPLOADS_DIR, isS3Configured } from "@formbricks/lib/constants";
 import { getLocalFile, getS3File } from "@formbricks/lib/storage/service";
 
-export const getFile = async (environmentId: string, accessType: string, fileName: string) => {
+export const getFile = async (
+  environmentId: string,
+  accessType: string,
+  fileName: string
+): Promise<Response> => {
   if (!isS3Configured()) {
     try {
       const { fileBuffer, metaData } = await getLocalFile(
@@ -32,15 +35,16 @@ export const getFile = async (environmentId: string, accessType: string, fileNam
       status: 302,
       headers: {
         Location: signedUrl,
-        // public file, cache for one hour, private file, cache for 10 minutes
-        "Cache-Control": `public, max-age=${accessType === "public" ? 3600 : 600}, s-maxage=3600, stale-while-revalidate=300`,
+        "Cache-Control":
+          accessType === "public"
+            ? `public, max-age=3600, s-maxage=3600, stale-while-revalidate=300`
+            : `public, max-age=600, s-maxage=3600, stale-while-revalidate=300`,
       },
     });
-  } catch (err) {
-    if (err.name === "NoSuchKey") {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "NoSuchKey") {
       return responses.notFoundResponse("File not found", fileName);
-    } else {
-      return responses.internalServerErrorResponse("Internal server error");
     }
+    return responses.internalServerErrorResponse("Internal server error");
   }
 };

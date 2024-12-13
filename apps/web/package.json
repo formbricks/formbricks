@@ -38,6 +38,7 @@
     "@opentelemetry/instrumentation": "0.53.0",
     "@opentelemetry/sdk-logs": "0.53.0",
     "@paralleldrive/cuid2": "2.2.2",
+    "@prisma/client": "5.20.0",
     "@radix-ui/react-accordion": "1.2.0",
     "@radix-ui/react-checkbox": "1.1.1",
     "@radix-ui/react-collapsible": "1.1.1",
@@ -87,6 +88,7 @@
     "lucide-react": "0.452.0",
     "mime": "4.0.4",
     "next": "15.1.0",
+    "next-auth": "4.24.10",
     "next-intl": "3.20.0",
     "next-safe-action": "7.10.1",
     "optional": "0.1.4",
@@ -111,7 +113,8 @@
     "tailwindcss": "3.4.13",
     "ua-parser-js": "1.0.39",
     "webpack": "5.95.0",
-    "xlsx": "0.18.5"
+    "xlsx": "0.18.5",
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

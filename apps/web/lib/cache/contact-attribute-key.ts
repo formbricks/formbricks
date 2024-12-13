@@ -18,17 +18,17 @@ export const contactAttributeKeyCache = {
       return `contactAttributeKey-environment-${environmentId}-key-${key}`;
     },
   },
-  revalidate({ id, environmentId, key }: RevalidateProps): void {
+  revalidate: ({ id, environmentId, key }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(contactAttributeKeyCache.tag.byId(id));
     }
 
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(contactAttributeKeyCache.tag.byEnvironmentId(environmentId));
     }
 
     if (environmentId && key) {
-      revalidateTag(this.tag.byEnvironmentIdAndKey(environmentId, key));
+      revalidateTag(contactAttributeKeyCache.tag.byEnvironmentIdAndKey(environmentId, key));
     }
   },
 };

@@ -104,10 +104,8 @@ export const getEnvironment = reactCache(
           return environment;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
             throw new DatabaseError(error.message);
           }
-
           throw error;
         }
       },
@@ -194,7 +192,6 @@ export const getLanguage = async (languageId: string): Promise<{ projectId: stri
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -205,15 +202,13 @@ export const getProject = reactCache(
   async (projectId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
-        let projectPrisma;
         try {
-          projectPrisma = await prisma.project.findUnique({
+          const projectPrisma = await prisma.project.findUnique({
             where: {
               id: projectId,
             },
             select: { organizationId: true },
           });
-
           return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -306,7 +301,6 @@ export const getSurvey = reactCache(
           return survey;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -324,21 +318,15 @@ export const getTag = reactCache(
     cache(
       async () => {
         validateInputs([id, ZId]);
-
-        try {
-          const tag = await prisma.tag.findUnique({
-            where: {
-              id,
-            },
-            select: {
-              environmentId: true,
-            },
-          });
-
-          return tag;
-        } catch (error) {
-          throw error;
-        }
+        const tag = await prisma.tag.findUnique({
+          where: {
+            id,
+          },
+          select: {
+            environmentId: true,
+          },
+        });
+        return tag;
       },
       [`utils-getTag-${id}`],
       {
@@ -476,29 +464,19 @@ export const isProjectPartOfOrganization = async (
   organizationId: string,
   projectId: string
 ): Promise<boolean> => {
-  try {
-    const project = await getProject(projectId);
-    if (!project) {
-      throw new ResourceNotFoundError("Project", projectId);
-    }
-
-    return project.organizationId === organizationId;
-  } catch (error) {
-    throw error;
+  const project = await getProject(projectId);
+  if (!project) {
+    throw new ResourceNotFoundError("Project", projectId);
   }
+  return project.organizationId === organizationId;
 };
 
 export const isTeamPartOfOrganization = async (organizationId: string, teamId: string): Promise<boolean> => {
-  try {
-    const team = await getTeam(teamId);
-    if (!team) {
-      throw new ResourceNotFoundError("Team", teamId);
-    }
-
-    return team.organizationId === organizationId;
-  } catch (error) {
-    throw error;
+  const team = await getTeam(teamId);
+  if (!team) {
+    throw new ResourceNotFoundError("Team", teamId);
   }
+  return team.organizationId === organizationId;
 };
 
 export const getContact = reactCache(
