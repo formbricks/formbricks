@@ -12,8 +12,8 @@
   },
   "dependencies": {
     "eslint-plugin-react-refresh": "0.4.12",
-    "react": "19.0.0-rc-ed15d500-20241110",
-    "react-dom": "19.0.0-rc-ed15d500-20241110"
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "2.0.2",

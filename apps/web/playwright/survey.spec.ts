@@ -316,6 +316,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator(".editor-input").fill(surveys.germanCreate.welcomeCard.description);
     await page.getByLabel("Note*").click();
     await page.getByLabel("Note*").fill(surveys.germanCreate.welcomeCard.headline);
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.welcomeCard.buttonLabel);
 
     // Fill Open text question in german
     await page.getByRole("main").getByText("Free text").click();

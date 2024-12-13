@@ -4,7 +4,7 @@ import {
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import { unstable_after as after } from "next/server";
+import { after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
