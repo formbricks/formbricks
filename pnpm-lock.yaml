@@ -151,7 +151,7 @@ importers:
         version: 8.12.1
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.41)
+        version: 10.4.20(postcss@8.4.49)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -504,7 +504,7 @@ importers:
         version: 3.4.33(react@19.0.0)(sswr@2.1.0(svelte@5.4.0))(svelte@5.4.0)(vue@3.5.13(typescript@5.7.2))(zod@3.23.8)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.49)
+        version: 10.4.20(postcss@8.4.41)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
@@ -572,8 +572,8 @@ importers:
         specifier: 3.20.0
         version: 3.20.0(next@15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
       next-safe-action:
-        specifier: 7.9.3
-        version: 7.9.3(next@15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.23.8)
+        specifier: 7.10.1
+        version: 7.10.1(next@15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.23.8)
       optional:
         specifier: 0.1.4
         version: 0.1.4
@@ -10374,8 +10374,8 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
 
-  next-safe-action@7.9.3:
-    resolution: {integrity: sha512-2GH7/iRiM5R/y6sIQZsNHGeRr/iKQJsg8ejP63WhTS7fXS9KzxVbEKrWwLNNhL33V9cn0448cPSI/aiSK/PUbA==}
+  next-safe-action@7.10.1:
+    resolution: {integrity: sha512-tNtxvRfueeIMITY+t6Yu4+59TJNRG3xRWjS3OXiqwcA1oPmtaernhIIs3AvH1vfRYkg9ykT2PnWs1M0me0pnFQ==}
     engines: {node: '>=18.17'}
     peerDependencies:
       '@sinclair/typebox': '>= 0.33.3'
@@ -25805,7 +25805,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  next-safe-action@7.9.3(next@15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.23.8):
+  next-safe-action@7.10.1(next@15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(zod@3.23.8):
     dependencies:
       next: 15.1.0(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react: 19.0.0
