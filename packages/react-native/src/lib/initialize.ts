@@ -1,5 +1,5 @@
 import { type TAttributes } from "@formbricks/types/attributes";
-import { type TJsRNConfig, type TJsReactNativeConfigInput } from "@formbricks/types/js";
+import { type TJsRNConfig, type TJsRNConfigInput } from "@formbricks/types/js";
 import {
   ErrorHandler,
   type MissingFieldError,
@@ -24,7 +24,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const initialize = async (
-  c: TJsReactNativeConfigInput
+  c: TJsRNConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -50,17 +50,6 @@ export const initialize = async (
       code: "missing_field",
       field: "apiHost",
     });
-  }
-
-  // if userId and attributes are available, set them in backend
-  let updatedAttributes: TAttributes | null = null;
-  if (c.userId && c.attributes) {
-    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
-
-    if (!res.ok) {
-      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
-    }
-    updatedAttributes = res.data;
   }
 
   let existingConfig: TJsRNConfig | undefined;
@@ -114,6 +103,17 @@ export const initialize = async (
 
   // todo: update attributes
   // update attributes in config
+  // if userId and attributes are available, set them in backend
+  let updatedAttributes: TAttributes | null = null;
+  if (c.userId && c.attributes) {
+    const res = await updateAttributes(c.apiHost, c.environmentId, c.userId, c.attributes);
+
+    if (!res.ok) {
+      return err(res.error) as unknown as Result<void, MissingFieldError | NetworkError | MissingPersonError>;
+    }
+    updatedAttributes = res.data;
+  }
+
   if (updatedAttributes && Object.keys(updatedAttributes).length > 0) {
     appConfig.update({
       environmentId: appConfig.get().environmentId,

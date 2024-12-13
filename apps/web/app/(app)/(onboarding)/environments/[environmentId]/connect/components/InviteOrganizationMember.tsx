@@ -1,6 +1,7 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/(app)/(onboarding)/organizations/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -11,6 +12,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { TOrganization } from "@formbricks/types/organizations";
+import { ZUserName } from "@formbricks/types/user";
 
 interface InviteOrganizationMemberProps {
   organization: TOrganization;
@@ -18,6 +20,7 @@ interface InviteOrganizationMemberProps {
 }
 
 const ZInviteOrganizationMemberDetails = z.object({
+  name: ZUserName,
   email: z.string().email(),
   inviteMessage: z
     .string()
@@ -32,6 +35,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
   const t = useTranslations();
   const form = useForm<TInviteOrganizationMemberDetails>({
     defaultValues: {
+      name: "",
       email: "",
       inviteMessage: t("environments.connect.invite.invite_message_content"),
     },
@@ -40,17 +44,19 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
   const { isSubmitting } = form.formState;
 
   const handleInvite = async (data: TInviteOrganizationMemberDetails) => {
-    try {
-      await inviteOrganizationMemberAction({
-        organizationId: organization.id,
-        email: data.email,
-        role: "member",
-        inviteMessage: data.inviteMessage,
-      });
-      toast.success("Invite sent successful");
+    const response = await inviteOrganizationMemberAction({
+      organizationId: organization.id,
+      email: data.email,
+      name: data.name,
+      role: "member",
+      inviteMessage: data.inviteMessage,
+    });
+    if (response?.data) {
+      toast.success(t("environments.connect.invite.invite_sent_successfully"));
       await finishOnboarding();
-    } catch (error) {
-      toast.error("An unexpected error occurred");
+    } else {
+      const errorMessage = getFormattedErrorMessage(response);
+      toast.error(errorMessage);
     }
   };
 
@@ -63,6 +69,26 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
       <FormProvider {...form}>
         <form onSubmit={form.handleSubmit(handleInvite)} className="w-full space-y-4">
           <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field, fieldState: { error } }) => (
+                <FormItem className="w-full space-y-4">
+                  <FormLabel>{t("common.name")}</FormLabel>
+                  <FormControl>
+                    <div>
+                      <Input
+                        value={field.value}
+                        onChange={(name) => field.onChange(name)}
+                        placeholder="John Doe"
+                        className="bg-white"
+                      />
+                      {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                    </div>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="email"
@@ -108,7 +134,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
               <Button
                 id="onboarding-inapp-invite-have-a-look-first"
                 className="text-slate-400"
-                variant="minimal"
+                variant="ghost"
                 onClick={(e) => {
                   e.preventDefault();
                   finishOnboarding();

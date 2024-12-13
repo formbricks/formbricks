@@ -94,7 +94,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
                     <Button
                       type="button"
                       className="h-10 w-full border border-slate-300 px-3 text-left"
-                      variant="minimal">
+                      variant="ghost">
                       <div className="flex w-full items-center justify-between">
                         {appLanguages.find((language) => language.code === field.value)?.label[field.value] ||
                           "NA"}

@@ -58,7 +58,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
             <div className="flex space-x-2">
               <Button
                 type="button"
-                variant="minimal"
+                variant="ghost"
                 onClick={() => {
                   setOpen(false);
                 }}>

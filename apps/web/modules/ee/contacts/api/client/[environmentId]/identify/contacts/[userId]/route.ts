@@ -56,11 +56,7 @@ export const GET = async (
         });
       }
 
-      return responses.successResponse(
-        personState.state,
-        true,
-        "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
-      );
+      return responses.successResponse(personState.state, true);
     } catch (err) {
       if (err instanceof ResourceNotFoundError) {
         return responses.notFoundResponse(err.resourceType, err.resourceId);

@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { generateObject } from "ai";
 import { z } from "zod";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -11,7 +12,9 @@ import {
 } from "@formbricks/types/surveys/types";
 import { llmModel } from "../aiModels";
 
-export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
+export const transformPrismaSurvey = <T extends TSurvey | TJsEnvironmentStateSurvey>(
+  surveyPrisma: any
+): T => {
   let segment: TSegment | null = null;
 
   if (surveyPrisma.segment) {
@@ -21,11 +24,11 @@ export const transformPrismaSurvey = (surveyPrisma: any): TSurvey => {
     };
   }
 
-  const transformedSurvey: TSurvey = {
+  const transformedSurvey = {
     ...surveyPrisma,
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
-  };
+  } as T;
 
   return transformedSurvey;
 };

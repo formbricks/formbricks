@@ -46,7 +46,7 @@ export const DeleteProjectRender = ({
   return (
     <div>
       {!isDeleteDisabled && (
-        <div>
+        <div className="space-y-2">
           <p className="text-sm text-slate-900">
             {t(
               "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more",
@@ -58,8 +58,7 @@ export const DeleteProjectRender = ({
           </p>
           <Button
             disabled={isDeleteDisabled}
-            variant="warn"
-            className={`mt-4 ${isDeleteDisabled ? "ring-grey-500 ring-1 ring-offset-1" : ""}`}
+            variant="destructive"
             onClick={() => setIsDeleteDialogOpen(true)}>
             {t("common.delete")}
           </Button>

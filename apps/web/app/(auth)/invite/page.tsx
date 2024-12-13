@@ -3,6 +3,8 @@ import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { unstable_after as after } from "next/server";
+import Link from "next/link";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -32,48 +34,16 @@ const Page = async (props) => {
 
     const isInviteExpired = new Date(invite.expiresAt) < new Date();
 
-    if (isInviteExpired) {
-      return (
-        <ContentLayout
-          headline={t("auth.invite.invite_expired")}
-          description={t("auth.invite.invite_expired_description")}
-        />
-      );
-    } else if (!session) {
-      const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
-      const encodedEmail = encodeURIComponent(email);
-      return (
-        <ContentLayout
-          headline={t("auth.invite.happy_to_have_you")}
-          description={t("auth.invite.happy_to_have_you_description")}>
-          <Button
-            variant="secondary"
-            href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
-            {t("auth.invite.create_account")}
-          </Button>
-          <Button href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
-            {t("auth.invite.login")}
-          </Button>
-        </ContentLayout>
-      );
-    } else if (user?.email !== email) {
-      return (
-        <ContentLayout
-          headline={t("auth.invite.email_does_not_match")}
-          description={t("auth.invite.email_does_not_match_description")}>
-          <Button variant="secondary" href="/support">
-            {t("auth.invite.contact_support")}
-          </Button>
-          <Button href="/">{t("auth.invite.go_to_app")}</Button>
-        </ContentLayout>
-      );
-    } else {
+    const createMembershipAction = async () => {
+      "use server";
+
+      if (!session || !user) return;
+
       await createMembership(invite.organizationId, session.user.id, {
         accepted: true,
         role: invite.role,
       });
       await deleteInvite(inviteId);
-
       await sendInviteAcceptedEmail(
         invite.creator.name ?? "",
         user?.name ?? "",
@@ -93,12 +63,55 @@ const Page = async (props) => {
           ),
         },
       });
+    };
 
+    if (isInviteExpired) {
+      return (
+        <ContentLayout
+          headline={t("auth.invite.invite_expired")}
+          description={t("auth.invite.invite_expired_description")}
+        />
+      );
+    } else if (!session) {
+      const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
+      const encodedEmail = encodeURIComponent(email);
+      return (
+        <ContentLayout
+          headline={t("auth.invite.happy_to_have_you")}
+          description={t("auth.invite.happy_to_have_you_description")}>
+          <Button variant="secondary" asChild>
+            <Link href={`/auth/signup?inviteToken=${searchParams.token}&email=${encodedEmail}`}>
+              {t("auth.invite.create_account")}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/auth/login?callbackUrl=${redirectUrl}&email=${encodedEmail}`}>
+              {t("auth.invite.login")}
+            </Link>
+          </Button>
+        </ContentLayout>
+      );
+    } else if (user?.email !== email) {
+      return (
+        <ContentLayout
+          headline={t("auth.invite.email_does_not_match")}
+          description={t("auth.invite.email_does_not_match_description")}>
+          <Button asChild>
+            <Link href="/">{t("auth.invite.go_to_app")}</Link>
+          </Button>
+        </ContentLayout>
+      );
+    } else {
+      after(async () => {
+        await createMembershipAction();
+      });
       return (
         <ContentLayout
           headline={t("auth.invite.welcome_to_organization")}
           description={t("auth.invite.welcome_to_organization_description")}>
-          <Button href="/">{t("auth.invite.go_to_app")}</Button>
+          <Button asChild>
+            <Link href="/">{t("auth.invite.go_to_app")}</Link>
+          </Button>
         </ContentLayout>
       );
     }

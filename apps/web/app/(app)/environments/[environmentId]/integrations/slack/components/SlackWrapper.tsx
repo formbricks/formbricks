@@ -6,7 +6,7 @@ import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/inte
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
@@ -41,7 +41,7 @@ export const SlackWrapper = ({
     (TIntegrationSlackConfigData & { index: number }) | null
   >(null);
 
-  const getSlackChannels = async () => {
+  const getSlackChannels = useCallback(async () => {
     const getSlackChannelsResponse = await getSlackChannelsAction({ environmentId: environment.id });
 
     if (
@@ -55,11 +55,11 @@ export const SlackWrapper = ({
     if (getSlackChannelsResponse?.data) {
       setSlackChannels(getSlackChannelsResponse.data);
     }
-  };
+  }, [environment.id]);
 
   useEffect(() => {
     getSlackChannels();
-  }, []);
+  }, [getSlackChannels]);
 
   const handleSlackAuthorization = async () => {
     authorize(environment.id, webAppUrl).then((url: string) => {

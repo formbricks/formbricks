@@ -1,17 +1,17 @@
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
-  TShuffleOption,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
+  type TShuffleOption,
+  type TSurveyLogic,
+  type TSurveyLogicAction,
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
 } from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const shuffle = (array: any[]) => {
+const shuffle = (array: unknown[]) => {
   for (let i = 0; i < array.length; i++) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -20,7 +20,7 @@ const shuffle = (array: any[]) => {
 
 export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
   // Create an array with numbers from 0 to n-1
-  let array = Array.from(Array(n).keys());
+  const array = Array.from(Array(n).keys());
 
   if (shuffleOption === "all") {
     shuffle(array);
@@ -61,7 +61,7 @@ export const getShuffledChoicesIds = (
   return shuffledChoices.map((choice) => choice.id);
 };
 
-export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number): number => {
+export const calculateElementIdx = (survey: TJsEnvironmentStateSurvey, currentQustionIdx: number): number => {
   const currentQuestion = survey.questions[currentQustionIdx];
   const surveyLength = survey.questions.length;
   const middleIdx = Math.floor(surveyLength / 2);

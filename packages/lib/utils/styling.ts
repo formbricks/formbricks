@@ -1,7 +1,6 @@
-import { TProject } from "@formbricks/types/project";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TJsEnvironmentStateProject, TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
-export const getStyling = (project: TProject, survey: TSurvey) => {
+export const getStyling = (project: TJsEnvironmentStateProject, survey: TJsEnvironmentStateSurvey) => {
   // allow style overwrite is disabled from the project
   if (!project.styling.allowStyleOverwrite) {
     return project.styling;

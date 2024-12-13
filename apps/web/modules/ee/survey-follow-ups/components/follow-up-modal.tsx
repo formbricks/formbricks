@@ -752,7 +752,7 @@ export const FollowUpModal = ({
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"
-                variant="minimal"
+                variant="ghost"
                 size="sm"
                 onClick={() => {
                   setOpen(false);
@@ -761,7 +761,7 @@ export const FollowUpModal = ({
                 {t("common.cancel")}
               </Button>
 
-              <Button loading={formSubmitting} variant="primary" size="sm">
+              <Button loading={formSubmitting} size="sm">
                 {t("common.save")}
               </Button>
             </div>

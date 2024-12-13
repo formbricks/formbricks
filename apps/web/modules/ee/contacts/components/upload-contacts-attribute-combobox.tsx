@@ -50,12 +50,12 @@ export const UploadContactsAttributeCombobox = ({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         {currentKey ? (
-          <Button variant="minimal" size="sm" className="border border-slate-300" aria-expanded={open}>
+          <Button variant="ghost" size="sm" className="border border-slate-300" aria-expanded={open}>
             {currentKey.label}
           </Button>
         ) : (
-          <Button variant="minimal" size="sm" className="border border-slate-300" aria-expanded={open}>
-            Select Attribute
+          <Button variant="ghost" size="sm" className="border border-slate-300" aria-expanded={open}>
+            {t("environments.contacts.select_attribute")}
           </Button>
         )}
       </PopoverTrigger>

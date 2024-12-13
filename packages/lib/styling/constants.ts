@@ -1,4 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { translate } from "../templates";
 
@@ -12,6 +13,43 @@ export const COLOR_DEFAULTS = {
   cardShadowColor: "#000000",
   highlightBorderColor: "#64748b",
 } as const;
+
+export const defaultStyling: TProjectStyling = {
+  allowStyleOverwrite: true,
+  brandColor: {
+    light: COLOR_DEFAULTS.brandColor,
+  },
+  questionColor: {
+    light: COLOR_DEFAULTS.questionColor,
+  },
+  inputColor: {
+    light: COLOR_DEFAULTS.inputColor,
+  },
+  inputBorderColor: {
+    light: COLOR_DEFAULTS.inputBorderColor,
+  },
+  cardBackgroundColor: {
+    light: COLOR_DEFAULTS.cardBackgroundColor,
+  },
+  cardBorderColor: {
+    light: COLOR_DEFAULTS.cardBorderColor,
+  },
+  cardShadowColor: {
+    light: COLOR_DEFAULTS.cardShadowColor,
+  },
+  isLogoHidden: false,
+  highlightBorderColor: undefined,
+  isDarkModeEnabled: false,
+  background: {
+    bg: "#fff",
+    bgType: "color",
+  },
+  roundness: 8,
+  cardArrangement: {
+    linkSurveys: "straight",
+    appSurveys: "straight",
+  },
+};
 
 export const getPreviewSurvey = (locale: string) => {
   return {

@@ -1,5 +1,5 @@
 import { revalidateTag } from "next/cache";
-import { TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 interface RevalidateProps {
   id?: string;
@@ -37,30 +37,30 @@ export const documentCache = {
       return `insights-${insightId}-surveys-${surveyId}-questions-${questionId}-documents`;
     },
   },
-  revalidate({ id, environmentId, surveyId, responseId, questionId, insightId }: RevalidateProps): void {
+  revalidate: ({ id, environmentId, surveyId, responseId, questionId, insightId }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(documentCache.tag.byId(id));
     }
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(documentCache.tag.byEnvironmentId(environmentId));
     }
     if (responseId) {
-      revalidateTag(this.tag.byResponseId(responseId));
+      revalidateTag(documentCache.tag.byResponseId(responseId));
     }
     if (surveyId) {
-      revalidateTag(this.tag.bySurveyId(surveyId));
+      revalidateTag(documentCache.tag.bySurveyId(surveyId));
     }
     if (responseId && questionId) {
-      revalidateTag(this.tag.byResponseIdQuestionId(responseId, questionId));
+      revalidateTag(documentCache.tag.byResponseIdQuestionId(responseId, questionId));
     }
     if (surveyId && questionId) {
-      revalidateTag(this.tag.bySurveyIdQuestionId(surveyId, questionId));
+      revalidateTag(documentCache.tag.bySurveyIdQuestionId(surveyId, questionId));
     }
     if (insightId) {
-      revalidateTag(this.tag.byInsightId(insightId));
+      revalidateTag(documentCache.tag.byInsightId(insightId));
     }
     if (insightId && surveyId && questionId) {
-      revalidateTag(this.tag.byInsightIdSurveyIdQuestionId(insightId, questionId));
+      revalidateTag(documentCache.tag.byInsightIdSurveyIdQuestionId(insightId, surveyId, questionId));
     }
   },
 };
