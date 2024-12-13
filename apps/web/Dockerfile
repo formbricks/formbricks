@@ -81,46 +81,20 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json 
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
 
-
 # Copy Prisma-specific generated files
-# COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
-# COPY --from=installer /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
+COPY --from=installer /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
-
-RUN ls node_modules/@prisma/client
-
 
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Copy only the required packages from installer
+# Copy only @paralleldrive/cuid2 and @noble/hashes
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 
-# Install ts-node globally
-RUN npm install -g tsx typescript prisma
-
-# Change to database directory
-# WORKDIR /app/packages/database
-
-# # Install Prisma globally
-# RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION @prisma/client@$PRISMA_VERSION
-# RUN npm install -g zod zod-prisma prisma-json-types-generator
-
-# RUN prisma generate
-
-# Install dependencies specifically in this directory
-# RUN pnpm install
-
-# Generate Prisma client
-# RUN pnpm prisma generate
-
-# Verify Prisma client generation
-RUN ls node_modules/@prisma/client
-
-# Change back to the working directory
-# WORKDIR /home/nextjs
+RUN npm install -g tsx typescript 
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
