@@ -82,8 +82,6 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./p
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
 
 # Copy Prisma-specific generated files
-COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
-COPY --from=installer /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
 
@@ -94,7 +92,7 @@ COPY /docker/cronjobs /app/docker/cronjobs
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 
-RUN npm install -g tsx typescript 
+RUN npm install -g tsx typescript prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
