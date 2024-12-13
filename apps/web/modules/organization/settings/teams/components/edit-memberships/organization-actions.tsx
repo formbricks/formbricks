@@ -16,7 +16,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 
 interface OrganizationActionsProps {
   role: TOrganizationRole;
-  isUserManagerOrOwner: boolean;
+  isOwnerOrManager: boolean;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   teams: TOrganizationTeam[];
@@ -28,7 +28,7 @@ interface OrganizationActionsProps {
 }
 
 export const OrganizationActions = ({
-  isUserManagerOrOwner,
+  isOwnerOrManager,
   role,
   organization,
   teams,
@@ -82,7 +82,7 @@ export const OrganizationActions = ({
           </Button>
         )}
 
-        {!isInviteDisabled && isUserManagerOrOwner && (
+        {!isInviteDisabled && isOwnerOrManager && (
           <Button
             size="sm"
             variant="secondary"

@@ -40,7 +40,7 @@ export const MembersView = async ({
   const t = await getTranslations();
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
-  const isUserManagerOrOwner = isManager || isOwner;
+  const isOwnerOrManager = isManager || isOwner;
 
   const userMemberships = await getMembershipsByUserId(currentUserId);
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
@@ -63,7 +63,7 @@ export const MembersView = async ({
       {membershipRole && (
         <OrganizationActions
           organization={organization}
-          isUserManagerOrOwner={isUserManagerOrOwner}
+          isOwnerOrManager={isOwnerOrManager}
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}

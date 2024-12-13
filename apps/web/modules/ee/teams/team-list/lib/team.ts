@@ -104,7 +104,7 @@ const getUserTeams = reactCache(
           throw error;
         }
       },
-      [`getUserTeams-${userId}`],
+      [`getUserTeams-${userId}-${organizationId}`],
       {
         tags: [
           teamCache.tag.byUserId(userId),
@@ -156,7 +156,7 @@ export const getOtherTeams = reactCache(
           throw error;
         }
       },
-      [`getOtherTeams-${userId}`],
+      [`getOtherTeams-${userId}-${organizationId}`],
       {
         tags: [
           teamCache.tag.byUserId(userId),
@@ -195,7 +195,7 @@ export const getTeams = reactCache(
 
         return { userTeams, otherTeams };
       },
-      [`teams-getTeams-${userId}`],
+      [`getTeams-${userId}-${organizationId}`],
       {
         tags: [
           teamCache.tag.byUserId(userId),

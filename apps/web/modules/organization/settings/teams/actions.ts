@@ -44,7 +44,7 @@ export const deleteInviteAction = authenticatedActionClient
   });
 
 const ZCreateInviteTokenAction = z.object({
-  inviteId: z.string(),
+  inviteId: ZUuid,
 });
 
 export const createInviteTokenAction = authenticatedActionClient
@@ -92,7 +92,7 @@ export const deleteMembershipAction = authenticatedActionClient
     });
 
     if (parsedInput.userId === ctx.user.id) {
-      throw new AuthenticationError("You cannot delete yourself from the organization");
+      throw new OperationNotAllowedError("You cannot delete yourself from the organization");
     }
 
     const membership = await getMembershipByUserIdOrganizationId(
@@ -126,7 +126,7 @@ export const resendInviteAction = authenticatedActionClient
   .schema(ZResendInviteAction)
   .action(async ({ parsedInput, ctx }) => {
     if (INVITE_DISABLED) {
-      throw new AuthenticationError("Invite disabled");
+      throw new OperationNotAllowedError("Invite are disabled");
     }
 
     const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);

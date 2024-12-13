@@ -17,7 +17,7 @@ import { ZId } from "@formbricks/types/common";
 
 const ZCreateTeamAction = z.object({
   organizationId: z.string().cuid(),
-  name: z.string(),
+  name: z.string().trim().min(1, "Team name is required"),
 });
 
 export const createTeamAction = authenticatedActionClient

@@ -83,6 +83,12 @@ export const BulkInviteTab = ({
     e.stopPropagation();
 
     const files = Array.from(e.dataTransfer.files);
+    const file = files[0];
+    if (!file.name.endsWith(".csv")) {
+      toast.error(t("common.invalid_file_type"));
+      return;
+    }
+
     onFileInputChange(files);
   };
 

@@ -35,7 +35,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
 
-  const isUserManagerOrOwner = isManager || isOwner;
+  const isOwnerOrManager = isManager || isOwner;
 
   const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
 
@@ -65,7 +65,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           <AIToggle
             environmentId={params.environmentId}
             organization={organization}
-            isUserManagerOrOwner={isUserManagerOrOwner}
+            isOwnerOrManager={isOwnerOrManager}
           />
         </SettingsCard>
       )}
