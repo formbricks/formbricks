@@ -151,7 +151,7 @@ importers:
         version: 8.12.1
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.41)
+        version: 10.4.20(postcss@8.4.49)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -421,6 +421,9 @@ importers:
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
+      '@prisma/client':
+        specifier: 5.20.0
+        version: 5.20.0(prisma@5.20.0)
       '@radix-ui/react-accordion':
         specifier: 1.2.0
         version: 1.2.0(@types/react-dom@18.3.0)(@types/react@18.3.11)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
@@ -504,7 +507,7 @@ importers:
         version: 3.4.33(react@19.0.0-rc-ed15d500-20241110)(sswr@2.1.0(svelte@5.4.0))(svelte@5.4.0)(vue@3.5.13(typescript@5.7.2))(zod@3.23.8)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.49)
+        version: 10.4.20(postcss@8.4.41)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
@@ -568,6 +571,9 @@ importers:
       next:
         specifier: 15.0.3
         version: 15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
+      next-auth:
+        specifier: 4.24.10
+        version: 4.24.10(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(nodemailer@6.9.16)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
       next-intl:
         specifier: 3.20.0
         version: 3.20.0(next@15.0.3(@opentelemetry/api@1.9.0)(@playwright/test@1.45.3)(react-dom@19.0.0-rc-ed15d500-20241110(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110))(react@19.0.0-rc-ed15d500-20241110)
@@ -643,6 +649,9 @@ importers:
       xlsx:
         specifier: 0.18.5
         version: 0.18.5
+      zod:
+        specifier: 3.23.8
+        version: 3.23.8
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
