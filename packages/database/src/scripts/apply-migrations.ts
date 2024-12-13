@@ -1,6 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { PrismaClient } from "@prisma/client";
 import { type DataMigrationScript, MigrationRunner } from "./migration-runner";
 
 const prisma = new PrismaClient();

@@ -114,6 +114,22 @@ export class MigrationRunner {
       // Temporary migrations directory for controlled migration
       const tempMigrationsDir = path.resolve(__dirname, "../../migration");
 
+      // // if the migration directory exists, we will check if the migration has already been applied
+
+      // const migrationDir = path.join(originalMigrationsDir, migration.name);
+      // if (fs.existsSync(migrationDir)) {
+      //   // Check if there is a migration.sql file in the directory
+      //   const hasSchemaMigration = fs.readdirSync(migrationDir).includes("migration.sql");
+      //   if (hasSchemaMigration) {
+      //     // Check if the migration has already been applied in the database
+      //     const isApplied = await isSchemaMigrationApplied(migration.name, this.prisma);
+      //     if (isApplied) {
+      //       console.log(`Schema migration ${migration.name} already applied. Skipping...`);
+      //       return;
+      //     }
+      //   }
+      // }
+
       // Ensure prisma migrations directory exists
       if (!fs.existsSync(originalMigrationsDir)) {
         fs.mkdirSync(originalMigrationsDir, { recursive: true });
@@ -142,12 +158,17 @@ export class MigrationRunner {
 }
 
 // async function isSchemaMigrationApplied(migrationName: string, prisma: PrismaClient): Promise<boolean> {
-//   const applied: unknown[] = await prisma.$queryRaw`
+//   try {
+//     const applied: unknown[] = await prisma.$queryRaw`
 //     SELECT 1
 //     FROM _prisma_migrations
 //     WHERE migration_name = ${migrationName}
 //       AND finished_at IS NOT NULL
 //     LIMIT 1;
 //   `;
-//   return applied.length > 0;
+//     return applied.length > 0;
+//   } catch (err) {
+//     console.log("Error: ", err);
+//     return false;
+//   }
 // }
