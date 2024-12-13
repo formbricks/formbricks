@@ -321,6 +321,15 @@ export const getProjectIdFromIntegrationId = async (integrationId: string) => {
   return await getProjectIdFromEnvironmentId(integration.environmentId);
 };
 
+export const getProjectIdFromWebhookId = async (webhookId: string) => {
+  const webhook = await getWebhook(webhookId);
+  if (!webhook) {
+    throw new ResourceNotFoundError("webhook", webhookId);
+  }
+
+  return await getProjectIdFromEnvironmentId(webhook.environmentId);
+};
+
 // environment id helpers
 export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
   const survey = await getSurvey(surveyId);

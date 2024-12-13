@@ -45,10 +45,6 @@ tags:
 
       - [Responses API](https://formbricks.com/docs/api/client/responses) -
       Create & update responses for a survey
-  - name: Client API > Action
-    description: >-
-      Actions taken by a user in your application. Saved actions can be used in
-      Advanced Targeting to display surveys based on past behavior.
   - name: Client API > Display
     description: >-
       Displays are metrics used to measure the number of times a survey was
@@ -142,139 +138,6 @@ tags:
 
       Methods allowed: Get All, Get ,Create, and Delete Webhooks
 paths:
-  /api/v1/client/{environmentId}/actions:
-    post:
-      tags:
-        - Client API > Action
-      summary: Add Action for User
-      description: >-
-        Create a new action for a user. A new action class is created if the
-        action name does not exist in the environment.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                userId: "{{userId}}"
-                name: new_action_v1
-      parameters:
-        - name: environmentId
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: OK
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            cache-control:
-              schema:
-                type: string
-                example: private, no-store
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:11:17 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                data: {}
-        "500":
-          description: Internal Server Error
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            cache-control:
-              schema:
-                type: string
-                example: private, no-store
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:07:03 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
-          content:
-            application/json:
-              schema:
-                type: object
-              example:
-                code: internal_server_error
-                message: >-
-                  Unable to handle the request: Database error when creating an
-                  action for environment clonzr6vc0009z8md7y06hipl
-                details: {}
   /api/v1/client/{environmentId}/displays:
     post:
       tags:
@@ -288,11 +151,9 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "surveyId": "{{surveyId}}",
-                    "userId": "{{userId}}" // OPTIONAL
-                }
+              example:
+                surveyId: "{{surveyId}}"
+                userId: "{{userId}} (optional)"
       parameters:
         - name: environmentId
           in: path
@@ -434,11 +295,9 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "userId":"{{userId}}", // OPTIONAL
-                    "responseId":"{{responseId}}" // OPTIONAL
-                }
+              example:
+                userId: "{{userId}} (optional)"
+                responseId: "{{responseId}} (optional)"
       parameters:
         - name: environmentId
           in: path
@@ -849,21 +708,17 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "surveyId": "{{surveyId}}",
-                    "userId": "{{userId}}", // OPTIONAL
-                    "finished": false,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzaw": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    },
-                    "meta":{ // Optional
-                        "source":"Postman API",
-                        "url":"https://postman.com",
-                        "action":"test action"
-                    }
-                }
+              example:
+                surveyId: "{{surveyId}}"
+                userId: "{{userId}} (optional)"
+                finished: false
+                data:
+                  hs8yd14l9h8u353tjmv6rzaw: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                meta:
+                  source: Postman API
+                  url: https://postman.com
+                  action: test action
       parameters:
         - name: environmentId
           in: path
@@ -1047,14 +902,11 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "finished": true,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzawqqq": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    }
-                }
+              example:
+                finished: true
+                data:
+                  hs8yd14l9h8u353tjmv6rzawqqq: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
       parameters:
         - name: responseId
           in: path
@@ -1318,19 +1170,15 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "environmentId": "{{environmentId}}",
-                    "name": "My Action from Postman",
-                    "type": "code",
-                    "description": "From API Docs", // OPTIONAL
-                    "noCodeConfig": { // OPTIONAL
-                        "type": "innerHtml",
-                        "innerHtml": {
-                            "value": "sign-up"
-                        }
-                    }
-                }
+              example:
+                environmentId: "{{environmentId}}"
+                name: "My Action from Postman"
+                type: "code"
+                description: "From API Docs (optional)"
+                noCodeConfig:
+                  type: "innerHtml"
+                  innerHtml:
+                    value: "sign-up"
       parameters:
         - name: x-api-key
           in: header
@@ -3177,19 +3025,15 @@ paths:
           application/json:
             schema:
               type: object
-              example: |-
-                {
-                    "finished": true,
-                    "data": {
-                        "hs8yd14l9h8u353tjmv6rzawqqq": "clicked", // Question IDs & their answers
-                        "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                    },
-                    "ttc": { // OPTIONAL
-                        "hs8yd14l9h8u353tjmv6rzawqqq": 120,
-                        "tcgls0063n8ri7dtrbnepcmz": 190
-                    },
-                    "language": "en" // OPTIONAL
-                }
+              example:
+                finished: true
+                data:
+                  hs8yd14l9h8u353tjmv6rzawqqq: clicked
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                  ttc:
+                    hs8yd14l9h8u353tjmv6rzawqqq: 120
+                    tcgls0063n8ri7dtrbnepcmz: 190
+                  language: en
       parameters:
         - name: x-api-key
           in: header
