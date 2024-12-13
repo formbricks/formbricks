@@ -1,31 +1,32 @@
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
-import { MembersInfo } from "@/modules/ee/teams/team-list/components/edit-memberships/members-info";
-import { getMembershipByOrganizationId } from "@/modules/ee/teams/team-list/lib/membership";
+import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
+import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
-import { TMembership } from "@formbricks/types/memberships";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
-type EditMembershipsProps = {
+interface EditMembershipsProps {
   organization: TOrganization;
   currentUserId: string;
-  currentUserMembership: TMembership;
-  allMemberships: TMembership[];
-};
+  role: TOrganizationRole;
+  canDoRoleManagement: boolean;
+}
 
 export const EditMemberships = async ({
   organization,
   currentUserId,
-  currentUserMembership: membership,
+  role,
+  canDoRoleManagement,
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
   const t = await getTranslations();
-  const currentUserRole = membership?.role;
-  const isUserManagerOrOwner = membership?.role === "manager" || membership?.role === "owner";
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const { isOwner, isManager } = getAccessFlags(role);
+
+  const isOwnerOrManager = isOwner || isManager;
 
   return (
     <div>
@@ -37,13 +38,13 @@ export const EditMemberships = async ({
           <div className="col-span-5"></div>
         </div>
 
-        {currentUserRole && (
+        {role && (
           <MembersInfo
             organization={organization}
             currentUserId={currentUserId}
             invites={invites ?? []}
             members={members ?? []}
-            isUserManagerOrOwner={isUserManagerOrOwner}
+            isOwnerOrManager={isOwnerOrManager}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />

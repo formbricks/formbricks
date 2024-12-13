@@ -2,7 +2,7 @@
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/actions";
+import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team-list/action";
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
@@ -12,7 +12,7 @@ import {
   TTeamDetails,
   TTeamRole,
   TUserTeam,
-} from "@/modules/ee/teams/team-list/types/teams";
+} from "@/modules/ee/teams/team-list/types/team";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";

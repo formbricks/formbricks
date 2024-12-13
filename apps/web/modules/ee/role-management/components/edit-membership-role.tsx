@@ -20,7 +20,7 @@ import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {
-  isUserManagerOrOwner: boolean;
+  isOwnerOrManager: boolean;
   memberRole: TOrganizationRole;
   organizationId: string;
   memberId?: string;
@@ -32,7 +32,7 @@ interface Role {
 }
 
 export function EditMembershipRole({
-  isUserManagerOrOwner,
+  isOwnerOrManager,
   memberRole,
   organizationId,
   memberId,
@@ -79,7 +79,7 @@ export function EditMembershipRole({
     return roles;
   };
 
-  if (isUserManagerOrOwner) {
+  if (isOwnerOrManager) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

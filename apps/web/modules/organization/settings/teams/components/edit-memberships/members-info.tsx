@@ -1,20 +1,20 @@
 import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
-import { MemberActions } from "@/modules/ee/teams/team-list/components/edit-memberships/member-actions";
+import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { Badge } from "@/modules/ui/components/badge";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
-type MembersInfoProps = {
+interface MembersInfoProps {
   organization: TOrganization;
   members: TMember[];
   invites: TInvite[];
-  isUserManagerOrOwner: boolean;
+  isOwnerOrManager: boolean;
   currentUserId: string;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
-};
+}
 
 // Type guard to check if member is an invitee
 const isInvitee = (member: TMember | TInvite): member is TInvite => {
@@ -24,7 +24,7 @@ const isInvitee = (member: TMember | TInvite): member is TInvite => {
 export const MembersInfo = async ({
   organization,
   invites,
-  isUserManagerOrOwner,
+  isOwnerOrManager,
   members,
   currentUserId,
   canDoRoleManagement,
@@ -50,7 +50,7 @@ export const MembersInfo = async ({
           <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
-                isUserManagerOrOwner={isUserManagerOrOwner}
+                isOwnerOrManager={isOwnerOrManager}
                 memberRole={member.role}
                 memberId={!isInvitee(member) ? member.userId : ""}
                 organizationId={organization.id}
@@ -80,7 +80,7 @@ export const MembersInfo = async ({
               member={!isInvitee(member) ? member : undefined}
               invite={isInvitee(member) ? member : undefined}
               showDeleteButton={
-                isUserManagerOrOwner &&
+                isOwnerOrManager &&
                 (member as TMember).userId !== currentUserId &&
                 ((member as TMember).role !== "owner" ||
                   ((member as TMember).role === "owner" && doesOrgHaveMoreThanOneOwner))

@@ -6,8 +6,8 @@ import {
   deleteInviteAction,
   deleteMembershipAction,
   resendInviteAction,
-} from "@/modules/ee/teams/team-list/actions";
-import { ShareInviteModal } from "@/modules/ee/teams/team-list/components/invite-member/share-invite-modal";
+} from "@/modules/organization/settings/teams/actions";
+import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
@@ -19,12 +19,12 @@ import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
-type MemberActionsProps = {
+interface MemberActionsProps {
   organization: TOrganization;
   member?: TMember;
   invite?: TInvite;
   showDeleteButton?: boolean;
-};
+}
 
 export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
   const router = useRouter();

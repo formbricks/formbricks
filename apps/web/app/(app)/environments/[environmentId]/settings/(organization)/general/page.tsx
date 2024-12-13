@@ -1,11 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getRoleManagementPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsMultiOrgEnabled, getIsOrganizationAIReady } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
@@ -31,7 +27,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
@@ -52,7 +47,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="general"
-          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <SettingsCard

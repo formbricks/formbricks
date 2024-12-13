@@ -2,7 +2,7 @@ import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { organizationCache } from "@/lib/cache/organization";
 import { teamCache } from "@/lib/cache/team";
-import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/teams";
+import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";

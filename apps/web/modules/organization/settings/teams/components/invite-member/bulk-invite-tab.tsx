@@ -53,6 +53,7 @@ export const BulkInviteTab = ({
             name: name.trim(),
             email: email.trim(),
             role: orgRole as TOrganizationRole,
+            teamIds: [],
           };
         });
         try {

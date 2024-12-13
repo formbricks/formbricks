@@ -2,7 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
-import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/actions";
+import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
@@ -12,7 +12,7 @@ import {
   TTeamSettingsFormSchema,
   ZTeamRole,
   ZTeamSettingsFormSchema,
-} from "@/modules/ee/teams/team-list/types/teams";
+} from "@/modules/ee/teams/team-list/types/team";
 import { getTeamAccessFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";

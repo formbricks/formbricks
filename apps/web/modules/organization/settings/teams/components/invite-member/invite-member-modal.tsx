@@ -1,6 +1,6 @@
 "use client";
 
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { H4, Muted } from "@/modules/ui/components/typography";

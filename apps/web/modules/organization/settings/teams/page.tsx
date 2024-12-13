@@ -1,16 +1,14 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
-import { MembersView } from "@/modules/ee/teams/team-list/components/members-view";
 import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
+import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 export const TeamsPage = async (props) => {
@@ -28,11 +26,6 @@ export const TeamsPage = async (props) => {
 
   const canDoRoleManagement = await getRoleManagementPermission(organization);
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isBilling } = getAccessFlags(currentUserMembership?.role);
-
-  if (!canDoRoleManagement || isBilling) {
-    notFound();
-  }
 
   return (
     <PageContentWrapper>
@@ -42,7 +35,6 @@ export const TeamsPage = async (props) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="teams"
-          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       <MembersView
@@ -50,11 +42,13 @@ export const TeamsPage = async (props) => {
         organization={organization}
         currentUserId={session.user.id}
         environmentId={params.environmentId}
+        canDoRoleManagement={canDoRoleManagement}
       />
       <TeamsView
         organizationId={organization.id}
         membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}
+        canDoRoleManagement={canDoRoleManagement}
       />
     </PageContentWrapper>
   );

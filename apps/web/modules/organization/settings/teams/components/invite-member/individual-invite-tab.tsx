@@ -1,7 +1,7 @@
 "use client";
 
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -105,17 +105,19 @@ export const IndividualInviteTab = ({
         )}
       </div>
 
-      <div className="flex flex-col space-y-2">
-        <Label htmlFor="memberEmailInput">{t("common.add_to_team")}</Label>
-        <MultiSelect
-          value={watch("teamIds")}
-          options={teamOptions}
-          placeholder={t("environments.settings.teams.team_select_placeholder")}
-          onChange={(teamIds) => {
-            setValue("teamIds", teamIds);
-          }}
-        />
-      </div>
+      {canDoRoleManagement && (
+        <div className="flex flex-col space-y-2">
+          <Label htmlFor="memberEmailInput">{t("common.add_to_team")}</Label>
+          <MultiSelect
+            value={watch("teamIds")}
+            options={teamOptions}
+            placeholder={t("environments.settings.teams.team_select_placeholder")}
+            onChange={(teamIds) => {
+              setValue("teamIds", teamIds);
+            }}
+          />
+        </div>
+      )}
 
       {!canDoRoleManagement &&
         (isFormbricksCloud ? (

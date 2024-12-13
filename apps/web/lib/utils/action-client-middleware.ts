@@ -1,6 +1,6 @@
 import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
-import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
+import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";

@@ -1,8 +1,8 @@
 "use client";
 
-import { inviteUserAction, leaveOrganizationAction } from "@/modules/ee/teams/team-list/actions";
-import { InviteMemberModal } from "@/modules/ee/teams/team-list/components/invite-member/invite-member-modal";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
+import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
@@ -11,10 +11,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TInvitee } from "@formbricks/types/invites";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
-type OrganizationActionsProps = {
-  role: string;
+interface OrganizationActionsProps {
+  role: TOrganizationRole;
   isUserManagerOrOwner: boolean;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
@@ -24,7 +25,7 @@ type OrganizationActionsProps = {
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
-};
+}
 
 export const OrganizationActions = ({
   isUserManagerOrOwner,

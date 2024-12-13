@@ -8,7 +8,7 @@ import {
   TTeamSettingsFormSchema,
   TUserTeam,
   ZTeamSettingsFormSchema,
-} from "@/modules/ee/teams/team-list/types/teams";
+} from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";

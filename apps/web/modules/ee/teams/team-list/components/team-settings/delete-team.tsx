@@ -1,6 +1,7 @@
 "use client";
 
-import { TTeam } from "@/modules/ee/teams/team-list/types/teams";
+import { deleteTeamAction } from "@/modules/ee/teams/team-list/action";
+import { TTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Label } from "@/modules/ui/components/label";
@@ -9,7 +10,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { deleteTeamAction } from "../../actions";
 
 interface DeleteTeamProps {
   teamId: TTeam["id"];
