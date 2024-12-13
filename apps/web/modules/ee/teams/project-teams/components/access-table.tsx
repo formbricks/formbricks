@@ -1,6 +1,6 @@
 "use client";
 
-import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/teams";
+import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { useTranslations } from "next-intl";

@@ -1,4 +1,4 @@
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZOrganizationRole } from "@formbricks/types/memberships";

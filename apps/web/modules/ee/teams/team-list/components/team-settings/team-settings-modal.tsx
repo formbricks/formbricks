@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { updateTeamDetailsAction } from "@/modules/ee/teams/team-list/action";
 import { DeleteTeam } from "@/modules/ee/teams/team-list/components/team-settings/delete-team";
 import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";

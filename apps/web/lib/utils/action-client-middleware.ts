@@ -1,11 +1,11 @@
 import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
-import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import { type TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { type TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
 import { getMembershipRole } from "@formbricks/lib/membership/hooks/actions";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { TOrganizationRole } from "@formbricks/types/memberships";
+import { type TOrganizationRole } from "@formbricks/types/memberships";
 
 const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }> => {
   return {
@@ -58,7 +58,7 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
 }) => {
   const role = await getMembershipRole(userId, organizationId);
 
-  for (let accessItem of access) {
+  for (const accessItem of access) {
     if (accessItem.type === "organization") {
       if (accessItem.schema) {
         const resultSchema = accessItem.schema.strict();

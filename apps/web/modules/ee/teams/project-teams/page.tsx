@@ -13,7 +13,7 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getTeamsByProjectId } from "./lib/teams";
+import { getTeamsByProjectId } from "./lib/team";
 
 export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
   const t = await getTranslations();
