@@ -65,8 +65,12 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
             return;
           }
 
-          // create a new data migration entry with pending status
-          await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+          if (existingMigration?.[0]?.status === "failed") {
+            console.log(`Data migration ${migration.name} failed previously. Retrying...`);
+          } else {
+            // create a new data migration entry with pending status
+            await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+          }
 
           if (migration.run) {
             // Run the actual migration
@@ -84,7 +88,6 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
           }
 
           console.log(`Data migration ${migration.name} completed successfully`);
-          // fake delay:
         },
         { timeout: TRANSACTION_TIMEOUT }
       );
@@ -95,6 +98,7 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
       await prisma.$queryRaw`
         INSERT INTO "DataMigration" (id, name, status)
         VALUES (${migration.id}, ${migration.name}, 'failed')
+        ON CONFLICT (id) DO UPDATE SET status = 'failed';
       `;
       throw error;
     }
@@ -110,22 +114,24 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
     // // if the migration directory exists, we will check if the migration has already been applied
 
     // const migrationDir = path.join(originalMigrationsDir, migration.name);
-    // if (fs.existsSync(migrationDir)) {
+    // const hasAccess = await fs
+    //   .access(migrationDir)
+    //   .then(() => true)
+    //   .catch(() => false);
+
+    // if (hasAccess) {
     //   // Check if there is a migration.sql file in the directory
-    //   const hasSchemaMigration = fs.readdirSync(migrationDir).includes("migration.sql");
+    //   const hasSchemaMigration = await fs
+    //     .readdir(migrationDir)
+    //     .then((files) => files.includes("migration.sql"));
     //   if (hasSchemaMigration) {
     //     // Check if the migration has already been applied in the database
-    //     const isApplied = await isSchemaMigrationApplied(migration.name, this.prisma);
+    //     const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
     //     if (isApplied) {
     //       console.log(`Schema migration ${migration.name} already applied. Skipping...`);
     //       return;
     //     }
     //   }
-    // }
-
-    // Ensure prisma migrations directory exists
-    // if (!fs.(originalMigrationsDir)) {
-    //   fs.mkdirSync(originalMigrationsDir, { recursive: true });
     // }
 
     const originalMigrationsDirExists = await fs
@@ -227,9 +233,9 @@ export async function applyMigrations(): Promise<void> {
   }
 }
 
-// async function isSchemaMigrationApplied(migrationName: string, prisma: PrismaClient): Promise<boolean> {
+// async function isSchemaMigrationApplied(migrationName: string, prismaClient: PrismaClient): Promise<boolean> {
 //   try {
-//     const applied: unknown[] = await prisma.$queryRaw`
+//     const applied: unknown[] = await prismaClient.$queryRaw`
 //     SELECT 1
 //     FROM _prisma_migrations
 //     WHERE migration_name = ${migrationName}
