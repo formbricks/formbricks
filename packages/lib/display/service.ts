@@ -35,12 +35,6 @@ export const getDisplayCountBySurveyId = reactCache(
                     lte: filters.createdAt.max,
                   },
                 }),
-              ...(filters &&
-                filters.responseIds && {
-                  responseId: {
-                    in: filters.responseIds,
-                  },
-                }),
             },
           });
           return displayCount;

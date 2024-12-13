@@ -7,6 +7,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -185,8 +186,14 @@ const Page = async (props) => {
                   "environments.settings.enterprise.no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form"
                 )}
               </p>
-              <Button href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5" target="_blank">
-                {t("environments.settings.enterprise.request_30_day_trial_license")}
+              <Button asChild>
+                <Link
+                  href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer">
+                  {t("environments.settings.enterprise.request_30_day_trial_license")}
+                </Link>
               </Button>
               <p className="mt-2 text-xs text-slate-500">
                 {t("environments.settings.enterprise.no_credit_card_no_sales_call_just_test_it")}

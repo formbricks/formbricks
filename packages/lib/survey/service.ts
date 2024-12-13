@@ -224,7 +224,7 @@ export const getSurvey = reactCache(
           return null;
         }
 
-        return transformPrismaSurvey(surveyPrisma);
+        return transformPrismaSurvey<TSurvey>(surveyPrisma);
       },
       [`getSurvey-${surveyId}`],
       {
@@ -267,7 +267,7 @@ export const getSurveysByActionClassId = reactCache(
         const surveys: TSurvey[] = [];
 
         for (const surveyPrisma of surveysPrisma) {
-          const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+          const transformedSurvey = transformPrismaSurvey<TSurvey>(surveyPrisma);
           surveys.push(transformedSurvey);
         }
 
@@ -303,7 +303,7 @@ export const getSurveys = reactCache(
             skip: offset,
           });
 
-          return surveysPrisma.map(transformPrismaSurvey);
+          return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             console.error(error);
@@ -1366,7 +1366,7 @@ export const getSurveysBySegmentId = reactCache(
           const surveys: TSurvey[] = [];
 
           for (const surveyPrisma of surveysPrisma) {
-            const transformedSurvey = transformPrismaSurvey(surveyPrisma);
+            const transformedSurvey = transformPrismaSurvey<TSurvey>(surveyPrisma);
             surveys.push(transformedSurvey);
           }
 

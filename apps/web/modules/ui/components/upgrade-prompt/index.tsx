@@ -1,4 +1,5 @@
 import { Button } from "@/modules/ui/components/button";
+import Link from "next/link";
 
 export type ModalButton = {
   text: string;
@@ -24,19 +25,26 @@ export const UpgradePrompt = ({ icon, title, description, buttons }: UpgradeProm
         <p className="text-sm text-slate-500">{description}</p>
       </div>
       <div className="flex gap-3">
-        <Button
-          {...(primaryButton.href
-            ? { href: primaryButton.href, target: "_blank", rel: "noopener noreferrer" }
-            : { onClick: primaryButton.onClick })}>
-          {primaryButton.text}
-        </Button>
-        <Button
-          variant="secondary"
-          {...(primaryButton.href
-            ? { href: primaryButton.href, target: "_blank", rel: "noopener noreferrer" }
-            : { onClick: primaryButton.onClick })}>
-          {secondaryButton.text}
-        </Button>
+        {primaryButton.href ? (
+          <Button asChild>
+            <Link href={primaryButton.href} target="_blank" rel="noopener noreferrer">
+              {primaryButton.text}
+            </Link>
+          </Button>
+        ) : (
+          <Button onClick={primaryButton.onClick}>{primaryButton.text}</Button>
+        )}
+        {secondaryButton.href ? (
+          <Button variant="secondary" asChild>
+            <Link href={secondaryButton.href} target="_blank" rel="noopener noreferrer">
+              {secondaryButton.text}
+            </Link>
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={secondaryButton.onClick}>
+            {secondaryButton.text}
+          </Button>
+        )}
       </div>
     </div>
   );

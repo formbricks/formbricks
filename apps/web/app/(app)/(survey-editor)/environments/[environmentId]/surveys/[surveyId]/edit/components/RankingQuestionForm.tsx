@@ -226,11 +226,11 @@ export const RankingQuestionForm = ({
             <Button
               size="sm"
               variant="secondary"
-              EndIcon={PlusIcon}
               type="button"
               disabled={question.choices?.length >= 25}
               onClick={() => addOption()}>
               {t("environments.surveys.edit.add_option")}
+              <PlusIcon />
             </Button>
             <ShuffleOptionSelect
               shuffleOptionsTypes={shuffleOptionsTypes}

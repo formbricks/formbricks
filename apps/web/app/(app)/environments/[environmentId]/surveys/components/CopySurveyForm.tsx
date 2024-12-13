@@ -130,13 +130,11 @@ export const CopySurveyForm = ({
         </div>
         <div className="fixed bottom-0 left-0 right-0 z-10 flex w-full justify-end space-x-2 bg-white">
           <div className="flex w-full justify-end pb-4 pr-4">
-            <Button type="button" onClick={onCancel} variant="minimal">
+            <Button type="button" onClick={onCancel} variant="ghost">
               {t("common.cancel")}
             </Button>
 
-            <Button variant="primary" type="submit">
-              {t("environments.surveys.copy_survey")}
-            </Button>
+            <Button type="submit">{t("environments.surveys.copy_survey")}</Button>
           </div>
         </div>
       </form>

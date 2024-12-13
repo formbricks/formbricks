@@ -186,9 +186,11 @@ export const POST = async (request: Request) => {
     );
 
     // Update survey status if necessary
-    if (survey.autoComplete && responseCount === survey.autoComplete) {
-      survey.status = "completed";
-      await updateSurvey(survey);
+    if (survey.autoComplete && responseCount >= survey.autoComplete) {
+      await updateSurvey({
+        ...survey,
+        status: "completed",
+      });
     }
 
     // Await webhook and email promises with allSettled to prevent early rejection

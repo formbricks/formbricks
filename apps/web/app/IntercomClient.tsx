@@ -35,7 +35,7 @@ export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }
       app_id: intercomAppId!,
       ...initParams,
     });
-  }, [user]);
+  }, [user, intercomSecretKey]);
 
   useEffect(() => {
     try {
@@ -50,7 +50,7 @@ export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }
     } catch (error) {
       console.error("Failed to initialize Intercom:", error);
     }
-  }, [isIntercomConfigured]);
+  }, [isIntercomConfigured, initializeIntercom]);
 
   return null;
 };

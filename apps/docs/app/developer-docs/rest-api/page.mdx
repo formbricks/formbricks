@@ -13,38 +13,33 @@ export const metadata = {
 
 # API Overview
 
-<Note>
-  The Formbricks API is currently in beta and is subject to change. We will do our best to notify you of any
-  changes.
-</Note>
-
 Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.
 
-View our [API Documentation](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh) in more than 30 frameworks and languages.
+View our [API Documentation](/api-docs) in more than 30 frameworks and languages.
 
 ## Public Client API
 
-The [Public Client API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#5c981d9e-5e7d-455d-9795-b9c45bc2f930) is designed for our SDKs and **does not require authentication**. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
+The [Public Client API](/api-docs#tag/Client-API) is designed for our SDKs and **does not require authentication**. This API is ideal for client-side interactions, as it doesn't expose sensitive information.
 
 We currently have the following Client API methods exposed and below is their documentation attached in Postman:
 
-- [Displays API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#949272bf-daec-4d72-9b52-47af3d74a62c) - Mark Survey as Displayed or Update an existing Display by linking it with a Response for a Person
-- [People API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#ee3d2188-4253-4bca-9238-6b76455805a9) - Create & Update a Person (e.g. attributes, email, userId, etc)
-- [Responses API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#8c773032-536c-483c-a237-c7697347946e) - Create & Update a Response for a Survey
+- [Displays API](/api-docs#tag/Public-Client-API-greater-Displays) - Mark Survey as Displayed or Update an existing Display by linking it with a Response for a Person
+- [People API](/api-docs#tag/Public-Client-API-greater-People) - Create & Update a Person (e.g. attributes, email, userId, etc)
+- [Responses API](/api-docs#tag/Public-Client-API-greater-Responses) - Create & Update a Response for a Survey
 
 ## Management API
 
-The [Management API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#98fce5a1-1365-4125-8de1-acdb28206766) provides access to all data and settings that your account has access to in the Formbricks app. This API **requires a personal API Key** for authentication, which can be generated in the Settings section of the Formbricks app. Checkout the [API Key Setup](#how-to-generate-an-api-key) below to generate & manage API Keys.
+The [Management API](/api-docs#tag/Management-API) provides access to all data and settings that your account has access to in the Formbricks app. This API **requires a personal API Key** for authentication, which can be generated in the Settings section of the Formbricks app. Checkout the [API Key Setup](#how-to-generate-an-api-key) below to generate & manage API Keys.
 
 We currently have the following Management API methods exposed and below is their documentation attached in Postman:
 
-- [Action Class API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#81947f69-99fc-41c9-a184-f3260e02be48) - Create, List, and Delete Action Classes
-- [Attribute Class API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#31089010-d468-4a7c-943e-8ebe71b9a36e) - Create, List, and Delete Attribute Classes
-- [Me API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#79e08365-641d-4b2d-aea2-9a855e0438ec) - Retrieve Account Information
-- [People API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#cffc27a6-dafb-428f-8ea7-5165bedb911e) - List and Delete People
-- [Response API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#e544ec0d-8b30-4e33-8d35-2441cb40d676) - List, List by Survey, Update, and Delete Responses
-- [Survey API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#953189b2-37b5-4429-a7bd-f4d01ceae242) - List, Create, Update, generate multiple suId and Delete Surveys
-- [Webhook API](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#62e6ec65-021b-42a4-ac93-d1434b393c6c) - List, Create, and Delete Webhooks
+- [Action Class API](/api-docs#tag/Management-API-greater-Action-Class) - Create, List, and Delete Action Classes
+- [Attribute Class API](/api-docs#tag/Management-API-greater-Attribute-Class) - Create, List, and Delete Attribute Classes
+- [Me API](/api-docs#tag/Management-API-greater-Me) - Retrieve Account Information
+- [People API](/api-docs#tag/Management-API-greater-People) - List and Delete People
+- [Response API](/api-docs#tag/Management-API-greater-Response) - List, List by Survey, Update, and Delete Responses
+- [Survey API](/api-docs#tag/Management-API-greater-Survey) - List, Create, Update, generate multiple suId and Delete Surveys
+- [Webhook API](/api-docs#tag/Management-API-greater-Webhook) - List, Create, and Delete Webhooks
 
 ## How to Generate an API key
 

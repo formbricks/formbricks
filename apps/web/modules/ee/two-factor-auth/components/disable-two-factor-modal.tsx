@@ -171,7 +171,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
             <div className="flex w-full items-center justify-between border-t border-slate-300 p-4">
               <div>
                 <Button
-                  variant="minimal"
+                  variant="ghost"
                   size="sm"
                   type="button"
                   onClick={() => setBackupCodeInputVisible((prev) => !prev)}>

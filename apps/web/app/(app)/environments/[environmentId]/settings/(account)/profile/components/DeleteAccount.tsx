@@ -35,7 +35,7 @@ export const DeleteAccount = ({
       <p className="text-sm text-slate-700">
         <strong>{t("warning_cannot_undo")}</strong>
       </p>
-      <Button className="mt-4" variant="warn" size="sm" onClick={() => setModalOpen(!isModalOpen)}>
+      <Button className="mt-4" variant="destructive" size="sm" onClick={() => setModalOpen(!isModalOpen)}>
         {t("confirm_delete_my_account")}
       </Button>
     </div>
