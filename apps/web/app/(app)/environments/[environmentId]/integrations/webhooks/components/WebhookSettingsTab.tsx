@@ -126,9 +126,17 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
-    toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
-    router.refresh();
+    const updateWebhookActionResult = await updateWebhookAction({
+      webhookId: webhook.id,
+      webhookInput: updatedData,
+    });
+    if (updateWebhookActionResult?.data) {
+      router.refresh();
+      toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateWebhookActionResult);
+      toast.error(errorMessage);
+    }
     setIsUpdatingWebhook(false);
     setOpen(false);
   };
@@ -245,12 +253,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
         text={t("environments.integrations.webhooks.webhook_delete_confirmation")}
         onDelete={async () => {
           setOpen(false);
-          try {
-            await deleteWebhookAction({ id: webhook.id });
+          const deleteWebhookActionResult = await deleteWebhookAction({ id: webhook.id });
+          if (deleteWebhookActionResult?.data) {
             router.refresh();
             toast.success(t("environments.integrations.webhooks.webhook_deleted_successfully"));
-          } catch (error) {
-            toast.error(t("common.something_went_wrong_please_try_again"));
+          } else {
+            const errorMessage = getFormattedErrorMessage(deleteWebhookActionResult);
+            toast.error(errorMessage);
           }
         }}
       />

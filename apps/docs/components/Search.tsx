@@ -11,12 +11,7 @@ const docSearchConfig = {
   indexName: process.env.NEXT_PUBLIC_DOCSEARCH_INDEX_NAME || "",
 };
 
-interface HitProps {
-  hit: { url: string };
-  children: React.ReactNode;
-}
-
-const Hit = ({ hit, children }: HitProps) => {
+const Hit = ({ hit, children }): JSX.Element => {
   return <Link href={hit.url}>{children}</Link>;
 };
 

@@ -122,10 +122,18 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           surveyIds: selectedSurveys,
         };
 
-        await createWebhookAction({ environmentId, webhookInput: updatedData });
-        router.refresh();
-        setOpenWithStates(false);
-        toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));
+        const createWebhookActionResult = await createWebhookAction({
+          environmentId,
+          webhookInput: updatedData,
+        });
+        if (createWebhookActionResult?.data) {
+          router.refresh();
+          setOpenWithStates(false);
+          toast.success(t("environments.integrations.webhooks.webhook_added_successfully"));
+        } else {
+          const errorMessage = getFormattedErrorMessage(createWebhookActionResult);
+          toast.error(errorMessage);
+        }
       } catch (e) {
         toast.error(e.message);
       } finally {

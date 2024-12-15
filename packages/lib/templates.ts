@@ -47,6 +47,7 @@ export const getDefaultWelcomeCard = (locale: string): TSurveyWelcomeCard => {
     enabled: false,
     headline: { default: translate("default_welcome_card_headline", locale) },
     html: { default: translate("default_welcome_card_html", locale) },
+    buttonLabel: { default: translate("default_welcome_card_button_label", locale) },
     timeToFinish: false,
     showResponseCount: false,
   };
