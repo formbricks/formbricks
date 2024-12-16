@@ -66,7 +66,6 @@ export const TeamsTable = ({
 
   const allTeams = [...userTeams, ...otherTeams];
 
-  console.log("allTeams", allTeams);
   return (
     <>
       {isOwnerOrManager && (
@@ -75,10 +74,10 @@ export const TeamsTable = ({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg">
+      <div className="overflow-hidden rounded-lg" aria-label="Teams list">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-slate-100">
+          <TableHeader role="rowgroup">
+            <TableRow className="bg-slate-100" role="row">
               <TableHead className="font-medium text-slate-500">
                 {t("environments.settings.teams.team_name")}
               </TableHead>

@@ -26,14 +26,15 @@ export const TeamsView = async ({
 }: TeamsViewProps) => {
   const t = await getTranslations();
 
-  const teams = await getTeams(currentUserId, organizationId);
+  const [teams, orgMembers, orgProjects] = await Promise.all([
+    getTeams(currentUserId, organizationId),
+    getMembersByOrganizationId(organizationId),
+    getProjectsByOrganizationId(organizationId),
+  ]);
 
   if (!teams) {
     throw new Error(t("common.teams_not_found"));
   }
-  const orgMembers = await getMembersByOrganizationId(organizationId);
-
-  const orgProjects = await getProjectsByOrganizationId(organizationId);
 
   const buttons: [ModalButton, ModalButton] = [
     {
