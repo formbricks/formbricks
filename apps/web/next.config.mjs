@@ -24,9 +24,7 @@ const nextConfig = {
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
-  experimental: {
-    after: true,
-  },
+  experimental: {},
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -317,7 +315,7 @@ const sentryConfig = {
 };
 
 const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
+  ? withSentryConfig(nextConfig, sentryOptions)
   : nextConfig;
 
 export default withNextIntl(nextConfig);

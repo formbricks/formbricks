@@ -19,14 +19,6 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
-const questionTypes = [
-  { value: "text", label: "common.text", icon: <MessageSquareTextIcon className="h-4 w-4" /> },
-  { value: "email", label: "common.email", icon: <MailIcon className="h-4 w-4" /> },
-  { value: "url", label: "common.url", icon: <LinkIcon className="h-4 w-4" /> },
-  { value: "number", label: "common.number", icon: <HashIcon className="h-4 w-4" /> },
-  { value: "phone", label: "common.phone", icon: <PhoneIcon className="h-4 w-4" /> },
-];
-
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
   question: TSurveyOpenTextQuestion;
@@ -52,6 +44,13 @@ export const OpenQuestionForm = ({
   locale,
 }: OpenQuestionFormProps): JSX.Element => {
   const t = useTranslations();
+  const questionTypes = [
+    { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
+    { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },
+    { value: "url", label: t("common.url"), icon: <LinkIcon className="h-4 w-4" /> },
+    { value: "number", label: t("common.number"), icon: <HashIcon className="h-4 w-4" /> },
+    { value: "phone", label: t("common.phone"), icon: <PhoneIcon className="h-4 w-4" /> },
+  ];
   const defaultPlaceholder = getPlaceholderByInputType(question.inputType ?? "text");
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 

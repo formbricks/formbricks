@@ -247,6 +247,7 @@ export const surveys = {
     welcomeCard: {
       headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
       description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation
+      buttonLabel: "Weiter",
     },
     openTextQuestion: {
       question: "Dies ist meine offene Textfrage", // German translation

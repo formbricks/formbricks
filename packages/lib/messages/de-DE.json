@@ -2271,6 +2271,7 @@
     "default_ending_card_button_label": "Erstelle deine eigene Umfrage",
     "default_ending_card_headline": "Danke!",
     "default_ending_card_subheader": "Wir schätzen dein Feedback.",
+    "default_welcome_card_button_label": "Weiter",
     "default_welcome_card_headline": "Willkommen!",
     "default_welcome_card_html": "Danke für dein Feedback - los geht's!",
     "docs_feedback_description": "Finde heraus, wie verständlich deine Entwicklerdokumentation ist.",
