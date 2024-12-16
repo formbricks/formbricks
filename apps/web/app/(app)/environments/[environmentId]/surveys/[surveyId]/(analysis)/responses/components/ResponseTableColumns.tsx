@@ -10,7 +10,7 @@ import Link from "next/link";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { getFormattedDate, getFormattedTime } from "@formbricks/lib/utils/datetime";
+import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { QUESTIONS_ICON_MAP, VARIABLES_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
@@ -182,12 +182,7 @@ export const generateResponseTableColumns = (
     size: 200,
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
-      return (
-        <div>
-          <p className="text-slate-900">{getFormattedDate(date)}</p>
-          <p className="text-slate-900">{getFormattedTime(date)}</p>
-        </div>
-      );
+      return <p className="text-slate-900">{getFormattedDateTimeString(date)}</p>;
     },
   };
 

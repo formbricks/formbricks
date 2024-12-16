@@ -5,7 +5,7 @@ import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { unstable_after as after } from "next/server";
+import { after } from "next/server";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";

@@ -2289,6 +2289,7 @@
     "default_ending_card_button_label": "Create your own Survey",
     "default_ending_card_headline": "Thank you!",
     "default_ending_card_subheader": "We appreciate your feedback.",
+    "default_welcome_card_button_label": "Next",
     "default_welcome_card_headline": "Welcome!",
     "default_welcome_card_html": "Thanks for providing your feedback - let's go!",
     "docs_feedback_description": "Measure how clear each page of your developer documentation is.",
