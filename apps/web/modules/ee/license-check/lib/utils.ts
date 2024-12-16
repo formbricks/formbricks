@@ -261,7 +261,7 @@ export const fetchLicense = reactCache(
 
 export const getSurveyFollowUpsPermission = async (organization: TOrganization): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
+  else if (!IS_FORMBRICKS_CLOUD) return true;
   return false;
 };
 
