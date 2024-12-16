@@ -221,13 +221,10 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
 
 export async function applyMigrations(): Promise<void> {
   try {
-    // throw new Error("Not implemented");
     const allMigrations = await loadMigrations();
     console.log(`Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR}`);
     await runMigrations(allMigrations);
   } catch (error) {
-    // console.error("Migration failed:", error);
-    // process.exit(1);
     await prisma.$disconnect();
     throw error;
   }

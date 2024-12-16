@@ -77,6 +77,7 @@ async function main(): Promise<void> {
     console.error("Error applying migrations: ", err);
     // delete the created migration directories:
     await fs.rm(destPath, { recursive: true, force: true });
+    process.exit(1);
   }
 }
 
