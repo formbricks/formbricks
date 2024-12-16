@@ -1232,7 +1232,7 @@
         "create": "Create",
         "create_first_team_message": "You need to create a team first.",
         "create_new_team": "Create new team",
-        "delete_team": "Delete Team",
+        "delete_team": "Delete team",
         "empty_project_message": "You haven't added any projects yet. Assign a project to the team to grant access to its members.",
         "empty_teams_state": "Create your first team.",
         "enter_team_name": "Enter team name",

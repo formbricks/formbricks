@@ -190,6 +190,10 @@ export const TeamSettingsModal = ({
     }
   };
 
+  const hasEmptyMember = watchMembers.some((m) => !m.userId);
+
+  const hasEmptyProject = watchProjects.some((p) => !p.projectId);
+
   return (
     <Modal open={open} setOpen={setOpen} noPadding className="overflow-visible" size="md" hideCloseButton>
       <div className="sticky top-0 flex h-full flex-col rounded-lg">
@@ -243,102 +247,121 @@ export const TeamSettingsModal = ({
             {/* Members Section */}
             <div className="space-y-2">
               <FormLabel>{t("common.members")}</FormLabel>
-              <div className="max-h-40 space-y-2 overflow-y-auto p-1">
-                {watchMembers.map((member, index) => {
-                  const memberOpts = getMemberOptionsForIndex(index);
-                  return (
-                    <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
-                      <FormField
-                        control={control}
-                        name={`members.${index}.userId`}
-                        render={({ field, fieldState: { error } }) => (
-                          <FormItem className="flex-1">
-                            <Select
-                              onValueChange={(val) => {
-                                field.onChange(val);
-                                handleMemberSelectionChange(index, val);
-                              }}
-                              disabled={!isOwnerOrManager && !isTeamAdminMember}
-                              value={member.userId}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select member" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {memberOpts.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                    id={`member-${index}-option`}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                          </FormItem>
-                        )}
-                      />
+              <FormField
+                control={control}
+                name={`members`}
+                render={({ fieldState: { error } }) => (
+                  <FormItem className="flex-1">
+                    <div className="max-h-40 space-y-2 overflow-y-auto p-1">
+                      {watchMembers.map((member, index) => {
+                        const memberOpts = getMemberOptionsForIndex(index);
+                        return (
+                          <div key={`member-${member.userId}-${index}`} className="flex gap-2.5">
+                            <FormField
+                              control={control}
+                              name={`members.${index}.userId`}
+                              render={({ field, fieldState: { error } }) => (
+                                <FormItem className="flex-1">
+                                  <Select
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                      handleMemberSelectionChange(index, val);
+                                    }}
+                                    disabled={!isOwnerOrManager && !isTeamAdminMember}
+                                    value={member.userId}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select member" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {memberOpts.map((option) => (
+                                        <SelectItem
+                                          key={option.value}
+                                          value={option.value}
+                                          id={`member-${index}-option`}>
+                                          {option.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {error?.message && (
+                                    <FormError className="text-left">{error.message}</FormError>
+                                  )}
+                                </FormItem>
+                              )}
+                            />
 
-                      <FormField
-                        control={control}
-                        name={`members.${index}.role`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <Select
-                              onValueChange={field.onChange}
-                              value={member.role}
-                              disabled={(() => {
-                                const chosenMember = orgMembers.find(
-                                  (m) => m.id === watchMembers[index]?.userId
-                                );
-                                if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
+                            <FormField
+                              control={control}
+                              name={`members.${index}.role`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={member.role}
+                                    disabled={(() => {
+                                      const chosenMember = orgMembers.find(
+                                        (m) => m.id === watchMembers[index]?.userId
+                                      );
+                                      if (!chosenMember) return !isOwnerOrManager && !isTeamAdminMember;
 
-                                return (
-                                  chosenMember.role === "owner" ||
-                                  chosenMember.role === "manager" ||
-                                  isTeamContributorMember ||
-                                  chosenMember.id === currentUserId
-                                );
-                              })()}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select role" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={ZTeamRole.enum.admin}>
-                                  {t("environments.settings.teams.team_admin")}
-                                </SelectItem>
-                                <SelectItem value={ZTeamRole.enum.contributor}>
-                                  {t("environments.settings.teams.contributor")}
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
+                                      return (
+                                        chosenMember.role === "owner" ||
+                                        chosenMember.role === "manager" ||
+                                        isTeamContributorMember ||
+                                        chosenMember.id === currentUserId
+                                      );
+                                    })()}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value={ZTeamRole.enum.admin}>
+                                        {t("environments.settings.teams.team_admin")}
+                                      </SelectItem>
+                                      <SelectItem value={ZTeamRole.enum.contributor}>
+                                        {t("environments.settings.teams.contributor")}
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormItem>
+                              )}
+                            />
 
-                      {/* Delete Button for Member */}
-                      <Button
-                        size="icon"
-                        type="button"
-                        variant="secondary"
-                        className="shrink-0"
-                        disabled={
-                          !isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)
-                        }
-                        onClick={() => handleRemoveMember(index)}>
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
+                            {/* Delete Button for Member */}
+                            {watchMembers.length > 1 && (
+                              <Button
+                                size="icon"
+                                type="button"
+                                variant="secondary"
+                                className="shrink-0"
+                                disabled={
+                                  !isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)
+                                }
+                                onClick={() => handleRemoveMember(index)}>
+                                <Trash2Icon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                    {error?.root?.message && (
+                      <FormError className="text-left">{error.root.message}</FormError>
+                    )}
+                  </FormItem>
+                )}
+              />
 
               <Button
                 size="default"
                 type="button"
                 variant="secondary"
                 onClick={handleAddMember}
-                disabled={!isOwnerOrManager && !isTeamAdminMember}>
+                disabled={
+                  (!isOwnerOrManager && !isTeamAdminMember) ||
+                  selectedMemberIds.length === orgMembers.length ||
+                  hasEmptyMember
+                }>
                 <PlusIcon className="h-4 w-4" />
                 <span>Add member</span>
               </Button>
@@ -350,85 +373,103 @@ export const TeamSettingsModal = ({
             {/* Projects Section */}
             <div className="space-y-2">
               <FormLabel>Projects</FormLabel>
-              <div className="max-h-40 space-y-2 overflow-y-auto p-1">
-                {watchProjects.map((project, index) => {
-                  const projectOpts = getProjectOptionsForIndex(index);
-                  return (
-                    <div key={`project-${project.projectId}-${index}`} className="flex gap-2.5">
-                      <FormField
-                        control={control}
-                        name={`projects.${index}.projectId`}
-                        render={({ field, fieldState: { error } }) => (
-                          <FormItem className="flex-1">
-                            <Select
-                              onValueChange={field.onChange}
-                              value={project.projectId}
-                              disabled={!isOwnerOrManager}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select project" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {projectOpts.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                    id={`project-${index}-option`}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                          </FormItem>
-                        )}
-                      />
+              <FormField
+                control={control}
+                name={`projects`}
+                render={({ fieldState: { error } }) => (
+                  <FormItem className="flex-1">
+                    <div className="max-h-40 space-y-2 overflow-y-auto p-1">
+                      {watchProjects.map((project, index) => {
+                        const projectOpts = getProjectOptionsForIndex(index);
+                        return (
+                          <div key={`project-${project.projectId}-${index}`} className="flex gap-2.5">
+                            <FormField
+                              control={control}
+                              name={`projects.${index}.projectId`}
+                              render={({ field, fieldState: { error } }) => (
+                                <FormItem className="flex-1">
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={project.projectId}
+                                    disabled={!isOwnerOrManager}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select project" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {projectOpts.map((option) => (
+                                        <SelectItem
+                                          key={option.value}
+                                          value={option.value}
+                                          id={`project-${index}-option`}>
+                                          {option.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  {error?.message && (
+                                    <FormError className="text-left">{error.message}</FormError>
+                                  )}
+                                </FormItem>
+                              )}
+                            />
 
-                      <FormField
-                        control={control}
-                        name={`projects.${index}.permission`}
-                        render={({ field }) => (
-                          <FormItem className="flex-1">
-                            <Select
-                              onValueChange={field.onChange}
-                              value={project.permission}
-                              disabled={!isOwnerOrManager}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select project role" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value={ZTeamPermission.enum.read}>
-                                  {t("environments.settings.teams.read")}
-                                </SelectItem>
-                                <SelectItem value={ZTeamPermission.enum.readWrite}>
-                                  {t("environments.settings.teams.read_write")}
-                                </SelectItem>
-                                <SelectItem value={ZTeamPermission.enum.manage}>
-                                  {t("environments.settings.teams.manage")}
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                      <Button
-                        size="icon"
-                        type="button"
-                        variant="secondary"
-                        className="shrink-0"
-                        disabled={!isOwnerOrManager}
-                        onClick={() => handleRemoveProject(index)}>
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
+                            <FormField
+                              control={control}
+                              name={`projects.${index}.permission`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <Select
+                                    onValueChange={field.onChange}
+                                    value={project.permission}
+                                    disabled={!isOwnerOrManager}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select project role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value={ZTeamPermission.enum.read}>
+                                        {t("environments.settings.teams.read")}
+                                      </SelectItem>
+                                      <SelectItem value={ZTeamPermission.enum.readWrite}>
+                                        {t("environments.settings.teams.read_write")}
+                                      </SelectItem>
+                                      <SelectItem value={ZTeamPermission.enum.manage}>
+                                        {t("environments.settings.teams.manage")}
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </FormItem>
+                              )}
+                            />
+                            {watchProjects.length > 1 && (
+                              <Button
+                                size="icon"
+                                type="button"
+                                variant="secondary"
+                                className="shrink-0"
+                                disabled={!isOwnerOrManager}
+                                onClick={() => handleRemoveProject(index)}>
+                                <Trash2Icon className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                    {error?.root?.message && (
+                      <FormError className="text-left">{error.root.message}</FormError>
+                    )}
+                  </FormItem>
+                )}
+              />
+
               <Button
                 size="default"
                 type="button"
                 variant="secondary"
                 onClick={handleAddProject}
-                disabled={!isOwnerOrManager}>
+                disabled={
+                  !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
+                }>
                 <PlusIcon className="h-4 w-4" />
                 <span>Add project</span>
               </Button>

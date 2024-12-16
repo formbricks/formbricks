@@ -65,7 +65,7 @@ export const ZTeamSettingsFormSchema = z.object({
   members: z
     .array(
       z.object({
-        userId: z.string({ required_error: "Please select a user" }),
+        userId: z.string().trim().min(1, "Please select a member"),
         role: ZTeamRole,
       })
     )
@@ -73,7 +73,7 @@ export const ZTeamSettingsFormSchema = z.object({
   projects: z
     .array(
       z.object({
-        projectId: z.string({ required_error: "Please select a project" }),
+        projectId: z.string().trim().min(1, "Please select a project"),
         permission: ZTeamPermission,
       })
     )
