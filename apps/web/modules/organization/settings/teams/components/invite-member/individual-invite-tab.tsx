@@ -7,6 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
+import { Small } from "@/modules/ui/components/typography";
 import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
@@ -108,14 +109,22 @@ export const IndividualInviteTab = ({
       {canDoRoleManagement && (
         <div className="flex flex-col space-y-2">
           <Label htmlFor="memberEmailInput">{t("common.add_to_team")}</Label>
-          <MultiSelect
-            value={watch("teamIds")}
-            options={teamOptions}
-            placeholder={t("environments.settings.teams.team_select_placeholder")}
-            onChange={(teamIds) => {
-              setValue("teamIds", teamIds);
-            }}
-          />
+          <div>
+            <MultiSelect
+              value={watch("teamIds")}
+              options={teamOptions}
+              placeholder={t("environments.settings.teams.team_select_placeholder")}
+              disabled={!teamOptions.length}
+              onChange={(teamIds) => {
+                if (teamIds.length) {
+                  setValue("teamIds", teamIds);
+                }
+              }}
+            />
+            {!teamOptions.length && (
+              <Small className="italic">{t("environments.settings.teams.create_first_team_message")}</Small>
+            )}
+          </div>
         </div>
       )}
 

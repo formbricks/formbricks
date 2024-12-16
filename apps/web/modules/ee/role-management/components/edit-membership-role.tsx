@@ -99,7 +99,7 @@ export function EditMembershipRole({
               onValueChange={(value) => {
                 handleRoleChange(value.toLowerCase() as TOrganizationRole);
               }}
-              value={capitalizeFirstLetter(memberRole)}>
+              value={memberRole}>
               {getMembershipRoles().map((role) => (
                 <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
                   {role.toLowerCase()}

@@ -49,6 +49,7 @@ export const TeamsPage = async (props) => {
         membershipRole={currentUserMembership?.role}
         currentUserId={session.user.id}
         canDoRoleManagement={canDoRoleManagement}
+        environmentId={params.environmentId}
       />
     </PageContentWrapper>
   );

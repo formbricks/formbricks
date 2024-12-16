@@ -58,7 +58,7 @@ export const getTeamDetailsAction = authenticatedActionClient
         {
           teamId: parsedInput.teamId,
           type: "team",
-          minPermission: "contributor",
+          minPermission: "admin",
         },
       ],
     });

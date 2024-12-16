@@ -1,8 +1,12 @@
+import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
 import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
+import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { KeyIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface TeamsViewProps {
@@ -10,6 +14,7 @@ interface TeamsViewProps {
   membershipRole?: TOrganizationRole;
   currentUserId: string;
   canDoRoleManagement: boolean;
+  environmentId: string;
 }
 
 export const TeamsView = async ({
@@ -17,11 +22,8 @@ export const TeamsView = async ({
   membershipRole,
   currentUserId,
   canDoRoleManagement,
+  environmentId,
 }: TeamsViewProps) => {
-  if (!canDoRoleManagement) {
-    return <></>;
-  }
-
   const t = await getTranslations();
 
   const teams = await getTeams(currentUserId, organizationId);
@@ -33,14 +35,40 @@ export const TeamsView = async ({
 
   const orgProjects = await getProjectsByOrganizationId(organizationId);
 
+  const buttons: [ModalButton, ModalButton] = [
+    {
+      text: t("common.start_free_trial"),
+      href: IS_FORMBRICKS_CLOUD
+        ? `/environments/${environmentId}/settings/billing`
+        : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+    },
+    {
+      text: t("common.learn_more"),
+      href: "https://formbricks.com/docs/self-hosting/license",
+    },
+  ];
+
   return (
-    <TeamsTable
-      teams={teams}
-      membershipRole={membershipRole}
-      organizationId={organizationId}
-      orgMembers={orgMembers}
-      orgProjects={orgProjects}
-      currentUserId={currentUserId}
-    />
+    <SettingsCard
+      title={t("environments.settings.teams.teams")}
+      description={t("environments.settings.teams.teams_description")}>
+      {canDoRoleManagement ? (
+        <TeamsTable
+          teams={teams}
+          membershipRole={membershipRole}
+          organizationId={organizationId}
+          orgMembers={orgMembers}
+          orgProjects={orgProjects}
+          currentUserId={currentUserId}
+        />
+      ) : (
+        <UpgradePrompt
+          icon={<KeyIcon className="h-6 w-6 text-slate-900" />}
+          title={t("environments.settings.teams.unlock_teams_title")}
+          description={t("environments.settings.teams.unlock_teams_description")}
+          buttons={buttons}
+        />
+      )}
+    </SettingsCard>
   );
 };

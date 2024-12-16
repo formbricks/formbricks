@@ -25,14 +25,15 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
     ? Object.values(OrganizationRole)
     : Object.keys(OrganizationRole).filter((role) => role !== "billing");
 
+  const t = useTranslations();
+
   const rolesDescription = {
-    owner: "Owners have full control over the organization.",
-    manager: "Managers can access all projects and add and remove members.",
-    member: "Members can work within projects.",
-    billing: "Only have access to billing info.",
+    owner: t("environments.settings.teams.owner_role_description"),
+    manager: t("environments.settings.teams.manager_role_description"),
+    member: t("environments.settings.teams.member_role_description"),
+    billing: t("environments.settings.teams.billing_role_description"),
   };
 
-  const t = useTranslations();
   return (
     <Controller
       control={control}
@@ -55,8 +56,8 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
             <SelectContent>
               <SelectGroup>
                 {roles.map((role) => (
-                  <SelectItem className="capitalize" key={role} value={role}>
-                    <P>{role}</P>
+                  <SelectItem key={role} value={role}>
+                    <P className="capitalize">{role}</P>
                     <Muted className="text-slate-500">{rolesDescription[role]}</Muted>
                   </SelectItem>
                 ))}

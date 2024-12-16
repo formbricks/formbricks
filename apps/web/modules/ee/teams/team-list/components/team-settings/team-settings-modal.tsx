@@ -449,7 +449,11 @@ export const TeamSettingsModal = ({
               <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" size="default" loading={isSubmitting}>
+              <Button
+                type="submit"
+                size="default"
+                loading={isSubmitting}
+                disabled={!isOwnerOrManager && !isTeamAdminMember}>
                 {t("common.save")}
               </Button>
             </div>
