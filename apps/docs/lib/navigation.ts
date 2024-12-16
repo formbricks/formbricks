@@ -34,18 +34,18 @@ export const navigation: Array<NavGroup> = [
           { title: "Data Prefilling", href: "/link-surveys/data-prefilling" },
           { title: "Single Use Links", href: "/link-surveys/single-use-links" },
           { title: "Source Tracking", href: "/link-surveys/source-tracking" },
-          { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
+          { title: "Hidden Fields", href: "/link-surveys/global/hidden-fields" },
           { title: "Start At Question", href: "/link-surveys/start-at-question" },
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
           { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
-          { title: "Multi Language Surveys", href: "/link-surveys/global/multi-language-surveys" },
+          { title: "Multi-Language Surveys", href: "/link-surveys/global/multi-language-surveys" },
           { title: "User Metadata", href: "/link-surveys/global/metadata" },
           { title: "Custom Styling", href: "/link-surveys/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/link-surveys/global/conditional-logic" },
           { title: "Shareable Dashboards", href: "/link-surveys/global/shareable-dashboards" },
           { title: "Start & End Dates", href: "/link-surveys/global/schedule-start-end-dates" },
           { title: "Limit submissions", href: "/link-surveys/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/link-surveys/global/recall" },
+          { title: "Recall Data", href: "/link-surveys/global/recall" },
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
           { title: "Partial Submissions", href: "/link-surveys/global/partial-submissions" },
@@ -72,13 +72,13 @@ export const navigation: Array<NavGroup> = [
           { title: "Show Survey to % of users", href: "/app-surveys/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
           { title: "Hidden Fields", href: "/app-surveys/global/hidden-fields" }, // global
-          { title: "Multi Language Surveys", href: "/app-surveys/global/multi-language-surveys" }, // global
+          { title: "Multi-Language Surveys", href: "/app-surveys/global/multi-language-surveys" }, // global
           { title: "User Metadata", href: "/app-surveys/global/metadata" }, // global
           { title: "Custom Styling", href: "/app-surveys/global/overwrite-styling" }, // global
           { title: "Conditional Logic", href: "/app-surveys/global/conditional-logic" }, // global
           { title: "Start & End Dates", href: "/app-surveys/global/schedule-start-end-dates" }, // global
           { title: "Limit submissions", href: "/app-surveys/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/app-surveys/global/recall" }, // global
+          { title: "Recall Data", href: "/app-surveys/global/recall" }, // global
           { title: "Partial Submissions", href: "/app-surveys/global/partial-submissions" }, // global
           { title: "Shareable Dashboards", href: "/app-surveys/global/shareable-dashboards" },
           {
