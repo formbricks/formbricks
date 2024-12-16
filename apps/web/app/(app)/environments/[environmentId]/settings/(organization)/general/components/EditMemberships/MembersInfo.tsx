@@ -2,6 +2,9 @@ import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings
 import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { Badge } from "@/modules/ui/components/badge";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslations } from "next-intl";
+import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -31,23 +34,41 @@ export const MembersInfo = async ({
   isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
+  const t = useTranslations();
+
+  const getMembershipBadge = (member: TMember | TInvite) => {
+    if (isInvitee(member)) {
+      return isInviteExpired(member) ? (
+        <Badge type="gray" text="Expired" size="tiny" />
+      ) : (
+        <TooltipRenderer
+          tooltipContent={`${t("environments.settings.general.invited_on", {
+            date: getFormattedDateTimeString(member.createdAt),
+          })}`}>
+          <Badge type="warning" text="Pending" size="tiny" />
+        </TooltipRenderer>
+      );
+    }
+
+    return <Badge type="success" text="Accepted" size="tiny" />;
+  };
 
   const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
 
   return (
-    <div className="grid-cols-20" id="membersInfoWrapper">
+    <div className="grid-cols-5" id="membersInfoWrapper">
       {allMembers.map((member) => (
         <div
-          className="singleMemberInfo grid-cols-20 grid h-auto w-full content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
+          className="singleMemberInfo grid h-auto w-full grid-cols-5 content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
           key={member.email}>
-          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all">
             <p>{member.name}</p>
           </div>
-          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all text-center">
             {member.email}
           </div>
 
-          <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col items-center justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
                 isUserManagerOrOwner={isUserManagerOrOwner}
@@ -63,14 +84,8 @@ export const MembersInfo = async ({
             )}
           </div>
 
-          <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-            {isInvitee(member) &&
-              (isInviteExpired(member) ? (
-                <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
-              ) : (
-                <Badge className="mr-2" type="warning" text="Pending" size="tiny" />
-              ))}
-
+          <div className="col-span-1 text-center">{getMembershipBadge(member)}</div>
+          <div className="col-span-1 flex items-center justify-end gap-x-4 pr-4">
             <MemberActions
               organization={organization}
               member={!isInvitee(member) ? member : undefined}

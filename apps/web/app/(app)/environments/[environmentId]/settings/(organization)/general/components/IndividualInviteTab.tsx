@@ -55,6 +55,7 @@ export const IndividualInviteTab = ({
   const submitEventClass = async () => {
     const data = getValues();
     data.role = data.role || OrganizationRole.owner;
+    data.email = data.email.toLowerCase();
     onSubmit([data]);
     setOpen(false);
     reset();

@@ -30,11 +30,12 @@ export const EditMemberships = async ({
   return (
     <div>
       <div className="rounded-lg border border-slate-200">
-        <div className="grid-cols-20 grid h-12 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-5">{t("common.full_name")}</div>
-          <div className="col-span-5">{t("common.email")}</div>
-          {canDoRoleManagement && <div className="col-span-5">{t("common.role")}</div>}
-          <div className="col-span-5"></div>
+        <div className="grid h-12 grid-cols-5 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
+          <div className="col-span-1">{t("common.full_name")}</div>
+          <div className="col-span-1 text-center">{t("common.email")}</div>
+          {canDoRoleManagement && <div className="col-span-1 text-center">{t("common.role")}</div>}
+          <div className="col-span-1 text-center">{t("common.status")}</div>
+          <div className="col-span-1"></div>
         </div>
 
         {currentUserRole && (
