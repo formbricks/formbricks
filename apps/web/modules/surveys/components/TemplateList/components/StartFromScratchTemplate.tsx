@@ -31,8 +31,7 @@ export const StartFromScratchTemplate = ({
   const t = useTranslations();
   const customSurvey = getCustomSurveyTemplate(locale);
   return (
-    <button
-      type="button"
+    <div
       onClick={() => {
         if (noPreview) {
           createSurvey(customSurvey);
@@ -62,6 +61,6 @@ export const StartFromScratchTemplate = ({
           </Button>
         </div>
       )}
-    </button>
+    </div>
   );
 };
