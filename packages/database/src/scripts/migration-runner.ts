@@ -57,7 +57,8 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
             console.log(
               "If you are sure that there is no migration running, you need to manually resolve the issue."
             );
-            process.exit(1);
+
+            throw new Error("Migration is pending. Please resolve the issue manually.");
           }
 
           if (existingMigration?.[0]?.status === "applied") {
@@ -100,6 +101,7 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
         VALUES (${migration.id}, ${migration.name}, 'failed')
         ON CONFLICT (id) DO UPDATE SET status = 'failed';
       `;
+
       throw error;
     }
   } else {
@@ -177,6 +179,14 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
     .map((d) => d.name)
     .sort(); // Assuming timestamped names, sorting ensures the correct order
 
+  // Separate sets for schema and data migrations
+  const schemaMigrationNames = new Set<string>();
+  const dataMigrationNames = new Set<string>();
+
+  // To keep track of duplicates for error reporting
+  const duplicateSchemaMigrations: string[] = [];
+  const duplicateDataMigrations: string[] = [];
+
   for (const dirName of migrationDirs) {
     const migrationPath = path.join(MIGRATIONS_DIR, dirName);
     const files = await fs.readdir(migrationPath);
@@ -190,7 +200,22 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
       );
     }
 
+    // Extract the migration name (underscored part after timestamp)
+    const migrationNameMatch = /^\d+_(?<migrationName>.+)$/.exec(dirName);
+    if (!migrationNameMatch) {
+      throw new Error(`Invalid migration directory name format: ${dirName}`);
+    }
+
+    const migrationName = migrationNameMatch[1];
+
     if (hasSchemaMigration) {
+      // It's a schema migration
+      if (schemaMigrationNames.has(migrationName)) {
+        duplicateSchemaMigrations.push(migrationName);
+      } else {
+        schemaMigrationNames.add(migrationName);
+      }
+
       // It's a schema migration
       // We just create an object with type: "schema" and name: dirName
       migrations.push({
@@ -198,6 +223,13 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
         name: dirName,
       } as DataMigrationScript);
     } else if (hasDataMigration) {
+      // Check for duplicates among data migrations
+      if (dataMigrationNames.has(migrationName)) {
+        duplicateDataMigrations.push(migrationName);
+      } else {
+        dataMigrationNames.add(migrationName);
+      }
+
       // It's a data migration, dynamically import and extract the scripts
       const modulePath = path.join(migrationPath, "migration.ts");
       const mod = (await import(modulePath)) as Record<string, DataMigrationScript | undefined>;
@@ -214,6 +246,21 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
         `Migration directory ${dirName} doesn't have migration.sql or data-migration.ts. Skipping...`
       );
     }
+  }
+
+  // If any duplicate migration names are found for the same type, throw an error
+  if (duplicateSchemaMigrations.length > 0 || duplicateDataMigrations.length > 0) {
+    const errorParts: string[] = [];
+    if (duplicateSchemaMigrations.length > 0) {
+      errorParts.push(`Schema migrations: ${duplicateSchemaMigrations.join(", ")}`);
+    }
+    if (duplicateDataMigrations.length > 0) {
+      errorParts.push(`Data migrations: ${duplicateDataMigrations.join(", ")}`);
+    }
+
+    throw new Error(
+      `Duplicate migration names found for the same type: ${errorParts.join(" | ")}. Please make sure each migration has a unique name within its type.`
+    );
   }
 
   return migrations;

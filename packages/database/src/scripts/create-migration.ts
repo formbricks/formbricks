@@ -6,7 +6,6 @@ import { promisify } from "node:util";
 import { applyMigrations } from "./migration-runner";
 
 const execAsync = promisify(exec);
-
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -21,19 +20,26 @@ function promptForMigrationName(): Promise<string> {
   });
 }
 
-// ask the user for the migration name and run `pnpm prisma migrate dev --name <migration-name> --create-only` to create the migration
-// then copy the migration script from the prisma migrations folder to a temp folder
-
 async function main(): Promise<void> {
   const migrationName = await promptForMigrationName();
-
-  await execAsync(`pnpm prisma migrate dev --name "${migrationName}" --create-only`);
-  console.log(`Migration created: ${migrationName}`);
+  const migrationNameUnderscored = migrationName.replace(/\s+/g, "_");
 
   const migrationsDir = path.resolve(__dirname, "../../migrations");
   const customMigrationsDir = path.resolve(__dirname, "../../migration");
 
-  const migrationNameUnderscored = migrationName.replace(/\s+/g, "_");
+  // Check if migration already exists in custom migrations
+  const existingMigrations = await fs.readdir(customMigrationsDir);
+  const duplicateMigration = existingMigrations.find((dir) => dir.includes(migrationNameUnderscored));
+
+  if (duplicateMigration) {
+    throw new Error(`Migration with name "${migrationName}" already exists in ${customMigrationsDir}`);
+  }
+
+  // Create migration
+  await execAsync(`pnpm prisma migrate dev --name "${migrationName}" --create-only`);
+  console.log(`Migration created: ${migrationName}`);
+
+  // Find the newly created migration
   const migrationToCopy = await fs
     .readdir(migrationsDir)
     .then((files) => files.find((dir) => dir.includes(migrationNameUnderscored)));
@@ -42,7 +48,7 @@ async function main(): Promise<void> {
     throw new Error(`migration not found: ${migrationName}`);
   }
 
-  // check if the migrationToCopy is empty:
+  // Check if the migration is empty
   const migrationToCopyPath = path.join(migrationsDir, migrationToCopy);
   const files = await fs.readdir(migrationToCopyPath);
 
@@ -53,7 +59,6 @@ async function main(): Promise<void> {
     );
   } else {
     const migrationSQL = await fs.readFile(path.join(migrationToCopyPath, "migration.sql"), "utf-8");
-
     if (migrationSQL === "-- This is an empty migration.") {
       await fs.rm(migrationToCopyPath, { recursive: true, force: true });
       throw new Error(
