@@ -46,7 +46,7 @@ export const InviteOrganizationMember = ({ organization, environmentId }: Invite
   const handleInvite = async (data: TInviteOrganizationMemberDetails) => {
     const response = await inviteOrganizationMemberAction({
       organizationId: organization.id,
-      email: data.email,
+      email: data.email.toLowerCase(),
       name: data.name,
       role: "member",
       inviteMessage: data.inviteMessage,

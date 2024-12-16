@@ -1125,6 +1125,7 @@
         "invite_deleted_successfully": "Einladung erfolgreich gelöscht",
         "invite_organization_member": "Organisationsmitglied einladen",
         "invited_on": "Eingeladen am {date}",
+        "invites_failed": "Einladungen fehlgeschlagen",
         "leave_organization": "Organisation verlassen",
         "leave_organization_description": "Du wirst diese Organisation verlassen und den Zugriff auf alle Umfragen und Antworten verlieren. Du kannst nur wieder beitreten, wenn Du erneut eingeladen wirst.",
         "leave_organization_ok_btn_text": "Ja, Organisation verlassen",

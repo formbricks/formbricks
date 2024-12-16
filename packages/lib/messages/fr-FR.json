@@ -1125,6 +1125,7 @@
         "invite_deleted_successfully": "Invitation supprimée avec succès",
         "invite_organization_member": "Inviter un membre de l'organisation",
         "invited_on": "Invité le {date}",
+        "invites_failed": "Invitations échouées",
         "leave_organization": "Quitter l'organisation",
         "leave_organization_description": "Vous quitterez cette organisation et perdrez l'accès à toutes les enquêtes et réponses. Vous ne pourrez revenir que si vous êtes de nouveau invité.",
         "leave_organization_ok_btn_text": "Oui, quitter l'organisation",

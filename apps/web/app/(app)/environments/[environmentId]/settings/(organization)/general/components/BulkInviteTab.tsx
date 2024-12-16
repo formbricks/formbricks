@@ -54,7 +54,7 @@ export const BulkInviteTab = ({
 
           return {
             name: name.trim(),
-            email: email.trim().toLowerCase(),
+            email: email.trim(),
             role: orgRole as TOrganizationRole,
           };
         });
