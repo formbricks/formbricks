@@ -91,15 +91,15 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
                   <TooltipRenderer tooltipContent={`${stat.value} positive`}>
                     {stats.overallSentiment === "positive" ? (
                       <Badge variant="success" size="large">
-                        Positive
+                        {t("common.positive")}
                       </Badge>
                     ) : stats.overallSentiment === "negative" ? (
                       <Badge variant="error" size="large">
-                        Negative
+                        {t("common.negative")}
                       </Badge>
                     ) : (
                       <Badge variant="gray" size="large">
-                        Neutral
+                        {t("common.neutral")}
                       </Badge>
                     )}
                   </TooltipRenderer>

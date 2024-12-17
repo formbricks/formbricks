@@ -2,15 +2,16 @@ import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { Badge } from "@/modules/ui/components/badge";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TInvite } from "@formbricks/types/invites";
-import { TMember } from "@formbricks/types/memberships";
+import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersInfoProps {
   organization: TOrganization;
   members: TMember[];
   invites: TInvite[];
-  isOwnerOrManager: boolean;
+  currentUserRole: TOrganizationRole;
   currentUserId: string;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
@@ -24,13 +25,16 @@ const isInvitee = (member: TMember | TInvite): member is TInvite => {
 export const MembersInfo = async ({
   organization,
   invites,
-  isOwnerOrManager,
+  currentUserRole,
   members,
   currentUserId,
   canDoRoleManagement,
   isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
+
+  const { isOwner, isManager } = getAccessFlags(currentUserRole);
+  const isOwnerOrManager = isOwner || isManager;
 
   const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
 
@@ -50,7 +54,7 @@ export const MembersInfo = async ({
           <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
-                isOwnerOrManager={isOwnerOrManager}
+                currentUserRole={currentUserRole}
                 memberRole={member.role}
                 memberId={!isInvitee(member) ? member.userId : ""}
                 organizationId={organization.id}

@@ -138,7 +138,7 @@ export const ShareEmbedSurvey = ({
                   <UsersRound className="h-6 w-6 text-slate-700" />
                   {t("environments.surveys.summary.send_to_panel")}
                   <Badge size="tiny" variant="success" className="absolute right-3 top-3">
-                    New
+                    {t("common.new")}
                   </Badge>
                 </button>
               </div>

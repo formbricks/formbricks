@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 
 interface DeleteTeamProps {
   teamId: TTeam["id"];
-  onDelete?: () => void;
+  onDelete: () => void;
   isOwnerOrManager: boolean;
 }
 
@@ -40,37 +40,25 @@ export const DeleteTeam = ({ teamId, onDelete, isOwnerOrManager }: DeleteTeamPro
     setIsDeleting(false);
   };
 
-  const DeleteButton = () => (
-    <Button
-      variant="destructive"
-      size="sm"
-      type="button"
-      id="deleteTeamButton"
-      className="w-auto"
-      disabled={!isOwnerOrManager}
-      onClick={() => setIsDeleteDialogOpen(true)}>
-      {t("environments.settings.teams.delete_team")}
-    </Button>
-  );
-
-  if (!isOwnerOrManager) {
-    return (
-      <div className="flex flex-col space-y-2">
-        <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
-        <TooltipRenderer
-          tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}
-          className="w-auto">
-          <DeleteButton />
-        </TooltipRenderer>
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex flex-col space-y-2">
         <Label htmlFor="deleteTeamButton">{t("common.danger_zone")}</Label>
-        <DeleteButton />
+        <TooltipRenderer
+          shouldRender={!isOwnerOrManager}
+          tooltipContent={t("environments.settings.teams.team_deletion_not_allowed")}
+          className="w-auto">
+          <Button
+            variant="destructive"
+            size="sm"
+            type="button"
+            id="deleteTeamButton"
+            className="w-auto"
+            disabled={!isOwnerOrManager}
+            onClick={() => setIsDeleteDialogOpen(true)}>
+            {t("environments.settings.teams.delete_team")}
+          </Button>
+        </TooltipRenderer>
       </div>
 
       {isDeleteDialogOpen && (

@@ -15,12 +15,13 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
 interface Role {
-  isOwnerOrManager: boolean;
+  currentUserRole: TOrganizationRole;
   memberRole: TOrganizationRole;
   organizationId: string;
   memberId?: string;
@@ -32,9 +33,9 @@ interface Role {
 }
 
 export function EditMembershipRole({
-  isOwnerOrManager,
   memberRole,
   organizationId,
+  currentUserRole,
   memberId,
   userId,
   memberAccepted,
@@ -46,7 +47,13 @@ export function EditMembershipRole({
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const disableRole = memberId === userId || (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner);
+  const { isOwner, isManager } = getAccessFlags(currentUserRole);
+  const isOwnerOrManager = isOwner || isManager;
+
+  const disableRole =
+    memberId === userId ||
+    (memberRole === "owner" && !doesOrgHaveMoreThanOneOwner) ||
+    (currentUserRole === "manager" && memberRole === "owner");
 
   const handleMemberRoleUpdate = async (role: TOrganizationRole) => {
     setLoading(true);

@@ -3,7 +3,6 @@ import { getMembershipByOrganizationId } from "@/modules/organization/settings/t
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -24,10 +23,6 @@ export const EditMemberships = async ({
   const invites = await getInvitesByOrganizationId(organization.id);
   const t = await getTranslations();
 
-  const { isOwner, isManager } = getAccessFlags(role);
-
-  const isOwnerOrManager = isOwner || isManager;
-
   return (
     <div>
       <div className="rounded-lg border border-slate-200">
@@ -44,7 +39,7 @@ export const EditMemberships = async ({
             currentUserId={currentUserId}
             invites={invites ?? []}
             members={members ?? []}
-            isOwnerOrManager={isOwnerOrManager}
+            currentUserRole={role}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />
