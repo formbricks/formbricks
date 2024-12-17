@@ -28,7 +28,22 @@ export const getSurveysForEnvironmentState = reactCache(
               variables: true,
               type: true,
               showLanguageSwitch: true,
-              languages: true,
+              languages: {
+                select: {
+                  default: true,
+                  enabled: true,
+                  language: {
+                    select: {
+                      id: true,
+                      code: true,
+                      alias: true,
+                      createdAt: true,
+                      updatedAt: true,
+                      projectId: true,
+                    },
+                  },
+                },
+              },
               endings: true,
               autoClose: true,
               styling: true,

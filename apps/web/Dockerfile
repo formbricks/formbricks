@@ -1,4 +1,4 @@
-FROM node:22-alpine AS base
+FROM node:22-alpine3.20 AS base
 
 #
 ## step 1: Prune monorepo
@@ -78,12 +78,21 @@ COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/we
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+
+# Copy Prisma-specific generated files
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
+
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+# Copy only @paralleldrive/cuid2 and @noble/hashes
+COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+
+RUN npm install -g tsx typescript prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
