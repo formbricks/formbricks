@@ -12,9 +12,9 @@ interface PathwayOptionProps {
 }
 
 const sizeClasses = {
-  sm: "p-4 rounded-lg w-60 text-sm shadow-md",
-  md: "p-6 rounded-xl w-80 text-base shadow-lg",
-  lg: "p-8 rounded-2xl w-100 text-lg shadow-xl",
+  sm: "p-4 rounded-lg w-60 shadow-md",
+  md: "p-6 rounded-xl w-80  shadow-lg",
+  lg: "p-8 rounded-2xl w-100 shadow-xl",
 };
 
 export const OptionCard: React.FC<PathwayOptionProps> = ({
@@ -37,8 +37,8 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
         <div className="flex flex-col items-center space-y-4">
           {children}
           <div className="text-center">
-            <p className="font-medium text-slate-800">{title}</p>
-            <p className="text-slate-500">{description}</p>
+            <p className="text-lg font-medium text-slate-800">{title}</p>
+            <p className="text-sm text-slate-500">{description}</p>
           </div>
         </div>
       </div>
