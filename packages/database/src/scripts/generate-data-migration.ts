@@ -65,6 +65,14 @@ async function createMigration(): Promise<void> {
 function promptForMigrationName(): Promise<string> {
   return new Promise((resolve) => {
     rl.question("Enter the name of the migration (please use spaces): ", (name) => {
+      if (!name.trim()) {
+        console.error("Migration name cannot be empty.");
+        process.exit(1);
+      }
+      if (/[^a-zA-Z0-9\s]/.test(name)) {
+        console.error("Migration name contains invalid characters. Only letters, numbers, and spaces are allowed.");
+        process.exit(1);
+      }
       rl.close();
       resolve(name);
     });
