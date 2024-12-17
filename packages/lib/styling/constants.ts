@@ -52,7 +52,6 @@ export const defaultStyling: TProjectStyling = {
 };
 
 export const getPreviewSurvey = (locale: string, projectName: string) => {
-  console.log("projectName", projectName);
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),

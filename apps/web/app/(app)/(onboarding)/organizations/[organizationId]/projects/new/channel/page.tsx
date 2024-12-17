@@ -25,14 +25,12 @@ const Page = async (props: ChannelPageProps) => {
   const t = await getTranslations();
   const channelOptions = [
     {
-      channel: "link",
       title: t("organizations.projects.new.channel.link_and_email_surveys"),
       description: t("organizations.projects.new.channel.link_and_email_surveys_description"),
       icon: SendIcon,
       href: `/organizations/${params.organizationId}/projects/new/settings?channel=link`,
     },
     {
-      channel: "app",
       title: t("organizations.projects.new.channel.in_product_surveys"),
       description: t("organizations.projects.new.channel.in_product_surveys_description"),
       icon: PictureInPicture2Icon,
