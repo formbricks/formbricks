@@ -54,7 +54,7 @@ test.describe("Invite, accept and remove organization member", async () => {
       const pendingSpan = lastMemberInfo.locator("div").filter({ hasText: "Pending" }).first();
       await expect(pendingSpan).toBeVisible();
 
-      const shareInviteButton = page.locator(".shareInviteButton").last();
+      const shareInviteButton = page.locator("#shareInviteButton").last();
       await expect(shareInviteButton).toBeVisible();
 
       await shareInviteButton.click();
