@@ -61,7 +61,7 @@ jobs:
       - name: Apply Prisma Migrations
         run: |
           # pnpm prisma migrate deploy
-          pnpm --filter=@formbricks/database apply-migrations:dev
+          pnpm db:migrate:dev
 
       - name: Run App
         run: |
