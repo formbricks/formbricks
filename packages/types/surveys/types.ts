@@ -481,6 +481,41 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
   insightsEnabled: z.boolean().default(false).optional(),
+  charLimit: z
+    .object({
+      enabled: z.boolean().default(false).optional(),
+      min: z.number().optional(),
+      max: z.number().optional(),
+    })
+    .default({ enabled: false }),
+}).superRefine((data, ctx) => {
+  if (data.charLimit.enabled && data.charLimit.min === undefined && data.charLimit.max === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter the values for either minimum or maximum field",
+    });
+  }
+
+  if (
+    (data.charLimit.min !== undefined && data.charLimit.min < 0) ||
+    (data.charLimit.max !== undefined && data.charLimit.max < 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "The character limit values should be positive",
+    });
+  }
+
+  if (
+    data.charLimit.min !== undefined &&
+    data.charLimit.max !== undefined &&
+    data.charLimit.min > data.charLimit.max
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Minimum value cannot be greater than the maximum value",
+    });
+  }
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;

@@ -143,6 +143,7 @@ export const SingleResponseCard = ({
         <SingleResponseCardBody survey={survey} response={response} skippedQuestions={skippedQuestions} />
 
         <ResponseTagsWrapper
+          key={response.id}
           environmentId={environmentId}
           responseId={response.id}
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}

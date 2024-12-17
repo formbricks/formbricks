@@ -236,7 +236,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Save changes" }).click();
     await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
-    await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+    await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.locator("#multi-lang-toggle").click();
     await page.getByRole("combobox").click();
@@ -316,6 +316,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator(".editor-input").fill(surveys.germanCreate.welcomeCard.description);
     await page.getByLabel("Note*").click();
     await page.getByLabel("Note*").fill(surveys.germanCreate.welcomeCard.headline);
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.welcomeCard.buttonLabel);
 
     // Fill Open text question in german
     await page.getByRole("main").getByText("Free text").click();
