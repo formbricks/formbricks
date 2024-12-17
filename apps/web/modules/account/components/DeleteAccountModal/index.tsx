@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { deleteUserAction } from "./actions";
 
@@ -15,6 +16,7 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   formbricksLogout: () => void;
+  organizationsWithSingleOwner: TOrganization[];
 }
 
 export const DeleteAccountModal = ({
@@ -23,6 +25,7 @@ export const DeleteAccountModal = ({
   user,
   isFormbricksCloud,
   formbricksLogout,
+  organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
   const t = useTranslations();
   const [deleting, setDeleting] = useState(false);
@@ -67,8 +70,22 @@ export const DeleteAccountModal = ({
               "environments.settings.profile.permanent_removal_of_all_of_your_personal_information_and_data"
             )}
           </li>
-          <li>{t("environments.settings.profile.org_ownership_transfer")}</li>
-          <li>{t("environments.settings.profile.org_deletion_warning")}</li>
+          {organizationsWithSingleOwner.length > 0 && (
+            <li>
+              {t.rich("environments.settings.profile.organizations_delete_message", {
+                b: (chunks) => <b>{chunks}</b>,
+              })}
+            </li>
+          )}
+          {organizationsWithSingleOwner.length > 0 && (
+            <ul className="ml-4" style={{ listStyleType: "circle" }}>
+              {organizationsWithSingleOwner.map((organization) => {
+                if (organization.name) {
+                  return <li key={organization.name}>{organization.name}</li>;
+                }
+              })}
+            </ul>
+          )}
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
         <form>
@@ -76,7 +93,6 @@ export const DeleteAccountModal = ({
             {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
               email: user.email,
             })}
-            :
           </label>
           <Input
             value={inputValue}

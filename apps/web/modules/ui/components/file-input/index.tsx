@@ -17,10 +17,6 @@ const allowedFileTypesForPreview = ["png", "jpeg", "jpg", "webp"];
 const isImage = (name: string) => {
   return allowedFileTypesForPreview.includes(name.split(".").pop() as TAllowedFileExtension);
 };
-const options = [
-  { value: "image", label: "common.image" },
-  { value: "video", label: "common.video" },
-];
 
 interface FileInputProps {
   id: string;
@@ -56,6 +52,10 @@ export const FileInput = ({
   disabled = false,
 }: FileInputProps) => {
   const t = useTranslations();
+  const options = [
+    { value: "image", label: t("common.image") },
+    { value: "video", label: t("common.video") },
+  ];
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
   const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");

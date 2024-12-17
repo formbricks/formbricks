@@ -14,12 +14,12 @@ export const insightCache = {
       return `environments-${environmentId}-documentGroups`;
     },
   },
-  revalidate({ id, environmentId }: RevalidateProps): void {
+  revalidate: ({ id, environmentId }: RevalidateProps): void => {
     if (id) {
-      revalidateTag(this.tag.byId(id));
+      revalidateTag(insightCache.tag.byId(id));
     }
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(insightCache.tag.byEnvironmentId(environmentId));
     }
   },
 };
