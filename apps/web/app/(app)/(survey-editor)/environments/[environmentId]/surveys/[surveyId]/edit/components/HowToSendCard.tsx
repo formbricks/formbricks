@@ -163,7 +163,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
                         </p>
                         {option.comingSoon && (
                           <Badge size="normal" variant="success" className="ml-2">
-                            coming soon
+                            {t("environments.settings.enterprise.coming_soon")}
                           </Badge>
                         )}
                       </div>
