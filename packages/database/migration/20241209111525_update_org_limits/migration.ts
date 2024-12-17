@@ -1,4 +1,4 @@
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 type Plan = "free" | "startup" | "scale";
 
@@ -30,7 +30,7 @@ export const BILLING_LIMITS = {
   },
 } as const;
 
-export const updateOrgLimits: DataMigrationScript = {
+export const updateOrgLimits: MigrationScript = {
   type: "data",
   id: "ax4otbz2f295rit6kn1jeu8l",
   name: "20241209111525_update_org_limits",

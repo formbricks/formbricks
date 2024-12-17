@@ -1,4 +1,4 @@
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 type Plan = "free" | "startup" | "scale" | "enterprise";
 
@@ -9,7 +9,7 @@ const projectsLimitByPlan: Record<Plan, number | null> = {
   enterprise: null,
 };
 
-export const productRevamp: DataMigrationScript = {
+export const productRevamp: MigrationScript = {
   type: "data",
   id: "wq3b8pvrvm70nzmsg2647olq",
   name: "20241209111725_product_revamp",

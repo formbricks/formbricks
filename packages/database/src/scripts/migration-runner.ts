@@ -14,7 +14,7 @@ export interface DataMigrationContext {
   >;
 }
 
-export interface DataMigrationScript {
+export interface MigrationScript {
   id?: string;
   name: string;
   run?: (context: DataMigrationContext) => Promise<void>;
@@ -24,20 +24,25 @@ export interface DataMigrationScript {
 const prisma = new PrismaClient();
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const MIGRATIONS_DIR = path.resolve(__dirname, "../../migration");
+const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 
-const runMigrations = async (dataMigrations: DataMigrationScript[]): Promise<void> => {
-  console.log(`Starting data migrations: ${dataMigrations.length.toString()} to run`);
+const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
+  console.log(`Starting data migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
 
-  for (const dataMigration of dataMigrations) {
-    await runSingleMigration(dataMigration);
+  // empty the prisma migrations directory
+
+  await execAsync(`rm -rf ${PRISMA_MIGRATIONS_DIR}/*`);
+
+  for (let index = 0; index < migrations.length; index++) {
+    await runSingleMigration(migrations[index], index);
   }
 
   const endTime = Date.now();
   console.log(`All data migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
-const runSingleMigration = async (migration: DataMigrationScript): Promise<void> => {
+const runSingleMigration = async (migration: MigrationScript, index: number): Promise<void> => {
   if (migration.type === "data") {
     console.log(`Running data migration: ${migration.name}`);
 
@@ -115,26 +120,33 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
     // TODO: Check if this can be implemented
     // // if the migration directory exists, we will check if the migration has already been applied
 
-    // const migrationDir = path.join(originalMigrationsDir, migration.name);
-    // const hasAccess = await fs
-    //   .access(migrationDir)
-    //   .then(() => true)
-    //   .catch(() => false);
+    const migrationDir = path.join(originalMigrationsDir, migration.name);
+    let copyOnly = false;
 
-    // if (hasAccess) {
-    //   // Check if there is a migration.sql file in the directory
-    //   const hasSchemaMigration = await fs
-    //     .readdir(migrationDir)
-    //     .then((files) => files.includes("migration.sql"));
-    //   if (hasSchemaMigration) {
-    //     // Check if the migration has already been applied in the database
-    //     const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
-    //     if (isApplied) {
-    //       console.log(`Schema migration ${migration.name} already applied. Skipping...`);
-    //       return;
-    //     }
-    //   }
-    // }
+    const hasAccess = await fs
+      .access(migrationDir)
+      .then(() => true)
+      .catch(() => false);
+
+    if (hasAccess && index > 0) {
+      // Check if there is a migration.sql file in the directory
+      const hasSchemaMigration = await fs
+        .readdir(migrationDir)
+        .then((files) => files.includes("migration.sql"));
+
+      if (hasSchemaMigration) {
+        // Check if the migration has already been applied in the database
+        const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
+        if (isApplied) {
+          console.log(`Schema migration ${migration.name} already applied. Skipping...`);
+          return;
+        }
+      }
+    } else {
+      // no access -> no migration subdirectory exists
+      // if the migration is still applied in the db, we can just copy the migration to the original migrations directory
+      copyOnly = true;
+    }
 
     const originalMigrationsDirExists = await fs
       .access(originalMigrationsDir)
@@ -161,6 +173,11 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
     // Copy migration folder
     await fs.cp(sourcePath, destPath, { recursive: true });
 
+    if (copyOnly) {
+      console.log(`Schema migration ${migration.name} copied to migrations directory`);
+      return;
+    }
+
     // Run Prisma migrate
     // throws when migrate deploy fails
     await execAsync("pnpm prisma migrate deploy");
@@ -168,8 +185,8 @@ const runSingleMigration = async (migration: DataMigrationScript): Promise<void>
   }
 };
 
-const loadMigrations = async (): Promise<DataMigrationScript[]> => {
-  const migrations: DataMigrationScript[] = [];
+const loadMigrations = async (): Promise<MigrationScript[]> => {
+  const migrations: MigrationScript[] = [];
 
   const entries = await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true });
 
@@ -221,7 +238,7 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
       migrations.push({
         type: "schema",
         name: dirName,
-      } as DataMigrationScript);
+      } as MigrationScript);
     } else if (hasDataMigration) {
       // Check for duplicates among data migrations
       if (dataMigrationNames.has(migrationName)) {
@@ -232,7 +249,7 @@ const loadMigrations = async (): Promise<DataMigrationScript[]> => {
 
       // It's a data migration, dynamically import and extract the scripts
       const modulePath = path.join(migrationPath, "migration.ts");
-      const mod = (await import(modulePath)) as Record<string, DataMigrationScript | undefined>;
+      const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
 
       // Check each export in the module for a DataMigrationScript (type: "data")
       for (const key of Object.keys(mod)) {
@@ -277,18 +294,13 @@ export async function applyMigrations(): Promise<void> {
   }
 }
 
-// async function isSchemaMigrationApplied(migrationName: string, prismaClient: PrismaClient): Promise<boolean> {
-//   try {
-//     const applied: unknown[] = await prismaClient.$queryRaw`
-//     SELECT 1
-//     FROM _prisma_migrations
-//     WHERE migration_name = ${migrationName}
-//       AND finished_at IS NOT NULL
-//     LIMIT 1;
-//   `;
-//     return applied.length > 0;
-//   } catch (err) {
-//     console.log("Error: ", err);
-//     return false;
-//   }
-// }
+async function isSchemaMigrationApplied(migrationName: string, prismaClient: PrismaClient): Promise<boolean> {
+  const applied: unknown[] = await prismaClient.$queryRaw`
+    SELECT 1
+    FROM _prisma_migrations
+    WHERE migration_name = ${migrationName}
+      AND finished_at IS NOT NULL
+    LIMIT 1;
+  `;
+  return applied.length > 0;
+}
