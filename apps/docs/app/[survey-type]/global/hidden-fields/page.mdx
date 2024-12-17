@@ -16,7 +16,7 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
 
 ## How to Add Hidden Fields
 
-### Enable them in the Survey Builder
+### Enable Hidden Fields
 
 1. Edit the survey you want to add hidden fields to & switch to the Questions tab and scroll down to the bottom of the page. You will see a section called **Hidden Fields**. Make sure to enable it by toggling the switch.
 
@@ -26,6 +26,8 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
   quality="100"
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
+
+### Add Hidden Field IDs
 
 2. Now click on it to add a new hidden field ID. You can add as many hidden fields as you want.
 
@@ -43,7 +45,36 @@ Hidden fields are a powerful feature in Formbricks that allows you to add data t
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-### Set Hidden Field
+## Set Hidden Field in Responses
+
+### Link Surveys
+
+Single Hidden Field:
+
+<Col>
+<CodeGroup title="Example Screen from which the User filled it">
+
+```sh
+https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=pricing
+```
+
+</CodeGroup>
+</Col>
+
+Multiple Hidden Fields:
+
+<Col>
+<CodeGroup title="Example Screen from which the User filled it">
+
+```sh
+https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
+```
+
+</CodeGroup>
+</Col>
+
+### App & Website Surveys
+For in-product surveys, you can set hidden fields in the response by adding them to the `formbricks.track` call:
 
 <Col>
 <CodeGroup title="Example Screen from which the User filled it">
@@ -73,5 +104,6 @@ These hidden fields will now be visible in the responses tab just like other fie
 
 ## Use Cases
 
+- **Tracking Source**: You can add a hidden field to track the source of the survey. For a detailed guide on Source Tracking, check out the [Source Tracking](/link-surveys/source-tracking) guide.
 - **User Metadata**: You can add hidden fields to capture user metadata such as user ID, email, or any other user-specific information.
 - **Survey Metadata**: You can add hidden fields to capture other metadata, e.g. the screen from which the survey was filled, or any other app specific information.
