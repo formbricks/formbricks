@@ -11,14 +11,19 @@ export const metadata = {
 ## v3.0
 
 <Note>
-  This major release introduces a new approach for data migrations. The process is much simpler than the
-  previous releases and users don't need to pull the data migrations docker image from now on.
+  **Don't upgrade to 3.0 if you need SSO and user identification**
+
+With Formbricks 3.0, we're making some strategic changes to ensure long-term sustainability while keeping our core commitment to open source. While the Community Edition <a href="https://formbricks.com/blog/formbricks-3-0">got more powerful</a>, we're moving <a href="/docs/self-hosting/license">some advanced features</a> to the Enterprise Edition.
+
+If you update to 3.0 and run the data migration, there is no way back to 2.7.2 - if you need to use SSO or one of the other previously free features, either stick with 2.7.x or <a href="mailto:hola@formbricks.com">reach out</a> for a custom quote.
+
 </Note>
 
 <Note>
-  If you are on a version older than v2.7, you need to migrate step-by-step through the earlier versions first
-  (e.g. 2.4 → 2.5 → 2.6 → 2.7). After you have reached v2.7, you can upgrade directly to any v3.x release
-  without performing each intermediate migration.
+  This major release introduces a new improved approach for data migrations. If you are on a version older
+  than v2.7, you need to migrate step-by-step through the earlier versions first (e.g. 2.4 → 2.5 → 2.6 → 2.7).
+  After you have reached v2.7, you can upgrade directly to any v3.x and future release without performing each
+  intermediate migration.
 </Note>
 
 ### Steps to Migrate
