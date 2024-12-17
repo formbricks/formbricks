@@ -30,7 +30,7 @@
     "jsonwebtoken": "9.0.2",
     "markdown-it": "14.1.0",
     "mime-types": "2.1.35",
-    "nanoid": "5.0.7",
+    "nanoid": "5.0.9",
     "next-auth": "4.24.10",
     "posthog-node": "4.1.0",
     "qrcode": "1.5.4",
