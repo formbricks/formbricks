@@ -187,9 +187,11 @@
       "outputs": []
     },
     "db:migrate:deploy": {
+      "cache": false,
       "outputs": []
     },
     "db:migrate:dev": {
+      "cache": false,
       "outputs": []
     },
     "db:migrate:vercel": {
