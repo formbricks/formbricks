@@ -194,10 +194,6 @@
       "cache": false,
       "outputs": []
     },
-    "db:migrate:vercel": {
-      "env": ["MIGRATE_DATABASE_URL", "DATABASE_URL"],
-      "outputs": []
-    },
     "db:push": {
       "outputs": []
     },
