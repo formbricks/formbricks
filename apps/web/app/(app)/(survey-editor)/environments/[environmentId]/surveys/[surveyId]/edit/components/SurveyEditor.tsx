@@ -1,7 +1,7 @@
 "use client";
 
-import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { FollowUpsView } from "@/modules/survey-follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -18,10 +18,10 @@ import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/su
 import { TUserLocale } from "@formbricks/types/user";
 import { refetchProjectAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
-import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
 import { QuestionsView } from "./QuestionsView";
 import { SettingsView } from "./SettingsView";
 import { StylingView } from "./StylingView";
+import { SurveyEditorTabs } from "./SurveyEditorTabs";
 import { SurveyMenuBar } from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
@@ -163,7 +163,7 @@ export const SurveyEditor = ({
         <main
           className="relative z-0 w-1/2 flex-1 overflow-y-auto bg-slate-50 focus:outline-none"
           ref={surveyEditorRef}>
-          <QuestionsAudienceTabs
+          <SurveyEditorTabs
             activeId={activeView}
             setActiveId={setActiveView}
             isCxMode={isCxMode}

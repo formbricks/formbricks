@@ -237,7 +237,7 @@ export const ResponseNotes = ({
                 </div>
                 <div className="pointer-events-auto z-10 mt-2 flex w-full items-center justify-end">
                   <Button
-                    variant="minimal"
+                    variant="ghost"
                     type="button"
                     size="sm"
                     className={cn("mr-auto duration-300")}

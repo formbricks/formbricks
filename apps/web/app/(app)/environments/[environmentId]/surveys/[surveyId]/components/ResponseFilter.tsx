@@ -303,7 +303,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             <Button size="sm" onClick={handleApplyFilters}>
               {t("common.apply_filters")}
             </Button>
-            <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>
+            <Button size="sm" variant="ghost" onClick={handleClearAllFilters}>
               {t("common.clear_all")}
             </Button>
           </div>

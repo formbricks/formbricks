@@ -12,6 +12,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
+import { getFormattedDateTimeString } from "../utils/datetime";
 import { sanitizeString } from "../utils/strings";
 
 export const calculateTtcTotal = (ttc: TResponseTtc) => {
@@ -497,7 +498,7 @@ export const getResponsesJson = (
     jsonData.push({
       "No.": idx + 1,
       "Response ID": response.id,
-      Timestamp: response.createdAt.toDateString(),
+      Timestamp: getFormattedDateTimeString(response.createdAt),
       Finished: response.finished ? "Yes" : "No",
       "Survey ID": response.surveyId,
       "Formbricks ID (internal)": response.contact?.id || "",

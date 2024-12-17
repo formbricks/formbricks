@@ -90,7 +90,7 @@ export const SurveyMenuBar = ({
     return () => {
       window.removeEventListener("beforeunload", handleWindowClose);
     };
-  }, [localSurvey, survey]);
+  }, [localSurvey, survey, t]);
 
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
@@ -319,10 +319,10 @@ export const SurveyMenuBar = ({
               size="sm"
               variant="secondary"
               className="h-full"
-              StartIcon={ArrowLeftIcon}
               onClick={() => {
                 handleBack();
               }}>
+              <ArrowLeftIcon />
               {t("common.back")}
             </Button>
           )}
@@ -390,9 +390,9 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
-              }}
-              EndIcon={SettingsIcon}>
+              }}>
               {t("environments.surveys.edit.continue_to_settings")}
+              <SettingsIcon />
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -415,7 +415,7 @@ export const SurveyMenuBar = ({
           mainText={t("environments.surveys.edit.unsaved_changes_warning")}
           confirmBtnLabel={t("common.save")}
           declineBtnLabel={t("common.discard")}
-          declineBtnVariant="warn"
+          declineBtnVariant="destructive"
           onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();

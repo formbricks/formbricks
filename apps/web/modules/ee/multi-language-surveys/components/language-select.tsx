@@ -59,7 +59,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         className="flex h-full w-full justify-between border border-slate-200 px-3 py-2"
         disabled={disabled}
         onClick={toggleDropdown}
-        variant="minimal">
+        variant="ghost">
         <span className="mr-2">{selectedOption?.label[locale] ?? t("common.select")}</span>
         <ChevronDown className="h-4 w-4" />
       </Button>

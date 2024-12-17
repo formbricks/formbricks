@@ -19,6 +19,14 @@ export const Layout = ({
 }) => {
   const pathname = usePathname();
 
+  const fullWidthRoutes = ["/api-docs"];
+  const isFullWidth = fullWidthRoutes.includes(pathname || "");
+
+  // If it's a full-width route, return just the children
+  if (isFullWidth) {
+    return children;
+  }
+
   return (
     <SectionProvider sections={allSections[pathname || ""] ?? []}>
       <div className="h-full lg:ml-72 xl:ml-80">

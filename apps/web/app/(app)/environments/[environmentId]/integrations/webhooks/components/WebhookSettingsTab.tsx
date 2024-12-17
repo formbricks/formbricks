@@ -11,6 +11,7 @@ import { Label } from "@/modules/ui/components/label";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -125,9 +126,17 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    await updateWebhookAction({ webhookId: webhook.id, webhookInput: updatedData });
-    toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
-    router.refresh();
+    const updateWebhookActionResult = await updateWebhookAction({
+      webhookId: webhook.id,
+      webhookInput: updatedData,
+    });
+    if (updateWebhookActionResult?.data) {
+      router.refresh();
+      toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateWebhookActionResult);
+      toast.error(errorMessage);
+    }
     setIsUpdatingWebhook(false);
     setOpen(false);
   };
@@ -213,19 +222,18 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
             {webhook.source === "user" && !isReadOnly && (
               <Button
                 type="button"
-                variant="warn"
+                variant="destructive"
                 onClick={() => setOpenDeleteDialog(true)}
-                StartIcon={TrashIcon}
                 className="mr-3">
+                <TrashIcon />
                 {t("common.delete")}
               </Button>
             )}
 
-            <Button
-              variant="secondary"
-              href="https://formbricks.com/docs/api/management/webhooks"
-              target="_blank">
-              {t("common.read_docs")}
+            <Button variant="secondary" asChild>
+              <Link href="https://formbricks.com/docs/api/management/webhooks" target="_blank">
+                {t("common.read_docs")}
+              </Link>
             </Button>
           </div>
 
@@ -245,12 +253,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
         text={t("environments.integrations.webhooks.webhook_delete_confirmation")}
         onDelete={async () => {
           setOpen(false);
-          try {
-            await deleteWebhookAction({ id: webhook.id });
+          const deleteWebhookActionResult = await deleteWebhookAction({ id: webhook.id });
+          if (deleteWebhookActionResult?.data) {
             router.refresh();
             toast.success(t("environments.integrations.webhooks.webhook_deleted_successfully"));
-          } catch (error) {
-            toast.error(t("common.something_went_wrong_please_try_again"));
+          } else {
+            const errorMessage = getFormattedErrorMessage(deleteWebhookActionResult);
+            toast.error(errorMessage);
           }
         }}
       />

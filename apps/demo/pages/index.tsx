@@ -56,7 +56,7 @@ const AppPage = ({}) => {
         router.events.off("routeChangeComplete", handleRouteChange);
       };
     }
-  }, []);
+  }, [router.events]);
 
   return (
     <div className="min-h-screen bg-white px-12 py-6 dark:bg-slate-800">

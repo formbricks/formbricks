@@ -47,7 +47,7 @@ export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) =>
 
       window.history.replaceState({}, "", url.toString());
     }
-  }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted]);
+  }, [environment, isAppSurvey, searchParams, survey, widgetSetupCompleted, t]);
 
   return <>{confetti && <Confetti />}</>;
 };

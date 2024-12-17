@@ -15,9 +15,9 @@
     "@formbricks/react-native": "workspace:*",
     "expo": "51.0.26",
     "expo-status-bar": "1.12.1",
-    "react": "19.0.0-rc-ed15d500-20241110",
-    "react-dom": "19.0.0-rc-ed15d500-20241110",
-    "react-native": "0.74.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.74.5",
     "react-native-webview": "13.8.6"
   },
   "devDependencies": {

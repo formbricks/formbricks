@@ -15,6 +15,7 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -52,7 +53,7 @@ export const StylingView = ({
   const t = useTranslations();
 
   const form = useForm<TSurveyStyling>({
-    defaultValues: localSurvey.styling ?? project.styling,
+    defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },
   });
 
   const overwriteThemeStyling = form.watch("overwriteThemeStyling");
@@ -64,8 +65,7 @@ export const StylingView = ({
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
 
   const onResetThemeStyling = () => {
-    const { styling: projectStyling } = project;
-    const { allowStyleOverwrite, ...baseStyling } = projectStyling ?? {};
+    const { allowStyleOverwrite, ...baseStyling } = project.styling ?? {};
 
     setStyling({
       ...baseStyling,
@@ -90,7 +90,7 @@ export const StylingView = ({
   }, [overwriteThemeStyling]);
 
   useEffect(() => {
-    form.watch((data: TSurveyStyling) => {
+    const subscription = form.watch((data: TSurveyStyling) => {
       setLocalSurvey((prev) => ({
         ...prev,
         styling: {
@@ -99,7 +99,9 @@ export const StylingView = ({
         },
       }));
     });
-  }, [setLocalSurvey]);
+
+    return () => subscription.unsubscribe();
+  }, [form, setLocalSurvey]);
 
   const defaultProjectStyling = useMemo(() => {
     const { styling: projectStyling } = project;
@@ -214,7 +216,7 @@ export const StylingView = ({
                 {overwriteThemeStyling && (
                   <Button
                     type="button"
-                    variant="minimal"
+                    variant="ghost"
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
                     {t("environments.surveys.edit.reset_to_theme_styles")}

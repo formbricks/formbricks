@@ -3,6 +3,7 @@ import { getSyncSurveys } from "@/app/api/v1/client/[environmentId]/app/sync/lib
 import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { contactCache } from "@/lib/cache/contact";
 import { NextRequest, userAgent } from "next/server";
 import { prisma } from "@formbricks/database";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
@@ -18,7 +19,7 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsRNStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -129,6 +130,14 @@ export const GET = async (
           attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
         },
       });
+
+      if (contact) {
+        contactCache.revalidate({
+          userId: contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
+          id: contact.id,
+          environmentId,
+        });
+      }
     }
 
     const contactAttributes = contact.attributes.reduce((acc, attribute) => {
@@ -165,7 +174,7 @@ export const GET = async (
     let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
-    let state: TJsAppStateSync = {
+    let state: TJsRNStateSync = {
       surveys: !isAppSurveyResponseLimitReached
         ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, contactAttributes))
         : [],
