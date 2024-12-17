@@ -4,8 +4,7 @@ import { Input } from "@/modules/ui/components/input";
 import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { checkForYoutubeUrl } from "@formbricks/lib/utils/videoUpload";
-import { extractYoutubeId, parseVideoUrl } from "@formbricks/lib/utils/videoUpload";
+import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";
 import { Label } from "../../label";
 import { checkForYoutubePrivacyMode } from "../lib/utils";
 
@@ -49,24 +48,26 @@ export const VideoSettings = ({
 
   const handleAddVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e.preventDefault();
-    const parsedUrl = parseVideoUrl(uploadedVideoUrl);
-    if (parsedUrl) {
-      setUploadedVideoUrl(parsedUrl);
-      onFileUpload([parsedUrl], "video");
+    const embedUrl = convertToEmbedUrl(uploadedVideoUrl.trim());
+    if (embedUrl) {
+      setUploadedVideoUrl(embedUrl);
+      onFileUpload([embedUrl], "video");
     } else {
-      toast.error("Url not supported");
+      toast.error("URL not supported");
     }
   };
 
   const handleRemoveVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
     e.preventDefault();
     setVideoUrlTemp("");
+    setUploadedVideoUrl("");
     onFileUpload([], "video");
   };
 
   const handleVideoUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const videoUrl = e.target.value;
     setUploadedVideoUrl(videoUrl);
+
     // Check if the URL is from one of the supported platforms
     const isSupportedPlatform = [
       "youtube.com",
@@ -82,25 +83,25 @@ export const VideoSettings = ({
   };
 
   const isAddButtonDisabled = () => {
-    return uploadedVideoUrl.trim() !== "" ? false : true;
+    return uploadedVideoUrl.trim() === "";
   };
 
   return (
     <form className="flex flex-col space-y-4">
-      <Label>Video URL(Youtube, Vimeo or Loom):</Label>
+      <Label>Video URL (YouTube, Vimeo, or Loom):</Label>
       <div className="flex h-10 items-center space-x-2">
         <Input
           className="w-full"
-          placeholder="https://www.youtube.com/embed/VIDEO_ID"
+          placeholder="https://www.youtube.com/watch?v=VIDEO_ID"
           value={uploadedVideoUrl}
-          onChange={(e) => handleVideoUrlChange(e)}
+          onChange={handleVideoUrlChange}
         />
         {uploadedVideoUrl && videoUrl === uploadedVideoUrl ? (
-          <Button variant="secondary" onClick={(e) => handleRemoveVideo(e)}>
+          <Button variant="secondary" onClick={handleRemoveVideo}>
             Remove
           </Button>
         ) : (
-          <Button onClick={(e) => handleAddVideo(e)} disabled={isAddButtonDisabled()}>
+          <Button onClick={handleAddVideo} disabled={isAddButtonDisabled()}>
             Add
           </Button>
         )}
@@ -110,18 +111,17 @@ export const VideoSettings = ({
         <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-xs text-slate-600">
           <AlertTriangle className="h-6 w-6" />
           <p>
-            Please enter a valid Youtube, Vimeo or Loom Url. We currently do not support other video hosting
+            Please enter a valid YouTube, Vimeo, or Loom URL. We currently do not support other video hosting
             providers.
           </p>
         </div>
       )}
+
       {isYoutubeLink && (
         <AdvancedOptionToggle
-          htmlId="closeOnNumberOfResponse"
+          htmlId="youtubePrivacyMode"
           isChecked={isYoutubePrivacyModeEnabled}
-          onToggle={() => {
-            toggleYoutubePrivacyMode();
-          }}
+          onToggle={toggleYoutubePrivacyMode}
           title="YouTube Privacy Mode"
           description="Keeps user tracking to a minimum"
           childBorder={true}></AdvancedOptionToggle>
