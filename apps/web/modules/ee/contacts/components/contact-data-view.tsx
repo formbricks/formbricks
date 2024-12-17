@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { deleteContactAction, getContactsAction } from "../actions";
@@ -70,6 +71,7 @@ export const ContactDataView = ({
           }
         } catch (error) {
           console.error("Error fetching people data:", error);
+          toast.error("Error fetching people data. Please try again.");
         } finally {
           setIsDataLoaded(true);
         }
