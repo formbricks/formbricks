@@ -15,6 +15,12 @@ export const metadata = {
   previous releases and users don't need to pull the data migrations docker image from now on.
 </Note>
 
+<Note>
+  If you are on a version older than v2.7, you need to migrate step-by-step through the earlier versions first
+  (e.g. 2.4 → 2.5 → 2.6 → 2.7). After you have reached v2.7, you can upgrade directly to any v3.x release
+  without performing each intermediate migration.
+</Note>
+
 ### Steps to Migrate
 
 This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
