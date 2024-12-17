@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslations } from "next-intl";
@@ -94,20 +94,25 @@ export const IndividualInviteTab = ({
                 </AlertDescription>
               </Alert>
             )}
-            {!canDoRoleManagement &&
-              (isFormbricksCloud ? (
-                <UpgradePlanNotice
-                  message={t("environments.settings.general.upgrade_plan_notice_message")}
-                  url={`/environments/${environmentId}/settings/billing`}
-                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_cloud")}
-                />
-              ) : (
-                <UpgradePlanNotice
-                  message={t("environments.settings.general.upgrade_plan_notice_message")}
-                  url={`/environments/${environmentId}/settings/enterprise`}
-                  textForUrl={t("environments.settings.general.upgrade_plan_notice_text_for_url_enterprise")}
-                />
-              ))}
+            {!canDoRoleManagement && (
+              <UpgradePrompt
+                title={t("environments.settings.general.upgrade_plan_notice_message")}
+                buttons={[
+                  {
+                    text: t("common.start_free_trial"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+                  },
+                  {
+                    text: t("common.learn_more"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/learn-more-self-hosting-license",
+                  },
+                ]}
+              />
+            )}
           </div>
         </div>
       </div>
