@@ -40,7 +40,7 @@ export const ContactDataView = ({
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(true);
 
   const isFirstRender = useRef(true);
 
