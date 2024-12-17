@@ -16,8 +16,9 @@ Personalize your surveys by dynamically inserting data from URL parameters or pr
 ## Recall Sources
 You can recall data from the following sources:
 
-- The response of a previous question
-- The URL using a [Hidden Field](/docs/global/hidden-fields)
+- From a previous question
+- From a [Hidden Field](/docs/link-surveys/global/hidden-fields)
+- From a [Variable](/docs/link-surveys/global/variables)
 
 ## Recalling from a previous question
 
@@ -65,7 +66,11 @@ To ensure the survey remains coherent when a response is missing (or the questio
 3. Set a fallback in case the hidden field is not being filled by a URL parameter
 4. Use [Data Prefilling](/docs/link-surveys/data-prefilling) to set the hidden field value when the survey is accessed
 
+## Recalling from a Variable
 
+1. Create a variable, [here is how →](/docs/link-surveys/global/variables)
+2. Use the `@` symbol in a question or description to recall the value of the variable
+3. Set a fallback in case the variable is not being filled by a URL parameter
 
 ## Live Demo
 
@@ -73,4 +78,4 @@ To ensure the survey remains coherent when a response is missing (or the questio
 
 ## **Conclusion**
 
-Recall Functionality in Formbricks surveys allows for a conversational and customized survey experience that enhances engagement and improves the quality of feedback. By integrating previous responses into new questions, you create a more interactive and relevant environment for respondents.
+Recall Data in Formbricks surveys allows for a conversational and customized survey experience that enhances engagement and improves the quality of feedback. By integrating previous responses into new questions, you create a more interactive and relevant environment for respondents.

@@ -138,7 +138,7 @@ export const signupUsingInviteToken = async (page: Page, name: string, email: st
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addQuestion = "Add questionAdd a new question to your survey";
 
-  await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+  await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
@@ -326,7 +326,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   const addQuestion = "Add questionAdd a new question to your survey";
 
-  await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+  await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);

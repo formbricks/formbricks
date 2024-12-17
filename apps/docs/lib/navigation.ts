@@ -34,26 +34,26 @@ export const navigation: Array<NavGroup> = [
           { title: "Data Prefilling", href: "/link-surveys/data-prefilling" },
           { title: "Single Use Links", href: "/link-surveys/single-use-links" },
           { title: "Source Tracking", href: "/link-surveys/source-tracking" },
-          { title: "Hidden Fields", href: "/link-surveys/hidden-fields" },
+          { title: "Hidden Fields", href: "/link-surveys/global/hidden-fields" },
           { title: "Start At Question", href: "/link-surveys/start-at-question" },
           { title: "Embed Surveys Anywhere", href: "/link-surveys/embed-surveys" },
           { title: "Market Research Panel", href: "/link-surveys/market-research-panel" },
-          { title: "Multi Language Surveys", href: "/global/multi-language-surveys" },
-          { title: "User Metadata", href: "/global/metadata" },
-          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
-          { title: "Conditional Logic", href: "/global/conditional-logic" },
-          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
-          { title: "Start & End Dates", href: "/global/schedule-start-end-dates" },
-          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/global/recall" },
+          { title: "Multi-Language Surveys", href: "/link-surveys/global/multi-language-surveys" },
+          { title: "User Metadata", href: "/link-surveys/global/metadata" },
+          { title: "Custom Styling", href: "/link-surveys/global/overwrite-styling" }, // global
+          { title: "Conditional Logic", href: "/link-surveys/global/conditional-logic" },
+          { title: "Shareable Dashboards", href: "/link-surveys/global/shareable-dashboards" },
+          { title: "Start & End Dates", href: "/link-surveys/global/schedule-start-end-dates" },
+          { title: "Limit submissions", href: "/link-surveys/global/limit-submissions" }, // global
+          { title: "Recall Data", href: "/link-surveys/global/recall" },
           { title: "Verify Email before Survey", href: "/link-surveys/verify-email-before-survey" },
           { title: "PIN Protected Surveys", href: "/link-surveys/pin-protected-surveys" },
-          { title: "Partial Submissions", href: "/global/partial-submissions" },
+          { title: "Partial Submissions", href: "/link-surveys/global/partial-submissions" },
           {
             title: "Add Image/Video to Question",
-            href: "/global/add-image-or-video-question",
+            href: "/link-surveys/global/add-image-or-video-question",
           },
-          { title: "Variables", href: "/global/variables" },
+          { title: "Variables", href: "/link-surveys/global/variables" },
         ],
       },
     ],
@@ -69,23 +69,23 @@ export const navigation: Array<NavGroup> = [
           { title: "Identify Users", href: "/app-surveys/user-identification" },
           { title: "Actions", href: "/app-surveys/actions" },
           { title: "Advanced Targeting", href: "/app-surveys/advanced-targeting" },
-          { title: "Show Survey to % of users", href: "/global/show-survey-to-percent-of-users" }, // app and website
+          { title: "Show Survey to % of users", href: "/app-surveys/global/show-survey-to-percent-of-users" }, // app and website
           { title: "Recontact Options", href: "/app-surveys/recontact" },
-          { title: "Hidden Fields", href: "/global/hidden-fields" }, // global
-          { title: "Multi Language Surveys", href: "/global/multi-language-surveys" }, // global
-          { title: "User Metadata", href: "/global/metadata" }, // global
-          { title: "Custom Styling", href: "/global/overwrite-styling" }, // global
-          { title: "Conditional Logic", href: "/global/conditional-logic" }, // global
-          { title: "Start & End Dates", href: "/global/schedule-start-end-dates" }, // global
-          { title: "Limit submissions", href: "/global/limit-submissions" }, // global
-          { title: "Recall Functionality", href: "/global/recall" }, // global
-          { title: "Partial Submissions", href: "/global/partial-submissions" }, // global
-          { title: "Shareable Dashboards", href: "/global/shareable-dashboards" },
+          { title: "Hidden Fields", href: "/app-surveys/global/hidden-fields" }, // global
+          { title: "Multi-Language Surveys", href: "/app-surveys/global/multi-language-surveys" }, // global
+          { title: "User Metadata", href: "/app-surveys/global/metadata" }, // global
+          { title: "Custom Styling", href: "/app-surveys/global/overwrite-styling" }, // global
+          { title: "Conditional Logic", href: "/app-surveys/global/conditional-logic" }, // global
+          { title: "Start & End Dates", href: "/app-surveys/global/schedule-start-end-dates" }, // global
+          { title: "Limit submissions", href: "/app-surveys/global/limit-submissions" }, // global
+          { title: "Recall Data", href: "/app-surveys/global/recall" }, // global
+          { title: "Partial Submissions", href: "/app-surveys/global/partial-submissions" }, // global
+          { title: "Shareable Dashboards", href: "/app-surveys/global/shareable-dashboards" },
           {
             title: "Add Image/Video to Question",
-            href: "/global/add-image-or-video-question",
+            href: "/app-surveys/global/add-image-or-video-question",
           },
-          { title: "Variables", href: "/global/variables" },
+          { title: "Variables", href: "/app-surveys/global/variables" },
         ],
       },
     ],
@@ -96,21 +96,21 @@ export const navigation: Array<NavGroup> = [
       {
         title: "Question Types",
         children: [
-          { title: "Free Text", href: "/global/question-type/free-text" },
-          { title: "Select Single", href: "/global/question-type/single-select" },
-          { title: "Select Multiple", href: "/global/question-type/multi-select" },
-          { title: "Select Picture", href: "/global/question-type/picture-selection" },
-          { title: "Rating", href: "/global/question-type/rating" },
-          { title: "Net Promoter Score", href: "/global/question-type/net-promoter-score" },
-          { title: "Ranking", href: "/global/question-type/ranking" },
-          { title: "Matrix", href: "/global/question-type/matrix" },
-          { title: "Statement (Call to Action)", href: "/global/question-type/statement-cta" },
-          { title: "Consent", href: "/global/question-type/consent" },
-          { title: "File Upload", href: "/global/question-type/file-upload" },
-          { title: "Date", href: "/global/question-type/date" },
-          { title: "Schedule a Meeting", href: "/global/question-type/schedule" },
-          { title: "Address", href: "/global/question-type/address" },
-          { title: "Contact Info", href: "/global/question-type/contact" },
+          { title: "Free Text", href: "/core-features/global/question-type/free-text" },
+          { title: "Select Single", href: "/core-features/global/question-type/single-select" },
+          { title: "Select Multiple", href: "/core-features/global/question-type/multi-select" },
+          { title: "Select Picture", href: "/core-features/global/question-type/picture-selection" },
+          { title: "Rating", href: "/core-features/global/question-type/rating" },
+          { title: "Net Promoter Score", href: "/core-features/global/question-type/net-promoter-score" },
+          { title: "Ranking", href: "/core-features/global/question-type/ranking" },
+          { title: "Matrix", href: "/core-features/global/question-type/matrix" },
+          { title: "Statement (Call to Action)", href: "/core-features/global/question-type/statement-cta" },
+          { title: "Consent", href: "/core-features/global/question-type/consent" },
+          { title: "File Upload", href: "/core-features/global/question-type/file-upload" },
+          { title: "Date", href: "/core-features/global/question-type/date" },
+          { title: "Schedule a Meeting", href: "/core-features/global/question-type/schedule" },
+          { title: "Address", href: "/core-features/global/question-type/address" },
+          { title: "Contact Info", href: "/core-features/global/question-type/contact" },
         ],
       },
       {
@@ -127,8 +127,8 @@ export const navigation: Array<NavGroup> = [
           { title: "Zapier", href: "/developer-docs/integrations/zapier" },
         ],
       },
-      { title: "User Management", href: "/global/access-roles" },
-      { title: "Styling Theme", href: "/global/styling-theme" },
+      { title: "User Management", href: "/core-features/global/access-roles" },
+      { title: "Styling Theme", href: "/core-features/global/styling-theme" },
     ],
   },
   {
