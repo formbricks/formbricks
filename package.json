@@ -33,12 +33,12 @@
   },
   "devDependencies": {
     "@formbricks/eslint-config": "workspace:*",
-    "@playwright/test": "1.45.3",
-    "eslint": "8.57.0",
-    "husky": "9.1.4",
-    "lint-staged": "15.2.7",
+    "@playwright/test": "1.49.1",
+    "eslint": "9.17.0",
+    "husky": "9.1.7",
+    "lint-staged": "15.2.11",
     "rimraf": "6.0.1",
-    "tsx": "4.16.5",
+    "tsx": "4.19.2",
     "turbo": "2.3.3"
   },
   "lint-staged": {
@@ -56,7 +56,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@9.14.2",
+  "packageManager": "pnpm@9.15.0",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -64,6 +64,6 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "2.27.7"
+    "@changesets/cli": "2.27.10"
   }
 }

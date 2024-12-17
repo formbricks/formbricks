@@ -7,11 +7,11 @@ interface SubheaderProps {
 
 export function Subheader({ subheader, questionId }: SubheaderProps) {
   return (
-    <p
+    <label
       htmlFor={questionId}
       className="fb-text-subheading fb-block fb-break-words fb-text-sm fb-font-normal fb-leading-5"
       dir="auto">
       {subheader}
-    </p>
+    </label>
   );
 }
