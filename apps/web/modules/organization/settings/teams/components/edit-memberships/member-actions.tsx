@@ -8,8 +8,9 @@ import {
   resendInviteAction,
 } from "@/modules/organization/settings/teams/actions";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -101,46 +102,47 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
   };
 
   return (
-    <>
+    <div className="flex gap-2">
       {showDeleteButton && (
-        <button type="button" id="deleteMemberButton" onClick={() => setDeleteMemberModalOpen(true)}>
-          <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
-        </button>
+        <>
+          <TooltipRenderer tooltipContent={t("common.delete")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              id="deleteMemberButton"
+              onClick={() => setDeleteMemberModalOpen(true)}>
+              <TrashIcon />
+            </Button>
+          </TooltipRenderer>
+        </>
       )}
 
       {invite && (
-        <TooltipProvider delayDuration={50}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => {
-                  handleShareInvite();
-                }}
-                className="shareInviteButton">
-                <ShareIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="TooltipContent" sideOffset={5}>
-              {t("environments.settings.general.share_invite_link")}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                onClick={() => {
-                  handleResendInvite();
-                }}
-                id="resendInviteButton">
-                <SendHorizonalIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent className="TooltipContent" sideOffset={5}>
-              {t("environments.settings.general.resend_invitation_email")}
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <>
+          <TooltipRenderer tooltipContent={t("environments.settings.general.share_invite_link")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              id="shareInviteButton"
+              onClick={() => {
+                handleShareInvite();
+              }}>
+              <ShareIcon />
+            </Button>
+          </TooltipRenderer>
+
+          <TooltipRenderer tooltipContent={t("environments.settings.general.resend_invitation_email")}>
+            <Button
+              variant="secondary"
+              size="icon"
+              id="resendInviteButton"
+              onClick={() => {
+                handleResendInvite();
+              }}>
+              <SendHorizonalIcon />
+            </Button>
+          </TooltipRenderer>
+        </>
       )}
 
       <DeleteDialog
@@ -158,6 +160,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
           setOpen={setShowShareInviteModal}
         />
       )}
-    </>
+    </div>
   );
 };

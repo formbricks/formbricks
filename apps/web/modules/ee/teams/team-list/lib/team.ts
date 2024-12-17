@@ -76,6 +76,9 @@ const getUserTeams = reactCache(
               id: true,
               name: true,
               teamUsers: {
+                where: {
+                  userId,
+                },
                 select: {
                   role: true,
                 },

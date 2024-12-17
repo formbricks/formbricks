@@ -89,7 +89,7 @@ export const TeamsTable = ({
           <TableBody className="[&_tr:last-child]:border-b">
             {allTeams.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={4} className="text-center hover:bg-transparent">
                   {t("environments.settings.teams.empty_teams_state")}
                 </TableCell>
               </TableRow>

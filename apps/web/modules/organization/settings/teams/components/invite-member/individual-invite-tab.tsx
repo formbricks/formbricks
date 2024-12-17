@@ -36,7 +36,7 @@ export const IndividualInviteTab = ({
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
-    email: z.string().email("Invalid email address"),
+    email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
     role: ZOrganizationRole,
     teamIds: z.array(z.string()),
   });
@@ -92,6 +92,7 @@ export const IndividualInviteTab = ({
           placeholder="e.g. bob@work.com"
           {...register("email", { required: true })}
         />
+        {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
       </div>
       <div>
         <AddMemberRole

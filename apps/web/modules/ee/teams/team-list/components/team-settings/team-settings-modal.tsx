@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { H4, Muted } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
@@ -351,20 +352,27 @@ export const TeamSettingsModal = ({
                   </FormItem>
                 )}
               />
-
-              <Button
-                size="default"
-                type="button"
-                variant="secondary"
-                onClick={handleAddMember}
-                disabled={
-                  (!isOwnerOrManager && !isTeamAdminMember) ||
-                  selectedMemberIds.length === orgMembers.length ||
+              <TooltipRenderer
+                shouldRender={selectedMemberIds.length === orgMembers.length || hasEmptyMember}
+                tooltipContent={
                   hasEmptyMember
+                    ? t("environments.settings.teams.please_fill_all_member_fields")
+                    : t("environments.settings.teams.all_members_added")
                 }>
-                <PlusIcon className="h-4 w-4" />
-                <span>Add member</span>
-              </Button>
+                <Button
+                  size="default"
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddMember}
+                  disabled={
+                    (!isOwnerOrManager && !isTeamAdminMember) ||
+                    selectedMemberIds.length === orgMembers.length ||
+                    hasEmptyMember
+                  }>
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Add member</span>
+                </Button>
+              </TooltipRenderer>
               <Muted className="block text-slate-500">
                 {t("environments.settings.teams.add_members_description")}
               </Muted>
@@ -462,17 +470,25 @@ export const TeamSettingsModal = ({
                 )}
               />
 
-              <Button
-                size="default"
-                type="button"
-                variant="secondary"
-                onClick={handleAddProject}
-                disabled={
-                  !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
+              <TooltipRenderer
+                shouldRender={selectedProjectIds.length === orgProjects.length || hasEmptyProject}
+                tooltipContent={
+                  hasEmptyProject
+                    ? t("environments.settings.teams.please_fill_all_project_fields")
+                    : t("environments.settings.teams.all_projects_added")
                 }>
-                <PlusIcon className="h-4 w-4" />
-                <span>Add project</span>
-              </Button>
+                <Button
+                  size="default"
+                  type="button"
+                  variant="secondary"
+                  onClick={handleAddProject}
+                  disabled={
+                    !isOwnerOrManager || selectedProjectIds.length === orgProjects.length || hasEmptyProject
+                  }>
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Add project</span>
+                </Button>
+              </TooltipRenderer>
 
               <Muted className="block text-slate-500">
                 {t("environments.settings.teams.add_projects_description")}
