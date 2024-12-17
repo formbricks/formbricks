@@ -9,8 +9,8 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
+import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
 import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";

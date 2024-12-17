@@ -4,7 +4,7 @@ import {
   TEnterpriseLicenseFeatures,
 } from "@/modules/ee/license-check/types/enterprise-license";
 import { HttpsProxyAgent } from "https-proxy-agent";
-import { unstable_after as after } from "next/server";
+import { after } from "next/server";
 import fetch from "node-fetch";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -258,12 +258,6 @@ export const fetchLicense = reactCache(
       { revalidate: 60 * 60 * 24 }
     )()
 );
-
-export const getSurveyFollowUpsPermission = async (organization: TOrganization): Promise<boolean> => {
-  if (IS_FORMBRICKS_CLOUD) return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
-  else if (!IS_FORMBRICKS_CLOUD) return (await getEnterpriseLicense()).active;
-  return false;
-};
 
 export const getRemoveBrandingPermission = async (organization: TOrganization): Promise<boolean> => {
   if (E2E_TESTING) {
