@@ -1197,8 +1197,8 @@
         "lost_access": "Accès perdu",
         "or_enter_the_following_code_manually": "Ou entrez le code suivant manuellement :",
         "org_deletion_warning": "Si vous êtes le seul membre d'une organisation ou s'il n'y a pas d'autre administrateur présent, l'organisation sera définitivement supprimée avec toutes les données associées.",
-        "org_ownership_transfer": "Si vous êtes le propriétaire d'une organisation avec d'autres administrateurs, la propriété de cette organisation sera transférée à un autre administrateur.",
         "organization_identification": "Aidez votre organisation à vous identifier sur Formbricks",
+        "organizations_delete_message": "Tu es le seul propriétaire de ces organisations, elles <b>seront aussi supprimées.</b>",
         "permanent_removal_of_all_of_your_personal_information_and_data": "Suppression permanente de toutes vos informations et données personnelles.",
         "personal_information": "Informations personnelles",
         "please_enter_email_to_confirm_account_deletion": "Veuillez entrer {email} dans le champ suivant pour confirmer la suppression définitive de votre compte :",
@@ -1215,6 +1215,7 @@
         "two_factor_code": "Code à deux facteurs",
         "update_personal_info": "Mettez à jour vos informations personnelles",
         "upload_image": "Télécharger l'image",
+        "warning_cannot_delete_account": "Tu es le seul propriétaire de cette organisation. Transfère la propriété à un autre membre d'abord.",
         "warning_cannot_undo": "Ceci ne peut pas être annulé",
         "you_must_select_a_file": "Vous devez sélectionner un fichier."
       },
