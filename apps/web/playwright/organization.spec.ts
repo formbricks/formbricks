@@ -49,7 +49,13 @@ test.describe("Invite, accept and remove organization member", async () => {
       const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
       await expect(lastMemberInfo).toBeVisible();
 
-      const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
+      const pendingSpan = page
+        .locator("#membersInfoWrapper > .singleMemberInfo:last-child")
+        .locator("span")
+        .filter({ hasText: "Pending" })
+        .first();
+
+      // Then check if the first one is visible
       await expect(pendingSpan).toBeVisible();
 
       const shareInviteButton = page.locator(".shareInviteButton").last();

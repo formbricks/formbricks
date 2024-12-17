@@ -50,7 +50,7 @@ export const MembersInfo = async ({
       );
     }
 
-    return <Badge type="success" text="Accepted" size="tiny" />;
+    return <Badge type="success" text="Active" size="tiny" />;
   };
 
   const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
@@ -84,7 +84,7 @@ export const MembersInfo = async ({
             )}
           </div>
 
-          <div className="col-span-1 text-center">{getMembershipBadge(member)}</div>
+          <div className="col-span-1 flex items-center justify-center">{getMembershipBadge(member)}</div>
           <div className="col-span-1 flex items-center justify-end gap-x-4 pr-4">
             <MemberActions
               organization={organization}
