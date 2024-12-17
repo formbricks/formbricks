@@ -283,7 +283,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           required: false,
           inputType: "text",
           buttonLabel: { default: translate("finish", locale) },
-          backButtonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
