@@ -60,7 +60,8 @@ jobs:
 
       - name: Apply Prisma Migrations
         run: |
-          pnpm prisma migrate deploy
+          # pnpm prisma migrate deploy
+          pnpm db:migrate:dev
 
       - name: Run App
         run: |
