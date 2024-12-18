@@ -144,7 +144,7 @@ test.describe("Create, update and delete team", async () => {
 
     await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
-    await expect(page.getByText("Teams")).toBeVisible();
+    await page.locator("text=Teams").waitFor({ state: "visible", timeout: 5000 });
     await page.getByText("Teams").click();
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
