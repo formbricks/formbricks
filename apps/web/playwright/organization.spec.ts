@@ -22,8 +22,6 @@ test.describe("Invite, accept and remove organization member", async () => {
       await page.getByRole("link", { name: "Organization" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
-      await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
-
       // Add member button
       await expect(page.getByRole("button", { name: "Add member" })).toBeVisible();
       await page.getByRole("button", { name: "Add member" }).click();
@@ -142,10 +140,8 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
-    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
-
-    await page.locator("text=Teams").waitFor({ state: "visible", timeout: 5000 });
-    await page.getByText("Teams").click();
+    await expect(page.getByRole("link", { name: "Teams" })).toBeVisible();
+    await page.getByRole("link", { name: "Teams" }).click();
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
