@@ -1,10 +1,15 @@
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { LockIcon, UsersIcon } from "lucide-react";
+import { LockIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
-export const TargetingLockedCard = () => {
+interface TargetingLockedCardProps {
+  isFormbricksCloud: boolean;
+  environmentId: string;
+}
+
+export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: TargetingLockedCardProps) => {
   const t = useTranslations();
   const [open, setOpen] = useState(false);
 
@@ -32,17 +37,20 @@ export const TargetingLockedCard = () => {
         <hr className="text-slate-600" />
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            icon={<UsersIcon className="h-6 w-6 text-slate-900" />}
             title={t("environments.surveys.edit.unlock_targeting_title")}
             description={t("environments.surveys.edit.unlock_targeting_description")}
             buttons={[
               {
                 text: t("common.start_free_trial"),
-                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
+                href: isFormbricksCloud
+                  ? `/environments/${environmentId}/settings/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
-                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
+                href: isFormbricksCloud
+                  ? `/environments/${environmentId}/settings/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
           />

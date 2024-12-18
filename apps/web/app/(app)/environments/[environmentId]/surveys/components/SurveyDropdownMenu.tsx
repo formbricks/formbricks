@@ -29,6 +29,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { cn } from "@formbricks/lib/cn";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { CopySurveyModal } from "./CopySurveyModal";
 
@@ -39,6 +40,7 @@ interface SurveyDropDownMenuProps {
   otherEnvironment: TEnvironment;
   webAppUrl: string;
   singleUseId?: string;
+  disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
@@ -49,6 +51,7 @@ export const SurveyDropDownMenu = ({
   survey,
   webAppUrl,
   singleUseId,
+  disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
   duplicateSurvey,
@@ -107,8 +110,12 @@ export const SurveyDropDownMenu = ({
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-          <div className="rounded-lg border bg-white p-2 hover:bg-slate-50">
+        <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
+          <div
+            className={cn(
+              "rounded-lg border bg-white p-2",
+              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
+            )}>
             <span className="sr-only">{t("environments.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </div>

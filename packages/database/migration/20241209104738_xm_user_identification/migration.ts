@@ -1,11 +1,10 @@
 /* eslint-disable no-constant-condition -- Required for the while loop */
-
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
-export const xmUserIdentification: DataMigrationScript = {
+export const xmUserIdentification: MigrationScript = {
   type: "data",
   id: "n2u5d3wmcw1t2h8a4vgfu2y9",
   name: "20241209104738_xm_user_identification",

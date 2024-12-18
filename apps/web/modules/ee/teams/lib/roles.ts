@@ -1,7 +1,7 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
-import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { TTeamRole } from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";

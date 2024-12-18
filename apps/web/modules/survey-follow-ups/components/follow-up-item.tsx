@@ -79,25 +79,25 @@ export const FollowUpItem = ({
           <div className="flex space-x-2">
             <Badge
               size="normal"
+              type="gray"
               text={
                 followUp.trigger.type === "response"
                   ? t("environments.surveys.edit.follow_ups_item_response_tag")
                   : t("environments.surveys.edit.follow_ups_item_ending_tag")
               }
-              type="gray"
             />
 
             <Badge
               size="normal"
-              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
               type="gray"
+              text={t("environments.surveys.edit.follow_ups_item_send_email_tag")}
             />
 
             {isEmailToInvalid || isEndingInvalid ? (
               <Badge
                 size="normal"
-                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
                 type="warning"
+                text={t("environments.surveys.edit.follow_ups_item_issue_detected_tag")}
               />
             ) : null}
           </div>

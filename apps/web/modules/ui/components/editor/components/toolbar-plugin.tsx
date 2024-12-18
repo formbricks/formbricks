@@ -527,8 +527,11 @@ export const ToolbarPlugin = (props: TextEditorProps & { container: HTMLElement 
                 className={isLink ? "bg-subtle active-button" : "inactive-button"}>
                 <Link />
               </Button>
-              {isLink &&
-                createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)}{" "}
+              {isLink ? (
+                createPortal(<FloatingLinkEditor editor={editor} />, props.container ?? document.body)
+              ) : (
+                <></>
+              )}
             </>
           )}
         </>

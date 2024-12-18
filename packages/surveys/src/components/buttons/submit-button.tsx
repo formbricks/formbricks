@@ -1,7 +1,7 @@
-import { type JSX } from "preact";
+import { ButtonHTMLAttributes } from "preact/compat";
 import { useCallback } from "preact/hooks";
 
-interface SubmitButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
+interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel: string | undefined;
   isLastQuestion: boolean;
   focus?: boolean;

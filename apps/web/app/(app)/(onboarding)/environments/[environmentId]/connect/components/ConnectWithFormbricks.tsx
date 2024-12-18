@@ -26,10 +26,6 @@ export const ConnectWithFormbricks = ({
   const t = useTranslations();
   const router = useRouter();
   const handleFinishOnboarding = async () => {
-    if (!widgetSetupCompleted) {
-      router.push(`/environments/${environment.id}/connect/invite`);
-      return;
-    }
     router.push(`/environments/${environment.id}/surveys`);
   };
 
@@ -89,7 +85,7 @@ export const ConnectWithFormbricks = ({
         onClick={handleFinishOnboarding}>
         {widgetSetupCompleted
           ? t("environments.connect.finish_onboarding")
-          : t("environments.connect.i_dont_know_how_to_do_it")}
+          : t("environments.connect.do_it_later")}
         <ArrowRight />
       </Button>
     </div>

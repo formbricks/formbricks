@@ -541,6 +541,7 @@ model Invite {
   expiresAt      DateTime
   deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
+  teamIds        String[]         @default([])
 
   @@index([email, organizationId])
   @@index([organizationId])

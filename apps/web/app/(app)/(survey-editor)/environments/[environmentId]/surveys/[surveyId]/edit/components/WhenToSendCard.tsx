@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";

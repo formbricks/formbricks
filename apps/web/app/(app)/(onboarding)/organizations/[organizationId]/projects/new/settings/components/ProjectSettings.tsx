@@ -2,7 +2,7 @@
 
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
@@ -44,6 +44,7 @@ interface ProjectSettingsProps {
   organizationTeams: TOrganizationTeam[];
   canDoRoleManagement: boolean;
   locale: string;
+  userProjectsCount: number;
 }
 
 export const ProjectSettings = ({
@@ -55,6 +56,7 @@ export const ProjectSettings = ({
   organizationTeams,
   canDoRoleManagement = false,
   locale,
+  userProjectsCount,
 }: ProjectSettingsProps) => {
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
@@ -105,8 +107,10 @@ export const ProjectSettings = ({
       styling: { allowStyleOverwrite: true, brandColor: { light: defaultBrandColor } },
       teamIds: [],
     },
+
     resolver: zodResolver(ZProjectUpdateInput),
   });
+  const projectName = form.watch("name");
   const logoUrl = form.watch("logo.url");
   const brandColor = form.watch("styling.brandColor.light") ?? defaultBrandColor;
   const { isSubmitting } = form.formState;
@@ -172,7 +176,7 @@ export const ProjectSettings = ({
               )}
             />
 
-            {canDoRoleManagement && (
+            {canDoRoleManagement && userProjectsCount > 0 && (
               <FormField
                 control={form.control}
                 name="teamIds"
@@ -180,8 +184,10 @@ export const ProjectSettings = ({
                   <FormItem className="w-full space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <FormLabel>Teams</FormLabel>
-                        <FormDescription>Who all can access this project?</FormDescription>
+                        <FormLabel>{t("common.teams")}</FormLabel>
+                        <FormDescription>
+                          {t("organizations.projects.new.settings.team_description")}
+                        </FormDescription>
                       </div>
                       <Button
                         variant="secondary"
@@ -195,8 +201,8 @@ export const ProjectSettings = ({
                       <div>
                         <MultiSelect
                           value={field.value}
-                          onChange={(teamIds) => field.onChange(teamIds)}
                           options={organizationTeamsOptions}
+                          onChange={(teamIds) => field.onChange(teamIds)}
                         />
                         {error?.message && <FormError className="text-left">{error.message}</FormError>}
                       </div>
@@ -227,7 +233,7 @@ export const ProjectSettings = ({
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
-            survey={getPreviewSurvey(locale)}
+            survey={getPreviewSurvey(locale, projectName || "my Product")}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}
             languageCode="default"
