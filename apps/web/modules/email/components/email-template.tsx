@@ -44,7 +44,7 @@ export function EmailTemplate({ children }): React.JSX.Element {
               </Column>
             </Row>
           </Section>
-          <Section className="mt-4 text-center">
+          <Section className="mt-4 text-center text-sm">
             Formbricks {new Date().getFullYear()}. All rights reserved.
             <br />
             <Link

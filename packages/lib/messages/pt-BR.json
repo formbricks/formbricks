@@ -1088,10 +1088,10 @@
         "website_surveys": "Pesquisas de Site"
       },
       "enterprise": {
-        "advanced_targeting_and_segmentation": "Segmentação e Alvo Avançado (Pesquisas no App)",
+        "ai": "Análise de IA",
         "audit_logs": "Registros de Auditoria",
         "coming_soon": "Em breve",
-        "custom_feature_development": "Desenvolvimento de Funcionalidades Personalizadas",
+        "contacts_and_segments": "Gerenciamento de contatos e segmentos",
         "enterprise_features": "Recursos Empresariais",
         "get_an_enterprise_license_to_get_access_to_all_features": "Adquira uma licença Enterprise para ter acesso a todos os recursos.",
         "keep_full_control_over_your_data_privacy_and_security": "Mantenha controle total sobre a privacidade e segurança dos seus dados.",
@@ -1104,6 +1104,8 @@
         "saml_sso": "SSO SAML",
         "service_level_agreement": "Acordo de Nível de Serviço",
         "soc2_hipaa_iso_27001_compliance_check": "Verificação de conformidade SOC2, HIPAA, ISO 27001",
+        "sso": "SSO (Google, Microsoft, OpenID Connect)",
+        "teams": "Equipes e Funções de Acesso (Ler, Ler e Escrever, Gerenciar)",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Desbloqueie todo o poder do Formbricks. Grátis por 30 dias.",
         "your_enterprise_license_is_active_all_features_unlocked": "Sua licença empresarial está ativa. Todos os recursos estão desbloqueados."
       },
@@ -1161,7 +1163,6 @@
         "there_can_only_be_one_owner_of_each_organization": "Só pode ter um dono de cada organização. Se você transferir sua propriedade para",
         "to_confirm": "pra confirmar:",
         "type_in": "Digita aí",
-        "upgrade_plan_notice_message": "Atualize para gerenciar funções de acesso",
         "upgrade_plan_notice_text_for_url_cloud": "atualize seu plano.",
         "upgrade_plan_notice_text_for_url_enterprise": "conseguir uma Licença Empresarial.",
         "when_you_transfer_the_ownership_you_will_remain_an_admin_of_the_organization": "Quando você transferir a propriedade, você vai continuar sendo um Admin da organização.",
@@ -1219,6 +1220,7 @@
         "two_factor_authentication_description": "Adicione uma camada extra de segurança à sua conta caso sua senha seja roubada.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autenticação de dois fatores ativada. Por favor, insira o código de seis dígitos do seu app autenticador.",
         "two_factor_code": "Código de Dois Fatores",
+        "unlock_two_factor_authentication": "Desbloqueia a autenticação de dois fatores com um plano melhor",
         "update_personal_info": "Atualize suas informações pessoais",
         "upload_image": "Enviar imagem",
         "warning_cannot_delete_account": "Você é o único dono desta organização. Transfere a propriedade para outra pessoa primeiro.",

@@ -45,6 +45,16 @@ const Page = async (props) => {
 
   const paidFeatures = [
     {
+      title: t("environments.settings.billing.remove_branding"),
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.sso"),
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
       title: t("environments.project.languages.multi_language_surveys"),
       comingSoon: false,
       onRequest: false,
@@ -55,9 +65,19 @@ const Page = async (props) => {
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.advanced_targeting_and_segmentation"),
+      title: t("environments.settings.enterprise.teams"),
       comingSoon: false,
       onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.contacts_and_segments"),
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.ai"),
+      comingSoon: false,
+      onRequest: true,
     },
     {
       title: t("environments.settings.enterprise.audit_logs"),
@@ -76,11 +96,6 @@ const Page = async (props) => {
     },
     {
       title: t("environments.settings.enterprise.soc2_hipaa_iso_27001_compliance_check"),
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
-      title: t("environments.settings.enterprise.custom_feature_development"),
       comingSoon: false,
       onRequest: true,
     },

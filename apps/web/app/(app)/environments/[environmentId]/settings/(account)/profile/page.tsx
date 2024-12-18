@@ -67,7 +67,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               description={t("environments.settings.profile.security_description")}>
               {!isTwoFactorAuthEnabled && !user.twoFactorEnabled ? (
                 <UpgradePrompt
-                  title={t("environments.settings.profile.two_factor_authentication")}
+                  title={t("environments.settings.profile.unlock_two_factor_authentication")}
                   description={t("environments.settings.profile.two_factor_authentication_description")}
                   buttons={[
                     {
