@@ -22,6 +22,8 @@ test.describe("Invite, accept and remove organization member", async () => {
       await page.getByRole("link", { name: "Organization" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
+      await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+
       // Add member button
       await expect(page.getByRole("button", { name: "Add member" })).toBeVisible();
       await page.getByRole("button", { name: "Add member" }).click();
@@ -47,14 +49,7 @@ test.describe("Invite, accept and remove organization member", async () => {
       const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
       await expect(lastMemberInfo).toBeVisible();
 
-      const pendingSpan = page
-        .locator("#membersInfoWrapper > .singleMemberInfo:last-child")
-        .locator("span")
-        .filter({ hasText: "Pending" })
-        .first();
-
-      // Then check if the first one is visible
-      await expect(pendingSpan).toBeVisible();
+      await expect(page.locator('[data-testid="badge-pending"]')).toBeVisible();
 
       const shareInviteButton = page.locator(".shareInviteButton").last();
       await expect(shareInviteButton).toBeVisible();
@@ -140,8 +135,10 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
-    await expect(page.getByRole("link", { name: "Teams" })).toBeVisible();
-    await page.getByRole("link", { name: "Teams" }).click();
+    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+
+    await expect(page.getByText("Teams")).toBeVisible();
+    await page.getByText("Teams").click();
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
