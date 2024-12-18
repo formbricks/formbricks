@@ -31,15 +31,9 @@ export const SettingsCard = ({
         <div className="flex">
           <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">
-            {beta && (
-              <Badge size="normal" variant="warning">
-                Beta
-              </Badge>
-            )}
+            {beta && <Badge size="normal" type="warning" text="Beta" />}
             {soon && (
-              <Badge size="normal" variant="success">
-                {t("environments.settings.enterprise.coming_soon")}
-              </Badge>
+              <Badge size="normal" type="success" text={t("environments.settings.enterprise.coming_soon")} />
             )}
           </div>
         </div>

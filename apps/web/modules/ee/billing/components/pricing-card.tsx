@@ -129,9 +129,7 @@ export const PricingCard = ({
             {t(plan.name)}
           </h2>
           {isCurrentPlan && (
-            <Badge variant="success" size="normal">
-              {t("environments.settings.billing.current_plan")}
-            </Badge>
+            <Badge type="success" size="normal" text={t("environments.settings.billing.current_plan")} />
           )}
         </div>
         <div className="flex flex-col items-end gap-6 sm:flex-row sm:justify-between lg:flex-col lg:items-stretch">

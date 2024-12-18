@@ -151,9 +151,12 @@ export const PricingTable = ({
               {t("environments.settings.billing.current_plan")}:{" "}
               {capitalizeFirstLetter(organization.billing.plan)}
               {cancellingOn && (
-                <Badge className="mx-2" size="normal" variant="warning">
-                  {`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
-                </Badge>
+                <Badge
+                  className="mx-2"
+                  size="normal"
+                  type="warning"
+                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
+                />
               )}
             </h2>
 
@@ -188,9 +191,11 @@ export const PricingTable = ({
               )}
 
               {responsesUnlimitedCheck && (
-                <Badge variant="success" size="normal">
-                  {t("environments.settings.billing.unlimited_responses")}
-                </Badge>
+                <Badge
+                  type="success"
+                  size="normal"
+                  text={t("environments.settings.billing.unlimited_responses")}
+                />
               )}
             </div>
 
@@ -213,9 +218,7 @@ export const PricingTable = ({
               )}
 
               {peopleUnlimitedCheck && (
-                <Badge variant="success" size="normal">
-                  {t("environments.settings.billing.unlimited_miu")}
-                </Badge>
+                <Badge type="success" size="normal" text={t("environments.settings.billing.unlimited_miu")} />
               )}
             </div>
 
@@ -236,9 +239,11 @@ export const PricingTable = ({
               )}
 
               {projectsUnlimitedCheck && (
-                <Badge variant="success" size="normal">
-                  {t("environments.settings.billing.unlimited_projects")}
-                </Badge>
+                <Badge
+                  type="success"
+                  size="normal"
+                  text={t("environments.settings.billing.unlimited_projects")}
+                />
               )}
             </div>
           </div>

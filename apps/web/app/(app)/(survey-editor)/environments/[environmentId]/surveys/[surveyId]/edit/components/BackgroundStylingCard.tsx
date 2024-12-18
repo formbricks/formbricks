@@ -69,11 +69,7 @@ export const BackgroundStylingCard = ({
               <p className={cn("font-semibold text-slate-800", isSettingsPage ? "text-sm" : "text-base")}>
                 {t("environments.surveys.edit.background_styling")}
               </p>
-              {isSettingsPage && (
-                <Badge variant="gray" size="normal">
-                  {t("common.link_surveys")}
-                </Badge>
-              )}
+              {isSettingsPage && <Badge type="gray" size="normal" text={t("common.link_surveys")} />}
             </div>
             <p className={cn("mt-1 text-slate-500", isSettingsPage ? "text-xs" : "text-sm")}>
               {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}

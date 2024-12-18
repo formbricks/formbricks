@@ -162,9 +162,12 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
                           {option.name}
                         </p>
                         {option.comingSoon && (
-                          <Badge size="normal" variant="success" className="ml-2">
-                            {t("environments.settings.enterprise.coming_soon")}
-                          </Badge>
+                          <Badge
+                            size="normal"
+                            type="success"
+                            className="ml-2"
+                            text={t("environments.settings.enterprise.coming_soon")}
+                          />
                         )}
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>

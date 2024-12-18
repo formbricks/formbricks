@@ -90,17 +90,11 @@ export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePage
                 <div className="flex items-center font-medium text-slate-700">
                   <TooltipRenderer tooltipContent={`${stat.value} positive`}>
                     {stats.overallSentiment === "positive" ? (
-                      <Badge variant="success" size="large">
-                        {t("common.positive")}
-                      </Badge>
+                      <Badge type="success" size="large" text={t("common.positive")} />
                     ) : stats.overallSentiment === "negative" ? (
-                      <Badge variant="error" size="large">
-                        {t("common.negative")}
-                      </Badge>
+                      <Badge type="error" size="large" text={t("common.negative")} />
                     ) : (
-                      <Badge variant="gray" size="large">
-                        {t("common.neutral")}
-                      </Badge>
+                      <Badge type="gray" size="large" text={t("common.neutral")} />
                     )}
                   </TooltipRenderer>
                 </div>

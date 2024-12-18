@@ -143,9 +143,12 @@ export const UploadContactsAttributes = ({
         />
 
         {isNewTag ? (
-          <Badge size="normal" variant="success" className="rounded-md">
-            {t("environments.contacts.upload_contacts_modal_attributes_new")}
-          </Badge>
+          <Badge
+            size="normal"
+            type="success"
+            className="rounded-md"
+            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
+          />
         ) : null}
       </div>
     </div>

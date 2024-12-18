@@ -1,7 +1,7 @@
 "use client";
 
-import { Badge } from "@/modules/ui/components/badge";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
+import { Badge } from "@/modules/ui/components/multi-select/badge";
 import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
@@ -96,7 +96,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         }`}>
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
-            <Badge key={option.value} variant="black" size="tiny" className="rounded-md">
+            <Badge key={option.value} className="rounded-md">
               {option.label}
               <button
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"

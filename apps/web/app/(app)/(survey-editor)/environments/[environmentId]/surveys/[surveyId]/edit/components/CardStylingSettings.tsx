@@ -261,9 +261,7 @@ export const CardStylingSettings = ({
                     <div>
                       <FormLabel>
                         {t("environments.surveys.edit.hide_logo")}
-                        <Badge variant="gray" size="normal">
-                          {t("common.link_surveys")}
-                        </Badge>
+                        <Badge type="gray" size="normal" text={t("common.link_surveys")} />
                       </FormLabel>
                       <FormDescription>
                         {t("environments.surveys.edit.hide_the_logo_in_this_specific_survey")}
