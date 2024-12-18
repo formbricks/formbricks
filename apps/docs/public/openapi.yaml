@@ -75,6 +75,20 @@ tags:
       users based on specific values of their attributes. They are associated
       with a Person. Read more
       [here](https://formbricks.com/docs/in-app-surveys/attributes)
+  - name: Management API > Contacts
+    description: >-
+      The Contacts API allows you to retrieve information about contacts in your environment.
+      Contacts represent users who have interacted with your surveys or forms.
+  - name: Management API > Contact Attributes
+    description: >-
+      The Contact Attributes API allows you to retrieve information about attributes
+      associated with contacts in your environment. These attributes can include
+      custom properties and values assigned to your contacts.
+  - name: Management API > Contact Attribute Keys
+    description: >-
+      The Contact Attribute Keys API allows you to retrieve information about the defined
+      attribute keys in your environment. These keys define the structure and properties
+      that can be assigned to contacts, such as email, name, or custom attributes.
   - name: Management API > Me
     description: Retrieve Account Information
   - name: Management API > People
@@ -137,6 +151,7 @@ tags:
         
 
       Methods allowed: Get All, Get ,Create, and Delete Webhooks
+  
 paths:
   /api/v1/client/{environmentId}/displays:
     post:
@@ -1036,6 +1051,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -1185,6 +1201,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -1280,6 +1297,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: actionClassId
           in: path
           schema:
@@ -1383,6 +1401,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: actionClassId
           in: path
           schema:
@@ -1522,6 +1541,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -1631,6 +1651,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -1731,6 +1752,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: attributeClassId
           in: path
           schema:
@@ -1876,6 +1898,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: attributeClassId
           in: path
           schema:
@@ -2015,6 +2038,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -2068,6 +2092,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -2156,6 +2181,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: personId
           in: path
           schema:
@@ -2218,6 +2244,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: personId
           in: path
           schema:
@@ -2317,6 +2344,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: surveyId
           in: query
           schema:
@@ -2663,6 +2691,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -2782,6 +2811,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: responseId
           in: path
           schema:
@@ -2904,6 +2934,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: responseId
           in: path
           schema:
@@ -3040,6 +3071,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: responseId
           in: path
           schema:
@@ -3164,6 +3196,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -3386,6 +3419,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -3567,6 +3601,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: surveyId
           in: path
           schema:
@@ -3706,6 +3741,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: surveyId
           in: path
           schema:
@@ -3893,6 +3929,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: surveyId
           in: path
           schema:
@@ -4069,6 +4106,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: surveyId
           in: path
           schema:
@@ -4191,6 +4229,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -4283,6 +4322,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
       responses:
         "200":
           description: OK
@@ -4345,6 +4385,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: webhookId
           in: path
           schema:
@@ -4413,6 +4454,7 @@ paths:
           schema:
             type: string
           example: "{{apiKey}}"
+          required: true
         - name: webhookId
           in: path
           schema:
@@ -4595,7 +4637,7 @@ paths:
                         <script src="/_next/static/chunks/webpack.js?v=1713855830239" async=""></script>
                         <script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script>
                         <script>self.__next_f.push([1,"1:HL[\"/_next/static/css/css-app_globals_css.css?v=1713855830239\",\"style\"]\n0:D{\"name\":\"rQ\",\"env\":\"Server\"}\n"])</script>
-                        <script>self.__next_f.push([1,"2:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n5:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n6:I[\"(app-pages-browser)/./app/health/error.tsx\",[\"app/health/error\",\"static/chunks/app/health/error.js\"],\"default\"]\n7:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n9:I[\"(app-pages-browser)/./app/error.tsx\",[\"app/error\",\"static/chunks/app/error.js\"],\"default\"]\nb:I[\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\",[\"app/not-found\",\"static/chunks/app/not-found.js\"],\"\"]\ne:I[\"(app-pages-browser)/./app/global-error.tsx\",[\"app/global-error\",\"static/chunks/app/global-error.js\"],\"default\"]\n3:D{\"name\":\"\",\"env\":\"Server\"}\n4:D{\"name\":\"HealthPage\",\"env\":\"Server\"}\n8:D{\"name\":\"RootLayout\",\"env\":\"Server\"}\na:D{\"name\":\"NotFound\",\"env\":\"Server\"}\nc:D{\"name\":\"Button\",\"env\":\"Server\"}\nc:[\"$\",\"button\",null,{\"className\":\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\",\"children\":[\"$undefined\",\"Back to home\",false,\"$undefined\"],\"disabled\":false,\"onClick\":\"$undefined\"}]\na:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\",\"children\":[[\"$\",\"p\",null,{\"className\":\"text-sm font-semibold text-zinc-900 dark:text-white\",\"children\":\"404\"}],[\"$\",\"h1\",null,{\"className\":\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\",\"children\":\"Page not found\"}],[\"$\",\"p\",null,{\"className\":\"mt-2 text-base text-zinc-600 dark:text-zinc-400\",\"children\":\"Sorry, we couldn’t find the page you’re looking for.\"}],[\"$\",\"$Lb\",null,{\"href\":\"/\",\"children\":\"$c\"}]]}]\n8:[\"$\",\"html\",null,{\"lang\":\"en\",\"child"])</script>
+                        <script>self.__next_f.push([1,"2:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n5:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n6:I[\"(app-pages-browser)/./app/health/error.tsx\",[\"app/health/error\",\"static/chunks/app/health/error.js\"],\"default\"]\n7:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n9:I[\"(app-pages-browser)/./app/error.tsx\",[\"app/error\",\"static/chunks/app/error.js\"],\"default\"]\nb:I[\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\",[\"app/not-found\",\"static/chunks/app/not-found.js\"],\"\"]\ne:I[\"(app-pages-browser)/./app/global-error.tsx\",[\"app/global-error\",\"static/chunks/app/global-error.js\"],\"default\"]\n3:D{\"name\":\"\",\"env\":\"Server\"}\n4:D{\"name\":\"HealthPage\",\"env\":\"Server\"}\n8:D{\"name\":\"RootLayout\",\"env\":\"Server\"}\na:D{\"name\":\"NotFound\",\"env\":\"Server\"}\nc:D{\"name\":\"Button\",\"env\":\"Server\"}\nc:[\"$\",\"button\",null,{\"className\":\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\",\"children\":[\"$undefined\",\"Back to home\",false,\"$undefined\"],\"disabled\":false,\"onClick\":\"$undefined\"}]\na:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\",\"children\":[[\"$\",\"p\",null,{\"className\":\"text-sm font-semibold text-zinc-900 dark:text-white\",\"children\":\"404\"}],[\"$\",\"h1\",null,{\"className\":\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\",\"children\":\"Page not found\"}],[\"$\",\"p\",null,{\"className\":\"mt-2 text-base text-zinc-600 dark:text-zinc-400\",\"children\":\"Sorry, we couldn't find the page you're looking for.\"}],[\"$\",\"$Lb\",null,{\"href\":\"/\",\"children\":\"$c\"}]]}]\n8:[\"$\",\"html\",null,{\"lang\":\"en\",\"child"])</script>
                         <script>self.__next_f.push([1,"ren\":[false,[\"$\",\"body\",null,{\"className\":\"flex h-screen flex-col\",\"children\":[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\"],\"error\":\"$9\",\"errorStyles\":[],\"errorScripts\":[],\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$a\",\"notFoundStyles\":[],\"styles\":null}]}]]}]\nd:D{\"name\":\"\",\"env\":\"Server\"}\nf:[]\n0:[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/css-app_globals_css.css?v=1713855830239\",\"precedence\":\"next_static/css/css-app_globals_css.css\",\"crossOrigin\":\"$undefined\"}]],[\"$\",\"$L2\",null,{\"buildId\":\"development\",\"assetPrefix\":\"\",\"initialCanonicalUrl\":\"/health\",\"initialTree\":[\"\",{\"children\":[\"health\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],\"initialSeedData\":[\"\",{\"children\":[\"health\",{\"children\":[\"__PAGE__\",{},[[\"$L3\",\"$L4\"],null],null]},[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\",\"health\",\"children\"],\"error\":\"$6\",\"errorStyles\":[],\"errorScripts\":[],\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"notFoundStyles\":\"$undefined\",\"styles\":null}],null]},[\"$8\",null],null],\"couldBeIntercepted\":false,\"initialHead\":[false,\"$Ld\"],\"globalErrorComponent\":\"$e\",\"missingSlots\":\"$Wf\"}]]\n"])</script>
                         <script>self.__next_f.push([1,"d:[[\"$\",\"meta\",\"0\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"1\",{\"charSet\":\"utf-8\"}],[\"$\",\"title\",\"2\",{\"children\":\"Formbricks\"}],[\"$\",\"meta\",\"3\",{\"name\":\"description\",\"content\":\"Open-Source Survey Suite\"}],[\"$\",\"meta\",\"4\",{\"name\":\"robots\",\"content\":\"noindex, nofollow\"}],[\"$\",\"meta\",\"5\",{\"name\":\"googlebot\",\"content\":\"noindex, nofollow\"}],[\"$\",\"link\",\"6\",{\"rel\":\"icon\",\"href\":\"/favicon.ico\",\"type\":\"image/x-icon\",\"sizes\":\"48x48\"}]]\n3:null\n10:D{\"name\":\"BadgeCheck\",\"env\":\"Server\"}\n10:[\"$\",\"svg\",null,{\"xmlns\":\"http://www.w3.org/2000/svg\",\"width\":24,\"height\":40,\"viewBox\":\"0 0 24 24\",\"fill\":\"none\",\"stroke\":\"green\",\"strokeWidth\":2,\"strokeLinecap\":\"round\",\"strokeLinejoin\":\"round\",\"className\":\"lucide lucide-badge-check \",\"children\":[[\"$\",\"path\",\"3c2336\",{\"d\":\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"}],[\"$\",\"path\",\"dzmm74\",{\"d\":\"m9 12 2 2 4-4\"}],\"$undefined\"]}]\n4:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center\",\"children\":[\"$10\",[\"$\",\"p\",null,{\"className\":\"text-md mt-4 font-bold text-zinc-900\",\"children\":\"All systems are up and running\"}]]}]\n"])</script>
                     </body>
@@ -4668,9 +4710,350 @@ paths:
                         <script src="/_next/static/chunks/webpack.js" async=""></script>
                         <script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script>
                         <script>self.__next_f.push([1,"1:HL[\"/_next/static/css/css-app_globals_css.css?v=1713855907820\",\"style\"]\n0:D{\"name\":\"rQ\",\"env\":\"Server\"}\n"])</script>
-                        <script>self.__next_f.push([1,"2:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n5:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n6:I[\"(app-pages-browser)/./app/health/error.tsx\",[\"app/health/error\",\"static/chunks/app/health/error.js\"],\"default\"]\n7:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n9:I[\"(app-pages-browser)/./app/error.tsx\",[\"app/error\",\"static/chunks/app/error.js\"],\"default\"]\nb:I[\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\",[\"app/not-found\",\"static/chunks/app/not-found.js\"],\"\"]\ne:I[\"(app-pages-browser)/./app/global-error.tsx\",[\"app/global-error\",\"static/chunks/app/global-error.js\"],\"default\"]\n3:D{\"name\":\"\",\"env\":\"Server\"}\n4:D{\"name\":\"HealthPage\",\"env\":\"Server\"}\n8:D{\"name\":\"RootLayout\",\"env\":\"Server\"}\na:D{\"name\":\"NotFound\",\"env\":\"Server\"}\nc:D{\"name\":\"Button\",\"env\":\"Server\"}\nc:[\"$\",\"button\",null,{\"className\":\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\",\"children\":[\"$undefined\",\"Back to home\",false,\"$undefined\"],\"disabled\":false,\"onClick\":\"$undefined\"}]\na:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\",\"children\":[[\"$\",\"p\",null,{\"className\":\"text-sm font-semibold text-zinc-900 dark:text-white\",\"children\":\"404\"}],[\"$\",\"h1\",null,{\"className\":\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\",\"children\":\"Page not found\"}],[\"$\",\"p\",null,{\"className\":\"mt-2 text-base text-zinc-600 dark:text-zinc-400\",\"children\":\"Sorry, we couldn’t find the page you’re looking for.\"}],[\"$\",\"$Lb\",null,{\"href\":\"/\",\"children\":\"$c\"}]]}]\n8:[\"$\",\"html\",null,{\"lang\":\"en\",\"child"])</script>
+                        <script>self.__next_f.push([1,"2:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n5:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n6:I[\"(app-pages-browser)/./app/health/error.tsx\",[\"app/health/error\",\"static/chunks/app/health/error.js\"],\"default\"]\n7:I[\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\",[\"app-pages-internals\",\"static/chunks/app-pages-internals.js\"],\"\"]\n9:I[\"(app-pages-browser)/./app/error.tsx\",[\"app/error\",\"static/chunks/app/error.js\"],\"default\"]\nb:I[\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\",[\"app/not-found\",\"static/chunks/app/not-found.js\"],\"\"]\ne:I[\"(app-pages-browser)/./app/global-error.tsx\",[\"app/global-error\",\"static/chunks/app/global-error.js\"],\"default\"]\n3:D{\"name\":\"\",\"env\":\"Server\"}\n4:D{\"name\":\"HealthPage\",\"env\":\"Server\"}\n8:D{\"name\":\"RootLayout\",\"env\":\"Server\"}\na:D{\"name\":\"NotFound\",\"env\":\"Server\"}\nc:D{\"name\":\"Button\",\"env\":\"Server\"}\nc:[\"$\",\"button\",null,{\"className\":\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\",\"children\":[\"$undefined\",\"Back to home\",false,\"$undefined\"],\"disabled\":false,\"onClick\":\"$undefined\"}]\na:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\",\"children\":[[\"$\",\"p\",null,{\"className\":\"text-sm font-semibold text-zinc-900 dark:text-white\",\"children\":\"404\"}],[\"$\",\"h1\",null,{\"className\":\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\",\"children\":\"Page not found\"}],[\"$\",\"p\",null,{\"className\":\"mt-2 text-base text-zinc-600 dark:text-zinc-400\",\"children\":\"Sorry, we couldn't find the page you're looking for.\"}],[\"$\",\"$Lb\",null,{\"href\":\"/\",\"children\":\"$c\"}]]}]\n8:[\"$\",\"html\",null,{\"lang\":\"en\",\"child"])</script>
                         <script>self.__next_f.push([1,"ren\":[false,[\"$\",\"body\",null,{\"className\":\"flex h-screen flex-col\",\"children\":[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\"],\"error\":\"$9\",\"errorStyles\":[],\"errorScripts\":[],\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$a\",\"notFoundStyles\":[],\"styles\":null}]}]]}]\nd:D{\"name\":\"\",\"env\":\"Server\"}\nf:[]\n0:[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/css-app_globals_css.css?v=1713855907820\",\"precedence\":\"next_static/css/css-app_globals_css.css\",\"crossOrigin\":\"$undefined\"}]],[\"$\",\"$L2\",null,{\"buildId\":\"development\",\"assetPrefix\":\"\",\"initialCanonicalUrl\":\"/health\",\"initialTree\":[\"\",{\"children\":[\"health\",{\"children\":[\"__PAGE__\",{}]}]},\"$undefined\",\"$undefined\",true],\"initialSeedData\":[\"\",{\"children\":[\"health\",{\"children\":[\"__PAGE__\",{},[[\"$L3\",\"$L4\"],null],null]},[\"$\",\"$L5\",null,{\"parallelRouterKey\":\"children\",\"segmentPath\":[\"children\",\"health\",\"children\"],\"error\":\"$6\",\"errorStyles\":[],\"errorScripts\":[],\"template\":[\"$\",\"$L7\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"notFoundStyles\":\"$undefined\",\"styles\":null}],null]},[\"$8\",null],null],\"couldBeIntercepted\":false,\"initialHead\":[false,\"$Ld\"],\"globalErrorComponent\":\"$e\",\"missingSlots\":\"$Wf\"}]]\n"])</script>
-                        <script>self.__next_f.push([1,"d:[[\"$\",\"meta\",\"0\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"1\",{\"charSet\":\"utf-8\"}],[\"$\",\"title\",\"2\",{\"children\":\"Formbricks\"}],[\"$\",\"meta\",\"3\",{\"name\":\"description\",\"content\":\"Open-Source Survey Suite\"}],[\"$\",\"meta\",\"4\",{\"name\":\"robots\",\"content\":\"noindex, nofollow\"}],[\"$\",\"meta\",\"5\",{\"name\":\"googlebot\",\"content\":\"noindex, nofollow\"}],[\"$\",\"link\",\"6\",{\"rel\":\"icon\",\"href\":\"/favicon.ico\",\"type\":\"image/x-icon\",\"sizes\":\"48x48\"}]]\n3:null\n"])</script>
-                        <script>self.__next_f.push([1,"4:E{\"digest\":\"1960283871\",\"message\":\"Database could not be reached\",\"stack\":\"Error: Database could not be reached\\n    at checkDatabaseConnection (webpack-internal:///(rsc)/./app/health/page.tsx:30:15)\\n    at HealthPage (webpack-internal:///(rsc)/./app/health/page.tsx:44:11)\\n    at e_ (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:264101)\\n    at e (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:268233)\\n    at eF (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:268721)\\n    at eq (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:274685)\\n    at ej (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:264929)\\n    at e_ (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:263971)\\n    at e (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:268233)\\n    at eF (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:268721)\\n    at /home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:265952\\n    at Array.toJSON (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:266416)\\n    at stringify (\u003canonymous\u003e)\\n    at eq (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:274784)\\n    at eJ (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:275302)\\n    at Timeout._onTimeout (/home/shubham/Desktop/formbricks/node_modules/next/dist/compiled/next-server/app-page.runtime.dev.js:35:265089)\\n    at listOnTimeout (node:internal/timers:573:17)\\n    at process.processTimers (node:internal/timers:514:7)\"}\n"])</script>
+                        <script>self.__next_f.push([1,"d:[[\"$\",\"meta\",\"0\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1\"}],[\"$\",\"meta\",\"1\",{\"charSet\":\"utf-8\"}],[\"$\",\"title\",\"2\",{\"children\":\"Formbricks\"}],[\"$\",\"meta\",\"3\",{\"name\":\"description\",\"content\":\"Open-Source Survey Suite\"}],[\"$\",\"meta\",\"4\",{\"name\":\"robots\",\"content\":\"noindex, nofollow\"}],[\"$\",\"meta\",\"5\",{\"name\":\"googlebot\",\"content\":\"noindex, nofollow\"}],[\"$\",\"link\",\"6\",{\"rel\":\"icon\",\"href\":\"/favicon.ico\",\"type\":\"image/x-icon\",\"sizes\":\"48x48\"}]]\n3:null\n10:D{\"name\":\"BadgeCheck\",\"env\":\"Server\"}\n10:[\"$\",\"svg\",null,{\"xmlns\":\"http://www.w3.org/2000/svg\",\"width\":24,\"height\":40,\"viewBox\":\"0 0 24 24\",\"fill\":\"none\",\"stroke\":\"green\",\"strokeWidth\":2,\"strokeLinecap\":\"round\",\"strokeLinejoin\":\"round\",\"className\":\"lucide lucide-badge-check \",\"children\":[[\"$\",\"path\",\"3c2336\",{\"d\":\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"}],[\"$\",\"path\",\"dzmm74\",{\"d\":\"m9 12 2 2 4-4\"}],\"$undefined\"]}]\n4:[\"$\",\"div\",null,{\"className\":\"mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center\",\"children\":[\"$10\",[\"$\",\"p\",null,{\"className\":\"text-md mt-4 font-bold text-zinc-900\",\"children\":\"All systems are up and running\"}]]}]\n"])</script>
                     </body>
                 </html>
+  /api/v1/management/contacts:
+    get:
+      tags:
+        - Management API > Contacts
+      summary: Get All Contacts
+      description: Retrieve a list of all contacts for the current environment
+      parameters:
+        - name: x-api-key
+          in: header
+          schema:
+            type: string
+          example: "{{apiKey}}"
+          required: true
+      responses:
+        "200":
+          description: OK
+          headers:
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 12:37:25 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  - id: cm4jnsxcd012fh3aqz1b6zox6
+                    userId: null
+                    createdAt: "2024-12-11T08:59:37.550Z"
+                    updatedAt: "2024-12-11T08:59:37.550Z"
+                    environmentId: cm37a748d0001hbwhqvvuba23
+                  - id: cm4la1bhn12g5cr5qh8p6v874
+                    userId: null
+                    createdAt: "2024-12-12T12:09:46.859Z"
+                    updatedAt: "2024-12-12T12:09:46.859Z"
+                    environmentId: cm37a748d0001hbwhqvvuba23
+  /api/v1/management/contacts/{contactId}:
+    get:
+      tags:
+        - Management API > Contacts
+      summary: Get Contact by ID
+      description: Retrieve a specific contact by its ID
+      parameters:
+        - name: x-api-key
+          in: header
+          schema:
+            type: string
+          example: "{{apiKey}}"
+          required: true
+        - name: contactId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: The ID of the contact to retrieve
+      responses:
+        "200":
+          description: OK
+          headers:
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 12:37:25 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  id: cm4jnsxcd00ufh3aqz1b6zox6
+                  userId: null
+                  createdAt: "2024-12-11T08:59:37.550Z"
+                  updatedAt: "2024-12-11T08:59:37.550Z"
+                  environmentId: cm37a748d0008hbwhqvvuba23
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: not_found
+                message: Contact not found
+                details:
+                  resource_id: cm4jnsxcd00ufh3aqz1b6zox6
+                  resource_type: Contact
+  /api/v1/management/contact-attributes:
+    get:
+      tags:
+        - Management API > Contact Attributes
+      summary: Get All Contact Attributes
+      description: Retrieve a list of all contact attributes in the current environment
+      parameters:
+        - name: x-api-key
+          in: header
+          schema:
+            type: string
+          example: "{{apiKey}}"
+          required: true
+      responses:
+        "200":
+          description: OK
+          headers:
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 12:37:25 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  - id: cm4jnsxxh00umh3aq76q08ah1
+                    createdAt: "2024-12-11T08:59:38.309Z"
+                    updatedAt: "2024-12-11T08:59:38.309Z"
+                    attributeKeyId: cm4jnsxxh00ukh3aq08gpdafw
+                    contactId: cm4jnsxcd00ufh3aqz1b6zox6
+                    value: "eight"
+  /api/v1/management/contact-attribute-keys:
+    get:
+      tags:
+        - Management API > Contact Attribute Keys
+      summary: Get All Contact Attribute Keys
+      description: Retrieve a list of all contact attribute keys defined in the current environment
+      parameters:
+        - name: x-api-key
+          in: header
+          schema:
+            type: string
+          example: "{{apiKey}}"
+          required: true
+      responses:
+        "200":
+          description: OK
+          headers:
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 12:37:25 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  - id: cm37a748d000ahbwhd5bbwc09
+                    createdAt: "2024-11-07T12:25:48.589Z"
+                    updatedAt: "2024-12-03T13:30:28.620Z"
+                    isUnique: true
+                    key: email
+                    name: email
+                    description: The email of the person
+                    type: default
+                    environmentId: cm37a748d0008hbwhqvvuba23
+  /api/v1/management/contact-attribute-keys/{contactAttributeKeyId}:
+    get:
+      tags:
+        - Management API > Contact Attribute Keys
+      summary: Get Contact Attribute Key by ID
+      description: Retrieve a specific contact attribute key by its ID. This returns detailed information about how a particular attribute is defined in your environment.
+      parameters:
+        - name: x-api-key
+          in: header
+          schema:
+            type: string
+          example: "{{apiKey}}"
+          required: true
+        - name: contactAttributeKeyId
+          in: path
+          schema:
+            type: string
+          required: true
+          description: The ID of the contact attribute key to retrieve
+      responses:
+        "200":
+          description: OK
+          headers:
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Unique identifier for the attribute key
+                      createdAt:
+                        type: string
+                        format: date-time
+                        description: Timestamp when the attribute key was created
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        description: Timestamp when the attribute key was last updated
+                      isUnique:
+                        type: boolean
+                        description: Whether this attribute must have unique values across contacts
+                      key:
+                        type: string
+                        description: The machine-readable identifier for the attribute
+                      name:
+                        type: string
+                        description: Human-readable name for the attribute
+                      description:
+                        type: string
+                        description: Detailed description of what this attribute represents
+                      type:
+                        type: string
+                        description: The type of attribute (e.g., "default")
+                      environmentId:
+                        type: string
+                        description: ID of the environment this attribute key belongs to
+              example:
+                data:
+                  id: cm37a748d000ahbwhd5bbwc09
+                  createdAt: "2024-11-07T12:25:48.589Z"
+                  updatedAt: "2024-12-03T13:30:28.620Z"
+                  isUnique: true
+                  key: email
+                  name: email
+                  description: The email of the person
+                  type: default
+                  environmentId: cm37a748d0008hbwhqvvuba23
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: not_found
+                  message:
+                    type: string
+                    example: Contact attribute key not found
+                  details:
+                    type: object
+                    properties:
+                      resource_id:
+                        type: string
+                      resource_type:
+                        type: string
+                        example: ContactAttributeKey
+              example:
+                code: not_found
+                message: Contact attribute key not found
+                details:
+                  resource_id: cm37a748d000ahbwhd5bbwc09
+                  resource_type: ContactAttributeKey
