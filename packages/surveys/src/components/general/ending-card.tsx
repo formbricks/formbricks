@@ -104,7 +104,7 @@ export function EndingCard({
                         responseData,
                         variablesData
                       )
-                    : "Respondants will not see this card"
+                    : "Respondents will not see this card"
                 }
                 questionId="EndingCard"
               />
