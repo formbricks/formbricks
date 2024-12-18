@@ -95,7 +95,7 @@ const Page = async (props) => {
           </Button>
         </ContentLayout>
       );
-    } else if (user?.email !== email) {
+    } else if (user?.email?.toLowerCase() !== email?.toLowerCase()) {
       return (
         <ContentLayout
           headline={t("auth.invite.email_does_not_match")}

@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required for any type */
-
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- required for any type */
-
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- required for any type */
-
 /* eslint-disable @typescript-eslint/no-explicit-any -- required for any type */
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
@@ -59,16 +60,55 @@ export const OrganizationActions = ({
     }
   };
 
-  const handleInviteMembers = async (data: TInvitee[]) => {
-    try {
-      await Promise.all(
+  const handleAddMembers = async (data: TInvitee[]) => {
+    if (data.length === 1) {
+      // Individual invite
+      const inviteUserActionResult = await inviteUserAction({
+        organizationId: organization.id,
+        email: data[0].email.toLowerCase(),
+        name: data[0].name,
+        role: data[0].role,
+        teamIds: data[0].teamIds,
+      });
+      if (inviteUserActionResult?.data) {
+        toast.success(t("environments.settings.general.member_invited_successfully"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(inviteUserActionResult);
+        toast.error(errorMessage);
+      }
+    } else {
+      const invitePromises = await Promise.all(
         data.map(async ({ name, email, role, teamIds }) => {
-          await inviteUserAction({ organizationId: organization.id, email, name, role, teamIds });
+          const inviteUserActionResult = await inviteUserAction({
+            organizationId: organization.id,
+            email: email.toLowerCase(),
+            name,
+            role,
+            teamIds: teamIds,
+          });
+          return {
+            email,
+            success: Boolean(inviteUserActionResult?.data),
+          };
         })
       );
-      toast.success(t("environments.settings.general.member_invited_successfully"));
-    } catch (err) {
-      toast.error(`${t("common.error")}: ${err.message}`);
+      let failedInvites: string[] = [];
+      let successInvites: string[] = [];
+      invitePromises.forEach((invite) => {
+        if (!invite.success) {
+          failedInvites.push(invite.email);
+        } else {
+          successInvites.push(invite.email);
+        }
+      });
+      if (failedInvites.length > 0) {
+        toast.error(`${failedInvites.length} ${t("environments.settings.general.invites_failed")}`);
+      }
+      if (successInvites.length > 0) {
+        toast.success(
+          `${successInvites.length} ${t("environments.settings.general.member_invited_successfully")}`
+        );
+      }
     }
   };
 
@@ -96,7 +136,7 @@ export const OrganizationActions = ({
       <InviteMemberModal
         open={isInviteMemberModalOpen}
         setOpen={setInviteMemberModalOpen}
-        onSubmit={handleInviteMembers}
+        onSubmit={handleAddMembers}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}

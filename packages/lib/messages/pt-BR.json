@@ -1131,6 +1131,8 @@
         "invitation_sent_once_more": "Convite enviado de novo.",
         "invite_deleted_successfully": "Convite deletado com sucesso",
         "invite_organization_member": "Convidar Membro da Organização",
+        "invited_on": "Convidado em {date}",
+        "invites_failed": "Convites falharam",
         "leave_organization": "Sair da organização",
         "leave_organization_description": "Você vai sair dessa organização e perder acesso a todas as pesquisas e respostas. Você só pode voltar se for convidado de novo.",
         "leave_organization_ok_btn_text": "Sim, sair da organização",

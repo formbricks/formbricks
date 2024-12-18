@@ -1131,6 +1131,8 @@
         "invitation_sent_once_more": "Invitation sent once more.",
         "invite_deleted_successfully": "Invite deleted successfully",
         "invite_organization_member": "Invite Organization Member",
+        "invited_on": "Invited on {date}",
+        "invites_failed": "Invites failed",
         "leave_organization": "Leave organization",
         "leave_organization_description": "You wil leave this organization and loose access to all surveys and responses. You can only rejoin if you are invited again.",
         "leave_organization_ok_btn_text": "Yes, leave organization",
