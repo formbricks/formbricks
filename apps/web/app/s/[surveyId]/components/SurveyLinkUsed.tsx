@@ -11,7 +11,7 @@ type SurveyLinkUsedProps = {
   singleUseMessage: TSurveySingleUse | null;
 };
 
-export const SurveyLinkUsed = async ({ singleUseMessage }: SurveyLinkUsedProps) => {
+export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
   const t = useTranslations();
   const defaultHeading = t("s.survey_already_answered_heading");
   const defaultSubheading = t("s.survey_already_answered_subheading");

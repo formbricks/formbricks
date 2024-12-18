@@ -51,7 +51,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  const agent = UAParser(request.headers.get("user-agent"));
+  const userAgent = request.headers.get("user-agent") || undefined;
+  const agent = new UAParser(userAgent);
+
   const country =
     requestHeaders.get("CF-IPCountry") ||
     requestHeaders.get("X-Vercel-IP-Country") ||
@@ -89,9 +91,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
       source: responseInputData?.meta?.source,
       url: responseInputData?.meta?.url,
       userAgent: {
-        browser: agent?.browser.name,
-        device: agent?.device.type || "desktop",
-        os: agent?.os.name,
+        browser: agent.getBrowser().name,
+        device: agent.getDevice().type || "desktop",
+        os: agent.getOS().name,
       },
       country: country,
       action: responseInputData?.meta?.action,
