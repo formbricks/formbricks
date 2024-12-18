@@ -2,6 +2,7 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { AlertTriangle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";
@@ -23,6 +24,7 @@ export const VideoSettings = ({
   videoUrl,
   setVideoUrlTemp,
 }: VideoSettingsProps) => {
+  const t = useTranslations();
   const [isYoutubeLink, setIsYoutubeLink] = useState(checkForYoutubeUrl(uploadedVideoUrl));
   const [isYoutubePrivacyModeEnabled, setIsYoutubePrivacyModeEnabled] = useState(
     checkForYoutubePrivacyMode(uploadedVideoUrl)
@@ -33,7 +35,7 @@ export const VideoSettings = ({
 
     const videoId = extractYoutubeId(uploadedVideoUrl);
     if (!videoId) {
-      toast.error("Invalid YouTube URL");
+      toast.error(t("environments.surveys.edit.invalid_youtube_url"));
       return;
     }
     const newUrl = isYoutubePrivacyModeEnabled
@@ -53,7 +55,7 @@ export const VideoSettings = ({
       setUploadedVideoUrl(embedUrl);
       onFileUpload([embedUrl], "video");
     } else {
-      toast.error("URL not supported");
+      toast.error(t("environments.surveys.edit.url_not_supported"));
     }
   };
 
@@ -98,11 +100,11 @@ export const VideoSettings = ({
         />
         {uploadedVideoUrl && videoUrl === uploadedVideoUrl ? (
           <Button variant="secondary" onClick={handleRemoveVideo}>
-            Remove
+            {t("common.remove")}
           </Button>
         ) : (
           <Button onClick={handleAddVideo} disabled={isAddButtonDisabled()}>
-            Add
+            {t("common.add")}
           </Button>
         )}
       </div>
@@ -110,10 +112,7 @@ export const VideoSettings = ({
       {showPlatformWarning && (
         <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-xs text-slate-600">
           <AlertTriangle className="h-6 w-6" />
-          <p>
-            Please enter a valid YouTube, Vimeo, or Loom URL. We currently do not support other video hosting
-            providers.
-          </p>
+          <p>{t("environments.surveys.edit.invalid_video_url_warning")}</p>
         </div>
       )}
 
