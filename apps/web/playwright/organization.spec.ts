@@ -21,6 +21,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await page.getByRole("link", { name: "Organization" }).click();
       await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
+      await page.waitForTimeout(5000);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
@@ -135,6 +136,7 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
+    await page.waitForTimeout(5000);
 
     await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
