@@ -1,8 +1,8 @@
-import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { type Prisma, PrismaClient } from "@prisma/client";
 
 const execAsync = promisify(exec);
 
@@ -283,8 +283,8 @@ async function isSchemaMigrationApplied(migrationName: string, prismaClient: Pri
          LIMIT 1;
        `;
     return applied.length > 0;
-  } catch (error) {
-    console.error(`Failed to check migration status: ${error}`);
-    throw new Error(`Could not verify migration status: ${error}`);
+  } catch (error: unknown) {
+    console.error(`Failed to check migration status: ${error as string}`);
+    throw new Error(`Could not verify migration status: ${error as string}`);
   }
 }
