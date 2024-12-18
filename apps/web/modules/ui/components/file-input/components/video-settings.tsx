@@ -89,7 +89,7 @@ export const VideoSettings = ({
   };
 
   return (
-    <form className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-4">
       <Label>Video URL (YouTube, Vimeo, or Loom):</Label>
       <div className="flex h-10 items-center space-x-2">
         <Input
@@ -125,6 +125,6 @@ export const VideoSettings = ({
           description="Keeps user tracking to a minimum"
           childBorder={true}></AdvancedOptionToggle>
       )}
-    </form>
+    </div>
   );
 };
