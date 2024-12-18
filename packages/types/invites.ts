@@ -12,6 +12,7 @@ export const ZInvite = z.object({
   createdAt: z.date(),
   expiresAt: z.date(),
   role: ZOrganizationRole,
+  teamIds: z.array(z.string()),
 });
 export type TInvite = z.infer<typeof ZInvite>;
 
@@ -19,6 +20,7 @@ export const ZInvitee = z.object({
   email: z.string().email(),
   name: ZUserName,
   role: ZOrganizationRole,
+  teamIds: z.array(z.string()),
 });
 export type TInvitee = z.infer<typeof ZInvitee>;
 
@@ -36,7 +38,10 @@ export const ZInviteUpdateInput = z.object({
 export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
 
 export const ZInviteMembersFormSchema = z.record(
-  z.string().email("Invalid email address").optional().or(z.literal(""))
+  z.object({
+    email: z.string().email("Invalid email address").optional().or(z.literal("")),
+    name: ZUserName,
+  })
 );
 
 export type TInviteMembersFormSchema = z.infer<typeof ZInviteMembersFormSchema>;

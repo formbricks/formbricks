@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { PlusIcon } from "lucide-react";
@@ -197,16 +198,22 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         )}
         <AddLanguageButton onClick={handleAddLanguage} />
       </div>
-      {!isReadOnly && (
-        <EditSaveButtons
-          isEditing={isEditing}
-          onCancel={handleCancelChanges}
-          onEdit={() => {
-            setIsEditing(true);
-          }}
-          onSave={handleSaveChanges}
-          t={t}
-        />
+      <EditSaveButtons
+        isEditing={isEditing}
+        onCancel={handleCancelChanges}
+        disabled={isReadOnly}
+        onEdit={() => {
+          setIsEditing(true);
+        }}
+        onSave={handleSaveChanges}
+        t={t}
+      />
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
       )}
       <ConfirmationModal
         buttonText={t("environments.project.languages.remove_language")}
@@ -224,23 +231,24 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
 }
 
 const EditSaveButtons: React.FC<{
+  disabled: boolean;
   isEditing: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
   t: (key: string) => string;
-}> = ({ isEditing, onEdit, onSave, onCancel, t }) =>
+}> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button onClick={onSave} size="sm">
+      <Button onClick={onSave} size="sm" disabled={disabled}>
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="ghost">
+      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>
         {t("common.cancel")}
       </Button>
     </div>
   ) : (
-    <Button className="w-fit" onClick={onEdit} size="sm">
+    <Button className="w-fit" onClick={onEdit} size="sm" disabled={disabled}>
       {t("environments.project.languages.edit_languages")}
     </Button>
   );

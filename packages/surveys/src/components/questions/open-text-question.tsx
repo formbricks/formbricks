@@ -153,7 +153,7 @@ export function OpenTextQuestion({
           tabIndex={isCurrent ? 0 : -1}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
-          onClick={() => { }}
+          onClick={() => {}}
         />
         {!isFirstQuestion && (
           <BackButton

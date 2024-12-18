@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { FollowUpsView } from "@/modules/survey-follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";

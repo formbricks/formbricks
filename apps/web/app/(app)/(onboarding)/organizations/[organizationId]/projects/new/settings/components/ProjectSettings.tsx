@@ -2,7 +2,7 @@
 
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/teams";
+import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
@@ -201,8 +201,8 @@ export const ProjectSettings = ({
                       <div>
                         <MultiSelect
                           value={field.value}
-                          onChange={(teamIds) => field.onChange(teamIds)}
                           options={organizationTeamsOptions}
+                          onChange={(teamIds) => field.onChange(teamIds)}
                         />
                         {error?.message && <FormError className="text-left">{error.message}</FormError>}
                       </div>

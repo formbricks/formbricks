@@ -31,22 +31,26 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   const { isSubmitting } = form.formState;
 
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
-    const emails = Object.values(data).filter((email) => email && email.trim());
-    if (!emails.length) {
+    const members = Object.values(data).filter((member) => member.email && member.email.trim());
+    if (!members.length) {
       router.push("/");
       return;
     }
 
-    for (const email of emails) {
+    for (const member of members) {
       try {
-        if (!email) continue;
-        await inviteOrganizationMemberAction({ email, organizationId });
+        if (!member.email) continue;
+        await inviteOrganizationMemberAction({
+          email: member.email.toLowerCase(),
+          name: member.name,
+          organizationId,
+        });
         if (IS_SMTP_CONFIGURED) {
-          toast.success(`${t("setup.invite.invitation_sent_to")} ${email}!`);
+          toast.success(`${t("setup.invite.invitation_sent_to")} ${member.email}!`);
         }
       } catch (error) {
-        console.error("Failed to invite:", email, error);
-        toast.error(`${t("setup.invite.failed_to_invite")} ${email}.`);
+        console.error("Failed to invite:", member.email, error);
+        toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
       }
     }
 
@@ -71,28 +75,50 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           <p>{t("setup.invite.life_s_no_fun_alone")}</p>
 
           {Array.from({ length: membersCount }).map((_, index) => (
-            <FormField
-              key={`member-${index}`}
-              control={form.control}
-              name={`member-${index}`}
-              render={({ field, fieldState: { error } }) => (
-                <FormItem>
-                  <FormControl>
-                    <div>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          placeholder={`user@example.com`}
-                          className="w-80"
-                          isInvalid={!!error?.message}
-                        />
+            <div key={`member-${index}`} className="space-y-2">
+              <FormField
+                control={form.control}
+                name={`member-${index}.email`}
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            placeholder={`user@example.com`}
+                            className="w-80"
+                            isInvalid={!!error?.message}
+                          />
+                        </div>
+                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
                       </div>
-                      {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                    </div>
-                  </FormControl>
-                </FormItem>
-              )}
-            />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={`member-${index}.name`}
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div>
+                        <div className="relative">
+                          <Input
+                            {...field}
+                            placeholder={`Full Name (optional)`}
+                            className="w-80"
+                            isInvalid={!!error?.message}
+                          />
+                        </div>
+                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
           ))}
 
           <Button variant="ghost" onClick={() => setMembersCount((count) => count + 1)} type="button">
