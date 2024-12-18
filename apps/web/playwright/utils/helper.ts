@@ -83,12 +83,10 @@ export const finishOnboarding = async (
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (projectChannel === "website") {
-    await page.getByRole("button", { name: "Built for scale Public website" }).click();
-  } else if (projectChannel === "app") {
-    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+  if (projectChannel === "app") {
+    await page.getByRole("button", { name: "In-product surveys" }).click();
   } else {
-    await page.getByRole("button", { name: "Anywhere online Link" }).click();
+    await page.getByRole("button", { name: "Link & email surveys" }).click();
   }
 
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
@@ -97,9 +95,7 @@ export const finishOnboarding = async (
   await page.locator("#form-next-button").click();
 
   if (projectChannel !== "link") {
-    await page.getByRole("button", { name: "I don't know how to do it" }).click();
-    await page.waitForTimeout(500);
-    await page.getByRole("button", { name: "Not now" }).click();
+    await page.getByRole("button", { name: "I'll do it later" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
