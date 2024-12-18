@@ -27,11 +27,10 @@ const MIGRATIONS_DIR = path.resolve(__dirname, "../../migration");
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 
 const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
-  console.log(`Starting data migrations: ${migrations.length.toString()} to run`);
+  console.log(`Starting migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
 
   // empty the prisma migrations directory
-
   await execAsync(`rm -rf ${PRISMA_MIGRATIONS_DIR}/*`);
 
   for (let index = 0; index < migrations.length; index++) {
@@ -39,7 +38,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   }
 
   const endTime = Date.now();
-  console.log(`All data migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
+  console.log(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
 const runSingleMigration = async (migration: MigrationScript, index: number): Promise<void> => {
@@ -117,35 +116,15 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
     // Temporary migrations directory for controlled migration
     const customMigrationsDir = path.resolve(__dirname, "../../migration");
 
-    // TODO: Check if this can be implemented
-    // // if the migration directory exists, we will check if the migration has already been applied
-
-    const migrationDir = path.join(originalMigrationsDir, migration.name);
     let copyOnly = false;
 
-    const hasAccess = await fs
-      .access(migrationDir)
-      .then(() => true)
-      .catch(() => false);
+    if (index > 0) {
+      const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
 
-    if (hasAccess && index > 0) {
-      // Check if there is a migration.sql file in the directory
-      const hasSchemaMigration = await fs
-        .readdir(migrationDir)
-        .then((files) => files.includes("migration.sql"));
-
-      if (hasSchemaMigration) {
-        // Check if the migration has already been applied in the database
-        const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
-        if (isApplied) {
-          console.log(`Schema migration ${migration.name} already applied. Skipping...`);
-          return;
-        }
+      if (isApplied) {
+        // schema migration is already applied, we can just copy the migration to the original migrations directory
+        copyOnly = true;
       }
-    } else {
-      // no access -> no migration subdirectory exists
-      // if the migration is still applied in the db, we can just copy the migration to the original migrations directory
-      copyOnly = true;
     }
 
     const originalMigrationsDirExists = await fs
