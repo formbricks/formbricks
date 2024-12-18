@@ -9,9 +9,9 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { UsersIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -96,17 +96,20 @@ export const SegmentsPage = async ({
       ) : (
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            icon={<UsersIcon className="h-6 w-6 text-slate-900" />}
             title={t("environments.segments.unlock_segments_title")}
             description={t("environments.segments.unlock_segments_description")}
             buttons={[
               {
                 text: t("common.start_free_trial"),
-                href: `https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request`,
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/environments/${params.environmentId}/settings/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
-                href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/environments/${params.environmentId}/settings/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
           />

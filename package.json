@@ -15,7 +15,6 @@
     "build:dev": "turbo run build:dev",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:deploy": "turbo run db:migrate:deploy",
-    "db:migrate:vercel": "turbo run db:migrate:vercel",
     "db:start": "turbo run db:start",
     "db:push": "turbo run db:push",
     "go": "turbo run go --concurrency 20",
@@ -29,16 +28,17 @@
     "test": "turbo run test --no-cache",
     "test:e2e": "playwright test",
     "prepare": "husky install",
-    "storybook": "turbo run storybook"
+    "storybook": "turbo run storybook",
+    "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate"
   },
   "devDependencies": {
     "@formbricks/eslint-config": "workspace:*",
-    "@playwright/test": "1.45.3",
+    "@playwright/test": "1.49.1",
     "eslint": "8.57.0",
-    "husky": "9.1.4",
-    "lint-staged": "15.2.7",
+    "husky": "9.1.7",
+    "lint-staged": "15.2.11",
     "rimraf": "6.0.1",
-    "tsx": "4.16.5",
+    "tsx": "4.19.2",
     "turbo": "2.3.3"
   },
   "lint-staged": {
@@ -56,7 +56,7 @@
   "engines": {
     "node": ">=16.0.0"
   },
-  "packageManager": "pnpm@9.14.2",
+  "packageManager": "pnpm@9.15.0",
   "nextBundleAnalysis": {
     "budget": 358400,
     "budgetPercentIncreaseRed": 20,
@@ -64,6 +64,6 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "2.27.7"
+    "@changesets/cli": "2.27.10"
   }
 }
