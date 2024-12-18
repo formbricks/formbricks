@@ -580,6 +580,7 @@
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
       "contact_not_found": "Kein solcher Kontakt gefunden",
       "contacts_table_refresh": "Kontakte aktualisieren",
+      "contacts_table_refresh_error": "Beim Aktualisieren der Kontakte ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
       "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "error_fetching_next_page_of_people_data": "Fehler beim Abrufen der nächsten Seite mit Kontaktdaten",
       "error_fetching_people_data": "Fehler beim Abrufen der Kontaktdaten",

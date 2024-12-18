@@ -44,8 +44,13 @@ export const DataTableToolbar = <T,>({
             <div
               onClick={async () => {
                 if (refreshContacts) {
-                  await refreshContacts();
-                  toast.success(t("environments.contacts.contacts_table_refresh_success"));
+                  try {
+                    await refreshContacts();
+                    toast.success(t("environments.contacts.contacts_table_refresh_success"));
+                  } catch (err) {
+                    console.error(err);
+                    toast.error(t("environments.contacts.contacts_table_refresh_error"));
+                  }
                 }
               }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">

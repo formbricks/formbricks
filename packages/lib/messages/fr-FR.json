@@ -580,6 +580,7 @@
       "contact_deleted_successfully": "Contact supprimé avec succès",
       "contact_not_found": "Aucun contact trouvé",
       "contacts_table_refresh": "Rafraîchir les contacts",
+      "contacts_table_refresh_error": "Une erreur s'est produite lors de la mise à jour des contacts. Veuillez réessayer.",
       "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "error_fetching_next_page_of_people_data": "Erreur lors de la récupération de la page suivante des données de contacts",
       "error_fetching_people_data": "Erreur lors de la récupération des données de contacts",
