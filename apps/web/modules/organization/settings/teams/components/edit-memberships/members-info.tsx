@@ -38,6 +38,30 @@ export const MembersInfo = async ({
 
   const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
 
+  const showDeleteButton = (member: TMember | TInvite) => {
+    if (isInvitee(member)) {
+      return isOwnerOrManager;
+    }
+
+    if (!isOwnerOrManager) {
+      return false;
+    }
+
+    if (member.userId === currentUserId) {
+      return false;
+    }
+
+    if (isManager) {
+      return member.role !== "owner";
+    }
+
+    if (member.role === "owner") {
+      return doesOrgHaveMoreThanOneOwner;
+    }
+
+    return true;
+  };
+
   return (
     <div className="grid-cols-20" id="membersInfoWrapper">
       {allMembers.map((member) => (
@@ -79,12 +103,7 @@ export const MembersInfo = async ({
               organization={organization}
               member={!isInvitee(member) ? member : undefined}
               invite={isInvitee(member) ? member : undefined}
-              showDeleteButton={
-                isOwnerOrManager &&
-                (member as TMember).userId !== currentUserId &&
-                ((member as TMember).role !== "owner" ||
-                  ((member as TMember).role === "owner" && doesOrgHaveMoreThanOneOwner))
-              }
+              showDeleteButton={showDeleteButton(member)}
             />
           </div>
         </div>

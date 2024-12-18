@@ -95,6 +95,15 @@ export const deleteMembershipAction = authenticatedActionClient
       throw new OperationNotAllowedError("You cannot delete yourself from the organization");
     }
 
+    const currentMembership = await getMembershipByUserIdOrganizationId(
+      ctx.user.id,
+      parsedInput.organizationId
+    );
+
+    if (!currentMembership) {
+      throw new AuthenticationError("Not a member of this organization");
+    }
+
     const membership = await getMembershipByUserIdOrganizationId(
       parsedInput.userId,
       parsedInput.organizationId
@@ -105,6 +114,10 @@ export const deleteMembershipAction = authenticatedActionClient
     }
 
     const isOwner = membership.role === "owner";
+
+    if (currentMembership.role === "manager" && isOwner) {
+      throw new OperationNotAllowedError("You cannot delete the owner of the organization");
+    }
 
     if (isOwner) {
       const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId);
