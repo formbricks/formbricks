@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment -- required for any type */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access -- required for any type */
 /* eslint-disable @typescript-eslint/no-explicit-any -- required for any type */
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const isResourceFilter = (resource: any): boolean => {
   return resource.root !== undefined;
@@ -42,7 +42,7 @@ const findAndReplace = (filters: any): any => {
   return newFilters;
 };
 
-export const xmSegmentMigration: DataMigrationScript = {
+export const xmSegmentMigration: MigrationScript = {
   type: "data",
   id: "s644oyyqccstfdeejc4fluye",
   name: "20241209110456_xm_segment_migration",
