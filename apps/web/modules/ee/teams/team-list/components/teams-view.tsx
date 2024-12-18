@@ -4,7 +4,6 @@ import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/pr
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { KeyIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -64,7 +63,6 @@ export const TeamsView = async ({
         />
       ) : (
         <UpgradePrompt
-          icon={<KeyIcon className="h-6 w-6 text-slate-900" />}
           title={t("environments.settings.teams.unlock_teams_title")}
           description={t("environments.settings.teams.unlock_teams_description")}
           buttons={buttons}
