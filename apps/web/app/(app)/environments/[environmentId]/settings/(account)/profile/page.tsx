@@ -74,7 +74,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                       text: t("common.start_free_trial"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/environments/${params.environmentId}/settings/billing`
-                        : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+                        : "https://formbricks.com/upgrade-self-hosting-license",
                     },
                     {
                       text: t("common.learn_more"),

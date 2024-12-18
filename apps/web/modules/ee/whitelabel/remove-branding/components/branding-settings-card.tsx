@@ -26,13 +26,13 @@ export const BrandingSettingsCard = async ({
       text: t("common.start_free_trial"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+        : "https://formbricks.com/upgrade-self-hosting-license",
     },
     {
       text: t("common.learn_more"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/docs/self-hosting/license",
+        : "https://formbricks.com/learn-more-self-hosting-license",
     },
   ];
 
