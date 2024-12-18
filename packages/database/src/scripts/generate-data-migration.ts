@@ -70,7 +70,9 @@ function promptForMigrationName(): Promise<string> {
         process.exit(1);
       }
       if (/[^a-zA-Z0-9\s]/.test(name)) {
-        console.error("Migration name contains invalid characters. Only letters, numbers, and spaces are allowed.");
+        console.error(
+          "Migration name contains invalid characters. Only letters, numbers, and spaces are allowed."
+        );
         process.exit(1);
       }
       rl.close();

@@ -110,7 +110,7 @@ export const Search = () => {
           </kbd>
         )}
       </button>
-      {isOpen &&
+      {isOpen ? (
         createPortal(
           <DocSearchModal
             {...docSearchConfig}
@@ -124,7 +124,10 @@ export const Search = () => {
             }}
           />,
           document.body
-        )}
+        )
+      ) : (
+        <></>
+      )}
     </>
   );
 };
