@@ -38,21 +38,19 @@ export const MembersInfo = async ({
 
   const getMembershipBadge = (member: TMember | TInvite) => {
     if (isInvitee(member)) {
-      if (isInviteExpired(member)) {
-        return <Badge type="gray" text="Expired" size="tiny" data-testid="badge-expired" />;
-      } else {
-        return (
-          <TooltipRenderer
-            tooltipContent={`${t("environments.settings.general.invited_on", {
-              date: getFormattedDateTimeString(member.createdAt),
-            })}`}>
-            <Badge type="warning" text="Pending" size="tiny" data-testid="badge-pending" />
-          </TooltipRenderer>
-        );
-      }
+      return isInviteExpired(member) ? (
+        <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
+      ) : (
+        <TooltipRenderer
+          tooltipContent={`${t("environments.settings.general.invited_on", {
+            date: getFormattedDateTimeString(member.createdAt),
+          })}`}>
+          <Badge type="warning" text="Pending" size="tiny" />
+        </TooltipRenderer>
+      );
     }
 
-    return <Badge type="success" text="Active" size="tiny" data-testid="badge-active" />;
+    return <Badge type="success" text="Active" size="tiny" />;
   };
 
   const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
