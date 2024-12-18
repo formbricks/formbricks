@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { Prisma } from "@prisma/client";
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
-export const xmAttributeRemoval: DataMigrationScript = {
+export const xmAttributeRemoval: MigrationScript = {
   type: "data",
   id: "mq9x7rjdnq0saxoli9pl9b3o",
   name: "20241209111404_xm_attribute_removal",
