@@ -142,6 +142,7 @@ test.describe("Create, update and delete team", async () => {
 
     await expect(page.getByText("Teams")).toBeVisible();
     await page.getByText("Teams").click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
