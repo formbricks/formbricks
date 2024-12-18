@@ -1,6 +1,6 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getEnterpriseLicense, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -42,8 +42,6 @@ const Page = async (props) => {
   }
 
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();
-
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
 
   const paidFeatures = [
     {
@@ -96,7 +94,6 @@ const Page = async (props) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="enterprise"
-          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       {isEnterpriseEdition ? (

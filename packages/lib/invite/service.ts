@@ -3,7 +3,12 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import {
   TInvite,
   TInviteUpdateInput,
@@ -27,6 +32,7 @@ const inviteSelect: Prisma.InviteSelect = {
   createdAt: true,
   expiresAt: true,
   role: true,
+  teamIds: true,
 };
 interface InviteWithCreator extends TInvite {
   creator: {
@@ -214,7 +220,7 @@ export const inviteUser = async ({
   validateInputs([organizationId, ZString], [invitee, ZInvitee]);
 
   try {
-    const { name, email, role } = invitee;
+    const { name, email, role, teamIds } = invitee;
 
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
@@ -232,6 +238,23 @@ export const inviteUser = async ({
       }
     }
 
+    const teamIdsSet = new Set(teamIds);
+
+    if (teamIdsSet.size !== teamIds.length) {
+      throw new ValidationError("teamIds must be unique");
+    }
+
+    const teams = await prisma.team.findMany({
+      where: {
+        id: { in: teamIds },
+        organizationId,
+      },
+    });
+
+    if (teams.length !== teamIds.length) {
+      throw new ValidationError("Invalid teamIds");
+    }
+
     const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
     const expiresAt = new Date(Date.now() + expiresIn);
 
@@ -244,6 +267,7 @@ export const inviteUser = async ({
         acceptor: user ? { connect: { id: user.id } } : undefined,
         role,
         expiresAt,
+        teamIds: { set: teamIds },
       },
     });
 

@@ -9,10 +9,12 @@ import { inviteUser } from "@formbricks/lib/invite/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
+import { ZUserName } from "@formbricks/types/user";
 
 const ZInviteOrganizationMemberAction = z.object({
   email: z.string(),
   organizationId: ZId,
+  name: ZUserName,
 });
 
 export const inviteOrganizationMemberAction = authenticatedActionClient
@@ -39,8 +41,9 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       organizationId: organizations[0].id,
       invitee: {
         email: parsedInput.email,
-        name: "",
+        name: parsedInput.name,
         role: "manager",
+        teamIds: [],
       },
       currentUserId: ctx.user.id,
     });

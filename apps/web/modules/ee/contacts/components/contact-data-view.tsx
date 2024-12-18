@@ -24,7 +24,7 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
-  refreshContacts: () => void;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactDataView = ({

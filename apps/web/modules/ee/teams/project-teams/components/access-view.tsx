@@ -2,50 +2,27 @@
 
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { AccessTable } from "@/modules/ee/teams/project-teams/components/access-table";
-import { AddTeam } from "@/modules/ee/teams/project-teams/components/add-team";
-import { TOrganizationTeam, TProjectTeam } from "@/modules/ee/teams/project-teams/types/teams";
+import { ManageTeam } from "@/modules/ee/teams/project-teams/components/manage-team";
+import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { useTranslations } from "next-intl";
-import { TProject } from "@formbricks/types/project";
 
 interface AccessViewProps {
-  project: TProject;
   teams: TProjectTeam[];
   environmentId: string;
-  organizationTeams: TOrganizationTeam[];
   isOwnerOrManager: boolean;
 }
 
-export const AccessView = ({
-  project,
-  teams,
-  organizationTeams,
-  environmentId,
-  isOwnerOrManager,
-}: AccessViewProps) => {
+export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
   const t = useTranslations();
   return (
     <>
       <SettingsCard
-        title={t("common.teams")}
+        title={t("common.team_access")}
         description={t("environments.project.teams.team_settings_description")}>
-        <div className="flex justify-end gap-2">
-          {isOwnerOrManager && (
-            <AddTeam
-              organizationTeams={organizationTeams}
-              projectTeams={teams}
-              projectId={project.id}
-              organizationId={project.organizationId}
-            />
-          )}
+        <div className="mb-4 flex justify-end">
+          <ManageTeam environmentId={environmentId} isOwnerOrManager={isOwnerOrManager} />
         </div>
-        <div className="mt-2">
-          <AccessTable
-            teams={teams}
-            projectId={project.id}
-            environmentId={environmentId}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        </div>
+        <AccessTable teams={teams} />
       </SettingsCard>
     </>
   );
