@@ -1,4 +1,5 @@
 /* eslint-disable no-constant-condition -- Required for the while loop */
+
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";

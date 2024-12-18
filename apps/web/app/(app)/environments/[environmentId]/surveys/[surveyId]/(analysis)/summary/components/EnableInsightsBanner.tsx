@@ -45,7 +45,7 @@ export const EnableInsightsBanner = ({
       <div className="flex-1">
         <AlertTitle>
           <span className="mr-2">{t("environments.surveys.summary.enable_ai_insights_banner_title")}</span>
-          <Badge text="Beta" type="gray" size="normal" />
+          <Badge type="gray" size="normal" text="Beta" />
         </AlertTitle>
         <AlertDescription className="flex items-start justify-between gap-4">
           {t("environments.surveys.summary.enable_ai_insights_banner_description")}

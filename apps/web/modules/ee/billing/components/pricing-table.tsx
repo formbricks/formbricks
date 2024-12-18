@@ -153,9 +153,9 @@ export const PricingTable = ({
               {cancellingOn && (
                 <Badge
                   className="mx-2"
-                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
                   size="normal"
                   type="warning"
+                  text={`Cancelling: ${cancellingOn ? cancellingOn.toDateString() : ""}`}
                 />
               )}
             </h2>
@@ -192,9 +192,9 @@ export const PricingTable = ({
 
               {responsesUnlimitedCheck && (
                 <Badge
-                  text={t("environments.settings.billing.unlimited_responses")}
                   type="success"
                   size="normal"
+                  text={t("environments.settings.billing.unlimited_responses")}
                 />
               )}
             </div>
@@ -218,7 +218,7 @@ export const PricingTable = ({
               )}
 
               {peopleUnlimitedCheck && (
-                <Badge text={t("environments.settings.billing.unlimited_miu")} type="success" size="normal" />
+                <Badge type="success" size="normal" text={t("environments.settings.billing.unlimited_miu")} />
               )}
             </div>
 
@@ -240,9 +240,9 @@ export const PricingTable = ({
 
               {projectsUnlimitedCheck && (
                 <Badge
-                  text={t("environments.settings.billing.unlimited_projects")}
                   type="success"
                   size="normal"
+                  text={t("environments.settings.billing.unlimited_projects")}
                 />
               )}
             </div>

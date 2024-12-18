@@ -1,5 +1,6 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
+import { createTeamMembership } from "@/modules/invite/lib/team";
 import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
@@ -43,6 +44,9 @@ const Page = async (props) => {
         accepted: true,
         role: invite.role,
       });
+      if (invite.teamIds) {
+        await createTeamMembership(invite, user.id);
+      }
       await deleteInvite(inviteId);
       await sendInviteAcceptedEmail(
         invite.creator.name ?? "",
