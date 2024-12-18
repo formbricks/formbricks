@@ -139,6 +139,7 @@ test.describe("Create, update and delete team", async () => {
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
     await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
+    await page.waitForTimeout(3000);
 
     await expect(page.getByText("Teams")).toBeVisible();
     await page.getByText("Teams").click();

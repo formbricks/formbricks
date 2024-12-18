@@ -10,11 +10,6 @@ const Loading = () => {
 
   const cards = [
     {
-      title: t("environments.settings.general.manage_members"),
-      description: t("environments.settings.general.manage_members_description"),
-      skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }, { classes: "h-8 w-80" }],
-    },
-    {
       title: t("environments.settings.general.organization_name"),
       description: t("environments.settings.general.organization_name_description"),
       skeletonLines: [{ classes: "h-6 w-28" }, { classes: "h-8 w-80" }],
