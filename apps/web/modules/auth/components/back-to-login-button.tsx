@@ -6,7 +6,9 @@ export const BackToLoginButton = async () => {
   const t = await getTranslations();
   return (
     <Button variant="secondary" className="w-full justify-center">
-      <Link href="/auth/login">{t("auth.signup.log_in")}</Link>
+      <Link href="/auth/login" className="h-full w-full">
+        {t("auth.signup.log_in")}
+      </Link>
     </Button>
   );
 };
