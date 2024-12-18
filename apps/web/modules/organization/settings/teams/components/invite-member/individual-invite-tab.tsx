@@ -9,10 +9,11 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
+import { LockIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -137,23 +138,20 @@ export const IndividualInviteTab = ({
         )}
 
         {!canDoRoleManagement && (
-          <UpgradePrompt
-            title={t("environments.settings.general.upgrade_plan_notice_message")}
-            buttons={[
-              {
-                text: t("common.start_free_trial"),
-                href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
-              },
-              {
-                text: t("common.learn_more"),
-                href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
-              },
-            ]}
-          />
+          <Alert>
+            <AlertDescription className="flex">
+              {t("environments.settings.teams.upgrade_plan_notice_message")}
+              <Link
+                className="ml-1 underline"
+                href={
+                  isFormbricksCloud
+                    ? `/environments/${environmentId}/settings/billing`
+                    : "https://formbricks.com/upgrade-self-hosting-license"
+                }>
+                {t("common.start_free_trial")}
+              </Link>
+            </AlertDescription>
+          </Alert>
         )}
 
         <div className="flex justify-between">

@@ -1088,10 +1088,10 @@
         "website_surveys": "Website Surveys"
       },
       "enterprise": {
-        "advanced_targeting_and_segmentation": "Advanced Targeting and Segmentation (In-app Surveys)",
+        "ai": "AI Analysis",
         "audit_logs": "Audit Logs",
         "coming_soon": "Coming soon",
-        "custom_feature_development": "Custom Feature Development",
+        "contacts_and_segments": "Contact management & segments",
         "enterprise_features": "Enterprise Features",
         "get_an_enterprise_license_to_get_access_to_all_features": "Get an Enterprise license to get access to all features.",
         "keep_full_control_over_your_data_privacy_and_security": "Keep full control over your data privacy and security.",
@@ -1104,6 +1104,8 @@
         "saml_sso": "SAML SSO",
         "service_level_agreement": "Service Level Agreement",
         "soc2_hipaa_iso_27001_compliance_check": "SOC2, HIPAA, ISO 27001 Compliance check",
+        "sso": "SSO (Google, Microsoft, OpenID Connect)",
+        "teams": "Teams & Access Roles (Read, Read & Write, Manage)",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Unlock the full power of Formbricks. Free for 30 days.",
         "your_enterprise_license_is_active_all_features_unlocked": "Your Enterprise License is active. All features unlocked."
       },
@@ -1159,7 +1161,6 @@
         "there_can_only_be_one_owner_of_each_organization": "There can only be one owner of each organization. If you transfer your ownership to",
         "to_confirm": "to confirm:",
         "type_in": "Type in",
-        "upgrade_plan_notice_message": "Upgrade to manage access roles",
         "upgrade_plan_notice_text_for_url_cloud": "upgrade your plan.",
         "upgrade_plan_notice_text_for_url_enterprise": "get an Enterprise License.",
         "when_you_transfer_the_ownership_you_will_remain_an_admin_of_the_organization": "When you transfer the ownership, you will remain an Admin of the organization.",
@@ -1217,6 +1218,7 @@
         "two_factor_authentication_description": "Add an extra layer of security to your account in case your password is stolen.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Two-factor authentication enabled. Please enter the six-digit code from your authenticator app.",
         "two_factor_code": "Two-Factor Code",
+        "unlock_two_factor_authentication": "Unlock two-factor authentication with a higher plan",
         "update_personal_info": "Update your personal information",
         "upload_image": "Upload image",
         "warning_cannot_delete_account": "You are the only owner of this organization. Please transfer ownership to another member first.",

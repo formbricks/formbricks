@@ -1088,10 +1088,10 @@
         "website_surveys": "Website-Umfragen"
       },
       "enterprise": {
-        "advanced_targeting_and_segmentation": "Erweiterte Zielgruppenansprache und Segmentierung (In-App-Umfragen)",
+        "ai": "KI-Analyse",
         "audit_logs": "Audit Logs",
         "coming_soon": "Kommt bald",
-        "custom_feature_development": "Entwicklung benutzerdefinierter Funktionen",
+        "contacts_and_segments": "Kontaktverwaltung & Segmente",
         "enterprise_features": "Unternehmensfunktionen",
         "get_an_enterprise_license_to_get_access_to_all_features": "Hol dir eine Enterprise-Lizenz, um Zugriff auf alle Funktionen zu erhalten.",
         "keep_full_control_over_your_data_privacy_and_security": "Behalte die volle Kontrolle über deine Daten, Privatsphäre und Sicherheit.",
@@ -1104,6 +1104,8 @@
         "saml_sso": "SAML-SSO",
         "service_level_agreement": "Service-Level-Vereinbarung",
         "soc2_hipaa_iso_27001_compliance_check": "SOC2-, HIPAA- und ISO 27001-Konformitätsprüfung",
+        "sso": "SSO (Google, Microsoft, OpenID Connect)",
+        "teams": "Teams & Zugriffskontrolle (Lesen, Lesen & Schreiben, Verwalten)",
         "unlock_the_full_power_of_formbricks_free_for_30_days": "Schalte die volle Power von Formbricks frei. 30 Tage kostenlos.",
         "your_enterprise_license_is_active_all_features_unlocked": "Deine Unternehmenslizenz ist aktiv. Alle Funktionen freigeschaltet."
       },
@@ -1217,6 +1219,7 @@
         "two_factor_authentication_description": "Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu, falls dein Passwort gestohlen wird.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Zwei-Faktor-Authentifizierung aktiviert. Bitte gib den sechsstelligen Code aus deiner Authentifizierungs-App ein.",
         "two_factor_code": "Zwei-Faktor-Code",
+        "unlock_two_factor_authentication": "Zwei-Faktor-Authentifizierung mit einem höheren Plan freischalten",
         "update_personal_info": "Persönliche Daten aktualisieren",
         "upload_image": "Bild hochladen",
         "warning_cannot_delete_account": "Du bist der einzige Besitzer dieser Organisation. Bitte übertrage das Eigentum zuerst an ein anderes Mitglied.",
