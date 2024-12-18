@@ -142,6 +142,7 @@ export const IndividualInviteTab = ({
               {t("environments.settings.teams.upgrade_plan_notice_message")}
               <Link
                 className="ml-1 underline"
+                target="_blank"
                 href={
                   isFormbricksCloud
                     ? `/environments/${environmentId}/settings/billing`
