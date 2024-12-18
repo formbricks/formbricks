@@ -109,58 +109,63 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
       throw error;
     }
   } else {
-    console.log(`Running schema migration: ${migration.name}`);
+    try {
+      console.log(`Running schema migration: ${migration.name}`);
 
-    // Original Prisma migrations directory
-    const originalMigrationsDir = path.resolve(__dirname, "../../migrations");
-    // Temporary migrations directory for controlled migration
-    const customMigrationsDir = path.resolve(__dirname, "../../migration");
+      // Original Prisma migrations directory
+      const originalMigrationsDir = path.resolve(__dirname, "../../migrations");
+      // Temporary migrations directory for controlled migration
+      const customMigrationsDir = path.resolve(__dirname, "../../migration");
 
-    let copyOnly = false;
+      let copyOnly = false;
 
-    if (index > 0) {
-      const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
+      if (index > 0) {
+        const isApplied = await isSchemaMigrationApplied(migration.name, prisma);
 
-      if (isApplied) {
-        // schema migration is already applied, we can just copy the migration to the original migrations directory
-        copyOnly = true;
+        if (isApplied) {
+          // schema migration is already applied, we can just copy the migration to the original migrations directory
+          copyOnly = true;
+        }
       }
+
+      const originalMigrationsDirExists = await fs
+        .access(originalMigrationsDir)
+        .then(() => true)
+        .catch(() => false);
+
+      if (!originalMigrationsDirExists) {
+        await fs.mkdir(originalMigrationsDir, { recursive: true });
+      }
+
+      // Copy specific schema migration from temp migrations directory to original migrations directory
+      const migrationToCopy = await fs
+        .readdir(customMigrationsDir)
+        .then((files) => files.find((dir) => dir.includes(migration.name)));
+
+      if (!migrationToCopy) {
+        console.error(`Schema migration not found: ${migration.name}`);
+        return;
+      }
+
+      const sourcePath = path.join(customMigrationsDir, migrationToCopy);
+      const destPath = path.join(originalMigrationsDir, migrationToCopy);
+
+      // Copy migration folder
+      await fs.cp(sourcePath, destPath, { recursive: true });
+
+      if (copyOnly) {
+        console.log(`Schema migration ${migration.name} copied to migrations directory`);
+        return;
+      }
+
+      // Run Prisma migrate
+      // throws when migrate deploy fails
+      await execAsync("pnpm prisma migrate deploy");
+      console.log(`Successfully applied schema migration: ${migration.name}`);
+    } catch (err) {
+      console.error(`Schema migration ${migration.name} failed:`, err);
+      throw err;
     }
-
-    const originalMigrationsDirExists = await fs
-      .access(originalMigrationsDir)
-      .then(() => true)
-      .catch(() => false);
-
-    if (!originalMigrationsDirExists) {
-      await fs.mkdir(originalMigrationsDir, { recursive: true });
-    }
-
-    // Copy specific schema migration from temp migrations directory to original migrations directory
-    const migrationToCopy = await fs
-      .readdir(customMigrationsDir)
-      .then((files) => files.find((dir) => dir.includes(migration.name)));
-
-    if (!migrationToCopy) {
-      console.error(`Schema migration not found: ${migration.name}`);
-      return;
-    }
-
-    const sourcePath = path.join(customMigrationsDir, migrationToCopy);
-    const destPath = path.join(originalMigrationsDir, migrationToCopy);
-
-    // Copy migration folder
-    await fs.cp(sourcePath, destPath, { recursive: true });
-
-    if (copyOnly) {
-      console.log(`Schema migration ${migration.name} copied to migrations directory`);
-      return;
-    }
-
-    // Run Prisma migrate
-    // throws when migrate deploy fails
-    await execAsync("pnpm prisma migrate deploy");
-    console.log(`Successfully applied schema migration: ${migration.name}`);
   }
 };
 
