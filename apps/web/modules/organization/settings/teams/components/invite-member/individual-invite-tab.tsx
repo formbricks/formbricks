@@ -11,7 +11,6 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
-import { LockIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { FormProvider, useForm } from "react-hook-form";
