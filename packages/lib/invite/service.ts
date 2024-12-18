@@ -3,7 +3,12 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import {
   TInvite,
   TInviteUpdateInput,
@@ -220,7 +225,7 @@ export const inviteUser = async ({
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
     if (existingInvite) {
-      throw new ValidationError("Invite already exists");
+      throw new InvalidInputError("Invite already exists");
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -229,7 +234,7 @@ export const inviteUser = async ({
       const member = await getMembershipByUserIdOrganizationId(user.id, organizationId);
 
       if (member) {
-        throw new ValidationError("User is already a member of this organization");
+        throw new InvalidInputError("User is already a member of this organization");
       }
     }
 

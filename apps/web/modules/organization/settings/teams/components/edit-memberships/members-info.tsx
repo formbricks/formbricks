@@ -2,7 +2,10 @@ import { isInviteExpired } from "@/app/lib/utils";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { Badge } from "@/modules/ui/components/badge";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslations } from "next-intl";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { TInvite } from "@formbricks/types/invites";
 import { TMember, TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -22,7 +25,7 @@ const isInvitee = (member: TMember | TInvite): member is TInvite => {
   return (member as TInvite).expiresAt !== undefined;
 };
 
-export const MembersInfo = async ({
+export const MembersInfo = ({
   organization,
   invites,
   currentUserRole,
@@ -32,6 +35,24 @@ export const MembersInfo = async ({
   isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
+  const t = useTranslations();
+
+  const getMembershipBadge = (member: TMember | TInvite) => {
+    if (isInvitee(member)) {
+      return isInviteExpired(member) ? (
+        <Badge type="gray" text="Expired" size="tiny" data-testid="expired-badge" />
+      ) : (
+        <TooltipRenderer
+          tooltipContent={`${t("environments.settings.general.invited_on", {
+            date: getFormattedDateTimeString(member.createdAt),
+          })}`}>
+          <Badge type="warning" text="Pending" size="tiny" />
+        </TooltipRenderer>
+      );
+    }
+
+    return <Badge type="success" text="Active" size="tiny" />;
+  };
 
   const { isOwner, isManager } = getAccessFlags(currentUserRole);
   const isOwnerOrManager = isOwner || isManager;
@@ -63,19 +84,19 @@ export const MembersInfo = async ({
   };
 
   return (
-    <div className="grid-cols-20" id="membersInfoWrapper">
+    <div className="grid-cols-5" id="membersInfoWrapper">
       {allMembers.map((member) => (
         <div
-          className="singleMemberInfo grid-cols-20 grid h-auto w-full content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
+          className="singleMemberInfo grid h-auto w-full grid-cols-5 content-center rounded-lg px-4 py-3 text-left text-sm text-slate-900"
           key={member.email}>
-          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all">
             <p>{member.name}</p>
           </div>
-          <div className="ph-no-capture col-span-5 flex flex-col justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col justify-center break-all text-center">
             {member.email}
           </div>
 
-          <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
+          <div className="ph-no-capture col-span-1 flex flex-col items-center justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
                 currentUserRole={currentUserRole}
@@ -90,15 +111,8 @@ export const MembersInfo = async ({
               />
             )}
           </div>
-
-          <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-            {isInvitee(member) &&
-              (isInviteExpired(member) ? (
-                <Badge className="mr-2" type="gray" size="tiny" text="Expired" />
-              ) : (
-                <Badge className="mr-2" type="warning" size="tiny" text="Pending" />
-              ))}
-
+          <div className="col-span-1 flex items-center justify-center">{getMembershipBadge(member)}</div>
+          <div className="col-span-1 flex items-center justify-end gap-x-4 pr-4">
             <MemberActions
               organization={organization}
               member={!isInvitee(member) ? member : undefined}
