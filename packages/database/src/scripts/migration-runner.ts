@@ -1,8 +1,8 @@
+import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { type Prisma, PrismaClient } from "@prisma/client";
 
 const execAsync = promisify(exec);
 
@@ -112,11 +112,6 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
     try {
       console.log(`Running schema migration: ${migration.name}`);
 
-      // Original Prisma migrations directory
-      const originalMigrationsDir = path.resolve(__dirname, "../../migrations");
-      // Temporary migrations directory for controlled migration
-      const customMigrationsDir = path.resolve(__dirname, "../../migration");
-
       let copyOnly = false;
 
       if (index > 0) {
@@ -129,17 +124,17 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
       }
 
       const originalMigrationsDirExists = await fs
-        .access(originalMigrationsDir)
+        .access(PRISMA_MIGRATIONS_DIR)
         .then(() => true)
         .catch(() => false);
 
       if (!originalMigrationsDirExists) {
-        await fs.mkdir(originalMigrationsDir, { recursive: true });
+        await fs.mkdir(PRISMA_MIGRATIONS_DIR, { recursive: true });
       }
 
       // Copy specific schema migration from temp migrations directory to original migrations directory
       const migrationToCopy = await fs
-        .readdir(customMigrationsDir)
+        .readdir(MIGRATIONS_DIR)
         .then((files) => files.find((dir) => dir.includes(migration.name)));
 
       if (!migrationToCopy) {
@@ -147,8 +142,8 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
         return;
       }
 
-      const sourcePath = path.join(customMigrationsDir, migrationToCopy);
-      const destPath = path.join(originalMigrationsDir, migrationToCopy);
+      const sourcePath = path.join(MIGRATIONS_DIR, migrationToCopy);
+      const destPath = path.join(PRISMA_MIGRATIONS_DIR, migrationToCopy);
 
       // Copy migration folder
       await fs.cp(sourcePath, destPath, { recursive: true });
@@ -279,12 +274,17 @@ export async function applyMigrations(): Promise<void> {
 }
 
 async function isSchemaMigrationApplied(migrationName: string, prismaClient: PrismaClient): Promise<boolean> {
-  const applied: unknown[] = await prismaClient.$queryRaw`
-    SELECT 1
-    FROM _prisma_migrations
-    WHERE migration_name = ${migrationName}
-      AND finished_at IS NOT NULL
-    LIMIT 1;
-  `;
-  return applied.length > 0;
+  try {
+    const applied: unknown[] = await prismaClient.$queryRaw`
+         SELECT 1
+         FROM _prisma_migrations
+         WHERE migration_name = ${migrationName}
+           AND finished_at IS NOT NULL
+         LIMIT 1;
+       `;
+    return applied.length > 0;
+  } catch (error) {
+    console.error(`Failed to check migration status: ${error}`);
+    throw new Error(`Could not verify migration status: ${error}`);
+  }
 }
