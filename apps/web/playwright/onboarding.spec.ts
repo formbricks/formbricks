@@ -12,7 +12,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
 
     await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
-    await page.getByRole("button", { name: "Anywhere online Link" }).click();
+    await page.getByRole("button", { name: "Link & email surveys" }).click();
     // await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
     await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(projectName);
@@ -29,15 +29,13 @@ test.describe("Onboarding Flow Test", async () => {
     await page.waitForURL(/\/organizations\/[^/]+\/projects\/new\/mode/);
 
     await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
-    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+    await page.getByRole("button", { name: "In-product surveys" }).click();
     // await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
     await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(projectName);
     await page.locator("#form-next-button").click();
 
-    await page.getByRole("button", { name: "I don't know how to do it" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/connect\/invite/);
-    await page.getByRole("button", { name: "Not now" }).click();
+    await page.getByRole("button", { name: "I'll do it later" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(projectName)).toBeVisible();
