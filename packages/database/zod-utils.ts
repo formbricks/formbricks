@@ -5,7 +5,7 @@ export const ZActionProperties = z.record(z.string());
 export { ZActionClassNoCodeConfig } from "../types/action-classes";
 export { ZIntegrationConfig } from "../types/integration";
 
-export { ZResponseData, ZResponsePersonAttributes, ZResponseMeta, ZResponseTtc } from "../types/responses";
+export { ZResponseData, ZResponseMeta, ZResponseTtc } from "../types/responses";
 
 export {
   ZSurveyWelcomeCard,

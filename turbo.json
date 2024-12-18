@@ -187,13 +187,11 @@
       "outputs": []
     },
     "db:migrate:deploy": {
+      "cache": false,
       "outputs": []
     },
     "db:migrate:dev": {
-      "outputs": []
-    },
-    "db:migrate:vercel": {
-      "env": ["MIGRATE_DATABASE_URL", "DATABASE_URL"],
+      "cache": false,
       "outputs": []
     },
     "db:push": {
