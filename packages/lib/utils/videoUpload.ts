@@ -73,7 +73,7 @@ export const extractYoutubeId = (url: string): string | null => {
     return false;
   });
 
-  return id;
+  return id || null;
 };
 
 const extractVimeoId = (url: string): string | null => {
@@ -96,44 +96,32 @@ const extractLoomId = (url: string): string | null => {
   return null;
 };
 
-// Function to convert watch urls into embed urls and vice versa
-export const parseVideoUrl = (url: string): string | undefined => {
-  // YouTube URL handling
+// Always convert a given URL into its embed form if supported.
+export const convertToEmbedUrl = (url: string): string | undefined => {
+  // YouTube
   if (checkForYoutubeUrl(url)) {
-    if (url.includes("/embed/")) {
-      // Reverse parse for YouTube embed URLs
-      const videoId = url.split("/embed/")[1].split("?")[0];
-      return `https://www.youtube.com/watch?v=${videoId}`;
-    } else {
-      // Normal parse for YouTube URLs
-      const videoId = extractYoutubeId(url);
-      if (videoId) {
-        return `https://www.youtube.com/embed/${videoId}`;
-      }
+    const videoId = extractYoutubeId(url);
+    if (videoId) {
+      return `https://www.youtube.com/embed/${videoId}`;
     }
   }
-  // Vimeo URL handling
-  else if (checkForVimeoUrl(url)) {
-    if (url.includes("/video/")) {
-      // Reverse parse for Vimeo embed URLs
-      const videoId = url.split("/video/")[1].split("?")[0];
-      return `https://www.vimeo.com/${videoId}`;
-    } else {
-      // Normal parse for Vimeo URLs
-      const videoId = extractVimeoId(url);
+
+  // Vimeo
+  if (checkForVimeoUrl(url)) {
+    const videoId = extractVimeoId(url);
+    if (videoId) {
       return `https://player.vimeo.com/video/${videoId}`;
     }
   }
-  // Loom URL handling
-  else if (checkForLoomUrl(url)) {
-    if (url.includes("/embed/")) {
-      // Reverse parse for Loom embed URLs
-      const videoId = url.split("/embed/")[1].split("?")[0];
-      return `https://www.loom.com/share/${videoId}`;
-    } else {
-      // Normal parse for Loom URLs
-      const videoId = extractLoomId(url);
+
+  // Loom
+  if (checkForLoomUrl(url)) {
+    const videoId = extractLoomId(url);
+    if (videoId) {
       return `https://www.loom.com/embed/${videoId}`;
     }
   }
+
+  // If no supported platform found, return undefined
+  return undefined;
 };
