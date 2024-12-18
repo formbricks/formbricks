@@ -220,6 +220,7 @@ export const SurveyEditor = ({
               isUserTargetingAllowed={isUserTargetingAllowed}
               locale={locale}
               projectPermission={projectPermission}
+              isFormbricksCloud={isFormbricksCloud}
             />
           )}
 

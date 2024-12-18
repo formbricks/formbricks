@@ -9,7 +9,7 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
-import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslations } from "next-intl";
@@ -136,20 +136,26 @@ export const IndividualInviteTab = ({
           />
         )}
 
-        {!canDoRoleManagement &&
-          (isFormbricksCloud ? (
-            <UpgradePlanNotice
-              message={t("environments.settings.teams.upgrade_plan_notice_message")}
-              url={`/environments/${environmentId}/settings/billing`}
-              textForUrl={t("environments.settings.teams.upgrade_plan_notice_text_for_url_cloud")}
-            />
-          ) : (
-            <UpgradePlanNotice
-              message={t("environments.settings.teams.upgrade_plan_notice_message")}
-              url={`/environments/${environmentId}/settings/enterprise`}
-              textForUrl={t("environments.settings.teams.upgrade_plan_notice_text_for_url_enterprise")}
-            />
-          ))}
+        {!canDoRoleManagement && (
+          <UpgradePrompt
+            title={t("environments.settings.general.upgrade_plan_notice_message")}
+            buttons={[
+              {
+                text: t("common.start_free_trial"),
+                href: isFormbricksCloud
+                  ? `/environments/${environmentId}/settings/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: isFormbricksCloud
+                  ? `/environments/${environmentId}/settings/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        )}
+
         <div className="flex justify-between">
           <Button
             size="default"

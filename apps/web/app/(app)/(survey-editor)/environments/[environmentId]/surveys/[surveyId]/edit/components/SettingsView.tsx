@@ -25,6 +25,7 @@ interface SettingsViewProps {
   isUserTargetingAllowed?: boolean;
   locale: string;
   projectPermission: TTeamPermission | null;
+  isFormbricksCloud: boolean;
 }
 
 export const SettingsView = ({
@@ -39,6 +40,7 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   locale,
   projectPermission,
+  isFormbricksCloud,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -68,7 +70,7 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard />
+            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} environmentId={environment.id} />
           )}
         </div>
       ) : null}

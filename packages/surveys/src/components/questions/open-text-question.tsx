@@ -129,13 +129,11 @@ export function OpenTextQuestion({
                 dir="auto"
                 required={question.required}
                 value={value}
-                type={question.inputType}
                 onInput={(e) => {
                   handleInputChange(e.currentTarget.value);
                   handleInputResize(e);
                 }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-bg-input-bg fb-text-subheading focus:fb-border-brand fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-ring-0 sm:fb-text-sm"
-                pattern={question.inputType === "phone" ? "[+][0-9 ]+" : ".*"}
                 title={question.inputType === "phone" ? "Please enter a valid phone number" : undefined}
                 minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
                 maxlength={question.inputType === "text" ? question.charLimit?.max : undefined}

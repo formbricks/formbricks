@@ -1,4 +1,5 @@
 import { Button } from "@/modules/ui/components/button";
+import { KeyIcon } from "lucide-react";
 import Link from "next/link";
 
 export type ModalButton = {
@@ -8,18 +9,19 @@ export type ModalButton = {
 };
 
 interface UpgradePromptProps {
-  icon: React.ReactNode;
   title: string;
-  description: string;
+  description?: string;
   buttons: [ModalButton, ModalButton];
 }
 
-export const UpgradePrompt = ({ icon, title, description, buttons }: UpgradePromptProps) => {
+export const UpgradePrompt = ({ title, description, buttons }: UpgradePromptProps) => {
   const [primaryButton, secondaryButton] = buttons;
 
   return (
     <div className="flex w-full flex-col items-center gap-6 p-6">
-      <div className="rounded-md border border-slate-200 p-3">{icon}</div>
+      <div className="rounded-md border border-slate-200 p-3">
+        <KeyIcon className="h-6 w-6 text-slate-900" />
+      </div>
       <div className="flex max-w-[80%] flex-col items-center gap-2 text-center">
         <p className="text-xl font-semibold text-slate-900">{title}</p>
         <p className="text-sm text-slate-500">{description}</p>
