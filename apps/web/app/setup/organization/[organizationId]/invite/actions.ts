@@ -6,13 +6,12 @@ import { sendInviteMemberEmail } from "@/modules/email";
 import { z } from "zod";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { inviteUser } from "@formbricks/lib/invite/service";
-import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { ZUserName } from "@formbricks/types/user";
+import { ZUserEmail, ZUserName } from "@formbricks/types/user";
 
 const ZInviteOrganizationMemberAction = z.object({
-  email: z.string(),
+  email: ZUserEmail,
   organizationId: ZId,
   name: ZUserName,
 });
@@ -35,14 +34,12 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       ],
     });
 
-    const organizations = await getOrganizationsByUserId(ctx.user.id);
-
     const invite = await inviteUser({
-      organizationId: organizations[0].id,
+      organizationId: parsedInput.organizationId,
       invitee: {
         email: parsedInput.email,
         name: parsedInput.name,
-        role: "manager",
+        role: "owner",
         teamIds: [],
       },
       currentUserId: ctx.user.id,
