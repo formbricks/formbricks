@@ -30,7 +30,7 @@
     "build": "tsc && vite build",
     "build:dev": "pnpm build",
     "go": "vite build --watch",
-    "lint": "eslint . -c .ts,.js,.tsx,.jsx",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "clean": "rimraf .turbo node_modules dist"
   },
   "devDependencies": {

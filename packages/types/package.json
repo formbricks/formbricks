@@ -5,7 +5,7 @@
   "main": "index.ts",
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint . -c .ts,.js,.tsx,.jsx",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {

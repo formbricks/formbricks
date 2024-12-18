@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsc && vite build",
     "build:dev": "tsc && vite build --mode dev",
-    "lint": "eslint src -c .ts,.js,.tsx,.jsx",
+    "lint": "eslint src --ext .ts,.js,.tsx,.jsx",
     "dev": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
