@@ -1,6 +1,6 @@
 import { TargetingLockedCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/TargetingLockedCard";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -25,6 +25,7 @@ interface SettingsViewProps {
   isUserTargetingAllowed?: boolean;
   locale: string;
   projectPermission: TTeamPermission | null;
+  isFormbricksCloud: boolean;
 }
 
 export const SettingsView = ({
@@ -39,6 +40,7 @@ export const SettingsView = ({
   isUserTargetingAllowed = false,
   locale,
   projectPermission,
+  isFormbricksCloud,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -68,7 +70,7 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard />
+            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} environmentId={environment.id} />
           )}
         </div>
       ) : null}

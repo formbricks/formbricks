@@ -5,6 +5,7 @@ import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/li
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -64,11 +65,28 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
             <SettingsCard
               title={t("common.security")}
               description={t("environments.settings.profile.security_description")}>
-              <AccountSecurity
-                user={user}
-                isTwoFactorAuthEnabled={isTwoFactorAuthEnabled}
-                environmentId={environmentId}
-              />
+              {!isTwoFactorAuthEnabled && !user.twoFactorEnabled ? (
+                <UpgradePrompt
+                  title={t("environments.settings.profile.unlock_two_factor_authentication")}
+                  description={t("environments.settings.profile.two_factor_authentication_description")}
+                  buttons={[
+                    {
+                      text: t("common.start_free_trial"),
+                      href: IS_FORMBRICKS_CLOUD
+                        ? `/environments/${params.environmentId}/settings/billing`
+                        : "https://formbricks.com/upgrade-self-hosting-license",
+                    },
+                    {
+                      text: t("common.learn_more"),
+                      href: IS_FORMBRICKS_CLOUD
+                        ? `/environments/${params.environmentId}/settings/billing`
+                        : "https://formbricks.com/learn-more-self-hosting-license",
+                    },
+                  ]}
+                />
+              ) : (
+                <AccountSecurity user={user} />
+              )}
             </SettingsCard>
           )}
 

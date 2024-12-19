@@ -1,6 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
@@ -46,8 +45,6 @@ export const PricingPage = async (props) => {
   const { isMember } = getAccessFlags(currentUserMembership?.role);
   const hasBillingRights = !isMember;
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
-
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
@@ -56,7 +53,6 @@ export const PricingPage = async (props) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="billing"
-          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
 

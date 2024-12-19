@@ -28,7 +28,7 @@ export function FollowUpEmail({ html }: FollowUpEmailProps): React.JSX.Element {
             />
           </Container>
 
-          <Section className="mt-4 text-center">
+          <Section className="mt-4 text-center text-sm">
             powered by Formbricks
             <br />
             <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer">

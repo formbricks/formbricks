@@ -147,10 +147,10 @@ export const SurveyAnalysisCTA = ({
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
         <Badge
-          text={t("environments.surveys.summary.results_are_public")}
           type="warning"
           size="normal"
           className="rounded-lg"
+          text={t("environments.surveys.summary.results_are_public")}
         />
       )}
 

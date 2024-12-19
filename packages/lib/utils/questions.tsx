@@ -145,7 +145,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("nps_description", locale),
     icon: PresentationIcon,
     preset: {
-      headline: { default: translate("nps_headline", locale) },
+      headline: { default: "" },
       lowerLabel: { default: translate("nps_lower_label", locale) },
       upperLabel: { default: translate("nps_upper_label", locale) },
       buttonLabel: { default: translate("next", locale) },

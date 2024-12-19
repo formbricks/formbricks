@@ -1,3 +1,3 @@
-import { TeamsPage } from "@/modules/ee/teams/team-list/page";
+import { TeamsPage } from "@/modules/organization/settings/teams/page";
 
 export default TeamsPage;

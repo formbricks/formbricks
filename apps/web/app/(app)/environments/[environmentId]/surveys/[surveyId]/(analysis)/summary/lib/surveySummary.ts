@@ -399,7 +399,7 @@ export const getQuestionSummary = async (
             value: label,
             count,
             percentage:
-              totalSelectionCount > 0 ? convertFloatTo2Decimal((count / totalSelectionCount) * 100) : 0,
+              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
           });
         });
 
@@ -408,8 +408,8 @@ export const getQuestionSummary = async (
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
             percentage:
-              totalSelectionCount > 0
-                ? convertFloatTo2Decimal((otherValues.length / totalSelectionCount) * 100)
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100)
                 : 0,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
@@ -452,8 +452,8 @@ export const getQuestionSummary = async (
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
             percentage:
-              totalSelectionCount > 0
-                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalSelectionCount) * 100)
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
                 : 0,
           });
         });

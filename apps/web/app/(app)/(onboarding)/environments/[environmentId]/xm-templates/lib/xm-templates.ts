@@ -71,9 +71,10 @@ const NPSSurvey = (locale: string): TXMTemplate => {
 
 const StarRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("star_rating_survey_name", locale),
     questions: [
       {
@@ -142,7 +143,7 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
@@ -172,9 +173,10 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
 
 const CSATSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("csat_survey_name", locale),
     questions: [
       {
@@ -242,7 +244,7 @@ const CSATSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
@@ -303,9 +305,10 @@ const CESSurvey = (locale: string): TXMTemplate => {
 
 const SmileysRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("smileys_survey_name", locale),
     questions: [
       {
@@ -374,7 +377,7 @@ const SmileysRatingSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },

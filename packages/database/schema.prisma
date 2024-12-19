@@ -405,6 +405,20 @@ model Integration {
   @@index([environmentId])
 }
 
+enum DataMigrationStatus {
+  pending
+  applied
+  failed
+}
+
+model DataMigration {
+  id         String              @id @default(cuid())
+  startedAt  DateTime            @default(now()) @map(name: "started_at")
+  finishedAt DateTime?           @map(name: "finished_at")
+  name       String              @unique
+  status     DataMigrationStatus
+}
+
 model Environment {
   id                   String                @id @default(cuid())
   createdAt            DateTime              @default(now()) @map(name: "created_at")
@@ -527,6 +541,7 @@ model Invite {
   expiresAt      DateTime
   deprecatedRole MembershipRole? //deprecated
   role           OrganizationRole @default(member)
+  teamIds        String[]         @default([])
 
   @@index([email, organizationId])
   @@index([organizationId])

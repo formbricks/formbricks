@@ -14,10 +14,10 @@ import { TOrganization } from "@formbricks/types/organizations";
 interface AIToggleProps {
   environmentId: string;
   organization: TOrganization;
-  isUserManagerOrOwner: boolean;
+  isOwnerOrManager: boolean;
 }
 
-export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) => {
+export const AIToggle = ({ organization, isOwnerOrManager }: AIToggleProps) => {
   const t = useTranslations();
   const [isAIEnabled, setIsAIEnabled] = useState(organization.isAIEnabled);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +65,7 @@ export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) 
           </Label>
           <Switch
             id="formbricks-ai-toggle"
-            disabled={!isUserManagerOrOwner || isSubmitting}
+            disabled={!isOwnerOrManager || isSubmitting}
             checked={isAIEnabled}
             onClick={(e) => {
               e.stopPropagation();
@@ -85,7 +85,7 @@ export const AIToggle = ({ organization, isUserManagerOrOwner }: AIToggleProps) 
           .
         </div>
       </div>
-      {!isUserManagerOrOwner && (
+      {!isOwnerOrManager && (
         <Alert variant="warning" className="mt-4">
           <AlertDescription>
             {t("environments.settings.general.only_org_owner_can_perform_action")}

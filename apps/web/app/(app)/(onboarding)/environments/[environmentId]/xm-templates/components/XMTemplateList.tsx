@@ -5,7 +5,7 @@ import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environme
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "@/modules/surveys/components/TemplateList/actions";
-import { ActivityIcon, ShoppingCartIcon, UsersIcon } from "lucide-react";
+import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -45,7 +45,7 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
     }
   };
 
-  const handleTemplateClick = (templateIdx) => {
+  const handleTemplateClick = (templateIdx: number) => {
     setActiveTemplateId(templateIdx);
     const template = getXMTemplates(user.locale)[templateIdx];
     const newTemplate = replacePresetPlaceholders(template, project);
@@ -60,7 +60,7 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
       onClick: () => handleTemplateClick(0),
       isLoading: activeTemplateId === 0,
     },
-    /*     {
+    {
       title: t("environments.xm-templates.five_star_rating"),
       description: t("environments.xm-templates.five_star_rating_description"),
       icon: StarIcon,
@@ -73,7 +73,7 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
       icon: ThumbsUpIcon,
       onClick: () => handleTemplateClick(2),
       isLoading: activeTemplateId === 2,
-    }, */
+    },
     {
       title: t("environments.xm-templates.ces"),
       description: t("environments.xm-templates.ces_description"),
@@ -81,13 +81,13 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
       onClick: () => handleTemplateClick(3),
       isLoading: activeTemplateId === 3,
     },
-    /*     {
+    {
       title: t("environments.xm-templates.smileys"),
       description: t("environments.xm-templates.smileys_description"),
       icon: SmileIcon,
       onClick: () => handleTemplateClick(4),
       isLoading: activeTemplateId === 4,
-    }, */
+    },
     {
       title: t("environments.xm-templates.enps"),
       description: t("environments.xm-templates.enps_description"),

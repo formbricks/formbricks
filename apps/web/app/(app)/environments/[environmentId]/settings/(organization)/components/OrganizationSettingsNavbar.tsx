@@ -12,7 +12,6 @@ interface OrganizationSettingsNavbarProps {
   membershipRole?: TOrganizationRole;
   activeId: string;
   loading?: boolean;
-  canDoRoleManagement?: boolean;
 }
 
 export const OrganizationSettingsNavbar = ({
@@ -21,10 +20,9 @@ export const OrganizationSettingsNavbar = ({
   membershipRole,
   activeId,
   loading,
-  canDoRoleManagement = false,
 }: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isBilling, isMember } = getAccessFlags(membershipRole);
+  const { isMember } = getAccessFlags(membershipRole);
   const isPricingDisabled = isMember;
   const t = useTranslations();
 
@@ -47,7 +45,6 @@ export const OrganizationSettingsNavbar = ({
       id: "teams",
       label: t("common.teams"),
       href: `/environments/${environmentId}/settings/teams`,
-      hidden: !canDoRoleManagement || isBilling,
       current: pathname?.includes("/teams"),
     },
     {

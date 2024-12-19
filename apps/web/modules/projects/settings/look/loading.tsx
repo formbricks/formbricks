@@ -77,7 +77,7 @@ export const ProjectLookSettingsLoading = () => {
                       <h2 className="text-sm font-semibold text-slate-700">
                         {t("environments.surveys.edit.background_styling")}
                       </h2>
-                      <Badge text={t("common.link_surveys")} type="gray" size="normal" />
+                      <Badge type="gray" size="normal" text={t("common.link_surveys")} />
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
                       {t("environments.surveys.edit.change_the_background_to_a_color_image_or_animation")}

@@ -1,6 +1,7 @@
-import { type TFormbricksApp } from "@formbricks/js-core";
+import type FormbricksApp from "@formbricks/js-core";
 import { loadFormbricksToProxy } from "./lib/load-formbricks";
 
+type TFormbricksApp = typeof FormbricksApp;
 declare global {
   interface Window {
     formbricks: TFormbricksApp | undefined;
