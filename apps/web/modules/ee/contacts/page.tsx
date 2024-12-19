@@ -84,7 +84,7 @@ export const ContactsPage = async ({
           contactAttributeKeys={contactAttributeKeys}
           isReadOnly={isReadOnly}
           initialContacts={initialContacts}
-          hasMore={initialContacts.length <= ITEMS_PER_PAGE}
+          hasMore={initialContacts.length >= ITEMS_PER_PAGE}
           refreshContacts={refreshContacts}
         />
       ) : (
