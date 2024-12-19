@@ -242,7 +242,12 @@ export function LogicEditorConditions({
 
     const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, t);
     const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey, t);
+    const {
+      show,
+      options,
+      showInput = false,
+      inputType,
+    } = getMatchValueProps(condition, localSurvey, questionIdx, t);
 
     const allowMultiSelect = [
       "equalsOneOf",

@@ -20,9 +20,17 @@ const getMessages = (locale: string) => {
   return messageCache[locale];
 };
 
-export const translate = (text: string, locale: string) => {
+export const translate = (text: string, locale: string, replacements?: Record<string, string>) => {
   const messages = getMessages(locale ?? defaultLocale);
-  return messages.templates[text];
+  let translatedText = messages.templates[text];
+
+  if (replacements) {
+    Object.entries(replacements).forEach(([key, value]) => {
+      translatedText = translatedText.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    });
+  }
+
+  return translatedText;
 };
 
 export const getDefaultEndingCard = (languages: TSurveyLanguage[], locale: string): TSurveyEndScreenCard => {
@@ -275,7 +283,7 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
           required: false,
           inputType: "text",
           buttonLabel: { default: translate("finish", locale) },
-          backButtonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },

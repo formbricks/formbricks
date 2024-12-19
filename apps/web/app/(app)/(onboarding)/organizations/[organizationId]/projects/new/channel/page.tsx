@@ -2,7 +2,7 @@ import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizatio
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { GlobeIcon, GlobeLockIcon, LinkIcon, XIcon } from "lucide-react";
+import { PictureInPicture2Icon, SendIcon, XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
@@ -25,26 +25,16 @@ const Page = async (props: ChannelPageProps) => {
   const t = await getTranslations();
   const channelOptions = [
     {
-      title: t("organizations.projects.new.channel.public_website"),
-      description: t("organizations.projects.new.channel.public_website_description"),
-      icon: GlobeIcon,
-      iconText: t("organizations.projects.new.channel.public_website_icon_text"),
-      href: `/organizations/${params.organizationId}/projects/new/settings?channel=website`,
-    },
-    {
-      title: t("organizations.projects.new.channel.app_with_sign_up"),
-      description: t("organizations.projects.new.channel.app_with_sign_up_description"),
-      icon: GlobeLockIcon,
-      iconText: t("organizations.projects.new.channel.app_with_sign_up_icon_text"),
-      href: `/organizations/${params.organizationId}/projects/new/settings?channel=app`,
-    },
-    {
-      channel: "link",
       title: t("organizations.projects.new.channel.link_and_email_surveys"),
       description: t("organizations.projects.new.channel.link_and_email_surveys_description"),
-      icon: LinkIcon,
-      iconText: t("organizations.projects.new.channel.link_and_email_surveys_icon_text"),
+      icon: SendIcon,
       href: `/organizations/${params.organizationId}/projects/new/settings?channel=link`,
+    },
+    {
+      title: t("organizations.projects.new.channel.in_product_surveys"),
+      description: t("organizations.projects.new.channel.in_product_surveys_description"),
+      icon: PictureInPicture2Icon,
+      href: `/organizations/${params.organizationId}/projects/new/settings?channel=app`,
     },
   ];
 

@@ -1,130 +1,159 @@
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/modules/ui/components/command";
-import clsx from "clsx";
-import { ChevronDownIcon, ChevronUpIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useRef, useState } from "react";
-import { cn } from "@formbricks/lib/cn";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+"use client";
+
+import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
+import { Badge } from "@/modules/ui/components/multi-select/badge";
+import { Command as CommandPrimitive } from "cmdk";
+import { X } from "lucide-react";
+import * as React from "react";
 
 interface TOption<T> {
-  label: string;
   value: T;
+  label: string;
 }
 
-interface MultiSelectProps<T extends string, K extends TOption<T>["value"] | TOption<T>["value"][]> {
+interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
   options: TOption<T>[];
-  isMultiple?: boolean;
-  disabled?: boolean;
-  isDisabledComboBox?: boolean;
   value?: K;
-  onChange: (value: K) => void;
+  onChange?: (selected: K) => void;
+  disabled?: boolean;
+  placeholder?: string;
 }
 
-export const MultiSelect = <T extends string, K extends TOption<T>["value"] | TOption<T>["value"][]>({
-  options,
-  isMultiple = true,
-  disabled,
-  isDisabledComboBox,
-  value,
-  onChange,
-}: MultiSelectProps<T, K>) => {
-  const [open, setOpen] = useState(false);
-  const t = useTranslations();
-  const isOptionSelected = (optionValue: T) => {
-    if (Array.isArray(value)) {
-      return value.includes(optionValue);
-    }
-    return value === optionValue;
-  };
+export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
+  props: MultiSelectProps<T, K>
+) {
+  const { options, value, onChange, disabled = false, placeholder = "Select options..." } = props;
 
-  const handleSelect = (optionValue: T) => {
-    if (isMultiple) {
-      if (Array.isArray(value)) {
-        if (isOptionSelected(optionValue)) {
-          onChange(value.filter((v) => v !== optionValue) as K);
-        } else {
-          onChange([...value, optionValue] as K);
-        }
-      } else {
-        onChange([optionValue] as K);
-      }
-    } else {
-      onChange(optionValue as K);
-    }
-    setOpen(false);
-  };
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  const filteredOptions = options.filter((option) => {
-    if (Array.isArray(value)) {
-      return !value.includes(option.value);
+  const [selected, setSelected] = React.useState<TOption<T>[]>(() => {
+    if (value) {
+      return value.map((val) => options.find((o) => o.value === val)).filter((o): o is TOption<T> => !!o);
     }
-    return option.value !== value;
+    return [];
   });
 
-  const commandRef = useRef<HTMLDivElement>(null);
-  useClickOutside(commandRef, () => setOpen(false));
+  const [open, setOpen] = React.useState(false);
+  const [inputValue, setInputValue] = React.useState("");
+
+  React.useEffect(() => {
+    if (value) {
+      setSelected(
+        value.map((val) => options.find((o) => o.value === val)).filter((o): o is TOption<T> => !!o)
+      );
+    }
+  }, [value, options]);
+
+  const handleUnselect = React.useCallback(
+    (option: TOption<T>) => {
+      if (disabled) return;
+      setSelected((prev) => {
+        const newSelected = prev.filter((s) => s.value !== option.value);
+        onChange?.(newSelected.map((s) => s.value) as K);
+        return newSelected;
+      });
+    },
+    [onChange, disabled]
+  );
+
+  const handleKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      const input = inputRef.current;
+      if (!input || disabled) return;
+
+      if ((e.key === "Delete" || e.key === "Backspace") && input.value === "") {
+        setSelected((prev) => {
+          const newSelected = [...prev];
+          newSelected.pop();
+          onChange?.(newSelected.map((s) => s.value) as K);
+          return newSelected;
+        });
+      }
+
+      if (e.key === "Escape") {
+        input.blur();
+      }
+    },
+    [onChange, disabled]
+  );
+
+  const selectableOptions = React.useMemo(() => {
+    return options
+      .filter((o) => !selected.some((s) => s.value === o.value))
+      .filter((o) => {
+        if (!inputValue) return true;
+        return o.label.toLowerCase().includes(inputValue.toLowerCase());
+      });
+  }, [options, selected, inputValue]);
 
   return (
-    <Command ref={commandRef} className="overflow-visible bg-transparent" id="multi-select-dropdown">
+    <Command
+      onKeyDown={handleKeyDown}
+      className={`overflow-visible bg-white ${disabled ? "cursor-not-allowed opacity-50" : ""}`}>
       <div
-        onClick={() => !disabled && !isDisabledComboBox && setOpen((open) => !open)}
-        className={clsx(
-          "group flex items-center justify-between rounded-md rounded-l-none border bg-white px-3 py-2 text-sm",
-          disabled || isDisabledComboBox ? "opacity-50" : "cursor-pointer"
-        )}>
-        {value && (Array.isArray(value) ? value.length > 0 : !!value) ? (
-          !Array.isArray(value) ? (
-            <p className="text-slate-600">{options.find((option) => option.value === value)?.label}</p>
-          ) : (
-            <div className="no-scrollbar flex gap-3 overflow-auto" onClick={(e) => e.stopPropagation()}>
-              {value.map((val) => (
-                <button
-                  type="button"
-                  key={val}
-                  onClick={() => handleSelect(val)}
-                  className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
-                  {options.find((option) => option.value === val)?.label}
-                  <XIcon width={14} height={14} className="ml-2" />
-                </button>
-              ))}
-            </div>
-          )
-        ) : (
-          <p className="text-slate-400">{t("common.select")}...</p>
-        )}
-        <div>
-          {open ? (
-            <ChevronUpIcon className="ml-2 h-4 w-4 opacity-50" />
-          ) : (
-            <ChevronDownIcon className="ml-2 h-4 w-4 opacity-50" />
-          )}
+        className={`border-input ring-offset-background group rounded-md border px-3 py-2 text-sm focus-within:ring-2 focus-within:ring-offset-2 ${
+          disabled ? "pointer-events-none" : "focus-within:ring-ring"
+        }`}>
+        <div className="flex flex-wrap gap-1">
+          {selected.map((option) => (
+            <Badge key={option.value} className="rounded-md">
+              {option.label}
+              <button
+                className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleUnselect(option);
+                  }
+                }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                onClick={() => handleUnselect(option)}>
+                <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+          <CommandPrimitive.Input
+            ref={inputRef}
+            value={inputValue}
+            onValueChange={setInputValue}
+            onBlur={() => setOpen(false)}
+            onFocus={() => setOpen(true)}
+            placeholder={placeholder}
+            disabled={disabled}
+            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 outline-none"
+          />
         </div>
       </div>
-      <div className="relative mt-2 h-full">
-        {open && (
-          <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md border bg-white outline-none">
-            <CommandList>
-              <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
-              <CommandGroup>
-                {filteredOptions.map((o, idx) => (
+      <div className="relative mt-2">
+        <CommandList>
+          {open && selectableOptions.length > 0 && !disabled && (
+            <div className="text-popover-foreground animate-in absolute top-0 z-10 max-h-32 w-full rounded-md border bg-white shadow-md outline-none">
+              <CommandGroup className="h-full overflow-auto">
+                {selectableOptions.map((option) => (
                   <CommandItem
-                    key={o.value}
-                    onSelect={() => handleSelect(o.value)}
-                    className={cn("cursor-pointer", `option-${idx + 1}`)}>
-                    {o.label}
+                    key={option.value}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
+                    onSelect={() => {
+                      if (disabled) return;
+                      const newSelected = [...selected, option];
+                      setSelected(newSelected);
+                      onChange?.(newSelected.map((o) => o.value) as K);
+                      setInputValue("");
+                    }}
+                    className="cursor-pointer">
+                    {option.label}
                   </CommandItem>
                 ))}
               </CommandGroup>
-            </CommandList>
-          </div>
-        )}
+            </div>
+          )}
+        </CommandList>
       </div>
     </Command>
   );
-};
+}

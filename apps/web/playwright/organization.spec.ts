@@ -24,9 +24,11 @@ test.describe("Invite, accept and remove organization member", async () => {
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
 
+      await page.getByRole("link", { name: "Teams" }).click();
+
       // Add member button
-      await expect(page.getByRole("button", { name: "Add member" })).toBeVisible();
-      await page.getByRole("button", { name: "Add member" }).click();
+      await expect(page.getByRole("button", { name: "Invite member" })).toBeVisible();
+      await page.getByRole("button", { name: "Invite member" }).click();
 
       // Fill the member name and email form
       await expect(page.getByLabel("Email")).toBeVisible();
@@ -35,7 +37,7 @@ test.describe("Invite, accept and remove organization member", async () => {
       await expect(page.getByLabel("Email")).toBeVisible();
       await page.getByLabel("Email").fill(invites.addMember.email);
 
-      await page.getByRole("button", { name: "Send Invitation", exact: true }).click();
+      await page.getByRole("button", { name: "Invite", exact: true }).click();
 
       await page.waitForLoadState("networkidle");
 
@@ -49,10 +51,10 @@ test.describe("Invite, accept and remove organization member", async () => {
       const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
       await expect(lastMemberInfo).toBeVisible();
 
-      const pendingSpan = lastMemberInfo.locator("span").filter({ hasText: "Pending" });
+      const pendingSpan = lastMemberInfo.locator("span").locator("span").filter({ hasText: "Pending" });
       await expect(pendingSpan).toBeVisible();
 
-      const shareInviteButton = page.locator(".shareInviteButton").last();
+      const shareInviteButton = page.locator("#shareInviteButton").last();
       await expect(shareInviteButton).toBeVisible();
 
       await shareInviteButton.click();
@@ -136,112 +138,46 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
-    await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
-
+    await page.waitForLoadState("networkidle");
     await expect(page.getByText("Teams")).toBeVisible();
     await page.getByText("Teams").click();
+    await page.waitForURL(/\/environments\/[^/]+\/settings\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
     await page.getByRole("button", { name: "Create" }).click();
     await expect(page.locator("#E2E")).toBeVisible();
-    await page.getByRole("link", { name: "E2E" }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/settings\/teams\/[^/]+/);
+
+    await page.getByRole("button", { name: "Manage team" }).click();
+
     await expect(page.getByRole("heading", { name: "E2E" })).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Add Member" })).toBeVisible();
-    await page.getByRole("button", { name: "Add Member" }).click();
+    await page.getByPlaceholder("Team name").fill("E2E Updated");
 
-    await page.locator("#multi-select-dropdown").click();
-    await page.locator(".option-1").click();
+    await page.locator("button").filter({ hasText: "Select member" }).first().click();
+    await page.locator("#member-0-option").click();
 
-    await page.getByRole("button", { name: "Add" }).click();
+    await page.locator("button").filter({ hasText: "Select project" }).first().click();
+    await page.locator("#project-0-option").click();
 
-    await expect(page.getByRole("cell", { name: "No members found" })).toBeHidden();
+    await page.getByRole("button", { name: "Save" }).click();
 
-    await expect(page.getByRole("button", { name: "Projects" })).toBeVisible();
-    await page.getByRole("button", { name: "Projects" }).click();
+    await page.waitForLoadState("networkidle");
 
-    await expect(
-      page.getByRole("cell", {
-        name: "You haven't added any projects yet. Assign a project to the team to grant access to its members.",
-      })
-    ).toBeVisible();
+    await expect(page.getByRole("cell", { name: "E2E Updated" })).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Add Project" })).toBeVisible();
-    await page.getByRole("button", { name: "Add Project" }).click();
-
-    await page.locator("#multi-select-dropdown").click();
-    await page.locator(".option-1").click();
-
-    await page.getByRole("button", { name: "Add" }).click();
-
-    await expect(
-      page.getByRole("cell", {
-        name: "You haven't added any projects yet. Assign a project to the team to grant access to its members.",
-      })
-    ).toBeHidden();
-
-    await page.getByRole("combobox").click();
-
-    await page.getByText("Manage").click();
-
-    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
-    await page.getByRole("button", { name: "Settings" }).click();
-
-    await page.locator("#team-name").fill("E2E Updated");
-    await page.getByRole("button", { name: "Update" }).click();
+    await page.getByRole("button", { name: "Manage team" }).click();
 
     await expect(page.getByRole("heading", { name: "E2E Updated" })).toBeVisible();
 
-    await page.getByRole("link", { name: "Configuration" }).click();
-
-    await expect(page.getByRole("heading", { name: "Configuration" })).toBeVisible();
-
-    await expect(page.getByRole("link", { name: "Team Access" })).toBeVisible();
-
-    await page.getByRole("link", { name: "Team Access" }).click();
-    await page.getByRole("combobox").click();
-
-    await page.getByText("Read & write").click();
-
-    await page.getByRole("button", { name: "Remove" }).click();
-
-    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Confirm", exact: true }).click();
-
-    await expect(page.getByRole("cell", { name: "No teams found" })).toBeVisible();
-
-    await page.getByRole("button", { name: "Add existing team" }).click();
-
-    await page.locator("#multi-select-dropdown").click();
-    await page.locator(".option-1").click();
-
-    await page.getByRole("button", { name: "Add" }).click();
-
-    await expect(page.getByRole("link", { name: "E2E Updated" })).toBeVisible();
-
-    await page.getByRole("link", { name: "E2E Updated" }).click();
-
-    await page.getByRole("button", { name: "Leave" }).click();
-    await expect(page.getByRole("button", { name: "Confirm", exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Confirm", exact: true }).click();
-
-    await expect(page.getByRole("cell", { name: "No members found" })).toBeVisible();
-
-    await expect(page.getByRole("button", { name: "Settings" })).toBeVisible();
-    await page.getByRole("button", { name: "Settings" }).click();
-
-    await page.getByRole("button", { name: "Delete" }).click();
+    await page.locator("#deleteTeamButton").click();
 
     await expect(page.getByRole("button", { name: "Delete", exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
 
-    await expect(
-      page.getByRole("cell", {
-        name: "You don’t have any teams yet. Create your first team to manage project access for members of your organization.",
-      })
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Organization Settings" })).toBeVisible();
+
+    await expect(page.getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
   });
 });

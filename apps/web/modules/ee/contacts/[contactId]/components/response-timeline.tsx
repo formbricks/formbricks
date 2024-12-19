@@ -1,6 +1,6 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
