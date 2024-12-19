@@ -54,10 +54,10 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
             render={() => (
               <FormItem>
                 <FormControl>
-                  <>
+                  <div>
                     <CssSelector form={form} disabled={isReadOnly} />
                     <InnerHtmlSelector form={form} disabled={isReadOnly} />
-                  </>
+                  </div>
                 </FormControl>
                 <FormError />
               </FormItem>
