@@ -1368,6 +1368,11 @@ const isInvalidOperatorsForQuestionType = (
         isInvalidOperator = true;
       }
       break;
+    case TSurveyQuestionTypeEnum.ContactInfo:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
     default:
       isInvalidOperator = true;
   }
@@ -2005,7 +2010,9 @@ const validateActions = (
   logicIndex: number,
   actions: TSurveyLogicAction[]
 ): z.ZodIssue[] => {
-  const questionIds = survey.questions.map((q) => q.id);
+  const previousQuestions = survey.questions.filter((_, idx) => idx <= questionIndex);
+  const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
+  const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
   const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
@@ -2076,7 +2083,7 @@ const validateActions = (
       if (action.value.type === "question") {
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
-        const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+        const selectedQuestion = previousQuestions.find((q) => q.id === action.value.value);
 
         if (
           !selectedQuestion ||
@@ -2095,7 +2102,7 @@ const validateActions = (
       const endingIds = survey.endings.map((ending) => ending.id);
 
       const possibleQuestionIds =
-        action.objective === "jumpToQuestion" ? [...questionIds, ...endingIds] : questionIds;
+        action.objective === "jumpToQuestion" ? [...nextQuestionsIds, ...endingIds] : nextQuestionsIds;
 
       if (!possibleQuestionIds.includes(action.target)) {
         return {
@@ -2106,7 +2113,7 @@ const validateActions = (
       }
 
       if (action.objective === "requireAnswer") {
-        const optionalQuestionIds = survey.questions
+        const optionalQuestionIds = nextQuestions
           .filter((question) => !question.required)
           .map((question) => question.id);
 
@@ -2640,7 +2647,7 @@ export const ZSurveyFilterCriteria = z.object({
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
 
-const ZSurveyFilters = z.object({
+export const ZSurveyFilters = z.object({
   name: z.string(),
   createdBy: z.array(z.enum(["you", "others"])),
   status: z.array(ZSurveyStatus),
@@ -2650,14 +2657,14 @@ const ZSurveyFilters = z.object({
 
 export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
 
-const ZFilterOption = z.object({
+export const ZFilterOption = z.object({
   label: z.string(),
   value: z.string(),
 });
 
 export type TFilterOption = z.infer<typeof ZFilterOption>;
 
-const ZSortOption = z.object({
+export const ZSortOption = z.object({
   label: z.string(),
   value: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });
