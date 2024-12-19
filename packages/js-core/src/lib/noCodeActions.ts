@@ -14,6 +14,7 @@ const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
 // Page URL Event Handlers
 let arePageUrlEventListenersAdded = false;
+let isHistoryPatched = false;
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
@@ -22,6 +23,9 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
   );
+
+  console.log("noCodePageViewActionClasses", noCodePageViewActionClasses);
+  console.log("url: ", window.location.href);
 
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
@@ -36,10 +40,49 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   return okVoid();
 };
 
-const checkPageUrlWrapper = () => checkPageUrl();
+const checkPageUrlWrapper = () => {
+  checkPageUrl();
+};
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
+
+  // Monkey patch history methods if not already done
+  if (!isHistoryPatched) {
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function (...args) {
+      const returnValue = originalPushState.apply(this, args);
+      const event = new Event("pushstate");
+      window.dispatchEvent(event);
+      // clear all timeouts:
+      const highestId = window.setTimeout(() => {
+        console.log("clearing all timeouts: ", highestId);
+        for (let i = highestId; i >= 0; i--) {
+          window.clearInterval(i);
+        }
+      }, 0);
+      return returnValue;
+    };
+
+    history.replaceState = function (...args) {
+      const returnValue = originalReplaceState.apply(this, args);
+      const event = new Event("replacestate");
+      window.dispatchEvent(event);
+      // clear all timeouts:
+      const highestId = window.setTimeout(() => {
+        console.log("clearing all timeouts: ", highestId);
+        for (let i = highestId; i >= 0; i--) {
+          window.clearInterval(i);
+        }
+      }, 0);
+      return returnValue;
+    };
+
+    isHistoryPatched = true;
+  }
+
   events.forEach((event) => window.addEventListener(event, checkPageUrlWrapper));
   arePageUrlEventListenersAdded = true;
 };

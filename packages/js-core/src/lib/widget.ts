@@ -58,6 +58,7 @@ const renderWidget = async (
   action?: string,
   hiddenFields: TResponseHiddenFieldValue = {}
 ) => {
+  console.log("renderWidget", survey, action, hiddenFields);
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
