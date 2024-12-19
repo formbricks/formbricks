@@ -2010,8 +2010,8 @@ const validateActions = (
   logicIndex: number,
   actions: TSurveyLogicAction[]
 ): z.ZodIssue[] => {
-  const previousQuestions = survey.questions.filter((q, idx) => idx <= questionIndex);
-  const nextQuestions = survey.questions.filter((q, idx) => idx >= questionIndex);
+  const previousQuestions = survey.questions.filter((_, idx) => idx <= questionIndex);
+  const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
   const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
   const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
