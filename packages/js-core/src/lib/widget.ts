@@ -3,13 +3,13 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import {
-  TJsEnvironmentStateSurvey,
-  TJsFileUploadParams,
-  TJsPersonState,
-  TJsTrackProperties,
+  type TJsEnvironmentStateSurvey,
+  type TJsFileUploadParams,
+  type TJsPersonState,
+  type TJsTrackProperties,
 } from "@formbricks/types/js";
-import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TResponseHiddenFieldValue, type TResponseUpdate } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { Config } from "./config";
 import { CONTAINER_ID } from "./constants";
 import { Logger } from "./logger";
@@ -274,7 +274,7 @@ const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurv
       const script = document.createElement("script");
       script.src = `${config.get().apiHost}/js/surveys.umd.cjs`;
       script.async = true;
-      script.onload = () => resolve(window.formbricksSurveys);
+      script.onload = () => { resolve(window.formbricksSurveys); };
       script.onerror = (error) => {
         console.error("Failed to load Formbricks Surveys library:", error);
         reject(error);

@@ -1,5 +1,6 @@
+/* eslint-disable no-console -- Required for error logging */
 // shared functions for environment and person state(s)
-import { TJsEnvironmentState, TJsEnvironmentSyncParams } from "@formbricks/types/js";
+import { type TJsEnvironmentState, type TJsEnvironmentSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
 import { Logger } from "./logger";
@@ -19,9 +20,9 @@ let environmentStateSyncIntervalId: number | null = null;
  */
 export const fetchEnvironmentState = async (
   { apiHost, environmentId }: TJsEnvironmentSyncParams,
-  noCache: boolean = false
+  noCache = false
 ): Promise<TJsEnvironmentState> => {
-  let fetchOptions: RequestInit = {};
+  const fetchOptions: RequestInit = {};
 
   if (noCache || getIsDebug()) {
     fetchOptions.cache = "no-cache";
@@ -33,7 +34,7 @@ export const fetchEnvironmentState = async (
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    const jsonRes = await response.json();
+    const jsonRes = (await response.json()) as { message: string };
 
     const error = err({
       code: "network_error",
@@ -43,7 +44,7 @@ export const fetchEnvironmentState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw error;
+    throw error.error;
   }
 
   const data = await response.json();
@@ -56,14 +57,14 @@ export const fetchEnvironmentState = async (
 };
 
 export const addEnvironmentStateExpiryCheckListener = (): void => {
-  let updateInterval = 1000 * 60; // every minute
+  const updateInterval = 1000 * 60; // every minute
   if (typeof window !== "undefined" && environmentStateSyncIntervalId === null) {
-    environmentStateSyncIntervalId = window.setInterval(async () => {
+    const intervalHandler = async (): Promise<void> => {
       const expiresAt = config.get().environmentState.expiresAt;
 
       try {
         // check if the environmentState has not expired yet
-        if (expiresAt && new Date(expiresAt) >= new Date()) {
+        if (new Date(expiresAt) >= new Date()) {
           return;
         }
 
@@ -91,7 +92,9 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
         const existingConfig = config.get();
         config.update(existingConfig);
       }
-    }, updateInterval);
+    };
+
+    environmentStateSyncIntervalId = window.setInterval(() => void intervalHandler(), updateInterval);
   }
 };
 

@@ -1,4 +1,4 @@
-import { TJsPersonState, TJsPersonSyncParams } from "@formbricks/types/js";
+import { type TJsPersonState, type TJsPersonSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
 import { Logger } from "./logger";
@@ -30,9 +30,9 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
  */
 export const fetchPersonState = async (
   { apiHost, environmentId, userId }: TJsPersonSyncParams,
-  noCache: boolean = false
+  noCache = false
 ): Promise<TJsPersonState> => {
-  let fetchOptions: RequestInit = {};
+  const fetchOptions: RequestInit = {};
 
   if (noCache || getIsDebug()) {
     fetchOptions.cache = "no-cache";

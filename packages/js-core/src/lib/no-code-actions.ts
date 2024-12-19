@@ -1,7 +1,7 @@
-import { TJsEnvironmentStateActionClass } from "@formbricks/types/js";
+import { type TJsEnvironmentStateActionClass } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { Config } from "./config";
-import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "./errors";
+import { ErrorHandler, type NetworkError, type Result, err, match, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "./utils";
 
@@ -30,7 +30,7 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     if (!isValidUrl) continue;
 
     const trackResult = await trackNoCodeAction(event.name);
-    if (trackResult.ok !== true) return err(trackResult.error);
+    if (!trackResult.ok) return err(trackResult.error);
   }
 
   return okVoid();
@@ -40,13 +40,13 @@ const checkPageUrlWrapper = () => checkPageUrl();
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
-  events.forEach((event) => window.addEventListener(event, checkPageUrlWrapper));
+  events.forEach((event) => { window.addEventListener(event, checkPageUrlWrapper); });
   arePageUrlEventListenersAdded = true;
 };
 
 export const removePageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || !arePageUrlEventListenersAdded) return;
-  events.forEach((event) => window.removeEventListener(event, checkPageUrlWrapper));
+  events.forEach((event) => { window.removeEventListener(event, checkPageUrlWrapper); });
   arePageUrlEventListenersAdded = false;
 };
 
@@ -71,14 +71,14 @@ const checkClickMatch = (event: MouseEvent) => {
         match(
           res,
           (_value: unknown) => {},
-          (err: any) => errorHandler.handle(err)
+          (err: any) => { errorHandler.handle(err); }
         );
       });
     }
   });
 };
 
-const checkClickMatchWrapper = (e: MouseEvent) => checkClickMatch(e);
+const checkClickMatchWrapper = (e: MouseEvent) => { checkClickMatch(e); };
 
 export const addClickEventListener = (): void => {
   if (typeof window === "undefined" || isClickEventListenerAdded) return;
@@ -111,7 +111,7 @@ const checkExitIntent = async (e: MouseEvent) => {
       if (!isValidUrl) continue;
 
       const trackResult = await trackNoCodeAction(event.name);
-      if (trackResult.ok !== true) return err(trackResult.error);
+      if (!trackResult.ok) return err(trackResult.error);
     }
   }
 };
@@ -162,7 +162,7 @@ const checkScrollDepth = async () => {
       if (!isValidUrl) continue;
 
       const trackResult = await trackNoCodeAction(event.name);
-      if (trackResult.ok !== true) return err(trackResult.error);
+      if (!trackResult.ok) return err(trackResult.error);
     }
   }
 

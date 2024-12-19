@@ -1,4 +1,4 @@
-import { TAttributes } from "@formbricks/types/attributes";
+import { type TAttributes } from "@formbricks/types/attributes";
 import { type ForbiddenError } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
@@ -9,22 +9,22 @@ import {
   LEGACY_JS_APP_LOCAL_STORAGE_KEY,
   LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
 } from "./constants";
-import { fetchEnvironmentState } from "./environmentState";
+import { fetchEnvironmentState } from "./environment-state";
 import {
   ErrorHandler,
-  MissingFieldError,
-  MissingPersonError,
-  NetworkError,
-  NotInitializedError,
-  Result,
+  type MissingFieldError,
+  type MissingPersonError,
+  type NetworkError,
+  type NotInitializedError,
+  type Result,
   err,
   okVoid,
   wrapThrows,
 } from "./errors";
-import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
+import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { Logger } from "./logger";
-import { checkPageUrl } from "./noCodeActions";
-import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./personState";
+import { checkPageUrl } from "./no-code-actions";
+import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
 import { filterSurveys, getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
@@ -171,7 +171,7 @@ export const initialize = async (
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status?.value === "error") {
+  if (existingConfig?.status.value === "error") {
     if (isDebug) {
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
@@ -182,14 +182,13 @@ export const initialize = async (
 
     logger.debug("Formbricks was set to an error state.");
 
-    const expiresAt = existingConfig?.status?.expiresAt;
+    const expiresAt = existingConfig.status.expiresAt;
 
     if (expiresAt && new Date(expiresAt) > new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
-    } else {
-      logger.debug("Error state is expired. Continue with initialization.");
     }
+    logger.debug("Error state is expired. Continue with initialization.");
   }
 
   ErrorHandler.getInstance().printStatus();
@@ -217,8 +216,7 @@ export const initialize = async (
   addWidgetContainer();
 
   if (
-    existingConfig &&
-    existingConfig.environmentState &&
+    existingConfig?.environmentState &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost
   ) {
@@ -278,7 +276,7 @@ export const initialize = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
+      logger.debug(`Fetched ${surveyNames.length} surveys during sync: ${surveyNames.join(", ")}`);
     } catch (e) {
       putFormbricksInErrorState(config);
     }
@@ -319,7 +317,7 @@ export const initialize = async (
             configInput.attributes
           );
 
-          if (res.ok !== true) {
+          if (!res.ok) {
             if (res.error.code === "forbidden") {
               logger.error(`Authorization error: ${res.error.responseMessage}`);
             }
@@ -380,7 +378,9 @@ export const handleErrorOnFirstInit = (e: any) => {
   };
 
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => {
+    localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig));
+  })();
   throw new Error("Could not initialize formbricks");
 };
 

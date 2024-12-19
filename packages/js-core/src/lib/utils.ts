@@ -1,14 +1,14 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
-import { TActionClassNoCodeConfig, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
-import { TAttributes } from "@formbricks/types/attributes";
+import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@formbricks/types/action-classes";
+import { type TAttributes } from "@formbricks/types/attributes";
 import {
-  TJsEnvironmentState,
-  TJsEnvironmentStateActionClass,
-  TJsEnvironmentStateSurvey,
-  TJsPersonState,
-  TJsTrackProperties,
+  type TJsEnvironmentState,
+  type TJsEnvironmentStateActionClass,
+  type TJsEnvironmentStateSurvey,
+  type TJsPersonState,
+  type TJsTrackProperties,
 } from "@formbricks/types/js";
-import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
+import { type TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
@@ -68,7 +68,7 @@ export const evaluateNoCodeConfigClick = (
   if (cssSelector) {
     // Split selectors that start with a . or # including the . or #
     const individualSelectors = cssSelector.split(/\s*(?=[.#])/);
-    for (let selector of individualSelectors) {
+    for (const selector of individualSelectors) {
       if (!targetElement.matches(selector)) {
         return false;
       }
@@ -94,14 +94,14 @@ export const handleHiddenFields = (
     logger.error("Hidden fields are not enabled for this survey");
   } else if (hiddenFieldIds && hiddenFields) {
     const unknownHiddenFields: string[] = [];
-    hiddenFieldsObject = Object.keys(hiddenFields).reduce((acc, key) => {
-      if (hiddenFieldIds?.includes(key)) {
-        acc[key] = hiddenFields?.[key];
+    hiddenFieldsObject = Object.keys(hiddenFields).reduce<TResponseHiddenFieldValue>((acc, key) => {
+      if (hiddenFieldIds.includes(key)) {
+        acc[key] = hiddenFields[key];
       } else {
         unknownHiddenFields.push(key);
       }
       return acc;
-    }, {} as TResponseHiddenFieldValue);
+    }, {});
 
     if (unknownHiddenFields.length > 0) {
       logger.error(
@@ -125,7 +125,7 @@ export const getLanguageCode = (
   const language = attributes.language;
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
-  else {
+  
     const selectedLanguage = survey.languages.find((surveyLanguage) => {
       return (
         surveyLanguage.language.code === language.toLowerCase() ||
@@ -137,18 +137,18 @@ export const getLanguageCode = (
     }
     if (
       !selectedLanguage ||
-      !selectedLanguage?.enabled ||
+      !selectedLanguage.enabled ||
       !availableLanguageCodes.includes(selectedLanguage.language.code)
     ) {
       return undefined;
     }
     return selectedLanguage.language.code;
-  }
+  
 };
 
 export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey) => {
-  const defaultSurveyLanguage = survey.languages?.find((surveyLanguage) => {
-    return surveyLanguage.default === true;
+  const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
+    return surveyLanguage.default;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
@@ -221,9 +221,9 @@ export const filterSurveys = (
       return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
     }
     // if no recontactDays is set, show the survey
-    else {
+    
       return true;
-    }
+    
   });
 
   if (!userId) {
