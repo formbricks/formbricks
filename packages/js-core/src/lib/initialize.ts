@@ -343,7 +343,7 @@ export const initialize = async (
         attributes: updatedAttributes ?? {},
       });
     } catch (e) {
-      handleErrorOnFirstInit(e as Error);
+      handleErrorOnFirstInit(e);
     }
 
     // and track the new session event
@@ -364,9 +364,9 @@ export const initialize = async (
 };
 
 export const handleErrorOnFirstInit = (e: unknown): void => {
-  const error = e as { error: ApiErrorResponse };
-  if (error.error.code === "forbidden") {
-    logger.error(`Authorization error: ${error.error.responseMessage ?? ""}`);
+  const error = e as ApiErrorResponse;
+  if (error.code === "forbidden") {
+    logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
   }
 
   if (getIsDebug()) {

@@ -57,7 +57,7 @@ export const fetchPersonState = async (
     throw new Error(error.error.message);
   }
 
-  const data = (await response.json()) as { data: TJsPersonState };
+  const data = (await response.json()) as { data: TJsPersonState["data"] };
   const { data: state } = data;
 
   const defaultPersonState: TJsPersonState = {
@@ -76,7 +76,7 @@ export const fetchPersonState = async (
   }
 
   return {
-    data: { ...state.data },
+    data: { ...state },
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
   };
 };

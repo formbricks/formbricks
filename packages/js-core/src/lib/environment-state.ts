@@ -44,7 +44,8 @@ export const fetchEnvironmentState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw new Error(error.error.message);
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error
+    throw error.error;
   }
 
   const data = (await response.json()) as { data: TJsEnvironmentState["data"] };

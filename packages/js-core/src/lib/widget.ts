@@ -201,7 +201,7 @@ const renderWidget = async (
             ...config.get().personState,
             data: {
               ...config.get().personState.data,
-              responses: [...responses, surveyState.surveyId],
+              responses: responses.length ? [...responses, surveyState.surveyId] : [surveyState.surveyId],
             },
           };
 
