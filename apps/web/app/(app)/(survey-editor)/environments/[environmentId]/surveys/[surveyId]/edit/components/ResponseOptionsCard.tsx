@@ -432,7 +432,6 @@ export const ResponseOptionsCard = ({
                       id="heading"
                       className="mb-4 mt-2 bg-white"
                       name="heading"
-                      defaultValue={singleUseMessage.heading}
                       value={singleUseMessage.heading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ heading: e.target.value })}
                     />
@@ -442,7 +441,6 @@ export const ResponseOptionsCard = ({
                       className="mb-4 mt-2 bg-white"
                       id="subheading"
                       name="subheading"
-                      defaultValue={singleUseMessage.subheading}
                       value={singleUseMessage.subheading}
                       onChange={(e) => handleSingleUseSurveyMessageChange({ subheading: e.target.value })}
                     />
