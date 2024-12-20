@@ -3,11 +3,14 @@ import { trackNoCodeAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, NetworkError, Result, err, match, okVoid } from "./errors";
 import { Logger } from "./logger";
+import { TimeoutStack } from "./timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "./utils";
+import { setIsSurveyRunning } from "./widget";
 
 const appConfig = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
+const timeoutStack = TimeoutStack.getInstance();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -24,14 +27,15 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
   );
 
-  console.log("noCodePageViewActionClasses", noCodePageViewActionClasses);
-  console.log("url: ", window.location.href);
-
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
     const isValidUrl = handleUrlFilters(urlFilters);
 
-    if (!isValidUrl) continue;
+    if (!isValidUrl) {
+      timeoutStack.clear();
+      setIsSurveyRunning(false);
+      continue;
+    }
 
     const trackResult = await trackNoCodeAction(event.name);
     if (trackResult.ok !== true) return err(trackResult.error);
@@ -50,33 +54,11 @@ export const addPageUrlEventListeners = (): void => {
   // Monkey patch history methods if not already done
   if (!isHistoryPatched) {
     const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
 
     history.pushState = function (...args) {
       const returnValue = originalPushState.apply(this, args);
       const event = new Event("pushstate");
       window.dispatchEvent(event);
-      // clear all timeouts:
-      const highestId = window.setTimeout(() => {
-        console.log("clearing all timeouts: ", highestId);
-        for (let i = highestId; i >= 0; i--) {
-          window.clearInterval(i);
-        }
-      }, 0);
-      return returnValue;
-    };
-
-    history.replaceState = function (...args) {
-      const returnValue = originalReplaceState.apply(this, args);
-      const event = new Event("replacestate");
-      window.dispatchEvent(event);
-      // clear all timeouts:
-      const highestId = window.setTimeout(() => {
-        console.log("clearing all timeouts: ", highestId);
-        for (let i = highestId; i >= 0; i--) {
-          window.clearInterval(i);
-        }
-      }, 0);
       return returnValue;
     };
 
