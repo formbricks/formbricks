@@ -28,16 +28,19 @@ const ZCreateUserAction = z.object({
   defaultOrganizationId: z.string().optional(),
   defaultOrganizationRole: ZOrganizationRole.optional(),
   emailVerificationDisabled: z.boolean().optional(),
-  turnstileToken: z.string().optional(),
+  turnstileToken: z
+    .string()
+    .optional()
+    .refine(
+      (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
+      "CAPTCHA verification required"
+    ),
 });
 
 export const createUserAction = actionClient.schema(ZCreateUserAction).action(async ({ parsedInput }) => {
   if (IS_TURNSTILE_CONFIGURED) {
-    if (!parsedInput.turnstileToken) {
-      throw new UnknownError("Missing reCAPTCHA token");
-    }
-    if (!TURNSTILE_SECRET_KEY) {
-      throw new UnknownError("Missing TURNSTILE_SECRET_KEY");
+    if (!parsedInput.turnstileToken || !TURNSTILE_SECRET_KEY) {
+      throw new UnknownError("Server configuration error");
     }
 
     const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, parsedInput.turnstileToken);
