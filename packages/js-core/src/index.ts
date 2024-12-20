@@ -62,5 +62,5 @@ const formbricks = {
   getApi,
 };
 
-export type TFormbricksApp = typeof formbricks;
+export type TFormbricks = typeof formbricks;
 export default formbricks;

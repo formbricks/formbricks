@@ -1,20 +1,21 @@
 import { type TAttributes } from "@formbricks/types/attributes";
-import { type ForbiddenError } from "@formbricks/types/errors";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { Config } from "./config";
 import {
   JS_LOCAL_STORAGE_KEY,
-  LEGACY_JS_APP_LOCAL_STORAGE_KEY,
-  LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
+  // LEGACY_JS_APP_LOCAL_STORAGE_KEY,
+  // LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
 } from "./constants";
 import { fetchEnvironmentState } from "./environment-state";
 import {
   ErrorHandler,
   type MissingFieldError,
-  type MissingPersonError,
-  type NetworkError,
+  // type MissingFieldError,
+  // type MissingPersonError,
+  // type NetworkError,
   type NotInitializedError,
   type Result,
   err,
@@ -28,134 +29,136 @@ import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-stat
 import { filterSurveys, getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
+const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
 
-export const setIsInitialized = (value: boolean) => {
+export const setIsInitialized = (value: boolean): void => {
   isInitialized = value;
 };
 
-const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
-  const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-  const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+// const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
+//   const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+//   const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
 
-  if (oldWebsiteConfig) {
-    localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
+//   if (oldWebsiteConfig) {
+//     localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+//     const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
 
-    if (
-      parsedOldConfig.environmentId &&
-      parsedOldConfig.apiHost &&
-      parsedOldConfig.environmentState &&
-      parsedOldConfig.personState &&
-      parsedOldConfig.filteredSurveys
-    ) {
-      const newLocalStorageConfig = { ...parsedOldConfig };
+//     if (
+//       parsedOldConfig.environmentId &&
+//       parsedOldConfig.apiHost &&
+//       parsedOldConfig.environmentState &&
+//       parsedOldConfig.personState &&
+//       parsedOldConfig.filteredSurveys
+//     ) {
+//       const newLocalStorageConfig = { ...parsedOldConfig };
 
-      return {
-        changed: true,
-        newState: newLocalStorageConfig,
-      };
-    }
-  }
+//       return {
+//         changed: true,
+//         newState: newLocalStorageConfig,
+//       };
+//     }
+//   }
 
-  if (oldAppConfig) {
-    localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
+//   if (oldAppConfig) {
+//     localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+//     const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
 
-    if (
-      parsedOldConfig.environmentId &&
-      parsedOldConfig.apiHost &&
-      parsedOldConfig.environmentState &&
-      parsedOldConfig.personState &&
-      parsedOldConfig.filteredSurveys
-    ) {
-      return {
-        changed: true,
-      };
-    }
-  }
+//     if (
+//       parsedOldConfig.environmentId &&
+//       parsedOldConfig.apiHost &&
+//       parsedOldConfig.environmentState &&
+//       parsedOldConfig.personState &&
+//       parsedOldConfig.filteredSurveys
+//     ) {
+//       return {
+//         changed: true,
+//       };
+//     }
+//   }
 
-  return {
-    changed: false,
-  };
-};
+//   return {
+//     changed: false,
+//   };
+// };
 
-const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
-  const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
+// const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
+//   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
-  if (existingConfig) {
-    const parsedConfig = JSON.parse(existingConfig);
+//   if (existingConfig) {
+//     const parsedConfig = JSON.parse(existingConfig);
 
-    if (parsedConfig.environmentState.data.product) {
-      const { environmentState, filteredSurveys, ...restConfig } = parsedConfig;
+//     if (parsedConfig.environmentState.data.product) {
+//       const { environmentState, filteredSurveys, ...restConfig } = parsedConfig;
 
-      // @ts-expect-error
-      const fixedFilteredSurveys = filteredSurveys.map((survey) => {
-        const { productOverwrites, ...rest } = survey;
-        return {
-          ...rest,
-          projectOverwrites: productOverwrites,
-        };
-      });
+//       // @ts-expect-error
+//       const fixedFilteredSurveys = filteredSurveys.map((survey) => {
+//         const { productOverwrites, ...rest } = survey;
+//         return {
+//           ...rest,
+//           projectOverwrites: productOverwrites,
+//         };
+//       });
 
-      const { product, ...rest } = parsedConfig.environmentState.data;
+//       const { product, ...rest } = parsedConfig.environmentState.data;
 
-      const newLocalStorageConfig = {
-        ...restConfig,
-        environmentState: {
-          ...parsedConfig.environmentState,
-          data: {
-            ...rest,
-            project: product,
-          },
-        },
-        filteredSurveys: fixedFilteredSurveys,
-      };
+//       const newLocalStorageConfig = {
+//         ...restConfig,
+//         environmentState: {
+//           ...parsedConfig.environmentState,
+//           data: {
+//             ...rest,
+//             project: product,
+//           },
+//         },
+//         filteredSurveys: fixedFilteredSurveys,
+//       };
 
-      return {
-        changed: true,
-        newState: newLocalStorageConfig,
-      };
-    }
-  }
+//       return {
+//         changed: true,
+//         newState: newLocalStorageConfig,
+//       };
+//     }
+//   }
 
-  return { changed: false };
-};
+//   return { changed: false };
+// };
 
 export const initialize = async (
   configInput: TJsConfigInput
-): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError | ForbiddenError>> => {
+): Promise<Result<void, MissingFieldError | ApiErrorResponse>> => {
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
   }
-  let config = Config.getInstance();
 
-  const { changed, newState } = migrateLocalStorage();
+  // let config = Config.getInstance();
 
-  if (changed) {
-    config.resetConfig();
-    config = Config.getInstance();
+  // const { changed, newState } = migrateLocalStorage();
 
-    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-    // otherwise, we just sync again!
-    if (!configInput.userId && newState) {
-      config.update(newState);
-    }
-  }
+  // if (changed) {
+  //   config.resetConfig();
+  //   config = Config.getInstance();
 
-  const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
+  //   // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
+  //   // otherwise, we just sync again!
+  //   if (!configInput.userId && newState) {
+  //     config.update(newState);
+  //   }
+  // }
 
-  if (migrated) {
-    config.resetConfig();
-    config = Config.getInstance();
+  // const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
 
-    if (updatedLocalState) {
-      config.update(updatedLocalState);
-    }
-  }
+  // if (migrated) {
+  //   config.resetConfig();
+  //   config = Config.getInstance();
+
+  //   if (updatedLocalState) {
+  //     config.update(updatedLocalState);
+  //   }
+  // }
 
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -166,7 +169,7 @@ export const initialize = async (
   try {
     existingConfig = config.get();
     logger.debug("Found existing configuration.");
-  } catch (e) {
+  } catch {
     logger.debug("No existing configuration found.");
   }
 
@@ -231,6 +234,7 @@ export const initialize = async (
 
     if (
       configInput.userId &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- personState could be null
       (existingConfig.personState === null ||
         (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
     ) {
@@ -276,8 +280,8 @@ export const initialize = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length} surveys during sync: ${surveyNames.join(", ")}`);
-    } catch (e) {
+      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+    } catch {
       putFormbricksInErrorState(config);
     }
   } else {
@@ -319,7 +323,7 @@ export const initialize = async (
 
           if (!res.ok) {
             if (res.error.code === "forbidden") {
-              logger.error(`Authorization error: ${res.error.responseMessage}`);
+              logger.error(`Authorization error: ${res.error.responseMessage ?? ""}`);
             }
             return err(res.error);
           }
@@ -355,13 +359,14 @@ export const initialize = async (
 
   // check page url if initialized after page load
 
-  checkPageUrl();
+  void checkPageUrl();
   return okVoid();
 };
 
-export const handleErrorOnFirstInit = (e: any) => {
-  if (e.error.code === "forbidden") {
-    logger.error(`Authorization error: ${e.error.responseMessage}`);
+export const handleErrorOnFirstInit = (e: unknown): void => {
+  const error = e as { error: ApiErrorResponse };
+  if (error.error.code === "forbidden") {
+    logger.error(`Authorization error: ${error.error.responseMessage ?? ""}`);
   }
 
   if (getIsDebug()) {
@@ -404,7 +409,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (config: Config): void => {
+export const putFormbricksInErrorState = (formbricksConfig: Config): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
@@ -412,8 +417,8 @@ export const putFormbricksInErrorState = (config: Config): void => {
 
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  config.update({
-    ...config.get(),
+  formbricksConfig.update({
+    ...formbricksConfig.get(),
     status: {
       value: "error",
       expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future

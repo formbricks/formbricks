@@ -1,5 +1,5 @@
-/* eslint-disable no-console -- Required for error logging */
 // shared functions for environment and person state(s)
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentState, type TJsEnvironmentSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
@@ -36,7 +36,7 @@ export const fetchEnvironmentState = async (
   if (!response.ok) {
     const jsonRes = (await response.json()) as { message: string };
 
-    const error = err({
+    const error = err<ApiErrorResponse>({
       code: "network_error",
       status: response.status,
       message: "Error syncing with backend",
@@ -44,14 +44,14 @@ export const fetchEnvironmentState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw error.error;
+    throw new Error(error.error.message);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
   const { data: state } = data;
 
   return {
-    data: { ...(state as TJsEnvironmentState["data"]) },
+    data: { ...state },
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
   };
 };
@@ -86,8 +86,8 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
           environmentState,
           filteredSurveys,
         });
-      } catch (e) {
-        console.error(`Error during expiry check: ${e}`);
+      } catch (e: unknown) {
+        logger.error(`Error during expiry check: ${e as string}`);
         logger.debug("Extending config and try again later.");
         const existingConfig = config.get();
         config.update(existingConfig);

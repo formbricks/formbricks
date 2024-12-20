@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Required for logging a warning here */
 import { Logger } from "./logger";
 
 export type { ZErrorHandler } from "@formbricks/types/errors";
@@ -32,7 +33,7 @@ export function match<TSuccess, TError, TReturn>(
   result: Result<TSuccess, TError>,
   onSuccess: (value: TSuccess) => TReturn,
   onError: (error: TError) => TReturn
-) {
+): TReturn {
   if (result.ok) {
     return onSuccess(result.value);
   }
@@ -111,17 +112,17 @@ const logger = Logger.getInstance();
 
 export class ErrorHandler {
   private static instance: ErrorHandler | null;
-  private handleError: (error: any) => void;
+  private handleError: (error: unknown) => void;
   public customized = false;
   public static initialized = false;
 
-  private constructor(errorHandler?: (error: any) => void) {
+  private constructor(errorHandler?: (error: unknown) => void) {
     if (errorHandler) {
       this.handleError = errorHandler;
       this.customized = true;
     } else {
-      this.handleError = (err) => {
-        Logger.getInstance().error(JSON.stringify(err));
+      this.handleError = (error) => {
+        Logger.getInstance().error(JSON.stringify(error));
       };
     }
   }
@@ -134,7 +135,7 @@ export class ErrorHandler {
     return ErrorHandler.instance;
   }
 
-  static init(errorHandler?: (error: any) => void): void {
+  static init(errorHandler?: (error: unknown) => void): void {
     this.initialized = true;
 
     ErrorHandler.instance = new ErrorHandler(errorHandler);
@@ -144,7 +145,7 @@ export class ErrorHandler {
     logger.debug(`Custom error handler: ${this.customized ? "yes" : "no"}`);
   }
 
-  public handle(error: any): void {
+  public handle(error: unknown): void {
     console.warn("🧱 Formbricks - Global error: ", error);
     this.handleError(error);
   }

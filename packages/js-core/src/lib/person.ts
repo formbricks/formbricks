@@ -7,14 +7,15 @@ import { closeSurvey } from "./widget";
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 
-export const logoutPerson = (): void => {
+// eslint-disable-next-line @typescript-eslint/require-await -- There are no promises but our proxy makes the functions async
+export const logoutPerson = async (): Promise<void> => {
   deinitalize();
   config.resetConfig();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
-  await closeSurvey();
+  closeSurvey();
 
   const userId = config.get().personState.data.userId;
 
@@ -25,7 +26,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     attributes: config.get().attributes,
   };
 
-  logoutPerson();
+  await logoutPerson();
 
   try {
     await initialize(syncParams);
