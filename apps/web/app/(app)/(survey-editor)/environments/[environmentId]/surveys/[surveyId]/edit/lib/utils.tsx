@@ -202,6 +202,7 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
+  questionIdx: number,
   t: (key: string) => string
 ): {
   show?: boolean;
@@ -223,7 +224,7 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questions = localSurvey.questions ?? [];
+  let questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
@@ -774,7 +775,7 @@ export const getActionTargetOptions = (
   currQuestionIdx: number,
   t: (key: string) => string
 ): TComboboxOption[] => {
-  let questions = localSurvey.questions.filter((_, idx) => idx !== currQuestionIdx);
+  let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
   if (action.objective === "requireAnswer") {
     questions = questions.filter((question) => !question.required);
@@ -863,11 +864,12 @@ export const getActionOperatorOptions = (
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
+  questionIdx: number,
   t: (key: string) => string
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
-  const questions = localSurvey.questions;
+  const questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {

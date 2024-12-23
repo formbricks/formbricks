@@ -186,7 +186,7 @@ export function LogicEditorActions({
                       placeholder: "Value",
                       type: localSurvey.variables.find((v) => v.id === action.variableId)?.type || "text",
                     }}
-                    groupedOptions={getActionValueOptions(action.variableId, localSurvey, t)}
+                    groupedOptions={getActionValueOptions(action.variableId, localSurvey, questionIdx, t)}
                     onChangeValue={(val, option, fromInput) => {
                       const fieldType = option?.meta?.type as TActionVariableValueType;
 
