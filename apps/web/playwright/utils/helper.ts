@@ -75,6 +75,31 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
+export const uploadFileForFileUploadQuestion = async (page: Page) => {
+  try {
+    const fileInput = page.locator('input[type="file"]');
+    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+    const buffer1 = Buffer.from(await response1.arrayBuffer());
+    const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+    await fileInput.setInputFiles([
+      {
+        name: "puppy-1-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer1,
+      },
+      {
+        name: "puppy-2-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer2,
+      },
+    ]);
+  } catch (error) {
+    console.error("Error uploading files:", error);
+  }
+};
+
 export const finishOnboarding = async (
   page: Page,
   projectChannel: TProjectConfigChannel = "website"
@@ -241,24 +266,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator('input[name="subheader"]').fill(params.pictureSelectQuestion.description);
 
   // Handle file uploads
-  const fileInput = page.locator('input[type="file"]');
-  const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-  const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-  const buffer1 = Buffer.from(await response1.arrayBuffer());
-  const buffer2 = Buffer.from(await response2.arrayBuffer());
-
-  await fileInput.setInputFiles([
-    {
-      name: "puppy-1-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer1,
-    },
-    {
-      name: "puppy-2-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer2,
-    },
-  ]);
+  await uploadFileForFileUploadQuestion(page);
 
   // File Upload Question
   await page

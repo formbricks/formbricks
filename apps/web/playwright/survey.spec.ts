@@ -1,7 +1,7 @@
 import { surveys } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { createSurvey, createSurveyWithLogic } from "./utils/helper";
+import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
 
 test.use({
   launchOptions: {
@@ -272,24 +272,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Question*").fill(surveys.createAndSubmit.pictureSelectQuestion.question);
 
     // Handle file uploads
-    const fileInput = page.locator('input[type="file"]');
-    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-    const buffer1 = Buffer.from(await response1.arrayBuffer());
-    const buffer2 = Buffer.from(await response2.arrayBuffer());
-
-    await fileInput.setInputFiles([
-      {
-        name: "puppy-1-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer1,
-      },
-      {
-        name: "puppy-2-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer2,
-      },
-    ]);
+    await uploadFileForFileUploadQuestion(page);
 
     await page
       .locator("div")
