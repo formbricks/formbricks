@@ -57,8 +57,8 @@ export const updateAttribute = async (
     }
 
     return err({
-      code: (res.error).code,
-      status: (res.error).status,
+      code: res.error.code,
+      status: res.error.status,
       message: `Error updating person with userId ${userId}`,
       url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`),
       responseMessage: res.error.message,
