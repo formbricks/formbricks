@@ -108,9 +108,6 @@ const AppPage = ({}) => {
               Look at the logs to understand how the widget works.{" "}
               <strong className="dark:text-white">Open your browser console</strong> to see the logs.
             </p>
-            {/* <div className="max-h-[40vh] overflow-y-auto py-4">
-              <LogsContainer />
-            </div> */}
           </div>
         </div>
 
