@@ -1732,6 +1732,7 @@
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Wenn die Bedingungen übereinstimmen, wird die Wartezeit ignoriert und die Umfrage angezeigt.",
         "with_the_formbricks_sdk": "mit dem Formbricks SDK",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Ohne Filter können alle deine Nutzer befragt werden.",
+        "you_have_not_created_a_segment_yet": "Du hast noch keinen Segment erstellt.",
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Du musst zwei oder mehr Sprachen in deinem Projekt einrichten, um mit Übersetzungen zu arbeiten.",
         "your_description_here_recall_information_with": "Deine Beschreibung hier. Informationen abrufen mit @",
         "your_question_here_recall_information_with": "Deine Frage hier. Informationen abrufen mit @",
