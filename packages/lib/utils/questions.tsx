@@ -55,7 +55,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("free_text_description", locale),
     icon: MessageSquareTextIcon,
     preset: {
-      headline: { default: translate("free_text_headline", locale) },
+      headline: { default: "" },
       placeholder: { default: translate("free_text_placeholder", locale) },
       longAnswer: true,
       inputType: "text",
@@ -69,15 +69,15 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("single_select_description", locale),
     icon: Rows3Icon,
     preset: {
-      headline: { default: translate("single_select_headline", locale) },
+      headline: { default: "" },
       choices: [
         {
           id: createId(),
-          label: { default: translate("single_select_option_1", locale) },
+          label: { default: "" },
         },
         {
           id: createId(),
-          label: { default: translate("single_select_option_2", locale) },
+          label: { default: "" },
         },
       ],
       shuffleOption: "none",
@@ -91,19 +91,19 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("multi_select_description", locale),
     icon: ListIcon,
     preset: {
-      headline: { default: translate("multi_select_headline", locale) },
+      headline: { default: "" },
       choices: [
         {
           id: createId(),
-          label: { default: translate("multi_select_option_1", locale) },
+          label: { default: "" },
         },
         {
           id: createId(),
-          label: { default: translate("multi_select_option_2", locale) },
+          label: { default: "" },
         },
         {
           id: createId(),
-          label: { default: translate("multi_select_option_3", locale) },
+          label: { default: "" },
         },
       ],
       shuffleOption: "none",
@@ -117,18 +117,9 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("picture_selection_description", locale),
     icon: ImageIcon,
     preset: {
-      headline: { default: translate("picture_selection_headline", locale) },
+      headline: { default: "" },
       allowMulti: true,
-      choices: [
-        {
-          id: createId(),
-          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg",
-        },
-        {
-          id: createId(),
-          imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
-        },
-      ],
+      choices: [],
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyPictureSelectionQuestion>,
@@ -139,7 +130,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("rating_description", locale),
     icon: StarIcon,
     preset: {
-      headline: { default: translate("rating_headline", locale) },
+      headline: { default: "" },
       scale: "star",
       range: 5,
       lowerLabel: { default: translate("rating_lower_label", locale) },
@@ -154,7 +145,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("nps_description", locale),
     icon: PresentationIcon,
     preset: {
-      headline: { default: translate("nps_headline", locale) },
+      headline: { default: "" },
       lowerLabel: { default: translate("nps_lower_label", locale) },
       upperLabel: { default: translate("nps_upper_label", locale) },
       buttonLabel: { default: translate("next", locale) },
@@ -168,28 +159,16 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     icon: ListOrderedIcon,
     preset: {
       headline: {
-        default: translate("ranking_headline", locale),
+        default: "",
       },
       choices: [
         {
           id: createId(),
-          label: { default: translate("ranking_option_1", locale) },
+          label: { default: "" },
         },
         {
           id: createId(),
-          label: { default: translate("ranking_option_2", locale) },
-        },
-        {
-          id: createId(),
-          label: { default: translate("ranking_option_3", locale) },
-        },
-        {
-          id: createId(),
-          label: { default: translate("ranking_option_4", locale) },
-        },
-        {
-          id: createId(),
-          label: { default: translate("ranking_option_5", locale) },
+          label: { default: "" },
         },
       ],
       buttonLabel: { default: translate("next", locale) },
@@ -203,19 +182,10 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     icon: Grid3X3Icon,
     preset: {
       headline: {
-        default: translate("matrix_headline", locale),
+        default: "",
       },
-      rows: [
-        { default: translate("matrix_row_1", locale) },
-        { default: translate("matrix_row_2", locale) },
-        { default: translate("matrix_row_3", locale) },
-      ],
-      columns: [
-        { default: translate("matrix_column_1", locale) },
-        { default: translate("matrix_column_2", locale) },
-        { default: translate("matrix_column_3", locale) },
-        { default: translate("matrix_column_4", locale) },
-      ],
+      rows: [{ default: "" }, { default: "" }],
+      columns: [{ default: "" }, { default: "" }],
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMatrixQuestion>,
@@ -226,9 +196,9 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("cta_description", locale),
     icon: MousePointerClickIcon,
     preset: {
-      headline: { default: translate("cta_headline", locale) },
+      headline: { default: "" },
       html: {
-        default: translate("cta_html", locale),
+        default: "",
       },
       buttonLabel: { default: translate("book_interview", locale) },
       buttonExternal: false,
@@ -242,9 +212,9 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("consent_description", locale),
     icon: CheckIcon,
     preset: {
-      headline: { default: translate("consent_headline", locale) },
+      headline: { default: "" },
       html: { default: "" },
-      label: { default: translate("consent_label", locale) },
+      label: { default: "" },
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyConsentQuestion>,
@@ -255,7 +225,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("file_upload_description", locale),
     icon: ArrowUpFromLineIcon,
     preset: {
-      headline: { default: translate("file_upload_headline", locale) },
+      headline: { default: "" },
       allowMultipleFiles: false,
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
@@ -267,7 +237,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("date_description", locale),
     icon: CalendarDaysIcon,
     preset: {
-      headline: { default: translate("date_headline", locale) },
+      headline: { default: "" },
       format: "M-d-y",
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
@@ -279,7 +249,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("schedule_a_meeting_description", locale),
     icon: PhoneIcon,
     preset: {
-      headline: { default: translate("schedule_a_meeting_headline", locale) },
+      headline: { default: "" },
       calUserName: "rick/get-rick-rolled",
       buttonLabel: { default: translate("next", locale) },
       backButtonLabel: { default: translate("back", locale) },
@@ -291,7 +261,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("address_description", locale),
     icon: HomeIcon,
     preset: {
-      headline: { default: translate("address_headline", locale) },
+      headline: { default: "" },
       addressLine1: { show: true, required: true },
       addressLine2: { show: true, required: true },
       city: { show: true, required: true },
@@ -308,7 +278,7 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
     description: translate("contact_info_description", locale),
     icon: ContactIcon,
     preset: {
-      headline: { default: translate("contact_info_headline", locale) },
+      headline: { default: "" },
       firstName: { show: true, required: true },
       lastName: { show: true, required: true },
       email: { show: true, required: true },
