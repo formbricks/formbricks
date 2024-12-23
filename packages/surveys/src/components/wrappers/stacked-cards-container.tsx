@@ -177,6 +177,18 @@ export function StackedCardsContainer({
       };
   };
 
+  const getDummyCardContent = () => {
+    return (
+      <div style={{ height: cardHeight }} className="fb-w-full fb-p-6">
+        <div className="fb-space-y-4">
+          <div className="fb-h-4 fb-w-3/4 fb-animate-pulse fb-bg-gray-200 fb-rounded" />
+          <div className="fb-h-4 fb-w-1/2 fb-animate-pulse fb-bg-gray-200 fb-rounded" />
+          <div className="fb-h-4 fb-w-2/3 fb-animate-pulse fb-bg-gray-200 fb-rounded" />
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
@@ -222,7 +234,7 @@ export function StackedCardsContainer({
                   ...getBottomStyles(),
                 }}
                 className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out">
-                {getCardContent(dynamicQuestionIndex, offset)}
+                {offset === 0 ? getCardContent(dynamicQuestionIndex, offset) : getDummyCardContent()}
               </div>
             );
           }
