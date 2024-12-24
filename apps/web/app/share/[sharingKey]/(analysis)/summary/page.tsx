@@ -10,10 +10,17 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 
-const Page = async (props) => {
-  const params = await props.params;
+type Params = Promise<{
+  sharingKey: string;
+}>;
+
+interface SummaryPageProps {
+  params: Params;
+}
+
+const Page = async ({ params }: SummaryPageProps) => {
   const t = await getTranslations();
-  const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
+  const surveyId = await getSurveyIdByResultShareKey((await params).sharingKey);
 
   if (!surveyId) {
     return notFound();
