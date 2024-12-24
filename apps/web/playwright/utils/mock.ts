@@ -144,6 +144,9 @@ export const surveys = {
       question: "This is my Picture Select Question",
       description: "This is Picture Select Description",
     },
+    dateQuestion: {
+      question: "This is my Date Question",
+    },
     fileUploadQuestion: {
       question: "This is my File Upload Question",
     },

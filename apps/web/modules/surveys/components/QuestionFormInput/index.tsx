@@ -594,6 +594,7 @@ export const QuestionFormInput = ({
                 ref={inputRef}
                 onBlur={onBlur}
                 maxLength={maxLength ?? undefined}
+                autoFocus={id === "headline"}
                 isInvalid={
                   isInvalid &&
                   text[usedLanguageCode]?.trim() === "" &&
