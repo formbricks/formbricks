@@ -241,6 +241,9 @@ const renderWidget = async (
     });
   }, survey.delay * 1000);
 
+  console.log("survey name: ", survey.name);
+  console.log("timeoutId: ", timeoutId);
+
   timeoutStack.add(timeoutId as unknown as number);
 };
 

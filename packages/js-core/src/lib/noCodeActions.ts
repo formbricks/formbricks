@@ -31,9 +31,15 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
     const isValidUrl = handleUrlFilters(urlFilters);
 
+    console.log("current timeout stack", timeoutStack.getTimeouts());
+
+    // if (!isValidUrl) {
+    timeoutStack.clear();
+    setIsSurveyRunning(false);
+    //   continue;
+    // }
+
     if (!isValidUrl) {
-      timeoutStack.clear();
-      setIsSurveyRunning(false);
       continue;
     }
 

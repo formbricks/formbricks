@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
@@ -110,6 +111,8 @@ const AppPage = ({}) => {
             </p>
           </div>
         </div>
+
+        <Link href="/search">Search</Link>
 
         <div className="md:grid md:grid-cols-3">
           <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">

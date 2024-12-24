@@ -15,7 +15,9 @@ export class TimeoutStack {
 
   // Add a new timeout ID to the stack
   public add(timeoutId: number): void {
+    console.log("Adding timeout ID to stack:", timeoutId);
     this.timeouts.push(timeoutId);
+    console.log("Current timeout stack:", this.timeouts);
   }
 
   // Clear a specific timeout and remove it from the stack
