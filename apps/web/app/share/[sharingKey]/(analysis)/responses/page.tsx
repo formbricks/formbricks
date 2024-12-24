@@ -12,10 +12,17 @@ import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/s
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
-const Page = async (props) => {
-  const params = await props.params;
+type Params = Promise<{
+  sharingKey: string;
+}>;
+
+interface ResponsesPageProps {
+  params: Params;
+}
+
+const Page = async ({ params }: ResponsesPageProps) => {
   const t = await getTranslations();
-  const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
+  const surveyId = await getSurveyIdByResultShareKey((await params).sharingKey);
 
   if (!surveyId) {
     return notFound();

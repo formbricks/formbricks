@@ -4,6 +4,7 @@ import {
   getIfResponseWithSurveyIdAndEmailExistAction,
   sendLinkSurveyEmailAction,
 } from "@/app/s/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -52,7 +53,7 @@ export const VerifyEmail = ({
     },
     resolver: zodResolver(ZVerifyEmailInput),
   });
-  survey = useMemo(() => {
+  const localSurvey = useMemo(() => {
     return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
   }, [survey, contactAttributeKeys]);
 
@@ -62,9 +63,9 @@ export const VerifyEmail = ({
 
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email.toLowerCase();
-    if (survey.isSingleResponsePerEmailEnabled) {
+    if (localSurvey.isSingleResponsePerEmailEnabled) {
       const actionResult = await getIfResponseWithSurveyIdAndEmailExistAction({
-        surveyId: survey.id,
+        surveyId: localSurvey.id,
         email,
       });
       if (actionResult?.data) {
@@ -76,17 +77,19 @@ export const VerifyEmail = ({
       }
     }
     const data = {
-      surveyId: survey.id,
-      email: email as string,
-      surveyName: survey.name,
+      surveyId: localSurvey.id,
+      email: email,
+      surveyName: localSurvey.name,
       suId: singleUseId ?? "",
       locale,
     };
-    try {
-      await sendLinkSurveyEmailAction(data);
+
+    const actionResult = await sendLinkSurveyEmailAction(data);
+    if (actionResult?.data) {
       setEmailSent(true);
-    } catch (error) {
-      toast.error(error.message);
+    } else {
+      const errorMessage = getFormattedErrorMessage(actionResult);
+      toast.error(errorMessage);
     }
   };
 
@@ -104,9 +107,9 @@ export const VerifyEmail = ({
       <div className="flex h-[100vh] w-[100vw] flex-col items-center justify-center bg-slate-50">
         <span className="h-24 w-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
         <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
-        <p className="mt-4 cursor-pointer text-sm text-slate-400" onClick={handleGoBackClick}>
+        <Button variant="ghost" className="mt-4" onClick={handleGoBackClick}>
           {t("s.please_try_again_with_the_original_link")}
-        </p>
+        </Button>
       </div>
     );
   }
@@ -116,10 +119,16 @@ export const VerifyEmail = ({
       <Toaster />
       <StackedCardsContainer
         cardArrangement={
-          survey.styling?.cardArrangement?.linkSurveys ?? styling.cardArrangement?.linkSurveys ?? "straight"
+          localSurvey.styling?.cardArrangement?.linkSurveys ??
+          styling.cardArrangement?.linkSurveys ??
+          "straight"
         }>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(submitEmail)}>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await form.handleSubmit(submitEmail)(e);
+            }}>
             {!emailSent && !showPreviewQuestions && (
               <div className="flex flex-col">
                 <div className="mx-auto rounded-full border bg-slate-200 p-6">
@@ -139,7 +148,9 @@ export const VerifyEmail = ({
                           <div className="flex space-x-2">
                             <Input
                               value={field.value}
-                              onChange={(email) => field.onChange(email)}
+                              onChange={(email) => {
+                                field.onChange(email);
+                              }}
                               type="email"
                               placeholder="engineering@acme.com"
                               className="h-10 bg-white"
@@ -154,9 +165,9 @@ export const VerifyEmail = ({
                     </FormItem>
                   )}
                 />
-                <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
-                  {t("s.just_curious")} <span className="underline">{t("s.preview_survey_questions")}</span>
-                </p>
+                <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>
+                  {t("s.just_curious")} <span>{t("s.preview_survey_questions")}</span>
+                </Button>
               </div>
             )}
           </form>
@@ -165,15 +176,15 @@ export const VerifyEmail = ({
           <div>
             <p className="text-4xl font-bold">{t("s.question_preview")}</p>
             <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
-              {survey.questions.map((question, index) => (
+              {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}
-                  className="my-1">{`${index + 1}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
+                  className="my-1">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
               ))}
             </div>
-            <p className="mt-6 cursor-pointer text-xs text-slate-400" onClick={handlePreviewClick}>
-              {t("s.want_to_respond")} <span className="underline">{t("s.verify_email")}</span>
-            </p>
+            <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>
+              {t("s.want_to_respond")} <span>{t("s.verify_email")}</span>
+            </Button>
           </div>
         )}
         {emailSent && (

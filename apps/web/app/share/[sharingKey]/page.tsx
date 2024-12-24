@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 
-const Page = async (props) => {
-  const params = await props.params;
-  return redirect(`/share/${params.sharingKey}/summary`);
+type Params = Promise<{
+  sharingKey: string;
+}>;
+
+const Page = async ({ params }: { params: Params }) => {
+  return redirect(`/share/${(await params).sharingKey}/summary`);
 };
 
 export default Page;

@@ -39,7 +39,7 @@ export type TInviteUpdateInput = z.infer<typeof ZInviteUpdateInput>;
 
 export const ZInviteMembersFormSchema = z.record(
   z.object({
-    email: z.string().email("Invalid email address").optional().or(z.literal("")),
+    email: z.string().email("Invalid email address"),
     name: ZUserName,
   })
 );

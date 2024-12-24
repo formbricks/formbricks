@@ -7,10 +7,9 @@ const FreshInstanceLayout = async ({ children }: { children: React.ReactNode }) 
   const session = await getServerSession(authOptions);
   const isFreshInstance = await getIsFreshInstance();
 
-  if (session || !isFreshInstance) {
+  if (session ?? !isFreshInstance) {
     return notFound();
   }
-  if (!isFreshInstance) return notFound();
   return <>{children}</>;
 };
 

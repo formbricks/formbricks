@@ -45,17 +45,15 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       currentUserId: ctx.user.id,
     });
 
-    if (invite) {
-      await sendInviteMemberEmail(
-        invite.id,
-        parsedInput.email,
-        ctx.user.name ?? "",
-        "",
-        false, // is onboarding invite
-        undefined,
-        ctx.user.locale
-      );
-    }
+    await sendInviteMemberEmail(
+      invite.id,
+      parsedInput.email,
+      ctx.user.name,
+      "",
+      false, // is onboarding invite
+      undefined,
+      ctx.user.locale
+    );
 
     return invite;
   });

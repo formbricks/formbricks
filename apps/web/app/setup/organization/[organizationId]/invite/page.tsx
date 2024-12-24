@@ -1,4 +1,4 @@
-import { InviteMembers } from "@/app/setup/organization/[organizationId]/invite/components/InviteMembers";
+import { InviteMembers } from "@/app/setup/organization/[organizationId]/invite/components/invite-members";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
@@ -8,15 +8,22 @@ import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { AuthenticationError } from "@formbricks/types/errors";
 
+type Params = Promise<{
+  organizationId: string;
+}>;
 export const metadata: Metadata = {
   title: "Invite",
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const Page = async (props) => {
+interface InvitePageProps {
+  params: Params;
+}
+
+const Page = async (props: InvitePageProps) => {
   const params = await props.params;
   const t = await getTranslations();
-  const IS_SMTP_CONFIGURED: boolean = SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD ? true : false;
+  const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD);
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError(t("common.session_not_found"));
 

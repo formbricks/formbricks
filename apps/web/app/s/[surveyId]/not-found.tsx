@@ -1,5 +1,6 @@
 import { Button } from "@/modules/ui/components/button";
 import { HelpCircleIcon } from "lucide-react";
+import { StaticImport } from "next/dist/shared/lib/get-img-props";
 import Image from "next/image";
 import Link from "next/link";
 import footerLogo from "./lib/footerlogo.svg";
@@ -18,7 +19,7 @@ const NotFound = () => {
       </div>
       <div>
         <Link href="https://formbricks.com">
-          <Image src={footerLogo} alt="Brand logo" className="mx-auto w-40" />
+          <Image src={footerLogo as StaticImport} alt="Brand logo" className="mx-auto w-40" />
         </Link>
       </div>
     </div>

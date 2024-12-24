@@ -13,7 +13,7 @@ export const getEmailVerificationDetails = async (
     return { status: "not-verified" };
   } else {
     try {
-      const verifiedEmail = await verifyTokenForLinkSurvey(token, surveyId);
+      const verifiedEmail = verifyTokenForLinkSurvey(token, surveyId);
       if (verifiedEmail) {
         return { status: "verified", email: verifiedEmail };
       } else {
