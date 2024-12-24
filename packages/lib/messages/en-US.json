@@ -1545,6 +1545,7 @@
         "invalid_targeting": "Invalid targeting: Please check your audience filters",
         "invalid_video_url_warning": "Please enter a valid YouTube, Vimeo, or Loom URL. We currently do not support other video hosting providers.",
         "invalid_youtube_url": "Invalid YouTube URL",
+        "is_accepted": "Is accepted",
         "is_after": "Is after",
         "is_before": "Is before",
         "is_booked": "Is booked",
