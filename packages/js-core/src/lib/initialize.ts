@@ -6,16 +6,13 @@ import { updateAttributes } from "./attributes";
 import { Config } from "./config";
 import {
   JS_LOCAL_STORAGE_KEY,
-  // LEGACY_JS_APP_LOCAL_STORAGE_KEY,
-  // LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
+  LEGACY_JS_APP_LOCAL_STORAGE_KEY,
+  LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
 } from "./constants";
 import { fetchEnvironmentState } from "./environment-state";
 import {
   ErrorHandler,
   type MissingFieldError,
-  // type MissingFieldError,
-  // type MissingPersonError,
-  // type NetworkError,
   type NotInitializedError,
   type Result,
   err,
@@ -29,7 +26,6 @@ import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-stat
 import { filterSurveys, getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
-const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 let isInitialized = false;
@@ -38,93 +34,109 @@ export const setIsInitialized = (value: boolean): void => {
   isInitialized = value;
 };
 
-// const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
-//   const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-//   const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
+  const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+  const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
 
-//   if (oldWebsiteConfig) {
-//     localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-//     const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
+  if (oldWebsiteConfig) {
+    localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
+    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as Partial<{
+      environmentId: string;
+      apiHost: string;
+      environmentState: TJsConfig["environmentState"];
+      personState: TJsConfig["personState"];
+      filteredSurveys: TJsConfig["filteredSurveys"];
+    }>;
 
-//     if (
-//       parsedOldConfig.environmentId &&
-//       parsedOldConfig.apiHost &&
-//       parsedOldConfig.environmentState &&
-//       parsedOldConfig.personState &&
-//       parsedOldConfig.filteredSurveys
-//     ) {
-//       const newLocalStorageConfig = { ...parsedOldConfig };
+    if (
+      parsedOldConfig.environmentId &&
+      parsedOldConfig.apiHost &&
+      parsedOldConfig.environmentState &&
+      parsedOldConfig.personState &&
+      parsedOldConfig.filteredSurveys
+    ) {
+      const newLocalStorageConfig = { ...parsedOldConfig };
 
-//       return {
-//         changed: true,
-//         newState: newLocalStorageConfig,
-//       };
-//     }
-//   }
+      return {
+        changed: true,
+        newState: newLocalStorageConfig as TJsConfig,
+      };
+    }
+  }
 
-//   if (oldAppConfig) {
-//     localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-//     const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
+  if (oldAppConfig) {
+    localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+    const parsedOldConfig = JSON.parse(oldAppConfig) as Partial<{
+      environmentId: string;
+      apiHost: string;
+      environmentState: TJsConfig["environmentState"];
+      personState: TJsConfig["personState"];
+      filteredSurveys: TJsConfig["filteredSurveys"];
+    }>;
 
-//     if (
-//       parsedOldConfig.environmentId &&
-//       parsedOldConfig.apiHost &&
-//       parsedOldConfig.environmentState &&
-//       parsedOldConfig.personState &&
-//       parsedOldConfig.filteredSurveys
-//     ) {
-//       return {
-//         changed: true,
-//       };
-//     }
-//   }
+    if (
+      parsedOldConfig.environmentId &&
+      parsedOldConfig.apiHost &&
+      parsedOldConfig.environmentState &&
+      parsedOldConfig.personState &&
+      parsedOldConfig.filteredSurveys
+    ) {
+      return {
+        changed: true,
+      };
+    }
+  }
 
-//   return {
-//     changed: false,
-//   };
-// };
+  return {
+    changed: false,
+  };
+};
 
-// const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
-//   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
+const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
+  const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
-//   if (existingConfig) {
-//     const parsedConfig = JSON.parse(existingConfig);
+  if (existingConfig) {
+    const parsedConfig = JSON.parse(existingConfig) as TJsConfig;
 
-//     if (parsedConfig.environmentState.data.product) {
-//       const { environmentState, filteredSurveys, ...restConfig } = parsedConfig;
+    // @ts-expect-error - product is not in the type
+    if (parsedConfig.environmentState.data.product) {
+      const { environmentState: _, filteredSurveys, ...restConfig } = parsedConfig;
 
-//       // @ts-expect-error
-//       const fixedFilteredSurveys = filteredSurveys.map((survey) => {
-//         const { productOverwrites, ...rest } = survey;
-//         return {
-//           ...rest,
-//           projectOverwrites: productOverwrites,
-//         };
-//       });
+      const fixedFilteredSurveys = filteredSurveys.map((survey) => {
+        // @ts-expect-error - productOverwrites is not in the type
+        const { productOverwrites, ...rest } = survey;
+        return {
+          ...rest,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- productOverwrites is not in the type
+          projectOverwrites: productOverwrites,
+        };
+      });
 
-//       const { product, ...rest } = parsedConfig.environmentState.data;
+      // @ts-expect-error - product is not in the type
+      const { product, ...rest } = parsedConfig.environmentState.data;
 
-//       const newLocalStorageConfig = {
-//         ...restConfig,
-//         environmentState: {
-//           ...parsedConfig.environmentState,
-//           data: {
-//             ...rest,
-//             project: product,
-//           },
-//         },
-//         filteredSurveys: fixedFilteredSurveys,
-//       };
+      const newLocalStorageConfig = {
+        ...restConfig,
+        environmentState: {
+          ...parsedConfig.environmentState,
+          data: {
+            ...rest,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- product is not in the type
+            project: product,
+          },
+        },
+        filteredSurveys: fixedFilteredSurveys,
+      };
 
-//       return {
-//         changed: true,
-//         newState: newLocalStorageConfig,
-//       };
-//     }
-//   }
+      return {
+        changed: true,
+        newState: newLocalStorageConfig,
+      };
+    }
+  }
 
-//   return { changed: false };
-// };
+  return { changed: false };
+};
 
 export const initialize = async (
   configInput: TJsConfigInput
@@ -134,31 +146,31 @@ export const initialize = async (
     logger.configure({ logLevel: "debug" });
   }
 
-  // let config = Config.getInstance();
+  let config = Config.getInstance();
 
-  // const { changed, newState } = migrateLocalStorage();
+  const { changed, newState } = migrateLocalStorage();
 
-  // if (changed) {
-  //   config.resetConfig();
-  //   config = Config.getInstance();
+  if (changed) {
+    config.resetConfig();
+    config = Config.getInstance();
 
-  //   // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-  //   // otherwise, we just sync again!
-  //   if (!configInput.userId && newState) {
-  //     config.update(newState);
-  //   }
-  // }
+    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
+    // otherwise, we just sync again!
+    if (!configInput.userId && newState) {
+      config.update(newState);
+    }
+  }
 
-  // const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
+  const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
 
-  // if (migrated) {
-  //   config.resetConfig();
-  //   config = Config.getInstance();
+  if (migrated) {
+    config.resetConfig();
+    config = Config.getInstance();
 
-  //   if (updatedLocalState) {
-  //     config.update(updatedLocalState);
-  //   }
-  // }
+    if (updatedLocalState) {
+      config.update(updatedLocalState);
+    }
+  }
 
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
