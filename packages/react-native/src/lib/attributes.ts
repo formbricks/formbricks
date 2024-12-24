@@ -28,7 +28,7 @@ export const updateAttributes = async (
         }
       }
     }
-  } catch (e) {
+  } catch {
     logger.debug("config not set; sending all attributes to backend");
   }
 
@@ -51,8 +51,7 @@ export const updateAttributes = async (
     return ok(updatedAttributes);
   }
 
-  // @ts-expect-error -- details is not defined in the error type
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access -- required
+   
   if (res.error.details?.ignore) {
     logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
     return ok(updatedAttributes);

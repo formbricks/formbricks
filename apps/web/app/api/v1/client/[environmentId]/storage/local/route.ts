@@ -3,7 +3,6 @@
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
-import { headers } from "next/headers";
 import { NextRequest } from "next/server";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
@@ -24,8 +23,7 @@ export const OPTIONS = async (): Promise<Response> => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, X-File-Name, X-File-Type, X-Survey-ID, X-Signature, X-Timestamp, X-UUID",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     }
   );
@@ -36,15 +34,14 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   const environmentId = params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
-  const headersList = await headers();
 
-  const fileType = headersList.get("X-File-Type");
-  const encodedFileName = headersList.get("X-File-Name");
-  const surveyId = headersList.get("X-Survey-ID");
-
-  const signedSignature = headersList.get("X-Signature");
-  const signedUuid = headersList.get("X-UUID");
-  const signedTimestamp = headersList.get("X-Timestamp");
+  const formData = await req.json();
+  const fileType = formData.fileType as string;
+  const encodedFileName = formData.fileName as string;
+  const surveyId = formData.surveyId as string;
+  const signedSignature = formData.signature as string;
+  const signedUuid = formData.uuid as string;
+  const signedTimestamp = formData.timestamp as string;
 
   if (!fileType) {
     return responses.badRequestResponse("contentType is required");
@@ -101,7 +98,6 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.unauthorizedResponse();
   }
 
-  const formData = await req.json();
   const base64String = formData.fileBase64String as string;
 
   const buffer = Buffer.from(base64String.split(",")[1], "base64");

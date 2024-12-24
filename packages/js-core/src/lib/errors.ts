@@ -1,10 +1,17 @@
+/* eslint-disable no-console -- Required for logging a warning here */
 import { Logger } from "./logger";
 
 export type { ZErrorHandler } from "@formbricks/types/errors";
 
-export type ResultError<T> = { ok: false; error: T };
+export interface ResultError<T> {
+  ok: false;
+  error: T;
+}
 
-export type ResultOk<T> = { ok: true; value: T };
+export interface ResultOk<T> {
+  ok: true;
+  value: T;
+}
 
 export type Result<T, E = Error> = ResultOk<T> | ResultError<E>;
 
@@ -20,14 +27,14 @@ export const err = <E = Error>(error: E): ResultError<E> => ({
 export const wrap =
   <T, R>(fn: (value: T) => R) =>
   (result: Result<T>): Result<R> =>
-    result.ok === true ? { ok: true, value: fn(result.value) } : result;
+    result.ok ? { ok: true, value: fn(result.value) } : result;
 
 export function match<TSuccess, TError, TReturn>(
   result: Result<TSuccess, TError>,
   onSuccess: (value: TSuccess) => TReturn,
   onError: (error: TError) => TReturn
-) {
-  if (result.ok === true) {
+): TReturn {
+  if (result.ok) {
     return onSuccess(result.value);
   }
 
@@ -48,7 +55,7 @@ if (result.ok === true) {
 }
 */
 export const wrapThrows =
-  <T, A extends any[]>(fn: (...args: A) => T) =>
+  <T, A extends unknown[]>(fn: (...args: A) => T) =>
   (...args: A): Result<T> => {
     try {
       return {
@@ -63,58 +70,60 @@ export const wrapThrows =
     }
   };
 
-export type NetworkError = {
+export interface NetworkError {
   code: "network_error";
   status: number;
   message: string;
   url: string;
   responseMessage: string;
-};
+}
 
-export type MissingFieldError = {
+export interface MissingFieldError {
   code: "missing_field";
   field: string;
-};
+}
 
-export type InvalidMatchTypeError = {
+export interface InvalidMatchTypeError {
   code: "invalid_match_type";
   message: string;
-};
+}
 
-export type MissingPersonError = {
+export interface MissingPersonError {
   code: "missing_person";
   message: string;
-};
+}
 
-export type NotInitializedError = {
+export interface NotInitializedError {
   code: "not_initialized";
   message: string;
-};
+}
 
-export type AttributeAlreadyExistsError = {
+export interface AttributeAlreadyExistsError {
   code: "attribute_already_exists";
   message: string;
-};
+}
 
-export type InvalidCodeError = {
+export interface InvalidCodeError {
   code: "invalid_code";
   message: string;
-};
+}
 
 const logger = Logger.getInstance();
 
 export class ErrorHandler {
   private static instance: ErrorHandler | null;
-  private handleError: (error: any) => void;
-  public customized: boolean = false;
+  private handleError: (error: unknown) => void;
+  public customized = false;
   public static initialized = false;
 
-  private constructor(errorHandler?: (error: any) => void) {
+  private constructor(errorHandler?: (error: unknown) => void) {
     if (errorHandler) {
       this.handleError = errorHandler;
       this.customized = true;
     } else {
-      this.handleError = (err) => Logger.getInstance().error(JSON.stringify(err));
+      this.handleError = (error) => {
+        Logger.getInstance().error(JSON.stringify(error));
+      };
     }
   }
 
@@ -126,7 +135,7 @@ export class ErrorHandler {
     return ErrorHandler.instance;
   }
 
-  static init(errorHandler?: (error: any) => void): void {
+  static init(errorHandler?: (error: unknown) => void): void {
     this.initialized = true;
 
     ErrorHandler.instance = new ErrorHandler(errorHandler);
@@ -136,7 +145,7 @@ export class ErrorHandler {
     logger.debug(`Custom error handler: ${this.customized ? "yes" : "no"}`);
   }
 
-  public handle(error: any): void {
+  public handle(error: unknown): void {
     console.warn("🧱 Formbricks - Global error: ", error);
     this.handleError(error);
   }
