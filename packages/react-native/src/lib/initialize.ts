@@ -1,5 +1,5 @@
 import { type TAttributes } from "@formbricks/types/attributes";
-import { type TJsRNConfig, type TJsRNConfigInput } from "@formbricks/types/js";
+import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import {
   ErrorHandler,
   type MissingFieldError,
@@ -24,7 +24,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const initialize = async (
-  c: TJsRNConfigInput
+  c: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
