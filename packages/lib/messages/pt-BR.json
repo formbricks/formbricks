@@ -1545,6 +1545,8 @@
         "invalid_targeting": "Segmentação inválida: Por favor, verifique os filtros do seu público",
         "invalid_video_url_warning": "Por favor, insira uma URL válida do YouTube, Vimeo ou Loom. No momento, não suportamos outros provedores de vídeo.",
         "invalid_youtube_url": "URL do YouTube inválida",
+        "is_accepted": "Está aceito",
+
         "is_after": "é depois",
         "is_before": "é antes",
         "is_booked": "Tá reservado",
