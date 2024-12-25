@@ -1545,6 +1545,7 @@
         "invalid_targeting": "Ciblage invalide : Veuillez vérifier vos filtres d'audience",
         "invalid_video_url_warning": "Merci d'entrer une URL YouTube, Vimeo ou Loom valide. Les autres plateformes vidéo ne sont pas encore supportées.",
         "invalid_youtube_url": "URL YouTube invalide",
+        "is_accepted": "C'est accepté",
         "is_after": "est après",
         "is_before": "Est avant",
         "is_booked": "Est réservé",
