@@ -12,11 +12,12 @@ export const logoutPerson = async (): Promise<void> => {
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  const userId = appConfig.get().personState.data.userId;
   const syncParams = {
     environmentId: appConfig.get().environmentId,
     apiHost: appConfig.get().apiHost,
-    userId: appConfig.get().userId,
-    attributes: appConfig.get().state.attributes,
+    ...(userId && { userId }),
+    attributes: appConfig.get().attributes,
   };
   await logoutPerson();
   try {

@@ -1,4 +1,4 @@
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import type { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type InvalidCodeError,
   type NetworkError,
@@ -8,11 +8,13 @@ import {
 } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
 import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/lib/utils";
-import { appConfig } from "./config";
+import type { RNConfig } from "./config";
+// import { appConfig, RNConfig } from "./config";
 import { SurveyStore } from "./survey-store";
 
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
+// const appConfig = RNConfig.getInstance();
 
 export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
@@ -27,12 +29,17 @@ export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   surveyStore.setSurvey(survey);
 };
 
-export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
+export const trackAction = (
+  name: string,
+  appConfig: RNConfig,
+  alias?: string
+): Result<void, NetworkError> => {
   const aliasName = alias ?? name;
+
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = appConfig.get().state.surveys;
+  const activeSurveys = appConfig.get().filteredSurveys;
 
   if (Boolean(activeSurveys) && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
@@ -50,10 +57,13 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
 };
 
 export const trackCodeAction = (
-  code: string
+  code: string,
+  appConfig: RNConfig
 ): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
-    state: { actionClasses = [] },
+    environmentState: {
+      data: { actionClasses = [] },
+    },
   } = appConfig.get();
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
@@ -66,5 +76,5 @@ export const trackCodeAction = (
     });
   }
 
-  return trackAction(actionClass.name, code);
+  return trackAction(actionClass.name, appConfig, code);
 };

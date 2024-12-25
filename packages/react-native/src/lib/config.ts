@@ -5,7 +5,13 @@ import type { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 
 export class RNConfig {
-  private static instance: RNConfig | undefined;
+  /**
+   * We store a *Promise* in `instance` instead of a raw `RNConfig`.
+   * So once we start creating it, further calls to `getInstance()`
+   * will return the same Promise.
+   */
+  private static instance: Promise<RNConfig> | null = null;
+
   private config: TJsConfig | null = null;
 
   private constructor() {
@@ -20,14 +26,35 @@ export class RNConfig {
       });
   }
 
-  static getInstance(): RNConfig {
+  static getInstance(): Promise<RNConfig> {
     if (!RNConfig.instance) {
-      RNConfig.instance = new RNConfig();
+      // Create the instance once and store the Promise.
+      RNConfig.instance = (async () => {
+        const configInstance = new RNConfig();
+        // "Initialize" the instance: load from storage, etc.
+        await configInstance.init();
+        return configInstance;
+      })();
     }
     return RNConfig.instance;
   }
 
-  public update(newConfig: TJsConfigUpdateInput): void {
+  /**
+   * A separate async init method where you do your loading logic.
+   * This is called once inside getInstance().
+   */
+  private async init(): Promise<void> {
+    try {
+      const localConfig = await this.loadFromStorage();
+      if (localConfig.ok) {
+        this.config = localConfig.data;
+      }
+    } catch (e: unknown) {
+      console.error("Error loading config from storage", e);
+    }
+  }
+
+  public async update(newConfig: TJsConfigUpdateInput): Promise<void> {
     this.config = {
       ...this.config,
       ...newConfig,
@@ -37,7 +64,7 @@ export class RNConfig {
       },
     };
 
-    void this.saveToStorage();
+    await this.saveToStorage();
   }
 
   public get(): TJsConfig {
@@ -49,7 +76,6 @@ export class RNConfig {
 
   public async loadFromStorage(): Promise<Result<TJsConfig>> {
     try {
-      // const savedConfig = await this.storageHandler.getItem(this.storageKey);
       const savedConfig = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
       if (savedConfig) {
         const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
