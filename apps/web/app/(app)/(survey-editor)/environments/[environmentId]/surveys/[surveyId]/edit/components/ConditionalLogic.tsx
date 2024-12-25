@@ -53,7 +53,7 @@ export function ConditionalLogic({
   }, [localSurvey, contactAttributeKeys]);
 
   const addLogic = () => {
-    const operator = getDefaultOperatorForQuestion(question);
+    const operator = getDefaultOperatorForQuestion(question, t);
 
     const initialCondition: TSurveyLogic = {
       id: createId(),
