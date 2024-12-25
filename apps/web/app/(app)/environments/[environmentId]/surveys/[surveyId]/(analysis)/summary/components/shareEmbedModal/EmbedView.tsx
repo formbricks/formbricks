@@ -60,7 +60,7 @@ export const EmbedView = ({
                 onClick={() => setActiveId(tab.id)}
                 autoFocus={tab.id === activeId}
                 className={cn(
-                  "rounded-md border px-4 py-2 text-slate-600",
+                  "flex justify-start rounded-md border px-4 py-2 text-slate-600",
                   // "focus:ring-0 focus:ring-offset-0", // enable these classes to remove the focus rings on buttons
                   tab.id === activeId
                     ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"

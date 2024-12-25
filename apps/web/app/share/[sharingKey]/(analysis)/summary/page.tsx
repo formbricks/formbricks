@@ -18,9 +18,10 @@ interface SummaryPageProps {
   params: Params;
 }
 
-const Page = async ({ params }: SummaryPageProps) => {
+const Page = async (props: SummaryPageProps) => {
   const t = await getTranslations();
-  const surveyId = await getSurveyIdByResultShareKey((await params).sharingKey);
+  const params = await props.params;
+  const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
     return notFound();

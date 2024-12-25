@@ -109,10 +109,7 @@ const Page = async (props: LinkSurveyPageProps) => {
   let verifiedEmail: string | undefined = undefined;
 
   if (survey.isVerifyEmailEnabled) {
-    const token =
-      Object.keys(searchParams).length !== 0 && Object.prototype.hasOwnProperty.call(searchParams, "verify")
-        ? searchParams.verify
-        : undefined;
+    const token = searchParams.verify;
 
     if (token) {
       const emailVerificationDetails = await getEmailVerificationDetails(survey.id, token);

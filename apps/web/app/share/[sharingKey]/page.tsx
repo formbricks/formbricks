@@ -4,8 +4,9 @@ type Params = Promise<{
   sharingKey: string;
 }>;
 
-const Page = async ({ params }: { params: Params }) => {
-  return redirect(`/share/${(await params).sharingKey}/summary`);
+const Page = async (props: { params: Params }) => {
+  const params = await props.params;
+  return redirect(`/share/${params.sharingKey}/summary`);
 };
 
 export default Page;

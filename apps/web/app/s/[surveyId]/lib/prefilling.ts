@@ -128,7 +128,7 @@ export const transformAnswer = (
 
       answerChoicesIdx.forEach((ansIdx) => {
         const choice = question.choices[Number(ansIdx) - 1];
-        answerArr.push(choice.id);
+        if (choice) answerArr.push(choice.id);
       });
 
       if (question.allowMulti) return answerArr;
