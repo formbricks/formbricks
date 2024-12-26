@@ -344,6 +344,7 @@ export const QuestionsView = ({
     const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
+    setActiveQuestionId(newEndingCard.id);
 
     setLocalSurvey(updatedSurvey);
   };
@@ -457,7 +458,6 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
-          internalQuestionIdMap={internalQuestionIdMap}
           contactAttributeKeys={contactAttributeKeys}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
