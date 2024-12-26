@@ -128,12 +128,19 @@ export const SignupForm = ({
 
           router.push(url);
         } else {
-          turnstile.reset();
+          if (isTurnstileConfigured) {
+            setTurnstileToken(undefined);
+            turnstile.reset();
+          }
+
           const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
           toast.error(errorMessage);
         }
       } else {
-        turnstile.reset();
+        if (isTurnstileConfigured) {
+          setTurnstileToken(undefined);
+          turnstile.reset();
+        }
 
         const errorMessage = getFormattedErrorMessage(createUserResponse);
         toast.error(errorMessage);
