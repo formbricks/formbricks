@@ -13,13 +13,10 @@ import type { TJsEnvironmentStateSurvey, TJsFileUploadParams, TJsPersonState } f
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
 import { Logger } from "../../js-core/src/lib/logger";
-import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
+import { filterSurveys, getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
 import { appConfig } from "./lib/config";
 import { StorageAPI } from "./lib/storage";
 import { SurveyStore } from "./lib/survey-store";
-import { filterSurveys } from "./lib/utils";
-
-// import { sync } from "./lib/sync";
 
 const logger = Logger.getInstance();
 logger.configure({ logLevel: "debug" });

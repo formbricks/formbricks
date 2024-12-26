@@ -14,16 +14,15 @@ import {
   okVoid,
 } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
+import { filterSurveys } from "../../../js-core/src/lib/utils";
 import { trackAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { appConfig } from "./config";
 import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
-import { filterSurveys } from "./utils";
 
 let isInitialized = false;
-// const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const setIsInitialize = (state: boolean): void => {
@@ -262,8 +261,6 @@ export const handleErrorOnFirstInit = async (e: {
     },
   };
 
-  // can't use config.update here because the config is not yet initialized
-  // wrapThrows(() => localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
   await wrapThrowsAsync(async () => {
     await AsyncStorage.setItem(RN_ASYNC_STORAGE_KEY, JSON.stringify(initialErrorConfig));
   })();

@@ -22,7 +22,7 @@ export function Formbricks({ initConfig }: FormbricksProps): React.JSX.Element |
           userId: initConfig.userId,
           attributes: initConfig.attributes,
         });
-      } catch (error) {
+      } catch {
         logger.debug("Initialization failed");
       }
     };

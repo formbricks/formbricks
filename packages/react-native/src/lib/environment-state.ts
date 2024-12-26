@@ -3,8 +3,8 @@
 import { type TJsEnvironmentState, type TJsEnvironmentSyncParams } from "@formbricks/types/js";
 import { err } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
+import { filterSurveys } from "../../../js-core/src/lib/utils";
 import { RNConfig } from "./config";
-import { filterSurveys } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
