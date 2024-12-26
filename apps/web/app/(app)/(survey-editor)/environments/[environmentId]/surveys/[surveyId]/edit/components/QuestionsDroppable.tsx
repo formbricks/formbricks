@@ -18,7 +18,6 @@ interface QuestionsDraggableProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   invalidQuestions: string[] | null;
-  internalQuestionIdMap: Record<string, string>;
   contactAttributeKeys: TContactAttributeKey[];
   addQuestion: (question: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -38,7 +37,6 @@ export const QuestionsDroppable = ({
   setActiveQuestionId,
   setSelectedLanguageCode,
   updateQuestion,
-  internalQuestionIdMap,
   contactAttributeKeys,
   addQuestion,
   isFormbricksCloud,
@@ -52,7 +50,7 @@ export const QuestionsDroppable = ({
       <SortableContext items={localSurvey.questions} strategy={verticalListSortingStrategy}>
         {localSurvey.questions.map((question, questionIdx) => (
           <QuestionCard
-            key={internalQuestionIdMap[question.id]}
+            key={question.id}
             localSurvey={localSurvey}
             project={project}
             question={question}
