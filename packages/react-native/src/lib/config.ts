@@ -5,12 +5,7 @@ import type { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 
 export class RNConfig {
-  /**
-   * We store a *Promise* in `instance` instead of a raw `RNConfig`.
-   * So once we start creating it, further calls to `getInstance()`
-   * will return the same Promise.
-   */
-  private static instance: Promise<RNConfig> | null = null;
+  private static instance: RNConfig | null = null;
 
   private config: TJsConfig | null = null;
 
@@ -26,35 +21,15 @@ export class RNConfig {
       });
   }
 
-  static getInstance(): Promise<RNConfig> {
+  static getInstance(): RNConfig {
     if (!RNConfig.instance) {
-      // Create the instance once and store the Promise.
-      RNConfig.instance = (async () => {
-        const configInstance = new RNConfig();
-        // "Initialize" the instance: load from storage, etc.
-        await configInstance.init();
-        return configInstance;
-      })();
+      RNConfig.instance = new RNConfig();
     }
+
     return RNConfig.instance;
   }
 
-  /**
-   * A separate async init method where you do your loading logic.
-   * This is called once inside getInstance().
-   */
-  private async init(): Promise<void> {
-    try {
-      const localConfig = await this.loadFromStorage();
-      if (localConfig.ok) {
-        this.config = localConfig.data;
-      }
-    } catch (e: unknown) {
-      console.error("Error loading config from storage", e);
-    }
-  }
-
-  public async update(newConfig: TJsConfigUpdateInput): Promise<void> {
+  public update(newConfig: TJsConfigUpdateInput): void {
     this.config = {
       ...this.config,
       ...newConfig,
@@ -64,7 +39,7 @@ export class RNConfig {
       },
     };
 
-    await this.saveToStorage();
+    void this.saveToStorage();
   }
 
   public get(): TJsConfig {
@@ -105,7 +80,6 @@ export class RNConfig {
   }
 
   // reset the config
-
   public async resetConfig(): Promise<Result<void>> {
     this.config = null;
 

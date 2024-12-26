@@ -53,7 +53,8 @@ export const fetchPersonState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw new Error(error.error.message);
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
+    throw error.error;
   }
 
   const data = (await response.json()) as { data: TJsPersonState["data"] };
@@ -82,12 +83,11 @@ export const fetchPersonState = async (
 
 /**
  * Add a listener to check if the person state has expired with a certain interval
- * @param config - The configuration for the SDK
  */
 export const addPersonStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every 60 seconds
 
-  if (typeof window !== "undefined" && personStateSyncIntervalId === null) {
+  if (personStateSyncIntervalId === null) {
     const intervalHandler = (): void => {
       const userId = config.get().personState.data.userId;
 
@@ -105,7 +105,7 @@ export const addPersonStateExpiryCheckListener = (): void => {
       });
     };
 
-    personStateSyncIntervalId = window.setInterval(intervalHandler, updateInterval);
+    personStateSyncIntervalId = setInterval(intervalHandler, updateInterval) as unknown as number;
   }
 };
 

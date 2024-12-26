@@ -6,7 +6,7 @@ import { Logger } from "../../../js-core/src/lib/logger";
 import { RNConfig } from "./config";
 import { filterSurveys } from "./utils";
 
-const config = RNConfig.getInstance();
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 let environmentStateSyncIntervalId: number | null = null;
 
@@ -57,11 +57,15 @@ export const fetchEnvironmentState = async (
   };
 };
 
+/**
+ * Add a listener to check if the environment state has expired with a certain interval
+ */
 export const addEnvironmentStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every minute
-  if (typeof window !== "undefined" && environmentStateSyncIntervalId === null) {
-    const intervalHandler = async () => {
-      const expiresAt = config.get().environmentState.expiresAt;
+
+  if (environmentStateSyncIntervalId === null) {
+    const intervalHandler = async (): Promise<void> => {
+      const expiresAt = appConfig.get().environmentState.expiresAt;
 
       try {
         // check if the environmentState has not expired yet
@@ -72,31 +76,34 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
 
         logger.debug("Environment State has expired. Starting sync.");
 
-        const personState = config.get().personState;
+        const personState = appConfig.get().personState;
         const environmentState = await fetchEnvironmentState(
           {
-            apiHost: config.get().apiHost,
-            environmentId: config.get().environmentId,
+            apiHost: appConfig.get().apiHost,
+            environmentId: appConfig.get().environmentId,
           },
           true
         );
 
         const filteredSurveys = filterSurveys(environmentState, personState);
 
-        config.update({
-          ...config.get(),
+        appConfig.update({
+          ...appConfig.get(),
           environmentState,
           filteredSurveys,
         });
       } catch (e) {
         console.error(`Error during expiry check: ${e as string}`);
         logger.debug("Extending config and try again later.");
-        const existingConfig = config.get();
-        config.update(existingConfig);
+        const existingConfig = appConfig.get();
+        appConfig.update(existingConfig);
       }
     };
 
-    environmentStateSyncIntervalId = window.setInterval(() => void intervalHandler(), updateInterval);
+    environmentStateSyncIntervalId = setInterval(
+      () => void intervalHandler(),
+      updateInterval
+    ) as unknown as number;
   }
 };
 

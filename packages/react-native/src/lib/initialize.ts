@@ -1,5 +1,8 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type TAttributes } from "@formbricks/types/attributes";
+import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
+import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 import {
   ErrorHandler,
   type MissingFieldError,
@@ -15,6 +18,7 @@ import { trackAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { appConfig } from "./config";
 import { fetchEnvironmentState } from "./environment-state";
+import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
 import { filterSurveys } from "./utils";
 
@@ -129,7 +133,7 @@ export const initialize = async (
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       // update the appConfig with the new filtered surveys
-      await appConfig.update({
+      appConfig.update({
         ...existingConfig,
         environmentState,
         personState,
@@ -195,7 +199,7 @@ export const initialize = async (
         }
       }
 
-      await appConfig.update({
+      appConfig.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
         personState,
@@ -204,12 +208,16 @@ export const initialize = async (
         attributes: updatedAttributes ?? {},
       });
     } catch (e) {
-      // handleErrorOnFirstInit(e);
+      await handleErrorOnFirstInit(e as { code: string; responseMessage: string });
     }
 
     // and track the new session event
     trackAction("New Session", appConfig);
   }
+
+  logger.debug("Adding event listeners");
+  addEventListeners();
+  addCleanupEventListeners();
 
   setIsInitialize(true);
   logger.debug("Initialized");
@@ -233,7 +241,32 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 export const deinitalize = async (): Promise<void> => {
   logger.debug("Deinitializing");
-  // closeSurvey();
   await appConfig.resetConfig();
   setIsInitialize(false);
+  removeAllEventListeners();
+};
+
+export const handleErrorOnFirstInit = async (e: {
+  code: string;
+  responseMessage: string;
+}): Promise<never> => {
+  if (e.code === "forbidden") {
+    logger.error(`Authorization error: ${e.responseMessage}`);
+  }
+
+  // put formbricks in error state (by creating a new config) and throw error
+  const initialErrorConfig: Partial<TJsConfig> = {
+    status: {
+      value: "error",
+      expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
+    },
+  };
+
+  // can't use config.update here because the config is not yet initialized
+  // wrapThrows(() => localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  await wrapThrowsAsync(async () => {
+    await AsyncStorage.setItem(RN_ASYNC_STORAGE_KEY, JSON.stringify(initialErrorConfig));
+  })();
+
+  throw new Error("Could not initialize formbricks");
 };
