@@ -122,7 +122,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
             disabled={disabled}
-            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 outline-none"
+            className="placeholder:text-muted-foreground h-5 flex-1 border-0 bg-transparent pl-2 text-sm outline-none"
           />
         </div>
       </div>
