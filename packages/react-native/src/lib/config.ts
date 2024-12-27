@@ -88,5 +88,3 @@ export class RNConfig {
     })();
   }
 }
-
-export const appConfig = RNConfig.getInstance();

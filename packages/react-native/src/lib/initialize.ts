@@ -17,12 +17,13 @@ import { Logger } from "../../../js-core/src/lib/logger";
 import { filterSurveys } from "../../../js-core/src/lib/utils";
 import { trackAction } from "./actions";
 import { updateAttributes } from "./attributes";
-import { appConfig } from "./config";
+import { RNConfig } from "./config";
 import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
 
 let isInitialized = false;
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const setIsInitialize = (state: boolean): void => {
@@ -211,7 +212,7 @@ export const initialize = async (
     }
 
     // and track the new session event
-    trackAction("New Session", appConfig);
+    trackAction("New Session");
   }
 
   logger.debug("Adding event listeners");

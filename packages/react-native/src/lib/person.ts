@@ -1,8 +1,9 @@
 import { type NetworkError, type Result, err, okVoid } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
-import { appConfig } from "./config";
+import { RNConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const logoutPerson = async (): Promise<void> => {

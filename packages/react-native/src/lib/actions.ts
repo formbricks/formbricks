@@ -8,13 +8,12 @@ import {
 } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
 import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/lib/utils";
-import type { RNConfig } from "./config";
-// import { appConfig, RNConfig } from "./config";
+import { RNConfig } from "./config";
 import { SurveyStore } from "./survey-store";
 
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
-// const appConfig = RNConfig.getInstance();
 
 export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
@@ -29,11 +28,7 @@ export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   surveyStore.setSurvey(survey);
 };
 
-export const trackAction = (
-  name: string,
-  appConfig: RNConfig,
-  alias?: string
-): Result<void, NetworkError> => {
+export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
   const aliasName = alias ?? name;
 
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
@@ -57,8 +52,7 @@ export const trackAction = (
 };
 
 export const trackCodeAction = (
-  code: string,
-  appConfig: RNConfig
+  code: string
 ): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
     environmentState: {
@@ -76,5 +70,5 @@ export const trackCodeAction = (
     });
   }
 
-  return trackAction(actionClass.name, appConfig, code);
+  return trackAction(actionClass.name, code);
 };

@@ -14,10 +14,11 @@ import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
 import { Logger } from "../../js-core/src/lib/logger";
 import { filterSurveys, getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
-import { appConfig } from "./lib/config";
+import { RNConfig } from "./lib/config";
 import { StorageAPI } from "./lib/storage";
 import { SurveyStore } from "./lib/survey-store";
 
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 logger.configure({ logLevel: "debug" });
 
@@ -213,8 +214,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               const existingDisplays = appConfig.get().personState.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
 
-              // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- existingDisplays is not always defined
-              const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
+              const displays = [...existingDisplays, newDisplay];
               const previousConfig = appConfig.get();
 
               const updatedPersonState = {
