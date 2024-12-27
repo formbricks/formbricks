@@ -31,13 +31,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   const { isSubmitting } = form.formState;
 
   const inviteTeamMembers = async (data: TInviteMembersFormSchema) => {
-    const members = Object.values(data).filter((member) => member.email && member.email.trim());
-    if (!members.length) {
-      router.push("/");
-      return;
-    }
-
-    for (const member of members) {
+    for (const member of Object.values(data)) {
       try {
         if (!member.email) continue;
         await inviteOrganizationMemberAction({
@@ -49,7 +43,6 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           toast.success(`${t("setup.invite.invitation_sent_to")} ${member.email}!`);
         }
       } catch (error) {
-        console.error("Failed to invite:", member.email, error);
         toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
       }
     }
@@ -69,16 +62,21 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           <AlertDescription>{t("setup.invite.smtp_not_configured_description")}</AlertDescription>
         </Alert>
       )}
-      <form onSubmit={form.handleSubmit(inviteTeamMembers)} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void form.handleSubmit(inviteTeamMembers)(e);
+        }}
+        className="space-y-4">
         <div className="flex flex-col items-center space-y-4">
           <h2 className="text-2xl font-medium">{t("setup.invite.invite_your_organization_members")}</h2>
           <p>{t("setup.invite.life_s_no_fun_alone")}</p>
 
           {Array.from({ length: membersCount }).map((_, index) => (
-            <div key={`member-${index}`} className="space-y-2">
+            <div key={`member-${index.toString()}`} className="space-y-2">
               <FormField
                 control={form.control}
-                name={`member-${index}.email`}
+                name={`member-${index.toString()}.email`}
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
                     <FormControl>
@@ -88,7 +86,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
                             {...field}
                             placeholder={`user@example.com`}
                             className="w-80"
-                            isInvalid={!!error?.message}
+                            isInvalid={Boolean(error?.message)}
                           />
                         </div>
                         {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -99,7 +97,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
               />
               <FormField
                 control={form.control}
-                name={`member-${index}.name`}
+                name={`member-${index.toString()}.name`}
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
                     <FormControl>
@@ -109,7 +107,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
                             {...field}
                             placeholder={`Full Name (optional)`}
                             className="w-80"
-                            isInvalid={!!error?.message}
+                            isInvalid={Boolean(error?.message)}
                           />
                         </div>
                         {error?.message && <FormError className="text-left">{error.message}</FormError>}
@@ -121,7 +119,12 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
             </div>
           ))}
 
-          <Button variant="ghost" onClick={() => setMembersCount((count) => count + 1)} type="button">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setMembersCount((count) => count + 1);
+            }}
+            type="button">
             <PlusIcon />
             {t("setup.invite.add_another_member")}
           </Button>

@@ -1,4 +1,4 @@
-import { RemovedFromOrganization } from "@/app/setup/organization/create/components/RemovedFromOrganization";
+import { RemovedFromOrganization } from "@/app/setup/organization/create/components/removed-from-organization";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
@@ -11,7 +11,7 @@ import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { CreateOrganization } from "./components/CreateOrganization";
+import { CreateOrganization } from "./components/create-organization";
 
 export const metadata: Metadata = {
   title: "Create Organization",
@@ -37,7 +37,7 @@ const Page = async () => {
     return <CreateOrganization />;
   }
 
-  if (!hasNoOrganizations && userOrganizations.length === 0 && !isMultiOrgEnabled) {
+  if (userOrganizations.length === 0) {
     return <RemovedFromOrganization user={user} isFormbricksCloud={IS_FORMBRICKS_CLOUD} />;
   }
 

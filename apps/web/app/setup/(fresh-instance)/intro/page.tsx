@@ -8,27 +8,20 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
+const renderRichText = async (text: string) => {
+  const t = await getTranslations();
+  return <p>{t.rich(text, { b: (chunks) => <b>{chunks}</b> })}</p>;
+};
+
 const Page = async () => {
   const t = await getTranslations();
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">{t("setup.intro.welcome_to_formbricks")}</h2>
       <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
-        <p>
-          {t.rich("setup.intro.paragraph_1", {
-            b: (chunks) => <b>{chunks}</b>,
-          })}
-        </p>
-        <p>
-          {t.rich("setup.intro.paragraph_2", {
-            b: (chunks) => <b>{chunks}</b>,
-          })}
-        </p>
-        <p>
-          {t.rich("setup.intro.paragraph_3", {
-            b: (chunks) => <b>{chunks}</b>,
-          })}
-        </p>
+        {renderRichText("setup.intro.paragraph_1")}
+        {renderRichText("setup.intro.paragraph_2")}
+        {renderRichText("setup.intro.paragraph_3")}
       </div>
       <Button className="mt-6" asChild>
         <Link href="/setup/signup">{t("setup.intro.get_started")}</Link>
