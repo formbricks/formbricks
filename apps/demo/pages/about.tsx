@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-export default function SearchPage() {
+export default function AboutPage() {
   return (
     <div>
-      <h1>Search</h1>
-      <Link href="/about?formbricksDebug=true">About</Link>
+      <h1>About</h1>
+      <Link href="/search?formbricksDebug=true">Search</Link>
       <Link href="/?formbricksDebug=true">Home</Link>
     </div>
   );

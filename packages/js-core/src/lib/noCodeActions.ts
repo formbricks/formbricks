@@ -27,24 +27,29 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
   );
 
+  // Track if we found any event with a valid URL
+  // let foundValidUrl = false;
+
   for (const event of noCodePageViewActionClasses) {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
     const isValidUrl = handleUrlFilters(urlFilters);
 
-    console.log("current timeout stack", timeoutStack.getTimeouts());
+    if (isValidUrl) {
+      const trackResult = await trackNoCodeAction(event.name);
 
-    // if (!isValidUrl) {
-    timeoutStack.clear();
-    setIsSurveyRunning(false);
-    //   continue;
-    // }
+      if (trackResult.ok !== true) {
+        return err(trackResult.error);
+      }
+    } else {
+      const scheduledTimeouts = timeoutStack.getTimeouts();
 
-    if (!isValidUrl) {
-      continue;
+      const scheduledTimeout = scheduledTimeouts.find((timeout) => timeout.event === event.name);
+      // If invalid, clear if it's scheduled
+      if (scheduledTimeout) {
+        timeoutStack.remove(scheduledTimeout.timeoutId);
+        setIsSurveyRunning(false);
+      }
     }
-
-    const trackResult = await trackNoCodeAction(event.name);
-    if (trackResult.ok !== true) return err(trackResult.error);
   }
 
   return okVoid();

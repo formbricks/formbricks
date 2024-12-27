@@ -112,7 +112,10 @@ const AppPage = ({}) => {
           </div>
         </div>
 
-        <Link href="/search">Search</Link>
+        <div className="h-20 w-20">
+          <Link href="/search?formbricksDebug=true">Search</Link>
+          <Link href="/about?formbricksDebug=true">About</Link>
+        </div>
 
         <div className="md:grid md:grid-cols-3">
           <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">

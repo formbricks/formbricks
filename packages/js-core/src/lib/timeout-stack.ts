@@ -1,6 +1,7 @@
 export class TimeoutStack {
   private static instance: TimeoutStack;
-  private timeouts: number[] = [];
+  // private timeouts: number[] = [];
+  private timeouts: { event: string; timeoutId: number }[] = [];
 
   // Private constructor to prevent direct instantiation
   private constructor() {}
@@ -14,28 +15,29 @@ export class TimeoutStack {
   }
 
   // Add a new timeout ID to the stack
-  public add(timeoutId: number): void {
-    console.log("Adding timeout ID to stack:", timeoutId);
-    this.timeouts.push(timeoutId);
-    console.log("Current timeout stack:", this.timeouts);
+  public add(event: string, timeoutId: number): void {
+    this.timeouts.push({ event, timeoutId });
   }
 
   // Clear a specific timeout and remove it from the stack
   public remove(timeoutId: number): void {
     clearTimeout(timeoutId);
-    this.timeouts = this.timeouts.filter((id) => id !== timeoutId);
+    this.timeouts = this.timeouts.filter((timeout) => timeout.timeoutId !== timeoutId);
   }
 
   // Clear all timeouts and reset the stack
   public clear(): void {
-    for (const timeoutId of this.timeouts) {
-      clearTimeout(timeoutId);
+    for (const timeout of this.timeouts) {
+      clearTimeout(timeout.timeoutId);
     }
     this.timeouts = [];
   }
 
   // Get the current stack of timeout IDs
-  public getTimeouts(): number[] {
+  public getTimeouts(): {
+    event: string;
+    timeoutId: number;
+  }[] {
     return this.timeouts;
   }
 }
