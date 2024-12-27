@@ -11,7 +11,7 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 
 const ZCreateOrganizationAction = z.object({
-  organizationName: z.string(),
+  organizationName: z.string().min(1, "Organization name must be at least 1 character long"),
 });
 
 export const createOrganizationAction = authenticatedActionClient
