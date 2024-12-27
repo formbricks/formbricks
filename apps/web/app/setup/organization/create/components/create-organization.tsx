@@ -1,6 +1,6 @@
 "use client";
 
-import { createOrganizationAction } from "@/app/setup/organization/create/actions";
+import { createOrganizationAction } from "@/modules/organization/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -31,10 +31,9 @@ export const CreateOrganization = () => {
 
   const organizationName = form.watch("name");
 
-  const onSubmit: SubmitHandler<TCreateOrganizationForm> = async (data) => {
+  const onSubmit: SubmitHandler<TCreateOrganizationForm> = async () => {
     try {
       setIsSubmitting(true);
-      const organizationName = data.name.trim();
       const createOrganizationResponse = await createOrganizationAction({ organizationName });
       if (createOrganizationResponse?.data) {
         router.push(`/setup/organization/${createOrganizationResponse.data.id}/invite`);
@@ -47,7 +46,11 @@ export const CreateOrganization = () => {
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void form.handleSubmit(onSubmit)(e);
+        }}>
         <div className="flex flex-col items-center space-y-4">
           <h2 className="text-2xl font-medium">{t("setup.organization.create.title")}</h2>
           <p>{t("setup.organization.create.description")}</p>
@@ -59,7 +62,7 @@ export const CreateOrganization = () => {
                 <FormControl>
                   <Input
                     {...field}
-                    isInvalid={!!form.formState.errors.name}
+                    isInvalid={Boolean(form.formState.errors.name)}
                     placeholder="e.g., Acme Inc"
                     className="w-80"
                     required
