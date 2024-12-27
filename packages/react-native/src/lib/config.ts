@@ -1,12 +1,13 @@
 /* eslint-disable no-console -- Required for error logging */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import type { TJsRNConfig, TJsRNConfigUpdateInput } from "@formbricks/types/js";
+import type { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 
 export class RNConfig {
-  private static instance: RNConfig | undefined;
-  private config: TJsRNConfig | null = null;
+  private static instance: RNConfig | null = null;
+
+  private config: TJsConfig | null = null;
 
   private constructor() {
     this.loadFromStorage()
@@ -24,42 +25,48 @@ export class RNConfig {
     if (!RNConfig.instance) {
       RNConfig.instance = new RNConfig();
     }
+
     return RNConfig.instance;
   }
 
-  public update(newConfig: TJsRNConfigUpdateInput): void {
+  public update(newConfig: TJsConfigUpdateInput): void {
     this.config = {
       ...this.config,
       ...newConfig,
-      status: newConfig.status ?? "success",
+      status: {
+        value: newConfig.status?.value ?? "success",
+        expiresAt: newConfig.status?.expiresAt ?? null,
+      },
     };
 
     void this.saveToStorage();
   }
 
-  public get(): TJsRNConfig {
+  public get(): TJsConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public async loadFromStorage(): Promise<Result<TJsRNConfig>> {
+  public async loadFromStorage(): Promise<Result<TJsConfig>> {
     try {
-      // const savedConfig = await this.storageHandler.getItem(this.storageKey);
       const savedConfig = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
       if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig) as TJsRNConfig;
+        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
 
         // check if the config has expired
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- need to check if expiresAt is set
-        if (parsedConfig.expiresAt && new Date(parsedConfig.expiresAt) <= new Date()) {
+        if (
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- need to check if expiresAt is set
+          parsedConfig.environmentState.expiresAt &&
+          new Date(parsedConfig.environmentState.expiresAt) <= new Date()
+        ) {
           return err(new Error("Config in local storage has expired"));
         }
 
         return ok(parsedConfig);
       }
-    } catch (e) {
+    } catch {
       return err(new Error("No or invalid config in local storage"));
     }
 
@@ -73,7 +80,6 @@ export class RNConfig {
   }
 
   // reset the config
-
   public async resetConfig(): Promise<Result<void>> {
     this.config = null;
 
@@ -82,5 +88,3 @@ export class RNConfig {
     })();
   }
 }
-
-export const appConfig = RNConfig.getInstance();

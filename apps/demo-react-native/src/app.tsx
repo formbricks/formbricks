@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import type { JSX } from "react";
+import React, { type JSX } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
 import Formbricks, { track } from "@formbricks/react-native";
 
@@ -15,8 +15,8 @@ export default function App(): JSX.Element {
   }
 
   const config = {
-    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-    apiHost: process.env.EXPO_PUBLIC_API_HOST,
+    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID as string,
+    apiHost: process.env.EXPO_PUBLIC_API_HOST as string,
     userId: "random-user-id",
     attributes: {
       language: "en",
