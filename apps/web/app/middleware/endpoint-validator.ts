@@ -15,7 +15,7 @@ export const isClientSideApiRoute = (url: string): boolean => {
 };
 
 export const isShareUrlRoute = (url: string): boolean => {
-  const regex = /\/share\/[A-Za-z0-9]+\/(summary|responses)/;
+  const regex = /\/share\/[A-Za-z0-9]+\/(?:summary|responses)/;
   return regex.test(url);
 };
 
@@ -29,7 +29,7 @@ export const isAuthProtectedRoute = (url: string): boolean => {
 export const isSyncWithUserIdentificationEndpoint = (
   url: string
 ): { environmentId: string; userId: string } | false => {
-  const regex = /\/api\/v1\/client\/([^/]+)\/app\/sync\/([^/]+)/;
+  const regex = /\/api\/v1\/client\/(?<environmentId>[^/]+)\/app\/sync\/(?<userId>[^/]+)/;
   const match = url.match(regex);
-  return match ? { environmentId: match[1], userId: match[2] } : false;
+  return match ? { environmentId: match.groups!.environmentId, userId: match.groups!.userId } : false;
 };

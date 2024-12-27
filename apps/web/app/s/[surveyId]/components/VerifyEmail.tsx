@@ -4,6 +4,7 @@ import {
   getIfResponseWithSurveyIdAndEmailExistAction,
   sendLinkSurveyEmailAction,
 } from "@/app/s/[surveyId]/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -83,8 +84,13 @@ export const VerifyEmail = ({
       locale,
     };
     try {
-      await sendLinkSurveyEmailAction(data);
-      setEmailSent(true);
+      const response = await sendLinkSurveyEmailAction(data);
+      if (response?.data) {
+        setEmailSent(true);
+      } else {
+        const formattedErrorMessage = getFormattedErrorMessage(response);
+        toast.error(formattedErrorMessage);
+      }
     } catch (error) {
       toast.error(error.message);
     }

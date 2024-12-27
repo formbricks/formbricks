@@ -9,11 +9,13 @@ import { getIfResponseWithSurveyIdAndEmailExist } from "@formbricks/lib/response
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
+import { InvalidInputError } from "@formbricks/types/errors";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
-    return await sendLinkSurveyToVerifiedEmail(parsedInput);
+    await sendLinkSurveyToVerifiedEmail(parsedInput);
+    return { success: true };
   });
 
 const ZVerifyTokenAction = z.object({
@@ -39,7 +41,9 @@ export const validateSurveyPinAction = actionClient
     const originalPin = survey.pin?.toString();
 
     if (!originalPin) return { survey };
-    if (originalPin !== parsedInput.pin) return { error: TSurveyPinValidationResponseError.INCORRECT_PIN };
+    if (originalPin !== parsedInput.pin) {
+      throw new InvalidInputError("INVALID_PIN");
+    }
 
     return { survey };
   });

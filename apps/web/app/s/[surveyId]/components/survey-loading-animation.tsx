@@ -39,9 +39,10 @@ export const SurveyLoadingAnimation = ({
     checkMediaLoaded();
 
     const mediaElements = document.querySelectorAll(`#${cardId} img, #${cardId} iframe`);
-    const handleLoad = () => checkMediaLoaded();
+    const handleLoad = () => {
+      checkMediaLoaded();
+    };
     const handleError = () => {
-      console.error("Media failed to load");
       setIsMediaLoaded(true);
     };
 
@@ -71,7 +72,9 @@ export const SurveyLoadingAnimation = ({
         setIsHidden(true);
       }, 500);
 
-      return () => clearTimeout(hideTimer);
+      return () => {
+        clearTimeout(hideTimer);
+      };
     } else {
       setIsHidden(false);
     }
@@ -118,7 +121,7 @@ export const SurveyLoadingAnimation = ({
           "flex flex-col items-center space-y-4",
           isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
-        <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
+        <Image src={Logo as string} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
         <LoadingSpinner />
       </div>
     </div>

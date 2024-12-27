@@ -1,7 +1,7 @@
 "use client";
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
-import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
 import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { OTPInput } from "@/modules/ui/components/otp-input";
@@ -56,19 +56,6 @@ export const PinScreen = (props: PinScreenProps) => {
   const [error, setError] = useState<TSurveyPinValidationResponseError>();
   const [survey, setSurvey] = useState<TSurvey>();
 
-  const _validateSurveyPinAsync = useCallback(async (surveyId: string, pin: string) => {
-    const response = await validateSurveyPinAction({ surveyId, pin });
-
-    if (response?.data) {
-      setSurvey(response.data.survey);
-    } else {
-      const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
-      setError(errorMessage);
-    }
-
-    setLoading(false);
-  }, []);
-
   const resetState = useCallback(() => {
     setError(undefined);
     setLoading(false);
@@ -77,7 +64,9 @@ export const PinScreen = (props: PinScreenProps) => {
 
   useEffect(() => {
     if (error) {
-      const timeout = setTimeout(() => resetState(), 2 * 1000);
+      const timeout = setTimeout(() => {
+        resetState();
+      }, 2 * 1000);
       return () => {
         clearTimeout(timeout);
       };
@@ -85,19 +74,24 @@ export const PinScreen = (props: PinScreenProps) => {
   }, [error, resetState]);
 
   useEffect(() => {
-    const validPinRegex = /^\d{4}$/;
-    const isValidPin = validPinRegex.test(localPinEntry);
+    const validateSurveyPin = async () => {
+      const validPinRegex = /^\d{4}$/;
+      const isValidPin = validPinRegex.test(localPinEntry);
+      if (isValidPin) {
+        setLoading(true);
+        const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
+        if (response?.data) {
+          setSurvey(response.data.survey);
+        } else {
+          const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
+          setError(errorMessage);
+        }
+        setLoading(false);
+      }
+    };
 
-    if (isValidPin) {
-      // Show loading and check against the server
-      setLoading(true);
-      _validateSurveyPinAsync(surveyId, localPinEntry);
-      return;
-    }
-
-    setError(undefined);
-    setLoading(false);
-  }, [_validateSurveyPinAsync, localPinEntry, surveyId]);
+    void validateSurveyPin();
+  }, [localPinEntry, surveyId]);
 
   if (!survey) {
     return (
@@ -109,7 +103,9 @@ export const PinScreen = (props: PinScreenProps) => {
           <OTPInput
             disabled={Boolean(error) || loading}
             value={localPinEntry}
-            onChange={(value) => setLocalPinEntry(value)}
+            onChange={(value) => {
+              setLocalPinEntry(value);
+            }}
             valueLength={4}
             inputBoxClassName={cn({ "border-red-400": Boolean(error) })}
           />

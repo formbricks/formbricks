@@ -1,7 +1,7 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
-import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
-import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
+import { PinScreen } from "@/app/s/[surveyId]/components/pin-screen";
+import { SurveyInactive } from "@/app/s/[surveyId]/components/survey-inactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import type { Metadata } from "next";
