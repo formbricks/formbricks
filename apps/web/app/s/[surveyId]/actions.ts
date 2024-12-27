@@ -1,6 +1,5 @@
 "use server";
 
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { actionClient } from "@/lib/utils/action-client";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { z } from "zod";
@@ -9,7 +8,7 @@ import { getIfResponseWithSurveyIdAndEmailExist } from "@formbricks/lib/response
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
@@ -36,7 +35,7 @@ export const validateSurveyPinAction = actionClient
   .schema(ZValidateSurveyPinAction)
   .action(async ({ parsedInput }) => {
     const survey = await getSurvey(parsedInput.surveyId);
-    if (!survey) return { error: TSurveyPinValidationResponseError.NOT_FOUND };
+    if (!survey) throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
 
     const originalPin = survey.pin?.toString();
 

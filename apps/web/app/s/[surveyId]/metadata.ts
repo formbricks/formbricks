@@ -18,7 +18,7 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
     throw new Error("Project not found");
   }
 
-  const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light || COLOR_DEFAULTS.brandColor);
+  const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor);
   const surveyName = getNameForURL(survey.name);
 
   const ogImgURL = `/api/v1/og?brandColor=${brandColor}&name=${surveyName}`;

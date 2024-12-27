@@ -2,7 +2,6 @@
 
 import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
-import { TSurveyPinValidationResponseError } from "@/app/s/[surveyId]/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslations } from "next-intl";
@@ -53,11 +52,11 @@ export const PinScreen = (props: PinScreenProps) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const t = useTranslations();
-  const [error, setError] = useState<TSurveyPinValidationResponseError>();
+  const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
 
   const resetState = useCallback(() => {
-    setError(undefined);
+    setError("");
     setLoading(false);
     setLocalPinEntry("");
   }, []);
@@ -83,7 +82,7 @@ export const PinScreen = (props: PinScreenProps) => {
         if (response?.data) {
           setSurvey(response.data.survey);
         } else {
-          const errorMessage = getFormattedErrorMessage(response) as TSurveyPinValidationResponseError;
+          const errorMessage = getFormattedErrorMessage(response);
           setError(errorMessage);
         }
         setLoading(false);
