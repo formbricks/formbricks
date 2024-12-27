@@ -147,7 +147,7 @@ export const RecontactOptionsCard = ({
               }
             }}>
             {displayOptions.map((option) => (
-              <>
+              <div key={option.id}>
                 <Label
                   key={option.name}
                   htmlFor={option.name}
@@ -179,7 +179,7 @@ export const RecontactOptionsCard = ({
                     </p>
                   </label>
                 )}
-              </>
+              </div>
             ))}
           </RadioGroup>
         </div>

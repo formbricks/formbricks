@@ -1545,6 +1545,8 @@
         "invalid_targeting": "Segmentação inválida: Por favor, verifique os filtros do seu público",
         "invalid_video_url_warning": "Por favor, insira uma URL válida do YouTube, Vimeo ou Loom. No momento, não suportamos outros provedores de vídeo.",
         "invalid_youtube_url": "URL do YouTube inválida",
+        "is_accepted": "Está aceito",
+
         "is_after": "é depois",
         "is_before": "é antes",
         "is_booked": "Tá reservado",
@@ -1732,6 +1734,7 @@
         "when_conditions_match_waiting_time_will_be_ignored_and_survey_shown": "Quando as condições forem atendidas, o tempo de espera será ignorado e a pesquisa será exibida.",
         "with_the_formbricks_sdk": "com o SDK do Formbricks.",
         "without_a_filter_all_of_your_users_can_be_surveyed": "Sem um filtro, todos os seus usuários podem ser pesquisados.",
+        "you_have_not_created_a_segment_yet": "Você ainda não criou um segmento.",
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Você precisa ter dois ou mais idiomas configurados no seu projeto para trabalhar com traduções.",
         "your_description_here_recall_information_with": "Sua descrição aqui. Lembre-se de informações com @",
         "your_question_here_recall_information_with": "Sua pergunta aqui. Lembre-se de informações com @",
