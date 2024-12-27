@@ -252,6 +252,10 @@ export const handleErrorOnFirstInit = async (e: {
 }): Promise<never> => {
   if (e.code === "forbidden") {
     logger.error(`Authorization error: ${e.responseMessage}`);
+  } else {
+    logger.error(
+      `Error during first initialization: ${e.code} - ${e.responseMessage}. Please try again later.`
+    );
   }
 
   // put formbricks in error state (by creating a new config) and throw error

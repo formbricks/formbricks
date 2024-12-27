@@ -22,39 +22,54 @@ export const fetchEnvironmentState = async (
   { apiHost, environmentId }: TJsEnvironmentSyncParams,
   noCache = false
 ): Promise<TJsEnvironmentState> => {
-  const fetchOptions: RequestInit = {};
-
-  if (noCache) {
-    fetchOptions.cache = "no-cache";
-    logger.debug("No cache option set for sync");
-  }
-
   const url = `${apiHost}/api/v1/client/${environmentId}/environment`;
 
-  const response = await fetch(url, fetchOptions);
+  try {
+    const fetchOptions: RequestInit = {};
 
-  if (!response.ok) {
-    const jsonRes = (await response.json()) as { message: string };
+    if (noCache) {
+      fetchOptions.cache = "no-cache";
+      logger.debug("No cache option set for sync");
+    }
+
+    const response = await fetch(url, fetchOptions);
+
+    if (!response.ok) {
+      const jsonRes = (await response.json()) as { message: string };
+
+      const error = err({
+        code: "network_error",
+        status: response.status,
+        message: "Error syncing with backend",
+        url: new URL(url),
+        responseMessage: jsonRes.message,
+      });
+
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
+      throw error.error;
+    }
+
+    const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
+    const { data: state } = data;
+
+    return {
+      data: { ...state },
+      expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+    };
+  } catch (e: unknown) {
+    const errorTyped = e as { message?: string };
 
     const error = err({
       code: "network_error",
-      status: response.status,
-      message: "Error syncing with backend",
+      message: errorTyped.message ?? "Error fetching the environment state",
+      status: 500,
       url: new URL(url),
-      responseMessage: jsonRes.message,
+      responseMessage: errorTyped.message ?? "Unknown error",
     });
 
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
     throw error.error;
   }
-
-  const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
-  const { data: state } = data;
-
-  return {
-    data: { ...state },
-    expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-  };
 };
 
 /**
