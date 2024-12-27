@@ -361,7 +361,6 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }):
       };
 
       function onResponse(responseUpdate) {
-        console.log(JSON.stringify({ onResponse: true, responseUpdate }));
         window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true, responseUpdate }));
       };
 
