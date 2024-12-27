@@ -275,6 +275,22 @@ export const getRemoveBrandingPermission = async (organization: TOrganization): 
   }
 };
 
+export const getWhiteLabelPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult?.features?.whitelabel ?? false;
+  }
+
+  if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {
+    return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
+  } else {
+    const licenseFeatures = await getLicenseFeatures();
+    if (!licenseFeatures) return false;
+
+    return licenseFeatures.whitelabel;
+  }
+};
+
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();

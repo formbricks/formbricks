@@ -2,11 +2,12 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   getMultiLanguagePermission,
-  getRemoveBrandingPermission,
   getRoleManagementPermission,
+  getWhiteLabelPermission,
 } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
@@ -43,15 +44,17 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error(t("common.organization_not_found"));
   }
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
-  const canRemoveBranding = await getRemoveBrandingPermission(organization);
+  const canRemoveBranding = await getWhiteLabelPermission(organization);
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.role);
+  const { isOwner, isManager, isMember } = getAccessFlags(currentUserMembership?.role);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasManageAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && !hasManageAccess;
+  const isOwnerOrManager = isOwner || isManager;
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
   const canDoRoleManagement = await getRoleManagementPermission(organization);
@@ -89,6 +92,11 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
         description={t("environments.project.look.app_survey_placement_settings_description")}>
         <EditPlacementForm project={project} environmentId={params.environmentId} isReadOnly={isReadOnly} />
       </SettingsCard>
+      <EmailCustomizationSettings
+        hasWhiteLabelPermission={hasWhiteLabelPermission}
+        environmentId={params.environmentId}
+        isReadOnly={!isOwnerOrManager}
+      />
       <BrandingSettingsCard
         canRemoveBranding={canRemoveBranding}
         project={project}
