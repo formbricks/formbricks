@@ -1,5 +1,6 @@
 import ClientEnvironmentRedirect from "@/app/ClientEnvironmentRedirect";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { ClientLogout } from "@/modules/ui/components/client-logout";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -19,6 +20,10 @@ const Page = async () => {
     } else {
       redirect("/auth/login");
     }
+  }
+
+  if (!session?.user) {
+    return <ClientLogout />;
   }
 
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
