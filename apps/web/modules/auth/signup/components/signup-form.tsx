@@ -103,7 +103,7 @@ export const SignupForm = ({
   const handleSubmit = async (data: TSignupInput) => {
     try {
       if (isTurnstileConfigured && !turnstileToken) {
-        throw new Error("Please verify reCAPTCHA");
+        throw new Error(t("auth.signup.please_verify_captha"));
       }
 
       const createUserResponse = await createUserAction({
@@ -233,6 +233,10 @@ export const SignupForm = ({
                 sitekey={turnstileSiteKey}
                 onSuccess={(token) => {
                   setTurnstileToken(token);
+                }}
+                onError={() => {
+                  setTurnstileToken(undefined);
+                  toast.error(t("auth.signup.captcha_failed"));
                 }}
               />
             )}
