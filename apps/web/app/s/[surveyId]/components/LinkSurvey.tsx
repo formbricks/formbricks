@@ -226,7 +226,8 @@ export const LinkSurvey = ({
       webAppUrl={webAppUrl}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}>
+      PRIVACY_URL={PRIVACY_URL}
+      isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
         survey={survey}
         styling={determineStyling()}
