@@ -1,5 +1,6 @@
 // shared functions for environment and person state(s)
-import { TJsEnvironmentState, TJsEnvironmentSyncParams } from "@formbricks/types/js";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
+import { type TJsEnvironmentState, type TJsEnvironmentSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
 import { Logger } from "./logger";
@@ -19,9 +20,9 @@ let environmentStateSyncIntervalId: number | null = null;
  */
 export const fetchEnvironmentState = async (
   { apiHost, environmentId }: TJsEnvironmentSyncParams,
-  noCache: boolean = false
+  noCache = false
 ): Promise<TJsEnvironmentState> => {
-  let fetchOptions: RequestInit = {};
+  const fetchOptions: RequestInit = {};
 
   if (noCache || getIsDebug()) {
     fetchOptions.cache = "no-cache";
@@ -33,9 +34,9 @@ export const fetchEnvironmentState = async (
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    const jsonRes = await response.json();
+    const jsonRes = (await response.json()) as { message: string };
 
-    const error = err({
+    const error = err<ApiErrorResponse>({
       code: "network_error",
       status: response.status,
       message: "Error syncing with backend",
@@ -43,14 +44,15 @@ export const fetchEnvironmentState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw error;
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error
+    throw error.error;
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
   const { data: state } = data;
 
   return {
-    data: { ...(state as TJsEnvironmentState["data"]) },
+    data: { ...state },
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
   };
 };
@@ -59,14 +61,14 @@ export const fetchEnvironmentState = async (
  * Add a listener to check if the environment state has expired with a certain interval
  */
 export const addEnvironmentStateExpiryCheckListener = (): void => {
-  let updateInterval = 1000 * 60; // every minute
+  const updateInterval = 1000 * 60; // every minute
   if (typeof window !== "undefined" && environmentStateSyncIntervalId === null) {
-    environmentStateSyncIntervalId = window.setInterval(async () => {
+    const intervalHandler = async (): Promise<void> => {
       const expiresAt = config.get().environmentState.expiresAt;
 
       try {
         // check if the environmentState has not expired yet
-        if (expiresAt && new Date(expiresAt) >= new Date()) {
+        if (new Date(expiresAt) >= new Date()) {
           return;
         }
 
@@ -88,13 +90,15 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
           environmentState,
           filteredSurveys,
         });
-      } catch (e) {
-        console.error(`Error during expiry check: ${e}`);
+      } catch (e: unknown) {
+        logger.error(`Error during expiry check: ${e as string}`);
         logger.debug("Extending config and try again later.");
         const existingConfig = config.get();
         config.update(existingConfig);
       }
-    }, updateInterval);
+    };
+
+    environmentStateSyncIntervalId = window.setInterval(() => void intervalHandler(), updateInterval);
   }
 };
 
