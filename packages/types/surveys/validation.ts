@@ -21,6 +21,7 @@ export const FORBIDDEN_IDS = [
   "verifiedEmail",
   "multiLanguage",
   "embed",
+  "verify",
 ];
 
 const FIELD_TO_LABEL_MAP: Record<string, string> = {

@@ -54,18 +54,18 @@ const Page = async (props: LinkSurveyPageProps) => {
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
-  const isEmbed = searchParams.embed === "true" ? true : false;
+  const isEmbed = searchParams.embed === "true";
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
 
-  const organization = await getOrganizationByEnvironmentId(survey?.environmentId);
+  const organization = await getOrganizationByEnvironmentId(survey.environmentId);
   if (!organization) {
     throw new Error("Organization not found");
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (survey && survey.status !== "inProgress" && !isPreview) {
+  if (survey.status !== "inProgress" && !isPreview) {
     return (
       <SurveyInactive
         status={survey.status}
@@ -105,14 +105,11 @@ const Page = async (props: LinkSurveyPageProps) => {
   }
 
   // verify email: Check if the survey requires email verification
-  let emailVerificationStatus: string = "";
+  let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
 
   if (survey.isVerifyEmailEnabled) {
-    const token =
-      searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
-        ? searchParams.verify
-        : undefined;
+    const token = searchParams.verify;
 
     if (token) {
       const emailVerificationDetails = await getEmailVerificationDetails(survey.id, token);
@@ -141,13 +138,13 @@ const Page = async (props: LinkSurveyPageProps) => {
       if (selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
       }
-      return selectedLanguage ? selectedLanguage.language.code : "default";
+      return selectedLanguage.language.code;
     }
   };
 
   const languageCode = getLanguageCode();
 
-  const isSurveyPinProtected = Boolean(!!survey && survey.pin);
+  const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
   if (isSurveyPinProtected) {
@@ -172,7 +169,7 @@ const Page = async (props: LinkSurveyPageProps) => {
     );
   }
 
-  return survey ? (
+  return (
     <LinkSurvey
       survey={survey}
       project={project}
@@ -191,7 +188,7 @@ const Page = async (props: LinkSurveyPageProps) => {
       locale={locale}
       isPreview={isPreview}
     />
-  ) : null;
+  );
 };
 
 export default Page;
