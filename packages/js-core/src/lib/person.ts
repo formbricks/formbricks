@@ -2,6 +2,7 @@ import { Config } from "./config";
 import { type NetworkError, type Result, err, okVoid } from "./errors";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
+import { setIsHistoryPatched } from "./no-code-actions";
 import { closeSurvey } from "./widget";
 
 const config = Config.getInstance();
@@ -27,6 +28,7 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   };
 
   await logoutPerson();
+  setIsHistoryPatched(false);
 
   try {
     await initialize(syncParams);

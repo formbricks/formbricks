@@ -3,17 +3,24 @@ import { trackNoCodeAction } from "./actions";
 import { Config } from "./config";
 import { ErrorHandler, type NetworkError, type Result, type ResultError, err, match, okVoid } from "./errors";
 import { Logger } from "./logger";
+import { TimeoutStack } from "./timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "./utils";
+import { setIsSurveyRunning } from "./widget";
 
 const appConfig = Config.getInstance();
 const logger = Logger.getInstance();
 const errorHandler = ErrorHandler.getInstance();
+const timeoutStack = TimeoutStack.getInstance();
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
 // Page URL Event Handlers
 let arePageUrlEventListenersAdded = false;
+let isHistoryPatched = false;
+export const setIsHistoryPatched = (value: boolean): void => {
+  isHistoryPatched = value;
+};
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
   logger.debug(`Checking page url: ${window.location.href}`);
@@ -27,10 +34,22 @@ export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
     const urlFilters = event.noCodeConfig?.urlFilters ?? [];
     const isValidUrl = handleUrlFilters(urlFilters);
 
-    if (!isValidUrl) continue;
+    if (isValidUrl) {
+      const trackResult = await trackNoCodeAction(event.name);
 
-    const trackResult = await trackNoCodeAction(event.name);
-    if (!trackResult.ok) return err(trackResult.error);
+      if (!trackResult.ok) {
+        return err(trackResult.error);
+      }
+    } else {
+      const scheduledTimeouts = timeoutStack.getTimeouts();
+
+      const scheduledTimeout = scheduledTimeouts.find((timeout) => timeout.event === event.name);
+      // If invalid, clear if it's scheduled
+      if (scheduledTimeout) {
+        timeoutStack.remove(scheduledTimeout.timeoutId);
+        setIsSurveyRunning(false);
+      }
+    }
   }
 
   return okVoid();
@@ -40,6 +59,22 @@ const checkPageUrlWrapper = (): ReturnType<typeof checkPageUrl> => checkPageUrl(
 
 export const addPageUrlEventListeners = (): void => {
   if (typeof window === "undefined" || arePageUrlEventListenersAdded) return;
+
+  // Monkey patch history methods if not already done
+  if (!isHistoryPatched) {
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- We need to access the original method
+    const originalPushState = history.pushState;
+
+    // eslint-disable-next-line func-names -- We need an anonymous function here
+    history.pushState = function (...args) {
+      originalPushState.apply(this, args);
+      const event = new Event("pushstate");
+      window.dispatchEvent(event);
+    };
+
+    isHistoryPatched = true;
+  }
+
   events.forEach((event) => {
     window.addEventListener(event, checkPageUrlWrapper as EventListener);
   });
