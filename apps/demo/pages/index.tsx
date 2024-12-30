@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
@@ -110,11 +109,6 @@ const AppPage = ({}) => {
               <strong className="dark:text-white">Open your browser console</strong> to see the logs.
             </p>
           </div>
-        </div>
-
-        <div className="h-20 w-20">
-          <Link href="/search?formbricksDebug=true">Search</Link>
-          <Link href="/about?formbricksDebug=true">About</Link>
         </div>
 
         <div className="md:grid md:grid-cols-3">
