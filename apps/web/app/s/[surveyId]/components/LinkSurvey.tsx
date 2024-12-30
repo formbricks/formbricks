@@ -2,7 +2,7 @@
 
 import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/LinkSurveyWrapper";
 import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
-import { VerifyEmail } from "@/app/s/[surveyId]/components/VerifyEmail";
+import { VerifyEmail } from "@/app/s/[surveyId]/components/verify-email";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { useTranslations } from "next-intl";
