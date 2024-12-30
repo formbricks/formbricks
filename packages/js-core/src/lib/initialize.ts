@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- required for logging */
 import { type TAttributes } from "@formbricks/types/attributes";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
@@ -99,7 +100,8 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
     const parsedConfig = JSON.parse(existingConfig) as TJsConfig;
 
     // @ts-expect-error - product is not in the type
-    if (parsedConfig.environmentState.data.product) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- environmentState could be undefined in an error state
+    if (parsedConfig.environmentState?.data?.product) {
       const { environmentState: _, filteredSurveys, ...restConfig } = parsedConfig;
 
       const fixedFilteredSurveys = filteredSurveys.map((survey) => {
@@ -195,15 +197,15 @@ export const initialize = async (
       return okVoid();
     }
 
-    logger.debug("Formbricks was set to an error state.");
+    console.error("🧱 Formbricks - Formbricks was set to an error state.");
 
     const expiresAt = existingConfig.status.expiresAt;
 
     if (expiresAt && new Date(expiresAt) > new Date()) {
-      logger.debug("Error state is not expired, skipping initialization");
+      console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
     }
-    logger.debug("Error state is expired. Continue with initialization.");
+    console.error("🧱 Formbricks - Error state is expired. Continuing with initialization.");
   }
 
   ErrorHandler.getInstance().printStatus();

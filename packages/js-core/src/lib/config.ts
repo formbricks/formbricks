@@ -51,7 +51,10 @@ export class Config {
         const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
 
         // check if the config has expired
-        if (new Date(parsedConfig.environmentState.expiresAt) <= new Date()) {
+        if (
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environmentState
+          new Date(parsedConfig.environmentState?.expiresAt) <= new Date()
+        ) {
           return err(new Error("Config in local storage has expired"));
         }
 
