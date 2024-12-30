@@ -57,6 +57,9 @@ export const fetchEnvironmentState = async (
   };
 };
 
+/**
+ * Add a listener to check if the environment state has expired with a certain interval
+ */
 export const addEnvironmentStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every minute
   if (typeof window !== "undefined" && environmentStateSyncIntervalId === null) {

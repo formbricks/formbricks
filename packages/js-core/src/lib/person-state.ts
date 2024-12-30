@@ -83,7 +83,6 @@ export const fetchPersonState = async (
 
 /**
  * Add a listener to check if the person state has expired with a certain interval
- * @param config - The configuration for the SDK
  */
 export const addPersonStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every 60 seconds
