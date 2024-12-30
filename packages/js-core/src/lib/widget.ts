@@ -13,6 +13,7 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { Config } from "./config";
 import { CONTAINER_ID } from "./constants";
 import { Logger } from "./logger";
+import { TimeoutStack } from "./timeout-stack";
 import {
   filterSurveys,
   getDefaultLanguageCode,
@@ -23,6 +24,8 @@ import {
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
+const timeoutStack = TimeoutStack.getInstance();
+
 let isSurveyRunning = false;
 let setIsError = (_: boolean) => {};
 let setIsResponseSendingFinished = (_: boolean) => {};
@@ -62,6 +65,7 @@ const renderWidget = async (
     logger.debug("A survey is already running. Skipping.");
     return;
   }
+
   setIsSurveyRunning(true);
 
   if (survey.delay) {
@@ -108,7 +112,7 @@ const renderWidget = async (
   const isBrandingEnabled = project.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
-  setTimeout(() => {
+  const timeoutId = setTimeout(() => {
     formbricksSurveys.renderSurveyModal({
       survey,
       isBrandingEnabled,
@@ -236,6 +240,10 @@ const renderWidget = async (
       hiddenFieldsRecord: hiddenFields,
     });
   }, survey.delay * 1000);
+
+  if (action) {
+    timeoutStack.add(action, timeoutId as unknown as number);
+  }
 };
 
 export const closeSurvey = async (): Promise<void> => {
