@@ -15,8 +15,8 @@ interface DeleteAccountModalProps {
   setOpen: Dispatch<SetStateAction<boolean>>;
   user: TUser;
   isFormbricksCloud: boolean;
-  formbricksLogout: () => void;
   organizationsWithSingleOwner: TOrganization[];
+  formbricksLogout: () => Promise<void>;
 }
 
 export const DeleteAccountModal = ({

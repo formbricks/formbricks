@@ -493,12 +493,12 @@ docker compose up -d
 <CodeGroup title="Migrate the data">
 
 ```bash
-docker pull ghcr.io/formbricks/data-migrations:v2.4.0 && \
+docker pull ghcr.io/formbricks/data-migrations:v2.4.3 && \
 docker run --rm \
   --network=formbricks_default \
   -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
   -e UPGRADE_TO_VERSION="v2.4" \
-  ghcr.io/formbricks/data-migrations:v2.4.0
+  ghcr.io/formbricks/data-migrations:v2.4.3
 ```
 
 </CodeGroup>

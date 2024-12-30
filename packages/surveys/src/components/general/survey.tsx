@@ -89,10 +89,6 @@ export function Survey({
   });
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
-  const questionIds = useMemo(
-    () => localSurvey.questions.map((question) => question.id),
-    [localSurvey.questions]
-  );
   const cardArrangement = useMemo(() => {
     if (localSurvey.type === "link") {
       return styling.cardArrangement?.linkSurveys ?? "straight";
@@ -102,13 +98,8 @@ export function Survey({
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
-    if (!questionIds.includes(questionId)) {
-      const newHistory = [...history];
-      const prevQuestionId = newHistory.pop();
-      return localSurvey.questions.find((q) => q.id === prevQuestionId);
-    }
     return localSurvey.questions.find((q) => q.id === questionId);
-  }, [questionId, localSurvey, history]);
+  }, [questionId, localSurvey.questions, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;

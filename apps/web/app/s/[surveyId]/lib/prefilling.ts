@@ -1,5 +1,6 @@
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
 
 export const getPrefillValue = (
   survey: TSurvey,
@@ -7,20 +8,22 @@ export const getPrefillValue = (
   languageId: string
 ): TResponseData | undefined => {
   const prefillAnswer: TResponseData = {};
-  let questionIdxMap: { [key: string]: number } = {};
+  let questionIdxMap: Record<string, number> = {};
 
   survey.questions.forEach((q, idx) => {
     questionIdxMap[q.id] = idx;
   });
 
   searchParams.forEach((value, key) => {
+    if (FORBIDDEN_IDS.includes(key)) return;
     const questionId = key;
     const questionIdx = questionIdxMap[questionId];
     const question = survey.questions[questionIdx];
     const answer = value;
-
-    if (question && checkValidity(question, answer, languageId)) {
-      prefillAnswer[questionId] = transformAnswer(question, answer, languageId);
+    if (question) {
+      if (checkValidity(question, answer, languageId)) {
+        prefillAnswer[questionId] = transformAnswer(question, answer, languageId);
+      }
     }
   });
 
@@ -62,8 +65,8 @@ export const checkValidity = (question: TSurveyQuestion, answer: string, languag
         return true;
       }
       case TSurveyQuestionTypeEnum.NPS: {
-        answer = answer.replace(/&/g, ";");
-        const answerNumber = Number(JSON.parse(answer));
+        const cleanedAnswer = answer.replace(/&/g, ";");
+        const answerNumber = Number(JSON.parse(cleanedAnswer));
 
         if (isNaN(answerNumber)) return false;
         if (answerNumber < 0 || answerNumber > 10) return false;
@@ -80,8 +83,8 @@ export const checkValidity = (question: TSurveyQuestion, answer: string, languag
         return true;
       }
       case TSurveyQuestionTypeEnum.Rating: {
-        answer = answer.replace(/&/g, ";");
-        const answerNumber = Number(JSON.parse(answer));
+        const cleanedAnswer = answer.replace(/&/g, ";");
+        const answerNumber = Number(JSON.parse(cleanedAnswer));
         if (answerNumber < 1 || answerNumber > question.range) return false;
         return true;
       }
@@ -115,8 +118,8 @@ export const transformAnswer = (
 
     case TSurveyQuestionTypeEnum.Rating:
     case TSurveyQuestionTypeEnum.NPS: {
-      answer = answer.replace(/&/g, ";");
-      return Number(JSON.parse(answer));
+      const cleanedAnswer = answer.replace(/&/g, ";");
+      return Number(JSON.parse(cleanedAnswer));
     }
 
     case TSurveyQuestionTypeEnum.PictureSelection: {
