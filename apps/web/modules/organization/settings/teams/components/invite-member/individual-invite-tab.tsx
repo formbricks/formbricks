@@ -117,7 +117,7 @@ export const IndividualInviteTab = ({
             render={({ field }) => (
               <FormItem className="flex flex-col space-y-2">
                 <FormLabel>{t("common.add_to_team")} </FormLabel>
-                <div>
+                <div className="space-y-2">
                   <MultiSelect
                     value={field.value}
                     options={teamOptions}

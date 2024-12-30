@@ -8,11 +8,13 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 interface SurveyLoadingAnimationProps {
   survey: TSurvey;
   isBackgroundLoaded?: boolean;
+  isBrandingEnabled: boolean;
 }
 
 export const SurveyLoadingAnimation = ({
   survey,
   isBackgroundLoaded = true,
+  isBrandingEnabled,
 }: SurveyLoadingAnimationProps) => {
   const [isHidden, setIsHidden] = useState(false);
   const [minTimePassed, setMinTimePassed] = useState(false);
@@ -118,7 +120,9 @@ export const SurveyLoadingAnimation = ({
           "flex flex-col items-center space-y-4",
           isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
-        <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
+        {isBrandingEnabled && (
+          <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
+        )}
         <LoadingSpinner />
       </div>
     </div>
