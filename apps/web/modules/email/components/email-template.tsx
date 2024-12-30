@@ -1,4 +1,4 @@
-import { Body, Column, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 export function EmailTemplate({ children }): React.JSX.Element {

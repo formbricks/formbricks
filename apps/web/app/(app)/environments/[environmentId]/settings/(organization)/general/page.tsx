@@ -1,7 +1,12 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getIsMultiOrgEnabled, getIsOrganizationAIReady } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsOrganizationAIReady,
+  getWhiteLabelPermission,
+} from "@/modules/ee/license-check/lib/utils";
+import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
@@ -31,6 +36,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
@@ -69,6 +75,13 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           />
         </SettingsCard>
       )}
+      <EmailCustomizationSettings
+        organization={organization}
+        hasWhiteLabelPermission={hasWhiteLabelPermission}
+        environmentId={params.environmentId}
+        isReadOnly={!isOwnerOrManager}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+      />
       {isMultiOrgEnabled && (
         <SettingsCard
           title={t("environments.settings.general.delete_organization")}
