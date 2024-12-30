@@ -353,7 +353,10 @@ export const getIsSSOEnabled = async (): Promise<boolean> => {
 
 export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
   if (!IS_AI_CONFIGURED) return false;
-
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.ai : false;
+  }
   const license = await getEnterpriseLicense();
 
   if (IS_FORMBRICKS_CLOUD) {
