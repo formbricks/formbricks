@@ -90,14 +90,17 @@ interface NetworkError {
   message: string;
   status: number;
   url: URL;
+  responseMessage?: string;
+  details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
 }
 
 interface ForbiddenError {
   code: "forbidden";
   message: string;
-  responseMessage?: string;
   status: number;
   url: URL;
+  responseMessage?: string;
+  details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
 }
 
 export const ZErrorHandler = z.function().args(z.any()).returns(z.void());
@@ -115,3 +118,21 @@ export {
   AuthorizationError,
 };
 export type { NetworkError, ForbiddenError };
+
+export interface ApiErrorResponse {
+  code:
+    | "not_found"
+    | "gone"
+    | "bad_request"
+    | "internal_server_error"
+    | "unauthorized"
+    | "method_not_allowed"
+    | "not_authenticated"
+    | "forbidden"
+    | "network_error";
+  message: string;
+  status: number;
+  url: URL;
+  details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
+  responseMessage?: string;
+}

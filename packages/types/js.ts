@@ -40,56 +40,6 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
 
 export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
 
-export const ZJsRNStateSync = z.object({
-  person: ZJsPerson.nullish(),
-  userId: z.string().optional(),
-  surveys: z.array(ZJsEnvironmentStateSurvey),
-  actionClasses: z.array(ZActionClass),
-  project: ZProject,
-  language: z.string().optional(),
-});
-
-export type TJsRNStateSync = z.infer<typeof ZJsRNStateSync>;
-
-export const ZJsRNState = z.object({
-  attributes: ZAttributes,
-  surveys: z.array(ZJsEnvironmentStateSurvey),
-  actionClasses: z.array(ZActionClass),
-  project: ZProject,
-});
-
-export type TJsRNState = z.infer<typeof ZJsRNState>;
-
-export const ZJsRNConfigUpdateInput = z.object({
-  environmentId: z.string().cuid2(),
-  apiHost: z.string(),
-  userId: z.string(),
-  state: ZJsRNState,
-  expiresAt: z.date(),
-  status: z.enum(["success", "error"]).optional(),
-});
-
-export type TJsRNConfigUpdateInput = z.infer<typeof ZJsRNConfigUpdateInput>;
-
-export const ZJsRNConfig = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-  userId: z.string(),
-  state: ZJsRNState,
-  expiresAt: z.date(),
-  status: z.enum(["success", "error"]).optional(),
-});
-
-export type TJsRNConfig = z.infer<typeof ZJsRNConfig>;
-
-export const ZJsRNSyncParams = z.object({
-  environmentId: z.string().cuid(),
-  apiHost: z.string(),
-  userId: z.string(),
-  attributes: ZAttributes.optional(),
-});
-
-export type TJsRNSyncParams = z.infer<typeof ZJsRNSyncParams>;
 export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   id: true,
   key: true,
@@ -189,9 +139,6 @@ export const ZJsConfigInput = z.object({
 });
 
 export type TJsConfigInput = z.infer<typeof ZJsConfigInput>;
-
-export const ZJsRNConfigInput = ZJsConfigInput.omit({ userId: true }).extend({ userId: z.string() });
-export type TJsRNConfigInput = z.infer<typeof ZJsRNConfigInput>;
 
 export const ZJsPeopleUserIdInput = z.object({
   environmentId: z.string().cuid2(),

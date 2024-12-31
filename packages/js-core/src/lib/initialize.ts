@@ -1,5 +1,6 @@
-import { TAttributes } from "@formbricks/types/attributes";
-import { type ForbiddenError } from "@formbricks/types/errors";
+/* eslint-disable no-console -- required for logging */
+import { type TAttributes } from "@formbricks/types/attributes";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
@@ -9,22 +10,20 @@ import {
   LEGACY_JS_APP_LOCAL_STORAGE_KEY,
   LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
 } from "./constants";
-import { fetchEnvironmentState } from "./environmentState";
+import { fetchEnvironmentState } from "./environment-state";
 import {
   ErrorHandler,
-  MissingFieldError,
-  MissingPersonError,
-  NetworkError,
-  NotInitializedError,
-  Result,
+  type MissingFieldError,
+  type NotInitializedError,
+  type Result,
   err,
   okVoid,
   wrapThrows,
 } from "./errors";
-import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./eventListeners";
+import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { Logger } from "./logger";
-import { checkPageUrl } from "./noCodeActions";
-import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./personState";
+import { checkPageUrl } from "./no-code-actions";
+import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
 import { filterSurveys, getIsDebug } from "./utils";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "./widget";
 
@@ -32,7 +31,7 @@ const logger = Logger.getInstance();
 
 let isInitialized = false;
 
-export const setIsInitialized = (value: boolean) => {
+export const setIsInitialized = (value: boolean): void => {
   isInitialized = value;
 };
 
@@ -42,7 +41,13 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
 
   if (oldWebsiteConfig) {
     localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as TJsConfig;
+    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as Partial<{
+      environmentId: string;
+      apiHost: string;
+      environmentState: TJsConfig["environmentState"];
+      personState: TJsConfig["personState"];
+      filteredSurveys: TJsConfig["filteredSurveys"];
+    }>;
 
     if (
       parsedOldConfig.environmentId &&
@@ -55,14 +60,20 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
 
       return {
         changed: true,
-        newState: newLocalStorageConfig,
+        newState: newLocalStorageConfig as TJsConfig,
       };
     }
   }
 
   if (oldAppConfig) {
     localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldAppConfig) as TJsConfig;
+    const parsedOldConfig = JSON.parse(oldAppConfig) as Partial<{
+      environmentId: string;
+      apiHost: string;
+      environmentState: TJsConfig["environmentState"];
+      personState: TJsConfig["personState"];
+      filteredSurveys: TJsConfig["filteredSurveys"];
+    }>;
 
     if (
       parsedOldConfig.environmentId &&
@@ -86,20 +97,24 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
   const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
   if (existingConfig) {
-    const parsedConfig = JSON.parse(existingConfig);
+    const parsedConfig = JSON.parse(existingConfig) as TJsConfig;
 
-    if (parsedConfig.environmentState.data.product) {
-      const { environmentState, filteredSurveys, ...restConfig } = parsedConfig;
+    // @ts-expect-error - product is not in the type
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- environmentState could be undefined in an error state
+    if (parsedConfig.environmentState?.data?.product) {
+      const { environmentState: _, filteredSurveys, ...restConfig } = parsedConfig;
 
-      // @ts-expect-error
       const fixedFilteredSurveys = filteredSurveys.map((survey) => {
+        // @ts-expect-error - productOverwrites is not in the type
         const { productOverwrites, ...rest } = survey;
         return {
           ...rest,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- productOverwrites is not in the type
           projectOverwrites: productOverwrites,
         };
       });
 
+      // @ts-expect-error - product is not in the type
       const { product, ...rest } = parsedConfig.environmentState.data;
 
       const newLocalStorageConfig = {
@@ -108,6 +123,7 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
           ...parsedConfig.environmentState,
           data: {
             ...rest,
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- product is not in the type
             project: product,
           },
         },
@@ -126,11 +142,12 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
 
 export const initialize = async (
   configInput: TJsConfigInput
-): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError | ForbiddenError>> => {
+): Promise<Result<void, MissingFieldError | ApiErrorResponse>> => {
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
   }
+
   let config = Config.getInstance();
 
   const { changed, newState } = migrateLocalStorage();
@@ -166,12 +183,12 @@ export const initialize = async (
   try {
     existingConfig = config.get();
     logger.debug("Found existing configuration.");
-  } catch (e) {
+  } catch {
     logger.debug("No existing configuration found.");
   }
 
   // formbricks is in error state, skip initialization
-  if (existingConfig?.status?.value === "error") {
+  if (existingConfig?.status.value === "error") {
     if (isDebug) {
       logger.debug(
         "Formbricks is in error state, but debug mode is active. Resetting config and continuing."
@@ -180,16 +197,15 @@ export const initialize = async (
       return okVoid();
     }
 
-    logger.debug("Formbricks was set to an error state.");
+    console.error("🧱 Formbricks - Formbricks was set to an error state.");
 
-    const expiresAt = existingConfig?.status?.expiresAt;
+    const expiresAt = existingConfig.status.expiresAt;
 
     if (expiresAt && new Date(expiresAt) > new Date()) {
-      logger.debug("Error state is not expired, skipping initialization");
+      console.error("🧱 Formbricks - Error state is not expired, skipping initialization");
       return okVoid();
-    } else {
-      logger.debug("Error state is expired. Continue with initialization.");
     }
+    console.error("🧱 Formbricks - Error state is expired. Continuing with initialization.");
   }
 
   ErrorHandler.getInstance().printStatus();
@@ -217,8 +233,7 @@ export const initialize = async (
   addWidgetContainer();
 
   if (
-    existingConfig &&
-    existingConfig.environmentState &&
+    existingConfig?.environmentState &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost
   ) {
@@ -233,6 +248,7 @@ export const initialize = async (
 
     if (
       configInput.userId &&
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- personState could be null
       (existingConfig.personState === null ||
         (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
     ) {
@@ -278,8 +294,8 @@ export const initialize = async (
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug("Fetched " + surveyNames.length + " surveys during sync: " + surveyNames.join(", "));
-    } catch (e) {
+      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
+    } catch {
       putFormbricksInErrorState(config);
     }
   } else {
@@ -319,9 +335,9 @@ export const initialize = async (
             configInput.attributes
           );
 
-          if (res.ok !== true) {
+          if (!res.ok) {
             if (res.error.code === "forbidden") {
-              logger.error(`Authorization error: ${res.error.responseMessage}`);
+              logger.error(`Authorization error: ${res.error.responseMessage ?? ""}`);
             }
             return err(res.error);
           }
@@ -341,7 +357,7 @@ export const initialize = async (
         attributes: updatedAttributes ?? {},
       });
     } catch (e) {
-      handleErrorOnFirstInit(e as Error);
+      handleErrorOnFirstInit(e);
     }
 
     // and track the new session event
@@ -357,13 +373,14 @@ export const initialize = async (
 
   // check page url if initialized after page load
 
-  checkPageUrl();
+  void checkPageUrl();
   return okVoid();
 };
 
-export const handleErrorOnFirstInit = (e: any) => {
-  if (e.error.code === "forbidden") {
-    logger.error(`Authorization error: ${e.error.responseMessage}`);
+export const handleErrorOnFirstInit = (e: unknown): void => {
+  const error = e as ApiErrorResponse;
+  if (error.code === "forbidden") {
+    logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
   }
 
   if (getIsDebug()) {
@@ -380,7 +397,9 @@ export const handleErrorOnFirstInit = (e: any) => {
   };
 
   // can't use config.update here because the config is not yet initialized
-  wrapThrows(() => localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig)))();
+  wrapThrows(() => {
+    localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(initialErrorConfig));
+  })();
   throw new Error("Could not initialize formbricks");
 };
 
@@ -404,7 +423,7 @@ export const deinitalize = (): void => {
   setIsInitialized(false);
 };
 
-export const putFormbricksInErrorState = (config: Config): void => {
+export const putFormbricksInErrorState = (formbricksConfig: Config): void => {
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
@@ -412,8 +431,8 @@ export const putFormbricksInErrorState = (config: Config): void => {
 
   logger.debug("Putting formbricks in error state");
   // change formbricks status to error
-  config.update({
-    ...config.get(),
+  formbricksConfig.update({
+    ...formbricksConfig.get(),
     status: {
       value: "error",
       expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future
