@@ -1,13 +1,12 @@
-/* eslint-disable import/no-default-export -- We need default exports for the js sdk */
-import { type TJsConfigInput, type TJsTrackProperties } from "@formbricks/types/js";
+import { TJsConfigInput, TJsTrackProperties } from "@formbricks/types/js";
 import { trackCodeAction } from "./lib/actions";
 import { getApi } from "./lib/api";
 import { setAttributeInApp } from "./lib/attributes";
-import { CommandQueue } from "./lib/command-queue";
+import { CommandQueue } from "./lib/commandQueue";
 import { ErrorHandler } from "./lib/errors";
 import { initialize } from "./lib/initialize";
 import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/no-code-actions";
+import { checkPageUrl } from "./lib/noCodeActions";
 import { logoutPerson, resetPerson } from "./lib/person";
 
 const logger = Logger.getInstance();
@@ -15,18 +14,18 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = async (initConfig: TJsConfigInput): Promise<void> => {
+const init = async (initConfig: TJsConfigInput) => {
   ErrorHandler.init(initConfig.errorHandler);
   queue.add(false, initialize, initConfig);
   await queue.wait();
 };
 
 const setEmail = async (email: string): Promise<void> => {
-  await setAttribute("email", email);
+  setAttribute("email", email);
   await queue.wait();
 };
 
-const setAttribute = async (key: string, value: string): Promise<void> => {
+const setAttribute = async (key: string, value: any): Promise<void> => {
   queue.add(true, setAttributeInApp, key, value);
   await queue.wait();
 };
@@ -41,8 +40,8 @@ const reset = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (code: string, properties?: TJsTrackProperties): Promise<void> => {
-  queue.add(true, trackCodeAction, code, properties);
+const track = async (name: string, properties?: TJsTrackProperties): Promise<void> => {
+  queue.add<any>(true, trackCodeAction, name, properties);
   await queue.wait();
 };
 
@@ -62,5 +61,5 @@ const formbricks = {
   getApi,
 };
 
-export type TFormbricks = typeof formbricks;
-export default formbricks;
+export type TFormbricksApp = typeof formbricks;
+export default formbricks as TFormbricksApp;

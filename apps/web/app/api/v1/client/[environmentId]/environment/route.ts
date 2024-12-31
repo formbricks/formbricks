@@ -19,7 +19,6 @@ export const GET = async (
   }
 ): Promise<Response> => {
   const params = await props.params;
-
   try {
     // validate using zod
     const inputValidation = ZJsSyncInput.safeParse({

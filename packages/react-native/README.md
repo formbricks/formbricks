@@ -27,9 +27,8 @@ export default function App() {
   const config = {
     environmentId: "your-environment-id",
     apiHost: "https://app.formbricks.com",
-    userId: "hello-user", // optional
+    userId: "hello-user",
     attributes: {
-      // optional
       plan: "free",
     },
   };
@@ -43,6 +42,6 @@ export default function App() {
 }
 ```
 
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Connections instructions** in the Formbricks **Configuration** pages.
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Connections instructions** in the Formbricks **Configuration** pages. Please make sure to pass a unique user identifier as `userId` to the Formbricks SDK (e.g. database id, email address).
 
 For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).

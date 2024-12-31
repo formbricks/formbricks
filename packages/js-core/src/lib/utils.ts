@@ -1,17 +1,14 @@
 import { diffInDays } from "@formbricks/lib/utils/datetime";
+import { TActionClassNoCodeConfig, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
+import { TAttributes } from "@formbricks/types/attributes";
 import {
-  type TActionClassNoCodeConfig,
-  type TActionClassPageUrlRule,
-} from "@formbricks/types/action-classes";
-import { type TAttributes } from "@formbricks/types/attributes";
-import {
-  type TJsEnvironmentState,
-  type TJsEnvironmentStateActionClass,
-  type TJsEnvironmentStateSurvey,
-  type TJsPersonState,
-  type TJsTrackProperties,
+  TJsEnvironmentState,
+  TJsEnvironmentStateActionClass,
+  TJsEnvironmentStateSurvey,
+  TJsPersonState,
+  TJsTrackProperties,
 } from "@formbricks/types/js";
-import { type TResponseHiddenFieldValue } from "@formbricks/types/responses";
+import { TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { Logger } from "./logger";
 
 const logger = Logger.getInstance();
@@ -40,7 +37,7 @@ export const checkUrlMatch = (
 };
 
 export const handleUrlFilters = (urlFilters: TActionClassNoCodeConfig["urlFilters"]): boolean => {
-  if (urlFilters.length === 0) {
+  if (!urlFilters || urlFilters.length === 0) {
     return true;
   }
 
@@ -71,7 +68,7 @@ export const evaluateNoCodeConfigClick = (
   if (cssSelector) {
     // Split selectors that start with a . or # including the . or #
     const individualSelectors = cssSelector.split(/\s*(?=[.#])/);
-    for (const selector of individualSelectors) {
+    for (let selector of individualSelectors) {
       if (!targetElement.matches(selector)) {
         return false;
       }
@@ -89,7 +86,7 @@ export const handleHiddenFields = (
   hiddenFieldsConfig: TJsEnvironmentStateSurvey["hiddenFields"],
   hiddenFields: TJsTrackProperties["hiddenFields"]
 ): TResponseHiddenFieldValue => {
-  const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig;
+  const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig || {};
 
   let hiddenFieldsObject: TResponseHiddenFieldValue = {};
 
@@ -97,14 +94,14 @@ export const handleHiddenFields = (
     logger.error("Hidden fields are not enabled for this survey");
   } else if (hiddenFieldIds && hiddenFields) {
     const unknownHiddenFields: string[] = [];
-    hiddenFieldsObject = Object.keys(hiddenFields).reduce<TResponseHiddenFieldValue>((acc, key) => {
-      if (hiddenFieldIds.includes(key)) {
-        acc[key] = hiddenFields[key];
+    hiddenFieldsObject = Object.keys(hiddenFields).reduce((acc, key) => {
+      if (hiddenFieldIds?.includes(key)) {
+        acc[key] = hiddenFields?.[key];
       } else {
         unknownHiddenFields.push(key);
       }
       return acc;
-    }, {});
+    }, {} as TResponseHiddenFieldValue);
 
     if (unknownHiddenFields.length > 0) {
       logger.error(
@@ -116,7 +113,7 @@ export const handleHiddenFields = (
   return hiddenFieldsObject;
 };
 
-export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boolean => {
+export const shouldDisplayBasedOnPercentage = (displayPercentage: number) => {
   const randomNum = Math.floor(Math.random() * 10000) / 100;
   return randomNum <= displayPercentage;
 };
@@ -128,39 +125,40 @@ export const getLanguageCode = (
   const language = attributes.language;
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
-
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      surveyLanguage.language.code === language.toLowerCase() ||
-      surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
-    );
-  });
-  if (selectedLanguage?.default) {
-    return "default";
+  else {
+    const selectedLanguage = survey.languages.find((surveyLanguage) => {
+      return (
+        surveyLanguage.language.code === language.toLowerCase() ||
+        surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
+      );
+    });
+    if (selectedLanguage?.default) {
+      return "default";
+    }
+    if (
+      !selectedLanguage ||
+      !selectedLanguage?.enabled ||
+      !availableLanguageCodes.includes(selectedLanguage.language.code)
+    ) {
+      return undefined;
+    }
+    return selectedLanguage.language.code;
   }
-  if (
-    !selectedLanguage ||
-    !selectedLanguage.enabled ||
-    !availableLanguageCodes.includes(selectedLanguage.language.code)
-  ) {
-    return undefined;
-  }
-  return selectedLanguage.language.code;
 };
 
-export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
-  const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
-    return surveyLanguage.default;
+export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey) => {
+  const defaultSurveyLanguage = survey.languages?.find((surveyLanguage) => {
+    return surveyLanguage.default === true;
   });
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getIsDebug = (): boolean => window.location.search.includes("formbricksDebug=true");
+export const getIsDebug = () => window.location.search.includes("formbricksDebug=true");
 
 /**
  * Filters surveys based on the displayOption, recontactDays, and segments
- * @param environmentSate -  The environment state
- * @param personState - The person state
+ * @param environmentSate The environment state
+ * @param personState The person state
  * @returns The filtered surveys
  */
 
@@ -171,6 +169,10 @@ export const filterSurveys = (
 ): TJsEnvironmentStateSurvey[] => {
   const { project, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = personState.data;
+
+  if (!displays) {
+    return [];
+  }
 
   // Function to filter surveys based on displayOption criteria
   let filteredSurveys = surveys.filter((survey: TJsEnvironmentStateSurvey) => {
@@ -209,19 +211,19 @@ export const filterSurveys = (
     // if survey has recontactDays, check if the last display was more than recontactDays ago
     else if (survey.recontactDays !== null) {
       const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- lastDisplaySurvey could be falsy
       if (!lastDisplaySurvey) {
         return true;
       }
       return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
     }
     // use recontactDays of the project if survey does not have recontactDays
-    else if (project.recontactDays) {
+    else if (project.recontactDays !== null) {
       return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
     }
     // if no recontactDays is set, show the survey
-
-    return true;
+    else {
+      return true;
+    }
   });
 
   if (!userId) {

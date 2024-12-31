@@ -1,6 +1,6 @@
-import { type TJsTrackProperties } from "@formbricks/types/js";
+import { TJsTrackProperties } from "@formbricks/types/js";
 import { Config } from "./config";
-import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "./errors";
+import { InvalidCodeError, NetworkError, Result, err, okVoid } from "./errors";
 import { Logger } from "./logger";
 import { triggerSurvey } from "./widget";
 
@@ -12,14 +12,14 @@ export const trackAction = async (
   alias?: string,
   properties?: TJsTrackProperties
 ): Promise<Result<void, NetworkError>> => {
-  const aliasName = alias ?? name;
+  const aliasName = alias || name;
 
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = config.get().filteredSurveys;
 
-  if (Boolean(activeSurveys) && activeSurveys.length > 0) {
+  if (!!activeSurveys && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
@@ -41,7 +41,7 @@ export const trackCodeAction = (
   const actionClasses = config.get().environmentState.data.actionClasses;
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");
-  const action = codeActionClasses.find((codeActionClass) => codeActionClass.key === code);
+  const action = codeActionClasses.find((action) => action.key === code);
 
   if (!action) {
     return err({

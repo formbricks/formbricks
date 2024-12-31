@@ -1,6 +1,6 @@
 import { type TDisplayCreateInput } from "@formbricks/types/displays";
 import { type Result } from "@formbricks/types/error-handlers";
-import { type ApiErrorResponse } from "@formbricks/types/errors";
+import { type ForbiddenError, type NetworkError } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class DisplayAPI {
@@ -14,7 +14,7 @@ export class DisplayAPI {
 
   async create(
     displayInput: Omit<TDisplayCreateInput, "environmentId">
-  ): Promise<Result<{ id: string }, ApiErrorResponse>> {
+  ): Promise<Result<{ id: string }, ForbiddenError | NetworkError | Error>> {
     return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/displays`, "POST", displayInput);
   }
 }

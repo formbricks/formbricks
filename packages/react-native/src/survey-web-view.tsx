@@ -9,16 +9,16 @@ import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import type { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
 import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
-import type { TJsEnvironmentStateSurvey, TJsFileUploadParams, TJsPersonState } from "@formbricks/types/js";
+import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
 import type { TResponseUpdate } from "@formbricks/types/responses";
 import type { TUploadFileConfig } from "@formbricks/types/storage";
 import { Logger } from "../../js-core/src/lib/logger";
-import { filterSurveys, getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
-import { RNConfig } from "./lib/config";
+import { getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
+import { appConfig } from "./lib/config";
 import { StorageAPI } from "./lib/storage";
 import { SurveyStore } from "./lib/survey-store";
+import { sync } from "./lib/sync";
 
-const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 logger.configure({ logLevel: "debug" });
 
@@ -33,15 +33,15 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const [isSurveyRunning, setIsSurveyRunning] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
 
-  const project = appConfig.get().environmentState.data.project;
-  const attributes = appConfig.get().attributes;
+  const project = appConfig.get().state.project;
+  const attributes = appConfig.get().state.attributes;
 
   const styling = getStyling(project, survey);
   const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
 
   const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, null, null, appConfig.get().personState.data.userId)
+    new SurveyState(survey.id, null, null, appConfig.get().userId)
   );
 
   const responseQueue = useMemo(
@@ -86,9 +86,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   }
 
   const addResponseToQueue = (responseUpdate: TResponseUpdate): void => {
-    const { userId } = appConfig.get().personState.data;
+    const { userId } = appConfig.get();
     if (userId) surveyState.updateUserId(userId);
-
     responseQueue.updateSurveyState(surveyState);
     responseQueue.add({
       data: responseUpdate.data,
@@ -100,38 +99,33 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     });
   };
 
-  const onCloseSurvey = (): void => {
-    const { environmentState, personState } = appConfig.get();
-    const filteredSurveys = filterSurveys(environmentState, personState);
-
-    appConfig.update({
-      ...appConfig.get(),
-      environmentState,
-      personState,
-      filteredSurveys,
-    });
-
+  const onCloseSurvey = async (): Promise<void> => {
+    await sync(
+      {
+        apiHost: appConfig.get().apiHost,
+        environmentId: appConfig.get().environmentId,
+        userId: appConfig.get().userId,
+      },
+      appConfig
+    );
     surveyStore.resetSurvey();
     setShowSurvey(false);
   };
 
   const createDisplay = async (surveyId: string): Promise<{ id: string }> => {
-    const { userId } = appConfig.get().personState.data;
+    const { userId } = appConfig.get();
 
     const api = new FormbricksAPI({
       apiHost: appConfig.get().apiHost,
       environmentId: appConfig.get().environmentId,
     });
-
     const res = await api.client.display.create({
       surveyId,
-      ...(userId && { userId }),
+      userId,
     });
-
     if (!res.ok) {
       throw new Error("Could not create display");
     }
-
     return res.data;
   };
 
@@ -210,67 +204,21 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             if (onDisplay) {
               const { id } = await createDisplay(survey.id);
               surveyState.updateDisplayId(id);
-
-              const existingDisplays = appConfig.get().personState.data.displays;
-              const newDisplay = { surveyId: survey.id, createdAt: new Date() };
-
-              const displays = [...existingDisplays, newDisplay];
-              const previousConfig = appConfig.get();
-
-              const updatedPersonState = {
-                ...previousConfig.personState,
-                data: {
-                  ...previousConfig.personState.data,
-                  displays,
-                  lastDisplayAt: new Date(),
-                },
-              };
-
-              const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
-
-              appConfig.update({
-                ...previousConfig,
-                environmentState: previousConfig.environmentState,
-                personState: updatedPersonState,
-                filteredSurveys,
-              });
             }
             if (onResponse && responseUpdate) {
               addResponseToQueue(responseUpdate);
-
-              const isNewResponse = surveyState.responseId === null;
-
-              if (isNewResponse) {
-                const responses = appConfig.get().personState.data.responses;
-                const newPersonState: TJsPersonState = {
-                  ...appConfig.get().personState,
-                  data: {
-                    ...appConfig.get().personState.data,
-                    responses: [...responses, surveyState.surveyId],
-                  },
-                };
-
-                const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
-
-                appConfig.update({
-                  ...appConfig.get(),
-                  environmentState: appConfig.get().environmentState,
-                  personState: newPersonState,
-                  filteredSurveys,
-                });
-              }
             }
             if (onClose) {
-              onCloseSurvey();
+              await onCloseSurvey();
             }
-
             if (onRetry) {
               await responseQueue.processQueue();
             }
-
             if (onFinished) {
               setTimeout(() => {
-                onCloseSurvey();
+                void (async () => {
+                  await onCloseSurvey();
+                })();
               }, 2500);
             }
             if (onFileUpload && fileUploadParams) {
@@ -361,6 +309,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }):
       };
 
       function onResponse(responseUpdate) {
+        console.log(JSON.stringify({ onResponse: true, responseUpdate }));
         window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true, responseUpdate }));
       };
 

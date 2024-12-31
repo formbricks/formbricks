@@ -89,7 +89,6 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           projects: 3,
           whitelabel: true,
           removeBranding: true,
-          ai: true,
         },
         lastChecked: currentTime,
       };
@@ -155,7 +154,6 @@ export const getEnterpriseLicense = async (): Promise<{
           whitelabel: false,
           removeBranding: false,
           contacts: false,
-          ai: false,
         },
         lastChecked: new Date(),
       };
@@ -352,23 +350,18 @@ export const getIsSSOEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
-  if (!IS_AI_CONFIGURED) return false;
-  if (E2E_TESTING) {
-    const previousResult = await fetchLicenseForE2ETesting();
-    return previousResult && previousResult.features ? previousResult.features.ai : false;
-  }
-  const license = await getEnterpriseLicense();
-
+  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
   if (IS_FORMBRICKS_CLOUD) {
-    return Boolean(
-      license.features?.ai &&
-        (billingPlan === PROJECT_FEATURE_KEYS.STARTUP ||
-          billingPlan === PROJECT_FEATURE_KEYS.SCALE ||
-          billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+    return (
+      IS_AI_CONFIGURED &&
+      (await getEnterpriseLicense()).active &&
+      (billingPlan === PROJECT_FEATURE_KEYS.STARTUP ||
+        billingPlan === PROJECT_FEATURE_KEYS.SCALE ||
+        billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
     );
   }
 
-  return Boolean(license.features?.ai);
+  return false;
 };
 
 export const getIsAIEnabled = async (organization: TOrganization) => {

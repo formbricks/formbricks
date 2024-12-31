@@ -12,7 +12,6 @@ const ZEnterpriseLicenseFeatures = z.object({
   removeBranding: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
-  ai: z.boolean(),
 });
 
 export type TEnterpriseLicenseFeatures = z.infer<typeof ZEnterpriseLicenseFeatures>;

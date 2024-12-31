@@ -1,4 +1,4 @@
-import { type TJsPersonState, type TJsPersonSyncParams } from "@formbricks/types/js";
+import { TJsPersonState, TJsPersonSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
 import { Logger } from "./logger";
@@ -30,9 +30,9 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
  */
 export const fetchPersonState = async (
   { apiHost, environmentId, userId }: TJsPersonSyncParams,
-  noCache = false
+  noCache: boolean = false
 ): Promise<TJsPersonState> => {
-  const fetchOptions: RequestInit = {};
+  let fetchOptions: RequestInit = {};
 
   if (noCache || getIsDebug()) {
     fetchOptions.cache = "no-cache";
@@ -44,7 +44,7 @@ export const fetchPersonState = async (
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    const jsonRes = (await response.json()) as { code: string; message: string };
+    const jsonRes = await response.json();
 
     const error = err({
       code: jsonRes.code === "forbidden" ? "forbidden" : "network_error",
@@ -54,10 +54,10 @@ export const fetchPersonState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw new Error(error.error.message);
+    throw error;
   }
 
-  const data = (await response.json()) as { data: TJsPersonState["data"] };
+  const data = await response.json();
   const { data: state } = data;
 
   const defaultPersonState: TJsPersonState = {
@@ -76,19 +76,20 @@ export const fetchPersonState = async (
   }
 
   return {
-    data: { ...state },
+    data: { ...(state as TJsPersonState["data"]) },
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
   };
 };
 
 /**
  * Add a listener to check if the person state has expired with a certain interval
+ * @param config - The configuration for the SDK
  */
 export const addPersonStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every 60 seconds
 
   if (typeof window !== "undefined" && personStateSyncIntervalId === null) {
-    const intervalHandler = (): void => {
+    personStateSyncIntervalId = window.setInterval(async () => {
       const userId = config.get().personState.data.userId;
 
       if (!userId) {
@@ -103,9 +104,7 @@ export const addPersonStateExpiryCheckListener = (): void => {
           expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
         },
       });
-    };
-
-    personStateSyncIntervalId = window.setInterval(intervalHandler, updateInterval);
+    }, updateInterval);
   }
 };
 

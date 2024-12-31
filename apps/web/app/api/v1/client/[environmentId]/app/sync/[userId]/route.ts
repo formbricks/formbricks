@@ -1,5 +1,3 @@
-// Deprecated: This api route is deprecated now and will be removed in the future.
-// Deprecated: This is currently only being used for the older react native SDKs. Please upgrade to the latest SDKs.
 import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/app/sync/lib/contact";
 import { getSyncSurveys } from "@/app/api/v1/client/[environmentId]/app/sync/lib/survey";
 import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
@@ -21,7 +19,7 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { TJsRNStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -176,7 +174,7 @@ export const GET = async (
     let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
-    let state = {
+    let state: TJsRNStateSync = {
       surveys: !isAppSurveyResponseLimitReached
         ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, contactAttributes))
         : [],

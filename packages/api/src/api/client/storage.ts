@@ -47,18 +47,18 @@ export class StorageAPI {
 
     const { signedUrl, fileUrl, signingData, presignedFields, updatedFileName } = data;
 
-    let localUploadDetails: Record<string, string> = {};
+    let requestHeaders: Record<string, string> = {};
 
     if (signingData) {
       const { signature, timestamp, uuid } = signingData;
 
-      localUploadDetails = {
-        fileType: file.type,
-        fileName: encodeURIComponent(updatedFileName),
-        surveyId: surveyId ?? "",
-        signature,
-        timestamp: String(timestamp),
-        uuid,
+      requestHeaders = {
+        "X-File-Type": file.type,
+        "X-File-Name": encodeURIComponent(updatedFileName),
+        "X-Survey-ID": surveyId ?? "",
+        "X-Signature": signature,
+        "X-Timestamp": String(timestamp),
+        "X-UUID": uuid,
       };
     }
 
@@ -91,12 +91,14 @@ export class StorageAPI {
     try {
       uploadResponse = await fetch(signedUrlCopy, {
         method: "POST",
-        body: presignedFields
-          ? formDataForS3
-          : JSON.stringify({
-              ...formData,
-              ...localUploadDetails,
-            }),
+        ...(signingData
+          ? {
+              headers: {
+                ...requestHeaders,
+              },
+            }
+          : {}),
+        body: presignedFields ? formDataForS3 : JSON.stringify(formData),
       });
     } catch (err) {
       console.error("Error uploading file", err);

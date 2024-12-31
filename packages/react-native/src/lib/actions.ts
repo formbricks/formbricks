@@ -1,4 +1,4 @@
-import type { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type InvalidCodeError,
   type NetworkError,
@@ -8,10 +8,9 @@ import {
 } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
 import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/lib/utils";
-import { RNConfig } from "./config";
+import { appConfig } from "./config";
 import { SurveyStore } from "./survey-store";
 
-const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
@@ -30,11 +29,10 @@ export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
 
 export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
   const aliasName = alias ?? name;
-
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
 
   // get a list of surveys that are collecting insights
-  const activeSurveys = appConfig.get().filteredSurveys;
+  const activeSurveys = appConfig.get().state.surveys;
 
   if (Boolean(activeSurveys) && activeSurveys.length > 0) {
     for (const survey of activeSurveys) {
@@ -55,9 +53,7 @@ export const trackCodeAction = (
   code: string
 ): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
-    environmentState: {
-      data: { actionClasses = [] },
-    },
+    state: { actionClasses = [] },
   } = appConfig.get();
 
   const codeActionClasses = actionClasses.filter((action) => action.type === "code");

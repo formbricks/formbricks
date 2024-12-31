@@ -1,7 +1,7 @@
 import {
   addEnvironmentStateExpiryCheckListener,
   clearEnvironmentStateExpiryCheckListener,
-} from "./environment-state";
+} from "./environmentState";
 import {
   addClickEventListener,
   addExitIntentListener,
@@ -11,8 +11,8 @@ import {
   removeExitIntentListener,
   removePageUrlEventListeners,
   removeScrollDepthListener,
-} from "./no-code-actions";
-import { addPersonStateExpiryCheckListener, clearPersonStateExpiryCheckListener } from "./person-state";
+} from "./noCodeActions";
+import { addPersonStateExpiryCheckListener, clearPersonStateExpiryCheckListener } from "./personState";
 
 let areRemoveEventListenersAdded = false;
 
