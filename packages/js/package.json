@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Formbricks-js allows you to connect your index to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
