@@ -4,6 +4,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationEmailLogoUrlAction,
+  sendTestEmailAction,
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -136,6 +137,16 @@ export const EmailCustomizationSettings = ({
     setIsSaving(false);
   };
 
+  const sendTestEmail = async () => {
+    const sendTestEmailResponse = await sendTestEmailAction({ organizationId: organization.id });
+    if (sendTestEmailResponse?.data) {
+      toast.success(t("common.sent"));
+    } else {
+      const errorMessage = getFormattedErrorMessage(sendTestEmailResponse);
+      toast.error(errorMessage);
+    }
+  };
+
   const buttons: [ModalButton, ModalButton] = [
     {
       text: t("common.start_free_trial"),
@@ -177,13 +188,16 @@ export const EmailCustomizationSettings = ({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+                      <Button
+                        variant="secondary"
+                        onClick={() => inputRef.current?.click()}
+                        disabled={isReadOnly}>
                         <RepeatIcon className="h-4 w-4" />
-                        Replace logo
+                        {t("environments.settings.general.replace_logo")}
                       </Button>
-                      <Button onClick={removeLogo} variant="outline">
+                      <Button onClick={removeLogo} variant="outline" disabled={isReadOnly}>
                         <Trash2Icon className="h-4 w-4" />
-                        Remove logo
+                        {t("environments.settings.general.remove_logo")}
                       </Button>
                     </div>
                   </div>
@@ -206,9 +220,15 @@ export const EmailCustomizationSettings = ({
               </div>
 
               <div className="flex gap-4">
-                <Button variant="secondary">Send test email</Button>
-                <Button onClick={handleSave} disabled={!logoFile} loading={isSaving}>
-                  Save
+                <Button variant="secondary" disabled={isReadOnly} onClick={sendTestEmail}>
+                  {t("common.send_test_email")}
+                </Button>
+                <Button
+                  onClick={handleSave}
+                  disabled={!logoFile || isReadOnly}
+                  loading={isSaving}
+                  className="w-full">
+                  {t("common.save")}
                 </Button>
               </div>
             </div>
@@ -220,22 +240,26 @@ export const EmailCustomizationSettings = ({
                 width={192}
                 height={192}
               />
-              <P className="font-bold">Hey {user?.name}</P>
+              <P className="font-bold">
+                {t("environments.settings.general.email_customization_preview_email_heading", {
+                  userName: user?.name,
+                })}
+              </P>
               <Muted className="text-slate-500">
-                This is an email preview to show you which logo will be rendered in the emails.
+                {t("environments.settings.general.email_customization_preview_email_text")}
               </Muted>
             </div>
           </div>
         ) : (
           <UpgradePrompt
-            title={t("environments.project.look.customize_email_with_a_higher_plan")}
-            description={t("environments.project.look.eliminate_branding_with_whitelabel")}
+            title={t("environments.settings.general.customize_email_with_a_higher_plan")}
+            description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
             buttons={buttons}
           />
         )}
 
         {hasWhiteLabelPermission && isReadOnly && (
-          <Alert variant="warning" className="mt-4">
+          <Alert variant="warning" className="mb-6 mt-4">
             <AlertDescription>
               {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
             </AlertDescription>

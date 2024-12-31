@@ -1,3 +1,4 @@
+import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { render } from "@react-email/render";
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
@@ -222,12 +223,29 @@ export const sendEmbedSurveyPreviewEmail = async (
   });
 };
 
+export const sendEmailCustomizationPreviewEmail = async (
+  to: string,
+  subject: string,
+  userName: string,
+  locale: string,
+  logoUrl?: string
+): Promise<void> => {
+  const emailHtmlBody = await render(EmailCustomizationPreviewEmail({ userName, locale, logoUrl }));
+
+  await sendEmail({
+    to,
+    subject,
+    html: emailHtmlBody,
+  });
+};
+
 export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<void> => {
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
   const locale = data.locale;
+  const logoUrl = data.logoUrl || "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const getSurveyLink = (): string => {
     if (singleUseId) {
@@ -237,7 +255,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   const surveyLink = getSurveyLink();
 
-  const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale }));
+  const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale, logoUrl }));
   await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",

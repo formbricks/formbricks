@@ -4,7 +4,7 @@ import {
   getIfResponseWithSurveyIdAndEmailExistAction,
   sendLinkSurveyEmailAction,
 } from "@/app/s/[surveyId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage, getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -17,6 +17,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getOrganizationLogoUrl } from "@formbricks/lib/organization/service";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProjectStyling } from "@formbricks/types/project";
@@ -76,12 +77,16 @@ export const VerifyEmail = ({
         return;
       }
     }
+    const organizationId = await getOrganizationIdFromSurveyId(localSurvey.id);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+
     const data = {
       surveyId: localSurvey.id,
       email: email,
       surveyName: localSurvey.name,
       suId: singleUseId ?? "",
       locale,
+      logoUrl: organizationLogoUrl ?? "",
     };
 
     const actionResult = await sendLinkSurveyEmailAction(data);
