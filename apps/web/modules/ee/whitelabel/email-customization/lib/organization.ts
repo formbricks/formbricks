@@ -22,7 +22,7 @@ export const updateOrganizationEmailLogoUrl = async (
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    await prisma.organization.update({
+    const updatedOrganization = await prisma.organization.update({
       where: { id: organizationId },
       data: {
         whitelabel: {
@@ -30,10 +30,30 @@ export const updateOrganizationEmailLogoUrl = async (
           logoUrl,
         },
       },
+      select: {
+        projects: {
+          select: {
+            id: true,
+            environments: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     organizationCache.revalidate({
       id: organizationId,
+    });
+
+    updatedOrganization.projects.forEach((project) => {
+      project.environments.forEach((environment) => {
+        organizationCache.revalidate({
+          environmentId: environment.id,
+        });
+      });
     });
 
     projectCache.revalidate({

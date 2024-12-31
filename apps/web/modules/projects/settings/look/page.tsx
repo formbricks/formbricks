@@ -46,7 +46,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const canRemoveBranding = await getWhiteLabelPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isOwner, isManager, isMember } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasManageAccess } = getTeamPermissionFlags(projectPermission);

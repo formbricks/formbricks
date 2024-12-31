@@ -1,7 +1,19 @@
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
-export function EmailTemplate({ children }): React.JSX.Element {
+const fbLogoUrl =
+  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
+const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
+
+interface EmailTemplateProps {
+  children: React.ReactNode;
+  logoUrl?: string;
+}
+
+export function EmailTemplate({ children, logoUrl }: EmailTemplateProps): React.JSX.Element {
+  const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
+
+  console.log("logoUrl", logoUrl);
   return (
     <Html>
       <Tailwind>
@@ -11,13 +23,13 @@ export function EmailTemplate({ children }): React.JSX.Element {
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
           <Section>
-            <Link href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">
-              <Img
-                alt="Formbricks Logo"
-                className="mx-auto w-80"
-                src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png"
-              />
-            </Link>
+            {isDefaultLogo ? (
+              <Link href={logoLink} target="_blank">
+                <Img alt="Logo" className="mx-auto w-80" src={fbLogoUrl} />
+              </Link>
+            ) : (
+              <Img alt="Logo" className="mx-auto max-h-32 w-80 object-contain" src={logoUrl} />
+            )}
           </Section>
           <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">{children}</Container>
 

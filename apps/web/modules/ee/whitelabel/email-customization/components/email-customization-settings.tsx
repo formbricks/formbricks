@@ -10,16 +10,18 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
-import { P } from "@/modules/ui/components/typography";
+import { Muted, P } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
 const DEFAULT_LOGO_URL =
@@ -31,6 +33,7 @@ interface EmailCustomizationSettingsProps {
   environmentId: string;
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
+  user: TUser | null;
 }
 
 export const EmailCustomizationSettings = ({
@@ -39,6 +42,7 @@ export const EmailCustomizationSettings = ({
   environmentId,
   isReadOnly,
   isFormbricksCloud,
+  user,
 }: EmailCustomizationSettingsProps) => {
   const t = useTranslations();
 
@@ -48,6 +52,8 @@ export const EmailCustomizationSettings = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const isDefaultLogo = logoUrl === DEFAULT_LOGO_URL;
+
+  const router = useRouter();
 
   const onFileInputChange = (files: File[]) => {
     const file = files[0];
@@ -95,7 +101,7 @@ export const EmailCustomizationSettings = ({
       inputRef.current.value = "";
     }
 
-    if (isDefaultLogo) return;
+    if (isDefaultLogo || !organization.whitelabel?.logoUrl) return;
 
     const removeLogoResponse = await removeOrganizationEmailLogoUrlAction({
       organizationId: organization.id,
@@ -103,10 +109,31 @@ export const EmailCustomizationSettings = ({
 
     if (removeLogoResponse?.data) {
       toast.success(t("common.removed"));
+      router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeLogoResponse);
       toast.error(errorMessage);
     }
+  };
+
+  const handleSave = async () => {
+    if (!logoFile) return;
+    setIsSaving(true);
+    const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
+    const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
+      organizationId: organization.id,
+      logoUrl: url,
+    });
+
+    if (updateLogoResponse?.data) {
+      toast.success(t("common.saved"));
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateLogoResponse);
+      toast.error(errorMessage);
+    }
+
+    setIsSaving(false);
   };
 
   const buttons: [ModalButton, ModalButton] = [
@@ -124,83 +151,79 @@ export const EmailCustomizationSettings = ({
     },
   ];
 
-  const handleSave = async () => {
-    if (!logoFile) return;
-    setIsSaving(true);
-    const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
-    const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
-      organizationId: organization.id,
-      logoUrl: url,
-    });
-
-    if (updateLogoResponse?.data) {
-      toast.success(t("common.saved"));
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateLogoResponse);
-      toast.error(errorMessage);
-    }
-
-    setIsSaving(false);
-  };
-
   return (
     <SettingsCard
-      className="pb-0"
+      className="overflow-hidden pb-0"
       title={t("environments.project.look.email_customization")}
       description={t("environments.project.look.email_customization_description")}
       noPadding>
       <div className="px-6 pt-6">
         {hasWhiteLabelPermission ? (
-          <div>
-            <P>Logo in header</P>
+          <div className="flex items-end justify-between gap-4">
+            <div className="mb-10">
+              <P>Logo in header</P>
 
-            <div className="mb-6 mt-2 flex items-center gap-4">
-              {logoUrl && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-center rounded-lg border border-slate-200 p-2">
-                    <Image
-                      src={logoUrl}
-                      alt="Logo"
-                      className="max-h-24 max-w-full object-contain"
-                      width={192}
-                      height={192}
-                    />
-                  </div>
+              <div className="mb-6 mt-2 flex items-center gap-4">
+                {logoUrl && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex w-max items-center justify-center rounded-lg border border-slate-200 px-4 py-2">
+                      <Image
+                        src={logoUrl}
+                        alt="Logo"
+                        className="max-h-24 max-w-full object-contain"
+                        width={192}
+                        height={192}
+                      />
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button variant="secondary" onClick={() => inputRef.current?.click()}>
-                      <RepeatIcon className="h-4 w-4" />
-                      Replace logo
-                    </Button>
-                    <Button onClick={removeLogo} variant="outline">
-                      <Trash2Icon className="h-4 w-4" />
-                      Remove logo
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="secondary" onClick={() => inputRef.current?.click()}>
+                        <RepeatIcon className="h-4 w-4" />
+                        Replace logo
+                      </Button>
+                      <Button onClick={removeLogo} variant="outline">
+                        <Trash2Icon className="h-4 w-4" />
+                        Remove logo
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-              <Uploader
-                ref={inputRef}
-                allowedFileExtensions={[...allowedFileExtensions]}
-                id="email-customization"
-                name="email-customization"
-                handleDragOver={handleDragOver}
-                uploaderClassName={cn(
-                  "h-20 w-96 border border-slate-200 bg-white",
-                  logoUrl ? "hidden" : "block"
                 )}
-                handleDrop={handleDrop}
-                multiple={false}
-                handleUpload={onFileInputChange}
-                disabled={isReadOnly}
-              />
-            </div>
+                <Uploader
+                  ref={inputRef}
+                  allowedFileExtensions={[...allowedFileExtensions]}
+                  id="email-customization"
+                  name="email-customization"
+                  handleDragOver={handleDragOver}
+                  uploaderClassName={cn(
+                    "h-20 w-96 border border-slate-200 bg-white",
+                    logoUrl ? "hidden" : "block"
+                  )}
+                  handleDrop={handleDrop}
+                  multiple={false}
+                  handleUpload={onFileInputChange}
+                  disabled={isReadOnly}
+                />
+              </div>
 
-            <div className="flex gap-4">
-              <Button variant="secondary">Send test email</Button>
-              <Button onClick={handleSave} disabled={!logoFile} loading={isSaving}>
-                Save
-              </Button>
+              <div className="flex gap-4">
+                <Button variant="secondary">Send test email</Button>
+                <Button onClick={handleSave} disabled={!logoFile} loading={isSaving}>
+                  Save
+                </Button>
+              </div>
+            </div>
+            <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
+              <Image
+                src={logoUrl || DEFAULT_LOGO_URL}
+                alt="Logo"
+                className="mx-auto max-h-24 max-w-full object-contain"
+                width={192}
+                height={192}
+              />
+              <P className="font-bold">Hey {user?.name}</P>
+              <Muted className="text-slate-500">
+                This is an email preview to show you which logo will be rendered in the emails.
+              </Muted>
             </div>
           </div>
         ) : (

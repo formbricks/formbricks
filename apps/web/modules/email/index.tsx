@@ -211,9 +211,10 @@ export const sendEmbedSurveyPreviewEmail = async (
   subject: string,
   innerHtml: string,
   environmentId: string,
-  locale: string
+  locale: string,
+  logoUrl?: string
 ): Promise<void> => {
-  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale }));
+  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale, logoUrl }));
   await sendEmail({
     to,
     subject,

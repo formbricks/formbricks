@@ -16,6 +16,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
@@ -27,6 +28,8 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
+  const user = session?.user?.id ? await getUser(session.user.id) : null;
+
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!organization) {
@@ -81,6 +84,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         environmentId={params.environmentId}
         isReadOnly={!isOwnerOrManager}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        user={user}
       />
       {isMultiOrgEnabled && (
         <SettingsCard

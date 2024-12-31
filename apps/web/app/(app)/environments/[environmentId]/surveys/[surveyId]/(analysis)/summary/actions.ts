@@ -7,6 +7,7 @@ import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/u
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -18,9 +19,12 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .schema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organization = await getOrganization(organizationId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -50,7 +54,8 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       "Formbricks Email Survey Preview",
       emailHtml,
       survey.environmentId,
-      ctx.user.locale
+      ctx.user.locale,
+      organization?.whitelabel?.logoUrl || ""
     );
   });
 
