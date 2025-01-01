@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
+import { captureFailedSignup } from "@/modules/auth/signup/lib/utils";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
@@ -237,6 +238,7 @@ export const SignupForm = ({
                 onError={() => {
                   setTurnstileToken(undefined);
                   toast.error(t("auth.signup.captcha_failed"));
+                  captureFailedSignup(form.getValues("email"), form.getValues("name"));
                 }}
               />
             )}

@@ -3,7 +3,7 @@
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser } from "@/modules/auth/lib/user";
 import { updateUser } from "@/modules/auth/lib/user";
-import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
+import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { createTeamMembership } from "@/modules/invite/lib/team";
@@ -40,11 +40,13 @@ const ZCreateUserAction = z.object({
 export const createUserAction = actionClient.schema(ZCreateUserAction).action(async ({ parsedInput }) => {
   if (IS_TURNSTILE_CONFIGURED) {
     if (!parsedInput.turnstileToken || !TURNSTILE_SECRET_KEY) {
+      captureFailedSignup(parsedInput.email, parsedInput.name);
       throw new UnknownError("Server configuration error");
     }
 
     const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, parsedInput.turnstileToken);
     if (!isHuman) {
+      captureFailedSignup(parsedInput.email, parsedInput.name);
       throw new UnknownError("reCAPTCHA verification failed");
     }
   }
