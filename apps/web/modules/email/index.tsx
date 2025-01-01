@@ -331,11 +331,13 @@ export const sendFollowUpEmail = async (
   html: string,
   subject: string,
   to: string,
-  replyTo: string[]
+  replyTo: string[],
+  logoUrl?: string
 ): Promise<void> => {
   const emailHtmlBody = await render(
     FollowUpEmail({
       html,
+      logoUrl,
     })
   );
 

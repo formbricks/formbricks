@@ -13,7 +13,6 @@ interface EmailTemplateProps {
 export function EmailTemplate({ children, logoUrl }: EmailTemplateProps): React.JSX.Element {
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
-  console.log("logoUrl", logoUrl);
   return (
     <Html>
       <Tailwind>

@@ -121,6 +121,7 @@ export const EmailCustomizationSettings = ({
     if (!logoFile) return;
     setIsSaving(true);
     const { url } = await uploadFile(logoFile, allowedFileExtensions, environmentId);
+
     const updateLogoResponse = await updateOrganizationEmailLogoUrlAction({
       organizationId: organization.id,
       logoUrl: url,
@@ -128,6 +129,7 @@ export const EmailCustomizationSettings = ({
 
     if (updateLogoResponse?.data) {
       toast.success(t("common.saved"));
+      setLogoUrl(url);
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateLogoResponse);
@@ -138,7 +140,18 @@ export const EmailCustomizationSettings = ({
   };
 
   const sendTestEmail = async () => {
-    const sendTestEmailResponse = await sendTestEmailAction({ organizationId: organization.id });
+    if (!logoUrl) {
+      toast.error(t("environments.settings.general.please_add_a_logo"));
+      return;
+    }
+    if (logoUrl !== organization.whitelabel?.logoUrl && !isDefaultLogo) {
+      toast.error(t("environments.settings.general.please_save_logo_before_sending_test_email"));
+      return;
+    }
+    const sendTestEmailResponse = await sendTestEmailAction({
+      organizationId: organization.id,
+    });
+
     if (sendTestEmailResponse?.data) {
       toast.success(t("common.sent"));
     } else {
