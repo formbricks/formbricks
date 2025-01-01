@@ -10,7 +10,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 export const updateOrganizationEmailLogoUrl = async (
   organizationId: string,
   logoUrl: string
-): Promise<Boolean> => {
+): Promise<boolean> => {
   validateInputs([organizationId, ZId], [logoUrl, ZString]);
 
   try {
@@ -70,7 +70,7 @@ export const updateOrganizationEmailLogoUrl = async (
   }
 };
 
-export const removeOrganizationEmailLogoUrl = async (organizationId: string): Promise<Boolean> => {
+export const removeOrganizationEmailLogoUrl = async (organizationId: string): Promise<boolean> => {
   validateInputs([organizationId, ZId]);
 
   try {
