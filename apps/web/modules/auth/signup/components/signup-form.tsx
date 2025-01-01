@@ -104,7 +104,7 @@ export const SignupForm = ({
   const handleSubmit = async (data: TSignupInput) => {
     try {
       if (isTurnstileConfigured && !turnstileToken) {
-        throw new Error(t("auth.signup.please_verify_captha"));
+        throw new Error(t("auth.signup.please_verify_captcha"));
       }
 
       const createUserResponse = await createUserAction({

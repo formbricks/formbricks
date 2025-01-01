@@ -63,7 +63,7 @@
       "password_validation_contain_at_least_1_number": "Contenir au moins 1 chiffre",
       "password_validation_minimum_8_and_maximum_128_characters": "Minimum 8 et Maximum 128 caractères",
       "password_validation_uppercase_and_lowercase": "Mélange de majuscules et de minuscules",
-      "please_verify_captha": "Veuillez vérifier reCAPTCHA",
+      "please_verify_captcha": "Veuillez vérifier reCAPTCHA",
       "privacy_policy": "Politique de confidentialité",
       "terms_of_service": "Conditions d'utilisation",
       "title": "Créez votre compte Formbricks"
