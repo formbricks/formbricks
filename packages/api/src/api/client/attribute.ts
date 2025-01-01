@@ -1,6 +1,6 @@
 import { type TAttributeUpdateInput } from "@formbricks/types/attributes";
 import { type Result } from "@formbricks/types/error-handlers";
-import { type ForbiddenError, type NetworkError } from "@formbricks/types/errors";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class AttributeAPI {
@@ -15,10 +15,7 @@ export class AttributeAPI {
   async update(
     attributeUpdateInput: Omit<TAttributeUpdateInput, "environmentId">
   ): Promise<
-    Result<
-      { changed: boolean; message: string; details?: Record<string, string> },
-      NetworkError | Error | ForbiddenError
-    >
+    Result<{ changed: boolean; message: string; details?: Record<string, string> }, ApiErrorResponse>
   > {
     // transform all attributes to string if attributes are present into a new attributes copy
     const attributes: Record<string, string> = {};

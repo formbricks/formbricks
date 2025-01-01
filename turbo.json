@@ -31,6 +31,9 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+    "@formbricks/js-core#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
