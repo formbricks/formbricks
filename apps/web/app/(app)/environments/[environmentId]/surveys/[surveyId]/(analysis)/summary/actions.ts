@@ -4,10 +4,10 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
-import { getOrganization } from "@formbricks/lib/organization/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -20,7 +20,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .schema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const organization = await getOrganization(organizationId);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -55,7 +55,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       emailHtml,
       survey.environmentId,
       ctx.user.locale,
-      organization?.whitelabel?.logoUrl || ""
+      organizationLogoUrl || ""
     );
   });
 

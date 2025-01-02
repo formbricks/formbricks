@@ -456,25 +456,3 @@ export const getOrganizationsWhereUserIsSingleOwner = reactCache(
       }
     )()
 );
-
-export const getOrganizationLogoUrl = reactCache(
-  async (organizationId: string): Promise<string | null> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZId]);
-        try {
-          const organization = await getOrganization(organizationId);
-          return organization?.whitelabel?.logoUrl ?? null;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
-        }
-      },
-      [`getOrganizationLogoUrl-${organizationId}`],
-      {
-        tags: [organizationCache.tag.byId(organizationId)],
-      }
-    )()
-);

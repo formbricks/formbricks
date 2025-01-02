@@ -1,11 +1,13 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { cache } from "@formbricks/lib/cache";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const updateOrganizationEmailLogoUrl = async (
   organizationId: string,
@@ -48,13 +50,13 @@ export const updateOrganizationEmailLogoUrl = async (
       id: organizationId,
     });
 
-    updatedOrganization.projects.forEach((project) => {
-      project.environments.forEach((environment) => {
+    for (const project of updatedOrganization.projects) {
+      for (const environment of project.environments) {
         organizationCache.revalidate({
           environmentId: environment.id,
         });
-      });
-    });
+      }
+    }
 
     projectCache.revalidate({
       organizationId: organizationId,
@@ -76,6 +78,19 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
   try {
     const organization = await prisma.organization.findUnique({
       where: { id: organizationId },
+      select: {
+        whitelabel: true,
+        projects: {
+          select: {
+            id: true,
+            environments: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!organization) {
@@ -96,6 +111,14 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
       id: organizationId,
     });
 
+    for (const project of organization.projects) {
+      for (const environment of project.environments) {
+        organizationCache.revalidate({
+          environmentId: environment.id,
+        });
+      }
+    }
+
     projectCache.revalidate({
       organizationId: organizationId,
     });
@@ -109,3 +132,30 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
     throw error;
   }
 };
+
+export const getOrganizationLogoUrl = reactCache(
+  async (organizationId: string): Promise<string | null> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZId]);
+        try {
+          const organization = await prisma.organization.findUnique({
+            where: { id: organizationId },
+            select: {
+              whitelabel: true,
+            },
+          });
+          return organization?.whitelabel?.logoUrl ?? null;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getOrganizationLogoUrl-${organizationId}`],
+      {
+        tags: [organizationCache.tag.byId(organizationId)],
+      }
+    )()
+);

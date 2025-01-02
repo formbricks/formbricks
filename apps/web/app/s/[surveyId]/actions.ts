@@ -2,10 +2,10 @@
 
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { z } from "zod";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
-import { getOrganizationLogoUrl } from "@formbricks/lib/organization/service";
 import { getIfResponseWithSurveyIdAndEmailExist } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";

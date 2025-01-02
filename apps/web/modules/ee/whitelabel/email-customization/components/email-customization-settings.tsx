@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
 import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
-import { Muted, P } from "@/modules/ui/components/typography";
+import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -109,7 +109,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (removeLogoResponse?.data) {
-      toast.success(t("common.removed"));
+      toast.success(t("environments.settings.general.logo_removed_successfully"));
       router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(removeLogoResponse);
@@ -128,7 +128,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (updateLogoResponse?.data) {
-      toast.success(t("common.saved"));
+      toast.success(t("environments.settings.general.logo_saved_successfully"));
       setLogoUrl(url);
       router.refresh();
     } else {
@@ -153,7 +153,7 @@ export const EmailCustomizationSettings = ({
     });
 
     if (sendTestEmailResponse?.data) {
-      toast.success(t("common.sent"));
+      toast.success(t("environments.settings.general.test_email_sent_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(sendTestEmailResponse);
       toast.error(errorMessage);
@@ -185,7 +185,7 @@ export const EmailCustomizationSettings = ({
         {hasWhiteLabelPermission ? (
           <div className="flex items-end justify-between gap-4">
             <div className="mb-10">
-              <P>Logo in header</P>
+              <Small>{t("environments.settings.general.logo_in_email_header")}</Small>
 
               <div className="mb-6 mt-2 flex items-center gap-4">
                 {logoUrl && (
@@ -217,7 +217,7 @@ export const EmailCustomizationSettings = ({
                 )}
                 <Uploader
                   ref={inputRef}
-                  allowedFileExtensions={[...allowedFileExtensions]}
+                  allowedFileExtensions={allowedFileExtensions}
                   id="email-customization"
                   name="email-customization"
                   handleDragOver={handleDragOver}
@@ -236,11 +236,7 @@ export const EmailCustomizationSettings = ({
                 <Button variant="secondary" disabled={isReadOnly} onClick={sendTestEmail}>
                   {t("common.send_test_email")}
                 </Button>
-                <Button
-                  onClick={handleSave}
-                  disabled={!logoFile || isReadOnly}
-                  loading={isSaving}
-                  className="w-full">
+                <Button onClick={handleSave} disabled={!logoFile || isReadOnly} loading={isSaving}>
                   {t("common.save")}
                 </Button>
               </div>
@@ -249,7 +245,7 @@ export const EmailCustomizationSettings = ({
               <Image
                 src={logoUrl || DEFAULT_LOGO_URL}
                 alt="Logo"
-                className="mx-auto max-h-24 max-w-full object-contain"
+                className="mx-auto max-h-[100px] max-w-full object-contain"
                 width={192}
                 height={192}
               />
