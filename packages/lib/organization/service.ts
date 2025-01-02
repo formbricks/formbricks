@@ -27,6 +27,7 @@ export const select: Prisma.OrganizationSelect = {
   name: true,
   billing: true,
   isAIEnabled: true,
+  whitelabel: true,
 };
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;

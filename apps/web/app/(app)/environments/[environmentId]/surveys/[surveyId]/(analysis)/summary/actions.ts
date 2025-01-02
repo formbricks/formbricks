@@ -4,6 +4,7 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
@@ -18,9 +19,12 @@ const ZSendEmbedSurveyPreviewEmailAction = z.object({
 export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .schema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -50,7 +54,8 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       "Formbricks Email Survey Preview",
       emailHtml,
       survey.environmentId,
-      ctx.user.locale
+      ctx.user.locale,
+      organizationLogoUrl || ""
     );
   });
 

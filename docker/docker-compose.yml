@@ -138,6 +138,9 @@ x-environment: &environment
     # Set the below to have your own Imprint Page URL on auth & link survey page
     # IMPRINT_URL:
 
+    # Set the below to have your own Address on email footer
+    # IMPRINT_ADDRESS:
+
     ########################################## OPTIONAL (SERVER CONFIGURATION) ###########################################
 
     # Set the below to 1 to disable Rate Limiting across Formbricks
