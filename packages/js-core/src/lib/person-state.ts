@@ -1,4 +1,4 @@
-import { TJsPersonState, TJsPersonSyncParams } from "@formbricks/types/js";
+import { type TJsPersonState, type TJsPersonSyncParams } from "@formbricks/types/js";
 import { Config } from "./config";
 import { err } from "./errors";
 import { Logger } from "./logger";
@@ -30,9 +30,9 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
  */
 export const fetchPersonState = async (
   { apiHost, environmentId, userId }: TJsPersonSyncParams,
-  noCache: boolean = false
+  noCache = false
 ): Promise<TJsPersonState> => {
-  let fetchOptions: RequestInit = {};
+  const fetchOptions: RequestInit = {};
 
   if (noCache || getIsDebug()) {
     fetchOptions.cache = "no-cache";
@@ -44,7 +44,7 @@ export const fetchPersonState = async (
   const response = await fetch(url, fetchOptions);
 
   if (!response.ok) {
-    const jsonRes = await response.json();
+    const jsonRes = (await response.json()) as { code: string; message: string };
 
     const error = err({
       code: jsonRes.code === "forbidden" ? "forbidden" : "network_error",
@@ -54,10 +54,10 @@ export const fetchPersonState = async (
       responseMessage: jsonRes.message,
     });
 
-    throw error;
+    throw new Error(error.error.message);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { data: TJsPersonState["data"] };
   const { data: state } = data;
 
   const defaultPersonState: TJsPersonState = {
@@ -76,7 +76,7 @@ export const fetchPersonState = async (
   }
 
   return {
-    data: { ...(state as TJsPersonState["data"]) },
+    data: { ...state },
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
   };
 };
@@ -88,7 +88,7 @@ export const addPersonStateExpiryCheckListener = (): void => {
   const updateInterval = 1000 * 60; // every 60 seconds
 
   if (typeof window !== "undefined" && personStateSyncIntervalId === null) {
-    personStateSyncIntervalId = window.setInterval(async () => {
+    const intervalHandler = (): void => {
       const userId = config.get().personState.data.userId;
 
       if (!userId) {
@@ -103,7 +103,9 @@ export const addPersonStateExpiryCheckListener = (): void => {
           expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
         },
       });
-    }, updateInterval);
+    };
+
+    personStateSyncIntervalId = window.setInterval(intervalHandler, updateInterval);
   }
 };
 

@@ -1,9 +1,8 @@
 export class TimeoutStack {
-  private static instance: TimeoutStack;
-  // private timeouts: number[] = [];
+  private static instance: TimeoutStack | null = null;
   private timeouts: { event: string; timeoutId: number }[] = [];
 
-  // Private constructor to prevent direct instantiation
+  // eslint-disable-next-line @typescript-eslint/no-empty-function -- Empty constructor is intentional
   private constructor() {}
 
   // Retrieve the singleton instance of TimeoutStack

@@ -1,15 +1,17 @@
+/* eslint-disable no-console -- Required for error logging */
+/* eslint-disable @typescript-eslint/no-empty-function -- There are some empty functions here that we need */
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import {
-  TJsEnvironmentStateSurvey,
-  TJsFileUploadParams,
-  TJsPersonState,
-  TJsTrackProperties,
+  type TJsEnvironmentStateSurvey,
+  type TJsFileUploadParams,
+  type TJsPersonState,
+  type TJsTrackProperties,
 } from "@formbricks/types/js";
-import { TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { type TResponseHiddenFieldValue, type TResponseUpdate } from "@formbricks/types/responses";
+import { type TUploadFileConfig } from "@formbricks/types/storage";
 import { Config } from "./config";
 import { CONTAINER_ID } from "./constants";
 import { Logger } from "./logger";
@@ -27,10 +29,10 @@ const logger = Logger.getInstance();
 const timeoutStack = TimeoutStack.getInstance();
 
 let isSurveyRunning = false;
-let setIsError = (_: boolean) => {};
-let setIsResponseSendingFinished = (_: boolean) => {};
+let setIsError = (_: boolean): void => {};
+let setIsResponseSendingFinished = (_: boolean): void => {};
 
-export const setIsSurveyRunning = (value: boolean) => {
+export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
 
@@ -60,7 +62,7 @@ const renderWidget = async (
   survey: TJsEnvironmentStateSurvey,
   action?: string,
   hiddenFields: TResponseHiddenFieldValue = {}
-) => {
+): Promise<void> => {
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -69,11 +71,11 @@ const renderWidget = async (
   setIsSurveyRunning(true);
 
   if (survey.delay) {
-    logger.debug(`Delaying survey "${survey.name}" by ${survey.delay} seconds.`);
+    logger.debug(`Delaying survey "${survey.name}" by ${survey.delay.toString()} seconds.`);
   }
 
-  const { project } = config.get().environmentState.data ?? {};
-  const { attributes } = config.get() ?? {};
+  const { project } = config.get().environmentState.data;
+  const { attributes } = config.get();
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
@@ -151,7 +153,7 @@ const renderWidget = async (
 
         const existingDisplays = config.get().personState.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
-        const displays = existingDisplays ? [...existingDisplays, newDisplay] : [newDisplay];
+        const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
         const previousConfig = config.get();
 
         const updatedPersonState: TJsPersonState = {
@@ -203,7 +205,7 @@ const renderWidget = async (
             ...config.get().personState,
             data: {
               ...config.get().personState.data,
-              responses: [...responses, surveyState.surveyId],
+              responses: responses.length ? [...responses, surveyState.surveyId] : [surveyState.surveyId],
             },
           };
 
@@ -235,7 +237,7 @@ const renderWidget = async (
       },
       onRetry: () => {
         setIsError(false);
-        responseQueue.processQueue();
+        void responseQueue.processQueue();
       },
       hiddenFieldsRecord: hiddenFields,
     });
@@ -246,7 +248,7 @@ const renderWidget = async (
   }
 };
 
-export const closeSurvey = async (): Promise<void> => {
+export const closeSurvey = (): void => {
   // remove container element from DOM
   removeWidgetContainer();
   addWidgetContainer();
@@ -276,16 +278,19 @@ export const removeWidgetContainer = (): void => {
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
   return new Promise((resolve, reject) => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- We need to check if the formbricksSurveys object exists
     if (window.formbricksSurveys) {
       resolve(window.formbricksSurveys);
     } else {
       const script = document.createElement("script");
       script.src = `${config.get().apiHost}/js/surveys.umd.cjs`;
       script.async = true;
-      script.onload = () => resolve(window.formbricksSurveys);
+      script.onload = () => {
+        resolve(window.formbricksSurveys);
+      };
       script.onerror = (error) => {
         console.error("Failed to load Formbricks Surveys library:", error);
-        reject(error);
+        reject(new Error(`Failed to load Formbricks Surveys library: ${error as string}`));
       };
       document.head.appendChild(script);
     }
