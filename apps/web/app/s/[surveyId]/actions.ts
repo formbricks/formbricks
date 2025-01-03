@@ -45,7 +45,9 @@ export const validateSurveyPinAction = actionClient
     const originalPin = survey.pin?.toString();
 
     if (!originalPin) return { survey };
-    if (originalPin !== parsedInput.pin) throw new InvalidInputError("Invalid pin");
+    if (originalPin !== parsedInput.pin) {
+      throw new InvalidInputError("INVALID_PIN");
+    }
 
     return { survey };
   });
