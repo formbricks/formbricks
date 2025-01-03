@@ -1,3 +1,4 @@
+import { EmailCustomizationPreviewEmail } from "@/modules/email/emails/general/email-customization-preview-email";
 import { render } from "@react-email/render";
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
@@ -211,13 +212,30 @@ export const sendEmbedSurveyPreviewEmail = async (
   subject: string,
   innerHtml: string,
   environmentId: string,
-  locale: string
+  locale: string,
+  logoUrl?: string
 ): Promise<void> => {
-  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale }));
+  const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale, logoUrl }));
   await sendEmail({
     to,
     subject,
     html,
+  });
+};
+
+export const sendEmailCustomizationPreviewEmail = async (
+  to: string,
+  subject: string,
+  userName: string,
+  locale: string,
+  logoUrl?: string
+): Promise<void> => {
+  const emailHtmlBody = await render(EmailCustomizationPreviewEmail({ userName, locale, logoUrl }));
+
+  await sendEmail({
+    to,
+    subject,
+    html: emailHtmlBody,
   });
 };
 
@@ -227,6 +245,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
   const locale = data.locale;
+  const logoUrl = data.logoUrl || "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const getSurveyLink = (): string => {
     if (singleUseId) {
@@ -236,7 +255,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   };
   const surveyLink = getSurveyLink();
 
-  const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale }));
+  const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale, logoUrl }));
   await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",
@@ -312,11 +331,13 @@ export const sendFollowUpEmail = async (
   html: string,
   subject: string,
   to: string,
-  replyTo: string[]
+  replyTo: string[],
+  logoUrl?: string
 ): Promise<void> => {
   const emailHtmlBody = await render(
     FollowUpEmail({
       html,
+      logoUrl,
     })
   );
 

@@ -169,7 +169,7 @@ export const POST = async (request: Request) => {
     const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization);
 
     if (surveyFollowUpsPermission) {
-      await sendSurveyFollowUps(survey, response);
+      await sendSurveyFollowUps(survey, response, organization);
     }
 
     const emailPromises = usersWithNotifications.map((user) =>

@@ -493,6 +493,9 @@ model Organization {
   /// @zod.custom(imports.ZOrganizationBilling)
   /// [OrganizationBilling]
   billing     Json
+  /// @zod.custom(imports.ZOrganizationWhitelabel)
+  /// [OrganizationWhitelabel]
+  whitelabel  Json         @default("{}")
   invites     Invite[]
   isAIEnabled Boolean      @default(false)
   teams       Team[]

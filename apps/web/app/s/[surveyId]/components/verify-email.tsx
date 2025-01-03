@@ -76,6 +76,7 @@ export const VerifyEmail = ({
         return;
       }
     }
+
     const data = {
       surveyId: localSurvey.id,
       email: email,

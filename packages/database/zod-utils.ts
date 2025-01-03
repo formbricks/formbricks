@@ -23,5 +23,5 @@ export {
 export { ZSurveyFollowUpAction, ZSurveyFollowUpTrigger } from "./types/survey-follow-up";
 
 export { ZSegmentFilters } from "../types/segment";
-export { ZOrganizationBilling } from "../types/organizations";
+export { ZOrganizationBilling, ZOrganizationWhitelabel } from "../types/organizations";
 export { ZUserNotificationSettings } from "../types/user";

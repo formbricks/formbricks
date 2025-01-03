@@ -3,6 +3,7 @@ import { MdxImage } from "@/components/MdxImage";
 import CreateNewIntegration from "./images/airtable/create-new-integration.webp";
 import OpenDeveloperHub from "./images/airtable/open-developer-hub.webp";
 import RegisterNewIntegration from "./images/airtable/register-new-integration.webp";
+import DevelopmentUseWarning from "./images/airtable/development-use-warning.webp";
 import SelectScopes from "./images/airtable/select-scopes.webp";
 
 import AddApiKey from "./images/n8n/add-api-key.webp";
@@ -56,6 +57,17 @@ We have step-by-step guides to configure our third-party integrations with a sel
 ## Airtable
 
 Enabling the Airtable Integration in a self-hosted environment requires creating an airtable account and changing the environment variables of your Formbricks instance.
+
+<Note>
+  If your Airtable app is in development use, please ensure that the email used in the Airtable integration matches the email used in the Airtable OAuth app. To use other email addresses, you need to fill this information in your OAuth app settings again:
+<MdxImage
+  src={DevelopmentUseWarning}
+  alt="Development use warning"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+</Note>
 
 1. Go to the [Airtable](https://airtable.com) and create a new account if you dont already have one.
 
@@ -111,6 +123,10 @@ Voila! You have successfully enabled the Airtable integration in your self-hoste
 ## Google Sheets
 
 Integrating Google Sheets with a self-hosted Formbricks instance requires configuring Google Cloud and updating your environment variables.
+
+<Note>
+  If your Google Cloud Console project has a publishing status of "Testing" your refresh token will expire after 7 days. To avoid that, you need to change the publishing status to "Production". [Google OAuth 2.0 documentation](https://developers.google.com/identity/protocols/oauth2?hl=en#expiration)
+</Note>
 
 1. Go to the **[Google Cloud Console](https://console.cloud.google.com/)** and **create a new project**.
 2. Enable necessary APIs:

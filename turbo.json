@@ -108,6 +108,7 @@
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "IMPRINT_URL",
+        "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_SECRET_KEY",

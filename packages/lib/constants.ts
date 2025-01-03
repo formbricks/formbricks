@@ -21,6 +21,7 @@ export const DEFAULT_BRAND_COLOR = "#64748b";
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
+export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
