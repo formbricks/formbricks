@@ -6,9 +6,12 @@ import { checkForEmptyFallBackValue } from "@formbricks/lib/utils/recall";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TI18nString,
+  TInputFieldConfig,
   TSurvey,
+  TSurveyAddressQuestion,
   TSurveyCTAQuestion,
   TSurveyConsentQuestion,
+  TSurveyContactInfoQuestion,
   TSurveyEndScreenCard,
   TSurveyLanguage,
   TSurveyMatrixQuestion,
@@ -67,6 +70,26 @@ const handleI18nCheckForMatrixLabels = (
   return rowsAndColumns.every((label) => isLabelValidForAllLanguages(label, languages));
 };
 
+const handleI18nCheckForContactAndAddressFields = (
+  question: TSurveyContactInfoQuestion | TSurveyAddressQuestion,
+  languages: TSurveyLanguage[]
+): boolean => {
+  let fields: TInputFieldConfig[] = [];
+  if (question.type === "contactInfo") {
+    const { firstName, lastName, phone, email, company } = question;
+    fields = [firstName, lastName, phone, email, company];
+  } else if (question.type === "address") {
+    const { addressLine1, addressLine2, city, state, zip, country } = question;
+    fields = [addressLine1, addressLine2, city, state, zip, country];
+  }
+  return fields.every((field) => {
+    if (field.show) {
+      return isLabelValidForAllLanguages(field.placeholder, languages);
+    }
+    return true;
+  });
+};
+
 // Validation rules
 export const validationRules = {
   openText: (question: TSurveyOpenTextQuestion, languages: TSurveyLanguage[]) => {
@@ -95,6 +118,12 @@ export const validationRules = {
   },
   matrix: (question: TSurveyMatrixQuestion, languages: TSurveyLanguage[]) => {
     return handleI18nCheckForMatrixLabels(question, languages);
+  },
+  contactInfo: (question: TSurveyContactInfoQuestion, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForContactAndAddressFields(question, languages);
+  },
+  address: (question: TSurveyAddressQuestion, languages: TSurveyLanguage[]) => {
+    return handleI18nCheckForContactAndAddressFields(question, languages);
   },
   // Assuming headline is of type TI18nString
   defaultValidation: (question: TSurveyQuestion, languages: TSurveyLanguage[], isFirstQuestion: boolean) => {

@@ -53,28 +53,28 @@ export function ContactInfoQuestion({
   const fields = [
     {
       id: "firstName",
-      placeholder: "First Name",
       ...question.firstName,
+      placeholder: question.firstName.placeholder[languageCode],
     },
     {
       id: "lastName",
-      placeholder: "Last Name",
       ...question.lastName,
+      placeholder: question.lastName.placeholder[languageCode],
     },
     {
       id: "email",
-      placeholder: "Email",
       ...question.email,
+      placeholder: question.email.placeholder[languageCode],
     },
     {
       id: "phone",
-      placeholder: "Phone",
       ...question.phone,
+      placeholder: question.phone.placeholder[languageCode],
     },
     {
       id: "company",
-      placeholder: "Company",
       ...question.company,
+      placeholder: question.company.placeholder[languageCode],
     },
   ];
 

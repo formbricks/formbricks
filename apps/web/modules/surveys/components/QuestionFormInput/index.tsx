@@ -148,7 +148,12 @@ export const QuestionFormInput = ({
     }
 
     return (
-      (question && (question[id as keyof TSurveyQuestion] as TI18nString)) ||
+      (question &&
+        (id.includes(".")
+          ? // Handle nested properties
+            (question[id.split(".")[0] as keyof TSurveyQuestion] as any)?.[id.split(".")[1]]
+          : // Original behavior
+            (question[id as keyof TSurveyQuestion] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
     );
   }, [
@@ -340,10 +345,22 @@ export const QuestionFormInput = ({
   const updateQuestionDetails = useCallback(
     (translatedText: TI18nString) => {
       if (updateQuestion) {
-        updateQuestion(questionIdx, { [id]: translatedText });
+        // Handle nested properties if id contains a dot
+        if (id.includes(".")) {
+          const [parent, child] = id.split(".");
+          updateQuestion(questionIdx, {
+            [parent]: {
+              ...question[parent],
+              [child]: translatedText,
+            },
+          });
+        } else {
+          // Original behavior for non-nested properties
+          updateQuestion(questionIdx, { [id]: translatedText });
+        }
       }
     },
-    [id, questionIdx, updateQuestion]
+    [id, questionIdx, updateQuestion, question]
   );
 
   const handleUpdate = useCallback(
