@@ -56,12 +56,14 @@
       "use_a_backup_code": "Usar um código de backup"
     },
     "signup": {
+      "captcha_failed": "reCAPTCHA falhou",
       "error": "Ocorreu um erro ao te cadastrar",
       "have_an_account": "Já tem uma conta?",
       "log_in": "Fazer login",
       "password_validation_contain_at_least_1_number": "Conter pelo menos 1 número",
       "password_validation_minimum_8_and_maximum_128_characters": "Mínimo 8 e Máximo 128 caracteres",
       "password_validation_uppercase_and_lowercase": "mistura de maiúsculas e minúsculas",
+      "please_verify_captcha": "Por favor, verifique o reCAPTCHA",
       "privacy_policy": "Política de Privacidade",
       "terms_of_service": "Termos de Serviço",
       "title": "Crie sua conta no Formbricks"

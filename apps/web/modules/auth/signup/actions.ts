@@ -3,16 +3,19 @@
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser } from "@/modules/auth/lib/user";
 import { updateUser } from "@/modules/auth/lib/user";
+import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { createTeamMembership } from "@/modules/invite/lib/team";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
+import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
 import { getInvite } from "@formbricks/lib/invite/service";
 import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
+import { UnknownError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserLocale, ZUserName } from "@formbricks/types/user";
 
@@ -25,9 +28,29 @@ const ZCreateUserAction = z.object({
   defaultOrganizationId: z.string().optional(),
   defaultOrganizationRole: ZOrganizationRole.optional(),
   emailVerificationDisabled: z.boolean().optional(),
+  turnstileToken: z
+    .string()
+    .optional()
+    .refine(
+      (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
+      "CAPTCHA verification required"
+    ),
 });
 
 export const createUserAction = actionClient.schema(ZCreateUserAction).action(async ({ parsedInput }) => {
+  if (IS_TURNSTILE_CONFIGURED) {
+    if (!parsedInput.turnstileToken || !TURNSTILE_SECRET_KEY) {
+      captureFailedSignup(parsedInput.email, parsedInput.name);
+      throw new UnknownError("Server configuration error");
+    }
+
+    const isHuman = await verifyTurnstileToken(TURNSTILE_SECRET_KEY, parsedInput.turnstileToken);
+    if (!isHuman) {
+      captureFailedSignup(parsedInput.email, parsedInput.name);
+      throw new UnknownError("reCAPTCHA verification failed");
+    }
+  }
+
   const { inviteToken, emailVerificationDisabled } = parsedInput;
   const hashedPassword = await hashPassword(parsedInput.password);
   const user = await createUser({

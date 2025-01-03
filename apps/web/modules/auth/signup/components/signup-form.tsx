@@ -3,6 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
+import { captureFailedSignup } from "@/modules/auth/signup/lib/utils";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
@@ -16,7 +17,9 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
+import { env } from "@formbricks/lib/env";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserLocale, ZUserName } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
@@ -30,6 +33,8 @@ const ZSignupInput = z.object({
     .min(8)
     .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
 });
+
+const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
 
@@ -49,6 +54,7 @@ interface SignupFormProps {
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
   isSSOEnabled: boolean;
+  isTurnstileConfigured: boolean;
 }
 
 export const SignupForm = ({
@@ -67,12 +73,16 @@ export const SignupForm = ({
   defaultOrganizationId,
   defaultOrganizationRole,
   isSSOEnabled,
+  isTurnstileConfigured,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
   const t = useTranslations();
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
+  const [turnstileToken, setTurnstileToken] = useState<string>();
+
+  const turnstile = useTurnstile();
 
   const callbackUrl = useMemo(() => {
     if (inviteToken) {
@@ -93,6 +103,10 @@ export const SignupForm = ({
 
   const handleSubmit = async (data: TSignupInput) => {
     try {
+      if (isTurnstileConfigured && !turnstileToken) {
+        throw new Error(t("auth.signup.please_verify_captcha"));
+      }
+
       const createUserResponse = await createUserAction({
         name: data.name,
         email: data.email,
@@ -102,6 +116,7 @@ export const SignupForm = ({
         emailVerificationDisabled,
         defaultOrganizationId,
         defaultOrganizationRole,
+        turnstileToken,
       });
 
       if (createUserResponse?.data) {
@@ -114,10 +129,20 @@ export const SignupForm = ({
 
           router.push(url);
         } else {
+          if (isTurnstileConfigured) {
+            setTurnstileToken(undefined);
+            turnstile.reset();
+          }
+
           const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
           toast.error(errorMessage);
         }
       } else {
+        if (isTurnstileConfigured) {
+          setTurnstileToken(undefined);
+          turnstile.reset();
+        }
+
         const errorMessage = getFormattedErrorMessage(createUserResponse);
         toast.error(errorMessage);
       }
@@ -204,6 +229,20 @@ export const SignupForm = ({
                 <PasswordChecks password={form.watch("password")} />
               </div>
             )}
+            {isTurnstileConfigured && showLogin && turnstileSiteKey && (
+              <Turnstile
+                sitekey={turnstileSiteKey}
+                onSuccess={(token) => {
+                  setTurnstileToken(token);
+                }}
+                onError={() => {
+                  setTurnstileToken(undefined);
+                  toast.error(t("auth.signup.captcha_failed"));
+                  captureFailedSignup(form.getValues("email"), form.getValues("name"));
+                }}
+              />
+            )}
+
             {showLogin && (
               <Button
                 type="submit"

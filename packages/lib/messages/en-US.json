@@ -56,12 +56,14 @@
       "use_a_backup_code": "Use a backup code"
     },
     "signup": {
+      "captcha_failed": "Captcha failed",
       "error": "An error occurred when signing you up",
       "have_an_account": "Have an account?",
       "log_in": "Log in",
       "password_validation_contain_at_least_1_number": "Contain at least 1 number",
       "password_validation_minimum_8_and_maximum_128_characters": "Minimum 8 & Maximum 128 characters",
       "password_validation_uppercase_and_lowercase": "Mix of uppercase and lowercase",
+      "please_verify_captcha": "Please verify reCAPTCHA",
       "privacy_policy": "Privacy Policy",
       "terms_of_service": "Terms of Service",
       "title": "Create your Formbricks account"
