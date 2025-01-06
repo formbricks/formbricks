@@ -35,10 +35,10 @@ const Page = async () => {
   }
 
   let environmentId: string | null = null;
-  environmentId = await getFirstEnvironmentIdByUserId(session?.user.id);
+  environmentId = await getFirstEnvironmentIdByUserId(session.user.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
-    session?.user.id,
+    session.user.id,
     userOrganizations[0].id
   );
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
