@@ -1,7 +1,7 @@
 "use client";
 
-import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/LinkSurveyWrapper";
-import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/SurveyLinkUsed";
+import { LinkSurveyWrapper } from "@/app/s/[surveyId]/components/link-survey-wrapper";
+import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/survey-link-used";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/verify-email";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { SurveyInline } from "@/modules/ui/components/survey";
@@ -68,19 +68,19 @@ export const LinkSurvey = ({
   const t = useTranslations();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
-  const skipPrefilled = searchParams?.get("skipPrefilled") === "true";
-  const sourceParam = searchParams?.get("source");
-  const suId = searchParams?.get("suId");
-  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => {
-    return surveyLanguage.default === true;
+  const skipPrefilled = searchParams.get("skipPrefilled") === "true";
+  const sourceParam = searchParams.get("source");
+  const suId = searchParams.get("suId");
+  const defaultLanguageCode = survey.languages.find((surveyLanguage) => {
+    return surveyLanguage.default;
   })?.language.code;
 
-  const startAt = searchParams?.get("startAt");
+  const startAt = searchParams.get("startAt");
   const isStartAtValid = useMemo(() => {
     if (!startAt) return false;
-    if (survey?.welcomeCard.enabled && startAt === "start") return true;
+    if (survey.welcomeCard.enabled && startAt === "start") return true;
 
-    const isValid = survey?.questions.some((question) => question.id === startAt);
+    const isValid = survey.questions.some((question) => question.id === startAt);
 
     // To remove startAt query param from URL if it is not valid:
     if (!isValid && typeof window !== "undefined") {
@@ -120,11 +120,11 @@ export const LinkSurvey = ({
   );
   const [autoFocus, setAutofocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {
-    if (singleUseResponse && singleUseResponse.finished) {
+    if (singleUseResponse?.finished) {
       return true;
     }
     return false;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once
   }, []);
 
   // Not in an iframe, enable autofocus on input fields.
@@ -132,21 +132,21 @@ export const LinkSurvey = ({
     if (window.self === window.top) {
       setAutofocus(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once
   }, []);
 
   const hiddenFieldsRecord = useMemo<TResponseHiddenFieldValue>(() => {
     const fieldsRecord: TResponseHiddenFieldValue = {};
 
-    survey.hiddenFields?.fieldIds?.forEach((field) => {
-      const answer = searchParams?.get(field);
+    survey.hiddenFields.fieldIds?.forEach((field) => {
+      const answer = searchParams.get(field);
       if (answer) {
         fieldsRecord[field] = answer;
       }
     });
 
     return fieldsRecord;
-  }, [searchParams, survey.hiddenFields?.fieldIds]);
+  }, [searchParams, survey.hiddenFields.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
     if (survey.isVerifyEmailEnabled && verifiedEmail) {
@@ -191,27 +191,17 @@ export const LinkSurvey = ({
   }
 
   const determineStyling = () => {
-    // allow style overwrite is disabled from the project
+    // Check if style overwrite is disabled at the project level
     if (!project.styling.allowStyleOverwrite) {
       return project.styling;
     }
 
-    // allow style overwrite is enabled from the project
-    if (project.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return project.styling;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling;
-    }
-
-    return project.styling;
+    // Return survey styling if survey overwrites are enabled, otherwise return project styling
+    return survey.styling?.overwriteThemeStyling ? survey.styling : project.styling;
   };
 
   const handleResetSurvey = () => {
-    setQuestionId(survey.welcomeCard.enabled ? "start" : survey?.questions[0]?.id);
+    setQuestionId(survey.welcomeCard.enabled ? "start" : survey.questions[0].id);
     setResponseData({});
   };
 
@@ -246,27 +236,29 @@ export const LinkSurvey = ({
         }
         onRetry={() => {
           setIsError(false);
-          responseQueue.processQueue();
+          void responseQueue.processQueue();
         }}
-        onDisplay={async () => {
+        onDisplay={() => {
           if (!isPreview) {
-            const api = new FormbricksAPI({
-              apiHost: webAppUrl,
-              environmentId: survey.environmentId,
-            });
+            void (async () => {
+              const api = new FormbricksAPI({
+                apiHost: webAppUrl,
+                environmentId: survey.environmentId,
+              });
 
-            const res = await api.client.display.create({
-              surveyId: survey.id,
-            });
+              const res = await api.client.display.create({
+                surveyId: survey.id,
+              });
 
-            if (!res.ok) {
-              throw new Error(t("s.could_not_create_display"));
-            }
+              if (!res.ok) {
+                throw new Error(t("s.could_not_create_display"));
+              }
 
-            const { id } = res.data;
+              const { id } = res.data;
 
-            surveyState.updateDisplayId(id);
-            responseQueue.updateSurveyState(surveyState);
+              surveyState.updateDisplayId(id);
+              responseQueue.updateSurveyState(surveyState);
+            })();
           }
         }}
         onResponse={(responseUpdate: TResponseUpdate) => {
@@ -286,7 +278,7 @@ export const LinkSurvey = ({
                   : responseUpdate.language,
               meta: {
                 url: window.location.href,
-                source: sourceParam || "",
+                source: typeof sourceParam === "string" ? sourceParam : "",
               },
               variables: responseUpdate.variables,
               displayId: surveyState.displayId,
@@ -302,6 +294,7 @@ export const LinkSurvey = ({
           const uploadedUrl = await api.client.storage.uploadFile(file, params);
           return uploadedUrl;
         }}
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- need it as focus behaviour is different in normal surveys and survey preview
         autoFocus={autoFocus}
         prefillResponseData={prefillValue}
         skipPrefilled={skipPrefilled}
@@ -313,7 +306,7 @@ export const LinkSurvey = ({
           setResponseData = f;
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
-        fullSizeCards={isEmbed ? true : false}
+        fullSizeCards={isEmbed}
         hiddenFieldsRecord={hiddenFieldsRecord}
       />
     </LinkSurveyWrapper>
