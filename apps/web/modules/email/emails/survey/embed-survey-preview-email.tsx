@@ -7,15 +7,17 @@ interface EmbedSurveyPreviewEmailProps {
   html: string;
   environmentId: string;
   locale: string;
+  logoUrl?: string;
 }
 
 export function EmbedSurveyPreviewEmail({
   html,
   environmentId,
   locale,
+  logoUrl,
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate logoUrl={logoUrl}>
       <Container>
         <Heading>{translateEmailText("embed_survey_preview_email_heading", locale)}</Heading>
         <Text>{translateEmailText("embed_survey_preview_email_text", locale)}</Text>

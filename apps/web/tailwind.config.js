@@ -30,6 +30,7 @@ module.exports = {
         "card-sm": "0px 0.5px 12px -5px rgba(30,41,59,0.20)",
         "card-md": "0px 1px 25px -10px rgba(30,41,59,0.30)",
         "card-lg": "0px 2px 51px -19px rgba(30,41,59,0.40)",
+        "card-xl": "0px 20px 25px -5px rgba(0, 0, 0, 0.10), 0px 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
       colors: {
         brand: {

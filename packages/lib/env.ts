@@ -44,6 +44,7 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
+    IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INTERCOM_SECRET_KEY: z.string().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
@@ -160,6 +161,7 @@ export const env = createEnv({
     HTTP_PROXY: process.env.HTTP_PROXY,
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
+    IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     INTERCOM_SECRET_KEY: process.env.INTERCOM_SECRET_KEY,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,

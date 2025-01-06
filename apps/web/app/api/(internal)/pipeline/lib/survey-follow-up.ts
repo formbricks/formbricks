@@ -1,6 +1,7 @@
 import { sendFollowUpEmail } from "@/modules/email";
 import { z } from "zod";
 import { TSurveyFollowUpAction } from "@formbricks/database/types/survey-follow-up";
+import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -13,11 +14,13 @@ type FollowUpResult = {
 const evaluateFollowUp = async (
   followUpId: string,
   followUpAction: TSurveyFollowUpAction,
-  response: TResponse
+  response: TResponse,
+  organization: TOrganization
 ): Promise<void> => {
   const { properties } = followUpAction;
   const { to, subject, body, replyTo } = properties;
   const toValueFromResponse = response.data[to];
+  const logoUrl = organization.whitelabel?.logoUrl || "";
   if (!toValueFromResponse) {
     throw new Error(`"To" value not found in response data for followup: ${followUpId}`);
   }
@@ -27,7 +30,7 @@ const evaluateFollowUp = async (
     const parsedResult = z.string().email().safeParse(toValueFromResponse);
     if (parsedResult.data) {
       // send email to this email address
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo);
+      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
@@ -38,14 +41,18 @@ const evaluateFollowUp = async (
     }
     const parsedResult = z.string().email().safeParse(emailAddress);
     if (parsedResult.data) {
-      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo);
+      await sendFollowUpEmail(body, subject, parsedResult.data, replyTo, logoUrl);
     } else {
       throw new Error(`Email address is not valid for followup: ${followUpId}`);
     }
   }
 };
 
-export const sendSurveyFollowUps = async (survey: TSurvey, response: TResponse) => {
+export const sendSurveyFollowUps = async (
+  survey: TSurvey,
+  response: TResponse,
+  organization: TOrganization
+) => {
   const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
     const { trigger } = followUp;
 
@@ -62,7 +69,7 @@ export const sendSurveyFollowUps = async (survey: TSurvey, response: TResponse) 
       }
     }
 
-    return evaluateFollowUp(followUp.id, followUp.action, response)
+    return evaluateFollowUp(followUp.id, followUp.action, response, organization)
       .then(() => ({
         followUpId: followUp.id,
         status: "success" as const,

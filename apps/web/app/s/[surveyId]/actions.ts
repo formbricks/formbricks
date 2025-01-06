@@ -1,6 +1,8 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { z } from "zod";
 import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
@@ -13,7 +15,10 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 export const sendLinkSurveyEmailAction = actionClient
   .schema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
-    await sendLinkSurveyToVerifiedEmail(parsedInput);
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+
+    await sendLinkSurveyToVerifiedEmail({ ...parsedInput, logoUrl: organizationLogoUrl || "" });
     return { success: true };
   });
 
