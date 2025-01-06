@@ -16,7 +16,7 @@ import {
   isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
-} from "@/app/middleware/endpointValidator";
+} from "@/app/middleware/endpoint-validator";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
