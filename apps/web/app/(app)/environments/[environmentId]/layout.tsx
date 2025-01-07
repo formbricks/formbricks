@@ -31,7 +31,7 @@ const EnvLayout = async (props: {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    return redirect(`/auth/login`);
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
