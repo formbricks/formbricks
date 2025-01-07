@@ -6,7 +6,7 @@ import { useCallback, useEffect } from "react";
 import formbricks from "@formbricks/js";
 import { env } from "@formbricks/lib/env";
 
-export const FormbricksClient = ({ userId }: { userId: string }) => {
+export const FormbricksClient = ({ userId, email }: { userId: string; email: string }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -17,8 +17,8 @@ export const FormbricksClient = ({ userId }: { userId: string }) => {
       userId,
     });
 
-    formbricks.registerRouteChange();
-  }, [userId]);
+    formbricks.setEmail(email);
+  }, [email, userId]);
 
   useEffect(() => {
     if (formbricksEnabled && userId) {
