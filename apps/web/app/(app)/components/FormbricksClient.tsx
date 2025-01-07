@@ -7,10 +7,6 @@ import { useCallback, useEffect } from "react";
 import formbricks from "@formbricks/js";
 import { env } from "@formbricks/lib/env";
 
-type UsageAttributesUpdaterProps = {
-  numSurveys: number;
-};
-
 export const FormbricksClient = ({ session, userEmail }: { session: Session; userEmail: string }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -31,22 +27,6 @@ export const FormbricksClient = ({ session, userEmail }: { session: Session; use
       initializeFormbricksAndSetupRouteChanges();
     }
   }, [session, pathname, searchParams, initializeFormbricksAndSetupRouteChanges]);
-
-  return null;
-};
-
-const updateUsageAttributes = (numSurveys) => {
-  if (!formbricksEnabled) return;
-
-  if (numSurveys >= 3) {
-    formbricks.setAttribute("HasThreeSurveys", "true");
-  }
-};
-
-export const UsageAttributesUpdater = ({ numSurveys }: UsageAttributesUpdaterProps) => {
-  useEffect(() => {
-    updateUsageAttributes(numSurveys);
-  }, [numSurveys]);
 
   return null;
 };
