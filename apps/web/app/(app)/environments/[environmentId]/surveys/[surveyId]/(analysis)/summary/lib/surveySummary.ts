@@ -899,7 +899,7 @@ export const getSurveySummary = reactCache(
             throw new ResourceNotFoundError("Survey", surveyId);
           }
 
-          const batchSize = 3000;
+          const batchSize = 10000;
           const totalResponseCount = await getResponseCountBySurveyId(surveyId);
           const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
 
