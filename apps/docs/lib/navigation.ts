@@ -1,6 +1,6 @@
-import type { NavGroup } from "@/components/Navigation";
+import type { NavGroup } from "@/components/navigation";
 
-export const navigation: Array<NavGroup> = [
+export const navigation: NavGroup[] = [
   {
     title: "Introduction",
     links: [
