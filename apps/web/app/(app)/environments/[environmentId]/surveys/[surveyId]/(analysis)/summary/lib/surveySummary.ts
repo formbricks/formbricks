@@ -907,12 +907,11 @@ export const getSurveySummary = reactCache(
 
           const pages = Math.ceil(filteredResponseCount / batchSize);
 
-          const responsesArray = await Promise.all(
-            Array.from({ length: pages }, (_, i) => {
-              return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
-            })
-          );
-          const responses = responsesArray.flat();
+          let responses: TResponse[] = [];
+          for (let i = 0; i < pages; i++) {
+            const batchResponses = await getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
+            responses = responses.concat(batchResponses);
+          }
 
           const responseIds = hasFilter ? responses.map((response) => response.id) : [];
 
