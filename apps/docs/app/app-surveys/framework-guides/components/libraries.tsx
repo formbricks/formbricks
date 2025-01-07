@@ -10,32 +10,32 @@ const libraries = [
     href: "#html",
     name: "HTML",
     description: "All you need to do is add 3 lines of code to your HTML script and thats it, you're done!",
-    logo: logoHtml,
+    logo: logoHtml as string,
   },
   {
     href: "#react-js",
     name: "React.js",
     description: "Load the our Js library with your environment ID and you're ready to go!",
-    logo: logoReactJs,
+    logo: logoReactJs as string,
   },
   {
     href: "#next-js",
     name: "Next.js",
     description:
       "Natively add us to your NextJs project with support for both App as well as Pages project structure!",
-    logo: logoNextjs,
+    logo: logoNextjs as string,
   },
   {
     href: "#vue-js",
     name: "Vue.js",
     description: "Simply add us to your router change and sit back!",
-    logo: logoVueJs,
+    logo: logoVueJs as string,
   },
   {
     href: "#react-native",
     name: "React Native",
     description: "Easily integrate our SDK with your React Native app for seamless survey support!",
-    logo: logoReactJs,
+    logo: logoReactJs as string,
   },
 ];
 

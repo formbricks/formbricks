@@ -1,12 +1,14 @@
 "use client";
 
-import { Dialog, Transition } from "@headlessui/react";
+import {
+  IsInsideMobileNavigationContext,
+  useIsInsideMobileNavigation,
+  useMobileNavigationStore,
+} from "@/hooks/use-mobile-navigation";
+import { Dialog, DialogPanel, Transition, TransitionChild } from "@headlessui/react";
 import { motion } from "framer-motion";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Fragment, Suspense, createContext, useContext, useEffect, useRef } from "react";
-import { create } from "zustand";
-import { Navigation } from "@/components/navigation";
-import { Header } from "@/components/header";
+import { Fragment, Suspense, useEffect, useRef } from "react";
 
 function MenuIcon(props: React.ComponentPropsWithoutRef<"svg">): React.JSX.Element {
   return (
@@ -24,9 +26,17 @@ function XIcon(props: React.ComponentPropsWithoutRef<"svg">): React.JSX.Element 
   );
 }
 
-const IsInsideMobileNavigationContext = createContext(false);
-
-function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () => void }): React.JSX.Element {
+function MobileNavigationDialog({
+  isOpen,
+  close,
+  NavigationComponent,
+  HeaderComponent,
+}: {
+  isOpen: boolean;
+  close: () => void;
+  NavigationComponent: React.ComponentType<{ isMobile: boolean }>;
+  HeaderComponent: React.ComponentType;
+}): React.JSX.Element {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const initialPathname = useRef(pathname).current;
@@ -54,9 +64,9 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
   };
 
   return (
-    <Transition.Root show={isOpen} as={Fragment}>
+    <Transition show={isOpen} as={Fragment}>
       <Dialog onClickCapture={onClickDialog} onClose={close} className="fixed inset-0 z-50 lg:hidden">
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="duration-300 ease-out"
           enterFrom="opacity-0"
@@ -65,10 +75,10 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
           leaveFrom="opacity-100"
           leaveTo="opacity-0">
           <div className="fixed inset-0 top-14 bg-zinc-400/20 backdrop-blur-sm dark:bg-black/40" />
-        </Transition.Child>
+        </TransitionChild>
 
-        <Dialog.Panel>
-          <Transition.Child
+        <DialogPanel>
+          <TransitionChild
             as={Fragment}
             enter="duration-300 ease-out"
             enterFrom="opacity-0"
@@ -76,10 +86,10 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
             leave="duration-200 ease-in"
             leaveFrom="opacity-100"
             leaveTo="opacity-0">
-            <Header />
-          </Transition.Child>
+            <HeaderComponent />
+          </TransitionChild>
 
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="duration-500 ease-in-out"
             enterFrom="-translate-x-full"
@@ -90,32 +100,22 @@ function MobileNavigationDialog({ isOpen, close }: { isOpen: boolean; close: () 
             <motion.div
               layoutScroll
               className="ring-zinc-900/7.5 fixed bottom-0 left-0 top-14 w-full overflow-y-auto bg-white px-4 pb-4 pt-6 shadow-lg shadow-zinc-900/10 ring-1 min-[416px]:max-w-sm sm:px-6 sm:pb-10 dark:bg-zinc-900 dark:ring-zinc-800">
-              <Navigation isMobile />
+              <NavigationComponent isMobile />
             </motion.div>
-          </Transition.Child>
-        </Dialog.Panel>
+          </TransitionChild>
+        </DialogPanel>
       </Dialog>
-    </Transition.Root>
+    </Transition>
   );
 }
 
-export const useIsInsideMobileNavigation = (): boolean => {
-  return useContext(IsInsideMobileNavigationContext);
-};
-
-export const useMobileNavigationStore = create<{
-  isOpen: boolean;
-  open: () => void;
-  close: () => void;
-  toggle: () => void;
-}>()((set) => ({
-  isOpen: false,
-  open: () => { set({ isOpen: true }); },
-  close: () => { set({ isOpen: false }); },
-  toggle: () => { set((state) => ({ isOpen: !state.isOpen })); },
-}));
-
-export function MobileNavigation(): React.JSX.Element {
+export function MobileNavigation({
+  NavigationComponent,
+  HeaderComponent,
+}: {
+  NavigationComponent: React.ComponentType<{ isMobile: boolean }>;
+  HeaderComponent: React.ComponentType;
+}): React.JSX.Element {
   const isInsideMobileNavigation = useIsInsideMobileNavigation();
   const { isOpen, toggle, close } = useMobileNavigationStore();
   const ToggleIcon = isOpen ? XIcon : MenuIcon;
@@ -131,7 +131,12 @@ export function MobileNavigation(): React.JSX.Element {
       </button>
       {!isInsideMobileNavigation && (
         <Suspense fallback={null}>
-          <MobileNavigationDialog isOpen={isOpen} close={close} />
+          <MobileNavigationDialog
+            isOpen={isOpen}
+            close={close}
+            NavigationComponent={NavigationComponent}
+            HeaderComponent={HeaderComponent}
+          />
         </Suspense>
       )}
     </IsInsideMobileNavigationContext.Provider>

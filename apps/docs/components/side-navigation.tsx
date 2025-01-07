@@ -1,4 +1,4 @@
-import { useTableContentObserver } from "@/hooks/useTableContentObserver";
+import { useTableContentObserver } from "@/hooks/use-table-content-observer";
 import clsx from "clsx";
 import Link from "next/link";
 import { useEffect, useState } from "react";

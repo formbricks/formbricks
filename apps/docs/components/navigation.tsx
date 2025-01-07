@@ -9,7 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import { remToPx } from "@/lib/rem-to-px";
 import { navigation } from "@/lib/navigation";
 import { Button } from "./button";
-import { useIsInsideMobileNavigation } from "./mobile-navigation";
+import { useIsInsideMobileNavigation } from "@/hooks/use-mobile-navigation";
 import { useSectionStore } from "./section-provider";
 
 export interface BaseLink {
@@ -231,12 +231,12 @@ function NavigationGroup({
               onClick={() => { setIsActiveGroup(true); }}>
               {link.href ? (
                 <NavLink
-                  href={isMobile && link.children ? "" : link.href}
+                  href={link.href}
                   active={Boolean(pathname.startsWith(link.href))}>
                   {link.title}
                 </NavLink>
               ) : (
-                <div onClick={() => { toggleParentTitle(`${group.title}-${link.title}`); }}>
+                <button onClick={() => { toggleParentTitle(`${group.title}-${link.title}`); }} className="w-full">
                   <NavLink
                     href={!isMobile ? link.children?.[0]?.href ?? "" : undefined}
                     active={
@@ -252,7 +252,7 @@ function NavigationGroup({
                       )}
                     </span>
                   </NavLink>
-                </div>
+                </button>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
                 {isActiveGroup && link.children && isParentOpen(`${group.title}-${link.title}`) ? <motion.ul

@@ -61,7 +61,7 @@ const useVisibleSections = (sectionStore: StoreApi<SectionState>) => {
       const newVisibleSections: string[] = [];
 
       for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
-        const { id, headingRef, offsetRem = 0 } = sections[sectionIndex];
+        const { id, headingRef, offsetRem = 0 } = sections[sectionIndex] ?? {};
 
         if (!headingRef?.current) {
           continue;
@@ -76,16 +76,16 @@ const useVisibleSections = (sectionStore: StoreApi<SectionState>) => {
 
         const nextSection = sections[sectionIndex + 1];
         const bottom =
-          (nextSection.headingRef?.current?.getBoundingClientRect().top ?? Infinity) +
+          (nextSection?.headingRef?.current?.getBoundingClientRect().top ?? Infinity) +
           scrollY -
-          remToPx(nextSection.offsetRem ?? 0);
+          remToPx(nextSection?.offsetRem ?? 0);
 
         if (
           (top > scrollY && top < scrollY + innerHeight) ||
           (bottom > scrollY && bottom < scrollY + innerHeight) ||
           (top <= scrollY && bottom >= scrollY + innerHeight)
         ) {
-          newVisibleSections.push(id);
+          newVisibleSections.push(id ?? "");
         }
       }
 

@@ -7,8 +7,10 @@ import { forwardRef } from "react";
 import { Search } from "@/components/search";
 import { Logo } from "@/components/logo";
 import { Button } from "./button";
-import { MobileNavigation, useIsInsideMobileNavigation, useMobileNavigationStore } from "./mobile-navigation";
+import { MobileNavigation } from "./mobile-navigation";
 import { ThemeToggle } from "./theme-toggle";
+import { Navigation } from "@/components/navigation";
+import { useIsInsideMobileNavigation, useMobileNavigationStore } from "@/hooks/use-mobile-navigation";
 
 function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }): React.JSX.Element {
   return (
@@ -58,7 +60,7 @@ export const Header = forwardRef<React.ElementRef<"div">, { className?: string }
         <Search />
       </div>
       <div className="flex items-center gap-5 lg:hidden">
-        <MobileNavigation />
+        <MobileNavigation NavigationComponent={Navigation} HeaderComponent={Header} />
         <Link href="/" aria-label="Home">
           <Logo className="h-8" />
         </Link>
