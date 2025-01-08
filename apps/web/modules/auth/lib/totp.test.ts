@@ -1,4 +1,5 @@
 import { Authenticator, TOTP } from "@otplib/core";
+import type { AuthenticatorOptions } from "@otplib/core/authenticator";
 import { createDigest, createRandomBytes } from "@otplib/plugin-crypto";
 import { keyDecoder, keyEncoder } from "@otplib/plugin-thirty-two";
 import { describe, expect, it, vi } from "vitest";
@@ -11,7 +12,7 @@ vi.mock("@otplib/plugin-thirty-two");
 describe("totpAuthenticatorCheck", () => {
   const token = "123456";
   const secret = "JBSWY3DPEHPK3PXP";
-  const opts = { window: [1, 0] };
+  const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
 
   it("should check the validity of a TOTP token using a base32-encoded secret", () => {
     const checkMock = vi.fn().mockReturnValue(true);
@@ -55,7 +56,7 @@ describe("totpAuthenticatorCheck", () => {
 describe("totpRawCheck", () => {
   const token = "123456";
   const secret = "abcdef1234567890";
-  const opts = { window: [1, 0] };
+  const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
 
   it("should check the validity of a TOTP token using a raw secret", () => {
     const checkMock = vi.fn().mockReturnValue(true);
