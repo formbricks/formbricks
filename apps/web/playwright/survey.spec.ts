@@ -523,6 +523,28 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.addressQuestion.question);
+    await page.locator('[id="addressLine1\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine1\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine1);
+    await page.locator('[id="addressLine2\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine2\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine2);
+    await page.locator('[id="city\\.placeholder"]').click();
+    await page
+      .locator('[id="city\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.city);
+    await page.locator('[id="state\\.placeholder"]').click();
+    await page
+      .locator('[id="state\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.state);
+    await page.locator('[id="zip\\.placeholder"]').click();
+    await page.locator('[id="zip\\.placeholder"]').fill(surveys.germanCreate.addressQuestion.placeholder.zip);
+    await page.locator('[id="country\\.placeholder"]').click();
+    await page
+      .locator('[id="country\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.country);
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
