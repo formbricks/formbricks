@@ -15,6 +15,9 @@
       "dependsOn": ["@formbricks/js#build"],
       "persistent": true
     },
+    "@formbricks/demo#lint": {
+      "dependsOn": ["@formbricks/js#build"]
+    },
     "@formbricks/js#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
