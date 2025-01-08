@@ -69,7 +69,7 @@ export const QuestionToggleTable = ({
 
   const t = useTranslations();
   return (
-    <table className="mt-4 w-3/4 table-fixed">
+    <table className="mt-4 w-full table-fixed">
       <thead>
         <tr className="text-left text-slate-800">
           <th className="w-1/4 text-sm font-semibold">
@@ -77,9 +77,9 @@ export const QuestionToggleTable = ({
               ? t("environments.surveys.edit.address_fields")
               : t("environments.surveys.edit.contact_fields")}
           </th>
-          <th className="text-sm font-semibold">{t("common.show")}</th>
-          <th className="text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
-          <th className="w-1/2 text-sm font-semibold">{t("common.placeholder")}</th>
+          <th className="w-1/6 text-sm font-semibold">{t("common.show")}</th>
+          <th className="w-1/6 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
+          <th className="text-sm font-semibold">{t("common.placeholder")}</th>
         </tr>
       </thead>
       <tbody>

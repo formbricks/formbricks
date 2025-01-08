@@ -621,31 +621,31 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
-const ZInputFieldConfig = z.object({
+const ZToggleInputConfig = z.object({
   show: z.boolean(),
   required: z.boolean(),
   placeholder: ZI18nString,
 });
 
-export type TInputFieldConfig = z.infer<typeof ZInputFieldConfig>;
+export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  addressLine1: ZInputFieldConfig,
-  addressLine2: ZInputFieldConfig,
-  city: ZInputFieldConfig,
-  state: ZInputFieldConfig,
-  zip: ZInputFieldConfig,
-  country: ZInputFieldConfig,
+  addressLine1: ZToggleInputConfig,
+  addressLine2: ZToggleInputConfig,
+  city: ZToggleInputConfig,
+  state: ZToggleInputConfig,
+  zip: ZToggleInputConfig,
+  country: ZToggleInputConfig,
 });
 
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
-  firstName: ZInputFieldConfig,
-  lastName: ZInputFieldConfig,
-  email: ZInputFieldConfig,
-  phone: ZInputFieldConfig,
-  company: ZInputFieldConfig,
+  firstName: ZToggleInputConfig,
+  lastName: ZToggleInputConfig,
+  email: ZToggleInputConfig,
+  phone: ZToggleInputConfig,
+  company: ZToggleInputConfig,
 });
 
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
