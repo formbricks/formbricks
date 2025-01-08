@@ -44,7 +44,7 @@ export function LanguageIndicator({
   });
 
   return (
-    <div className="absolute right-2 top-2">
+    <div className="absolute right-2 top-2 z-10">
       <button
         aria-expanded={showLanguageDropdown}
         aria-haspopup="true"

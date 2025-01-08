@@ -1,8 +1,5 @@
 "use client";
 
-import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
-import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
-import { BaseInput } from "@/modules/surveys/components/QuestionFormInput/components/BaseInput";
 import { MultiLangWrapper } from "@/modules/surveys/components/QuestionFormInput/components/MultiLangWrapper";
 import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
 import { Button } from "@/modules/ui/components/button";
@@ -12,28 +9,12 @@ import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { debounce } from "lodash";
-import { ImagePlusIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { ImagePlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type JSX, RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
-import {
-  createI18nString,
-  extractLanguageCodes,
-  getEnabledLanguages,
-  getLocalizedValue,
-} from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
+import { RefObject, useCallback, useMemo, useRef, useState } from "react";
+import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
-import {
-  extractId,
-  extractRecallInfo,
-  findRecallInfoById,
-  getFallbackValues,
-  getRecallItems,
-  headlineToRecall,
-  recallToHeadline,
-  replaceRecallInfoWithUnderline,
-} from "@formbricks/lib/utils/recall";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
@@ -41,12 +22,9 @@ import {
   TSurveyEndScreenCard,
   TSurveyQuestion,
   TSurveyQuestionChoice,
-  TSurveyRecallItem,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-// import { FallbackInput } from "./components/FallbackInput";
-// import { RecallItemSelect } from "./components/RecallItemSelect";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -165,136 +143,15 @@ export const QuestionFormInput = ({
   ]);
 
   const [text, setText] = useState(elementText);
-  const [renderedText, setRenderedText] = useState<JSX.Element[]>();
   const [showImageUploader, setShowImageUploader] = useState<boolean>(
     determineImageUploaderVisibility(questionIdx, localSurvey)
   );
 
-  const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const [showFallbackInput, setShowFallbackInput] = useState(false);
-  // const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-  //   getLocalizedValue(text, usedLanguageCode).includes("#recall:")
-  //     ? getRecallItems(
-  //         getLocalizedValue(text, usedLanguageCode),
-  //         localSurvey,
-  //         usedLanguageCode,
-  //         contactAttributeKeys
-  //       )
-  //     : []
-  // );
-
-  // const [fallbacks, setFallbacks] = useState<{ [type: string]: string }>(() => {
-  //   const localizedValue = getLocalizedValue(text, usedLanguageCode);
-  //   return localizedValue.includes("/fallback:") ? getFallbackValues(localizedValue) : {};
-  // });
-
   const highlightContainerRef = useRef<HTMLInputElement>(null);
-  // const fallbackInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  // const filteredRecallItems = Array.from(new Set(recallItems.map((q) => q.id))).map((id) => {
-  //   return recallItems.find((q) => q.id === id);
-  // });
 
   // Hook to synchronize the horizontal scroll position of highlightContainerRef and inputRef.
   useSyncScroll(highlightContainerRef, inputRef);
-
-  // useEffect(() => {
-  //   setRecallItems(
-  //     getLocalizedValue(text, usedLanguageCode).includes("#recall:")
-  //       ? getRecallItems(
-  //           getLocalizedValue(text, usedLanguageCode),
-  //           localSurvey,
-  //           usedLanguageCode,
-  //           contactAttributeKeys
-  //         )
-  //       : []
-  //   );
-  // }, [usedLanguageCode]);
-
-  // useEffect(() => {
-  //   // Generates an array of headlines from recallItems, replacing nested recall questions with '___' .
-  //   const recallItemLabels = recallItems.flatMap((recallItem) => {
-  //     if (!recallItem.label.includes("#recall:")) {
-  //       return [recallItem.label];
-  //     }
-  //     const recallItemLabel = recallItem.label;
-  //     const recallInfo = extractRecallInfo(recallItemLabel);
-
-  //     if (recallInfo) {
-  //       const recallItemId = extractId(recallInfo);
-  //       const recallQuestion = localSurvey.questions.find((question) => question.id === recallItemId);
-
-  //       if (recallQuestion) {
-  //         return [recallItemLabel.replace(recallInfo, `___`)];
-  //       }
-  //     }
-  //     return [];
-  //   });
-
-  //   // Constructs an array of JSX elements representing segmented parts of text, interspersed with special formatted spans for recall headlines.
-  //   const processInput = (): JSX.Element[] => {
-  //     const parts: JSX.Element[] = [];
-  //     let remainingText = recallToHeadline(text, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
-  //       usedLanguageCode
-  //     ];
-  //     // filterRecallItems(remainingText);
-  //     recallItemLabels.forEach((label) => {
-  //       const index = remainingText.indexOf("@" + label);
-  //       if (index !== -1) {
-  //         if (index > 0) {
-  //           parts.push(
-  //             <span key={parts.length} className="whitespace-pre">
-  //               {remainingText.substring(0, index)}
-  //             </span>
-  //           );
-  //         }
-  //         parts.push(
-  //           <span
-  //             className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
-  //             key={parts.length}>
-  //             {"@" + label}
-  //           </span>
-  //         );
-  //         remainingText = remainingText.substring(index + label.length + 1);
-  //       }
-  //     });
-  //     if (remainingText?.length) {
-  //       parts.push(
-  //         <span className="whitespace-pre" key={parts.length}>
-  //           {remainingText}
-  //         </span>
-  //       );
-  //     }
-  //     return parts;
-  //   };
-
-  //   setRenderedText(processInput());
-  // }, [text, recallItems]);
-
-  // useEffect(() => {
-  //   if (fallbackInputRef.current) {
-  //     fallbackInputRef.current.focus();
-  //   }
-  // }, [showFallbackInput]);
-
-  const checkForRecallSymbol = useCallback(
-    (value: TI18nString) => {
-      const pattern = /(^|\s)@(\s|$)/;
-      if (pattern.test(getLocalizedValue(value, usedLanguageCode))) {
-        setShowRecallItemSelect(true);
-      } else {
-        setShowRecallItemSelect(false);
-      }
-    },
-    [usedLanguageCode]
-  );
-
-  // updation of questions, WelcomeCard, ThankYouCard and choices is done in a different manner,
-  // questions -> updateQuestion
-  // thankYouCard, welcomeCard-> updateSurvey
-  // choice -> updateChoice
-  // matrixLabel -> updateMatrixLabel
 
   const createUpdatedText = useCallback(
     (updatedText: string): TI18nString => {
@@ -370,103 +227,6 @@ export const QuestionFormInput = ({
     ]
   );
 
-  // Adds a new recall question to the recallItems array, updates fallbacks, modifies the text with recall details.
-  // const addRecallItem = useCallback(
-  //   (recallItem: TSurveyRecallItem) => {
-  //     if (recallItem.label.trim() === "") {
-  //       toast.error(t("environments.surveys.edit.cannot_add_question_with_empty_headline_as_recall"));
-  //       return;
-  //     }
-
-  //     let recallItemTemp = structuredClone(recallItem);
-  //     recallItemTemp.label = replaceRecallInfoWithUnderline(recallItem.label);
-
-  //     setRecallItems((prevQuestions) => {
-  //       const updatedQuestions = [...prevQuestions, recallItemTemp];
-  //       return updatedQuestions;
-  //     });
-
-  //     if (!Object.keys(fallbacks).includes(recallItem.id)) {
-  //       setFallbacks((prevFallbacks) => ({
-  //         ...prevFallbacks,
-  //         [recallItem.id]: "",
-  //       }));
-  //     }
-
-  //     setShowRecallItemSelect(false);
-
-  //     let modifiedHeadlineWithId = { ...elementText };
-  //     modifiedHeadlineWithId[usedLanguageCode] = getLocalizedValue(
-  //       modifiedHeadlineWithId,
-  //       usedLanguageCode
-  //     ).replace(/(?<=^|\s)@(?=\s|$)/g, `#recall:${recallItem.id}/fallback:# `);
-
-  //     handleUpdate(getLocalizedValue(modifiedHeadlineWithId, usedLanguageCode));
-
-  //     const modifiedHeadlineWithName = recallToHeadline(
-  //       modifiedHeadlineWithId,
-  //       localSurvey,
-  //       false,
-  //       usedLanguageCode,
-  //       contactAttributeKeys
-  //     );
-
-  //     setText(modifiedHeadlineWithName);
-  //     setShowFallbackInput(true);
-  //   },
-  //   [contactAttributeKeys, elementText, fallbacks, handleUpdate, localSurvey, usedLanguageCode]
-  // );
-
-  // // Filters and updates the list of recall questions based on their presence in the given text, also managing related text and fallback states.
-  // const filterRecallItems = useCallback(
-  //   (remainingText: string) => {
-  //     let includedRecallItems: TSurveyRecallItem[] = [];
-
-  //     recallItems.forEach((recallItem) => {
-  //       if (remainingText.includes(`@${recallItem.label}`)) {
-  //         includedRecallItems.push(recallItem);
-  //       } else {
-  //         const recallItemToRemove = recallItem.label.slice(0, -1);
-  //         const newText = { ...text };
-  //         newText[usedLanguageCode] = text[usedLanguageCode].replace(`@${recallItemToRemove}`, "");
-  //         setText(newText);
-  //         handleUpdate(text[usedLanguageCode].replace(`@${recallItemToRemove}`, ""));
-  //         let updatedFallback = { ...fallbacks };
-  //         delete updatedFallback[recallItem.id];
-  //         setFallbacks(updatedFallback);
-  //         setRecallItems(includedRecallItems);
-  //       }
-  //     });
-  //   },
-  //   [fallbacks, handleUpdate, recallItems, text, usedLanguageCode]
-  // );
-
-  // const addFallback = () => {
-  //   let headlineWithFallback = elementText;
-  //   filteredRecallItems.forEach((recallQuestion) => {
-  //     if (recallQuestion) {
-  //       const recallInfo = findRecallInfoById(
-  //         getLocalizedValue(headlineWithFallback, usedLanguageCode),
-  //         recallQuestion!.id
-  //       );
-  //       if (recallInfo) {
-  //         let fallBackValue = fallbacks[recallQuestion.id].trim();
-  //         fallBackValue = fallBackValue.replace(/ /g, "nbsp");
-  //         let updatedFallback = { ...fallbacks };
-  //         updatedFallback[recallQuestion.id] = fallBackValue;
-  //         setFallbacks(updatedFallback);
-  //         headlineWithFallback[usedLanguageCode] = getLocalizedValue(
-  //           headlineWithFallback,
-  //           usedLanguageCode
-  //         ).replace(recallInfo, `#recall:${recallQuestion?.id}/fallback:${fallBackValue}#`);
-  //         handleUpdate(getLocalizedValue(headlineWithFallback, usedLanguageCode));
-  //       }
-  //     }
-  //   });
-  //   setShowFallbackInput(false);
-  //   inputRef.current?.focus();
-  // };
-
   const getFileUrl = (): string | undefined => {
     if (isWelcomeCard) return localSurvey.welcomeCard.fileUrl;
     if (isEndingCard) {
@@ -483,41 +243,17 @@ export const QuestionFormInput = ({
     } else return question.videoUrl;
   };
 
-  const debouncedHandleUpdate = useMemo(
-    // () => debounce((value) => handleUpdate(headlineToRecall(value, recallItems, fallbacks)), 100),
-    () => debounce((value) => handleUpdate(value), 100),
-    [handleUpdate]
-  );
-
-  // console.log("question value: ", question.headline);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    const updatedText = {
-      ...elementText,
-      [usedLanguageCode]: value,
-    };
-
-    // const valueTI18nString = recallToHeadline(
-    //   updatedText,
-    //   localSurvey,
-    //   false,
-    //   usedLanguageCode,
-    //   contactAttributeKeys
-    // );
-
-    // setText(valueTI18nString);
-    setText(updatedText);
-
-    debouncedHandleUpdate(value);
-  };
+  const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
   const [animationParent] = useAutoAnimate();
 
-  // console.log("question: ", question.headline.default);
-
   return (
     <div className="w-full">
+      {label && (
+        <div className="mb-2 mt-3">
+          <Label htmlFor={id}>{label}</Label>
+        </div>
+      )}
       <MultiLangWrapper
         isTranslationIncomplete={isTranslationIncomplete}
         value={text}
@@ -528,7 +264,7 @@ export const QuestionFormInput = ({
         key={selectedLanguageCode}
         onChange={(updatedText) => {
           setText(updatedText);
-          handleUpdate(updatedText[usedLanguageCode]);
+          debouncedHandleUpdate(updatedText[usedLanguageCode]);
         }}
         contactAttributeKeys={contactAttributeKeys}
         render={({ value, onChange, children: languageIndicator }) => {

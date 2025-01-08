@@ -253,11 +253,11 @@ export const RecallWrapper = ({
         onChange: handleInputChange,
         highlightedJSX: renderedText,
         children: (
-          <>
+          <div>
             {internalValue.includes("recall:") && (
               <button
                 type="button"
-                className="absolute right-2 top-full z-10 flex cursor-pointer items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200"
+                className="absolute right-2 top-full z-[1] flex cursor-pointer items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowFallbackInput(true);
@@ -289,7 +289,7 @@ export const RecallWrapper = ({
                 addFallback={addFallback}
               />
             )}
-          </>
+          </div>
         ),
       })}
     </div>

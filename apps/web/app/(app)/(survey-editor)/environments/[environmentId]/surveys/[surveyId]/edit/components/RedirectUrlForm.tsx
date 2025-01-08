@@ -33,7 +33,10 @@ export const RedirectUrlForm = ({
           value={endingCard.url ?? ""}
           questionId={endingCard.id}
           onChange={(val, recallItems, fallbacks) => {
-            console.log("from recall wrapper", val, recallItems, fallbacks);
+            // console.log("from recall wrapper", val, recallItems, fallbacks);
+            updateSurvey({
+              url: val,
+            });
           }}
           contactAttributeKeys={contactAttributeKeys}
           isRecallAllowed
@@ -42,7 +45,17 @@ export const RedirectUrlForm = ({
           render={({ value, onChange, highlightedJSX, children }) => {
             return (
               <div className="relative flex flex-col gap-2">
-                {highlightedJSX}
+                {/* The highlight container is absolutely positioned behind the input */}
+                {/* <div className="h-10 w-full"></div> */}
+                <div
+                  // ref={highlightContainerRef}
+                  className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                    localSurvey.languages?.length > 1 ? "pr-24" : ""
+                  }`}
+                  dir="auto"
+                  key={highlightedJSX.toString()}>
+                  {highlightedJSX}
+                </div>
                 <Input
                   id="redirectUrl"
                   name="redirectUrl"
