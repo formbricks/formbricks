@@ -11,9 +11,9 @@ import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 const docSearchConfig = {
-  appId: process.env.NEXT_PUBLIC_DOCSEARCH_APP_ID ?? "",
-  apiKey: process.env.NEXT_PUBLIC_DOCSEARCH_API_KEY ?? "",
-  indexName: process.env.NEXT_PUBLIC_DOCSEARCH_INDEX_NAME ?? "",
+  appId: process.env.NEXT_PUBLIC_DOCSEARCH_APP_ID || "",
+  apiKey: process.env.NEXT_PUBLIC_DOCSEARCH_API_KEY || "",
+  indexName: process.env.NEXT_PUBLIC_DOCSEARCH_INDEX_NAME || "",
 };
 
 function Hit({
@@ -121,24 +121,22 @@ export function Search(): React.JSX.Element {
           </kbd>
         ) : null}
       </button>
-      <div className="">
-        {isOpen ? (
-          createPortal(
-            <DocSearchModal
-              {...docSearchConfig}
-              initialScrollY={window.scrollY}
-              onClose={onClose}
-              hitComponent={Hit}
-              navigator={{
-                navigate({ itemUrl }) {
-                  window.location.href = itemUrl;
-                },
-              }}
-            />,
-            document.body
-          )
-        ) : null}
-      </div>
+      {isOpen ? (
+        createPortal(
+          <DocSearchModal
+            {...docSearchConfig}
+            initialScrollY={window.scrollY}
+            onClose={onClose}
+            hitComponent={Hit}
+            navigator={{
+              navigate({ itemUrl }) {
+                window.location.href = itemUrl;
+              },
+            }}
+          />,
+          document.body
+        )
+      ) : null}
     </>
   );
 }
