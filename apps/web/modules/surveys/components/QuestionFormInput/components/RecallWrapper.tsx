@@ -47,11 +47,12 @@ export const RecallWrapper = ({
   isRecallAllowed,
 }: RecallWrapperProps) => {
   const t = useTranslations();
-  // const [internalValue, setInternalValue] = useState<string>(value);
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-    value.includes("#recall:") ? getRecallItems(value, localSurvey, "default", contactAttributeKeys) : []
+    value.includes("#recall:")
+      ? getRecallItems(value, localSurvey, usedLanguageCode, contactAttributeKeys)
+      : []
   );
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(
     value.includes("/fallback:") ? getFallbackValues(value) : {}

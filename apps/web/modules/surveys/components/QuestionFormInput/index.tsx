@@ -310,7 +310,6 @@ export const QuestionFormInput = ({
                     <div className="flex w-full items-center space-x-2">
                       <div className="group relative w-full">
                         {languageIndicator}
-                        {recallComponents}
                         {/* The highlight container is absolutely positioned behind the input */}
                         <div className="h-10 w-full"></div>
                         <div
@@ -343,8 +342,9 @@ export const QuestionFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          // localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          className={`absolute right-0 top-0 text-black caret-black ${className}`}
+                          className={`absolute right-0 top-0 text-black caret-black ${className} ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          }`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&
@@ -352,6 +352,7 @@ export const QuestionFormInput = ({
                             isTranslationIncomplete
                           }
                         />
+                        {recallComponents}
                       </div>
 
                       <div>

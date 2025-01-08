@@ -190,7 +190,7 @@ export const RecallItemSelect = ({
         <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
           <div className="flex h-0 w-full items-center justify-between overflow-hidden" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="mt-10 w-96 bg-slate-50 text-slate-700" align="start" side="bottom">
+        <DropdownMenuContent className="w-96 bg-slate-50 text-slate-700" align="start" side="bottom">
           <p className="m-2 text-sm font-medium">Recall Information from...</p>
           <Input
             id="recallItemSearchInput"

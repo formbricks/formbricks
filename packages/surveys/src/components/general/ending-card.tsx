@@ -66,7 +66,8 @@ export function EndingCard({
   useEffect(() => {
     if (isCurrent) {
       if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
-        window.top?.location.replace(endingCard.url);
+        const url = replaceRecallInfo(endingCard.url, responseData, variablesData);
+        window.top?.location.replace(url);
       }
     }
     const handleEnter = (e: KeyboardEvent) => {

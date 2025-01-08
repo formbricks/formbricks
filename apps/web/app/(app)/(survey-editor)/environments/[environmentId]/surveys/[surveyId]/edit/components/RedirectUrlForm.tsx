@@ -1,18 +1,15 @@
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";
+import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface RedirectUrlFormProps {
   localSurvey: TSurvey;
-  selectedLanguageCode: string;
   endingCard: TSurveyRedirectUrlCard;
   updateSurvey: (input: Partial<TSurveyRedirectUrlCard>) => void;
-  locale: TUserLocale;
   contactAttributeKeys: TContactAttributeKey[];
 }
 
@@ -21,9 +18,8 @@ export const RedirectUrlForm = ({
   contactAttributeKeys,
   endingCard,
   updateSurvey,
-  selectedLanguageCode,
-  locale,
 }: RedirectUrlFormProps) => {
+  const selectedLanguageCode = "default";
   const t = useTranslations();
   return (
     <form className="mt-3 space-y-3">
@@ -33,10 +29,12 @@ export const RedirectUrlForm = ({
           value={endingCard.url ?? ""}
           questionId={endingCard.id}
           onChange={(val, recallItems, fallbacks) => {
-            // console.log("from recall wrapper", val, recallItems, fallbacks);
-            updateSurvey({
-              url: val,
-            });
+            const updatedValue = {
+              ...endingCard,
+              url: recallItems && fallbacks ? headlineToRecall(val, recallItems, fallbacks) : val,
+            };
+
+            updateSurvey(updatedValue);
           }}
           contactAttributeKeys={contactAttributeKeys}
           isRecallAllowed
@@ -44,14 +42,10 @@ export const RedirectUrlForm = ({
           usedLanguageCode={"default"}
           render={({ value, onChange, highlightedJSX, children }) => {
             return (
-              <div className="relative flex flex-col gap-2">
+              <div className="group relative">
                 {/* The highlight container is absolutely positioned behind the input */}
-                {/* <div className="h-10 w-full"></div> */}
                 <div
-                  // ref={highlightContainerRef}
-                  className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
-                    localSurvey.languages?.length > 1 ? "pr-24" : ""
-                  }`}
+                  className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
                   dir="auto"
                   key={highlightedJSX.toString()}>
                   {highlightedJSX}
@@ -59,9 +53,19 @@ export const RedirectUrlForm = ({
                 <Input
                   id="redirectUrl"
                   name="redirectUrl"
-                  className="bg-white"
+                  className="relative text-black caret-black"
                   placeholder="https://formbricks.com"
-                  value={value}
+                  value={
+                    recallToHeadline(
+                      {
+                        [selectedLanguageCode]: value,
+                      },
+                      localSurvey,
+                      false,
+                      "default",
+                      contactAttributeKeys
+                    )[selectedLanguageCode]
+                  }
                   onChange={(e) => onChange(e.target.value)}
                 />
                 {children}
