@@ -88,7 +88,11 @@ export const DeleteAccountModal = ({
           )}
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
-        <form>
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await deleteAccount();
+          }}>
           <label htmlFor="deleteAccountConfirmation">
             {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
               email: user.email,

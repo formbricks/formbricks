@@ -9,6 +9,7 @@ import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { getUser } from "@formbricks/lib/user/service";
 
 const Page = async () => {
   const session: Session | null = await getServerSession(authOptions);
@@ -22,7 +23,8 @@ const Page = async () => {
     }
   }
 
-  if (!session?.user) {
+  const user = await getUser(session.user.id);
+  if (!user) {
     return <ClientLogout />;
   }
 
@@ -33,10 +35,10 @@ const Page = async () => {
   }
 
   let environmentId: string | null = null;
-  environmentId = await getFirstEnvironmentIdByUserId(session?.user.id);
+  environmentId = await getFirstEnvironmentIdByUserId(session.user.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
-    session?.user.id,
+    session.user.id,
     userOrganizations[0].id
   );
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);

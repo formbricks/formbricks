@@ -91,6 +91,7 @@ export const ShareEmbedSurvey = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTitle className="sr-only" />
       <DialogContent className="w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
         {showView === "start" ? (
           <div className="h-full max-w-full overflow-hidden">
