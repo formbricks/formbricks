@@ -38,17 +38,23 @@ export const UploadContactsCSVButton = ({
   const [error, setErrror] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = (e) => {
-    let selectedFiles = Array.from(e.target?.files || []);
-    let csvFile = selectedFiles[0] as File;
+  const processCSVFile = async (file: File) => {
+    if (!file) return;
 
-    if (!csvFile) {
+    // Check file type
+    if (!file.type && !file.name.endsWith(".csv")) {
+      setErrror("Please upload a CSV file");
+      return;
+    }
+
+    if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
+      setErrror("Please upload a CSV file");
       return;
     }
 
     // Max file size check (800KB)
-    const maxSizeInBytes = 800 * 1024; // 800KB
-    if (csvFile.size > maxSizeInBytes) {
+    const maxSizeInBytes = 800 * 1024;
+    if (file.size > maxSizeInBytes) {
       setErrror("File size exceeds the maximum limit of 800KB");
       return;
     }
@@ -77,7 +83,14 @@ export const UploadContactsCSVButton = ({
       }
     };
 
-    reader.readAsText(csvFile); // Trigger file read
+    reader.readAsText(file);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target?.files?.[0];
+    if (file) {
+      processCSVFile(file);
+    }
   };
 
   const csvColumns = useMemo(() => {
@@ -233,6 +246,29 @@ export const UploadContactsCSVButton = ({
     document.body.removeChild(link);
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Only show copy cursor if file is CSV
+    const items = Array.from(e.dataTransfer.items);
+    const isCSV = items.some(
+      (item) => item.type === "text/csv" || (item.type === "" && item.kind === "file") // For when type isn't available
+    );
+
+    e.dataTransfer.dropEffect = isCSV ? "copy" : "none";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processCSVFile(file);
+    }
+  };
+
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
@@ -294,9 +330,8 @@ export const UploadContactsCSVButton = ({
                     className={cn(
                       "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
                     )}
-                    // onDragOver={(e) => handleDragOver(e)}
-                    // onDrop={(e) => handleDrop(e)}>
-                  >
+                    onDragOver={(e) => handleDragOver(e)}
+                    onDrop={(e) => handleDrop(e)}>
                     <div className="flex flex-col items-center justify-center pb-6 pt-5">
                       <ArrowUpFromLineIcon className="h-6 text-slate-500" />
                       <p className={cn("mt-2 text-center text-sm text-slate-500")}>
