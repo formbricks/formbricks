@@ -7,9 +7,9 @@ interface HeadingElement extends IntersectionObserverEntry {
 /**
  * A custom hook that sets up an IntersectionObserver to track the visibility of headings on the page.
  *
- * @param {Function} setActiveId - A function to set the active heading ID.
- * @param {string} pathname - The current pathname, used as a dependency for the useEffect hook.
- * @returns {void}
+ * @param setActiveId - A function to set the active heading ID.
+ * @param pathname - The current pathname, used as a dependency for the useEffect hook.
+ * @returns void
  *
  * This hook performs the following tasks:
  * 1. Creates a map of heading elements, where the key is the heading's ID and the value is the heading element.
@@ -28,14 +28,14 @@ export const useTableContentObserver = (setActiveId: (id: string) => void, pathn
         (map, headingElement) => {
           return { ...map, [headingElement.target.id]: headingElement };
         },
-        {} as Record<string, HeadingElement>
+        {}
       );
 
       // Find the visible headings (i.e., headings that are currently intersecting with the viewport)
       const visibleHeadings: HeadingElement[] = [];
       Object.keys(headingElementsRef.current).forEach((key) => {
         const headingElement = headingElementsRef.current[key];
-        if (headingElement.isIntersecting) visibleHeadings.push(headingElement);
+        if (headingElement?.isIntersecting) visibleHeadings.push(headingElement);
       });
 
       // Define a function to get the index of a heading element in the headingElements array
@@ -43,7 +43,7 @@ export const useTableContentObserver = (setActiveId: (id: string) => void, pathn
 
       // If there is only one visible heading, set it as the active heading
       if (visibleHeadings.length === 1) {
-        setActiveId(visibleHeadings[0].target.id);
+        setActiveId(visibleHeadings[0]?.target?.id ?? "");
       }
       // If there are multiple visible headings, set the active heading to the one that is highest on the page
       else if (visibleHeadings.length > 1) {
@@ -52,7 +52,7 @@ export const useTableContentObserver = (setActiveId: (id: string) => void, pathn
           const bIndex = getIndexFromId(b.target.id);
           return aIndex - bIndex;
         });
-        setActiveId(sortedVisibleHeadings[0].target.id);
+        setActiveId(sortedVisibleHeadings[0]?.target?.id ?? "");
       }
     };
 
@@ -61,7 +61,11 @@ export const useTableContentObserver = (setActiveId: (id: string) => void, pathn
     });
 
     const headingElements = Array.from(document.querySelectorAll("h2[id], h3[id], h4[id]"));
-    headingElements.forEach((element) => observer.observe(element));
+    headingElements.forEach((element) => {
+      if (element instanceof HTMLElement) {
+        observer.observe(element);
+      }
+    });
 
     return () => {
       observer.disconnect();

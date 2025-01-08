@@ -9,7 +9,7 @@ interface Heading {
   level: number;
 }
 
-export function SideNavigation({ pathname }: { pathname: string }): React.JSX.Element {
+export function SideNavigation({ pathname }: { pathname: string }): React.JSX.Element | null {
   const [headings, setHeadings] = useState<Heading[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export function SideNavigation({ pathname }: { pathname: string }): React.JSX.El
       {items.map((heading, index) => {
         if (heading.level === currentLevel) {
           let nextIndex = index + 1;
-          while (nextIndex < items.length && items[nextIndex].level > currentLevel) {
+          while (nextIndex < items.length && (items[nextIndex]?.level ?? 0) > currentLevel) {
             nextIndex++;
           }
 

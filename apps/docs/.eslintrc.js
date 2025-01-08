@@ -1,4 +1,5 @@
 module.exports = {
+  root: true,
   extends: ["@formbricks/eslint-config/next.js"],
   parserOptions: {
     project: "tsconfig.json",
@@ -6,15 +7,12 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/restrict-template-expressions": "off",
+    "import/no-cycle": "off",
   },
   settings: {
     "import/resolver": {
       typescript: {
         project: "tsconfig.json",
-      },
-      node: {
-        extensions: [".js", ".ts", ".d.ts", ".tsx"],
-        paths: ["."],
       },
       caseSensitive: false,
     },

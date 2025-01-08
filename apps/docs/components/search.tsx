@@ -121,22 +121,24 @@ export function Search(): React.JSX.Element {
           </kbd>
         ) : null}
       </button>
-      {isOpen
-        ? createPortal(
-          <DocSearchModal
-            {...docSearchConfig}
-            initialScrollY={window.scrollY}
-            onClose={onClose}
-            hitComponent={Hit}
-            navigator={{
-              navigate({ itemUrl }) {
-                window.location.href = itemUrl;
-              },
-            }}
-          />,
-          document.body
-        )
-        : null}
+      <div className="">
+        {isOpen ? (
+          createPortal(
+            <DocSearchModal
+              {...docSearchConfig}
+              initialScrollY={window.scrollY}
+              onClose={onClose}
+              hitComponent={Hit}
+              navigator={{
+                navigate({ itemUrl }) {
+                  window.location.href = itemUrl;
+                },
+              }}
+            />,
+            document.body
+          )
+        ) : null}
+      </div>
     </>
   );
 }
