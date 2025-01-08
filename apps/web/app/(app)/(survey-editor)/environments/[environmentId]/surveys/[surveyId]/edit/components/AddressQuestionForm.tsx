@@ -83,9 +83,7 @@ export const AddressQuestionForm = ({
       .filter((field) => field.show)
       .every((field) => !field.required);
 
-    if (allFieldsAreOptional) {
-      updateQuestion(questionIdx, { required: false });
-    }
+    updateQuestion(questionIdx, { required: !allFieldsAreOptional });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     question.addressLine1,
