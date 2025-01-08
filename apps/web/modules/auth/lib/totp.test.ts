@@ -14,7 +14,7 @@ describe("totpAuthenticatorCheck", () => {
   const secret = "JBSWY3DPEHPK3PXP";
   const opts: Partial<AuthenticatorOptions> = { window: [1, 0] };
 
-  it("should check the validity of a TOTP token using a base32-encoded secret", () => {
+  it("should check a TOTP token with a base32-encoded secret", () => {
     const checkMock = vi.fn().mockReturnValue(true);
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: checkMock,
@@ -33,7 +33,7 @@ describe("totpAuthenticatorCheck", () => {
     expect(result).toBe(true);
   });
 
-  it("should use default window if not provided", () => {
+  it("should use default window if none is provided", () => {
     const checkMock = vi.fn().mockReturnValue(true);
     (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
       check: checkMock,
@@ -50,5 +50,39 @@ describe("totpAuthenticatorCheck", () => {
     });
     expect(checkMock).toHaveBeenCalledWith(token, secret);
     expect(result).toBe(true);
+  });
+
+  it("should throw an error for invalid token format", () => {
+    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
+      check: () => {
+        throw new Error("Invalid token format");
+      },
+    }));
+
+    expect(() => {
+      totpAuthenticatorCheck("invalidToken", secret);
+    }).toThrow("Invalid token format");
+  });
+
+  it("should throw an error for invalid secret format", () => {
+    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
+      check: () => {
+        throw new Error("Invalid secret format");
+      },
+    }));
+
+    expect(() => {
+      totpAuthenticatorCheck(token, "invalidSecret");
+    }).toThrow("Invalid secret format");
+  });
+
+  it("should return false if token verification fails", () => {
+    const checkMock = vi.fn().mockReturnValue(false);
+    (Authenticator as unknown as vi.Mock).mockImplementation(() => ({
+      check: checkMock,
+    }));
+
+    const result = totpAuthenticatorCheck(token, secret);
+    expect(result).toBe(false);
   });
 });
