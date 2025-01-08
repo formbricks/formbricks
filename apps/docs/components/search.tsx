@@ -5,15 +5,16 @@ import {
   StoredDocSearchHit,
   useDocSearchKeyboardEvents,
 } from "@docsearch/react";
+import clsx from "clsx";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 const docSearchConfig = {
-  appId: process.env.NEXT_PUBLIC_DOCSEARCH_APP_ID || "",
-  apiKey: process.env.NEXT_PUBLIC_DOCSEARCH_API_KEY || "",
-  indexName: process.env.NEXT_PUBLIC_DOCSEARCH_INDEX_NAME || "",
+  appId: process.env.NEXT_PUBLIC_DOCSEARCH_APP_ID ?? "",
+  apiKey: process.env.NEXT_PUBLIC_DOCSEARCH_API_KEY ?? "",
+  indexName: process.env.NEXT_PUBLIC_DOCSEARCH_INDEX_NAME ?? "",
 };
 
 function Hit({
@@ -38,6 +39,8 @@ export function Search(): React.JSX.Element {
   const { resolvedTheme } = useTheme();
   const isLightMode = resolvedTheme === "light";
 
+  const isSearchDisabled = !docSearchConfig.appId || !docSearchConfig.apiKey || !docSearchConfig.indexName;
+
   const [isOpen, setIsOpen] = useState(false);
   const [modifierKey, setModifierKey] = useState<string>();
 
@@ -49,11 +52,15 @@ export function Search(): React.JSX.Element {
     setIsOpen(false);
   }, [setIsOpen]);
 
-  useDocSearchKeyboardEvents({ isOpen, onOpen, onClose });
+  useDocSearchKeyboardEvents({
+    isOpen,
+    onOpen: isSearchDisabled ? () => { return void 0 } : onOpen,
+    onClose,
+  });
 
   useEffect(() => {
     setModifierKey(/(?<temp1>Mac|iPhone|iPod|iPad)/i.test(navigator.platform) ? "⌘" : "Ctrl ");
-  }, []);
+  }, [isSearchDisabled]);
 
   useEffect(() => {
     const style = document.createElement("style");
@@ -104,12 +111,16 @@ export function Search(): React.JSX.Element {
     };
   }, [isLightMode]);
 
+
   return (
     <>
       <button
         type="button"
-        className="group flex h-6 w-6 items-center justify-center sm:justify-start md:h-auto md:w-60 md:flex-none md:rounded-lg md:py-2.5 md:pl-4 md:pr-3.5 md:text-sm md:ring-1 md:ring-slate-200 md:hover:ring-slate-300 xl:w-80 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20"
-        onClick={onOpen}>
+        className={clsx(
+          "group flex h-6 w-6 items-center justify-center sm:justify-start md:h-auto md:w-60 md:flex-none md:rounded-lg md:py-2.5 md:pl-4 md:pr-3.5 md:text-sm md:ring-1 md:ring-slate-200 md:hover:ring-slate-300 xl:w-80 dark:text-slate-400 dark:ring-inset dark:ring-white/10 dark:hover:ring-white/20",
+          isSearchDisabled && "cursor-not-allowed opacity-50"
+        )}
+        onClick={isSearchDisabled ? undefined : onOpen}>
         <SearchIcon className="h-5 w-5 flex-none fill-slate-400 group-hover:fill-slate-500 md:group-hover:fill-slate-400 dark:fill-slate-500" />
         <span className="sr-only md:not-sr-only md:pl-2 md:text-slate-500 md:dark:text-slate-400">
           Search docs
@@ -121,22 +132,32 @@ export function Search(): React.JSX.Element {
           </kbd>
         ) : null}
       </button>
-      {isOpen ? (
-        createPortal(
-          <DocSearchModal
-            {...docSearchConfig}
-            initialScrollY={window.scrollY}
-            onClose={onClose}
-            hitComponent={Hit}
-            navigator={{
-              navigate({ itemUrl }) {
-                window.location.href = itemUrl;
-              },
-            }}
-          />,
-          document.body
-        )
-      ) : null}
+      <SearchModal isOpen={isOpen} onClose={onClose} />
     </>
+  );
+}
+
+function SearchModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}): React.JSX.Element | null {
+  if (!isOpen) return null;
+
+  return createPortal(
+    <DocSearchModal
+      {...docSearchConfig}
+      initialScrollY={window.scrollY}
+      onClose={onClose}
+      hitComponent={Hit}
+      navigator={{
+        navigate({ itemUrl }) {
+          window.location.href = itemUrl;
+        },
+      }}
+    />,
+    document.body
   );
 }
