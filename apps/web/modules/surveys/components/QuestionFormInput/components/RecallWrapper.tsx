@@ -1,6 +1,8 @@
 import { FallbackInput } from "@/modules/surveys/components/QuestionFormInput/components/FallbackInput";
 import { RecallItemSelect } from "@/modules/surveys/components/QuestionFormInput/components/RecallItemSelect";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import { PencilIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
@@ -9,48 +11,18 @@ import {
   findRecallInfoById,
   getFallbackValues,
   getRecallItems,
+  headlineToRecall,
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
-const usePrevious = (value, initialValue) => {
-  const ref = useRef(initialValue);
-  useEffect(() => {
-    ref.current = value;
-  });
-  return ref.current;
-};
-const useEffectDebugger = (effectHook, dependencies, dependencyNames = []) => {
-  const previousDeps = usePrevious(dependencies, []);
-
-  const changedDeps = dependencies.reduce((accum, dependency, index) => {
-    if (dependency !== previousDeps[index]) {
-      const keyName = dependencyNames[index] || index;
-      return {
-        ...accum,
-        [keyName]: {
-          before: previousDeps[index],
-          after: dependency,
-        },
-      };
-    }
-
-    return accum;
-  }, {});
-
-  if (Object.keys(changedDeps).length) {
-    console.log("[use-effect-debugger] ", changedDeps);
-  }
-
-  useEffect(effectHook, dependencies);
-};
-
 interface RecallWrapperRenderProps {
   value: string;
   onChange: (val: string) => void;
   highlightedJSX: JSX.Element[];
+  children: ReactNode;
 }
 
 interface RecallWrapperProps {
@@ -59,7 +31,7 @@ interface RecallWrapperProps {
   localSurvey: TSurvey;
   questionId: string;
   contactAttributeKeys: TContactAttributeKey[];
-  children: (props: RecallWrapperRenderProps) => React.ReactNode;
+  render: (props: RecallWrapperRenderProps) => React.ReactNode;
   usedLanguageCode: string;
   isRecallAllowed: boolean;
 }
@@ -70,27 +42,28 @@ export const RecallWrapper = ({
   localSurvey,
   questionId,
   contactAttributeKeys,
-  children,
+  render,
   usedLanguageCode,
   isRecallAllowed,
 }: RecallWrapperProps) => {
-  const [internalValue, setInternalValue] = useState<string>(value);
+  const t = useTranslations();
+  // const [internalValue, setInternalValue] = useState<string>(value);
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-    internalValue.includes("#recall:")
-      ? getRecallItems(internalValue, localSurvey, "default", contactAttributeKeys)
-      : []
+    value.includes("#recall:") ? getRecallItems(value, localSurvey, "default", contactAttributeKeys) : []
   );
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(
-    internalValue.includes("/fallback:") ? getFallbackValues(internalValue) : {}
+    value.includes("/fallback:") ? getFallbackValues(value) : {}
   );
+
+  const [internalValue, setInternalValue] = useState<string>(headlineToRecall(value, recallItems, fallbacks));
   const [renderedText, setRenderedText] = useState<JSX.Element[]>([]);
   const fallbackInputRef = useRef<HTMLInputElement>(null);
 
-  // useEffect(() => {
-  //   setInternalValue(value);
-  // }, [value]);
+  useEffect(() => {
+    setInternalValue(headlineToRecall(value, recallItems, fallbacks));
+  }, [value, recallItems, fallbacks]);
 
   const checkForRecallSymbol = useCallback((str: string) => {
     const pattern = /(^|\s)@(\s|$)/;
@@ -106,7 +79,8 @@ export const RecallWrapper = ({
       const val = recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
         usedLanguageCode
       ];
-      setInternalValue(val);
+
+      setInternalValue(newVal);
 
       if (isRecallAllowed) {
         checkForRecallSymbol(val);
@@ -136,10 +110,9 @@ export const RecallWrapper = ({
       let recallItemTemp = structuredClone(recallItem);
       recallItemTemp.label = replaceRecallInfoWithUnderline(recallItem.label);
 
-      setRecallItems((prevQuestions) => {
-        const updatedQuestions = [...prevQuestions, recallItemTemp];
-        return updatedQuestions;
-      });
+      const updatedRecallItems = [...recallItems, recallItemTemp];
+
+      setRecallItems(updatedRecallItems);
 
       if (!Object.keys(fallbacks).includes(recallItem.id)) {
         setFallbacks((prevFallbacks) => ({
@@ -156,17 +129,7 @@ export const RecallWrapper = ({
         `#recall:${recallItem.id}/fallback:# `
       );
 
-      onChange(modifiedHeadlineWithId[usedLanguageCode], recallItems, fallbacks);
-
-      // const modifiedHeadlineWithName = recallToHeadline(
-      //   modifiedHeadlineWithId,
-      //   localSurvey,
-      //   false,
-      //   usedLanguageCode,
-      //   contactAttributeKeys
-      // );
-
-      // setInternalValue(modifiedHeadlineWithName[usedLanguageCode]);
+      onChange(modifiedHeadlineWithId[usedLanguageCode], updatedRecallItems, fallbacks);
       setInternalValue(modifiedHeadlineWithId[usedLanguageCode]);
       setShowFallbackInput(true);
     },
@@ -177,7 +140,6 @@ export const RecallWrapper = ({
     let newVal = internalValue;
     recallItems.forEach((item) => {
       const recallInfo = findRecallInfoById(newVal, item.id);
-      console.log("recallInfo: ", recallInfo);
       if (recallInfo) {
         const fallbackValue = (fallbacks[item.id]?.trim() || "").replace(/ /g, "nbsp");
         let updatedFallbacks = { ...fallbacks };
@@ -185,7 +147,6 @@ export const RecallWrapper = ({
         setFallbacks(updatedFallbacks);
         newVal = newVal.replace(recallInfo, `#recall:${item.id}/fallback:${fallbackValue}#`);
 
-        console.log("newVal: ", newVal, recallItems, updatedFallbacks);
         onChange(newVal, recallItems, updatedFallbacks);
       }
     });
@@ -286,35 +247,51 @@ export const RecallWrapper = ({
   }, [internalValue, recallItems]);
 
   return (
-    <div className="relative w-full">
-      {children({
+    <div className="relative">
+      {render({
         value: internalValue,
         onChange: handleInputChange,
         highlightedJSX: renderedText,
+        children: (
+          <>
+            {internalValue.includes("recall:") && (
+              <button
+                type="button"
+                className="absolute right-2 top-full z-10 flex cursor-pointer items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setShowFallbackInput(true);
+                }}>
+                {t("environments.surveys.edit.edit_recall")}
+                <PencilIcon className="ml-2 h-3 w-3" />
+              </button>
+            )}
+
+            {showRecallItemSelect && (
+              <RecallItemSelect
+                localSurvey={localSurvey}
+                questionId={questionId}
+                addRecallItem={addRecallItem}
+                setShowRecallItemSelect={setShowRecallItemSelect}
+                recallItems={recallItems}
+                selectedLanguageCode={usedLanguageCode}
+                hiddenFields={localSurvey.hiddenFields}
+                contactAttributeKeys={contactAttributeKeys}
+              />
+            )}
+
+            {showFallbackInput && recallItems.length > 0 && (
+              <FallbackInput
+                filteredRecallItems={recallItems}
+                fallbacks={fallbacks}
+                setFallbacks={setFallbacks}
+                fallbackInputRef={fallbackInputRef}
+                addFallback={addFallback}
+              />
+            )}
+          </>
+        ),
       })}
-
-      {showRecallItemSelect && (
-        <RecallItemSelect
-          localSurvey={localSurvey}
-          questionId={questionId}
-          addRecallItem={addRecallItem}
-          setShowRecallItemSelect={setShowRecallItemSelect}
-          recallItems={recallItems}
-          selectedLanguageCode={usedLanguageCode}
-          hiddenFields={localSurvey.hiddenFields}
-          contactAttributeKeys={contactAttributeKeys}
-        />
-      )}
-
-      {showFallbackInput && recallItems.length > 0 && (
-        <FallbackInput
-          filteredRecallItems={recallItems}
-          fallbacks={fallbacks}
-          setFallbacks={setFallbacks}
-          fallbackInputRef={fallbackInputRef}
-          addFallback={addFallback}
-        />
-      )}
     </div>
   );
 };

@@ -281,7 +281,14 @@ export const EditEndingCard = ({
             />
           )}
           {endingCard.type === "redirectToUrl" && (
-            <RedirectUrlForm endingCard={endingCard} updateSurvey={updateSurvey} />
+            <RedirectUrlForm
+              localSurvey={localSurvey}
+              endingCard={endingCard}
+              updateSurvey={updateSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              locale={locale}
+              contactAttributeKeys={contactAttributeKeys}
+            />
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

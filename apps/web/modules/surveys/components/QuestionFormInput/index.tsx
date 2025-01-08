@@ -3,6 +3,7 @@
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { BaseInput } from "@/modules/surveys/components/QuestionFormInput/components/BaseInput";
+import { MultiLangWrapper } from "@/modules/surveys/components/QuestionFormInput/components/MultiLangWrapper";
 import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -118,11 +119,6 @@ export const QuestionFormInput = ({
         ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
         : question.id;
   }, [isWelcomeCard, isEndingCard, question?.id]);
-
-  const enabledLanguages = useMemo(
-    () => getEnabledLanguages(localSurvey.languages ?? []),
-    [localSurvey.languages]
-  );
 
   const surveyLanguageCodes = useMemo(
     () => extractLanguageCodes(localSurvey.languages),
@@ -513,70 +509,157 @@ export const QuestionFormInput = ({
     // setText(valueTI18nString);
     setText(updatedText);
 
-    // if (id === "headline" || id === "subheader") {
-    //   checkForRecallSymbol(valueTI18nString);
-    // }
-
     debouncedHandleUpdate(value);
   };
 
   const [animationParent] = useAutoAnimate();
 
+  // console.log("question: ", question.headline.default);
+
   return (
     <div className="w-full">
-      <RecallWrapper
-        contactAttributeKeys={contactAttributeKeys}
+      <MultiLangWrapper
+        isTranslationIncomplete={isTranslationIncomplete}
+        value={text}
         localSurvey={localSurvey}
-        questionId={questionId}
-        value={text[usedLanguageCode]}
-        onChange={(value, recallItems, fallbacks) => {
-          handleUpdate(headlineToRecall(value, recallItems, fallbacks));
+        selectedLanguageCode={selectedLanguageCode}
+        setSelectedLanguageCode={setSelectedLanguageCode}
+        locale={locale}
+        key={selectedLanguageCode}
+        onChange={(updatedText) => {
+          setText(updatedText);
+          handleUpdate(updatedText[usedLanguageCode]);
         }}
-        isRecallAllowed={id === "headline" || id === "subheader"}
-        usedLanguageCode={usedLanguageCode}>
-        {({ value, onChange, highlightedJSX }) => {
+        contactAttributeKeys={contactAttributeKeys}
+        render={({ value, onChange, children: languageIndicator }) => {
           return (
-            <div className="group relative w-full">
-              {/* The highlight container is absolutely positioned behind the input */}
-              <div className="h-10 w-full"></div>
-              <div
-                ref={highlightContainerRef}
-                className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
-                  localSurvey.languages?.length > 1 ? "pr-24" : ""
-                }`}
-                dir="auto"
-                key={highlightedJSX.toString()}>
-                {highlightedJSX}
-              </div>
+            <RecallWrapper
+              contactAttributeKeys={contactAttributeKeys}
+              localSurvey={localSurvey}
+              questionId={questionId}
+              value={value[usedLanguageCode]}
+              onChange={(value, recallItems, fallbacks) => {
+                // Pass all values to MultiLangWrapper's onChange
+                onChange(value, recallItems, fallbacks);
+              }}
+              isRecallAllowed={id === "headline" || id === "subheader"}
+              usedLanguageCode={usedLanguageCode}
+              render={({ value, onChange, highlightedJSX, children: recallComponents }) => {
+                return (
+                  <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
+                    {showImageUploader && id === "headline" && (
+                      <FileInput
+                        id="question-image"
+                        allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
+                        environmentId={localSurvey.environmentId}
+                        onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                          if (url) {
+                            const update =
+                              fileType === "video"
+                                ? { videoUrl: url[0], imageUrl: "" }
+                                : { imageUrl: url[0], videoUrl: "" };
+                            if (isEndingCard && updateSurvey) {
+                              updateSurvey(update);
+                            } else if (updateQuestion) {
+                              updateQuestion(questionIdx, update);
+                            }
+                          }
+                        }}
+                        fileUrl={getFileUrl()}
+                        videoUrl={getVideoUrl()}
+                        isVideoAllowed={true}
+                      />
+                    )}
 
-              <Input
-                value={
-                  recallToHeadline(
-                    {
-                      [usedLanguageCode]: value,
-                    },
-                    localSurvey,
-                    false,
-                    usedLanguageCode,
-                    contactAttributeKeys
-                  )[usedLanguageCode]
-                }
-                onChange={(e) => onChange(e.target.value)}
-                id={id}
-                name={id}
-                placeholder={placeholder ?? getPlaceHolderById(id, t)}
-                aria-label={label}
-                maxLength={maxLength}
-                ref={inputRef}
-                onBlur={onBlur}
-                // localSurvey.languages?.length > 1 ? "pr-24" : ""
-                className={`absolute top-0 text-black caret-black ${className}`}
-                isInvalid={isInvalid && text[usedLanguageCode]?.trim() === ""}
-              />
-            </div>
+                    <div className="flex w-full items-center space-x-2">
+                      <div className="group relative w-full">
+                        {languageIndicator}
+                        {recallComponents}
+                        {/* The highlight container is absolutely positioned behind the input */}
+                        <div className="h-10 w-full"></div>
+                        <div
+                          ref={highlightContainerRef}
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                            localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          }`}
+                          dir="auto"
+                          key={highlightedJSX.toString()}>
+                          {highlightedJSX}
+                        </div>
+
+                        <Input
+                          value={
+                            recallToHeadline(
+                              {
+                                [usedLanguageCode]: value,
+                              },
+                              localSurvey,
+                              false,
+                              usedLanguageCode,
+                              contactAttributeKeys
+                            )[usedLanguageCode]
+                          }
+                          onChange={(e) => onChange(e.target.value)}
+                          id={id}
+                          name={id}
+                          placeholder={placeholder ?? getPlaceHolderById(id, t)}
+                          aria-label={label}
+                          maxLength={maxLength}
+                          ref={inputRef}
+                          onBlur={onBlur}
+                          // localSurvey.languages?.length > 1 ? "pr-24" : ""
+                          className={`absolute right-0 top-0 text-black caret-black ${className}`}
+                          isInvalid={
+                            isInvalid &&
+                            text[usedLanguageCode]?.trim() === "" &&
+                            localSurvey.languages?.length > 1 &&
+                            isTranslationIncomplete
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        {id === "headline" && !isWelcomeCard && (
+                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              aria-label="Toggle image uploader"
+                              className="ml-2"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setShowImageUploader((prev) => !prev);
+                              }}>
+                              <ImagePlusIcon />
+                            </Button>
+                          </TooltipRenderer>
+                        )}
+                        {id === "subheader" && question && question.subheader !== undefined && (
+                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
+                            <Button
+                              variant="secondary"
+                              size="icon"
+                              aria-label="Remove description"
+                              className="ml-2"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (updateQuestion) {
+                                  updateQuestion(questionIdx, { subheader: undefined });
+                                }
+                              }}>
+                              <TrashIcon />
+                            </Button>
+                          </TooltipRenderer>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              }}
+            />
           );
         }}
-      </RecallWrapper>
+      />
     </div>
   );
 };
