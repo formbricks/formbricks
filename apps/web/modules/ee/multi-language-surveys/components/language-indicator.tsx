@@ -25,7 +25,7 @@ export function LanguageIndicator({
   const languageDropdownRef = useRef(null);
 
   const changeLanguage = (language: TSurveyLanguage) => {
-    setSelectedLanguageCode(language.language.code);
+    setSelectedLanguageCode(language.default ? "default" : language.language.code);
     if (setFirstRender) {
       //for lexical editor
       setFirstRender(true);

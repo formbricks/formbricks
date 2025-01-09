@@ -1,6 +1,6 @@
-import type { NavGroup } from "@/components/Navigation";
+import type { NavGroup } from "@/components/navigation";
 
-export const navigation: Array<NavGroup> = [
+export const navigation: NavGroup[] = [
   {
     title: "Introduction",
     links: [
@@ -129,6 +129,7 @@ export const navigation: Array<NavGroup> = [
       },
       { title: "User Management", href: "/core-features/global/access-roles" },
       { title: "Styling Theme", href: "/core-features/global/styling-theme" },
+      { title: "Email Customization", href: "/core-features/global/email-customization" },
     ],
   },
   {

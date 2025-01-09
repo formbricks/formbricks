@@ -56,7 +56,7 @@ const SurveyEditorEnvironmentLayout = async (props) => {
           organizationName={organization.name}
           organizationBilling={organization.billing}
         />
-        <FormbricksClient session={session} userEmail={user.email} />
+        <FormbricksClient userId={user.id} email={user.email} />
         <ToasterClient />
         <div className="flex h-screen flex-col">
           <DevEnvironmentBanner environment={environment} />

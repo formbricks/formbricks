@@ -5,6 +5,7 @@ import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TProjectStyling } from "@formbricks/types/project";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { type TSurveyQuestionId, type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { StackedCard } from "./stacked-card";
 
 // offset = 0 -> Current question card
 // offset < 0 -> Question cards that are already answered
@@ -95,41 +96,6 @@ export function StackedCardsContainer({
     };
   }, [survey.type, cardBorderColor, highlightBorderColor]);
 
-  const calculateCardTransform = useMemo(() => {
-    let rotationCoefficient = 3;
-
-    if (cardWidth >= 1000) {
-      rotationCoefficient = 1.5;
-    } else if (cardWidth > 650) {
-      rotationCoefficient = 2;
-    }
-
-    return (offset: number) => {
-      switch (cardArrangement) {
-        case "casual":
-          return offset < 0
-            ? `translateX(33%)`
-            : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
-        case "straight":
-          return offset < 0
-            ? `translateY(25%)`
-            : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
-        default:
-          return offset < 0 ? `translateX(0)` : `translateX(0)`;
-      }
-    };
-  }, [cardArrangement, hovered, cardWidth]);
-
-  const straightCardArrangementStyles = (offset: number) => {
-    if (cardArrangement === "straight") {
-      // styles to set the descending width of stacked question cards when card arrangement is set to straight
-      return {
-        width: `${(100 - 5 * offset >= 100 ? 100 : 100 - 5 * offset).toString()}%`,
-        margin: "auto",
-      };
-    }
-  };
-
   // UseEffect to handle the resize of current question card and set cardHeight accordingly
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -161,22 +127,6 @@ export function StackedCardsContainer({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when cardArrangement changes
   }, [cardArrangement]);
 
-  const getCardHeight = (offset: number): string => {
-    // Take default height depending upon card content
-    if (offset === 0) return "auto";
-    // Preserve original height
-    else if (offset < 0) return "initial";
-    // Assign the height of the foremost card to all cards behind it
-    return cardHeight;
-  };
-
-  const getBottomStyles = () => {
-    if (survey.type !== "link")
-      return {
-        bottom: 0,
-      };
-  };
-
   return (
     <div
       className="fb-relative fb-flex fb-h-full fb-items-end fb-justify-center md:fb-items-center"
@@ -204,26 +154,21 @@ export function StackedCardsContainer({
             // Check for hiding extra card
             if (dynamicQuestionIndex > survey.questions.length + (hasEndingCard ? 0 : -1)) return;
             const offset = index - 1;
-            const isHidden = offset < 0;
             return (
-              <div
-                ref={(el) => (cardRefs.current[dynamicQuestionIndex] = el)}
-                id={`questionCard-${dynamicQuestionIndex}`}
+              <StackedCard
                 key={dynamicQuestionIndex}
-                style={{
-                  zIndex: 1000 - dynamicQuestionIndex,
-                  transform: calculateCardTransform(offset),
-                  opacity: isHidden ? 0 : (100 - 0 * offset) / 100,
-                  height: fullSizeCards ? "100%" : getCardHeight(offset),
-                  transitionDuration: "600ms",
-                  pointerEvents: offset === 0 ? "auto" : "none",
-                  ...borderStyles,
-                  ...straightCardArrangementStyles(offset),
-                  ...getBottomStyles(),
-                }}
-                className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out">
-                {getCardContent(dynamicQuestionIndex, offset)}
-              </div>
+                cardRefs={cardRefs}
+                dynamicQuestionIndex={dynamicQuestionIndex}
+                offset={offset}
+                fullSizeCards={fullSizeCards}
+                borderStyles={borderStyles}
+                getCardContent={getCardContent}
+                cardHeight={cardHeight}
+                survey={survey}
+                cardWidth={cardWidth}
+                hovered={hovered}
+                cardArrangement={cardArrangement}
+              />
             );
           }
         )

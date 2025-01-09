@@ -8,7 +8,6 @@ import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache((environmentId: string) =>
   cache(
@@ -47,156 +46,125 @@ export const updateAttributes = async (
     [contactAttributesParam, ZContactAttributes]
   );
 
-  const contactAttributeKeys = await getContactAttributeKeys(environmentId);
-
-  const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack.id]));
-  const upsertOperations: Promise<any>[] = [];
-  const createOperations: Promise<any>[] = [];
-  const newAttributes: { key: string; value: string }[] = [];
-
-  let contactAttributes = { ...contactAttributesParam };
-  let emailExists = false;
-
-  const emailContactAttributeKey = await prisma.contactAttributeKey.findFirst({
-    where: { key: "email", environmentId },
-  });
-
-  if (emailContactAttributeKey) {
-    const emailContactAttributes = await prisma.contactAttribute.findMany({
-      where: {
-        attributeKeyId: emailContactAttributeKey.id,
-      },
-      select: {
-        value: true,
-      },
-    });
-
-    // if the user supplies an email, we need to ensure that it is unique
-    const { email, ...rest } = contactAttributesParam;
-
-    if (email) {
-      emailExists = emailContactAttributes.some((attr) => attr.value === email);
-
-      if (emailExists) {
-        // if the email already exists, we need to remove it from the attributes
-        contactAttributes = { ...rest };
-      }
-    }
-  }
-
-  for (const [key, value] of Object.entries(contactAttributes)) {
-    const contactAttributeKeyId = contactAttributeKeyMap.get(key);
-
-    if (contactAttributeKeyId) {
-      // Class exists, perform an upsert operation
-      upsertOperations.push(
-        prisma.contactAttribute
-          .upsert({
-            select: {
-              id: true,
-            },
-            where: {
-              contactId_attributeKeyId: {
-                contactId,
-                attributeKeyId: contactAttributeKeyId,
+  // Fetch contact attribute keys and email check in parallel
+  const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
+    getContactAttributeKeys(environmentId),
+    contactAttributesParam.email
+      ? prisma.contactAttribute.findFirst({
+          where: {
+            AND: [
+              {
+                attributeKey: {
+                  key: "email",
+                },
+                value: contactAttributesParam.email,
               },
-            },
-            update: {
-              value,
-            },
-            create: {
-              contactId,
-              attributeKeyId: contactAttributeKeyId,
-              value,
-            },
-          })
-          .then(() => {
-            contactAttributeCache.revalidate({
-              environmentId,
-              contactId,
-              userId,
-              key,
-            });
-          })
-      );
-    } else {
-      // Collect new attributes to be created later
-      newAttributes.push({ key: key, value });
-    }
-  }
-
-  // Execute all upsert operations concurrently
-  await Promise.all(upsertOperations);
-
-  if (newAttributes.length === 0) {
-    // short-circuit if no new attributes to create
-    return {
-      success: true,
-      ...(emailExists
-        ? {
-            details: {
-              email: "The email already exists for this environment and was not updated.",
-            },
-          }
-        : {}),
-    };
-  }
-
-  // Check if new attribute classes will exceed the limit
-  const contactAttributeKeyCount = contactAttributeKeys.length;
-
-  const totalAttributeClassesLength = contactAttributeKeyCount + newAttributes.length;
-
-  if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-    throw new OperationNotAllowedError(
-      `Updating these attributes would exceed the maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) for environment ${environmentId}. Existing attributes have been updated.`
-    );
-  }
-
-  for (const { key, value } of newAttributes) {
-    createOperations.push(
-      prisma.contactAttributeKey
-        .create({
+              {
+                NOT: {
+                  contactId,
+                },
+              },
+            ],
+          },
           select: { id: true },
-          data: {
-            key,
-            type: "custom",
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-            attributes: {
-              create: {
-                contactId,
-                value,
-              },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  // Process email existence early
+  const { email, ...remainingAttributes } = contactAttributesParam;
+  const contactAttributes = existingEmailAttribute ? remainingAttributes : contactAttributesParam;
+  const emailExists = !!existingEmailAttribute;
+
+  // Create lookup map for attribute keys
+  const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
+
+  // Separate existing and new attributes in a single pass
+  const { existingAttributes, newAttributes } = Object.entries(contactAttributes).reduce(
+    (acc, [key, value]) => {
+      const attributeKey = contactAttributeKeyMap.get(key);
+      if (attributeKey) {
+        acc.existingAttributes.push({ key, value, attributeKeyId: attributeKey.id });
+      } else {
+        acc.newAttributes.push({ key, value });
+      }
+      return acc;
+    },
+    { existingAttributes: [], newAttributes: [] } as {
+      existingAttributes: { key: string; value: string; attributeKeyId: string }[];
+      newAttributes: { key: string; value: string }[];
+    }
+  );
+
+  let details: Record<string, string> = emailExists
+    ? { email: "The email already exists for this environment and was not updated." }
+    : {};
+
+  // First, update all existing attributes
+  if (existingAttributes.length > 0) {
+    await prisma.$transaction(
+      existingAttributes.map(({ attributeKeyId, value }) =>
+        prisma.contactAttribute.upsert({
+          where: {
+            contactId_attributeKeyId: {
+              contactId,
+              attributeKeyId,
             },
           },
+          update: { value },
+          create: {
+            contactId,
+            attributeKeyId,
+            value,
+          },
         })
-        .then(({ id }) => {
-          contactAttributeKeyCache.revalidate({ id, environmentId, key });
-          contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
-        })
+      )
+    );
+
+    // Revalidate cache for existing attributes
+    existingAttributes.map(({ key }) =>
+      contactAttributeCache.revalidate({ environmentId, contactId, userId, key })
     );
   }
 
-  // Execute all create operations for new attribute classes
-  await Promise.all(createOperations);
+  // Then, try to create new attributes if any exist
+  if (newAttributes.length > 0) {
+    const totalAttributeClassesLength = contactAttributeKeys.length + newAttributes.length;
 
-  // Revalidate the count cache
-  contactAttributeKeyCache.revalidate({
-    environmentId,
-  });
+    if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+      // Add warning to details about skipped attributes
+      details = {
+        ...details,
+        newAttributes: `Could not create ${newAttributes.length} new attribute(s) as it would exceed the maximum limit of ${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT} attribute classes. Existing attributes were updated successfully.`,
+      };
+    } else {
+      // Create new attributes since we're under the limit
+      await prisma.$transaction(
+        newAttributes.map(({ key, value }) =>
+          prisma.contactAttributeKey.create({
+            data: {
+              key,
+              type: "custom",
+              environment: { connect: { id: environmentId } },
+              attributes: {
+                create: { contactId, value },
+              },
+            },
+          })
+        )
+      );
+
+      // Batch revalidate caches for new attributes
+      newAttributes.forEach(({ key }) => {
+        contactAttributeKeyCache.revalidate({ environmentId, key });
+        contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
+      });
+      contactAttributeKeyCache.revalidate({ environmentId });
+    }
+  }
 
   return {
     success: true,
-    ...(emailExists
-      ? {
-          details: {
-            email: "The email already exists for this environment and was not updated.",
-          },
-        }
-      : {}),
+    ...(Object.keys(details).length > 0 ? { details } : {}),
   };
 };

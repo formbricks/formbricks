@@ -44,6 +44,7 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
+    IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INTERCOM_SECRET_KEY: z.string().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
@@ -90,6 +91,7 @@ export const env = createEnv({
       .url()
       .optional()
       .or(z.string().refine((str) => str === "")),
+    TURNSTILE_SECRET_KEY: z.string().optional(),
     UPLOADS_DIR: z.string().min(1).optional(),
     VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.string().url().optional(),
@@ -116,6 +118,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
     NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
     NEXT_PUBLIC_INTERCOM_APP_ID: z.string().optional(),
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -160,6 +163,7 @@ export const env = createEnv({
     HTTP_PROXY: process.env.HTTP_PROXY,
     HTTPS_PROXY: process.env.HTTPS_PROXY,
     IMPRINT_URL: process.env.IMPRINT_URL,
+    IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     INTERCOM_SECRET_KEY: process.env.INTERCOM_SECRET_KEY,
     IS_FORMBRICKS_CLOUD: process.env.IS_FORMBRICKS_CLOUD,
@@ -171,6 +175,7 @@ export const env = createEnv({
     NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
     NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
     NEXT_PUBLIC_INTERCOM_APP_ID: process.env.NEXT_PUBLIC_INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
@@ -204,6 +209,7 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
+    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,
     UPLOADS_DIR: process.env.UPLOADS_DIR,
     VERCEL_URL: process.env.VERCEL_URL,

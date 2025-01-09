@@ -5,6 +5,7 @@ import { TAllowedFileExtension } from "@formbricks/types/common";
 interface UploaderProps {
   id: string;
   name: string;
+  ref?: React.RefObject<HTMLInputElement>;
   handleDragOver: (e: React.DragEvent<HTMLLabelElement>) => void;
   uploaderClassName: string;
   handleDrop: (e: React.DragEvent<HTMLLabelElement>) => void;
@@ -18,6 +19,7 @@ interface UploaderProps {
 export const Uploader = ({
   id,
   name,
+  ref,
   handleDragOver,
   uploaderClassName,
   handleDrop,
@@ -52,6 +54,7 @@ export const Uploader = ({
           className="hidden"
           multiple={multiple}
           disabled={disabled}
+          ref={ref}
           onChange={async (e) => {
             let selectedFiles = Array.from(e.target?.files || []);
             handleUpload(selectedFiles);

@@ -89,6 +89,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           projects: 3,
           whitelabel: true,
           removeBranding: true,
+          ai: true,
         },
         lastChecked: currentTime,
       };
@@ -154,6 +155,7 @@ export const getEnterpriseLicense = async (): Promise<{
           whitelabel: false,
           removeBranding: false,
           contacts: false,
+          ai: false,
         },
         lastChecked: new Date(),
       };
@@ -275,6 +277,22 @@ export const getRemoveBrandingPermission = async (organization: TOrganization): 
   }
 };
 
+export const getWhiteLabelPermission = async (organization: TOrganization): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult?.features?.whitelabel ?? false;
+  }
+
+  if (IS_FORMBRICKS_CLOUD && (await getEnterpriseLicense()).active) {
+    return organization.billing.plan !== PROJECT_FEATURE_KEYS.FREE;
+  } else {
+    const licenseFeatures = await getLicenseFeatures();
+    if (!licenseFeatures) return false;
+
+    return licenseFeatures.whitelabel;
+  }
+};
+
 export const getRoleManagementPermission = async (organization: TOrganization): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
@@ -350,18 +368,23 @@ export const getIsSSOEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBillingPlan) => {
-  // TODO: We'll remove the IS_FORMBRICKS_CLOUD check once we have the AI feature available for self-hosted customers
+  if (!IS_AI_CONFIGURED) return false;
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features ? previousResult.features.ai : false;
+  }
+  const license = await getEnterpriseLicense();
+
   if (IS_FORMBRICKS_CLOUD) {
-    return (
-      IS_AI_CONFIGURED &&
-      (await getEnterpriseLicense()).active &&
-      (billingPlan === PROJECT_FEATURE_KEYS.STARTUP ||
-        billingPlan === PROJECT_FEATURE_KEYS.SCALE ||
-        billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
+    return Boolean(
+      license.features?.ai &&
+        (billingPlan === PROJECT_FEATURE_KEYS.STARTUP ||
+          billingPlan === PROJECT_FEATURE_KEYS.SCALE ||
+          billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
     );
   }
 
-  return false;
+  return Boolean(license.features?.ai);
 };
 
 export const getIsAIEnabled = async (organization: TOrganization) => {

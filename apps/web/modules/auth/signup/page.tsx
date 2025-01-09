@@ -10,6 +10,7 @@ import {
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
+  IS_TURNSTILE_CONFIGURED,
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
@@ -53,6 +54,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
             isSSOEnabled={isSSOEnabled}
+            isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
           />
         </FormWrapper>
       </div>
