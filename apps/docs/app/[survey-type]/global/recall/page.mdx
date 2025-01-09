@@ -1,19 +1,21 @@
-import { MdxImage } from "@/components/MdxImage";
-import SurveyEmbed from "@/components/SurveyEmbed";
-import StepOne from "./images/StepOne.webp";
-import StepThree from "./images/StepThree.webp";
-import StepTwo from "./images/StepTwo.webp";
+import { MdxImage } from "@/components/mdx-image";
+import SurveyEmbed from "@/components/survey-embed";
+import StepOne from "./images/step-one.webp";
+import StepThree from "./images/step-three.webp";
+import StepTwo from "./images/step-two.webp";
 
 export const metadata = {
   title: "Recall Data in Formbricks Surveys",
   description:
-    "Personalize your surveys by dynamically inserting data from URL parameters or previous answers into questions and descriptions. The Recall Data feature helps create engaging, adaptive survey experiences tailored to each respondent."};
+    "Personalize your surveys by dynamically inserting data from URL parameters or previous answers into questions and descriptions. The Recall Data feature helps create engaging, adaptive survey experiences tailored to each respondent.",
+};
 
 # Recall Data
 
 Personalize your surveys by dynamically inserting data from URL parameters or previous answers into questions and descriptions. The Recall Data feature helps create engaging, adaptive survey experiences tailored to each respondent.
 
 ## Recall Sources
+
 You can recall data from the following sources:
 
 - From a previous question
@@ -23,8 +25,7 @@ You can recall data from the following sources:
 ## Recalling from a previous question
 
 <Note>
-  The recall functionality is disabled on the first question of the survey since there’s no preceding question
-  to recall data from.
+  The recall functionality is disabled on the first question of the survey since there’s no preceding question to recall data from.
 </Note>
 
 ### **Pre-requisite**
@@ -35,7 +36,7 @@ Ensure the answer you wish to recall precedes the question in which it will be r
   src={StepThree}
   alt="Survey setup example with link survey template"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### **Step 1: Recall Data**
@@ -46,7 +47,7 @@ Type **`@`** in the question or description field where you want to insert a rec
   src={StepTwo}
   alt="Dropdown menu for recalling data in survey"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ### **Step 2: Set a Fallback**
@@ -57,10 +58,11 @@ To ensure the survey remains coherent when a response is missing (or the questio
   src={StepOne}
   alt="Setting fallback option in survey question"
   quality="100"
-  className="max-w-full rounded-lg sm:max-w-3xl "
+  className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
 ## Recalling from the URL
+
 1. Create a hidden field, [here is how →](/docs/global/hidden-fields)
 2. Use the `@` symbol in a question or description to recall the value of the hidden field
 3. Set a fallback in case the hidden field is not being filled by a URL parameter

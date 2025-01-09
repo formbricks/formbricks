@@ -68,6 +68,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@types/dompurify": "3.2.0",
+    "@types/react-dom": "19.0.2",
     "@types/react-highlight-words": "0.20.0"
   }
 }

@@ -1,4 +1,4 @@
-import { MdxImage } from "@/components/MdxImage";
+import { MdxImage } from "@/components/mdx-image";
 
 import EntraIDAppReg01 from "./images/entra_app_reg_01.webp";
 import EntraIDAppReg02 from "./images/entra_app_reg_02.webp";
@@ -56,6 +56,8 @@ These variables are present inside your machine’s docker-compose file. Restart
 | SMTP_PASSWORD                | Password for your SMTP Server.                                                                                 | optional (required if email services are to be enabled) |                           |
 | SMTP_SECURE_ENABLED          | SMTP secure connection. For using TLS, set to 1 else to 0.                                                     | optional (required if email services are to be enabled) |                           |
 | SMTP_REJECT_UNAUTHORIZED_TLS | If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs. | optional                                                | 1                         |
+| TURNSTILE_SITE_KEY           | Site key for Turnstile.                                                                                       | optional                                                |                           |
+| TURNSTILE_SECRET_KEY         | Secret key for Turnstile.                                                                                     | optional                                                |                           |
 | GITHUB_ID                    | Client ID for GitHub.                                                                                          | optional (required if GitHub auth is enabled)           |                           |
 | GITHUB_SECRET                | Secret for GitHub.                                                                                             | optional (required if GitHub auth is enabled)           |                           |
 | GOOGLE_CLIENT_ID             | Client ID for Google.                                                                                          | optional (required if Google auth is enabled)           |                           |
@@ -258,8 +260,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 12. Copy the entry under **Value** to populate the `AZUREAD_CLIENT_SECRET` variable.
 
 <Note>
-  Microsoft will only show this value to you immediately after creation, and you will not be able to access it
-  again. If you lose it, simply start from step 9 to create a new secret.
+  Microsoft will only show this value to you immediately after creation, and you will not be able to access it again. If you lose it, simply start from step 9 to create a new secret.
 </Note>
 
 <MdxImage
@@ -272,8 +273,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 13. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
 
 <Note>
-  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to
-  prevent issues with special characters.
+  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
 </Note>
 
 An example `.env` for Microsoft Entra ID in Formbricks would look like:
