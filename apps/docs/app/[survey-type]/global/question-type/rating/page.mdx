@@ -1,5 +1,5 @@
-import { MdxImage } from "@/components/MdxImage";
-import SurveyEmbed from "@/components/SurveyEmbed";
+import { MdxImage } from "@/components/mdx-image";
+import SurveyEmbed from "@/components/survey-embed";
 import Rating from "./images/rating.webp";
 
 export const metadata = {
@@ -16,6 +16,7 @@ Rating questions allow respondents to rate questions on a scale. Displays a titl
 <SurveyEmbed surveyUrl="https://app.formbricks.com/s/cx7u4n6hwvc3nztuk4vdezl9" />
 
 ## Elements
+
 <MdxImage
   src={Rating}
   alt="Overview of Rating question type"
@@ -24,16 +25,21 @@ Rating questions allow respondents to rate questions on a scale. Displays a titl
 />
 
 ### Title
+
 Add a clear title to inform the respondent what information you are asking for.
 
 ### Description
+
 Provide an optional description with further instructions.
 
 ### Scale
+
 Select the icon to be used for the rating scale. The options include: stars, numbers or smileys. The default is stars.
 
 ### Range
+
 Select the range of the rating scale. the options include: 3, 4, 5, 7 or 10. The default is 5.
 
 ### Labels
+
 Add labels for the lower and upper bounds of the rating scale. The default is "Not good" and "Very good".

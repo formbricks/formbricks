@@ -62,7 +62,7 @@ const EnvLayout = async (props: {
           organizationName={organization.name}
           organizationBilling={organization.billing}
         />
-        <FormbricksClient session={session} userEmail={user.email} />
+        <FormbricksClient userId={user.id} email={user.email} />
         <ToasterClient />
         <EnvironmentStorageHandler environmentId={params.environmentId} />
         <EnvironmentLayout environmentId={params.environmentId} session={session}>
