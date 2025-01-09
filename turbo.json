@@ -10,9 +10,6 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
-    "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/types#build"]
-    },
     "@formbricks/demo#go": {
       "cache": false,
       "dependsOn": ["@formbricks/js#build"],
