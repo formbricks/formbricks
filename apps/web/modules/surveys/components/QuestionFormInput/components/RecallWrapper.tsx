@@ -67,7 +67,7 @@ export const RecallWrapper = ({
   }, [value, recallItems, fallbacks]);
 
   const checkForRecallSymbol = useCallback((str: string) => {
-    const pattern = /(^|\s)@(\s|$)/;
+    const pattern = /@(\b|$)/;
     pattern.test(str) ? setShowRecallItemSelect(true) : setShowRecallItemSelect(false);
   }, []);
 
@@ -126,7 +126,7 @@ export const RecallWrapper = ({
 
       let modifiedHeadlineWithId = { [usedLanguageCode]: internalValue };
       modifiedHeadlineWithId[usedLanguageCode] = modifiedHeadlineWithId[usedLanguageCode].replace(
-        /(?<=^|\s)@(?=\s|$)/g,
+        /@(\b|$)/g,
         `#recall:${recallItem.id}/fallback:# `
       );
 
