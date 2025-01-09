@@ -83,7 +83,7 @@ export const MultiLangWrapper = ({
 
       {enabledLanguages.length > 1 && (
         <>
-          {usedLanguageCode !== "default" && value && typeof value["default"] !== undefined && (
+          {usedLanguageCode !== "default" && value && typeof value["default"] !== "undefined" && (
             <div className="mt-1 text-xs text-slate-500">
               <strong>{t("environments.project.languages.translate")}:</strong>{" "}
               {contactAttributeKeys
