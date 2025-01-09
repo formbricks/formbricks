@@ -1,6 +1,6 @@
 import { z } from "zod";
+import { ZInsightCategory } from "@formbricks/database/zod/insights";
 import { ZId } from "./common";
-import { ZInsightCategory } from "./insights";
 import { ZSurveyQuestionId } from "./surveys/types";
 
 export const ZDocumentSentiment = z.enum(["positive", "negative", "neutral"]);

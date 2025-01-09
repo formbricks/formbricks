@@ -4,13 +4,14 @@ import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
+import { InsightCategory } from "@prisma/client";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { TInsight } from "@formbricks/database/zod/insights";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
-import { TInsight, TInsightCategory } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
 import CategoryBadge from "../experience/components/category-select";
 
@@ -61,9 +62,7 @@ export const InsightView = ({
       if (filterValue === "all") {
         setLocalInsights(insights);
       } else {
-        setLocalInsights(
-          insights.filter((insight) => insight.category === (filterValue as TInsightCategory))
-        );
+        setLocalInsights(insights.filter((insight) => insight.category === (filterValue as InsightCategory)));
       }
     },
     [insights]
@@ -94,7 +93,7 @@ export const InsightView = ({
     );
   };
 
-  const onCategoryChange = async (insightId: string, newCategory: TInsight["category"]) => {
+  const onCategoryChange = async (insightId: string, newCategory: InsightCategory) => {
     updateLocalInsight(insightId, { category: newCategory });
   };
 

@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { embed, generateObject } from "ai";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { ZInsightCategory } from "@formbricks/database/zod/insights";
 import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
@@ -13,7 +14,6 @@ import {
   ZDocumentSentiment,
 } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZInsightCategory } from "@formbricks/types/insights";
 
 export const createDocumentAndAssignInsight = async (
   surveyName: string,

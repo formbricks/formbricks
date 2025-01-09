@@ -1,11 +1,10 @@
+import { type Insight, InsightCategory } from "@prisma/client";
 import { z } from "zod";
-import { ZId } from "./common";
+import { ZId } from "../../types/common";
 
-export const ZInsightCategory = z.enum(["featureRequest", "complaint", "praise", "other"]);
+export const ZInsightCategory = z.nativeEnum(InsightCategory);
 
-export type TInsightCategory = z.infer<typeof ZInsightCategory>;
-
-export const ZInsight = z.object({
+const InsightModel = z.object({
   id: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -13,6 +12,9 @@ export const ZInsight = z.object({
   title: z.string(),
   description: z.string(),
   category: ZInsightCategory,
+}) satisfies z.ZodType<Insight>;
+
+export const ZInsight = InsightModel.extend({
   _count: z.object({
     documentInsights: z.number(),
   }),
@@ -20,11 +22,12 @@ export const ZInsight = z.object({
 
 export type TInsight = z.infer<typeof ZInsight>;
 
-export const ZInsightCreateInput = z.object({
-  environmentId: ZId,
-  title: z.string(),
-  description: z.string(),
-  category: ZInsightCategory,
+export const ZInsightCreateInput = InsightModel.pick({
+  environmentId: true,
+  title: true,
+  description: true,
+  category: true,
+}).extend({
   vector: z.array(z.number()).length(512),
 });
 

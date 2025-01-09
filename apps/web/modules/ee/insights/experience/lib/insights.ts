@@ -2,13 +2,13 @@ import { insightCache } from "@/lib/cache/insight";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/database/zod/insights";
 import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/types/insights";
 
 export const getInsights = reactCache(
   async (

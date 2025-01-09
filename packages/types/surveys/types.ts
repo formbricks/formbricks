@@ -1,9 +1,9 @@
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
-import { ZInsight } from "../insights";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";

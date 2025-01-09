@@ -3,8 +3,10 @@ import { doesResponseHasAnyOpenTextAnswer } from "@/app/api/(internal)/insights/
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
 import { Prisma } from "@prisma/client";
+import { InsightCategory } from "@prisma/client";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
+import { TInsight, TInsightCreateInput, ZInsightCreateInput } from "@formbricks/database/zod/insights";
 import { embeddingsModel } from "@formbricks/lib/aiModels";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
@@ -12,12 +14,6 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { TCreatedDocument } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
-import {
-  TInsight,
-  TInsightCategory,
-  TInsightCreateInput,
-  ZInsightCreateInput,
-} from "@formbricks/types/insights";
 import {
   TSurvey,
   TSurveyQuestionId,
@@ -373,7 +369,7 @@ export const handleInsightAssignments = async (
   insight: {
     title: string;
     description: string;
-    category: TInsightCategory;
+    category: InsightCategory;
   }
 ) => {
   try {

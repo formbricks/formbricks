@@ -4,12 +4,13 @@ import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
+import { InsightCategory } from "@prisma/client";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { TInsight, TInsightFilterCriteria } from "@formbricks/database/zod/insights";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
-import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
 import { getEnvironmentInsightsAction } from "../actions";
 import CategoryBadge from "./category-select";
@@ -56,7 +57,7 @@ export const InsightView = ({
       documentCreatedAt: {
         min: statsFrom,
       },
-      category: activeTab === "all" ? undefined : (activeTab as TInsight["category"]),
+      category: activeTab === "all" ? undefined : (activeTab as InsightCategory),
     }),
     [statsFrom, activeTab]
   );

@@ -2,12 +2,12 @@ import { documentCache } from "@/lib/cache/document";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { TInsight } from "@formbricks/database/zod/insights";
 import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInsight } from "@formbricks/types/insights";
 import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
 
 export const getInsightsBySurveyIdQuestionId = reactCache(

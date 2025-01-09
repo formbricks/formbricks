@@ -6,5 +6,6 @@ module.exports = {
   },
   rules: {
     "no-console": "off",
+    "import/no-relative-packages": "off",
   },
 };

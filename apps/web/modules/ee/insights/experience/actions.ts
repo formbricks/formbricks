@@ -10,8 +10,8 @@ import {
 } from "@/lib/utils/helper";
 import { checkAIPermission } from "@/modules/ee/insights/actions";
 import { z } from "zod";
+import { ZInsight, ZInsightFilterCriteria } from "@formbricks/database/zod/insights";
 import { ZId } from "@formbricks/types/common";
-import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
 import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
 
