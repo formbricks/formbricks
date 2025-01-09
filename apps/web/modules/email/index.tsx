@@ -51,7 +51,6 @@ const getEmailSubject = (projectName: string): string => {
 };
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
-  if (!IS_SMTP_CONFIGURED) return false;
   try {
     const transporter = createTransport({
       host: SMTP_HOST,
