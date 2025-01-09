@@ -108,6 +108,21 @@ export const QuestionCard = ({
 
   const getIsRequiredToggleDisabled = (): boolean => {
     if (question.type === TSurveyQuestionTypeEnum.Address) {
+      const allFieldsAreOptional = [
+        question.addressLine1,
+        question.addressLine2,
+        question.city,
+        question.state,
+        question.zip,
+        question.country,
+      ]
+        .filter((field) => field.show)
+        .every((field) => !field.required);
+
+      if (allFieldsAreOptional) {
+        return true;
+      }
+
       return [
         question.addressLine1,
         question.addressLine2,
@@ -121,6 +136,20 @@ export const QuestionCard = ({
     }
 
     if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
+      const allFieldsAreOptional = [
+        question.firstName,
+        question.lastName,
+        question.email,
+        question.phone,
+        question.company,
+      ]
+        .filter((field) => field.show)
+        .every((field) => !field.required);
+
+      if (allFieldsAreOptional) {
+        return true;
+      }
+
       return [question.firstName, question.lastName, question.email, question.phone, question.company]
         .filter((field) => field.show)
         .some((condition) => condition.required === true);
