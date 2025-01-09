@@ -21,7 +21,7 @@ const AppLayout = async ({ children }) => {
       </Suspense>
       <PHProvider>
         <>
-          {session && user ? <FormbricksClient session={session} userEmail={user.email} /> : null}
+          {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
           <IntercomClient
             isIntercomConfigured={IS_INTERCOM_CONFIGURED}
             intercomSecretKey={INTERCOM_SECRET_KEY}
