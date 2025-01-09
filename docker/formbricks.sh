@@ -237,7 +237,7 @@ EOT
     read smtp_password
     
     echo -n "Enable Authenticated SMTP? Enter 1 for yes and 0 for no(default is 1): "
-    read authenticated_smtp
+    read smtp_authenticated
 
     echo -n "Enable Secure SMTP (use SSL)? Enter 1 for yes and 0 for no: "
     read smtp_secure_enabled
@@ -248,7 +248,7 @@ EOT
     smtp_port=""
     smtp_user=""
     smtp_password=""
-    authenticated_smtp=1
+    smtp_authenticated=1
     smtp_secure_enabled=0
   fi
 
@@ -275,7 +275,7 @@ EOT
     sed -i "s|# SMTP_SECURE_ENABLED:|SMTP_SECURE_ENABLED: $smtp_secure_enabled|" docker-compose.yml
     sed -i "s|# SMTP_USER:|SMTP_USER: \"$smtp_user\"|" docker-compose.yml
     sed -i "s|# SMTP_PASSWORD:|SMTP_PASSWORD: \"$smtp_password\"|" docker-compose.yml
-    sed -i "s|# AUTHENTICATED_SMTP:|AUTHENTICATED_SMTP: $authenticated_smtp|" docker-compose.yml
+    sed -i "s|# SMTP_AUTHENTICATED:|SMTP_AUTHENTICATED: $smtp_authenticated|" docker-compose.yml
   fi
 
   awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '

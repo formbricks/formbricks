@@ -3,9 +3,9 @@ import { render } from "@react-email/render";
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
-  AUTHENTICATED_SMTP,
   DEBUG,
   MAIL_FROM,
+  SMTP_AUTHENTICATED,
   SMTP_HOST,
   SMTP_PASSWORD,
   SMTP_PORT,
@@ -56,7 +56,7 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
       host: SMTP_HOST,
       port: SMTP_PORT,
       secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-      ...(AUTHENTICATED_SMTP
+      ...(SMTP_AUTHENTICATED
         ? {
             auth: {
               type: "LOGIN",

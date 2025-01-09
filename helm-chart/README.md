@@ -222,7 +222,7 @@ These documents provide detailed information on scaling and configuring high ava
      --set env.SMTP_PORT=587 \
      --set env.SMTP_USER=user@example.com \
      --set env.SMTP_PASSWORD=password123 \
-     --set env.AUTHENTICATED_SMTP=1
+     --set env.SMTP_AUTHENTICATED=1
    ```
 
 5. **Installation with Custom Resource Limits**:
