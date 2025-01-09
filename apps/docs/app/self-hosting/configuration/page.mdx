@@ -1,4 +1,4 @@
-import { MdxImage } from "@/components/MdxImage";
+import { MdxImage } from "@/components/mdx-image";
 
 import EntraIDAppReg01 from "./images/entra_app_reg_01.webp";
 import EntraIDAppReg02 from "./images/entra_app_reg_02.webp";
@@ -261,8 +261,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 12. Copy the entry under **Value** to populate the `AZUREAD_CLIENT_SECRET` variable.
 
 <Note>
-  Microsoft will only show this value to you immediately after creation, and you will not be able to access it
-  again. If you lose it, simply start from step 9 to create a new secret.
+  Microsoft will only show this value to you immediately after creation, and you will not be able to access it again. If you lose it, simply start from step 9 to create a new secret.
 </Note>
 
 <MdxImage
@@ -275,8 +274,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 13. Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
 
 <Note>
-  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to
-  prevent issues with special characters.
+  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., `"THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
 </Note>
 
 An example `.env` for Microsoft Entra ID in Formbricks would look like:
