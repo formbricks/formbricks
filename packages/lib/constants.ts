@@ -72,6 +72,7 @@ export const SMTP_PORT = env.SMTP_PORT;
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
+export const AUTHENTICATED_SMTP = env.AUTHENTICATED_SMTP !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
 

@@ -3,6 +3,7 @@ import { render } from "@react-email/render";
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
+  AUTHENTICATED_SMTP,
   DEBUG,
   MAIL_FROM,
   SMTP_HOST,
@@ -16,6 +17,7 @@ import {
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
+import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserEmail, TUserLocale } from "@formbricks/types/user";
@@ -48,27 +50,38 @@ const getEmailSubject = (projectName: string): string => {
   return `${projectName} User Insights - Last Week by Formbricks`;
 };
 
-export const sendEmail = async (emailData: SendEmailDataProps): Promise<void> => {
-  if (!IS_SMTP_CONFIGURED) return;
+export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
+  if (!IS_SMTP_CONFIGURED) return false;
+  try {
+    const transporter = createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
+      ...(AUTHENTICATED_SMTP
+        ? {
+            auth: {
+              type: "LOGIN",
+              user: SMTP_USER,
+              pass: SMTP_PASSWORD,
+            },
+          }
+        : {}),
+      tls: {
+        rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
+      },
+      logger: DEBUG,
+      debug: DEBUG,
+    } as SMTPTransport.Options);
 
-  const transporter = createTransport({
-    host: SMTP_HOST,
-    port: SMTP_PORT,
-    secure: SMTP_SECURE_ENABLED, // true for 465, false for other ports
-    auth: {
-      user: SMTP_USER,
-      pass: SMTP_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: SMTP_REJECT_UNAUTHORIZED_TLS,
-    },
-    logger: DEBUG,
-    debug: DEBUG,
-  } as SMTPTransport.Options);
-  const emailDefaults = {
-    from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
-  };
-  await transporter.sendMail({ ...emailDefaults, ...emailData });
+    const emailDefaults = {
+      from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
+    };
+    await transporter.sendMail({ ...emailDefaults, ...emailData });
+
+    return true;
+  } catch (error) {
+    throw new InvalidInputError("Incorrect SMTP credentials");
+  }
 };
 
 export const sendVerificationEmail = async ({
@@ -79,14 +92,14 @@ export const sendVerificationEmail = async ({
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
-}): Promise<void> => {
+}): Promise<boolean> => {
   const token = createToken(id, email, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
   const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
   const html = await render(VerificationEmail({ verificationRequestLink, verifyLink, locale }));
-  await sendEmail({
+  return await sendEmail({
     to: email,
     subject: translateEmailText("verification_email_subject", locale),
     html,
@@ -97,13 +110,13 @@ export const sendForgotPasswordEmail = async (user: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
-}): Promise<void> => {
+}): Promise<boolean> => {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
   const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
   const html = await render(ForgotPasswordEmail({ verifyLink, locale: user.locale }));
-  await sendEmail({
+  return await sendEmail({
     to: user.email,
     subject: "Reset your Formbricks password",
     html,
@@ -113,9 +126,9 @@ export const sendForgotPasswordEmail = async (user: {
 export const sendPasswordResetNotifyEmail = async (user: {
   email: string;
   locale: TUserLocale;
-}): Promise<void> => {
+}): Promise<boolean> => {
   const html = await render(PasswordResetNotifyEmail({ locale: user.locale }));
-  await sendEmail({
+  return await sendEmail({
     to: user.email,
     subject: "Your Formbricks password has been changed",
     html,
@@ -130,7 +143,7 @@ export const sendInviteMemberEmail = async (
   isOnboardingInvite?: boolean,
   inviteMessage?: string,
   locale = "en-US"
-): Promise<void> => {
+): Promise<boolean> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
   });
@@ -141,14 +154,14 @@ export const sendInviteMemberEmail = async (
     const html = await render(
       OnboardingInviteEmail({ verifyLink, inviteMessage, inviterName, locale, inviteeName })
     );
-    await sendEmail({
+    return await sendEmail({
       to: email,
       subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
       html,
     });
   } else {
     const html = await render(InviteEmail({ inviteeName, inviterName, verifyLink, locale }));
-    await sendEmail({
+    return await sendEmail({
       to: email,
       subject: `You're invited to collaborate on Formbricks!`,
       html,
@@ -214,9 +227,9 @@ export const sendEmbedSurveyPreviewEmail = async (
   environmentId: string,
   locale: string,
   logoUrl?: string
-): Promise<void> => {
+): Promise<boolean> => {
   const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale, logoUrl }));
-  await sendEmail({
+  return await sendEmail({
     to,
     subject,
     html,
@@ -229,17 +242,17 @@ export const sendEmailCustomizationPreviewEmail = async (
   userName: string,
   locale: string,
   logoUrl?: string
-): Promise<void> => {
+): Promise<boolean> => {
   const emailHtmlBody = await render(EmailCustomizationPreviewEmail({ userName, locale, logoUrl }));
 
-  await sendEmail({
+  return await sendEmail({
     to,
     subject,
     html: emailHtmlBody,
   });
 };
 
-export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<void> => {
+export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<boolean> => {
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyName = data.surveyName;
@@ -256,7 +269,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const surveyLink = getSurveyLink();
 
   const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale, logoUrl }));
-  await sendEmail({
+  return await sendEmail({
     to: data.email,
     subject: "Your survey is ready to be filled out.",
     html,
