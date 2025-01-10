@@ -38,9 +38,45 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
+const validateUrlWithRecall = (url: string): string | null => {
+  try {
+    if (!url.startsWith("https://")) {
+      return "URL must start with https://";
+    }
+
+    if (url.includes(" ") && !url.endsWith(" ")) {
+      return "URL must not contain spaces";
+    }
+
+    const __url = new URL(url);
+
+    return null;
+  } catch {
+    const hostname = url.split("https://")[1];
+    if (hostname.includes("#recall:")) {
+      return "Recall information cannot be used in the hostname part of the URL";
+    }
+
+    return "Invalid Redirect URL";
+  }
+};
+
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl("Invalid Redirect Url").optional(),
+  url: z
+    .string()
+    .optional()
+    .superRefine((url, ctx) => {
+      if (!url) return;
+
+      const error = validateUrlWithRecall(url);
+      if (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error,
+        });
+      }
+    }),
   label: z.string().optional(),
 });
 
