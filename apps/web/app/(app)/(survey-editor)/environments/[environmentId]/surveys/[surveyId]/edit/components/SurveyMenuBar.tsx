@@ -258,6 +258,7 @@ export const SurveyMenuBar = ({
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
+        return false;
       }
 
       return true;
