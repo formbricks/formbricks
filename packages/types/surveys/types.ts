@@ -1,3 +1,4 @@
+/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
@@ -48,7 +49,7 @@ const validateUrlWithRecall = (url: string): string | null => {
       return "URL must not contain spaces";
     }
 
-    const __url = new URL(url);
+    new URL(url);
 
     return null;
   } catch {
