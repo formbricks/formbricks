@@ -45,7 +45,6 @@ Harvest user-insights, build irresistible experiences.
     - [Using a Values File for Complex Upgrades](#using-a-values-file-for-complex-upgrades)
   - [Support](#support)
   - [Full Values Documentation](#full-values-documentation)
-  - [Full Values Documentation](#full-values-documentation-1)
   - [✍️ Contribution](#️-contribution)
   - [MicroK8s Installation and Formbricks Deployment](#microk8s-installation-and-formbricks-deployment)
     - [MicroK8s Quick Setup](#microk8s-quick-setup)
