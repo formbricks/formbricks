@@ -1,5 +1,6 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -38,8 +39,13 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      await sendEmbedSurveyPreviewEmailAction({ surveyId });
-      toast.success(t("environments.surveys.summary.email_sent"));
+      const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
+      if (val?.data) {
+        toast.success(t("environments.surveys.summary.email_sent"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(val);
+        toast.error(errorMessage);
+      }
     } catch (err) {
       if (err instanceof AuthenticationError) {
         toast.error(t("common.not_authenticated"));
