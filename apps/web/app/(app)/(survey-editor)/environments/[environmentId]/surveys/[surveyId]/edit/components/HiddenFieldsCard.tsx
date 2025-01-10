@@ -192,12 +192,12 @@ export const HiddenFieldsCard = ({
               toast.success(t("environments.surveys.edit.hidden_field_added_successfully"));
               setHiddenField("");
             }}>
-            <Label htmlFor="headline">{t("common.hidden_field")}</Label>
-            <div className="mt-2 flex gap-2">
+            <Label htmlFor="hiddenField">{t("common.hidden_field")}</Label>
+            <div className="mt-2 flex items-center gap-2">
               <Input
                 autoFocus
-                id="headline"
-                name="headline"
+                id="hiddenField"
+                name="hiddenField"
                 value={hiddenField}
                 onChange={(e) => setHiddenField(e.target.value.trim())}
                 placeholder={t("environments.surveys.edit.type_field_id") + "..."}
