@@ -353,7 +353,7 @@ export const QuestionFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute top-0 text-black caret-black ${className} ${
+                          className={`absolute top-0 text-black caret-black ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           } ${className}`}
                           isInvalid={
