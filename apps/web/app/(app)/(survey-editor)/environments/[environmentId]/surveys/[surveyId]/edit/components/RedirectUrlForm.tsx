@@ -2,6 +2,7 @@ import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/co
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";
+import { useRef } from "react";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -21,6 +22,8 @@ export const RedirectUrlForm = ({
 }: RedirectUrlFormProps) => {
   const selectedLanguageCode = "default";
   const t = useTranslations();
+  const inputRef = useRef<HTMLInputElement>(null);
+
   return (
     <form className="mt-3 space-y-3">
       <div className="space-y-2">
@@ -35,6 +38,9 @@ export const RedirectUrlForm = ({
             };
 
             updateSurvey(updatedValue);
+          }}
+          onAddFallback={() => {
+            inputRef.current?.focus();
           }}
           contactAttributeKeys={contactAttributeKeys}
           isRecallAllowed
@@ -51,6 +57,7 @@ export const RedirectUrlForm = ({
                   {highlightedJSX}
                 </div>
                 <Input
+                  ref={inputRef}
                   id="redirectUrl"
                   name="redirectUrl"
                   className="relative text-black caret-black"

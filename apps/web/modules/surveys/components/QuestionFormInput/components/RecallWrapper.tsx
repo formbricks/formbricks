@@ -1,5 +1,6 @@
 import { FallbackInput } from "@/modules/surveys/components/QuestionFormInput/components/FallbackInput";
 import { RecallItemSelect } from "@/modules/surveys/components/QuestionFormInput/components/RecallItemSelect";
+import { Button } from "@/modules/ui/components/button";
 import { PencilIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
@@ -23,6 +24,7 @@ interface RecallWrapperRenderProps {
   onChange: (val: string) => void;
   highlightedJSX: JSX.Element[];
   children: ReactNode;
+  isRecallSelectVisible: boolean;
 }
 
 interface RecallWrapperProps {
@@ -34,6 +36,7 @@ interface RecallWrapperProps {
   render: (props: RecallWrapperRenderProps) => React.ReactNode;
   usedLanguageCode: string;
   isRecallAllowed: boolean;
+  onAddFallback: (fallback: string) => void;
 }
 
 export const RecallWrapper = ({
@@ -45,6 +48,7 @@ export const RecallWrapper = ({
   render,
   usedLanguageCode,
   isRecallAllowed,
+  onAddFallback,
 }: RecallWrapperProps) => {
   const t = useTranslations();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
@@ -67,8 +71,11 @@ export const RecallWrapper = ({
   }, [value, recallItems, fallbacks]);
 
   const checkForRecallSymbol = useCallback((str: string) => {
-    const pattern = /@(\b|$)/;
-    pattern.test(str) ? setShowRecallItemSelect(true) : setShowRecallItemSelect(false);
+    // Get cursor position by finding last character
+    // Only trigger when @ is the last character typed
+    const lastChar = str[str.length - 1];
+    const shouldShow = lastChar === "@";
+    setShowRecallItemSelect(shouldShow);
   }, []);
 
   const handleInputChange = useCallback(
@@ -153,7 +160,9 @@ export const RecallWrapper = ({
     });
 
     setShowFallbackInput(false);
-  }, [fallbacks, recallItems, internalValue, onChange]);
+    setShowRecallItemSelect(false);
+    onAddFallback(newVal);
+  }, [fallbacks, recallItems, internalValue, onChange, onAddFallback]);
 
   const filterRecallItems = useCallback(
     (remainingText: string) => {
@@ -253,19 +262,21 @@ export const RecallWrapper = ({
         value: internalValue,
         onChange: handleInputChange,
         highlightedJSX: renderedText,
+        isRecallSelectVisible: showRecallItemSelect,
         children: (
           <div>
             {internalValue.includes("recall:") && (
-              <button
+              <Button
+                variant="ghost"
                 type="button"
-                className="absolute right-2 top-full z-[1] flex cursor-pointer items-center rounded-b-lg bg-slate-100 px-2.5 py-1 text-xs hover:bg-slate-200"
+                className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowFallbackInput(true);
                 }}>
                 {t("environments.surveys.edit.edit_recall")}
-                <PencilIcon className="ml-2 h-3 w-3" />
-              </button>
+                <PencilIcon className="h-3 w-3" />
+              </Button>
             )}
 
             {showRecallItemSelect && (

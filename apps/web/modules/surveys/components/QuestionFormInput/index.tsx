@@ -278,9 +278,18 @@ export const QuestionFormInput = ({
                 // Pass all values to MultiLangWrapper's onChange
                 onChange(value, recallItems, fallbacks);
               }}
-              isRecallAllowed={id === "headline" || id === "subheader"}
+              onAddFallback={() => {
+                inputRef.current?.focus();
+              }}
+              isRecallAllowed={!isWelcomeCard && (id === "headline" || id === "subheader")}
               usedLanguageCode={usedLanguageCode}
-              render={({ value, onChange, highlightedJSX, children: recallComponents }) => {
+              render={({
+                value,
+                onChange,
+                highlightedJSX,
+                children: recallComponents,
+                isRecallSelectVisible,
+              }) => {
                 return (
                   <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
                     {showImageUploader && id === "headline" && (
@@ -314,7 +323,7 @@ export const QuestionFormInput = ({
                         <div className="h-10 w-full"></div>
                         <div
                           ref={highlightContainerRef}
-                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
                           }`}
                           dir="auto"
@@ -323,6 +332,7 @@ export const QuestionFormInput = ({
                         </div>
 
                         <Input
+                          key={`${questionId}-${id}-${usedLanguageCode}`}
                           value={
                             recallToHeadline(
                               {
@@ -334,6 +344,7 @@ export const QuestionFormInput = ({
                               contactAttributeKeys
                             )[usedLanguageCode]
                           }
+                          dir="auto"
                           onChange={(e) => onChange(e.target.value)}
                           id={id}
                           name={id}
@@ -342,15 +353,17 @@ export const QuestionFormInput = ({
                           maxLength={maxLength}
                           ref={inputRef}
                           onBlur={onBlur}
-                          className={`absolute right-0 top-0 text-black caret-black ${className} ${
+                          className={`absolute top-0 text-black caret-black ${className} ${
                             localSurvey.languages?.length > 1 ? "pr-24" : ""
-                          }`}
+                          } ${className}`}
                           isInvalid={
                             isInvalid &&
                             text[usedLanguageCode]?.trim() === "" &&
                             localSurvey.languages?.length > 1 &&
                             isTranslationIncomplete
                           }
+                          autoComplete={isRecallSelectVisible ? "off" : "on"}
+                          autoFocus={id === "headline"}
                         />
                         {recallComponents}
                       </div>

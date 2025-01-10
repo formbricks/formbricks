@@ -7,6 +7,7 @@ import { Input } from "@/modules/ui/components/input";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import {
   CalendarDaysIcon,
+  ContactIcon,
   EyeOffIcon,
   FileDigitIcon,
   FileTextIcon,
@@ -40,6 +41,7 @@ const questionIconMapping = {
   date: CalendarDaysIcon,
   cal: PhoneIcon,
   address: HomeIcon,
+  contactInfo: ContactIcon,
   ranking: ListOrderedIcon,
 };
 

@@ -285,8 +285,6 @@ export const EditEndingCard = ({
               localSurvey={localSurvey}
               endingCard={endingCard}
               updateSurvey={updateSurvey}
-              selectedLanguageCode={selectedLanguageCode}
-              locale={locale}
               contactAttributeKeys={contactAttributeKeys}
             />
           )}

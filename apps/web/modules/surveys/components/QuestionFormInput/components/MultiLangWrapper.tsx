@@ -4,27 +4,24 @@ import React, { ReactNode, useMemo } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TI18nString, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+
+interface MultiLangWrapperRenderProps {
+  value: TI18nString;
+  onChange: (value: string, recallItems?: TSurveyRecallItem[], fallbacks?: { [key: string]: string }) => void;
+  children?: ReactNode;
+}
 
 interface MultiLangWrapperProps {
   isTranslationIncomplete: boolean;
   value: TI18nString;
+  onChange: (value: TI18nString) => void;
   localSurvey: TSurvey;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (code: string) => void;
   locale: TUserLocale;
-  render: (props: {
-    value: TI18nString;
-    onChange: (
-      value: string,
-      recallItems?: TSurveyRecallItem[],
-      fallbacks?: { [key: string]: string }
-    ) => void;
-    children?: ReactNode;
-  }) => ReactNode;
-  onChange: (value: TI18nString) => void;
+  render: (props: MultiLangWrapperRenderProps) => ReactNode;
   contactAttributeKeys?: TContactAttributeKey[];
 }
 
