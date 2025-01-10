@@ -1,6 +1,7 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/setup/organization/[organizationId]/invite/actions";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
@@ -34,13 +35,16 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
     for (const member of Object.values(data)) {
       try {
         if (!member.email) continue;
-        await inviteOrganizationMemberAction({
+        const inviteResponse = await inviteOrganizationMemberAction({
           email: member.email.toLowerCase(),
           name: member.name,
           organizationId,
         });
-        if (IS_SMTP_CONFIGURED) {
+        if (inviteResponse?.data) {
           toast.success(`${t("setup.invite.invitation_sent_to")} ${member.email}!`);
+        } else {
+          const errorMessage = getFormattedErrorMessage(inviteResponse);
+          toast.error(errorMessage);
         }
       } catch (error) {
         toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
