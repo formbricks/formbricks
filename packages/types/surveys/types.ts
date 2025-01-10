@@ -621,30 +621,34 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
-const ZSurveyShowRequiredToggle = z.object({
+const ZToggleInputConfig = z.object({
   show: z.boolean(),
   required: z.boolean(),
+  placeholder: ZI18nString,
 });
+
+export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  addressLine1: ZSurveyShowRequiredToggle,
-  addressLine2: ZSurveyShowRequiredToggle,
-  city: ZSurveyShowRequiredToggle,
-  state: ZSurveyShowRequiredToggle,
-  zip: ZSurveyShowRequiredToggle,
-  country: ZSurveyShowRequiredToggle,
+  addressLine1: ZToggleInputConfig,
+  addressLine2: ZToggleInputConfig,
+  city: ZToggleInputConfig,
+  state: ZToggleInputConfig,
+  zip: ZToggleInputConfig,
+  country: ZToggleInputConfig,
 });
-export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
-  firstName: ZSurveyShowRequiredToggle,
-  lastName: ZSurveyShowRequiredToggle,
-  email: ZSurveyShowRequiredToggle,
-  phone: ZSurveyShowRequiredToggle,
-  company: ZSurveyShowRequiredToggle,
+  firstName: ZToggleInputConfig,
+  lastName: ZToggleInputConfig,
+  email: ZToggleInputConfig,
+  phone: ZToggleInputConfig,
+  company: ZToggleInputConfig,
 });
+
+export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
@@ -1101,7 +1105,13 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
         const { company, email, firstName, lastName, phone } = question;
-        const fields = [company, email, firstName, lastName, phone];
+        const fields = [
+          { ...company, label: "Company" },
+          { ...email, label: "Email" },
+          { ...firstName, label: "First Name" },
+          { ...lastName, label: "Last Name" },
+          { ...phone, label: "Phone" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1110,11 +1120,32 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Address) {
         const { addressLine1, addressLine2, city, state, zip, country } = question;
-        const fields = [addressLine1, addressLine2, city, state, zip, country];
+        const fields = [
+          { ...addressLine1, label: "Address Line 1" },
+          { ...addressLine2, label: "Address Line 2" },
+          { ...city, label: "City" },
+          { ...state, label: "State" },
+          { ...zip, label: "Zip" },
+          { ...country, label: "Country" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1123,6 +1154,20 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.logic) {
