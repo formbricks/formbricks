@@ -1,19 +1,15 @@
 "use client";
 
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
+import { useTranslations } from "next-intl";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { BulkInviteTab } from "./BulkInviteTab";
 import { IndividualInviteTab } from "./IndividualInviteTab";
 
-export enum MembershipRole {
-  Admin = "admin",
-  Editor = "editor",
-  Developer = "developer",
-  Viewer = "viewer",
-}
 interface AddMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  onSubmit: (data: { name: string; email: string; role: MembershipRole }[]) => void;
+  onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
@@ -27,9 +23,10 @@ export const AddMemberModal = ({
   isFormbricksCloud,
   environmentId,
 }: AddMemberModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Individual Invite",
+      title: t("environments.settings.general.individual_invite"),
       children: (
         <IndividualInviteTab
           setOpen={setOpen}
@@ -41,9 +38,14 @@ export const AddMemberModal = ({
       ),
     },
     {
-      title: "Bulk Invite",
+      title: t("environments.settings.general.bulk_invite"),
       children: (
-        <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} canDoRoleManagement={canDoRoleManagement} />
+        <BulkInviteTab
+          setOpen={setOpen}
+          onSubmit={onSubmit}
+          canDoRoleManagement={canDoRoleManagement}
+          isFormbricksCloud={isFormbricksCloud}
+        />
       ),
     },
   ];
@@ -54,7 +56,7 @@ export const AddMemberModal = ({
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        label={"Invite Organization Member"}
+        label={t("environments.settings.general.invite_organization_member")}
         closeOnOutsideClick={true}
       />
     </>

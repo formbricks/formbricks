@@ -1,24 +1,25 @@
 "use client";
 
 import { findVariableUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
-import { createId } from "@paralleldrive/cuid2";
-import { TrashIcon } from "lucide-react";
-import React, { useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { createId } from "@paralleldrive/cuid2";
+import { TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import React, { useCallback, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { extractRecallInfo } from "@formbricks/lib/utils/recall";
+import { TSurvey, TSurveyVariable } from "@formbricks/types/surveys/types";
 
 interface SurveyVariablesCardItemProps {
   variable?: TSurveyVariable;
@@ -33,6 +34,7 @@ export const SurveyVariablesCardItem = ({
   setLocalSurvey,
   mode,
 }: SurveyVariablesCardItemProps) => {
+  const t = useTranslations();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
       id: createId(),
@@ -87,7 +89,13 @@ export const SurveyVariablesCardItem = ({
 
     if (quesIdx !== -1) {
       toast.error(
-        `${variable.name} is used in logic of question ${quesIdx + 1}. Please remove it from logic first.`
+        t(
+          "environments.surveys.edit.variable_is_used_in_logic_of_question_please_remove_it_from_logic_first",
+          {
+            variable: variable.name,
+            questionIndex: quesIdx + 1,
+          }
+        )
       );
       return;
     }
@@ -126,7 +134,9 @@ export const SurveyVariablesCardItem = ({
               editSurveyVariable(data);
             }
           })}>
-          {mode === "create" && <Label htmlFor="headline">Add variable</Label>}
+          {mode === "create" && (
+            <Label htmlFor="headline">{t("environments.surveys.edit.add_variable")}</Label>
+          )}
 
           <div className="mt-2 flex w-full items-center gap-2">
             <FormField
@@ -135,7 +145,9 @@ export const SurveyVariablesCardItem = ({
               rules={{
                 pattern: {
                   value: /^[a-z0-9_]+$/,
-                  message: "Only lower case letters, numbers, and underscores are allowed.",
+                  message: t(
+                    "environments.surveys.edit.only_lower_case_letters_numbers_and_underscores_are_allowed"
+                  ),
                 },
                 validate: (value) => {
                   // if the variable name is already taken
@@ -143,18 +155,22 @@ export const SurveyVariablesCardItem = ({
                     mode === "create" &&
                     localSurvey.variables.find((variable) => variable.name === value)
                   ) {
-                    return "Variable name is already taken, please choose another.";
+                    return t(
+                      "environments.surveys.edit.variable_name_is_already_taken_please_choose_another"
+                    );
                   }
 
                   if (mode === "edit" && variable && variable.name !== value) {
                     if (localSurvey.variables.find((variable) => variable.name === value)) {
-                      return "Variable name is already taken, please choose another.";
+                      return t(
+                        "environments.surveys.edit.variable_name_is_already_taken_please_choose_another"
+                      );
                     }
                   }
 
                   // if it does not start with a letter
                   if (!/^[a-z]/.test(value)) {
-                    return "Variable name must start with a letter.";
+                    return t("environments.surveys.edit.variable_name_must_start_with_a_letter");
                   }
                 },
               }}
@@ -165,7 +181,7 @@ export const SurveyVariablesCardItem = ({
                       {...field}
                       isInvalid={isNameError}
                       type="text"
-                      placeholder="Field name e.g, score, price"
+                      placeholder={t("environments.surveys.edit.field_name_eg_score_price")}
                     />
                   </FormControl>
                 </FormItem>
@@ -183,11 +199,14 @@ export const SurveyVariablesCardItem = ({
                     field.onChange(value);
                   }}>
                   <SelectTrigger className="w-24">
-                    <SelectValue placeholder="Select type" className="text-sm" />
+                    <SelectValue
+                      placeholder={t("environments.surveys.edit.select_type")}
+                      className="text-sm"
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={"number"}>Number</SelectItem>
-                    <SelectItem value={"text"}>Text</SelectItem>
+                    <SelectItem value={"number"}>{t("common.number")}</SelectItem>
+                    <SelectItem value={"text"}>{t("common.text")}</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -206,7 +225,7 @@ export const SurveyVariablesCardItem = ({
                       onChange={(e) => {
                         field.onChange(variableType === "number" ? Number(e.target.value) : e.target.value);
                       }}
-                      placeholder="Initial value"
+                      placeholder={t("environments.surveys.edit.initial_value")}
                       type={variableType === "number" ? "number" : "text"}
                     />
                   </FormControl>
@@ -216,7 +235,7 @@ export const SurveyVariablesCardItem = ({
 
             {mode === "create" && (
               <Button variant="secondary" type="submit" className="h-10 whitespace-nowrap">
-                Add variable
+                {t("environments.surveys.edit.add_variable")}
               </Button>
             )}
 

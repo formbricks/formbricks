@@ -2,19 +2,21 @@
 
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProductConfigNavigation } from "@/app/(app)/environments/[environmentId]/product/components/ProductConfigNavigation";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { useTranslations } from "next-intl";
 
 const Loading = () => {
+  const t = useTranslations();
   const cards = [
     {
-      title: "Product Name",
-      description: "Change your products name.",
+      title: t("common.product_name"),
+      description: t("environments.product.general.product_name_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Recontact Waiting Time",
-      description: "Control how frequently users can be surveyed across all surveys.",
+      title: t("environments.product.general.recontact_waiting_time"),
+      description: t("environments.product.general.recontact_waiting_time_settings_description"),
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
@@ -28,16 +30,15 @@ const Loading = () => {
       skeletonLines: [{ classes: "h-4 w-28" }, { classes: "h-6 w-64" }, { classes: "h-8 w-24" }],
     },
     {
-      title: "Delete Product",
-      description:
-        "Delete product with all surveys, responses, people, actions and attributes. This cannot be undone.",
+      title: t("environments.product.general.delete_product"),
+      description: t("environments.product.general.delete_product_settings_description"),
       skeletonLines: [{ classes: "h-4 w-96" }, { classes: "h-8 w-24" }],
     },
   ];
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Configuration">
+      <PageHeader pageTitle={t("common.configuration")}>
         <ProductConfigNavigation activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

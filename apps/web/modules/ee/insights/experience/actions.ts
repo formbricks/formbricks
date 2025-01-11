@@ -1,12 +1,18 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromInsightId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromInsightId,
+} from "@/lib/utils/helper";
+import { checkAIPermission } from "@/modules/ee/insights/actions";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
-import { ZInsightFilterCriteria } from "@formbricks/types/insights";
-import { getInsights } from "./lib/insights";
+import { ZInsight, ZInsightFilterCriteria } from "@formbricks/types/insights";
+import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
 
 const ZGetEnvironmentInsightsAction = z.object({
@@ -19,11 +25,24 @@ const ZGetEnvironmentInsightsAction = z.object({
 export const getEnvironmentInsightsAction = authenticatedActionClient
   .schema(ZGetEnvironmentInsightsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["response", "read"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
+
+    await checkAIPermission(organizationId);
 
     return await getInsights(
       parsedInput.environmentId,
@@ -41,11 +60,65 @@ const ZGetStatsAction = z.object({
 export const getStatsAction = authenticatedActionClient
   .schema(ZGetStatsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["response", "read"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
+    await checkAIPermission(organizationId);
     return await getStats(parsedInput.environmentId, parsedInput.statsFrom);
+  });
+
+const ZUpdateInsightAction = z.object({
+  insightId: ZId,
+  data: ZInsight.partial(),
+});
+
+export const updateInsightAction = authenticatedActionClient
+  .schema(ZUpdateInsightAction)
+  .action(async ({ ctx, parsedInput }) => {
+    try {
+      const organizationId = await getOrganizationIdFromInsightId(parsedInput.insightId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "productTeam",
+            productId: await getProductIdFromInsightId(parsedInput.insightId),
+            minPermission: "readWrite",
+          },
+        ],
+      });
+
+      await checkAIPermission(organizationId);
+
+      return await updateInsight(parsedInput.insightId, parsedInput.data);
+    } catch (error) {
+      console.error("Error updating insight:", {
+        insightId: parsedInput.insightId,
+        error,
+      });
+      if (error instanceof Error) {
+        throw new Error(`Failed to update insight: ${error.message}`);
+      }
+      throw new Error("An unexpected error occurred while updating the insight");
+    }
   });

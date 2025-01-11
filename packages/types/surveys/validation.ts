@@ -214,7 +214,19 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
         }
       }
 
-      // Handle default behavior
+      // Check fallback logic
+      if (question?.logicFallback) {
+        const fallbackQuestionId = question.logicFallback;
+        if (!visited[fallbackQuestionId] && checkForCyclicLogic(fallbackQuestionId)) {
+          cyclicQuestions.add(questionId);
+          return true;
+        } else if (recStack[fallbackQuestionId]) {
+          cyclicQuestions.add(questionId);
+          return true;
+        }
+      }
+
+      // Handle default behavior: move to the next question if no jump actions or fallback logic is defined
       const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
       const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
       if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {

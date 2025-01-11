@@ -6,8 +6,9 @@ import { generateSurveySingleUseIds } from "@formbricks/lib/utils/singleUseSurve
 
 export const GET = async (
   request: NextRequest,
-  { params }: { params: { surveyId: string } }
+  props: { params: Promise<{ surveyId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

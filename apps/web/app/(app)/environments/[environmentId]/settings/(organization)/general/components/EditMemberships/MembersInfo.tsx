@@ -1,19 +1,19 @@
 import { MemberActions } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/EditMemberships/MemberActions";
 import { isInviteExpired } from "@/app/lib/utils";
-import { EditMembershipRole } from "@formbricks/ee/role-management/components/edit-membership-role";
+import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
+import { Badge } from "@/modules/ui/components/badge";
 import { TInvite } from "@formbricks/types/invites";
-import { TMember, TMembershipRole } from "@formbricks/types/memberships";
+import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { Badge } from "@formbricks/ui/components/Badge";
 
 type MembersInfoProps = {
   organization: TOrganization;
   members: TMember[];
   invites: TInvite[];
-  isUserAdminOrOwner: boolean;
+  isUserManagerOrOwner: boolean;
   currentUserId: string;
-  currentUserRole: TMembershipRole;
   canDoRoleManagement: boolean;
+  isFormbricksCloud: boolean;
 };
 
 // Type guard to check if member is an invitee
@@ -24,13 +24,15 @@ const isInvitee = (member: TMember | TInvite): member is TInvite => {
 export const MembersInfo = async ({
   organization,
   invites,
-  isUserAdminOrOwner,
+  isUserManagerOrOwner,
   members,
   currentUserId,
-  currentUserRole,
   canDoRoleManagement,
+  isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
+
+  const doesOrgHaveMoreThanOneOwner = allMembers.filter((member) => member.role === "owner").length > 1;
 
   return (
     <div className="grid-cols-20" id="membersInfoWrapper">
@@ -48,22 +50,21 @@ export const MembersInfo = async ({
           <div className="ph-no-capture col-span-5 flex flex-col items-start justify-center break-all">
             {canDoRoleManagement && allMembers?.length > 0 && (
               <EditMembershipRole
-                isAdminOrOwner={isUserAdminOrOwner}
+                isUserManagerOrOwner={isUserManagerOrOwner}
                 memberRole={member.role}
                 memberId={!isInvitee(member) ? member.userId : ""}
-                memberName={member.name ?? ""}
                 organizationId={organization.id}
                 userId={currentUserId}
-                memberAccepted={member.accepted}
+                memberAccepted={!isInvitee(member) ? member.accepted : undefined}
                 inviteId={isInvitee(member) ? member.id : ""}
-                currentUserRole={currentUserRole}
+                doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
+                isFormbricksCloud={isFormbricksCloud}
               />
             )}
           </div>
 
           <div className="col-span-5 flex items-center justify-end gap-x-4 pr-4">
-            {!member.accepted &&
-              isInvitee(member) &&
+            {isInvitee(member) &&
               (isInviteExpired(member) ? (
                 <Badge className="mr-2" type="gray" text="Expired" size="tiny" />
               ) : (
@@ -74,9 +75,11 @@ export const MembersInfo = async ({
               organization={organization}
               member={!isInvitee(member) ? member : undefined}
               invite={isInvitee(member) ? member : undefined}
-              isAdminOrOwner={isUserAdminOrOwner}
               showDeleteButton={
-                isUserAdminOrOwner && member.role !== "owner" && (member as TMember).userId !== currentUserId
+                isUserManagerOrOwner &&
+                (member as TMember).userId !== currentUserId &&
+                ((member as TMember).role !== "owner" ||
+                  ((member as TMember).role === "owner" && doesOrgHaveMoreThanOneOwner))
               }
             />
           </div>

@@ -3,12 +3,18 @@ import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/s
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
-import { getIsAIEnabled } from "@/app/lib/utils";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
+  DEFAULT_LOCALE,
   DOCUMENTS_PER_PAGE,
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
@@ -21,13 +27,13 @@ import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.session_not_found"));
   }
 
   const surveyId = params.surveyId;
@@ -42,31 +48,36 @@ const Page = async ({ params }) => {
     getAttributeClasses(params.environmentId),
   ]);
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
   if (!survey) {
-    throw new Error("Survey not found");
+    throw new Error(t("common.survey_not_found"));
   }
 
   const product = await getProductByEnvironmentId(environment.id);
   if (!product) {
-    throw new Error("Product not found");
+    throw new Error(t("common.product_not_found"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
@@ -81,7 +92,7 @@ const Page = async ({ params }) => {
           <SurveyAnalysisCTA
             environment={environment}
             survey={survey}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             webAppUrl={WEBAPP_URL}
             user={user}
           />
@@ -110,6 +121,8 @@ const Page = async ({ params }) => {
         attributeClasses={attributeClasses}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
+        isReadOnly={isReadOnly}
+        locale={user.locale ?? DEFAULT_LOCALE}
       />
     </PageContentWrapper>
   );

@@ -18,13 +18,13 @@ Ready to dive into the code and make a real impact? Here's your path:
 
 1. **Read our Best Practices**: [It takes 5 minutes](https://formbricks.com/docs/developer-docs/contributing/get-started) but will help you save hours 🤓
 
-1. **Fork the Repository:** Fork our repository or use [Gitpod](https://formbricks.com/docs/developer-docs/contributing/gitpod) or use [Codespaces](https://formbricks.com/docs/developer-docs/contributing/codespaces)
+1. **Fork the Repository:** Fork our repository or use [Gitpod](https://gitpod.io) or use [Github Codespaces](https://github.com/features/codespaces) to get started instantly.
 
 1. **Tweak and Transform:** Work your coding magic and apply your changes.
 
 1. **Pull Request Act:** If you're ready to go, craft a new pull request closely following our PR template 🙏
 
-Would you prefer a chat before you dive into a lot of work? Our [Discord server](https://formbricks.com/discord) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
+Would you prefer a chat before you dive into a lot of work? [Github Discussions](https://github.com/formbricks/formbricks/discussions) is your harbor. Share your thoughts, and we'll meet you there with open arms. We're responsive and friendly, promise!
 
 ## 🚀 Aspiring Features
 

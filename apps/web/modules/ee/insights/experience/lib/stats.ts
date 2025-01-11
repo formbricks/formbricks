@@ -11,7 +11,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TStats } from "../types/stats";
 
 export const getStats = reactCache(
-  (environmentId: string, statsFrom?: Date): Promise<TStats> =>
+  async (environmentId: string, statsFrom?: Date): Promise<TStats> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -75,7 +75,8 @@ export const getStats = reactCache(
           if (sentimentCounts.positive || sentimentCounts.negative) {
             sentimentScore = sentimentCounts.positive / (sentimentCounts.positive + sentimentCounts.negative);
 
-            overallSentiment = sentimentScore > 0.5 ? "positive" : "negative";
+            overallSentiment =
+              sentimentScore > 0.5 ? "positive" : sentimentScore < 0.5 ? "negative" : "neutral";
           }
 
           return {

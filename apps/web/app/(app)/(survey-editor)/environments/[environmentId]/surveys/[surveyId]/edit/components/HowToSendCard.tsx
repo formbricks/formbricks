@@ -1,8 +1,12 @@
 "use client";
 
+import { Badge } from "@/modules/ui/components/badge";
+import { Label } from "@/modules/ui/components/label";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -10,20 +14,18 @@ import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Label } from "@formbricks/ui/components/Label";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
+  locale: string;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-
+  const t = useTranslations();
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
@@ -33,7 +35,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
-      endingsTemp.push(getDefaultEndingCard(localSurvey.languages));
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages, locale));
     }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,
@@ -73,18 +75,18 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
   const options = [
     {
       id: "link",
-      name: "Link survey",
+      name: t("common.link_survey"),
       icon: LinkIcon,
-      description: "Share a link to a survey page or embed it in a web page or email.",
+      description: t("environments.surveys.edit.link_survey_description"),
       comingSoon: false,
       alert: false,
       hide: false,
     },
     {
       id: "app",
-      name: "Website & App Survey",
+      name: t("common.website_app_survey"),
       icon: MonitorIcon,
-      description: "Embed a survey in your web app or website to collect responses.",
+      description: t("environments.surveys.edit.app_survey_description"),
       comingSoon: false,
       alert: !appSetupCompleted,
     },
@@ -112,8 +114,10 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
             />
           </div>
           <div>
-            <p className="font-semibold text-slate-800">Survey Type</p>
-            <p className="mt-1 text-sm text-slate-500">Choose where to run the survey.</p>
+            <p className="font-semibold text-slate-800">{t("common.survey_type")}</p>
+            <p className="mt-1 text-sm text-slate-500">
+              {t("environments.surveys.edit.choose_where_to_run_the_survey")}
+            </p>
           </div>
         </div>
       </Collapsible.CollapsibleTrigger>
@@ -166,15 +170,17 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                         <div className="mt-2 flex items-center space-x-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2">
                           <AlertCircleIcon className="h-5 w-5 text-amber-500" />
                           <div className="text-amber-800">
-                            <p className="text-xs font-semibold">Formbricks SDK is not connected</p>
+                            <p className="text-xs font-semibold">
+                              {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
+                            </p>
                             <p className="text-xs font-normal">
                               <Link
                                 href={`/environments/${environment.id}/product/${option.id}-connection`}
                                 className="underline hover:text-amber-900"
                                 target="_blank">
-                                Connect Formbricks
+                                {t("common.connect_formbricks")}
                               </Link>{" "}
-                              and launch surveys in your website or app.
+                              {t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
                             </p>
                           </div>
                         </div>

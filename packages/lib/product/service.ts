@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import type { TProduct, TProductUpdateInput } from "@formbricks/types/product";
 import { ZProduct, ZProductUpdateInput } from "@formbricks/types/product";
 import { cache } from "../cache";
@@ -38,8 +38,69 @@ const selectProduct = {
   logo: true,
 };
 
+export const getUserProducts = reactCache(
+  async (userId: string, organizationId: string, page?: number): Promise<TProduct[]> =>
+    cache(
+      async () => {
+        validateInputs([userId, ZString], [organizationId, ZId], [page, ZOptionalNumber]);
+
+        const orgMembership = await prisma.membership.findFirst({
+          where: {
+            userId,
+            organizationId,
+          },
+        });
+
+        if (!orgMembership) {
+          throw new ValidationError("User is not a member of this organization");
+        }
+
+        let productWhereClause: Prisma.ProductWhereInput = {};
+
+        if (orgMembership.role === "member") {
+          productWhereClause = {
+            productTeams: {
+              some: {
+                team: {
+                  teamUsers: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          };
+        }
+
+        try {
+          const products = await prisma.product.findMany({
+            where: {
+              organizationId,
+              ...productWhereClause,
+            },
+            select: selectProduct,
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+          return products;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getUserProducts-${userId}-${organizationId}-${page}`],
+      {
+        tags: [productCache.tag.byUserId(userId), productCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
 export const getProducts = reactCache(
-  (organizationId: string, page?: number): Promise<TProduct[]> =>
+  async (organizationId: string, page?: number): Promise<TProduct[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId], [page, ZOptionalNumber]);
@@ -70,7 +131,7 @@ export const getProducts = reactCache(
 );
 
 export const getProductByEnvironmentId = reactCache(
-  (environmentId: string): Promise<TProduct | null> =>
+  async (environmentId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -157,7 +218,7 @@ export const updateProduct = async (
 };
 
 export const getProduct = reactCache(
-  (productId: string): Promise<TProduct | null> =>
+  async (productId: string): Promise<TProduct | null> =>
     cache(
       async () => {
         let productPrisma;
@@ -259,7 +320,7 @@ export const createProduct = async (
     throw new ValidationError("Product Name is required");
   }
 
-  const { environments, ...data } = productInput;
+  const { environments, teamIds, ...data } = productInput;
 
   try {
     let product = await prisma.product.create({
@@ -274,6 +335,15 @@ export const createProduct = async (
       },
       select: selectProduct,
     });
+
+    if (teamIds) {
+      await prisma.productTeam.createMany({
+        data: teamIds.map((teamId) => ({
+          productId: product.id,
+          teamId,
+        })),
+      });
+    }
 
     productCache.revalidate({
       id: product.id,
@@ -294,7 +364,12 @@ export const createProduct = async (
 
     return updatedProduct;
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      throw new InvalidInputError("A product with this name already exists in your organization");
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      console.error(error.message);
       throw new DatabaseError(error.message);
     }
     throw error;

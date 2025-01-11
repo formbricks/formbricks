@@ -43,7 +43,7 @@ export const createDocumentAndAssignInsight = async (
         ),
         isSpam: z.boolean(),
       }),
-      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concicely answer the question, e.g. "What type of people do you think would most benefit" -> "Developers". You are very objective, for the insights split the feedback in the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight.`,
+      system: `You are an XM researcher. You analyse a survey response (survey name, question headline & user answer) and generate insights from it. The insight title (1-3 words) should concisely answer the question, e.g., "What type of people do you think would most benefit" -> "Developers". You are very objective. For the insights, split the feedback into the smallest parts possible and only use the feedback itself to draw conclusions. You must output at least one insight. Always generate insights and titles in English, regardless of the input language.`,
       prompt: `Survey: ${surveyName}\n${documentInput.text}`,
       temperature: 0,
       experimental_telemetry: { isEnabled: true },
@@ -86,7 +86,7 @@ export const createDocumentAndAssignInsight = async (
         // create or connect the insight
         insightPromises.push(handleInsightAssignments(documentInput.environmentId, document.id, insight));
       }
-      await Promise.all(insightPromises);
+      await Promise.allSettled(insightPromises);
     }
 
     documentCache.revalidate({

@@ -1,13 +1,14 @@
 import { hasOrganizationAccess } from "@/app/lib/api/apiHelper";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProduct } from "@formbricks/lib/product/service";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
-export const GET = async (_: Request, context: { params: { productId: string } }) => {
-  const productId = context?.params?.productId;
+export const GET = async (_: Request, context: { params: Promise<{ productId: string }> }) => {
+  const params = await context?.params;
+  const productId = params.productId;
   if (!productId) return notFound();
   // check auth
   const session = await getServerSession(authOptions);

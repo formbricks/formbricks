@@ -1,10 +1,11 @@
 "use client";
 
+import { SegmentSettings } from "@/modules/ee/advanced-targeting/components/segment-settings";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { UsersIcon } from "lucide-react";
-import { SegmentSettings } from "@formbricks/ee/advanced-targeting/components/segment-settings";
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { BasicSegmentSettings } from "./BasicSegmentSettings";
 import { SegmentActivityTab } from "./SegmentActivityTab";
 
@@ -17,6 +18,7 @@ interface EditSegmentModalProps {
   attributeClasses: TAttributeClass[];
   isAdvancedTargetingAllowed: boolean;
   isFormbricksCloud: boolean;
+  isReadOnly: boolean;
 }
 
 export const EditSegmentModal = ({
@@ -28,7 +30,9 @@ export const EditSegmentModal = ({
   segments,
   isAdvancedTargetingAllowed,
   isFormbricksCloud,
+  isReadOnly,
 }: EditSegmentModalProps) => {
+  const t = useTranslations();
   const SettingsTab = () => {
     if (isAdvancedTargetingAllowed) {
       return (
@@ -38,6 +42,7 @@ export const EditSegmentModal = ({
           initialSegment={currentSegment}
           segments={segments}
           setOpen={setOpen}
+          isReadOnly={isReadOnly}
         />
       );
     }
@@ -49,17 +54,18 @@ export const EditSegmentModal = ({
         initialSegment={currentSegment}
         setOpen={setOpen}
         isFormbricksCloud={isFormbricksCloud}
+        isReadOnly={isReadOnly}
       />
     );
   };
 
   const tabs = [
     {
-      title: "Activity",
+      title: t("common.activity"),
       children: <SegmentActivityTab environmentId={environmentId} currentSegment={currentSegment} />,
     },
     {
-      title: "Settings",
+      title: t("common.settings"),
       children: <SettingsTab />,
     },
   ];

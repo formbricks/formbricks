@@ -1,8 +1,9 @@
+import { Input } from "@/modules/ui/components/input";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface SavedActionsTabProps {
   actionClasses: TActionClass[];
@@ -17,6 +18,7 @@ export const SavedActionsTab = ({
   setLocalSurvey,
   setOpen,
 }: SavedActionsTabProps) => {
+  const t = useTranslations();
   const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );
@@ -55,7 +57,7 @@ export const SavedActionsTab = ({
             actions.length > 0 && (
               <div key={i} className="me-4">
                 <h2 className="mb-2 mt-4 font-semibold">
-                  {i === 0 ? "Automatic" : i === 1 ? "No code" : "Code"}
+                  {i === 0 ? t("common.automatic") : i === 1 ? t("common.no_code") : t("common.code")}
                 </h2>
                 <div className="flex flex-col gap-2">
                   {actions.map((action) => (
@@ -76,7 +78,7 @@ export const SavedActionsTab = ({
 
                         <h4 className="text-sm font-semibold text-slate-600">{action.name}</h4>
                       </div>
-                      <p className="mt-1 text-xs text-gray-500">{action.description}</p>
+                      <p className="mt-1 text-xs text-slate-500">{action.description}</p>
                     </div>
                   ))}
                 </div>

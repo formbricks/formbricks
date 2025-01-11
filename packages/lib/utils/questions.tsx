@@ -19,6 +19,7 @@ import {
   ScanEyeIcon,
   StarIcon,
 } from "lucide-react";
+import type { JSX } from "react";
 import {
   TSurveyQuestionTypeEnum as QuestionId,
   TSurveyAdQuestion,
@@ -38,6 +39,7 @@ import {
   TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
+import { translate } from "../templates";
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TQuestion = {
@@ -48,55 +50,76 @@ export type TQuestion = {
   preset: any;
 };
 
-export const questionTypes: TQuestion[] = [
+export const getQuestionTypes = (locale: string): TQuestion[] => [
   {
     id: QuestionId.OpenText,
-    label: "Free text",
-    description: "Collect open-ended feedback",
+    label: translate("free_text", locale),
+    description: translate("free_text_description", locale),
     icon: MessageSquareTextIcon,
     preset: {
-      headline: { default: "Who let the dogs out?" },
-      placeholder: { default: "Type your answer here..." },
+      headline: { default: translate("free_text_headline", locale) },
+      placeholder: { default: translate("free_text_placeholder", locale) },
       longAnswer: true,
       inputType: "text",
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyOpenTextQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceSingle,
-    label: "Single-Select",
-    description: "Offer a list of options (choose one)",
+    label: translate("single_select", locale),
+    description: translate("single_select_description", locale),
     icon: Rows3Icon,
     preset: {
-      headline: { default: "What do you do?" },
+      headline: { default: translate("single_select_headline", locale) },
       choices: [
-        { id: createId(), label: { default: "Eat the cake 🍰" } },
-        { id: createId(), label: { default: "Have the cake 🎂" } },
+        {
+          id: createId(),
+          label: { default: translate("single_select_option_1", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("single_select_option_2", locale) },
+        },
       ],
       shuffleOption: "none",
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
-    label: "Multi-Select",
-    description: "Offer a list of options (choose multiple)",
+    label: translate("multi_select", locale),
+    description: translate("multi_select_description", locale),
     icon: ListIcon,
     preset: {
-      headline: { default: "What's important on vacay?" },
+      headline: { default: translate("multi_select_headline", locale) },
       choices: [
-        { id: createId(), label: { default: "Sun ☀️" } },
-        { id: createId(), label: { default: "Ocean 🌊" } },
-        { id: createId(), label: { default: "Palms 🌴" } },
+        {
+          id: createId(),
+          label: { default: translate("multi_select_option_1", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("multi_select_option_2", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("multi_select_option_3", locale) },
+        },
       ],
       shuffleOption: "none",
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.PictureSelection,
-    label: "Picture Selection",
-    description: "Ask respondents to choose one or more images",
+    label: translate("picture_selection", locale),
+    description: translate("picture_selection_description", locale),
     icon: ImageIcon,
     preset: {
-      headline: { default: "Which is the cutest puppy?" },
+      headline: { default: translate("picture_selection_headline", locale) },
       allowMulti: true,
       choices: [
         {
@@ -108,73 +131,111 @@ export const questionTypes: TQuestion[] = [
           imageUrl: "https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg",
         },
       ],
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyPictureSelectionQuestion>,
   },
   {
     id: QuestionId.Rating,
-    label: "Rating",
-    description: "Ask respondents for a rating (stars, smileys, numbers)",
+    label: translate("rating", locale),
+    description: translate("rating_description", locale),
     icon: StarIcon,
     preset: {
-      headline: { default: "How would you rate {{productName}}" },
+      headline: { default: translate("rating_headline", locale) },
       scale: "star",
       range: 5,
-      lowerLabel: { default: "Not good" },
-      upperLabel: { default: "Very good" },
+      lowerLabel: { default: translate("rating_lower_label", locale) },
+      upperLabel: { default: translate("rating_upper_label", locale) },
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyRatingQuestion>,
   },
   {
     id: QuestionId.NPS,
-    label: "Net Promoter Score (NPS)",
-    description: "Measure Net-Promoter-Score (0-10)",
+    label: translate("nps", locale),
+    description: translate("nps_description", locale),
     icon: PresentationIcon,
     preset: {
-      headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
-      lowerLabel: { default: "Not at all likely" },
-      upperLabel: { default: "Extremely likely" },
+      headline: { default: translate("nps_headline", locale) },
+      lowerLabel: { default: translate("nps_lower_label", locale) },
+      upperLabel: { default: translate("nps_upper_label", locale) },
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyNPSQuestion>,
   },
   {
     id: QuestionId.Ranking,
-    label: "Ranking",
-    description: "Ask respondents to order items by preference or importance",
+    label: translate("ranking", locale),
+    description: translate("ranking_description", locale),
     icon: ListOrderedIcon,
     preset: {
-      headline: { default: "What is most important for you in life?" },
+      headline: {
+        default: translate("ranking_headline", locale),
+      },
       choices: [
-        { id: createId(), label: { default: "Work" } },
-        { id: createId(), label: { default: "Money" } },
-        { id: createId(), label: { default: "Travel" } },
-        { id: createId(), label: { default: "Family" } },
-        { id: createId(), label: { default: "Friends" } },
+        {
+          id: createId(),
+          label: { default: translate("ranking_option_1", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("ranking_option_2", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("ranking_option_3", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("ranking_option_4", locale) },
+        },
+        {
+          id: createId(),
+          label: { default: translate("ranking_option_5", locale) },
+        },
       ],
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyRankingQuestion>,
   },
   {
     id: QuestionId.Matrix,
-    label: "Matrix",
-    description: "Create a grid to rate multiple items on the same set of criteria",
+    label: translate("matrix", locale),
+    description: translate("matrix_description", locale),
     icon: Grid3X3Icon,
     preset: {
-      headline: { default: "How much do you love these flowers?" },
-      rows: [{ default: "Roses" }, { default: "Trees" }, { default: "Ocean" }],
-      columns: [{ default: "0" }, { default: "1" }, { default: "2" }, { default: "3" }],
+      headline: {
+        default: translate("matrix_headline", locale),
+      },
+      rows: [
+        { default: translate("matrix_row_1", locale) },
+        { default: translate("matrix_row_2", locale) },
+        { default: translate("matrix_row_3", locale) },
+      ],
+      columns: [
+        { default: translate("matrix_column_1", locale) },
+        { default: translate("matrix_column_2", locale) },
+        { default: translate("matrix_column_3", locale) },
+        { default: translate("matrix_column_4", locale) },
+      ],
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyMatrixQuestion>,
   },
   {
     id: QuestionId.CTA,
-    label: "Statement (Call to Action)",
-    description: "Display information and prompt users to take a specific action",
+    label: translate("statement_call_to_action", locale),
+    description: translate("cta_description", locale),
     icon: MousePointerClickIcon,
     preset: {
-      headline: { default: "You are one of our power users!" },
+      headline: { default: translate("cta_headline", locale) },
       html: {
-        default:
-          '<p class="fb-editor-paragraph" dir="ltr"><span>We would love to understand your user experience better. Sharing your insight helps a lot.</span></p>',
+        default: translate("cta_html", locale),
       },
-      buttonLabel: { default: "Book interview" },
+      buttonLabel: { default: translate("book_interview", locale) },
       buttonExternal: false,
-      dismissButtonLabel: { default: "Skip" },
+      dismissButtonLabel: { default: translate("skip", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyCTAQuestion>,
   },
   {
@@ -190,89 +251,104 @@ export const questionTypes: TQuestion[] = [
   },
   {
     id: QuestionId.Consent,
-    label: "Consent",
-    description: "Ask to agree to terms, conditions, or data usage",
+    label: translate("consent", locale),
+    description: translate("consent_description", locale),
     icon: CheckIcon,
     preset: {
-      headline: { default: "Terms and Conditions" },
+      headline: { default: translate("consent_headline", locale) },
       html: { default: "" },
-      label: { default: "I agree to the terms and conditions" },
+      label: { default: translate("consent_label", locale) },
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyConsentQuestion>,
   },
   {
     id: QuestionId.FileUpload,
-    label: "File Upload",
-    description: "Enable respondents to upload documents, images, or other files",
+    label: translate("file_upload", locale),
+    description: translate("file_upload_description", locale),
     icon: ArrowUpFromLineIcon,
     preset: {
-      headline: { default: "File Upload" },
+      headline: { default: translate("file_upload_headline", locale) },
       allowMultipleFiles: false,
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyFileUploadQuestion>,
   },
   {
     id: QuestionId.Date,
-    label: "Date",
-    description: "Ask for a date selection",
+    label: translate("date", locale),
+    description: translate("date_description", locale),
     icon: CalendarDaysIcon,
     preset: {
-      headline: { default: "When is your birthday?" },
+      headline: { default: translate("date_headline", locale) },
       format: "M-d-y",
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyDateQuestion>,
   },
   {
     id: QuestionId.Cal,
-    label: "Schedule a meeting",
-    description: "Ask respondents to book a time slot for meetings or calls",
+    label: translate("schedule_a_meeting", locale),
+    description: translate("schedule_a_meeting_description", locale),
     icon: PhoneIcon,
     preset: {
-      headline: { default: "Schedule a call with me" },
+      headline: { default: translate("schedule_a_meeting_headline", locale) },
       calUserName: "rick/get-rick-rolled",
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyCalQuestion>,
   },
   {
     id: QuestionId.Address,
-    label: "Address",
-    description: "Ask for a mailing address",
+    label: translate("address", locale),
+    description: translate("address_description", locale),
     icon: HomeIcon,
     preset: {
-      headline: { default: "Where do you live?" },
+      headline: { default: translate("address_headline", locale) },
       addressLine1: { show: true, required: true },
       addressLine2: { show: true, required: true },
       city: { show: true, required: true },
       state: { show: true, required: true },
       zip: { show: true, required: true },
       country: { show: true, required: true },
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyAddressQuestion>,
   },
   {
     id: QuestionId.ContactInfo,
-    label: "Contact Info",
-    description: "Ask for name, surname, email, phone number and company jointly",
+    label: translate("contact_info", locale),
+    description: translate("contact_info_description", locale),
     icon: ContactIcon,
     preset: {
-      headline: { default: "Contact Info" },
+      headline: { default: translate("contact_info_headline", locale) },
       firstName: { show: true, required: true },
       lastName: { show: true, required: true },
       email: { show: true, required: true },
       phone: { show: true, required: true },
       company: { show: true, required: true },
+      buttonLabel: { default: translate("next", locale) },
+      backButtonLabel: { default: translate("back", locale) },
     } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
 
-export const CXQuestionTypes = questionTypes.filter((questionType) => {
-  return [
-    TSurveyQuestionTypeEnum.OpenText,
-    TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-    TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-    TSurveyQuestionTypeEnum.Rating,
-    TSurveyQuestionTypeEnum.NPS,
-    TSurveyQuestionTypeEnum.Consent,
-    TSurveyQuestionTypeEnum.CTA,
-  ].includes(questionType.id as TSurveyQuestionTypeEnum);
-});
+export const getCXQuestionTypes = (locale: string) =>
+  getQuestionTypes(locale).filter((questionType) => {
+    return [
+      TSurveyQuestionTypeEnum.OpenText,
+      TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+      TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+      TSurveyQuestionTypeEnum.Rating,
+      TSurveyQuestionTypeEnum.NPS,
+      TSurveyQuestionTypeEnum.Consent,
+      TSurveyQuestionTypeEnum.CTA,
+    ].includes(questionType.id as TSurveyQuestionTypeEnum);
+  });
 
-export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = questionTypes.reduce(
+export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = getQuestionTypes(
+  "en-US"
+).reduce(
   (prev, curr) => ({
     ...prev,
     [curr.id]: <curr.icon className="h-4 w-4" />,
@@ -280,41 +356,43 @@ export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = 
   {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
 );
 
-export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
-  return questionTypes.find((questionType) => questionType.id === type)?.icon;
-};
+export const getQuestionNameMap = (locale: string) =>
+  getQuestionTypes(locale).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: curr.label,
+    }),
+    {}
+  ) as Record<TSurveyQuestionTypeEnum, string>;
 
-export const QUESTIONS_NAME_MAP = questionTypes.reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: curr.label,
-  }),
-  {}
-) as Record<TSurveyQuestionTypeEnum, string>;
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
+  return getQuestionTypes("en-US").find((questionType) => questionType.id === type)?.icon;
+};
 
 export const VARIABLES_ICON_MAP = {
   text: <FileType2Icon className="h-4 w-4" />,
   number: <FileDigitIcon className="h-4 w-4" />,
 };
 
-export const CX_QUESTIONS_NAME_MAP = CXQuestionTypes.reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: curr.label,
-  }),
-  {}
-) as Record<TSurveyQuestionTypeEnum, string>;
+export const getCXQuestionNameMap = (locale: string) =>
+  getCXQuestionTypes(locale).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: curr.label,
+    }),
+    {}
+  ) as Record<TSurveyQuestionTypeEnum, string>;
 
 export const universalQuestionPresets = {
   required: true,
 };
 
-export const getQuestionDefaults = (id: string, product: any) => {
-  const questionType = questionTypes.find((questionType) => questionType.id === id);
+export const getQuestionDefaults = (id: string, product: any, locale: string) => {
+  const questionType = getQuestionTypes(locale).find((questionType) => questionType.id === id);
   return replaceQuestionPresetPlaceholders(questionType?.preset, product);
 };
 
-export const getTSurveyQuestionTypeEnumName = (id: string) => {
-  const questionType = questionTypes.find((questionType) => questionType.id === id);
+export const getTSurveyQuestionTypeEnumName = (id: string, locale: string) => {
+  const questionType = getQuestionTypes(locale).find((questionType) => questionType.id === id);
   return questionType?.label;
 };

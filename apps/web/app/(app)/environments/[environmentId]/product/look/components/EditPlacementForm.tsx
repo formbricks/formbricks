@@ -1,29 +1,32 @@
 "use client";
 
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
+import { Label } from "@/modules/ui/components/label";
+import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
+import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { cn } from "@formbricks/lib/cn";
 import { TProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/components/Form";
-import { Label } from "@formbricks/ui/components/Label";
-import { getPlacementStyle } from "@formbricks/ui/components/PreviewSurvey/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@formbricks/ui/components/RadioGroup";
 import { updateProductAction } from "../../actions";
 
 const placements = [
-  { name: "Bottom Right", value: "bottomRight", disabled: false },
-  { name: "Top Right", value: "topRight", disabled: false },
-  { name: "Top Left", value: "topLeft", disabled: false },
-  { name: "Bottom Left", value: "bottomLeft", disabled: false },
-  { name: "Centered Modal", value: "center", disabled: false },
+  { name: "common.bottom_right", value: "bottomRight", disabled: false },
+  { name: "common.top_right", value: "topRight", disabled: false },
+  { name: "common.top_left", value: "topLeft", disabled: false },
+  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
+  { name: "common.centered_modal", value: "center", disabled: false },
 ];
 
 interface EditPlacementProps {
   product: TProduct;
   environmentId: string;
+  isReadOnly: boolean;
 }
 
 const ZProductPlacementInput = z.object({
@@ -34,7 +37,8 @@ const ZProductPlacementInput = z.object({
 
 type EditPlacementFormValues = z.infer<typeof ZProductPlacementInput>;
 
-export const EditPlacementForm = ({ product }: EditPlacementProps) => {
+export const EditPlacementForm = ({ product, isReadOnly }: EditPlacementProps) => {
+  const t = useTranslations();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: product.placement,
@@ -49,7 +53,7 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
   const clickOutsideClose = form.watch("clickOutsideClose");
   const isSubmitting = form.formState.isSubmitting;
 
-  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-gray-700/80" : "bg-slate-200";
+  const overlayStyle = currentPlacement === "center" && darkOverlay ? "bg-slate-700/80" : "bg-slate-200";
 
   const onSubmit: SubmitHandler<EditPlacementFormValues> = async (data) => {
     try {
@@ -62,133 +66,157 @@ export const EditPlacementForm = ({ product }: EditPlacementProps) => {
         },
       });
 
-      toast.success("Placement updated successfully.");
+      toast.success(t("environments.product.look.placement_updated_successfully"));
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     }
   };
 
   return (
-    <FormProvider {...form}>
-      <form className="w-full items-center" onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="flex">
-          <FormField
-            control={form.control}
-            name="placement"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <RadioGroup
-                    {...field}
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                    }}
-                    className="h-full">
-                    {placements.map((placement) => (
-                      <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
-                        <RadioGroupItem
-                          id={placement.value}
-                          value={placement.value}
-                          disabled={placement.disabled}
-                          checked={field.value === placement.value}
-                        />
-                        <Label htmlFor={placement.value} className="text-slate-900">
-                          {placement.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <div
-            className={cn(
-              clickOutsideClose ? "" : "cursor-not-allowed",
-              "relative ml-8 h-40 w-full rounded",
-              overlayStyle
-            )}>
+    <>
+      <FormProvider {...form}>
+        <form className="w-full items-center" onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="flex">
+            <FormField
+              control={form.control}
+              name="placement"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <RadioGroup
+                      {...field}
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      disabled={isReadOnly}
+                      className="h-full">
+                      {placements.map((placement) => (
+                        <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
+                          <RadioGroupItem
+                            id={placement.value}
+                            value={placement.value}
+                            disabled={placement.disabled}
+                            checked={field.value === placement.value}
+                          />
+                          <Label
+                            htmlFor={placement.value}
+                            className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                            {t(placement.name)}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                </FormItem>
+              )}
+            />
             <div
               className={cn(
-                "absolute h-16 w-16 cursor-default rounded bg-slate-700",
-                getPlacementStyle(currentPlacement)
-              )}></div>
+                clickOutsideClose ? "" : "cursor-not-allowed",
+                "relative ml-8 h-40 w-full rounded",
+                overlayStyle
+              )}>
+              <div
+                className={cn(
+                  "absolute h-16 w-16 cursor-default rounded bg-slate-700",
+                  getPlacementStyle(currentPlacement)
+                )}></div>
+            </div>
           </div>
-        </div>
 
-        {currentPlacement === "center" && (
-          <>
-            <div className="mt-6 space-y-2">
-              <FormField
-                control={form.control}
-                name="darkOverlay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">Centered modal overlay color</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={(value) => {
-                          field.onChange(value === "darkOverlay");
-                        }}
-                        className="flex space-x-4">
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
-                          <RadioGroupItem id="lightOverlay" value="lightOverlay" checked={!field.value} />
-                          <Label htmlFor="lightOverlay" className="text-slate-900">
-                            Light Overlay
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
-                          <RadioGroupItem id="darkOverlay" value="darkOverlay" checked={field.value} />
-                          <Label htmlFor="darkOverlay" className="text-slate-900">
-                            Dark Overlay
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="mt-6 space-y-2">
-              <FormField
-                control={form.control}
-                name="clickOutsideClose"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-semibold">
-                      Allow users to exit by clicking outside the study
-                    </FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={(value) => {
-                          field.onChange(value === "allow");
-                        }}
-                        className="flex space-x-4">
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
-                          <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
-                          <Label htmlFor="disallow" className="text-slate-900">
-                            Don&apos;t Allow
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
-                          <RadioGroupItem id="allow" value="allow" checked={field.value} />
-                          <Label htmlFor="allow" className="text-slate-900">
-                            Allow
-                          </Label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-          </>
-        )}
+          {currentPlacement === "center" && (
+            <>
+              <div className="mt-6 space-y-2">
+                <FormField
+                  control={form.control}
+                  name="darkOverlay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">
+                        {t("environments.product.look.centered_modal_overlay_color")}
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={(value) => {
+                            field.onChange(value === "darkOverlay");
+                          }}
+                          disabled={isReadOnly}
+                          className="flex space-x-4">
+                          <div className="flex items-center space-x-2 whitespace-nowrap">
+                            <RadioGroupItem id="lightOverlay" value="lightOverlay" checked={!field.value} />
+                            <Label
+                              htmlFor="lightOverlay"
+                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                              {t("common.light_overlay")}
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2 whitespace-nowrap">
+                            <RadioGroupItem id="darkOverlay" value="darkOverlay" checked={field.value} />
+                            <Label
+                              htmlFor="darkOverlay"
+                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                              {t("common.dark_overlay")}
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="mt-6 space-y-2">
+                <FormField
+                  control={form.control}
+                  name="clickOutsideClose"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-semibold">
+                        {t("common.allow_users_to_exit_by_clicking_outside_the_survey")}
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          disabled={isReadOnly}
+                          onValueChange={(value) => {
+                            field.onChange(value === "allow");
+                          }}
+                          className="flex space-x-4">
+                          <div className="flex items-center space-x-2 whitespace-nowrap">
+                            <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
+                            <Label
+                              htmlFor="disallow"
+                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                              {t("common.disallow")}
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2 whitespace-nowrap">
+                            <RadioGroupItem id="allow" value="allow" checked={field.value} />
+                            <Label
+                              htmlFor="allow"
+                              className={`text-slate-900 ${isReadOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                              {t("common.allow")}
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </>
+          )}
 
-        <Button className="mt-4 w-fit" size="sm" loading={isSubmitting}>
-          Save
-        </Button>
-      </form>
-    </FormProvider>
+          <Button className="mt-4 w-fit" size="sm" loading={isSubmitting} disabled={isReadOnly}>
+            {t("common.save")}
+          </Button>
+        </form>
+      </FormProvider>
+      {isReadOnly && (
+        <Alert variant="warning" className="mt-4">
+          <AlertDescription>
+            {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
+          </AlertDescription>
+        </Alert>
+      )}
+    </>
   );
 };

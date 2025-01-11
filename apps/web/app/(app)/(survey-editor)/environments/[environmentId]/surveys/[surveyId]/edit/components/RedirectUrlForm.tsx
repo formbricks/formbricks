@@ -1,7 +1,8 @@
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { useTranslations } from "next-intl";
 import React, { useEffect } from "react";
 import { TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface RedirectUrlFormProps {
   endingCard: TSurveyRedirectUrlCard;
@@ -10,6 +11,7 @@ interface RedirectUrlFormProps {
 }
 
 export const RedirectUrlForm = ({ endingCard, updateSurvey, defaultRedirect }: RedirectUrlFormProps) => {
+  const t = useTranslations();
 
   useEffect(() => {
     if (!endingCard.url) {
@@ -20,7 +22,7 @@ export const RedirectUrlForm = ({ endingCard, updateSurvey, defaultRedirect }: R
   return (
     <form className="mt-3 space-y-3">
       <div className="space-y-2">
-        <Label>URL</Label>
+        <Label>{t("common.url")}</Label>
         <Input
           id="redirectUrl"
           name="redirectUrl"
@@ -31,7 +33,7 @@ export const RedirectUrlForm = ({ endingCard, updateSurvey, defaultRedirect }: R
         />
       </div>
       <div className="space-y-2">
-        <Label>Label</Label>
+        <Label>{t("common.label")}</Label>
         <Input
           id="redirectUrlLabel"
           name="redirectUrlLabel"

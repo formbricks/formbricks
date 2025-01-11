@@ -1,15 +1,15 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { llmModel } from "@formbricks/lib/aiModels";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { createSurvey } from "@formbricks/lib/survey/service";
-import { getIsAIEnabled } from "@formbricks/lib/utils/ai";
 import { ZId, ZString } from "@formbricks/types/common";
 import { ZSurveyQuestion } from "@formbricks/types/surveys/types";
 
@@ -23,10 +23,20 @@ export const createAISurveyAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
-      rules: ["survey", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
+        },
+      ],
     });
 
     const organization = await getOrganization(organizationId);
@@ -35,7 +45,7 @@ export const createAISurveyAction = authenticatedActionClient
       throw new Error("Organization not found");
     }
 
-    const isAIEnabled = await getIsAIEnabled(organization.billing.plan);
+    const isAIEnabled = await getIsAIEnabled(organization);
 
     if (!isAIEnabled) {
       throw new Error("AI is not enabled for this organization");

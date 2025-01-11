@@ -180,7 +180,7 @@ export const getDisplaysByUserId = reactCache(
 );
 
 export const getDisplayCountBySurveyId = reactCache(
-  (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
+  async (surveyId: string, filters?: TDisplayFilters): Promise<number> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);

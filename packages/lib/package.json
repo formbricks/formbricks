@@ -8,13 +8,14 @@
   "type": "module",
   "scripts": {
     "clean": "rimraf .turbo node_modules .next coverage",
-    "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "lint": "eslint . --ext .ts,.js,.tsx,.jsx,.json",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
     "test:dev": "vitest",
     "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
+    "@ai-sdk/azure": "0.0.52",
     "@aws-sdk/client-s3": "3.631.0",
     "@aws-sdk/s3-presigned-post": "3.631.0",
     "@aws-sdk/s3-request-presigner": "3.631.0",
@@ -30,7 +31,7 @@
     "markdown-it": "14.1.0",
     "mime-types": "2.1.35",
     "nanoid": "5.0.7",
-    "next-auth": "4.24.7",
+    "next-auth": "4.24.10",
     "posthog-node": "4.1.0",
     "qrcode": "1.5.4",
     "server-only": "0.0.1",
@@ -39,11 +40,11 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
     "@types/jsonwebtoken": "9.0.6",
     "@types/mime-types": "2.1.4",
     "@types/ungap__structured-clone": "1.2.0",
     "dotenv": "16.4.5",
-    "@formbricks/eslint-config": "workspace:*",
     "ts-node": "10.9.2",
     "vitest": "2.0.5",
     "vitest-mock-extended": "2.0.0"

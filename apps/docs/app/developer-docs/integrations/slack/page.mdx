@@ -1,5 +1,9 @@
 import { MdxImage } from "@/components/MdxImage";
 
+import AddSlackBot1 from "./images/add-slack-bot-1.webp";
+import AddSlackBot2 from "./images/add-slack-bot-2.webp";
+import AddSlackBot3 from "./images/add-slack-bot-3.webp";
+import AddSlackBot4 from "./images/add-slack-bot-4.webp";
 import ConnectWithSlack from "./images/connect-with-slack.webp";
 import DeleteConnection from "./images/delete-connection.webp";
 import IntegrationsTab from "./images/integrations-tab.webp";
@@ -69,7 +73,34 @@ The slack integration allows you to automatically send responses to a Slack chan
   channel in the Slack workspace you integrated.
 </Note>
 
-5. Now click on the "Link channel" button to link a Slack channel with Formbricks and a modal will open up.
+5. In order to make your channel available in channel dropdown, you need to add formbricks integration bot to the channel you want to link. You can do this by going to channel settings -> Integrations -> Add apps -> Search for "Formbricks" -> Select the bot -> Add.
+
+<MdxImage
+  src={AddSlackBot1}
+  alt="Click on three dot at top right of the channel"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot2}
+  alt="Select Edit Settings"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot3}
+  alt="Navigate to Integrations"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+<MdxImage
+  src={AddSlackBot4}
+  alt="Add Formbricks Bot"
+  quality="100"
+  className="max-w-full rounded-lg sm:max-w-3xl"
+/>
+
+6. Now click on the "Link channel" button to link a Slack channel with Formbricks and a modal will open up.
 
 <MdxImage
   src={LinkSurveyWithChannel}
@@ -78,7 +109,7 @@ The slack integration allows you to automatically send responses to a Slack chan
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-6. Select the channel you want to link with Formbricks and the Survey. On doing so, you will be asked to select the questions' responses you want to feed in the Slack channel. Select the questions and click on the "Link Channel" button.
+7. Select the channel you want to link with Formbricks and the Survey. On doing so, you will be asked to select the questions' responses you want to feed in the Slack channel. Select the questions and click on the "Link Channel" button.
 
 <MdxImage
   src={LinkWithQuestions}
@@ -87,7 +118,7 @@ The slack integration allows you to automatically send responses to a Slack chan
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-7. On submitting, the modal will close and you will see the linked Slack channel in the list of linked Slack channels.
+8. On submitting, the modal will close and you will see the linked Slack channel in the list of linked Slack channels.
 
 <MdxImage
   src={ListLinkedSurveys}
@@ -124,6 +155,7 @@ Enabling the Slack Integration in a self-hosted environment requires a setup usi
 4. Go to the **OAuth & Permissions** tab on the sidebar and add the following **Bot Token Scopes**:
 
    - `channels:read`
+   - `groups:read`
    - `chat:write`
    - `chat:write.public`
    - `chat:write.customize`
@@ -165,4 +197,4 @@ To remove the integration with Slack Workspace,
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-Still struggling or something not working as expected? [Join our Discord!](https://formbricks.com/discord) and we'd be glad to assist you!
+Still struggling or something not working as expected? [Join our Github Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

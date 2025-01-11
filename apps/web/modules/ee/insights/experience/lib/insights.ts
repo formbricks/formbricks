@@ -4,13 +4,14 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
+import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/types/insights";
 
 export const getInsights = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -82,3 +83,45 @@ export const getInsights = reactCache(
       }
     )()
 );
+
+export const updateInsight = async (insightId: string, updates: Partial<TInsight>): Promise<void> => {
+  try {
+    const updatedInsight = await prisma.insight.update({
+      where: { id: insightId },
+      data: updates,
+      select: {
+        environmentId: true,
+        documentInsights: {
+          select: {
+            document: {
+              select: {
+                surveyId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const uniqueSurveyIds = Array.from(
+      new Set(updatedInsight.documentInsights.map((di) => di.document.surveyId))
+    );
+
+    insightCache.revalidate({ id: insightId, environmentId: updatedInsight.environmentId });
+
+    for (const surveyId of uniqueSurveyIds) {
+      if (surveyId) {
+        responseCache.revalidate({
+          surveyId,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error in updateInsight:", error);
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};

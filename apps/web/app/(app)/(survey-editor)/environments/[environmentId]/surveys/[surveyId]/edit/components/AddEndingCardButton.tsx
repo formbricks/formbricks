@@ -1,6 +1,7 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddEndingCardButtonProps {
@@ -10,6 +11,7 @@ interface AddEndingCardButtonProps {
 }
 
 export const AddEndingCardButton = ({ localSurvey, addEndingCard }: AddEndingCardButtonProps) => {
+  const t = useTranslations();
   return (
     <div
       className="group inline-flex rounded-lg border border-slate-300 bg-slate-50 hover:cursor-pointer hover:bg-white"
@@ -18,7 +20,7 @@ export const AddEndingCardButton = ({ localSurvey, addEndingCard }: AddEndingCar
         <PlusIcon className="h-6 w-6 text-white" />
       </div>
       <div className="px-4 py-3 text-sm">
-        <p className="font-semibold">Add ending</p>
+        <p className="font-semibold">{t("environments.surveys.edit.add_ending")}</p>
       </div>
     </div>
   );

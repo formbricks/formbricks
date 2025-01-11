@@ -11,10 +11,7 @@ services:
       - 5432:5432
 
   mailhog:
-    image: mailhog/mailhog
-    # network_mode: service:app
-    logging:
-      driver: "none" # disable saving logs
+    image: arjenz/mailhog # Copy of mailhog/MailHog to support linux/arm64
     ports:
       - 8025:8025 # web ui
       - 1025:1025 # smtp server

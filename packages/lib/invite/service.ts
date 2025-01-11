@@ -1,15 +1,9 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { getServerSession } from "next-auth";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
-import {
-  AuthenticationError,
-  DatabaseError,
-  ResourceNotFoundError,
-  ValidationError,
-} from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
   TInvite,
   TInviteUpdateInput,
@@ -17,21 +11,19 @@ import {
   ZInviteUpdateInput,
   ZInvitee,
 } from "@formbricks/types/invites";
-import { authOptions } from "../authOptions";
 import { cache } from "../cache";
 import { ITEMS_PER_PAGE } from "../constants";
 import { getMembershipByUserIdOrganizationId } from "../membership/service";
 import { validateInputs } from "../utils/validate";
 import { inviteCache } from "./cache";
 
-const inviteSelect = {
+const inviteSelect: Prisma.InviteSelect = {
   id: true,
   email: true,
   name: true,
   organizationId: true,
   creatorId: true,
   acceptorId: true,
-  accepted: true,
   createdAt: true,
   expiresAt: true,
   role: true,
@@ -43,7 +35,7 @@ interface InviteWithCreator extends TInvite {
   };
 }
 export const getInvitesByOrganizationId = reactCache(
-  (organizationId: string, page?: number): Promise<TInvite[]> =>
+  async (organizationId: string, page?: number): Promise<TInvite[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
@@ -131,7 +123,7 @@ export const deleteInvite = async (inviteId: string): Promise<TInvite> => {
 };
 
 export const getInvite = reactCache(
-  (inviteId: string): Promise<InviteWithCreator | null> =>
+  async (inviteId: string): Promise<InviteWithCreator | null> =>
     cache(
       async () => {
         validateInputs([inviteId, ZString]);
@@ -213,19 +205,17 @@ export const resendInvite = async (inviteId: string): Promise<TInvite> => {
 export const inviteUser = async ({
   invitee,
   organizationId,
+  currentUserId,
 }: {
   organizationId: string;
   invitee: TInvitee;
+  currentUserId: string;
 }): Promise<TInvite> => {
   validateInputs([organizationId, ZString], [invitee, ZInvitee]);
-  const session = await getServerSession(authOptions);
-
-  if (!session) throw new AuthenticationError("Not Authenticated");
-  const currentUser = session.user;
 
   try {
     const { name, email, role } = invitee;
-    const { id: currentUserId } = currentUser;
+
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
     if (existingInvite) {

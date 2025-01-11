@@ -1,6 +1,9 @@
+"use client";
+
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { TagIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
 import { AttributeActivityTab } from "./AttributeActivityTab";
 import { AttributeSettingsTab } from "./AttributeSettingsTab";
 
@@ -8,17 +11,26 @@ interface AttributeDetailModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   attributeClass: TAttributeClass;
+  isReadOnly: boolean;
 }
 
-export const AttributeDetailModal = ({ open, setOpen, attributeClass }: AttributeDetailModalProps) => {
+export const AttributeDetailModal = ({
+  open,
+  setOpen,
+  attributeClass,
+  isReadOnly,
+}: AttributeDetailModalProps) => {
+  const t = useTranslations();
   const tabs = [
     {
-      title: "Activity",
+      title: t("common.activity"),
       children: <AttributeActivityTab attributeClass={attributeClass} />,
     },
     {
-      title: "Settings",
-      children: <AttributeSettingsTab attributeClass={attributeClass} setOpen={setOpen} />,
+      title: t("common.settings"),
+      children: (
+        <AttributeSettingsTab attributeClass={attributeClass} setOpen={setOpen} isReadOnly={isReadOnly} />
+      ),
     },
   ];
 

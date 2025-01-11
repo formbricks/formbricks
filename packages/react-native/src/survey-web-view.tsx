@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 
 /* eslint-disable no-console -- debugging*/
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
@@ -25,11 +25,6 @@ const logger = Logger.getInstance();
 logger.configure({ logLevel: "debug" });
 
 const surveyStore = SurveyStore.getInstance();
-let isSurveyRunning = false;
-
-export const setIsSurveyRunning = (value: boolean): void => {
-  isSurveyRunning = value;
-};
 
 interface SurveyWebViewProps {
   survey: TSurvey;
@@ -37,6 +32,7 @@ interface SurveyWebViewProps {
 
 export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | undefined {
   const webViewRef = useRef(null);
+  const [isSurveyRunning, setIsSurveyRunning] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
 
   const product = appConfig.get().state.product;
@@ -65,14 +61,18 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   );
 
   useEffect(() => {
-    if (survey.delay) {
-      setTimeout(() => {
+    if (!isSurveyRunning && survey.delay) {
+      const timerId = setTimeout(() => {
         setShowSurvey(true);
       }, survey.delay * 1000);
-      return;
+
+      return () => {
+        clearTimeout(timerId);
+      };
+    } else if (!survey.delay) {
+      setShowSurvey(true);
     }
-    setShowSurvey(true);
-  }, [survey.delay]);
+  }, [survey.delay, isSurveyRunning]);
 
   let languageCode = "default";
 

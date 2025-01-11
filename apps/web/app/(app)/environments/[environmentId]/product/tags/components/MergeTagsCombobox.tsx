@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Button } from "@formbricks/ui/components/Button";
+import { Button } from "@/modules/ui/components/button";
 import {
   Command,
   CommandEmpty,
@@ -7,8 +6,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@formbricks/ui/components/Command";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
+} from "@/modules/ui/components/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 interface IMergeTagsComboboxProps {
   tags: Tag[];
@@ -21,6 +22,7 @@ type Tag = {
 };
 
 export const MergeTagsCombobox = ({ tags, onSelect }: IMergeTagsComboboxProps) => {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
@@ -31,23 +33,25 @@ export const MergeTagsCombobox = ({ tags, onSelect }: IMergeTagsComboboxProps) =
           variant="secondary"
           size="sm"
           className="font-medium text-slate-900 focus:border-transparent focus:shadow-transparent focus:outline-transparent focus:ring-0 focus:ring-transparent">
-          Merge
+          {t("environments.product.tags.merge")}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command>
           <div className="p-1">
             <CommandInput
-              placeholder="Search Tags..."
+              placeholder={t("environments.product.tags.search_tags")}
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
             />
           </div>
           <CommandList>
             <CommandEmpty>
-              <div className="p-2 text-sm text-slate-500">No tag found</div>
+              <div className="p-2 text-sm text-slate-500">{t("environments.product.tags.no_tag_found")}</div>
             </CommandEmpty>
             <CommandGroup>
-              {tags?.length === 0 ? <CommandItem>No tags found</CommandItem> : null}
+              {tags?.length === 0 ? (
+                <CommandItem>{t("environments.product.tags.no_tag_found")}</CommandItem>
+              ) : null}
 
               {tags?.map((tag) => (
                 <CommandItem

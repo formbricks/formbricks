@@ -1,9 +1,9 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { createHash } from "crypto";
 import { NextApiRequest, NextApiResponse } from "next";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 
 export const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
@@ -72,34 +72,4 @@ export const getSessionUser = async (req?: NextApiRequest, res?: NextApiResponse
     session = await getServerSession(authOptions);
   }
   if (session && "user" in session) return session.user;
-};
-
-export const isOwner = async (user, organizationId) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId: user.id,
-        organizationId: organizationId,
-      },
-    },
-  });
-  if (membership && membership.role === "owner") {
-    return true;
-  }
-  return false;
-};
-
-export const isAdminOrOwner = async (user, organizationId) => {
-  const membership = await prisma.membership.findUnique({
-    where: {
-      userId_organizationId: {
-        userId: user.id,
-        organizationId: organizationId,
-      },
-    },
-  });
-  if (membership && (membership.role === "admin" || membership.role === "owner")) {
-    return true;
-  }
-  return false;
 };

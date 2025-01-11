@@ -1,12 +1,13 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
 
 interface UpdateQuestionIdProps {
   localSurvey: TSurvey;
@@ -21,6 +22,7 @@ export const UpdateQuestionId = ({
   questionIdx,
   updateQuestion,
 }: UpdateQuestionIdProps) => {
+  const t = useTranslations();
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);
   const [isInputInvalid, setIsInputInvalid] = useState(
@@ -47,7 +49,7 @@ export const UpdateQuestionId = ({
     }
 
     setIsInputInvalid(false);
-    toast.success("Question ID updated.");
+    toast.success(t("environments.surveys.edit.question_id_updated"));
     updateQuestion(questionIdx, { id: currentValue });
     setPrevValue(currentValue); // after successful update, set current value as previous value
   };
@@ -59,7 +61,7 @@ export const UpdateQuestionId = ({
 
   return (
     <div>
-      <Label htmlFor="questionId">Question ID</Label>
+      <Label htmlFor="questionId">{t("common.question_id")}</Label>
       <div className="mt-2 inline-flex w-full space-x-2">
         <Input
           id="questionId"
@@ -73,7 +75,7 @@ export const UpdateQuestionId = ({
           className={`h-10 ${isInputInvalid ? "border-red-300 focus:border-red-300" : ""}`}
         />
         <Button size="sm" onClick={saveAction} disabled={isButtonDisabled()}>
-          Save
+          {t("common.save")}
         </Button>
       </div>
     </div>

@@ -29,7 +29,7 @@ export const hasOrganizationAccess = async (userId: string, organizationId: stri
   return false;
 };
 
-export const isAdminOrOwner = async (userId: string, organizationId: string) => {
+export const isManagerOrOwner = async (userId: string, organizationId: string) => {
   const membership = await prisma.membership.findUnique({
     where: {
       userId_organizationId: {
@@ -39,7 +39,7 @@ export const isAdminOrOwner = async (userId: string, organizationId: string) => 
     },
   });
 
-  if (membership && (membership.role === "admin" || membership.role === "owner")) {
+  if (membership && (membership.role === "owner" || membership.role === "manager")) {
     return true;
   }
 
@@ -69,9 +69,9 @@ export const hasOrganizationAuthority = async (userId: string, organizationId: s
     throw new AuthenticationError("Not authorized");
   }
 
-  const isAdminOrOwnerAccess = await isAdminOrOwner(userId, organizationId);
-  if (!isAdminOrOwnerAccess) {
-    throw new AuthenticationError("You are not the admin or owner of this organization");
+  const isManagerOrOwnerAccess = await isManagerOrOwner(userId, organizationId);
+  if (!isManagerOrOwnerAccess) {
+    throw new AuthenticationError("You are not the manager or owner of this organization");
   }
 
   return true;

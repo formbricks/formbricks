@@ -1,4 +1,7 @@
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { Button } from "@/modules/ui/components/button";
 import { DownloadIcon, FileIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
@@ -6,8 +9,7 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
-import { Button } from "@formbricks/ui/components/Button";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface FileUploadSummaryProps {
@@ -15,6 +17,7 @@ interface FileUploadSummaryProps {
   environmentId: string;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const FileUploadSummary = ({
@@ -22,9 +25,10 @@ export const FileUploadSummary = ({
   environmentId,
   survey,
   attributeClasses,
+  locale,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-
+  const t = useTranslations();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
@@ -38,12 +42,13 @@ export const FileUploadSummary = ({
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
+          <div className="pl-4 md:pl-6">{t("common.user")}</div>
+          <div className="col-span-2 pl-4 md:pl-6">{t("common.response")}</div>
+          <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
         <div className="max-h-[62vh] w-full overflow-y-auto">
           {questionSummary.files.slice(0, visibleResponses).map((response) => (
@@ -67,7 +72,7 @@ export const FileUploadSummary = ({
                     <div className="hidden md:flex">
                       <PersonAvatar personId="anonymous" />
                     </div>
-                    <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                    <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                   </div>
                 )}
               </div>
@@ -102,13 +107,15 @@ export const FileUploadSummary = ({
                     })
                   ) : (
                     <div className="flex w-full flex-col items-center justify-center p-2">
-                      <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">skipped</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        {t("common.skipped")}
+                      </p>
                     </div>
                   ))}
               </div>
 
               <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString())}
+                {timeSince(new Date(response.updatedAt).toISOString(), locale)}
               </div>
             </div>
           ))}
@@ -116,7 +123,7 @@ export const FileUploadSummary = ({
         {visibleResponses < questionSummary.files.length && (
           <div className="flex justify-center py-4">
             <Button onClick={handleLoadMore} variant="secondary" size="sm">
-              Load more
+              {t("common.load_more")}
             </Button>
           </div>
         )}

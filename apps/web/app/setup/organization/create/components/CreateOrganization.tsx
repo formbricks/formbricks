@@ -1,21 +1,23 @@
 "use client";
 
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
 
 const ZCreateOrganizationFormSchema = ZOrganization.pick({ name: true });
 type TCreateOrganizationForm = z.infer<typeof ZCreateOrganizationFormSchema>;
 
 export const CreateOrganization = () => {
+  const t = useTranslations();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,8 +49,8 @@ export const CreateOrganization = () => {
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="flex flex-col items-center space-y-4">
-          <h2 className="text-2xl font-medium">Setup your organization</h2>
-          <p>Make it yours.</p>
+          <h2 className="text-2xl font-medium">{t("setup.organization.create.title")}</h2>
+          <p>{t("setup.organization.create.description")}</p>
           <FormField
             control={form.control}
             name="name"
@@ -73,7 +75,7 @@ export const CreateOrganization = () => {
             className="flex w-80 justify-center"
             loading={isSubmitting}
             disabled={isSubmitting || organizationName.trim() === ""}>
-            Continue
+            {t("setup.organization.create.continue")}
           </Button>
         </div>
       </form>

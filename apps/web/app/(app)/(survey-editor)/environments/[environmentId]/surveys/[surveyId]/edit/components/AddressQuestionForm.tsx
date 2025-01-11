@@ -1,14 +1,16 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { Button } from "@/modules/ui/components/button";
+import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon } from "lucide-react";
-import { useEffect } from "react";
+import { useTranslations } from "next-intl";
+import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { QuestionFormInput } from "@formbricks/ui/components/QuestionFormInput";
-import { QuestionToggleTable } from "@formbricks/ui/components/QuestionToggleTable";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface AddressQuestionFormProps {
   localSurvey: TSurvey;
@@ -20,6 +22,7 @@ interface AddressQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const AddressQuestionForm = ({
@@ -31,38 +34,39 @@ export const AddressQuestionForm = ({
   selectedLanguageCode,
   setSelectedLanguageCode,
   attributeClasses,
+  locale,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
-
+  const t = useTranslations();
   const fields = [
     {
       id: "addressLine1",
-      label: "Address Line 1",
+      label: t("environments.surveys.edit.address_line_1"),
       ...question.addressLine1,
     },
     {
       id: "addressLine2",
-      label: "Address Line 2",
+      label: t("environments.surveys.edit.address_line_2"),
       ...question.addressLine2,
     },
     {
       id: "city",
-      label: "City",
+      label: t("environments.surveys.edit.city"),
       ...question.city,
     },
     {
       id: "state",
-      label: "State",
+      label: t("environments.surveys.edit.state"),
       ...question.state,
     },
     {
       id: "zip",
-      label: "Zip",
+      label: t("environments.surveys.edit.zip"),
       ...question.zip,
     },
     {
       id: "country",
-      label: "Country",
+      label: t("environments.surveys.edit.country"),
       ...question.country,
     },
   ];
@@ -98,7 +102,7 @@ export const AddressQuestionForm = ({
       <QuestionFormInput
         id="headline"
         value={question.headline}
-        label={"Question*"}
+        label={t("environments.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         questionIdx={questionIdx}
         isInvalid={isInvalid}
@@ -106,6 +110,7 @@ export const AddressQuestionForm = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
 
       <div ref={parent}>
@@ -115,7 +120,7 @@ export const AddressQuestionForm = ({
               <QuestionFormInput
                 id="subheader"
                 value={question.subheader}
-                label={"Description"}
+                label={t("common.description")}
                 localSurvey={localSurvey}
                 questionIdx={questionIdx}
                 isInvalid={isInvalid}
@@ -123,6 +128,7 @@ export const AddressQuestionForm = ({
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 attributeClasses={attributeClasses}
+                locale={locale}
               />
             </div>
           </div>
@@ -139,7 +145,7 @@ export const AddressQuestionForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            Add Description
+            {t("environments.surveys.edit.add_description")}
           </Button>
         )}
 

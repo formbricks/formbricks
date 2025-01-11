@@ -1,23 +1,18 @@
 "use client";
 
 import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
+import { Button } from "@/modules/ui/components/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightFilterCriteria } from "@formbricks/types/insights";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
+import { TUserLocale } from "@formbricks/types/user";
 import { getEnvironmentInsightsAction } from "../actions";
+import CategoryBadge from "./category-select";
 import { InsightLoading } from "./insight-loading";
 
 interface InsightViewProps {
@@ -25,6 +20,7 @@ interface InsightViewProps {
   environmentId: string;
   documentsPerPage: number;
   insightsPerPage: number;
+  locale: TUserLocale;
 }
 
 export const InsightView = ({
@@ -32,13 +28,15 @@ export const InsightView = ({
   environmentId,
   insightsPerPage,
   documentsPerPage,
+  locale,
 }: InsightViewProps) => {
+  const t = useTranslations();
   const [insights, setInsights] = useState<TInsight[]>([]);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(false);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState<string>("featureRequest");
 
   const handleFeedback = (feedback: "positive" | "negative") => {
     formbricks.track("AI Insight Feedback", {
@@ -76,16 +74,27 @@ export const InsightView = ({
     const fetchInitialInsights = async () => {
       setIsFetching(true);
       setInsights([]);
-      const res = await getEnvironmentInsightsAction({
-        environmentId,
-        limit: insightsPerPage,
-        offset: 0,
-        insightsFilter,
-      });
-      if (res?.data) {
-        setInsights(res.data);
-        setHasMore(res.data.length >= insightsPerPage);
-        setIsFetching(false);
+      try {
+        const res = await getEnvironmentInsightsAction({
+          environmentId,
+          limit: insightsPerPage,
+          offset: 0,
+          insightsFilter,
+        });
+        if (res?.data) {
+          setInsights(res.data);
+          setHasMore(res.data.length >= insightsPerPage);
+
+          // Find the updated currentInsight based on its id
+          const updatedCurrentInsight = res.data.find((insight) => insight.id === currentInsight?.id);
+
+          // Update currentInsight with the matched insight or default to the first one
+          setCurrentInsight(updatedCurrentInsight || (res.data.length > 0 ? res.data[0] : null));
+        }
+      } catch (error) {
+        console.error("Failed to fetch insights:", error);
+      } finally {
+        setIsFetching(false); // Ensure isFetching is set to false in all cases
       }
     };
 
@@ -114,63 +123,56 @@ export const InsightView = ({
 
   return (
     <div>
-      <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="complaint">Complaint</TabsTrigger>
-          <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
-          <TabsTrigger value="praise">Praise</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="featureRequest" onValueChange={handleFilterSelect}>
+        <div className="flex items-center justify-between">
+          <TabsList>
+            <TabsTrigger value="all">{t("environments.experience.all")}</TabsTrigger>
+            <TabsTrigger value="complaint">{t("environments.experience.complaint")}</TabsTrigger>
+            <TabsTrigger value="featureRequest">{t("environments.experience.feature_request")}</TabsTrigger>
+            <TabsTrigger value="praise">{t("environments.experience.praise")}</TabsTrigger>
+            <TabsTrigger value="other">{t("common.other")}</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value={activeTab}>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>{t("common.title")}</TableHead>
+                <TableHead>{t("common.description")}</TableHead>
+                <TableHead>{t("environments.experience.category")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {insights.length === 0 && !isFetching ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">
-                      No insights found. Collect more survey responses or enable insights for your existing
-                      surveys to get started.
-                    </p>
+                    <p className="text-slate-500">{t("environments.experience.no_insights_found")}</p>
                   </TableCell>
                 </TableRow>
               ) : (
-                insights.map((insight) => (
-                  <TableRow
-                    key={insight.id}
-                    className="group cursor-pointer hover:bg-slate-50"
-                    onClick={() => {
-                      setCurrentInsight(insight);
-                      setIsInsightSheetOpen(true);
-                    }}>
-                    <TableCell className="flex font-medium">
-                      {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
-                    </TableCell>
-                    <TableCell className="font-medium">{insight.title}</TableCell>
-                    <TableCell className="underline-offset-2 group-hover:underline">
-                      {insight.description}
-                    </TableCell>
-                    <TableCell>
-                      {insight.category === "complaint" ? (
-                        <Badge text="Complaint" type="error" size="tiny" />
-                      ) : insight.category === "featureRequest" ? (
-                        <Badge text="Feature Request" type="warning" size="tiny" />
-                      ) : insight.category === "praise" ? (
-                        <Badge text="Praise" type="success" size="tiny" />
-                      ) : (
-                        <Badge text="Other" type="gray" size="tiny" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))
+                insights
+                  .sort((a, b) => b._count.documentInsights - a._count.documentInsights)
+                  .map((insight) => (
+                    <TableRow
+                      key={insight.id}
+                      className="group cursor-pointer hover:bg-slate-50"
+                      onClick={() => {
+                        setCurrentInsight(insight);
+                        setIsInsightSheetOpen(true);
+                      }}>
+                      <TableCell className="flex font-medium">
+                        {insight._count.documentInsights} <UserIcon className="ml-2 h-4 w-4" />
+                      </TableCell>
+                      <TableCell className="font-medium">{insight.title}</TableCell>
+                      <TableCell className="underline-offset-2 group-hover:underline">
+                        {insight.description}
+                      </TableCell>
+                      <TableCell className="flex items-center justify-between gap-2">
+                        <CategoryBadge category={insight.category} insightId={insight.id} />
+                      </TableCell>
+                    </TableRow>
+                  ))
               )}
             </TableBody>
           </Table>
@@ -181,7 +183,7 @@ export const InsightView = ({
       {hasMore && !isFetching && (
         <div className="flex justify-center py-5">
           <Button onClick={fetchNextPage} variant="secondary" size="sm" loading={isFetching}>
-            Load more
+            {t("common.load_more")}
           </Button>
         </div>
       )}
@@ -193,6 +195,7 @@ export const InsightView = ({
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </div>
   );
