@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { embed, generateObject } from "ai";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { ZInsightCategory } from "@formbricks/database/zod/insights";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { embeddingsModel, llmModel } from "@formbricks/lib/aiModels";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import {
@@ -38,7 +38,7 @@ export const createDocumentAndAssignInsight = async (
           z.object({
             title: z.string().describe("insight title, very specific"),
             description: z.string().describe("very brief insight description"),
-            category: ZInsightCategory,
+            category: ZInsight.shape.category,
           })
         ),
         isSpam: z.boolean(),

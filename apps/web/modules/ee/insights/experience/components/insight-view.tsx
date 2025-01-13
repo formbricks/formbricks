@@ -1,6 +1,10 @@
 "use client";
 
 import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
+import {
+  TInsightFilterCriteria,
+  TInsightWithDocumentCount,
+} from "@/modules/ee/insights/experience/types/insights";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
@@ -8,7 +12,6 @@ import { InsightCategory } from "@prisma/client";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { TInsight, TInsightFilterCriteria } from "@formbricks/database/zod/insights";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TUserLocale } from "@formbricks/types/user";
@@ -32,11 +35,11 @@ export const InsightView = ({
   locale,
 }: InsightViewProps) => {
   const t = useTranslations();
-  const [insights, setInsights] = useState<TInsight[]>([]);
+  const [insights, setInsights] = useState<TInsightWithDocumentCount[]>([]);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetching, setIsFetching] = useState(false);
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(false);
-  const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
+  const [currentInsight, setCurrentInsight] = useState<TInsightWithDocumentCount | null>(null);
   const [activeTab, setActiveTab] = useState<string>("featureRequest");
 
   const handleFeedback = (feedback: "positive" | "negative") => {

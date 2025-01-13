@@ -4,19 +4,19 @@ import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
 import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
-import { InsightCategory } from "@prisma/client";
+import { Insight, InsightCategory } from "@prisma/client";
 import { UserIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
-import { TInsight } from "@formbricks/database/zod/insights";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
+import { TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import CategoryBadge from "../experience/components/category-select";
 
 interface InsightViewProps {
-  insights: TInsight[];
+  insights: TSurveyQuestionSummaryOpenText["insights"];
   questionId?: string;
   surveyId?: string;
   documentsFilter?: TDocumentFilterCriteria;
@@ -36,8 +36,10 @@ export const InsightView = ({
 }: InsightViewProps) => {
   const t = useTranslations();
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
-  const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
-  const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
+  const [localInsights, setLocalInsights] = useState<TSurveyQuestionSummaryOpenText["insights"]>(insights);
+  const [currentInsight, setCurrentInsight] = useState<
+    TSurveyQuestionSummaryOpenText["insights"][number] | null
+  >(null);
   const [activeTab, setActiveTab] = useState<string>("all");
   const [visibleInsights, setVisibleInsights] = useState(10);
 
@@ -87,7 +89,7 @@ export const InsightView = ({
     setVisibleInsights((prevVisibleInsights) => Math.min(prevVisibleInsights + 10, insights.length));
   };
 
-  const updateLocalInsight = (insightId: string, updates: Partial<TInsight>) => {
+  const updateLocalInsight = (insightId: string, updates: Partial<Insight>) => {
     setLocalInsights((prevInsights) =>
       prevInsights.map((insight) => (insight.id === insightId ? { ...insight, ...updates } : insight))
     );

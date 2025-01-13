@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZInsightCategory } from "@formbricks/database/zod/insights";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZId } from "./common";
 import { ZSurveyQuestionId } from "./surveys/types";
 
@@ -47,7 +47,7 @@ export const ZGenerateDocumentObjectSchema = z.object({
     z.object({
       title: z.string().describe("insight title, very specific"),
       description: z.string().describe("very brief insight description"),
-      category: ZInsightCategory,
+      category: ZInsight.shape.category,
     })
   ),
   isSpam: z.boolean(),

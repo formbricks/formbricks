@@ -1,8 +1,12 @@
 import { insightCache } from "@/lib/cache/insight";
-import { Prisma } from "@prisma/client";
+import {
+  TInsightFilterCriteria,
+  TInsightWithDocumentCount,
+  ZInsightFilterCriteria,
+} from "@/modules/ee/insights/experience/types/insights";
+import { Insight, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/database/zod/insights";
 import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { responseCache } from "@formbricks/lib/response/cache";
@@ -16,7 +20,7 @@ export const getInsights = reactCache(
     limit?: number,
     offset?: number,
     filterCriteria?: TInsightFilterCriteria
-  ): Promise<TInsight[]> =>
+  ): Promise<TInsightWithDocumentCount[]> =>
     cache(
       async () => {
         validateInputs(
@@ -84,7 +88,7 @@ export const getInsights = reactCache(
     )()
 );
 
-export const updateInsight = async (insightId: string, updates: Partial<TInsight>): Promise<void> => {
+export const updateInsight = async (insightId: string, updates: Partial<Insight>): Promise<void> => {
   try {
     const updatedInsight = await prisma.insight.update({
       where: { id: insightId },

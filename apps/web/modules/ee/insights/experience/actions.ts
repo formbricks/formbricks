@@ -9,8 +9,9 @@ import {
   getProjectIdFromInsightId,
 } from "@/lib/utils/helper";
 import { checkAIPermission } from "@/modules/ee/insights/actions";
+import { ZInsightFilterCriteria } from "@/modules/ee/insights/experience/types/insights";
 import { z } from "zod";
-import { ZInsight, ZInsightFilterCriteria } from "@formbricks/database/zod/insights";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZId } from "@formbricks/types/common";
 import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";

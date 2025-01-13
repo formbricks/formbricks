@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TInsightWithDocumentCount } from "@/modules/ee/insights/experience/types/insights";
 import { Button } from "@/modules/ui/components/button";
 import { Card, CardContent, CardFooter } from "@/modules/ui/components/card";
 import {
@@ -14,7 +15,6 @@ import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
-import { TInsight } from "@formbricks/database/zod/insights";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TUserLocale } from "@formbricks/types/user";
@@ -25,7 +25,7 @@ import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionI
 interface InsightSheetProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  insight: TInsight | null;
+  insight: TInsightWithDocumentCount | null;
   surveyId?: string;
   questionId?: string;
   handleFeedback: (feedback: "positive" | "negative") => void;
