@@ -97,7 +97,7 @@ jobs:
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
         run: |
-          pnpm test:e2e -c playwright.service.config.ts --workers=20
+          pnpm test-e2e:azure
 
       - uses: actions/upload-artifact@v4
         if: always()
