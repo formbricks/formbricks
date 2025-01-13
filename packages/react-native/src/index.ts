@@ -1,6 +1,6 @@
 import { Formbricks } from "./formbricks";
-import { track } from "./lib";
+import { init, logout, setAttribute, setAttributes, setUserId, track } from "./lib";
 
 export default Formbricks;
 
-export { track };
+export { track, init, logout, setAttribute, setAttributes, setUserId };

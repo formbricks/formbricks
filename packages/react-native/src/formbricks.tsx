@@ -19,8 +19,8 @@ export function Formbricks({ initConfig }: FormbricksProps): React.JSX.Element |
         await init({
           environmentId: initConfig.environmentId,
           apiHost: initConfig.apiHost,
-          userId: initConfig.userId,
-          attributes: initConfig.attributes,
+          // userId: initConfig.userId,
+          // attributes: initConfig.attributes,
         });
       } catch {
         logger.debug("Initialization failed");

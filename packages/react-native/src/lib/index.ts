@@ -1,5 +1,6 @@
 import { type TJsConfigInput } from "@formbricks/types/js";
 import { ErrorHandler } from "../../../js-core/src/lib/errors";
+// import { ErrorHandler } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
 import { trackCodeAction } from "./actions";
 import { setAttributesInApp } from "./attributes";
@@ -11,8 +12,11 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-export const init = async (initConfig: TJsConfigInput): Promise<void> => {
-  ErrorHandler.init(initConfig.errorHandler);
+export const init = async (initConfig: Pick<TJsConfigInput, "apiHost" | "environmentId">): Promise<void> => {
+  ErrorHandler.init(() => {
+    // eslint-disable-next-line no-console -- Testing without error handler
+    console.log("ErrorHandler.init");
+  });
   queue.add(initialize, false, initConfig);
   await queue.wait();
 };
