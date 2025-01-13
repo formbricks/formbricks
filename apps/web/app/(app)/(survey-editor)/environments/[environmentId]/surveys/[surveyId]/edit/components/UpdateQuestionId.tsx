@@ -62,7 +62,7 @@ export const UpdateQuestionId = ({
   return (
     <div>
       <Label htmlFor="questionId">{t("common.question_id")}</Label>
-      <div className="mt-2 inline-flex w-full space-x-2">
+      <div className="mt-2 inline-flex w-full items-center space-x-2">
         <Input
           id="questionId"
           name="questionId"

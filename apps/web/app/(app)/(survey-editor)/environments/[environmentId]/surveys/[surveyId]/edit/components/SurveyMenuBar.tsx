@@ -1,6 +1,5 @@
 "use client";
 
-import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -114,13 +113,6 @@ export const SurveyMenuBar = ({
 
     if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
   }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
-
-  // write a function which updates the local survey status
-  const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.status = status;
-    setLocalSurvey(updatedSurvey);
-  };
 
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;
@@ -355,13 +347,6 @@ export const SurveyMenuBar = ({
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
-          <div className="mr-4 flex items-center">
-            <SurveyStatusDropdown
-              survey={survey}
-              environment={environment}
-              updateLocalSurveyStatus={updateLocalSurveyStatus}
-            />
-          </div>
           {!isCxMode && (
             <Button
               disabled={disableSave}

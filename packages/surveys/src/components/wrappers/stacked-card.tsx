@@ -114,6 +114,7 @@ export const StackedCard = ({
         style={{
           opacity: contentOpacity,
           transition: "opacity 300ms ease-in-out",
+          height: "100%",
         }}>
         {delayedOffset === 0 ? getCardContent(dynamicQuestionIndex, offset) : getDummyCardContent()}
       </div>
