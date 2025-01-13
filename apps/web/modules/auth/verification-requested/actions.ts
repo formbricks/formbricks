@@ -20,6 +20,5 @@ export const resendVerificationEmailAction = actionClient
     if (user.emailVerified) {
       throw new InvalidInputError("Email address has already been verified");
     }
-    await sendVerificationEmail(user);
-    return { success: true };
+    return await sendVerificationEmail(user);
   });

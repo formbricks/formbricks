@@ -19,20 +19,34 @@ Harvest user-insights, build irresistible experiences.
 
 # Formbricks Helm Chart: Comprehensive Documentation
 
-1. [Introduction](#introduction)
-2. [Prerequisites](#prerequisites)
-3. [Chart Components](#chart-components)
-4. [Installation](#installation)
-   - [Quick Start](#quick-start)
-   - [Usage Examples](#usage-examples)
-5. [Configuration](#configuration)
-6. [Environment Variables](#environment-variables)
-7. [Scaling](#scaling)
-8. [Upgrading Formbricks](#upgrading-formbricks)
-9. [Support](#support)
-10. [Full Values Documentation](#full-values-documentation)
-11. [Contribution](#contribution)
-12. [MicroK8s Installation and Formbricks Deployment](#microk8s-installation-and-formbricks-deployment)
+- [Formbricks Helm Chart: Comprehensive Documentation](#formbricks-helm-chart-comprehensive-documentation)
+  - [Introduction](#introduction)
+  - [Prerequisites](#prerequisites)
+  - [Chart Components](#chart-components)
+  - [Installation](#installation)
+    - [Quick Start](#quick-start)
+    - [Usage Examples](#usage-examples)
+      - [Scaling PostgreSQL and Redis](#scaling-postgresql-and-redis)
+    - [Configuration](#configuration)
+  - [Environment Variables](#environment-variables)
+  - [Scaling](#scaling)
+    - [With Auto Scaling (Kubernetes Metrics Server Requirement)](#with-auto-scaling-kubernetes-metrics-server-requirement)
+    - [Customizing Autoscaling](#customizing-autoscaling)
+    - [Kubernetes Metrics Server Requirement](#kubernetes-metrics-server-requirement)
+    - [Advanced Autoscaling Configuration](#advanced-autoscaling-configuration)
+  - [Upgrading Formbricks](#upgrading-formbricks)
+    - [Upgrade Process](#upgrade-process)
+    - [Common Upgrade Scenarios](#common-upgrade-scenarios)
+      - [1. Updating Environment Variables](#1-updating-environment-variables)
+      - [2. Enabling or Disabling Features](#2-enabling-or-disabling-features)
+      - [3. Scaling Resources](#3-scaling-resources)
+      - [4. Updating Autoscaling Configuration](#4-updating-autoscaling-configuration)
+      - [5. Changing Database Credentials](#5-changing-database-credentials)
+    - [Using a Values File for Complex Upgrades](#using-a-values-file-for-complex-upgrades)
+  - [Support](#support)
+  - [Full Values Documentation](#full-values-documentation)
+  - [✍️ Contribution](#️-contribution)
+  - [MicroK8s Installation and Formbricks Deployment](#microk8s-installation-and-formbricks-deployment)
     - [MicroK8s Quick Setup](#microk8s-quick-setup)
     - [Deploying Formbricks on MicroK8s](#deploying-formbricks-on-microk8s)
 
@@ -206,7 +220,8 @@ These documents provide detailed information on scaling and configuring high ava
      --set env.SMTP_HOST=smtp.example.com \
      --set env.SMTP_PORT=587 \
      --set env.SMTP_USER=user@example.com \
-     --set env.SMTP_PASSWORD=password123
+     --set env.SMTP_PASSWORD=password123 \
+     --set env.SMTP_AUTHENTICATED=1
    ```
 
 5. **Installation with Custom Resource Limits**:
