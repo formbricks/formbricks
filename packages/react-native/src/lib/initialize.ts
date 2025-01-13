@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type TAttributes } from "@formbricks/types/attributes";
 import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
@@ -16,7 +15,6 @@ import {
 import { Logger } from "../../../js-core/src/lib/logger";
 import { filterSurveys } from "../../../js-core/src/lib/utils";
 import { trackAction } from "./actions";
-import { updateAttributes } from "./attributes";
 import { RNConfig } from "./config";
 import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
@@ -31,7 +29,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const initialize = async (
-  configInput: TJsConfigInput
+  configInput: Pick<TJsConfigInput, "environmentId" | "apiHost">
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -94,15 +92,20 @@ export const initialize = async (
       isEnvironmentStateExpired = true;
     }
 
-    if (
-      configInput.userId &&
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- personState could be null
-      (existingConfig.personState === null ||
-        (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
-    ) {
-      logger.debug("Person state needs syncing - either null or expired");
+    if (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()) {
+      logger.debug("Person state expired. Syncing.");
       isPersonStateExpired = true;
     }
+
+    // if (
+    //   configInput.userId &&
+    //   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- personState could be null
+    //   (existingConfig.personState === null ||
+    //     (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
+    // ) {
+    //   logger.debug("Person state needs syncing - either null or expired");
+    //   isPersonStateExpired = true;
+    // }
 
     try {
       // fetch the environment state (if expired)
@@ -118,11 +121,14 @@ export const initialize = async (
       let { personState } = existingConfig;
 
       if (isPersonStateExpired) {
-        if (configInput.userId) {
+        // If the existing person state (expired) has a userId, we need to fetch the person state
+        // If the existing person state (expired) has no userId, we need to set the person state to the default
+
+        if (personState.data.userId) {
           personState = await fetchPersonState({
             apiHost: configInput.apiHost,
             environmentId: configInput.environmentId,
-            userId: configInput.userId,
+            userId: personState.data.userId,
           });
         } else {
           personState = DEFAULT_PERSON_STATE_NO_USER_ID;
@@ -132,13 +138,12 @@ export const initialize = async (
       // filter the environment state wrt the person state
       const filteredSurveys = filterSurveys(environmentState, personState);
 
-      // update the appConfig with the new filtered surveys
+      // update the appConfig with the new filtered surveys and person state
       appConfig.update({
         ...existingConfig,
         environmentState,
         personState,
         filteredSurveys,
-        attributes: configInput.attributes ?? {},
       });
 
       const surveyNames = filteredSurveys.map((s) => s.name);
@@ -151,6 +156,10 @@ export const initialize = async (
     void appConfig.resetConfig();
     logger.debug("Syncing.");
 
+    // During init, if we don't have a valid config, we need to fetch the environment state
+    // but not the person state, we can set it to the default value.
+    // The person state will be fetched when the `setUserId` method is called.
+
     try {
       const environmentState = await fetchEnvironmentState(
         {
@@ -160,44 +169,46 @@ export const initialize = async (
         false
       );
 
-      const personState = configInput.userId
-        ? await fetchPersonState(
-            {
-              apiHost: configInput.apiHost,
-              environmentId: configInput.environmentId,
-              userId: configInput.userId,
-            },
-            false
-          )
-        : DEFAULT_PERSON_STATE_NO_USER_ID;
+      // const personState = configInput.userId
+      //   ? await fetchPersonState(
+      //       {
+      //         apiHost: configInput.apiHost,
+      //         environmentId: configInput.environmentId,
+      //         userId: configInput.userId,
+      //       },
+      //       false
+      //     )
+      //   : DEFAULT_PERSON_STATE_NO_USER_ID;
+
+      const personState = DEFAULT_PERSON_STATE_NO_USER_ID;
 
       const filteredSurveys = filterSurveys(environmentState, personState);
 
-      let updatedAttributes: TAttributes | null = null;
-      if (configInput.attributes) {
-        if (configInput.userId) {
-          const res = await updateAttributes(
-            configInput.apiHost,
-            configInput.environmentId,
-            configInput.userId,
-            configInput.attributes
-          );
+      // let updatedAttributes: TAttributes | null = null;
+      // if (configInput.attributes) {
+      //   if (configInput.userId) {
+      //     const res = await updateAttributes(
+      //       configInput.apiHost,
+      //       configInput.environmentId,
+      //       configInput.userId,
+      //       configInput.attributes
+      //     );
 
-          if (!res.ok) {
-            if (res.error.code === "forbidden") {
-              logger.error(`Authorization error: ${res.error.responseMessage ?? ""}`);
-            }
-            return err(res.error) as unknown as Result<
-              void,
-              MissingFieldError | NetworkError | MissingPersonError
-            >;
-          }
+      //     if (!res.ok) {
+      //       if (res.error.code === "forbidden") {
+      //         logger.error(`Authorization error: ${res.error.responseMessage ?? ""}`);
+      //       }
+      //       return err(res.error) as unknown as Result<
+      //         void,
+      //         MissingFieldError | NetworkError | MissingPersonError
+      //       >;
+      //     }
 
-          updatedAttributes = res.value;
-        } else {
-          updatedAttributes = { ...configInput.attributes };
-        }
-      }
+      //     updatedAttributes = res.value;
+      //   } else {
+      //     updatedAttributes = { ...configInput.attributes };
+      //   }
+      // }
 
       appConfig.update({
         apiHost: configInput.apiHost,
@@ -205,7 +216,7 @@ export const initialize = async (
         personState,
         environmentState,
         filteredSurveys,
-        attributes: updatedAttributes ?? {},
+        attributes: {},
       });
     } catch (e) {
       await handleErrorOnFirstInit(e as { code: string; responseMessage: string });
