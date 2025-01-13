@@ -1,11 +1,12 @@
 import { withSentryConfig } from "@sentry/nextjs";
 import createJiti from "jiti";
+import createNextIntlPlugin from "next-intl/plugin";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
@@ -19,17 +20,14 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
-    instrumentationHook: true,
-    staleTimes: {
-      dynamic: 0,
-    },
-    outputFileTracingIncludes: {
-      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    },
+  serverExternalPackages: ["@aws-sdk"],
+  outputFileTracingIncludes: {
+    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  experimental: {
+    after: true,
+  },
+  transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
@@ -75,6 +73,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "api-iam.eu.intercom.io",
       },
     ],
   },
@@ -308,4 +310,4 @@ const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
   : nextConfig;
 
-export default exportConfig;
+export default withNextIntl(nextConfig);

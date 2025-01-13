@@ -1,11 +1,12 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { Modal } from "@/modules/ui/components/modal";
 import { AlertTriangleIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface MemberModalProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface MemberModalProps {
 }
 
 export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) => {
+  const t = useTranslations();
   const { register, getValues, handleSubmit, reset } = useForm<{ label: string; environment: string }>();
 
   const submitAPIKey = async () => {
@@ -29,7 +31,9 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
         <div className="rounded-t-lg bg-slate-100">
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
-              <div className="text-xl font-medium text-slate-700">Add API Key</div>
+              <div className="text-xl font-medium text-slate-700">
+                {t("environments.product.api-keys.add_api_key")}
+              </div>
             </div>
           </div>
         </div>
@@ -37,7 +41,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
           <div className="flex justify-between rounded-lg p-6">
             <div className="w-full space-y-4">
               <div>
-                <Label>API Key Label</Label>
+                <Label>{t("environments.product.api-keys.api_key_label")}</Label>
                 <Input
                   placeholder="e.g. GitHub, PostHog, Slack"
                   {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
@@ -46,10 +50,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
 
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
                 <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
-                <p>
-                  For security reasons, the API key will only be <strong>shown once</strong> after creation.
-                  Please copy it to your destination right away.
-                </p>
+                <p>{t("environments.product.api-keys.api_key_security_warning")}</p>
               </div>
             </div>
           </div>
@@ -61,9 +62,9 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
                 onClick={() => {
                   setOpen(false);
                 }}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">Add API Key</Button>
+              <Button type="submit">{t("environments.product.api-keys.add_api_key")}</Button>
             </div>
           </div>
         </form>

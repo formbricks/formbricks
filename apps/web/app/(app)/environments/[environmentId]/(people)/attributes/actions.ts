@@ -1,9 +1,9 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getProductIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { getSegmentsByAttributeClassName } from "@formbricks/lib/segment/service";
 import { ZAttributeClass } from "@formbricks/types/attribute-classes";
 import { ZId } from "@formbricks/types/common";
@@ -16,12 +16,21 @@ const ZGetSegmentsByAttributeClassAction = z.object({
 export const getSegmentsByAttributeClassAction = authenticatedActionClient
   .schema(ZGetSegmentsByAttributeClassAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
-
     const segments = await getSegmentsByAttributeClassName(
       parsedInput.environmentId,
       parsedInput.attributeClass.name

@@ -34,7 +34,7 @@ export const surveySelect: Prisma.SurveySelect = {
 };
 
 export const getSurveys = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -86,7 +86,7 @@ export const getSurveys = reactCache(
 );
 
 export const getSurveysSortedByRelevance = reactCache(
-  (
+  async (
     environmentId: string,
     limit?: number,
     offset?: number,
@@ -170,7 +170,7 @@ export const getSurveysSortedByRelevance = reactCache(
 );
 
 export const getSurvey = reactCache(
-  (surveyId: string): Promise<TSurvey | null> =>
+  async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId]);

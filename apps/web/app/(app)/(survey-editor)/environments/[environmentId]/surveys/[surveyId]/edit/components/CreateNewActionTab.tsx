@@ -1,5 +1,13 @@
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
+import { Button } from "@/modules/ui/components/button";
+import { CodeActionForm } from "@/modules/ui/components/code-action-form";
+import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
+import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -11,19 +19,12 @@ import {
   ZActionClassInput,
 } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
-import { Label } from "@formbricks/ui/components/Label";
-import { TabToggle } from "@formbricks/ui/components/TabToggle";
-import { CodeActionForm } from "@formbricks/ui/components/organisms/CodeActionForm";
-import { NoCodeActionForm } from "@formbricks/ui/components/organisms/NoCodeActionForm";
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {
   actionClasses: TActionClass[];
   setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
-  isViewer: boolean;
+  isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   environmentId: string;
@@ -33,10 +34,11 @@ export const CreateNewActionTab = ({
   actionClasses,
   setActionClasses,
   setOpen,
-  isViewer,
+  isReadOnly,
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
+  const t = useTranslations();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]
@@ -63,7 +65,7 @@ export const CreateNewActionTab = ({
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["name"],
-            message: `Action with name ${data.name} already exists`,
+            message: t("environments.actions.action_with_name_already_exists", { name: data.name }),
           });
         }
       })
@@ -85,16 +87,16 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     const { type } = data;
     try {
-      if (isViewer) {
-        throw new Error("You are not authorised to perform this action.");
+      if (isReadOnly) {
+        throw new Error(t("common.you_are_not_authorised_to_perform_this_action"));
       }
 
       if (data.name && actionClassNames.includes(data.name)) {
-        throw new Error(`Action with name ${data.name} already exist`);
+        throw new Error(t("environments.actions.action_with_name_already_exists", { name: data.name }));
       }
 
       if (type === "code" && data.key && actionClassKeys.includes(data.key)) {
-        throw new Error(`Action with key ${data.key} already exist`);
+        throw new Error(t("environments.actions.action_with_key_already_exists", { key: data.key }));
       }
 
       if (
@@ -156,7 +158,7 @@ export const CreateNewActionTab = ({
 
       reset();
       resetAllStates();
-      toast.success("Action created successfully");
+      toast.success(t("environments.actions.action_created_successfully"));
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -178,12 +180,12 @@ export const CreateNewActionTab = ({
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <Label className="font-semibold">Action Type</Label>
+                    <Label className="font-semibold">{t("environments.actions.action_type")}</Label>
                     <TabToggle
                       id="type"
                       options={[
-                        { value: "noCode", label: "No code" },
-                        { value: "code", label: "Code" },
+                        { value: "noCode", label: t("common.no_code") },
+                        { value: "code", label: t("common.code") },
                       ]}
                       {...field}
                       defaultSelected={field.value}
@@ -200,14 +202,16 @@ export const CreateNewActionTab = ({
                   name="name"
                   render={({ field, fieldState: { error } }) => (
                     <FormItem>
-                      <FormLabel htmlFor="actionNameInput">What did your user do?</FormLabel>
+                      <FormLabel htmlFor="actionNameInput">
+                        {t("environments.actions.what_did_your_user_do")}
+                      </FormLabel>
 
                       <FormControl>
                         <Input
                           type="text"
                           id="actionNameInput"
                           {...field}
-                          placeholder="E.g. Clicked Download"
+                          placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
                         />
                       </FormControl>
@@ -223,14 +227,14 @@ export const CreateNewActionTab = ({
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel htmlFor="actionDescriptionInput">Description</FormLabel>
+                      <FormLabel htmlFor="actionDescriptionInput">{t("common.description")}</FormLabel>
 
                       <FormControl>
                         <Input
                           type="text"
                           id="actionDescriptionInput"
                           {...field}
-                          placeholder="User clicked Download Button"
+                          placeholder={t("environments.actions.eg_user_clicked_download_button")}
                           value={field.value ?? ""}
                         />
                       </FormControl>
@@ -243,18 +247,18 @@ export const CreateNewActionTab = ({
             <hr className="border-slate-200" />
 
             {watch("type") === "code" ? (
-              <CodeActionForm form={form} isEdit={false} />
+              <CodeActionForm form={form} isReadOnly={isReadOnly} />
             ) : (
-              <NoCodeActionForm form={form} />
+              <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             )}
           </div>
           <div className="flex justify-end pt-6">
             <div className="flex space-x-2">
               <Button type="button" variant="minimal" onClick={resetAllStates}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" loading={isSubmitting}>
-                Create action
+                {t("environments.actions.create_action")}
               </Button>
             </div>
           </div>

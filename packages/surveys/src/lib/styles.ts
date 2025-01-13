@@ -5,7 +5,7 @@ import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { TProductStyling } from "@formbricks/types/product";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import editorCss from "../../../ui/components/Editor/stylesEditorFrontend.css?inline";
+import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 export const addStylesToDom = () => {
@@ -33,7 +33,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   let cssVariables = ":root {\n";
 
   // Helper function to append the variable if it's not undefined
-  const appendCssVariable = (variableName: string, value: string | undefined) => {
+  const appendCssVariable = (variableName: string, value?: string) => {
     if (value !== undefined) {
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }

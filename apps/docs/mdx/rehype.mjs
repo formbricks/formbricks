@@ -2,8 +2,18 @@ import { slugifyWithCounter } from "@sindresorhus/slugify";
 import * as acorn from "acorn";
 import { toString } from "mdast-util-to-string";
 import { mdxAnnotations } from "mdx-annotations";
-import { getHighlighter, renderToHtml } from "shiki";
+import { createCssVariablesTheme, createHighlighter } from "shiki";
 import { visit } from "unist-util-visit";
+
+let highlighterPromise;
+const supportedLanguages = ["javascript", "html", "shell", "tsx", "json", "yml", "ts"];
+
+const myTheme = createCssVariablesTheme({
+  name: "css-variables",
+  variablePrefix: "--shiki-",
+  variableDefaults: {},
+  fontStyle: true,
+});
 
 const rehypeParseCodeBlocks = () => {
   return (tree) => {
@@ -15,29 +25,31 @@ const rehypeParseCodeBlocks = () => {
   };
 };
 
-let highlighter;
 
+const getHighlighter = async () => {
+  if (!highlighterPromise) {
+    highlighterPromise = createHighlighter({
+      langs: supportedLanguages,
+      themes: [myTheme],
+    })
+  }
+
+  return highlighterPromise;
+}
 const rehypeShiki = () => {
   return async (tree) => {
-    highlighter = highlighter ?? (await getHighlighter({ theme: "css-variables" }));
+    const highlighter = await getHighlighter();
 
     visit(tree, "element", (node) => {
       if (node.tagName === "pre" && node.children[0]?.tagName === "code") {
         let codeNode = node.children[0];
         let textNode = codeNode.children[0];
-
+        if (!codeNode || !textNode) return;
         node.properties.code = textNode.value;
-
-        if (node.properties.language) {
-          let tokens = highlighter.codeToThemedTokens(textNode.value, node.properties.language);
-
-          textNode.value = renderToHtml(tokens, {
-            elements: {
-              pre: ({ children }) => children,
-              code: ({ children }) => children,
-              line: ({ children }) => `<span>${children}</span>`,
-            },
-          });
+        if (codeNode.properties.className && codeNode.properties.className.length > 0) {
+          let lang = codeNode.properties.className[0].replace("language-", "");
+          const code = highlighter.codeToHtml(textNode.value, { lang, theme: "css-variables" });
+          textNode.value = code;
         }
       }
     });

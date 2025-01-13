@@ -4,7 +4,7 @@ import { AlertCircleIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TTag } from "@formbricks/types/tags";
 import {
   createTagAction,
@@ -12,9 +12,9 @@ import {
   deleteTagOnSurveyAction,
   getTagsForSurveyAction,
 } from "../actions";
-import {TagsCombobox} from "@formbricks/ui/components/TagsCombobox";
-import { Button } from "@formbricks/ui/components/Button";
-import { Tag } from "@formbricks/ui/components/Tag";
+import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
+import { Button } from "@/modules/ui/components/button";
+import { Tag } from "@/modules/ui/components/tag";
 
 interface SurveyTagsWrapperProps {
   tags: {

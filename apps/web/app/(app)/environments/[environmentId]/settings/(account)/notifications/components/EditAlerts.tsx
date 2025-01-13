@@ -1,7 +1,8 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
@@ -20,6 +21,7 @@ export const EditAlerts = ({
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: EditAlertsProps) => {
+  const t = useTranslations();
   return (
     <>
       {memberships.map((membership) => (
@@ -32,7 +34,9 @@ export const EditAlerts = ({
             </div>
 
             <div className="col-span-3 flex items-center justify-end pr-2">
-              <p className="pr-4 text-sm text-slate-600">Auto-subscribe to new surveys</p>
+              <p className="pr-4 text-sm text-slate-600">
+                {t("environments.settings.notifications.auto_subscribe_to_new_surveys")}
+              </p>
               <NotificationSwitch
                 surveyOrProductOrOrganizationId={membership.organization.id}
                 notificationSettings={user.notificationSettings!}
@@ -44,16 +48,18 @@ export const EditAlerts = ({
           </div>
           <div className="mb-6 rounded-lg border border-slate-200">
             <div className="grid h-12 grid-cols-3 content-center rounded-t-lg bg-slate-100 px-4 text-left text-sm font-semibold text-slate-900">
-              <div className="col-span-2 flex items-center">Survey</div>
+              <div className="col-span-2 flex items-center">{t("common.surveys")}</div>
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
                     <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
-                      <span>Every Response</span>
+                      <span>{t("environments.settings.notifications.every_response")}</span>
                       <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
-                  <TooltipContent>Sends complete responses, no partials.</TooltipContent>
+                  <TooltipContent>
+                    {t("environments.settings.notifications.every_response_tooltip")}
+                  </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
@@ -92,13 +98,13 @@ export const EditAlerts = ({
               </div>
             ) : (
               <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
-                <p>No surveys found.</p>
+                <p>{t("common.no_surveys_found")}</p>
               </div>
             )}
             <p className="pb-3 pl-4 text-xs text-slate-400">
-              Want to loop in organization mates?{" "}
+              {t("environments.settings.notifications.want_to_loop_in_organization_mates")}{" "}
               <Link className="font-semibold" href={`/environments/${environmentId}/settings/general`}>
-                Invite them.
+                {t("common.invite_them")}
               </Link>
             </p>
           </div>

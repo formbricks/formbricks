@@ -7,12 +7,13 @@ import {
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/actions";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getResponseCountBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { InboxIcon, PresentationIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface SurveyAnalysisNavigationProps {
   environmentId: string;
@@ -28,6 +29,7 @@ export const SurveyAnalysisNavigation = ({
   activeId,
 }: SurveyAnalysisNavigationProps) => {
   const pathname = usePathname();
+  const t = useTranslations();
   const params = useParams();
   const [filteredResponseCount, setFilteredResponseCount] = useState<number | null>(null);
   const [totalResponseCount, setTotalResponseCount] = useState<number | null>(initialTotalResponseCount);
@@ -102,7 +104,7 @@ export const SurveyAnalysisNavigation = ({
   const navigation = [
     {
       id: "summary",
-      label: "Summary",
+      label: t("common.summary"),
       icon: <PresentationIcon className="h-5 w-5" />,
       href: `${url}/summary?referer=true`,
       current: pathname?.includes("/summary"),
@@ -112,7 +114,7 @@ export const SurveyAnalysisNavigation = ({
     },
     {
       id: "responses",
-      label: `Responses ${getResponseCountString()}`,
+      label: `${t("common.responses")} ${getResponseCountString()}`,
       icon: <InboxIcon className="h-5 w-5" />,
       href: `${url}/responses?referer=true`,
       current: pathname?.includes("/responses"),

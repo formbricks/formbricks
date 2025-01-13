@@ -1,3 +1,5 @@
+import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslations } from "next-intl";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
@@ -6,7 +8,7 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { HalfCircle, ProgressBar } from "@formbricks/ui/components/ProgressBar";
+import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -14,6 +16,7 @@ interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
   attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -23,23 +26,30 @@ interface NPSSummaryProps {
   ) => void;
 }
 
-export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilter }: NPSSummaryProps) => {
+export const NPSSummary = ({
+  questionSummary,
+  survey,
+  attributeClasses,
+  setFilter,
+  locale,
+}: NPSSummaryProps) => {
+  const t = useTranslations();
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
-        comparison: "Includes either",
+        comparison: t("environments.surveys.summary.includes_either"),
         values: ["9", "10"],
       },
       passives: {
-        comparison: "Includes either",
+        comparison: t("environments.surveys.summary.includes_either"),
         values: ["7", "8"],
       },
       detractors: {
-        comparison: "Is less than",
+        comparison: t("environments.surveys.summary.is_less_than"),
         values: "7",
       },
       dismissed: {
-        comparison: "Skipped",
+        comparison: t("common.skipped"),
         values: undefined,
       },
     };
@@ -63,6 +73,7 @@ export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilte
         questionSummary={questionSummary}
         survey={survey}
         attributeClasses={attributeClasses}
+        locale={locale}
       />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (
@@ -82,7 +93,7 @@ export const NPSSummary = ({ questionSummary, survey, attributeClasses, setFilte
               </div>
               <p className="flex w-32 items-end justify-end text-slate-600">
                 {questionSummary[group]?.count}{" "}
-                {questionSummary[group]?.count === 1 ? "response" : "responses"}
+                {questionSummary[group]?.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
             <ProgressBar

@@ -1,11 +1,12 @@
 "use client";
 
+import { Label } from "@/modules/ui/components/label";
+import { Switch } from "@/modules/ui/components/switch";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TProduct, TProductUpdateInput } from "@formbricks/types/product";
-import { Label } from "@formbricks/ui/components/Label";
-import { Switch } from "@formbricks/ui/components/Switch";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 import { updateProductAction } from "../../actions";
 
 interface EditFormbricksBrandingProps {
@@ -13,6 +14,7 @@ interface EditFormbricksBrandingProps {
   product: TProduct;
   canRemoveBranding: boolean;
   environmentId: string;
+  isReadOnly?: boolean;
 }
 
 export const EditFormbricksBranding = ({
@@ -20,7 +22,9 @@ export const EditFormbricksBranding = ({
   product,
   canRemoveBranding,
   environmentId,
+  isReadOnly,
 }: EditFormbricksBrandingProps) => {
+  const t = useTranslations();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(
     type === "linkSurvey" ? product.linkSurveyBranding : product.inAppSurveyBranding
   );
@@ -35,7 +39,11 @@ export const EditFormbricksBranding = ({
         [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
       };
       await updateProductAction({ productId: product.id, data: inputProduct });
-      toast.success(newBrandingState ? "Formbricks branding is shown." : "Formbricks branding is hidden.");
+      toast.success(
+        newBrandingState
+          ? t("environments.product.look.formbricks_branding_shown")
+          : t("environments.product.look.formbricks_branding_hidden")
+      );
     } catch (error) {
       toast.error(`Error: ${error.message}`);
     } finally {
@@ -50,10 +58,12 @@ export const EditFormbricksBranding = ({
           id={`branding-${type}`}
           checked={isBrandingEnabled}
           onCheckedChange={toggleBranding}
-          disabled={!canRemoveBranding || updatingBranding}
+          disabled={!canRemoveBranding || updatingBranding || isReadOnly}
         />
         <Label htmlFor={`branding-${type}`}>
-          Show Formbricks Branding in {type === "linkSurvey" ? "Link" : "App"} Surveys
+          {t("environments.product.look.show_formbricks_branding_in", {
+            type: type === "linkSurvey" ? t("common.link") : t("common.app"),
+          })}
         </Label>
       </div>
       {!canRemoveBranding && (
@@ -61,16 +71,16 @@ export const EditFormbricksBranding = ({
           {type === "linkSurvey" && (
             <div className="mb-8">
               <UpgradePlanNotice
-                message="To remove the Formbricks branding from Link Surveys, please"
-                textForUrl="upgrade your plan."
+                message={t("environments.product.look.formbricks_branding_upgrade_message")}
+                textForUrl={t("environments.product.look.formbricks_branding_upgrade_text")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             </div>
           )}
           {type !== "linkSurvey" && (
             <UpgradePlanNotice
-              message="To remove the Formbricks branding from In-app Surveys, please"
-              textForUrl="upgrade your plan."
+              message={t("environments.product.look.formbricks_branding_upgrade_message_in_app")}
+              textForUrl={t("environments.product.look.formbricks_branding_upgrade_text")}
               url={`/environments/${environmentId}/settings/billing`}
             />
           )}

@@ -1,19 +1,27 @@
 "use server";
 
-import { insightCache } from "@/lib/cache/insight";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getEnvironmentIdFromInsightId,
+  getEnvironmentIdFromSurveyId,
+  getOrganizationIdFromDocumentId,
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromInsightId,
+  getProductIdFromDocumentId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromInsightId,
+} from "@/lib/utils/helper";
+import { checkAIPermission } from "@/modules/ee/insights/actions";
 import {
   getDocumentsByInsightId,
   getDocumentsByInsightIdSurveyIdQuestionId,
 } from "@/modules/ee/insights/components/insight-sheet/lib/documents";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { cache } from "@formbricks/lib/cache";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { ZId } from "@formbricks/types/common";
 import { ZDocumentFilterCriteria } from "@formbricks/types/documents";
 import { ZSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { updateDocument } from "./lib/documents";
 
 const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   insightId: ZId,
@@ -23,44 +31,35 @@ const ZGetDocumentsByInsightIdSurveyIdQuestionIdAction = z.object({
   offset: z.number().optional(),
 });
 
-const getOrganizationIdFromInsightId = async (insightId: string) =>
-  cache(
-    async () => {
-      const insight = await prisma.insight.findUnique({
-        where: {
-          id: insightId,
-        },
-        select: {
-          environmentId: true,
-        },
-      });
-
-      if (!insight) {
-        throw new Error("Insight not found");
-      }
-
-      return await getOrganizationIdFromEnvironmentId(insight.environmentId);
-    },
-    [`getInsight-${insightId}`],
-    {
-      tags: [insightCache.tag.byId(insightId)],
-    }
-  )();
-
 export const getDocumentsByInsightIdSurveyIdQuestionIdAction = authenticatedActionClient
   .schema(ZGetDocumentsByInsightIdSurveyIdQuestionIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    const insight = await getOrganizationIdFromInsightId(parsedInput.insightId);
+    const insightEnvironmentId = await getEnvironmentIdFromInsightId(parsedInput.insightId);
+    const surveyEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
 
-    if (!insight) {
-      throw new Error("Insight not found");
+    if (insightEnvironmentId !== surveyEnvironmentId) {
+      throw new Error("Insight and survey are not in the same environment");
     }
 
-    await checkAuthorization({
+    const organizationId = await getOrganizationIdFromEnvironmentId(surveyEnvironmentId);
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInsightId(parsedInput.insightId),
-      rules: ["response", "read"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
+        },
+      ],
     });
+
+    await checkAIPermission(organizationId);
 
     return await getDocumentsByInsightIdSurveyIdQuestionId(
       parsedInput.insightId,
@@ -81,11 +80,24 @@ const ZGetDocumentsByInsightIdAction = z.object({
 export const getDocumentsByInsightIdAction = authenticatedActionClient
   .schema(ZGetDocumentsByInsightIdAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    const organizationId = await getOrganizationIdFromInsightId(parsedInput.insightId);
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInsightId(parsedInput.insightId),
-      rules: ["response", "read"],
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromInsightId(parsedInput.insightId),
+        },
+      ],
     });
+
+    await checkAIPermission(organizationId);
 
     return await getDocumentsByInsightId(
       parsedInput.insightId,
@@ -93,4 +105,38 @@ export const getDocumentsByInsightIdAction = authenticatedActionClient
       parsedInput.offset,
       parsedInput.filterCriteria
     );
+  });
+
+const ZUpdateDocumentAction = z.object({
+  documentId: ZId,
+  data: z
+    .object({
+      sentiment: z.enum(["positive", "negative", "neutral"]).optional(),
+    })
+    .strict(),
+});
+
+export const updateDocumentAction = authenticatedActionClient
+  .schema(ZUpdateDocumentAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromDocumentId(parsedInput.documentId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromDocumentId(parsedInput.documentId),
+        },
+      ],
+    });
+
+    await checkAIPermission(organizationId);
+
+    return await updateDocument(parsedInput.documentId, parsedInput.data);
   });

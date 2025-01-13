@@ -1,5 +1,8 @@
 "use client";
 
+import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -7,13 +10,13 @@ import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { PreviewSurvey } from "@formbricks/ui/components/PreviewSurvey";
+import { TUserLocale } from "@formbricks/types/user";
 import { refetchProductAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
@@ -30,7 +33,7 @@ interface SurveyEditorProps {
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;
@@ -38,6 +41,11 @@ interface SurveyEditorProps {
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
+  locale: TUserLocale;
+  mailFrom: string;
+  isSurveyFollowUpsAllowed: boolean;
+  productPermission: TTeamPermission | null;
+  userEmail: string;
   environmentTags: TTag[];
 }
 
@@ -58,6 +66,11 @@ export const SurveyEditor = ({
   isUnsplashConfigured,
   plan,
   isCxMode = false,
+  locale,
+  mailFrom,
+  isSurveyFollowUpsAllowed = false,
+  productPermission,
+  userEmail,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
@@ -147,6 +160,7 @@ export const SurveyEditor = ({
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
+        locale={locale}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
@@ -157,6 +171,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
           {activeView === "questions" && (
@@ -175,6 +190,7 @@ export const SurveyEditor = ({
               attributeClasses={attributeClasses}
               plan={plan}
               isCxMode={isCxMode}
+              locale={locale}
             />
           )}
 
@@ -208,6 +224,19 @@ export const SurveyEditor = ({
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
               product={localProduct}
+              productPermission={productPermission}
+            />
+          )}
+
+          {activeView === "followUps" && (
+            <FollowUpsView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              selectedLanguageCode={selectedLanguageCode}
+              mailFrom={mailFrom}
+              isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
+              userEmail={userEmail}
+              locale={locale}
             />
           )}
         </main>

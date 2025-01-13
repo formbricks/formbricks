@@ -1,23 +1,18 @@
 "use client";
 
 import { InsightSheet } from "@/modules/ee/insights/components/insight-sheet";
+import { Button } from "@/modules/ui/components/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { UserIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
 import { TInsight, TInsightCategory } from "@formbricks/types/insights";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@formbricks/ui/components/Table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@formbricks/ui/components/Tabs";
+import { TUserLocale } from "@formbricks/types/user";
+import CategoryBadge from "../experience/components/category-select";
 
 interface InsightViewProps {
   insights: TInsight[];
@@ -26,6 +21,7 @@ interface InsightViewProps {
   documentsFilter?: TDocumentFilterCriteria;
   isFetching?: boolean;
   documentsPerPage?: number;
+  locale: TUserLocale;
 }
 
 export const InsightView = ({
@@ -35,7 +31,9 @@ export const InsightView = ({
   documentsFilter,
   isFetching,
   documentsPerPage,
+  locale,
 }: InsightViewProps) => {
+  const t = useTranslations();
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TInsight[]>(insights);
   const [currentInsight, setCurrentInsight] = useState<TInsight | null>(null);
@@ -73,46 +71,66 @@ export const InsightView = ({
 
   useEffect(() => {
     handleFilterSelect(activeTab);
-  }, [insights]);
+
+    // Update currentInsight if it exists in the new insights array
+    if (currentInsight) {
+      const updatedInsight = insights.find((insight) => insight.id === currentInsight.id);
+      if (updatedInsight) {
+        setCurrentInsight(updatedInsight);
+      } else {
+        setCurrentInsight(null);
+        setIsInsightSheetOpen(false);
+      }
+    }
+  }, [insights, activeTab, handleFilterSelect]);
 
   const handleLoadMore = () => {
     setVisibleInsights((prevVisibleInsights) => Math.min(prevVisibleInsights + 10, insights.length));
+  };
+
+  const updateLocalInsight = (insightId: string, updates: Partial<TInsight>) => {
+    setLocalInsights((prevInsights) =>
+      prevInsights.map((insight) => (insight.id === insightId ? { ...insight, ...updates } : insight))
+    );
+  };
+
+  const onCategoryChange = async (insightId: string, newCategory: TInsight["category"]) => {
+    updateLocalInsight(insightId, { category: newCategory });
   };
 
   return (
     <div className={cn("mt-2")}>
       <Tabs defaultValue="all" onValueChange={handleFilterSelect}>
         <TabsList className={cn("ml-2")}>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="complaint">Complaint</TabsTrigger>
-          <TabsTrigger value="featureRequest">Feature Request</TabsTrigger>
-          <TabsTrigger value="praise">Praise</TabsTrigger>
-          <TabsTrigger value="other">Other</TabsTrigger>
+          <TabsTrigger value="all">{t("environments.experience.all")}</TabsTrigger>
+          <TabsTrigger value="complaint">{t("environments.experience.complaint")}</TabsTrigger>
+          <TabsTrigger value="featureRequest">{t("environments.experience.feature_request")}</TabsTrigger>
+          <TabsTrigger value="praise">{t("environments.experience.praise")}</TabsTrigger>
+          <TabsTrigger value="other">{t("common.other")}</TabsTrigger>
         </TabsList>
         <TabsContent value={activeTab}>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Category</TableHead>
+                <TableHead>{t("common.title")}</TableHead>
+                <TableHead>{t("common.description")}</TableHead>
+                <TableHead>{t("environments.experience.category")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isFetching ? null : insights.length === 0 ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">
-                      No insights found. Collect more survey responses or enable insights for your existing
-                      surveys to get started.
-                    </p>
+                    <p className="text-slate-500">{t("environments.experience.no_insights_found")}</p>
                   </TableCell>
                 </TableRow>
               ) : localInsights.length === 0 ? (
                 <TableRow className="pointer-events-none">
                   <TableCell colSpan={4} className="py-8 text-center">
-                    <p className="text-slate-500">No insights found for this filter.</p>
+                    <p className="text-slate-500">
+                      {t("environments.experience.no_insights_for_this_filter")}
+                    </p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -132,15 +150,11 @@ export const InsightView = ({
                       {insight.description}
                     </TableCell>
                     <TableCell>
-                      {insight.category === "complaint" ? (
-                        <Badge text="Complaint" type="error" size="tiny" />
-                      ) : insight.category === "featureRequest" ? (
-                        <Badge text="Feature Request" type="warning" size="tiny" />
-                      ) : insight.category === "praise" ? (
-                        <Badge text="Praise" type="success" size="tiny" />
-                      ) : insight.category === "other" ? (
-                        <Badge text="Other" type="gray" size="tiny" />
-                      ) : null}
+                      <CategoryBadge
+                        category={insight.category}
+                        insightId={insight.id}
+                        onCategoryChange={onCategoryChange}
+                      />
                     </TableCell>
                   </TableRow>
                 ))
@@ -153,7 +167,7 @@ export const InsightView = ({
       {visibleInsights < localInsights.length && (
         <div className="flex justify-center py-4">
           <Button onClick={handleLoadMore} variant="secondary" size="sm">
-            Load more
+            {t("common.load_more")}
           </Button>
         </div>
       )}
@@ -167,6 +181,7 @@ export const InsightView = ({
         handleFeedback={handleFeedback}
         documentsFilter={documentsFilter}
         documentsPerPage={documentsPerPage}
+        locale={locale}
       />
     </div>
   );

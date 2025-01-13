@@ -16,7 +16,7 @@ test.describe("Onboarding Flow Test", async () => {
     // await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
     await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
-    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+    await page.locator("#form-next-button").click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
     await expect(page.getByText(productName)).toBeVisible();
@@ -33,7 +33,8 @@ test.describe("Onboarding Flow Test", async () => {
     // await page.getByRole("button", { name: "B2B and B2C E-Commerce" }).click();
     await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
-    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+    await page.locator("#form-next-button").click();
+
     await page.getByRole("button", { name: "I don't know how to do it" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/connect\/invite/);
     await page.getByRole("button", { name: "Not now" }).click();
@@ -53,7 +54,8 @@ test.describe("CX Onboarding", async () => {
 
     await page.getByPlaceholder("e.g. Formbricks").click();
     await page.getByPlaceholder("e.g. Formbricks").fill(productName);
-    await page.locator("form").filter({ hasText: "Brand colorMatch the main" }).getByRole("button").click();
+    await page.locator("#form-next-button").click();
+
     await page.getByRole("button", { name: "NPS Implement proven best" }).click();
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx$/);

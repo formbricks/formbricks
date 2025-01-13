@@ -1,17 +1,18 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/setup/organization/[organizationId]/invite/actions";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { TInviteMembersFormSchema, ZInviteMembersFormSchema } from "@formbricks/types/invites";
-import { Alert, AlertDescription, AlertTitle } from "@formbricks/ui/components/Alert";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormProvider } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
 
 interface InviteMembersProps {
   IS_SMTP_CONFIGURED: boolean;
@@ -19,6 +20,7 @@ interface InviteMembersProps {
 }
 
 export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMembersProps) => {
+  const t = useTranslations();
   const [membersCount, setMembersCount] = useState(1);
   const router = useRouter();
 
@@ -40,11 +42,11 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
         if (!email) continue;
         await inviteOrganizationMemberAction({ email, organizationId });
         if (IS_SMTP_CONFIGURED) {
-          toast.success(`Invitation sent to ${email}!`);
+          toast.success(`${t("setup.invite.invitation_sent_to")} ${email}!`);
         }
       } catch (error) {
         console.error("Failed to invite:", email, error);
-        toast.error(`Failed to invite ${email}.`);
+        toast.error(`${t("setup.invite.failed_to_invite")} ${email}.`);
       }
     }
 
@@ -59,17 +61,14 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
     <FormProvider {...form}>
       {!IS_SMTP_CONFIGURED && (
         <Alert variant="warning">
-          <AlertTitle>SMTP not configured</AlertTitle>
-          <AlertDescription>
-            Invitations cannot be sent at this time because the email service is not configured. You can copy
-            the invite link in the organization settings later.
-          </AlertDescription>
+          <AlertTitle>{t("setup.invite.smtp_not_configured")}</AlertTitle>
+          <AlertDescription>{t("setup.invite.smtp_not_configured_description")}</AlertDescription>
         </Alert>
       )}
       <form onSubmit={form.handleSubmit(inviteTeamMembers)} className="space-y-4">
         <div className="flex flex-col items-center space-y-4">
-          <h2 className="text-2xl font-medium">Invite your Organization members</h2>
-          <p>Life&apos;s no fun alone.</p>
+          <h2 className="text-2xl font-medium">{t("setup.invite.invite_your_organization_members")}</h2>
+          <p>{t("setup.invite.life_s_no_fun_alone")}</p>
 
           {Array.from({ length: membersCount }).map((_, index) => (
             <FormField
@@ -101,7 +100,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
             onClick={() => setMembersCount((count) => count + 1)}
             type="button"
             StartIcon={PlusIcon}>
-            Add another member
+            {t("setup.invite.add_another_member")}
           </Button>
 
           <hr className="my-6 w-full border-slate-200" />
@@ -112,10 +111,10 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
               type="submit"
               loading={isSubmitting}
               disabled={isSubmitting}>
-              Continue
+              {t("setup.invite.continue")}
             </Button>
             <Button type="button" variant="minimal" className="flex w-80 justify-center" onClick={handleSkip}>
-              Skip
+              {t("setup.invite.skip")}
             </Button>
           </div>
         </div>

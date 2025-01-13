@@ -1,23 +1,29 @@
 "use server";
 
-import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { sendInviteMemberEmail } from "@formbricks/email";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { INVITE_DISABLED } from "@formbricks/lib/constants";
-import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
-import { createInviteToken } from "@formbricks/lib/jwt";
 import {
   deleteMembership,
-  getMembershipByUserIdOrganizationId,
   getMembershipsByUserId,
-} from "@formbricks/lib/membership/service";
-import { deleteOrganization, updateOrganization } from "@formbricks/lib/organization/service";
-import { getOrganizationIdFromInviteId } from "@formbricks/lib/organization/utils";
+} from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/lib/membership";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { sendInviteMemberEmail } from "@/modules/email";
+import { OrganizationRole } from "@prisma/client";
+import { z } from "zod";
+import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
+import { createInviteToken } from "@formbricks/lib/jwt";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import {
+  deleteOrganization,
+  getOrganization,
+  updateOrganization,
+} from "@formbricks/lib/organization/service";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { ZMembershipRole } from "@formbricks/types/memberships";
+import { ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZOrganizationUpdateInput } from "@formbricks/types/organizations";
 
 const ZUpdateOrganizationNameAction = z.object({
@@ -28,30 +34,17 @@ const ZUpdateOrganizationNameAction = z.object({
 export const updateOrganizationNameAction = authenticatedActionClient
   .schema(ZUpdateOrganizationNameAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      schema: ZOrganizationUpdateInput.pick({ name: true }),
-      data: parsedInput.data,
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "update"],
-    });
-    return await updateOrganization(parsedInput.organizationId, parsedInput.data);
-  });
-
-const ZUpdateOrganizationAIEnabledAction = z.object({
-  organizationId: ZId,
-  data: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
-});
-
-export const updateOrganizationAIEnabledAction = authenticatedActionClient
-  .schema(ZUpdateOrganizationAIEnabledAction)
-  .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      schema: ZOrganizationUpdateInput.pick({ isAIEnabled: true }),
-      data: parsedInput.data,
-      userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
-      rules: ["organization", "update"],
+      access: [
+        {
+          type: "organization",
+          schema: ZOrganizationUpdateInput.pick({ name: true }),
+          data: parsedInput.data,
+          roles: ["owner"],
+        },
+      ],
     });
 
     return await updateOrganization(parsedInput.organizationId, parsedInput.data);
@@ -65,10 +58,15 @@ const ZDeleteInviteAction = z.object({
 export const deleteInviteAction = authenticatedActionClient
   .schema(ZDeleteInviteAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
     return await deleteInvite(parsedInput.inviteId);
   });
@@ -81,15 +79,33 @@ const ZDeleteMembershipAction = z.object({
 export const deleteMembershipAction = authenticatedActionClient
   .schema(ZDeleteMembershipAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["membership", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     if (parsedInput.userId === ctx.user.id) {
       throw new AuthenticationError("You cannot delete yourself from the organization");
     }
+
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+
+    if (!membership) {
+      throw new AuthenticationError("Not a member of this organization");
+    }
+
+    const memberships = await getMembershipsByUserId(ctx.user.id);
+    const isLastOwner = memberships?.filter((m) => m.role === "owner").length === 1;
+    if (membership.role === "owner" && isLastOwner) {
+      throw new ValidationError("You cannot delete the last owner of the organization");
+    }
+
     return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
   });
 
@@ -100,10 +116,15 @@ const ZLeaveOrganizationAction = z.object({
 export const leaveOrganizationAction = authenticatedActionClient
   .schema(ZLeaveOrganizationAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "billing", "member"],
+        },
+      ],
     });
 
     const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
@@ -112,8 +133,18 @@ export const leaveOrganizationAction = authenticatedActionClient
       throw new AuthenticationError("Not a member of this organization");
     }
 
-    if (membership.role === "owner") {
-      throw new ValidationError("You cannot leave a organization you own");
+    const { isOwner } = getAccessFlags(membership.role);
+
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+    if (isOwner) {
+      throw new OperationNotAllowedError("You cannot leave an organization you own");
+    }
+
+    if (!isMultiOrgEnabled) {
+      throw new OperationNotAllowedError(
+        "You cannot leave the organization because you are the only owner and organization deletion is disabled"
+      );
     }
 
     const memberships = await getMembershipsByUserId(ctx.user.id);
@@ -131,10 +162,15 @@ const ZCreateInviteTokenAction = z.object({
 export const createInviteTokenAction = authenticatedActionClient
   .schema(ZCreateInviteTokenAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      rules: ["invite", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -160,16 +196,21 @@ export const resendInviteAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    const inviteOrganizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
+    if (inviteOrganizationId !== parsedInput.organizationId) {
+      throw new ValidationError("Invite does not belong to the organization");
+    }
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "update"],
-    });
-
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromInviteId(parsedInput.inviteId),
-      rules: ["invite", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
 
     const invite = await getInvite(parsedInput.inviteId);
@@ -179,7 +220,9 @@ export const resendInviteAction = authenticatedActionClient
       parsedInput.inviteId,
       updatedInvite.email,
       invite?.creator.name ?? "",
-      updatedInvite.name ?? ""
+      updatedInvite.name ?? "",
+      undefined,
+      ctx.user.locale
     );
   });
 
@@ -187,7 +230,7 @@ const ZInviteUserAction = z.object({
   organizationId: ZId,
   email: z.string(),
   name: z.string(),
-  role: ZMembershipRole,
+  role: ZOrganizationRole,
 });
 
 export const inviteUserAction = authenticatedActionClient
@@ -197,11 +240,33 @@ export const inviteUserAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    await checkAuthorization({
+    if (!IS_FORMBRICKS_CLOUD && parsedInput.role === OrganizationRole.billing) {
+      throw new ValidationError("Billing role is not allowed");
+    }
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["invite", "create"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
+
+    if (parsedInput.role !== "owner") {
+      const organization = await getOrganization(parsedInput.organizationId);
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+      if (!canDoRoleManagement) {
+        throw new OperationNotAllowedError("Role management is disabled");
+      }
+    }
 
     const invite = await inviteUser({
       organizationId: parsedInput.organizationId,
@@ -210,6 +275,7 @@ export const inviteUserAction = authenticatedActionClient
         name: parsedInput.name,
         role: parsedInput.role,
       },
+      currentUserId: ctx.user.id,
     });
 
     if (invite) {
@@ -218,7 +284,9 @@ export const inviteUserAction = authenticatedActionClient
         parsedInput.email,
         ctx.user.name ?? "",
         parsedInput.name ?? "",
-        false
+        false,
+        undefined,
+        ctx.user.locale
       );
     }
 
@@ -235,10 +303,15 @@ export const deleteOrganizationAction = authenticatedActionClient
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
     if (!isMultiOrgEnabled) throw new OperationNotAllowedError("Organization deletion disabled");
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["organization", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner"],
+        },
+      ],
     });
 
     return await deleteOrganization(parsedInput.organizationId);

@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import type { JSX } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
 import Formbricks, { track } from "@formbricks/react-native";
 

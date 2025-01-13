@@ -1,8 +1,8 @@
 import "server-only";
-import { prisma } from "@formbricks/database";
 import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@formbricks/lib/survey/utils";
+import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
+import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -42,17 +42,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
 > => {
   validateInputs([surveyId, ZId]);
   try {
-    const survey = await prisma.survey.findUnique({
-      where: {
-        id: surveyId,
-      },
-      select: {
-        id: true,
-        name: true,
-        environmentId: true,
-        questions: true,
-      },
-    });
+    const survey = await getSurvey(surveyId);
 
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
@@ -72,48 +62,19 @@ export const generateInsightsEnabledForSurveyQuestions = async (
       return { success: false };
     }
 
-    const insightsEnabledValues = await Promise.all(
-      openTextQuestions.map(async (question) => {
-        const insightsEnabled = await getInsightsEnabled(question);
+    const updatedSurvey = await updateSurvey(survey);
 
-        return { id: question.id, insightsEnabled };
-      })
+    if (!updatedSurvey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    const doesSurveyHasInsightsEnabledQuestion = updatedSurvey.questions.some(
+      (question) => question.type === "openText" && question.insightsEnabled === true
     );
-
-    const insightsEnabledQuestionIds = insightsEnabledValues
-      .filter((value) => value.insightsEnabled)
-      .map((value) => value.id);
-
-    const updatedQuestions = survey.questions.map((question) => {
-      if (question.type === "openText") {
-        const areInsightsEnabled = insightsEnabledQuestionIds.includes(question.id);
-        return {
-          ...question,
-          insightsEnabled: areInsightsEnabled,
-        };
-      }
-
-      return question;
-    });
-
-    const updatedSurvey = await prisma.survey.update({
-      where: {
-        id: survey.id,
-      },
-      data: {
-        questions: updatedQuestions,
-      },
-      select: {
-        id: true,
-        name: true,
-        environmentId: true,
-        questions: true,
-      },
-    });
 
     surveyCache.revalidate({ id: surveyId, environmentId: survey.environmentId });
 
-    if (insightsEnabledQuestionIds.length > 0) {
+    if (doesSurveyHasInsightsEnabledQuestion) {
       return { success: true, survey: updatedSurvey };
     }
 

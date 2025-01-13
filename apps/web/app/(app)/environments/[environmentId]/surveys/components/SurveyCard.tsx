@@ -3,42 +3,46 @@
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { SurveyTypeIndicator } from "@/app/(app)/environments/[environmentId]/surveys/components/SurveyTypeIndicator";
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
-import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
+import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./SurveyDropdownMenu";
 
 interface SurveyCardProps {
   survey: TSurvey;
   environment: TEnvironment;
   otherEnvironment: TEnvironment;
-  isViewer: boolean;
+  isReadOnly: boolean;
   WEBAPP_URL: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
+  locale: TUserLocale;
 }
 export const SurveyCard = ({
   survey,
   environment,
   otherEnvironment,
-  isViewer,
+  isReadOnly,
   WEBAPP_URL,
   deleteSurvey,
   duplicateSurvey,
+  locale,
 }: SurveyCardProps) => {
-  const isSurveyCreationDeletionDisabled = isViewer;
-
+  const isSurveyCreationDeletionDisabled = isReadOnly;
+  const t = useTranslations();
   const surveyStatusLabel = useMemo(() => {
-    if (survey.status === "inProgress") return "In Progress";
-    else if (survey.status === "scheduled") return "Scheduled";
-    else if (survey.status === "completed") return "Completed";
-    else if (survey.status === "draft") return "Draft";
-    else if (survey.status === "paused") return "Paused";
+    if (survey.status === "inProgress") return t("common.in_progress");
+    else if (survey.status === "scheduled") return t("common.scheduled");
+    else if (survey.status === "completed") return t("common.completed");
+    else if (survey.status === "draft") return t("common.draft");
+    else if (survey.status === "paused") return t("common.paused");
   }, [survey]);
 
   const [singleUseId, setSingleUseId] = useState<string | undefined>();
@@ -95,7 +99,7 @@ export const SurveyCard = ({
           {convertDateString(survey.createdAt.toString())}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {timeSince(survey.updatedAt.toString())}
+          {timeSince(survey.updatedAt.toString(), locale)}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {survey.creator ? survey.creator.name : "-"}

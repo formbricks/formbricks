@@ -1,19 +1,20 @@
 "use client";
 
+import { createSegmentAction } from "@/modules/ee/advanced-targeting/lib/actions";
+import { BasicAddFilterModal } from "@/modules/ui/components/basic-add-filter-modal";
+import { BasicSegmentEditor } from "@/modules/ui/components/basic-segment-editor";
+import { Button } from "@/modules/ui/components/button";
+import { Input } from "@/modules/ui/components/input";
+import { Modal } from "@/modules/ui/components/modal";
+import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { createSegmentAction } from "@formbricks/ee/advanced-targeting/lib/actions";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TBaseFilter, TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { BasicAddFilterModal } from "@formbricks/ui/components/BasicAddFilterModal";
-import { BasicSegmentEditor } from "@formbricks/ui/components/BasicSegmentEditor";
-import { Button } from "@formbricks/ui/components/Button";
-import { Input } from "@formbricks/ui/components/Input";
-import { Modal } from "@formbricks/ui/components/Modal";
-import { UpgradePlanNotice } from "@formbricks/ui/components/UpgradePlanNotice";
 
 type TCreateSegmentModalProps = {
   environmentId: string;
@@ -26,6 +27,7 @@ export const BasicCreateSegmentModal = ({
   attributeClasses,
   isFormbricksCloud,
 }: TCreateSegmentModalProps) => {
+  const t = useTranslations();
   const router = useRouter();
   const initialSegmentState = {
     title: "",
@@ -80,14 +82,14 @@ export const BasicCreateSegmentModal = ({
       });
 
       setIsCreatingSegment(false);
-      toast.success("Segment created successfully!");
+      toast.success(t("environments.segments.segment_created_successfully"));
     } catch (err: any) {
       // parse the segment filters to check if they are valid
       const parsedFilters = ZSegmentFilters.safeParse(segment.filters);
       if (!parsedFilters.success) {
-        toast.error("Invalid filters. Please check the filters and try again.");
+        toast.error(t("environments.segments.invalid_filters_please_check_the_filters_and_try_again"));
       } else {
-        toast.error("Something went wrong. Please try again.");
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
       setIsCreatingSegment(false);
       return;
@@ -101,7 +103,7 @@ export const BasicCreateSegmentModal = ({
   const isSaveDisabled = useMemo(() => {
     // check if title is empty
 
-    if (!segment.title) {
+    if (!segment.title.trim()) {
       return true;
     }
 
@@ -117,7 +119,7 @@ export const BasicCreateSegmentModal = ({
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
-        Create segment
+        {t("common.create_segment")}
       </Button>
 
       <Modal
@@ -136,9 +138,11 @@ export const BasicCreateSegmentModal = ({
                   <UsersIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-medium">Create Segment</h3>
+                  <h3 className="text-base font-medium">{t("common.create_segment")}</h3>
                   <p className="text-sm text-slate-600">
-                    Segments help you target the users with the same characteristics easily.
+                    {t(
+                      "environments.segments.segments_help_you_target_users_with_same_characteristics_easily"
+                    )}
                   </p>
                 </div>
               </div>
@@ -148,10 +152,10 @@ export const BasicCreateSegmentModal = ({
           <div className="flex flex-col overflow-auto rounded-lg bg-white p-6">
             <div className="flex w-full items-center gap-4">
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Title</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.title")}</label>
                 <div className="relative flex flex-col gap-1">
                   <Input
-                    placeholder="Ex. Power Users"
+                    placeholder={t("environments.segments.ex_power_users")}
                     onChange={(e) => {
                       setSegment((prev) => ({
                         ...prev,
@@ -164,9 +168,9 @@ export const BasicCreateSegmentModal = ({
               </div>
 
               <div className="flex w-1/2 flex-col gap-2">
-                <label className="text-sm font-medium text-slate-900">Description</label>
+                <label className="text-sm font-medium text-slate-900">{t("common.description")}</label>
                 <Input
-                  placeholder="Ex. Fully activated recurring users"
+                  placeholder={t("environments.segments.ex_fully_activated_recurring_users")}
                   onChange={(e) => {
                     setSegment((prev) => ({
                       ...prev,
@@ -178,12 +182,14 @@ export const BasicCreateSegmentModal = ({
               </div>
             </div>
 
-            <label className="my-4 text-sm font-medium text-slate-900">Targeting</label>
+            <label className="my-4 text-sm font-medium text-slate-900">{t("common.targeting")}</label>
             <div className="filter-scrollbar flex w-full flex-col gap-4 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
               {segment?.filters?.length === 0 && (
                 <div className="-mb-2 flex items-center gap-1">
                   <FilterIcon className="h-5 w-5 text-slate-700" />
-                  <h3 className="text-sm font-medium text-slate-700">Add your first filter to get started</h3>
+                  <h3 className="text-sm font-medium text-slate-700">
+                    {t("environments.segments.add_your_first_filter_to_get_started")}
+                  </h3>
                 </div>
               )}
 
@@ -200,7 +206,7 @@ export const BasicCreateSegmentModal = ({
                 variant="secondary"
                 size="sm"
                 onClick={() => setAddFilterModalOpen(true)}>
-                Add Filter
+                {t("common.add_filter")}
               </Button>
 
               <BasicAddFilterModal
@@ -215,14 +221,14 @@ export const BasicCreateSegmentModal = ({
 
             {isFormbricksCloud ? (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="upgrade your plan."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("environments.segments.upgrade_your_plan")}
                 url={`/environments/${environmentId}/settings/billing`}
               />
             ) : (
               <UpgradePlanNotice
-                message="For advanced targeting, please"
-                textForUrl="request an Enterprise License."
+                message={t("environments.segments.for_advanced_targeting_please")}
+                textForUrl={t("common.request_an_enterprise_license")}
                 url={`/environments/${environmentId}/settings/enterprise`}
               />
             )}
@@ -235,7 +241,7 @@ export const BasicCreateSegmentModal = ({
                   onClick={() => {
                     handleResetState();
                   }}>
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
@@ -244,7 +250,7 @@ export const BasicCreateSegmentModal = ({
                   onClick={() => {
                     handleCreateSegment();
                   }}>
-                  Create segment
+                  {t("common.create_segment")}
                 </Button>
               </div>
             </div>

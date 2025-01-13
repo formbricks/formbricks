@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TProduct, ZProduct } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
-import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@formbricks/ui/components/Form";
-import { Input } from "@formbricks/ui/components/Input";
+import { Button } from "@/modules/ui/components/button";
+import { FormControl, FormError, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
+import { Input } from "@/modules/ui/components/input";
 import { updateProductAction } from "../../actions";
 
 type EditRedirectsProps = {

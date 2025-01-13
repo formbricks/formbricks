@@ -1,8 +1,8 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization } from "@formbricks/lib/organization/service";

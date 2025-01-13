@@ -112,6 +112,7 @@ model Response {
   createdAt        DateTime          @default(now()) @map(name: "created_at")
   updatedAt        DateTime          @updatedAt @map(name: "updated_at")
   finished         Boolean           @default(false)
+  endingId         String?
   survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId         String
   person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
@@ -337,6 +338,7 @@ model Survey {
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   documents                       Document[]
+  followUps                       SurveyFollowUp[]
   reward                          Float            @default(0)
   countries                       Country[]        @relation("SurveyCountries")
   tags                            Tag[]
@@ -345,6 +347,21 @@ model Survey {
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
+}
+
+model SurveyFollowUp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  name      String
+  /// [SurveyFollowUpTrigger]
+  /// @zod.custom(imports.ZSurveyFollowUpTrigger)
+  trigger   Json
+  /// [SurveyFollowUpAction]
+  /// @zod.custom(imports.ZSurveyFollowUpAction)
+  action    Json
 }
 
 model Country {
@@ -466,6 +483,7 @@ model Product {
   /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                         Json?
+  productTeams         ProductTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -478,11 +496,19 @@ model Organization {
   name        String
   memberships Membership[]
   products    Product[]
-  /// @zod.custom(imports.ZTeamBilling)
-  /// [TeamBilling]
+  /// @zod.custom(imports.ZOrganizationBilling)
+  /// [OrganizationBilling]
   billing     Json
   invites     Invite[]
   isAIEnabled Boolean      @default(false)
+  teams       Team[]
+}
+
+enum OrganizationRole {
+  owner
+  manager
+  member
+  billing
 }
 
 enum MembershipRole {
@@ -494,12 +520,13 @@ enum MembershipRole {
 }
 
 model Membership {
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  accepted       Boolean        @default(false)
-  role           MembershipRole
+  accepted       Boolean          @default(false)
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
   @@index([userId])
@@ -507,19 +534,19 @@ model Membership {
 }
 
 model Invite {
-  id             String         @id @default(uuid())
+  id             String           @id @default(uuid())
   email          String
   name           String?
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  creator        User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
   creatorId      String
-  acceptor       User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
   acceptorId     String?
-  accepted       Boolean        @default(false)
-  createdAt      DateTime       @default(now())
+  createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  role           MembershipRole @default(admin)
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
 
   @@index([email, organizationId])
   @@index([organizationId])
@@ -593,12 +620,13 @@ enum Intention {
 }
 
 model User {
-  id                        String           @id @default(cuid())
-  createdAt                 DateTime         @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
-  name                      String
-  email                     String           @unique
-  emailVerified             DateTime?        @map(name: "email_verified")
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  name          String
+  email         String    @unique
+  emailVerified DateTime? @map(name: "email_verified")
+
   imageUrl                  String?
   twoFactorSecret           String?
   twoFactorEnabled          Boolean          @default(false)
@@ -618,7 +646,11 @@ model User {
   /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  /// @zod.custom(imports.ZUserLocale)
+  /// [Locale]
+  locale                    String           @default("en-US")
   surveys                   Survey[]
+  teamUsers                 TeamUser[]
 
   @@index([email])
 }
@@ -729,4 +761,54 @@ model Document {
 
   @@unique([responseId, questionId])
   @@index([createdAt])
+}
+
+model Team {
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now()) @map(name: "created_at")
+  updatedAt      DateTime      @updatedAt @map(name: "updated_at")
+  name           String
+  organizationId String        @map(name: "organization_id")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers      TeamUser[]
+  productTeams   ProductTeam[]
+
+  @@unique([organizationId, name])
+}
+
+enum TeamUserRole {
+  admin
+  contributor
+}
+
+model TeamUser {
+  createdAt DateTime     @default(now()) @map(name: "created_at")
+  updatedAt DateTime     @updatedAt @map(name: "updated_at")
+  teamId    String       @map(name: "team_id")
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String       @map(name: "user_id")
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamUserRole
+
+  @@id([teamId, userId])
+  @@index([userId])
+}
+
+enum ProductTeamPermission {
+  read
+  readWrite
+  manage
+}
+
+model ProductTeam {
+  createdAt  DateTime              @default(now()) @map(name: "created_at")
+  updatedAt  DateTime              @updatedAt @map(name: "updated_at")
+  productId  String                @map(name: "product_id")
+  product    Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  teamId     String                @map(name: "team_id")
+  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permission ProductTeamPermission @default(read)
+
+  @@id([productId, teamId])
+  @@index([teamId])
 }

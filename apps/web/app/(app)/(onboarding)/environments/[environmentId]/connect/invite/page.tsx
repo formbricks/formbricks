@@ -1,20 +1,23 @@
 import { InviteOrganizationMember } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/InviteOrganizationMember";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { Button } from "@/modules/ui/components/button";
+import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { Header } from "@formbricks/ui/components/Header";
 
 interface InvitePageProps {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
-const Page = async ({ params }: InvitePageProps) => {
+const Page = async (props: InvitePageProps) => {
+  const params = await props.params;
+  const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -25,15 +28,15 @@ const Page = async ({ params }: InvitePageProps) => {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership || (membership.role !== "owner" && membership.role !== "admin")) {
+  if (!membership || (membership.role !== "owner" && membership.role !== "manager")) {
     return notFound();
   }
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
       <Header
-        title="Who is your favorite engineer?"
-        subtitle="Invite your tech-savvy co-worker to help with the setup."
+        title={t("environments.connect.invite.headline")}
+        subtitle={t("environments.connect.invite.subtitle")}
       />
       <div className="space-y-4 text-center">
         <p className="text-4xl font-medium text-slate-800"></p>

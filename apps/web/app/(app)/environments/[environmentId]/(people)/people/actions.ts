@@ -1,11 +1,15 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import {
+  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromPersonId,
+  getProductIdFromEnvironmentId,
+  getProductIdFromPersonId,
+} from "@/lib/utils/helper";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getAttributes } from "@formbricks/lib/attribute/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
-import { getPeople } from "@formbricks/lib/person/service";
+import { deletePerson, getPeople } from "@formbricks/lib/person/service";
 import { ZId } from "@formbricks/types/common";
 
 const ZGetPersonsAction = z.object({
@@ -17,28 +21,47 @@ const ZGetPersonsAction = z.object({
 export const getPersonsAction = authenticatedActionClient
   .schema(ZGetPersonsAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "read",
+          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
     });
 
     return getPeople(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
   });
 
-const ZGetPersonAttributesAction = z.object({
-  environmentId: ZId,
+const ZPersonDeleteAction = z.object({
   personId: ZId,
 });
 
-export const getPersonAttributesAction = authenticatedActionClient
-  .schema(ZGetPersonAttributesAction)
+export const deletePersonAction = authenticatedActionClient
+  .schema(ZPersonDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
+      organizationId: await getOrganizationIdFromPersonId(parsedInput.personId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          minPermission: "readWrite",
+          productId: await getProductIdFromPersonId(parsedInput.personId),
+        },
+      ],
     });
 
-    return getAttributes(parsedInput.personId);
+    return await deletePerson(parsedInput.personId);
   });

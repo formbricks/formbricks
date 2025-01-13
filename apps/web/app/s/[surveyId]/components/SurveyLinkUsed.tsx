@@ -1,5 +1,8 @@
+"use client";
+
 import OpinodoLogo from "@/images/opinodo-logo.png";
 import { CheckCircle2Icon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveySingleUse } from "@formbricks/types/surveys/types";
@@ -8,9 +11,10 @@ type SurveyLinkUsedProps = {
   singleUseMessage: TSurveySingleUse | null;
 };
 
-export const SurveyLinkUsed = ({ singleUseMessage }: SurveyLinkUsedProps) => {
-  const defaultHeading = "The survey has already been answered.";
-  const defaultSubheading = "You can only use this link once.";
+export const SurveyLinkUsed = async ({ singleUseMessage }: SurveyLinkUsedProps) => {
+  const t = useTranslations();
+  const defaultHeading = t("s.survey_already_answered_heading");
+  const defaultSubheading = t("s.survey_already_answered_subheading");
   return (
     <div className="flex min-h-screen flex-col items-center justify-between bg-gradient-to-tr from-slate-200 to-slate-50 py-8 text-center">
       <div></div>

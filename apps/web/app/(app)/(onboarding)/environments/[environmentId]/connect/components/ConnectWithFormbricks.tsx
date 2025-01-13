@@ -1,12 +1,13 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
@@ -22,8 +23,8 @@ export const ConnectWithFormbricks = ({
   widgetSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
+  const t = useTranslations();
   const router = useRouter();
-
   const handleFinishOnboarding = async () => {
     if (!widgetSetupCompleted) {
       router.push(`/environments/${environment.id}/connect/invite`);
@@ -64,8 +65,10 @@ export const ConnectWithFormbricks = ({
           )}>
           {widgetSetupCompleted ? (
             <div>
-              <p className="text-3xl">Congrats!</p>
-              <p className="pt-4 text-sm font-medium text-slate-600">Well done! We&apos;re connected.</p>
+              <p className="text-3xl">{t("environments.connect.congrats")}</p>
+              <p className="pt-4 text-sm font-medium text-slate-600">
+                {t("environments.connect.connection_successful_message")}
+              </p>
             </div>
           ) : (
             <div className="flex animate-pulse flex-col items-center space-y-4">
@@ -73,7 +76,9 @@ export const ConnectWithFormbricks = ({
                 <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
                 <span className="relative inline-flex h-10 w-10 rounded-full bg-slate-500"></span>
               </span>
-              <p className="pt-4 text-sm font-medium text-slate-600">Waiting for your signal...</p>
+              <p className="pt-4 text-sm font-medium text-slate-600">
+                {t("environments.connect.waiting_for_your_signal")}
+              </p>
             </div>
           )}
         </div>
@@ -83,7 +88,9 @@ export const ConnectWithFormbricks = ({
         variant={widgetSetupCompleted ? "primary" : "minimal"}
         onClick={handleFinishOnboarding}
         EndIcon={ArrowRight}>
-        {widgetSetupCompleted ? "Finish Onboarding" : "I don't know how to do it"}
+        {widgetSetupCompleted
+          ? t("environments.connect.finish_onboarding")
+          : t("environments.connect.i_dont_know_how_to_do_it")}
       </Button>
     </div>
   );

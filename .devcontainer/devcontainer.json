@@ -1,29 +1,6 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/javascript-node-postgres
-// Update the VARIANT arg in docker-compose.yml to pick a Node.js version
 {
-  "name": "Node.js & PostgreSQL",
-  "dockerComposeFile": "docker-compose.yml",
-  "service": "app",
-  "workspaceFolder": "/workspace",
-
-  // Configure tool-specific properties.
-  "customizations": {
-    // Configure properties specific to VS Code.
-    "vscode": {
-      // Add the IDs of extensions you want installed when the container is created.
-      "extensions": ["dbaeumer.vscode-eslint"]
-    }
-  },
-
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // This can be used to network with other containers or with the host.
-  "forwardPorts": [3000, 5432, 8025],
-
-  // Use 'postCreateCommand' to run commands after the container is created.
-  "postCreateCommand": "cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^NEXTAUTH_SECRET=/c\\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env && sed -i '/^CRON_SECRET=/c\\CRON_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev",
-  "postAttachCommand": "pnpm dev --filter=@formbricks/web... --filter=@formbricks/demo...",
-
-  // Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
-  "remoteUser": "node"
+  "features": {},
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "postAttachCommand": "pnpm go",
+  "postCreateCommand": "cp .env.example .env && sed -i '/^ENCRYPTION_KEY=/c\\ENCRYPTION_KEY='$(openssl rand -hex 32) .env && sed -i '/^NEXTAUTH_SECRET=/c\\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env && sed -i '/^CRON_SECRET=/c\\CRON_SECRET='$(openssl rand -hex 32) .env && pnpm install && pnpm db:migrate:dev"
 }

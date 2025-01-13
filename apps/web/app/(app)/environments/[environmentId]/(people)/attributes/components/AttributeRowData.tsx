@@ -1,8 +1,8 @@
+import { Badge } from "@/modules/ui/components/badge";
 import { TagIcon } from "lucide-react";
-import { timeSinceConditionally } from "@formbricks/lib/time";
-import { Badge } from "@formbricks/ui/components/Badge";
+import { timeSince } from "@formbricks/lib/time";
 
-export const AttributeClassDataRow = ({ attributeClass }) => {
+export const AttributeClassDataRow = ({ attributeClass, locale }) => {
   return (
     <div className="m-2 grid h-16 cursor-pointer grid-cols-5 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-5 flex items-center pl-6 text-sm sm:col-span-3">
@@ -21,10 +21,10 @@ export const AttributeClassDataRow = ({ attributeClass }) => {
       </div>
 
       <div className="my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 md:block">
-        <div className="text-slate-900">{timeSinceConditionally(attributeClass.createdAt.toString())}</div>
+        <div className="text-slate-900">{timeSince(attributeClass.createdAt.toString(), locale)}</div>
       </div>
       <div className="my-auto hidden whitespace-nowrap text-center text-sm text-slate-500 md:block">
-        <div className="text-slate-900">{timeSinceConditionally(attributeClass.updatedAt.toString())}</div>
+        <div className="text-slate-900">{timeSince(attributeClass.updatedAt.toString(), locale)}</div>
       </div>
     </div>
   );

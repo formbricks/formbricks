@@ -3,9 +3,9 @@ import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
 import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
 import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMultiLanguagePermission } from "@formbricks/ee/lib/service";
 import { updateAttributes } from "@formbricks/lib/attribute/service";
 import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -14,27 +14,30 @@ import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service"
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
-  params: {
+  params: Promise<{
     surveyId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     suId?: string;
     userId?: string;
     verify?: string;
     lang?: string;
     embed?: string;
+    preview?: string;
     email?: string;
     country?: string;
     language?: string;
-  };
+  }>;
 }
 
-export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise<Metadata> => {
+export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
@@ -43,13 +46,16 @@ export const generateMetadata = async ({ params }: LinkSurveyPageProps): Promise
   return getMetadataForLinkSurvey(params.surveyId);
 };
 
-const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
+const Page = async (props: LinkSurveyPageProps) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const validId = ZId.safeParse(params.surveyId);
   if (!validId.success) {
     notFound();
   }
+  const isPreview = searchParams.preview === "true";
   const survey = await getSurvey(params.surveyId);
-
+  const locale = await findMatchingLocale();
   const suId = searchParams.suId;
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
@@ -65,7 +71,7 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (survey && survey.status !== "inProgress") {
+  if (survey && survey.status !== "inProgress" && !isPreview) {
     return (
       <SurveyInactive
         status={survey.status}
@@ -185,6 +191,8 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
         languageCode={languageCode}
         attributeClasses={attributeClasses}
         isEmbed={isEmbed}
+        locale={locale}
+        isPreview={isPreview}
       />
     );
   }
@@ -206,6 +214,8 @@ const Page = async ({ params, searchParams }: LinkSurveyPageProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      locale={locale}
+      isPreview={isPreview}
     />
   ) : null;
 };

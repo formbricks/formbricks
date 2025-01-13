@@ -1,11 +1,17 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromProductId } from "@/lib/utils/helper";
+import {
+  getRemoveInAppBrandingPermission,
+  getRemoveLinkBrandingPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromProductId } from "@formbricks/lib/organization/utils";
+import { getOrganization } from "@formbricks/lib/organization/service";
 import { updateProduct } from "@formbricks/lib/product/service";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { ZProductUpdateInput } from "@formbricks/types/product";
 
 const ZUpdateProductAction = z.object({
@@ -16,13 +22,50 @@ const ZUpdateProductAction = z.object({
 export const updateProductAction = authenticatedActionClient
   .schema(ZUpdateProductAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
-      schema: ZProductUpdateInput,
-      data: parsedInput.data,
+    const organizationId = await getOrganizationIdFromProductId(parsedInput.productId);
+
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
-      rules: ["product", "update"],
+      organizationId,
+      access: [
+        {
+          schema: ZProductUpdateInput,
+          data: parsedInput.data,
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "productTeam",
+          productId: parsedInput.productId,
+          minPermission: "manage",
+        },
+      ],
     });
+
+    if (
+      parsedInput.data.inAppSurveyBranding !== undefined ||
+      parsedInput.data.linkSurveyBranding !== undefined
+    ) {
+      const organization = await getOrganization(organizationId);
+
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+
+      if (parsedInput.data.inAppSurveyBranding !== undefined) {
+        const canRemoveInAppBranding = getRemoveInAppBrandingPermission(organization);
+        if (!canRemoveInAppBranding) {
+          throw new OperationNotAllowedError("You are not allowed to remove in-app branding");
+        }
+      }
+
+      if (parsedInput.data.linkSurveyBranding !== undefined) {
+        const canRemoveLinkSurveyBranding = getRemoveLinkBrandingPermission(organization);
+        if (!canRemoveLinkSurveyBranding) {
+          throw new OperationNotAllowedError("You are not allowed to remove link survey branding");
+        }
+      }
+    }
 
     return await updateProduct(parsedInput.productId, parsedInput.data);
   });

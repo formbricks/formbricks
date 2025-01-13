@@ -1,14 +1,16 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FilesIcon, TrashIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
+import { cn } from "@formbricks/lib/cn";
 import { timeSince } from "@formbricks/lib/time";
-import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TApiKey } from "@formbricks/types/api-keys";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
+import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./AddApiKeyModal";
 
@@ -17,12 +19,17 @@ export const EditAPIKeys = ({
   environmentType,
   apiKeys,
   environmentId,
+  locale,
+  isReadOnly,
 }: {
   environmentTypeId: string;
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
+  locale: TUserLocale;
+  isReadOnly: boolean;
 }) => {
+  const t = useTranslations();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);
@@ -39,9 +46,9 @@ export const EditAPIKeys = ({
       await deleteApiKeyAction({ id: activeKey.id });
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
-      toast.success("API Key deleted");
+      toast.success(t("environments.product.api-keys.api_key_deleted"));
     } catch (e) {
-      toast.error("Unable to delete API Key");
+      toast.error(t("environments.product.api-keys.unable_to_delete_api_key"));
     } finally {
       setOpenDeleteKeyModal(false);
     }
@@ -55,7 +62,7 @@ export const EditAPIKeys = ({
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
-      toast.success("API key created");
+      toast.success(t("environments.product.api-keys.api_key_created"));
     } else {
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
       toast.error(errorMessage);
@@ -67,11 +74,11 @@ export const EditAPIKeys = ({
   const ApiKeyDisplay = ({ apiKey }) => {
     const copyToClipboard = () => {
       navigator.clipboard.writeText(apiKey);
-      toast.success("API Key copied to clipboard");
+      toast.success(t("environments.product.api-keys.api_key_copied_to_clipboard"));
     };
 
     if (!apiKey) {
-      return <span className="italic">secret</span>;
+      return <span className="italic">{t("environments.product.api-keys.secret")}</span>;
     }
 
     return (
@@ -88,49 +95,60 @@ export const EditAPIKeys = ({
     <div className="space-y-4">
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 sm:col-span-2">Label</div>
-          <div className="col-span-4 hidden sm:col-span-5 sm:block">API Key</div>
-          <div className="col-span-4 sm:col-span-2">Created at</div>
+          <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">
+            {t("environments.product.api-keys.api_key")}
+          </div>
+          <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
           <div></div>
         </div>
         <div className="grid-cols-9">
           {apiKeysLocal && apiKeysLocal.length === 0 ? (
             <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
-              You don&apos;t have any API keys yet
+              {t("environments.product.api-keys.no_api_keys_yet")}
             </div>
           ) : (
             apiKeysLocal &&
             apiKeysLocal.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-10 content-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.apiKey} />
                 </div>
-                <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
-                <div className="col-span-1 text-center">
-                  <button onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
-                    <TrashIcon className="h-5 w-5 text-slate-700 hover:text-slate-500" />
-                  </button>
+                <div className="col-span-4 sm:col-span-2">
+                  {timeSince(apiKey.createdAt.toString(), locale)}
                 </div>
+                {!isReadOnly && (
+                  <div className="col-span-1 text-center">
+                    <Button
+                      size="icon"
+                      variant="minimal"
+                      onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}
+                      StartIcon={TrashIcon}
+                      startIconClassName={cn("h-5 w-5 text-slate-700", isReadOnly && "opacity-50")}
+                    />
+                  </div>
+                )}
               </div>
             ))
           )}
         </div>
       </div>
 
-      <div>
-        <Button
-          size="sm"
-          disabled={environmentId !== environmentTypeId}
-          onClick={() => {
-            setOpenAddAPIKeyModal(true);
-          }}>
-          {`Add ${capitalizeFirstLetter(environmentType)} API Key`}
-        </Button>
-      </div>
-
+      {!isReadOnly && (
+        <div>
+          <Button
+            size="sm"
+            disabled={environmentId !== environmentTypeId}
+            onClick={() => {
+              setOpenAddAPIKeyModal(true);
+            }}>
+            {t("environments.product.api-keys.add_env_api_key", { environmentType })}
+          </Button>
+        </div>
+      )}
       <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}
@@ -139,7 +157,7 @@ export const EditAPIKeys = ({
       <DeleteDialog
         open={isDeleteKeyModalOpen}
         setOpen={setOpenDeleteKeyModal}
-        deleteWhat="API Key"
+        deleteWhat={t("environments.product.api-keys.api_key")}
         onDelete={handleDeleteKey}
       />
     </div>

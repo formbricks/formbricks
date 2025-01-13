@@ -10,7 +10,7 @@ import { validateInputs } from "../utils/validate";
 import { tagCache } from "./cache";
 
 export const getTagsByEnvironmentId = reactCache(
-  (environmentId: string, page?: number): Promise<TTag[]> =>
+  async (environmentId: string, page?: number): Promise<TTag[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -37,7 +37,7 @@ export const getTagsByEnvironmentId = reactCache(
 );
 
 export const getTag = reactCache(
-  (id: string): Promise<TTag | null> =>
+  async (id: string): Promise<TTag | null> =>
     cache(
       async () => {
         validateInputs([id, ZId]);

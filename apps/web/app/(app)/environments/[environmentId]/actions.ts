@@ -1,11 +1,11 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getIsMultiOrgEnabled, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
-import { getIsMultiOrgEnabled } from "@formbricks/ee/lib/service";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { createOrganization } from "@formbricks/lib/organization/service";
+import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { createProduct } from "@formbricks/lib/product/service";
 import { getAllDbCountries } from "@formbricks/lib/survey/service";
 import { updateUser } from "@formbricks/lib/user/service";
@@ -71,13 +71,34 @@ export const createProductAction = authenticatedActionClient
   .action(async ({ parsedInput, ctx }) => {
     const { user } = ctx;
 
-    await checkAuthorization({
-      schema: ZProductUpdateInput,
-      data: parsedInput.data,
+    const organizationId = parsedInput.organizationId;
+
+    await checkAuthorizationUpdated({
       userId: user.id,
       organizationId: parsedInput.organizationId,
-      rules: ["product", "create"],
+      access: [
+        {
+          data: parsedInput.data,
+          schema: ZProductUpdateInput,
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
     });
+
+    if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
+      const organization = await getOrganization(organizationId);
+
+      if (!organization) {
+        throw new Error("Organization not found");
+      }
+
+      const canDoRoleManagement = await getRoleManagementPermission(organization);
+
+      if (!canDoRoleManagement) {
+        throw new OperationNotAllowedError("You do not have permission to manage roles");
+      }
+    }
 
     const product = await createProduct(parsedInput.organizationId, parsedInput.data);
     const updatedNotificationSettings = {

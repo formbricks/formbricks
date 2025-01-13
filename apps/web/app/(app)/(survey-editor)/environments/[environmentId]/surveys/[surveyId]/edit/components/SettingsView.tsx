@@ -1,9 +1,10 @@
 import { SurveyGeneralSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyGeneralSettings";
-import { AdvancedTargetingCard } from "@formbricks/ee/advanced-targeting/components/advanced-targeting-card";
+import { AdvancedTargetingCard } from "@/modules/ee/advanced-targeting/components/advanced-targeting-card";
+import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TMembershipRole } from "@formbricks/types/memberships";
+import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TProduct } from "@formbricks/types/product";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -22,9 +23,10 @@ interface SettingsViewProps {
   attributeClasses: TAttributeClass[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TMembershipRole;
+  membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
+  productPermission: TTeamPermission | null;
   product: TProduct;
   environmentTags: TTag[];
 }
@@ -42,6 +44,7 @@ export const SettingsView = ({
   isFormbricksCloud,
   product,
   environmentTags,
+  productPermission,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -88,6 +91,7 @@ export const SettingsView = ({
         environmentId={environment.id}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
+        productPermission={productPermission}
       />
 
       <ResponseOptionsCard

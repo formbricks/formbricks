@@ -1,6 +1,7 @@
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { getTranslations } from "next-intl/server";
 import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 import { TProduct } from "@formbricks/types/product";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
 interface PersonSecondaryNavigationProps {
   activeId: string;
@@ -14,7 +15,7 @@ export const PersonSecondaryNavigation = async ({
   loading,
 }: PersonSecondaryNavigationProps) => {
   let product: TProduct | null = null;
-
+  const t = await getTranslations();
   if (!loading && environmentId) {
     product = await getProductByEnvironmentId(environmentId);
 
@@ -26,17 +27,17 @@ export const PersonSecondaryNavigation = async ({
   const navigation = [
     {
       id: "people",
-      label: "People",
+      label: t("common.people"),
       href: `/environments/${environmentId}/people`,
     },
     {
       id: "segments",
-      label: "Segments",
+      label: t("common.segments"),
       href: `/environments/${environmentId}/segments`,
     },
     {
       id: "attributes",
-      label: "Attributes",
+      label: t("common.attributes"),
       href: `/environments/${environmentId}/attributes`,
     },
   ];

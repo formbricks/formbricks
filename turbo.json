@@ -1,70 +1,68 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "ui": "stream",
   "tasks": {
-    "@formbricks/web#go": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"]
-    },
-    "@formbricks/demo#go": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/js#build"]
-    },
     "@formbricks/api#build": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build"]
-    },
-    "@formbricks/js#build": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build"]
-    },
-    "@formbricks/js#build:dev": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build:dev"]
-    },
-    "@formbricks/surveys#build": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build"]
-    },
-    "@formbricks/surveys#build:dev": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build:dev"]
-    },
-    "@formbricks/surveys#go": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/surveys#build"]
-    },
-    "@formbricks/js#go": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/js#build"]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/api#go": {
       "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/api#build"]
+      "dependsOn": ["@formbricks/api#build"],
+      "persistent": true
     },
-    "@formbricks/react-native#build": {
-      "outputs": ["dist/**"],
-      "dependsOn": ["^build"]
-    },
-    "@formbricks/react-native#go": {
+    "@formbricks/demo#go": {
       "cache": false,
-      "persistent": true,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"]
+      "dependsOn": ["@formbricks/js#build"],
+      "persistent": true
     },
-    "@formbricks/react-native#lint": {
-      "dependsOn": ["@formbricks/api#build"]
+    "@formbricks/js#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/js#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/js#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/js#build"],
+      "persistent": true
     },
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+    "@formbricks/react-native#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/react-native#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "persistent": true
+    },
+    "@formbricks/react-native#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/surveys#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/surveys#build:dev": {
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/surveys#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/surveys#build"],
+      "persistent": true
+    },
+    "@formbricks/web#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", ".next/**"],
       "env": [
         "AI_AZURE_EMBEDDINGS_API_KEY",
         "AI_AZURE_LLM_API_KEY",
@@ -111,7 +109,9 @@
         "IMPRINT_URL",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
+        "INTERCOM_SECRET_KEY",
         "MAIL_FROM",
+        "NEXT_PUBLIC_LAYER_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_INDEX_NAME",
@@ -122,6 +122,7 @@
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
+        "NEXT_PUBLIC_INTERCOM_APP_ID",
         "NEXT_PUBLIC_POSTHOG_API_KEY",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
@@ -173,13 +174,14 @@
         "WEBAPP_URL",
         "WEBHOOK_SECRET",
         "UNSPLASH_ACCESS_KEY"
-      ]
+      ],
+      "outputs": ["dist/**", ".next/**"]
     },
     "build:dev": {
       "dependsOn": ["^build:dev"],
       "outputs": ["dist/**", ".next/**"]
     },
-    "db:setup": {
+    "clean": {
       "cache": false,
       "outputs": []
     },
@@ -187,14 +189,10 @@
       "cache": false,
       "outputs": []
     },
-    "go": {
-      "persistent": true,
-      "cache": false
-    },
-    "db:migrate:dev": {
+    "db:migrate:deploy": {
       "outputs": []
     },
-    "db:migrate:deploy": {
+    "db:migrate:dev": {
       "outputs": []
     },
     "db:migrate:vercel": {
@@ -207,6 +205,10 @@
     "db:seed": {
       "outputs": []
     },
+    "db:setup": {
+      "cache": false,
+      "outputs": []
+    },
     "db:start": {
       "cache": false
     },
@@ -214,25 +216,26 @@
       "cache": false,
       "persistent": true
     },
-    "start": {
-      "outputs": []
-    },
-    "test": {
-      "outputs": []
-    },
     "generate": {
       "dependsOn": ["^generate"]
+    },
+    "go": {
+      "cache": false,
+      "persistent": true
     },
     "lint": {
       "outputs": []
     },
-    "clean": {
-      "outputs": [],
-      "cache": false
+    "start": {
+      "outputs": []
     },
     "storybook": {
       "cache": false,
       "persistent": true
+    },
+    "test": {
+      "outputs": []
     }
-  }
+  },
+  "ui": "stream"
 }

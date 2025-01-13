@@ -1,18 +1,53 @@
 import { PersonDataView } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonDataView";
 import { PersonSecondaryNavigation } from "@/app/(app)/environments/[environmentId]/(people)/people/components/PersonSecondaryNavigation";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { Button } from "@/modules/ui/components/button";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { CircleHelpIcon } from "lucide-react";
+import { getServerSession } from "next-auth";
+import { getTranslations } from "next-intl/server";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { Button } from "@formbricks/ui/components/Button";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
+import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
 
-const Page = async ({ params }: { params: { environmentId: string } }) => {
-  const environment = await getEnvironment(params.environmentId);
+const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+  const params = await props.params;
+  const t = await getTranslations();
+  const session = await getServerSession(authOptions);
 
-  if (!environment) {
-    throw new Error("Environment not found");
+  if (!session) {
+    throw new Error(t("common.session_not_found"));
   }
+
+  const environment = await getEnvironment(params.environmentId);
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
+  const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  const product = await getProductByEnvironmentId(params.environmentId);
+  if (!product) {
+    throw new Error(t("common.product_not_found"));
+  }
+
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const { isMember } = getAccessFlags(currentUserMembership?.role);
+
+  const productPermission = await getProductPermissionByUserId(session?.user.id, product.id);
+
+  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
 
   const HowToAddPeopleButton = (
     <Button
@@ -21,16 +56,16 @@ const Page = async ({ params }: { params: { environmentId: string } }) => {
       variant="secondary"
       target="_blank"
       EndIcon={CircleHelpIcon}>
-      How to add people
+      {t("environments.people.how_to_add_people")}
     </Button>
   );
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="People" cta={HowToAddPeopleButton}>
+      <PageHeader pageTitle={t("common.people")} cta={HowToAddPeopleButton}>
         <PersonSecondaryNavigation activeId="people" environmentId={params.environmentId} />
       </PageHeader>
-      <PersonDataView environment={environment} itemsPerPage={ITEMS_PER_PAGE} />
+      <PersonDataView environment={environment} itemsPerPage={ITEMS_PER_PAGE} isReadOnly={isReadOnly} />
     </PageContentWrapper>
   );
 };

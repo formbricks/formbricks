@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 
 export const GET = async () => {
-  const headersList = headers();
+  const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
   if (apiKey) {
     const apiKeyData = await prisma.apiKey.findUnique({

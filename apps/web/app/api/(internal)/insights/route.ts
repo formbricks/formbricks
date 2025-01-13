@@ -1,8 +1,5 @@
 // This function can run for a maximum of 300 seconds
-import {
-  //  generateInsightsForSurveyResponses,
-  generateInsightsForSurveyResponsesConcept,
-} from "@/app/api/(internal)/insights/lib/insights";
+import { generateInsightsForSurveyResponsesConcept } from "@/app/api/(internal)/insights/lib/insights";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
@@ -18,8 +15,9 @@ const ZGenerateInsightsInput = z.object({
 
 export const POST = async (request: Request) => {
   try {
+    const requestHeaders = await headers();
     // Check authentication
-    if (headers().get("x-api-key") !== CRON_SECRET) {
+    if (requestHeaders.get("x-api-key") !== CRON_SECRET) {
       return responses.notAuthenticatedResponse();
     }
 
@@ -43,7 +41,6 @@ export const POST = async (request: Request) => {
       return responses.successResponse({ message: "No insights enabled questions found" });
     }
 
-    // await generateInsightsForSurveyResponses(data.survey);
     await generateInsightsForSurveyResponsesConcept(data.survey);
 
     return responses.successResponse({ message: "Insights generated successfully" });
