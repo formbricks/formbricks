@@ -77,7 +77,9 @@ export function WelcomeCard({
   variablesData,
 }: WelcomeCardProps) {
   const calculateTimeToComplete = () => {
-    let idx = calculateElementIdx(survey, 0);
+    let totalCards = survey.questions.length;
+    if (survey.endings.length > 0) totalCards += 1;
+    let idx = calculateElementIdx(survey, 0, totalCards);
     if (idx === 0.5) {
       idx = 1;
     }
