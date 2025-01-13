@@ -12,6 +12,9 @@ importers:
         specifier: 2.27.10
         version: 2.27.10
     devDependencies:
+      '@azure/microsoft-playwright-testing':
+        specifier: 1.0.0-beta.6
+        version: 1.0.0-beta.6(@playwright/test@1.49.1)
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:packages/config-eslint
@@ -124,7 +127,7 @@ importers:
         version: 2.2.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@headlessui/tailwindcss':
         specifier: 0.2.1
-        version: 0.2.1(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.7.2)))
+        version: 0.2.1(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))
       '@mapbox/rehype-prism':
         specifier: 0.9.0
         version: 0.9.0
@@ -495,7 +498,7 @@ importers:
         version: 8.20.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@vercel/functions':
         specifier: 1.5.2
-        version: 1.5.2(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0(aws-crt@1.24.0)))
+        version: 1.5.2(@aws-sdk/credential-provider-web-identity@3.709.0)
       '@vercel/og':
         specifier: 0.6.4
         version: 0.6.4
@@ -742,7 +745,7 @@ importers:
         version: 8.18.0(eslint@8.57.0)(typescript@5.7.2)
       '@vercel/style-guide':
         specifier: 6.0.0
-        version: 6.0.0(@next/eslint-plugin-next@15.1.0)(eslint@8.57.0)(prettier@3.4.2)(typescript@5.7.2)(vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0))
+        version: 6.0.0(@next/eslint-plugin-next@15.1.0)(eslint@8.57.0)(prettier@3.4.2)(typescript@5.7.2)(vitest@2.1.8)
       eslint-config-next:
         specifier: 15.1.0
         version: 15.1.0(eslint@8.57.0)(typescript@5.7.2)
@@ -1456,6 +1459,76 @@ packages:
   '@aws-sdk/xml-builder@3.709.0':
     resolution: {integrity: sha512-2GPCwlNxeHspoK/Mc8nbk9cBOkSpp3j2SJUQmFnyQK6V/pR6II2oPRyZkMomug1Rc10hqlBHByMecq4zhV2uUw==}
     engines: {node: '>=16.0.0'}
+
+  '@azure/abort-controller@2.1.2':
+    resolution: {integrity: sha512-nBrLsEWm4J2u5LpAPjxADTlq3trDgVZZXHNKabeXZtpq3d3AbN/KGO82R87rdDz5/lYB024rtEf10/q0urNgsA==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-auth@1.9.0':
+    resolution: {integrity: sha512-FPwHpZywuyasDSLMqJ6fhbOK3TqUdviZNF8OqRGA4W5Ewib2lEEZ+pBsYcBa88B2NGO/SEnYPGhyBqNlE8ilSw==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-client@1.9.2':
+    resolution: {integrity: sha512-kRdry/rav3fUKHl/aDLd/pDLcB+4pOFwPPTVEExuMyaI5r+JBbMWqRbCY1pn5BniDaU3lRxO9eaQ1AmSMehl/w==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-http-compat@2.1.2':
+    resolution: {integrity: sha512-5MnV1yqzZwgNLLjlizsU3QqOeQChkIXw781Fwh1xdAqJR5AA32IUaq6xv1BICJvfbHoa+JYcaij2HFkhLbNTJQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-lro@2.7.2':
+    resolution: {integrity: sha512-0YIpccoX8m/k00O7mDDMdJpbr6mf1yWo2dfmxt5A8XVZVVMz2SSKaEbMCeJRvgQ0IaSlqhjT47p4hVIRRy90xw==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-paging@1.6.2':
+    resolution: {integrity: sha512-YKWi9YuCU04B55h25cnOYZHxXYtEvQEbKST5vqRga7hWY9ydd3FZHdeQF8pyh+acWZvppw13M/LMGx0LABUVMA==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-rest-pipeline@1.18.2':
+    resolution: {integrity: sha512-IkTf/DWKyCklEtN/WYW3lqEsIaUDshlzWRlZNNwSYtFcCBQz++OtOjxNpm8rr1VcbMS6RpjybQa3u6B6nG0zNw==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-tracing@1.2.0':
+    resolution: {integrity: sha512-UKTiEJPkWcESPYJz3X5uKRYyOcJD+4nYph+KpfdPRnQJVrZfk0KJgdnaAWKfhsBBtAf/D58Az4AvCJEmWgIBAg==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-util@1.11.0':
+    resolution: {integrity: sha512-DxOSLua+NdpWoSqULhjDyAZTXFdP/LKkqtYuxxz1SCN289zk3OG8UOpnCQAz/tygyACBtWp/BoO72ptK7msY8g==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/core-xml@1.4.4':
+    resolution: {integrity: sha512-J4FYAqakGXcbfeZjwjMzjNcpcH4E+JtEBv+xcV1yL0Ydn/6wbQfeFKTCHh9wttAi0lmajHw7yBbHPRG+YHckZQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/identity@4.5.0':
+    resolution: {integrity: sha512-EknvVmtBuSIic47xkOqyNabAme0RYTw52BTMz8eBgU1ysTyMrD1uOoM+JdS0J/4Yfp98IBT3osqq3BfwSaNaGQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/logger@1.1.4':
+    resolution: {integrity: sha512-4IXXzcCdLdlXuCG+8UKEwLA1T1NHqUfanhXYHiQTn+6sfWCZXduqbtXDGceg3Ce5QxTGo7EqmbV6Bi+aqKuClQ==}
+    engines: {node: '>=18.0.0'}
+
+  '@azure/microsoft-playwright-testing@1.0.0-beta.6':
+    resolution: {integrity: sha512-TVfBM5AL1t88VGNRfj6cudEYURVc4Y/n0tnL+o+TDL9OpAvGa8fZ2xPjXy6imjnX9dgpNjbowMG4pxCKo00OvA==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      '@playwright/test': ^1.43.1
+
+  '@azure/msal-browser@3.28.0':
+    resolution: {integrity: sha512-1c1qUF6vB52mWlyoMem4xR1gdwiQWYEQB2uhDkbAL4wVJr8WmAcXybc1Qs33y19N4BdPI8/DHI7rPE8L5jMtWw==}
+    engines: {node: '>=0.8.0'}
+
+  '@azure/msal-common@14.16.0':
+    resolution: {integrity: sha512-1KOZj9IpcDSwpNiQNjt0jDYZpQvNZay7QAEi/5DLubay40iGYtLzya/jbjRPLyOTZhEKyL1MzPuw2HqBCjceYA==}
+    engines: {node: '>=0.8.0'}
+
+  '@azure/msal-node@2.16.2':
+    resolution: {integrity: sha512-An7l1hEr0w1HMMh1LU+rtDtqL7/jw74ORlc9Wnh06v7TU/xpG39/Zdr1ZJu3QpjUfKJ+E0/OXMW8DRSWTlh7qQ==}
+    engines: {node: '>=16'}
+
+  '@azure/storage-blob@12.26.0':
+    resolution: {integrity: sha512-SriLPKezypIsiZ+TtlFfE46uuBIap2HeaQVS78e1P7rz5OSbq0rsd52WE1mC5f7vAeLiXqv7I7oRhL3WFZEw3Q==}
+    engines: {node: '>=18.0.0'}
 
   '@babel/code-frame@7.10.4':
     resolution: {integrity: sha512-vG6SvB6oYEhvgisZNFRmRCUkLz11c7rp+tbNTynGqc6mS1d5ATd/sGyV6W0KZZnXRKMTzZDRgQT3Ou9jhpAfUg==}
@@ -12058,6 +12131,10 @@ packages:
   stickyfill@1.1.1:
     resolution: {integrity: sha512-GCp7vHAfpao+Qh/3Flh9DXEJ/qSi0KJwJw6zYlZOtRYXWUIpMM6mC2rIep/dK8RQqwW0KxGJIllmjPIBOGN8AA==}
 
+  stoppable@1.1.0:
+    resolution: {integrity: sha512-KXDYZ9dszj6bzvnEMRYvxgeTHU74QBFL54XKtP3nyMuJ81CFYtABZ3bAzL2EdFUaEwJOBOgENyFj3R7oTzDyyw==}
+    engines: {node: '>=4', npm: '>=6'}
+
   storybook@8.4.7:
     resolution: {integrity: sha512-RP/nMJxiWyFc8EVMH5gp20ID032Wvk+Yr3lmKidoegto5Iy+2dVQnUoElZb2zpbVXNHWakGuAkfI0dY1Hfp/vw==}
     hasBin: true
@@ -14129,6 +14206,138 @@ snapshots:
       '@smithy/types': 3.7.2
       tslib: 2.8.1
 
+  '@azure/abort-controller@2.1.2':
+    dependencies:
+      tslib: 2.8.1
+
+  '@azure/core-auth@1.9.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-util': 1.11.0
+      tslib: 2.8.1
+
+  '@azure/core-client@1.9.2':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-rest-pipeline': 1.18.2
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.11.0
+      '@azure/logger': 1.1.4
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/core-http-compat@2.1.2':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-client': 1.9.2
+      '@azure/core-rest-pipeline': 1.18.2
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/core-lro@2.7.2':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-util': 1.11.0
+      '@azure/logger': 1.1.4
+      tslib: 2.8.1
+
+  '@azure/core-paging@1.6.2':
+    dependencies:
+      tslib: 2.8.1
+
+  '@azure/core-rest-pipeline@1.18.2':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.11.0
+      '@azure/logger': 1.1.4
+      http-proxy-agent: 7.0.2
+      https-proxy-agent: 7.0.6
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/core-tracing@1.2.0':
+    dependencies:
+      tslib: 2.8.1
+
+  '@azure/core-util@1.11.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      tslib: 2.8.1
+
+  '@azure/core-xml@1.4.4':
+    dependencies:
+      fast-xml-parser: 4.5.1
+      tslib: 2.8.1
+
+  '@azure/identity@4.5.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-client': 1.9.2
+      '@azure/core-rest-pipeline': 1.18.2
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.11.0
+      '@azure/logger': 1.1.4
+      '@azure/msal-browser': 3.28.0
+      '@azure/msal-node': 2.16.2
+      events: 3.3.0
+      jws: 4.0.0
+      open: 8.4.2
+      stoppable: 1.1.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/logger@1.1.4':
+    dependencies:
+      tslib: 2.8.1
+
+  '@azure/microsoft-playwright-testing@1.0.0-beta.6(@playwright/test@1.49.1)':
+    dependencies:
+      '@azure/core-rest-pipeline': 1.18.2
+      '@azure/identity': 4.5.0
+      '@azure/logger': 1.1.4
+      '@azure/storage-blob': 12.26.0
+      '@playwright/test': 1.49.1
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@azure/msal-browser@3.28.0':
+    dependencies:
+      '@azure/msal-common': 14.16.0
+
+  '@azure/msal-common@14.16.0': {}
+
+  '@azure/msal-node@2.16.2':
+    dependencies:
+      '@azure/msal-common': 14.16.0
+      jsonwebtoken: 9.0.2
+      uuid: 8.3.2
+
+  '@azure/storage-blob@12.26.0':
+    dependencies:
+      '@azure/abort-controller': 2.1.2
+      '@azure/core-auth': 1.9.0
+      '@azure/core-client': 1.9.2
+      '@azure/core-http-compat': 2.1.2
+      '@azure/core-lro': 2.7.2
+      '@azure/core-paging': 1.6.2
+      '@azure/core-rest-pipeline': 1.18.2
+      '@azure/core-tracing': 1.2.0
+      '@azure/core-util': 1.11.0
+      '@azure/core-xml': 1.4.4
+      '@azure/logger': 1.1.4
+      events: 3.3.0
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@babel/code-frame@7.10.4':
     dependencies:
       '@babel/highlight': 7.25.9
@@ -15930,7 +16139,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.7.2)))':
+  '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))':
     dependencies:
       tailwindcss: 3.4.16(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.7.2))
 
@@ -19767,7 +19976,7 @@ snapshots:
       '@urql/core': 5.1.0
       wonka: 6.3.4
 
-  '@vercel/functions@1.5.2(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0(aws-crt@1.24.0)))':
+  '@vercel/functions@1.5.2(@aws-sdk/credential-provider-web-identity@3.709.0)':
     optionalDependencies:
       '@aws-sdk/credential-provider-web-identity': 3.709.0(@aws-sdk/client-sts@3.712.0(aws-crt@1.24.0))
 
@@ -19792,7 +20001,7 @@ snapshots:
       next: 15.1.2(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react: 19.0.0
 
-  '@vercel/style-guide@6.0.0(@next/eslint-plugin-next@15.1.0)(eslint@8.57.0)(prettier@3.4.2)(typescript@5.7.2)(vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0))':
+  '@vercel/style-guide@6.0.0(@next/eslint-plugin-next@15.1.0)(eslint@8.57.0)(prettier@3.4.2)(typescript@5.7.2)(vitest@2.1.8)':
     dependencies:
       '@babel/core': 7.26.0
       '@babel/eslint-parser': 7.25.9(@babel/core@7.26.0)(eslint@8.57.0)
@@ -19800,7 +20009,7 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.0)(typescript@5.7.2)
       eslint-config-prettier: 9.1.0(eslint@8.57.0)
-      eslint-import-resolver-alias: 1.1.2(eslint-plugin-import@2.31.0)
+      eslint-import-resolver-alias: 1.1.2(eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0))
       eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.57.0)
       eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)
@@ -19812,7 +20021,7 @@ snapshots:
       eslint-plugin-testing-library: 6.5.0(eslint@8.57.0)(typescript@5.7.2)
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 51.0.1(eslint@8.57.0)
-      eslint-plugin-vitest: 0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2)(vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0))
+      eslint-plugin-vitest: 0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2)(vitest@2.1.8)
       prettier-plugin-packagejson: 2.5.6(prettier@3.4.2)
     optionalDependencies:
       '@next/eslint-plugin-next': 15.1.0
@@ -19851,7 +20060,7 @@ snapshots:
       chai: 5.1.2
       tinyrainbow: 1.2.0
 
-  '@vitest/mocker@2.1.8(vite@5.4.11(@types/node@22.10.2)(lightningcss@1.27.0)(terser@5.37.0))':
+  '@vitest/mocker@2.1.8(vite@5.4.11)':
     dependencies:
       '@vitest/spy': 2.1.8
       estree-walker: 3.0.3
@@ -21883,7 +22092,7 @@ snapshots:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.0)
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.0)
       eslint-plugin-react: 7.37.2(eslint@8.57.0)
       eslint-plugin-react-hooks: 5.1.0(eslint@8.57.0)
@@ -21903,9 +22112,9 @@ snapshots:
       eslint: 8.57.0
       eslint-plugin-turbo: 2.3.3(eslint@8.57.0)
 
-  eslint-import-resolver-alias@1.1.2(eslint-plugin-import@2.31.0):
+  eslint-import-resolver-alias@1.1.2(eslint-plugin-import@2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)):
     dependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)
 
   eslint-import-resolver-node@0.3.9:
     dependencies:
@@ -21927,11 +22136,11 @@ snapshots:
       is-glob: 4.0.3
       stable-hash: 0.0.4
     optionalDependencies:
-      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)
+      eslint-plugin-import: 2.31.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)
     transitivePeerDependencies:
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
@@ -21986,7 +22195,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.7.0(eslint-plugin-import@2.31.0)(eslint@8.57.0))(eslint@8.57.0)
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
@@ -22004,7 +22213,7 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0):
+  eslint-plugin-import@2.31.0(@typescript-eslint/parser@8.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint-import-resolver-typescript@3.7.0)(eslint@8.57.0):
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.8
@@ -22153,7 +22362,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2)(vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)):
+  eslint-plugin-vitest@0.3.26(@typescript-eslint/eslint-plugin@7.18.0(@typescript-eslint/parser@7.18.0(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2))(eslint@8.57.0)(typescript@5.7.2)(vitest@2.1.8):
     dependencies:
       '@typescript-eslint/utils': 7.18.0(eslint@8.57.0)(typescript@5.7.2)
       eslint: 8.57.0
@@ -27497,6 +27706,8 @@ snapshots:
 
   stickyfill@1.1.1: {}
 
+  stoppable@1.1.0: {}
+
   storybook@8.4.7(prettier@3.4.2):
     dependencies:
       '@storybook/core': 8.4.7(prettier@3.4.2)
@@ -28475,7 +28686,7 @@ snapshots:
   vitest@2.1.8(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0):
     dependencies:
       '@vitest/expect': 2.1.8
-      '@vitest/mocker': 2.1.8(vite@5.4.11(@types/node@22.10.2)(lightningcss@1.27.0)(terser@5.37.0))
+      '@vitest/mocker': 2.1.8(vite@5.4.11)
       '@vitest/pretty-format': 2.1.8
       '@vitest/runner': 2.1.8
       '@vitest/snapshot': 2.1.8

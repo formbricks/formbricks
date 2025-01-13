@@ -2,8 +2,10 @@ name: E2E Tests
 on:
   workflow_call:
   workflow_dispatch:
+
 env:
   TELEMETRY_DISABLED: 1
+
 jobs:
   build:
     name: Run E2E Tests
@@ -54,6 +56,14 @@ jobs:
           echo "E2E_TESTING=1" >> .env
         shell: bash
 
+      - name: Login to Azure with AzPowershell (enableAzPSSession true)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
       - name: Build App
         run: |
           pnpm build --filter=@formbricks/web...
@@ -84,8 +94,10 @@ jobs:
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E Tests
+        env:
+          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
         run: |
-          pnpm test:e2e
+          pnpm test:e2e -c playwright.service.config.ts --workers=20
 
       - uses: actions/upload-artifact@v4
         if: always()
