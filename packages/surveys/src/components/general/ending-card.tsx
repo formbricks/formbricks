@@ -66,7 +66,14 @@ export function EndingCard({
   useEffect(() => {
     if (isCurrent) {
       if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
-        window.top?.location.replace(endingCard.url);
+        try {
+          const url = replaceRecallInfo(endingCard.url, responseData, variablesData);
+          if (url && new URL(url)) {
+            window.top?.location.replace(url);
+          }
+        } catch (error) {
+          console.error("Invalid URL after recall processing:", error);
+        }
       }
     }
     const handleEnter = (e: KeyboardEvent) => {

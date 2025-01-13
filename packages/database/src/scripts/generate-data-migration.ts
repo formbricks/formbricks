@@ -1,7 +1,7 @@
+import { createId } from "@paralleldrive/cuid2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
-import { createId } from "@paralleldrive/cuid2";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -93,9 +93,9 @@ function getTemplateContent(migrationName: string, fullMigrationName: string): s
   const migrationId = createId();
 
   return `
-import type { DataMigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 
-export const ${migrationName}: DataMigrationScript = {
+export const ${migrationName}: MigrationScript = {
   type: "data",
   id: "${migrationId}",
   name: "${fullMigrationName}",

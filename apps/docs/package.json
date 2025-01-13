@@ -38,7 +38,7 @@
     "lucide-react": "0.468.0",
     "mdast-util-to-string": "4.0.0",
     "mdx-annotations": "0.1.4",
-    "next": "15.1.0",
+    "next": "15.1.2",
     "next-plausible": "3.12.4",
     "next-seo": "6.6.0",
     "next-sitemap": "4.2.3",
@@ -68,6 +68,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@types/dompurify": "3.2.0",
+    "@types/react-dom": "19.0.2",
     "@types/react-highlight-words": "0.20.0"
   }
 }

@@ -1,4 +1,4 @@
-import { MdxImage } from "@/components/MdxImage";
+import { MdxImage } from "@/components/mdx-image";
 
 import CopySurveyLink from "./copy-survey-link.webp";
 import CreateStudy from "./create-study.webp";
@@ -10,7 +10,6 @@ import RedirectUrl from "./redirect-url.webp";
 import ScreeningOut from "./screening-out.webp";
 import UrlParameters from "./url-parameters.webp";
 
-
 export const metadata = {
   title: "Creating a Research Panel with Prolific",
   description:
@@ -21,12 +20,13 @@ export const metadata = {
 
 # Creating a Research Panel with Prolific
 
-You need a lot of research participants that match your target audience fast? 
+You need a lot of research participants that match your target audience fast?
 
 Formbricks integrates well with Prolific. Prolific provides a pool of over 200.000 research participants you can choose from. Run market research with Formbricks within hours, not days.
 
 <Note>
-  Prolific is a paid service. You need to fund your account to access the pool of participants. The cost depends on the number of participants you want to reach and the demographics you're targeting. You can get an estimate of the cost with the [Prolific price calculator](https://www.prolific.com/calculator)
+  Prolific is a paid service. You need to fund your account to access the pool of participants. The cost
+  depends on the number of participants you want to reach and the demographics you're targeting. You can get an estimate of the cost with the [Prolific price calculator](https://www.prolific.com/calculator)
 </Note>
 
 ## Purpose
@@ -40,7 +40,8 @@ External research panels are useful when:
 ## Steps to Follow
 
 ### Step 1: Add hidden fields to the Formbricks survey
-To be able to attribute a completed answer to a research participant, you need to add hidden fields to your Formbricks survey. To do so, edit your survey and scroll down to the Hidden Fields card. 
+
+To be able to attribute a completed answer to a research participant, you need to add hidden fields to your Formbricks survey. To do so, edit your survey and scroll down to the Hidden Fields card.
 
 Add three fields with the IDs `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID`.
 
@@ -52,10 +53,13 @@ Add three fields with the IDs `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID`.
 />
 
 ### Step 2: Create an account on Prolific
+
 Go to [Prolific](https://app.prolific.co/) and create an account.
 
 ### Step 3: Create a study on Prolific
+
 Once you're logged in to Prolific, create a new study.
+
 <MdxImage
   src={CreateStudy}
   alt="Create a study on Prolific"
@@ -63,8 +67,8 @@ Once you're logged in to Prolific, create a new study.
   className="max-w-full rounded-lg sm:max-w-3xl"
 />
 
-
 ### Step 4: Copy the Formbricks survey link to the Prolific study
+
 We connect the Formbricks survey with the Prolific study by copying the survey link from Formbricks and pasting it into the Prolific study:
 
 <MdxImage
@@ -75,7 +79,9 @@ We connect the Formbricks survey with the Prolific study by copying the survey l
 />
 
 ### Step 5: Choose URL parameters for attribution
+
 To attribute responses to the correct participant, you need to add URL parameters to the Formbricks survey link. The parameters are `PROLIFIC_PID`, `STUDY_ID`, and `SESSION_ID`, exactly like the hidden fields you added.
+
 <MdxImage
   src={UrlParameters}
   alt="Adding URL parameters to the survey"
@@ -84,9 +90,11 @@ To attribute responses to the correct participant, you need to add URL parameter
 />
 
 ### Step 6: Update the Formbricks Redirect URL
+
 To ensure that participants are redirected back to Prolific after completing the survey, add the redirect URL provided in the Prolific study setup (e.g. `https://app.prolific.co/submissions/complete?cc=I2PWSFRG`)
 
 Copy from Prolific:
+
 <MdxImage
   src={RedirectUrl}
   alt="Copy redirect URL"
@@ -95,6 +103,7 @@ Copy from Prolific:
 />
 
 Set it up as Redirect URL in the Response Options in Formbricks:
+
 <MdxImage
   src={AddRedirectUrl}
   alt="Add redirect URL to Formbricks"
@@ -103,6 +112,7 @@ Set it up as Redirect URL in the Response Options in Formbricks:
 />
 
 ### Step 7: Preview the study
+
 Preview the study using Prolific's [Preview-functionality](https://researcher-help.prolific.com/hc/en-gb/articles/360009222853-Previewing-your-study)
 
 <MdxImage
@@ -113,6 +123,7 @@ Preview the study using Prolific's [Preview-functionality](https://researcher-he
 />
 
 Got to the success screen? Then you're ready to publish your study!
+
 <MdxImage
   src={PreviewComplete}
   alt="Preview complete"
@@ -121,11 +132,11 @@ Got to the success screen? Then you're ready to publish your study!
 />
 
 ### Step 8: Publish the study
+
 After you've published the study, you'll get the first responses within a few hours.
 
-<Note>
-  Prolific is a paid service. You need to fund your account to publish your study.
-</Note>
+<Note>Prolific is a paid service. You need to fund your account to publish your study.</Note>
 
 ### That's it! 🎉
+
 Once you've published the survey, you can sit back and watch the responses come in. Prolific will take care of the rest.

@@ -1,3 +1,4 @@
+/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
@@ -38,9 +39,45 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
+const validateUrlWithRecall = (url: string): string | null => {
+  try {
+    if (!url.startsWith("https://")) {
+      return "URL must start with https://";
+    }
+
+    if (url.includes(" ") && !url.endsWith(" ")) {
+      return "URL must not contain spaces";
+    }
+
+    new URL(url);
+
+    return null;
+  } catch {
+    const hostname = url.split("https://")[1];
+    if (hostname.includes("#recall:")) {
+      return "Recall information cannot be used in the hostname part of the URL";
+    }
+
+    return "Invalid Redirect URL";
+  }
+};
+
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl("Invalid Redirect Url").optional(),
+  url: z
+    .string()
+    .optional()
+    .superRefine((url, ctx) => {
+      if (!url) return;
+
+      const error = validateUrlWithRecall(url);
+      if (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error,
+        });
+      }
+    }),
   label: z.string().optional(),
 });
 
@@ -621,30 +658,34 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
-const ZSurveyShowRequiredToggle = z.object({
+const ZToggleInputConfig = z.object({
   show: z.boolean(),
   required: z.boolean(),
+  placeholder: ZI18nString,
 });
+
+export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  addressLine1: ZSurveyShowRequiredToggle,
-  addressLine2: ZSurveyShowRequiredToggle,
-  city: ZSurveyShowRequiredToggle,
-  state: ZSurveyShowRequiredToggle,
-  zip: ZSurveyShowRequiredToggle,
-  country: ZSurveyShowRequiredToggle,
+  addressLine1: ZToggleInputConfig,
+  addressLine2: ZToggleInputConfig,
+  city: ZToggleInputConfig,
+  state: ZToggleInputConfig,
+  zip: ZToggleInputConfig,
+  country: ZToggleInputConfig,
 });
-export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
-  firstName: ZSurveyShowRequiredToggle,
-  lastName: ZSurveyShowRequiredToggle,
-  email: ZSurveyShowRequiredToggle,
-  phone: ZSurveyShowRequiredToggle,
-  company: ZSurveyShowRequiredToggle,
+  firstName: ZToggleInputConfig,
+  lastName: ZToggleInputConfig,
+  email: ZToggleInputConfig,
+  phone: ZToggleInputConfig,
+  company: ZToggleInputConfig,
 });
+
+export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
@@ -1101,7 +1142,13 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
         const { company, email, firstName, lastName, phone } = question;
-        const fields = [company, email, firstName, lastName, phone];
+        const fields = [
+          { ...company, label: "Company" },
+          { ...email, label: "Email" },
+          { ...firstName, label: "First Name" },
+          { ...lastName, label: "Last Name" },
+          { ...phone, label: "Phone" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1110,11 +1157,32 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Address) {
         const { addressLine1, addressLine2, city, state, zip, country } = question;
-        const fields = [addressLine1, addressLine2, city, state, zip, country];
+        const fields = [
+          { ...addressLine1, label: "Address Line 1" },
+          { ...addressLine2, label: "Address Line 2" },
+          { ...city, label: "City" },
+          { ...state, label: "State" },
+          { ...zip, label: "Zip" },
+          { ...country, label: "Country" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1123,6 +1191,20 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.logic) {

@@ -25,7 +25,7 @@ export function LanguageIndicator({
   const languageDropdownRef = useRef(null);
 
   const changeLanguage = (language: TSurveyLanguage) => {
-    setSelectedLanguageCode(language.language.code);
+    setSelectedLanguageCode(language.default ? "default" : language.language.code);
     if (setFirstRender) {
       //for lexical editor
       setFirstRender(true);
@@ -44,7 +44,7 @@ export function LanguageIndicator({
   });
 
   return (
-    <div className="absolute right-2 top-2">
+    <div className="absolute right-2 top-2 z-10">
       <button
         aria-expanded={showLanguageDropdown}
         aria-haspopup="true"
@@ -61,7 +61,8 @@ export function LanguageIndicator({
           ref={languageDropdownRef}>
           {surveyLanguages.map(
             (language) =>
-              language.language.code !== languageToBeDisplayed?.language.code && (
+              language.language.code !== languageToBeDisplayed?.language.code &&
+              language.enabled && (
                 <button
                   className="block w-full rounded-sm p-1 text-left hover:bg-slate-700"
                   key={language.language.id}
