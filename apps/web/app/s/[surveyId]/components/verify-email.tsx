@@ -116,7 +116,7 @@ export const VerifyEmail = ({
   }
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center text-center">
+    <div className="flex h-full w-full flex-col items-center justify-center p-2 text-center">
       <Toaster />
       <StackedCardsContainer
         cardArrangement={
@@ -175,12 +175,12 @@ export const VerifyEmail = ({
         </FormProvider>
         {!emailSent && showPreviewQuestions && (
           <div>
-            <p className="text-4xl font-bold">{t("s.question_preview")}</p>
+            <p className="text-2xl font-bold">{t("s.question_preview")}</p>
             <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
               {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}
-                  className="my-1">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
+                  className="my-1 text-sm">{`${(index + 1).toString()}. ${getLocalizedValue(question.headline, languageCode)}`}</p>
               ))}
             </div>
             <Button variant="ghost" className="mt-6" onClick={handlePreviewClick}>
