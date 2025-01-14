@@ -3,7 +3,6 @@ import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
 import {
-  ErrorHandler,
   type MissingFieldError,
   type MissingPersonError,
   type NetworkError,
@@ -56,8 +55,6 @@ export const initialize = async (
     }
     logger.debug("Error state is expired. Continue with initialization.");
   }
-
-  ErrorHandler.getInstance().printStatus();
 
   logger.debug("Start initialize");
 
@@ -240,7 +237,7 @@ export const initialize = async (
 export const checkInitialized = (): Result<void, NotInitializedError> => {
   logger.debug("Check if initialized");
 
-  if (!isInitialized || !ErrorHandler.initialized) {
+  if (!isInitialized) {
     return err({
       code: "not_initialized",
       message: "Formbricks not initialized. Call initialize() first.",
@@ -250,9 +247,15 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
   return okVoid();
 };
 
+// eslint-disable-next-line @typescript-eslint/require-await -- disabled for now
 export const deinitalize = async (): Promise<void> => {
-  logger.debug("Deinitializing");
-  await appConfig.resetConfig();
+  logger.debug("Setting person state to default");
+  // await appConfig.resetConfig();
+  // clear the user state and set it to the default value
+  appConfig.update({
+    ...appConfig.get(),
+    personState: DEFAULT_PERSON_STATE_NO_USER_ID,
+  });
   setIsInitialize(false);
   removeAllEventListeners();
 };

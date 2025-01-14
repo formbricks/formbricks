@@ -57,7 +57,10 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     ...(userId && { userId }),
     attributes: appConfig.get().attributes,
   };
-  await logoutPerson();
+
+  // await logoutPerson();
+
+  void logoutPerson();
   try {
     await initialize(syncParams);
     return okVoid();
