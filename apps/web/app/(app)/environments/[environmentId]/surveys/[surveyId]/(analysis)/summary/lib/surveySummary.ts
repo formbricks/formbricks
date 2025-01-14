@@ -982,7 +982,7 @@ export const getResponsesForSummary = reactCache(
           [filterCriteria, ZResponseFilterCriteria.optional()]
         );
 
-        limit = limit ?? RESPONSES_PER_PAGE;
+        const queryLimit = limit ?? RESPONSES_PER_PAGE;
         const survey = await getSurvey(surveyId);
         if (!survey) return [];
         try {
@@ -1013,7 +1013,7 @@ export const getResponsesForSummary = reactCache(
                 createdAt: "desc",
               },
             ],
-            take: limit,
+            take: queryLimit,
             skip: offset,
           });
 
