@@ -1,4 +1,4 @@
-import { type Insight, InsightCategory } from "@prisma/client";
+import { type Insight } from "@prisma/client";
 import { z } from "zod";
 
 export const ZInsight = z.object({
@@ -8,5 +8,5 @@ export const ZInsight = z.object({
   environmentId: z.string().cuid2(),
   title: z.string(),
   description: z.string(),
-  category: z.nativeEnum(InsightCategory),
+  category: z.enum(["featureRequest", "complaint", "praise", "other"]),
 }) satisfies z.ZodType<Insight>;
