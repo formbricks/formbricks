@@ -4,8 +4,7 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "files": [
-    "src",
-    "zod"
+    "src"
   ],
   "scripts": {
     "clean": "rimraf .turbo node_modules",
