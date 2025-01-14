@@ -69,6 +69,7 @@ const Page = async (props: ResponsesPageProps) => {
           responsesPerPage={RESPONSES_PER_PAGE}
           locale={locale}
           isReadOnly={true}
+          contactAttributeKeys={[]}
         />
       </PageContentWrapper>
     </div>
