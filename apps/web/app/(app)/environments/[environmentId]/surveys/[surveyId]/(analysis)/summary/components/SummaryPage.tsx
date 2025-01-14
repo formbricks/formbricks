@@ -173,7 +173,13 @@ export const SummaryPage = ({
         setShowDropOffs={setShowDropOffs}
         isLoading={isLoading}
       />
-      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} />}
+      {showDropOffs && (
+        <SummaryDropOffs
+          dropOff={surveySummary.dropOff}
+          survey={surveyMemoized}
+          contactAttributeKeys={contactAttributeKeys}
+        />
+      )}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
         {!isReadOnly && !isSharingPage && (
