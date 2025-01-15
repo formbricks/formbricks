@@ -6,6 +6,10 @@ on:
 env:
   TELEMETRY_DISABLED: 1
 
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   build:
     name: Run E2E Tests
