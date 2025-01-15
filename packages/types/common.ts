@@ -53,6 +53,18 @@ export const getZSafeUrl = (message: string): z.ZodEffects<z.ZodString, string, 
   z
     .string()
     .url({ message })
-    .refine((url) => url.startsWith("https://"), {
-      message: "URL must start with https://",
+    .superRefine((url, ctx) => {
+      if (url.includes(" ")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "URL must not contain spaces",
+        });
+      }
+
+      if (!url.startsWith("https://")) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "URL must start with https://",
+        });
+      }
     });

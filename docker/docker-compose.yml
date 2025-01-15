@@ -40,6 +40,7 @@ x-environment: &environment
     # SMTP_PORT:
     # SMTP_USER:
     # SMTP_PASSWORD:
+    # SMTP_AUTHENTICATED:
 
     # (Additional option for TLS (port 465) only)
     # SMTP_SECURE_ENABLED: 1

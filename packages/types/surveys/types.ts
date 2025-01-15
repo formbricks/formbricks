@@ -1,9 +1,10 @@
+/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
-import { ZInsight } from "../insights";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -38,9 +39,45 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
+const validateUrlWithRecall = (url: string): string | null => {
+  try {
+    if (!url.startsWith("https://")) {
+      return "URL must start with https://";
+    }
+
+    if (url.includes(" ") && !url.endsWith(" ")) {
+      return "URL must not contain spaces";
+    }
+
+    new URL(url);
+
+    return null;
+  } catch {
+    const hostname = url.split("https://")[1];
+    if (hostname.includes("#recall:")) {
+      return "Recall information cannot be used in the hostname part of the URL";
+    }
+
+    return "Invalid Redirect URL";
+  }
+};
+
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl("Invalid Redirect Url").optional(),
+  url: z
+    .string()
+    .optional()
+    .superRefine((url, ctx) => {
+      if (!url) return;
+
+      const error = validateUrlWithRecall(url);
+      if (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error,
+        });
+      }
+    }),
   label: z.string().optional(),
 });
 
@@ -2334,7 +2371,13 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
-  insights: z.array(ZInsight),
+  insights: z.array(
+    ZInsight.extend({
+      _count: z.object({
+        documentInsights: z.number(),
+      }),
+    })
+  ),
   insightsEnabled: z.boolean().optional(),
 });
 

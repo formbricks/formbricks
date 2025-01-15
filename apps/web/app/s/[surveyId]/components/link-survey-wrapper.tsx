@@ -67,9 +67,9 @@ export const LinkSurveyWrapper = ({
           isBrandingEnabled={isBrandingEnabled}
         />
         <MediaBackground survey={survey} project={project} onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-end justify-center overflow-clip sm:items-center">
+          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
             {!styling.isLogoHidden && project.logo?.url && <ClientLogo project={project} />}
-            <div className="h-full w-full space-y-6 p-0 sm:max-w-lg">
+            <div className="h-full w-full max-w-lg space-y-6 px-1.5">
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
