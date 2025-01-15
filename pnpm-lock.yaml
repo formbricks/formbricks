@@ -902,13 +902,13 @@ importers:
         specifier: 3.712.0
         version: 3.712.0
       '@formbricks/api':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../api
       '@formbricks/database':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../database
       '@formbricks/types':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../types
       '@paralleldrive/cuid2':
         specifier: 2.2.2
