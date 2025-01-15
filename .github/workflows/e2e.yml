@@ -2,6 +2,11 @@ name: E2E Tests
 on:
   workflow_call:
   workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write    
 env:
   TELEMETRY_DISABLED: 1
 jobs:

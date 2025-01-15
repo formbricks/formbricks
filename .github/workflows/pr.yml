@@ -1,5 +1,10 @@
 name: PR Update
 
+# Add default permissions for all jobs
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   pull_request:
     branches:
@@ -15,8 +20,6 @@ jobs:
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     outputs:
       has-files-requiring-all-checks: ${{ steps.filter.outputs.has-files-requiring-all-checks }}
     steps:
@@ -69,6 +72,10 @@ jobs:
     needs: [lint, test, build, e2e-test, docs]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
     steps:
       - name: fail if conditional jobs failed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')

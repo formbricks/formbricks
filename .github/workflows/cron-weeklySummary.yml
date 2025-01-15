@@ -9,6 +9,9 @@ on:
     - cron: "0 8 * * 1"
 jobs:
   cron-weeklySummary:
+    permissions:
+      contents: read    
+      actions: read      
     env:
       APP_URL: ${{ secrets.APP_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}

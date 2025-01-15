@@ -1,6 +1,12 @@
 name: Lint
 on:
   workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+  checks: write  
+
 jobs:
   build:
     name: Linters
