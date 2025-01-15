@@ -1,5 +1,12 @@
 "use server";
 
+import {
+  createWebhook,
+  deleteWebhook,
+  testEndpoint,
+  updateWebhook,
+} from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/webhook";
+import { ZWebhookInput } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/types/webhooks";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
@@ -9,10 +16,7 @@ import {
   getProjectIdFromWebhookId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
-import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
-import { testEndpoint } from "@formbricks/lib/webhook/utils";
 import { ZId } from "@formbricks/types/common";
-import { ZWebhookInput } from "@formbricks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({
   environmentId: ZId,
