@@ -1,4 +1,6 @@
 import { contactCache } from "@/lib/cache/contact";
+import { contactAttributeCache } from "@/lib/cache/contact-attribute";
+import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -35,7 +37,11 @@ export const getContactByUserIdWithAttributes = reactCache(
       },
       [`getContactByUserId-${environmentId}-${userId}-${JSON.stringify(updatedAttributes)}`],
       {
-        tags: [contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId)],
+        tags: [
+          contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+          contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+          contactAttributeKeyCache.tag.byEnvironmentId(environmentId),
+        ],
       }
     )()
 );
