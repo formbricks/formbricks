@@ -41,8 +41,7 @@ export const SurveyInactive = async ({
         </p>
         {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
           <Button className="mt-2" href="https://member.digiopinion.com/overview">
-            {t("s.create_your_own")}
-          {/*  todo: add translation*/}
+            {t("s.take_more_surveys")}
           </Button>
         )}
       </div>

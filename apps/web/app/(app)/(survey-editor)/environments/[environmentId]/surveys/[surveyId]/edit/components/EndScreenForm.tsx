@@ -87,7 +87,7 @@ export const EndScreenForm = ({
                 updateSurvey({ buttonLabel: undefined, buttonLink: undefined });
               } else {
                 updateSurvey({
-                  buttonLabel: { default: t("environments.surveys.edit.create_your_own_survey") },
+                  buttonLabel: { default: t("environments.surveys.edit.take_more_surveys") },
                   buttonLink: defaultRedirect,
                 });
               }
@@ -111,7 +111,7 @@ export const EndScreenForm = ({
               <QuestionFormInput
                 id="buttonLabel"
                 label={t("environments.surveys.edit.button_label")}
-                placeholder={t("environments.surveys.edit.create_your_own_survey")}
+                placeholder={t("environments.surveys.edit.take_more_surveys")}
                 className="bg-white"
                 value={endingCard.buttonLabel}
                 localSurvey={localSurvey}
