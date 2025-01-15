@@ -4,9 +4,7 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "files": [
-    "src",
-    "zod",
-    "zod-utils.ts"
+    "src"
   ],
   "scripts": {
     "clean": "rimraf .turbo node_modules",
@@ -37,7 +35,6 @@
     "prisma-dbml-generator": "0.12.0",
     "prisma-json-types-generator": "3.1.1",
     "ts-node": "10.9.2",
-    "zod": "3.24.1",
-    "zod-prisma": "0.5.4"
+    "zod": "3.24.1"
   }
 }
