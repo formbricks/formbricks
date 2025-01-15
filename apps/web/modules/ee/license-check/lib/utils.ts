@@ -376,12 +376,7 @@ export const getIsOrganizationAIReady = async (billingPlan: TOrganizationBilling
   const license = await getEnterpriseLicense();
 
   if (IS_FORMBRICKS_CLOUD) {
-    return Boolean(
-      license.features?.ai &&
-        (billingPlan === PROJECT_FEATURE_KEYS.STARTUP ||
-          billingPlan === PROJECT_FEATURE_KEYS.SCALE ||
-          billingPlan === PROJECT_FEATURE_KEYS.ENTERPRISE)
-    );
+    return Boolean(license.features?.ai && billingPlan !== PROJECT_FEATURE_KEYS.FREE);
   }
 
   return Boolean(license.features?.ai);
