@@ -11,7 +11,6 @@ jobs:
   cron-weeklySummary:
     permissions:
       contents: read    
-      actions: read      
     env:
       APP_URL: ${{ secrets.APP_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
