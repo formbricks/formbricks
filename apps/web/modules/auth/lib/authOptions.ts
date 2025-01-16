@@ -39,6 +39,9 @@ export const authOptions: NextAuthOptions = {
         backupCode: { label: "Backup Code", type: "input", placeholder: "Two-factor backup code" },
       },
       async authorize(credentials, _req) {
+        if (!credentials) {
+          throw new Error("Invalid credentials");
+        }
         let user;
         try {
           user = await prisma.user.findUnique({
@@ -50,11 +53,12 @@ export const authOptions: NextAuthOptions = {
           console.error(e);
           throw Error("Internal server error. Please try again later");
         }
-        if (!user || !credentials) {
-          throw new Error("Invalid credentials");
+        console.log("user", user);
+        if (!user) {
+          throw new Error("User not found");
         }
         if (!user.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("User has no password stored");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
@@ -102,12 +106,12 @@ export const authOptions: NextAuthOptions = {
 
           const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
           if (secret.length !== 32) {
-            throw new Error("Internal Server Error");
+            throw new Error("Invalid two factor secret");
           }
 
           const isValidToken = (await import("./totp")).totpAuthenticatorCheck(credentials.totpCode, secret);
           if (!isValidToken) {
-            throw new Error("Invalid second factor code");
+            throw new Error("Invalid two factor code");
           }
         }
 
