@@ -60,13 +60,13 @@ jobs:
           echo "E2E_TESTING=1" >> .env
         shell: bash
 
-      - name: Login to Azure with AzPowershell (enableAzPSSession true)
+      - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          enable-AzPSSession: true
+          enable-AzPSSession: false
 
       - name: Build App
         run: |
