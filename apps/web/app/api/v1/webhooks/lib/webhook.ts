@@ -32,12 +32,12 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
 
     return createdWebhook;
   } catch (error) {
-    if (!(error instanceof InvalidInputError)) {
-      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
-    }
-
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
+    }
+
+    if (!(error instanceof InvalidInputError)) {
+      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
     }
 
     throw error;
