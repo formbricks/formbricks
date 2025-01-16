@@ -1,5 +1,5 @@
 import { TOrganization } from "@formbricks/types/organizations";
-import { IS_AI_CONFIGURED, IS_FORMBRICKS_CLOUD } from "../constants";
+import { IS_AI_CONFIGURED } from "../constants";
 
 export const getPromptText = (questionHeadline: string, response: string) => {
   return `**${questionHeadline.trim()}**\n${response.trim()}`;
@@ -11,7 +11,6 @@ export const getIsAIEnabled = async (organization: TOrganization) => {
   return Boolean(
     organization.isAIEnabled &&
       IS_AI_CONFIGURED &&
-      IS_FORMBRICKS_CLOUD &&
       (billingPlan === "startup" || billingPlan === "scale" || billingPlan === "enterprise")
   );
 };

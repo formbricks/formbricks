@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TInsightWithDocumentCount } from "@/modules/ee/insights/experience/types/insights";
 import { Button } from "@/modules/ui/components/button";
 import { Card, CardContent, CardFooter } from "@/modules/ui/components/card";
 import {
@@ -16,7 +17,6 @@ import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { timeSince } from "@formbricks/lib/time";
 import { TDocument, TDocumentFilterCriteria } from "@formbricks/types/documents";
-import { TInsight } from "@formbricks/types/insights";
 import { TUserLocale } from "@formbricks/types/user";
 import CategoryBadge from "../../experience/components/category-select";
 import SentimentSelect from "../sentiment-select";
@@ -25,7 +25,7 @@ import { getDocumentsByInsightIdAction, getDocumentsByInsightIdSurveyIdQuestionI
 interface InsightSheetProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  insight: TInsight | null;
+  insight: TInsightWithDocumentCount | null;
   surveyId?: string;
   questionId?: string;
   handleFeedback: (feedback: "positive" | "negative") => void;

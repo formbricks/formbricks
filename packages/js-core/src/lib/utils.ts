@@ -206,19 +206,19 @@ export const filterSurveys = (
     if (!lastDisplayAt) {
       return true;
     }
+
     // if survey has recontactDays, check if the last display was more than recontactDays ago
-    else if (survey.recontactDays !== null) {
-      const lastDisplaySurvey = displays.filter((display) => display.surveyId === survey.id)[0];
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- lastDisplaySurvey could be falsy
-      if (!lastDisplaySurvey) {
-        return true;
-      }
-      return diffInDays(new Date(), new Date(lastDisplaySurvey.createdAt)) >= survey.recontactDays;
+    // The previous approach checked the last display for each survey which is why we still have a surveyId in the displays array.
+    // TODO: Remove the surveyId from the displays array
+    if (survey.recontactDays !== null) {
+      return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
     }
+
     // use recontactDays of the project if survey does not have recontactDays
-    else if (project.recontactDays) {
+    if (project.recontactDays) {
       return diffInDays(new Date(), new Date(lastDisplayAt)) >= project.recontactDays;
     }
+
     // if no recontactDays is set, show the survey
 
     return true;
