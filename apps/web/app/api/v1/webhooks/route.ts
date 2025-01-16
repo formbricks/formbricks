@@ -1,7 +1,7 @@
+import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { createWebhook, getWebhooks } from "@formbricks/lib/webhook/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { ZWebhookInput } from "@formbricks/types/webhooks";
@@ -12,7 +12,7 @@ export const GET = async () => {
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
+  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }
@@ -35,7 +35,7 @@ export const POST = async (request: Request) => {
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
+  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }

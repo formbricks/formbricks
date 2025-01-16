@@ -1,12 +1,12 @@
 "use server";
 
+import { apiKeyCache } from "@/lib/cache/api-key";
 import { contactCache } from "@/lib/cache/contact";
 import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { apiKeyCache } from "@formbricks/lib/apiKey/cache";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { environmentCache } from "@formbricks/lib/environment/cache";

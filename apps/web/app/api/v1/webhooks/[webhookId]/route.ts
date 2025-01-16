@@ -1,6 +1,6 @@
+import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { getApiKeyFromKey } from "@formbricks/lib/apiKey/service";
 import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 
 export const GET = async (_: Request, props: { params: Promise<{ webhookId: string }> }) => {
@@ -10,7 +10,7 @@ export const GET = async (_: Request, props: { params: Promise<{ webhookId: stri
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
+  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }
@@ -33,7 +33,7 @@ export const DELETE = async (_: Request, props: { params: Promise<{ webhookId: s
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getApiKeyFromKey(apiKey);
+  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
   if (!apiKeyData) {
     return responses.notAuthenticatedResponse();
   }
