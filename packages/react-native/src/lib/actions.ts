@@ -1,15 +1,9 @@
-import type { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
-import {
-  type InvalidCodeError,
-  type NetworkError,
-  type Result,
-  err,
-  okVoid,
-} from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
-import { shouldDisplayBasedOnPercentage } from "../../../js-core/src/lib/utils";
+import type { TJsEnvironmentStateSurvey } from "../types/config";
+import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
+import { Logger } from "./logger";
 import { SurveyStore } from "./survey-store";
+import { shouldDisplayBasedOnPercentage } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();

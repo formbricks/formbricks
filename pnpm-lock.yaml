@@ -989,6 +989,9 @@ importers:
       react-native-webview:
         specifier: '>=13.0.0'
         version: 13.12.5(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
+      zod:
+        specifier: 3.24.1
+        version: 3.24.1
     devDependencies:
       '@formbricks/api':
         specifier: workspace:*
@@ -996,12 +999,6 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
-      '@formbricks/lib':
-        specifier: workspace:*
-        version: link:../lib
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       '@react-native-async-storage/async-storage':
         specifier: 2.1.0
         version: 2.1.0(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.0(@babel/core@7.26.0))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1))

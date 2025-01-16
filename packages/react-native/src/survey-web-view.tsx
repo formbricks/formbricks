@@ -4,19 +4,21 @@ import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
-import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import { SurveyState } from "@formbricks/lib/surveyState";
-import { getStyling } from "@formbricks/lib/utils/styling";
-import type { SurveyInlineProps } from "@formbricks/types/formbricks-surveys";
-import { ZJsRNWebViewOnMessageData } from "@formbricks/types/js";
-import type { TJsEnvironmentStateSurvey, TJsFileUploadParams, TJsPersonState } from "@formbricks/types/js";
-import type { TResponseUpdate } from "@formbricks/types/responses";
-import type { TUploadFileConfig } from "@formbricks/types/storage";
-import { Logger } from "../../js-core/src/lib/logger";
-import { filterSurveys, getDefaultLanguageCode, getLanguageCode } from "../../js-core/src/lib/utils";
 import { RNConfig } from "./lib/config";
+import { Logger } from "./lib/logger";
+import { ResponseQueue } from "./lib/response-queue";
 import { StorageAPI } from "./lib/storage";
+import { SurveyState } from "./lib/survey-state";
 import { SurveyStore } from "./lib/survey-store";
+import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "./lib/utils";
+import {
+  type TJsEnvironmentStateSurvey,
+  type TJsPersonState,
+  ZJsRNWebViewOnMessageData,
+} from "./types/config";
+import type { TResponseUpdate } from "./types/response";
+import type { TJsFileUploadParams, TUploadFileConfig } from "./types/storage";
+import type { SurveyInlineProps } from "./types/surveys";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -195,7 +197,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               logger.error("Error parsing message from WebView.");
               return;
             }
-            // display
+
             const {
               onDisplay,
               onResponse,

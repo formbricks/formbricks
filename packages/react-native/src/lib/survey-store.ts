@@ -1,4 +1,4 @@
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import type { TJsEnvironmentStateSurvey } from "../types/config";
 
 type Listener = (
   state: TJsEnvironmentStateSurvey | null,

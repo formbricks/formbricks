@@ -1,10 +1,9 @@
-import { type NetworkError } from "@formbricks/types/errors";
-import { type Result, err, okVoid } from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
-import { filterSurveys } from "../../../js-core/src/lib/utils";
+import { type NetworkError, type Result, err, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
+import { Logger } from "./logger";
 import { fetchPersonState } from "./person-state";
+import { filterSurveys } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -57,8 +56,6 @@ export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
     ...(userId && { userId }),
     attributes: appConfig.get().attributes,
   };
-
-  // await logoutPerson();
 
   void logoutPerson();
   try {

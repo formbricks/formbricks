@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- we need to log global errors */
-import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { type Result } from "../../../js-core/src/lib/errors";
+import type { Result } from "../types/errors";
 import { checkInitialized } from "./initialize";
+import { wrapThrowsAsync } from "./utils";
 
 export class CommandQueue {
   private queue: {

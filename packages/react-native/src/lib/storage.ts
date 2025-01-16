@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- used for error logging */
-import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
+import { type TUploadFileConfig, type TUploadFileResponse } from "../types/storage";
 
 export class StorageAPI {
   private apiHost: string;

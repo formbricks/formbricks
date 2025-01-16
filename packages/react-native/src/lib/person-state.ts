@@ -1,7 +1,7 @@
-import { type TJsPersonState, type TJsPersonSyncParams } from "@formbricks/types/js";
-import { err } from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
+import type { TJsPersonState } from "../types/config";
+import { err } from "../types/errors";
 import { RNConfig } from "./config";
+import { Logger } from "./logger";
 
 const config = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -28,7 +28,7 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
  * @throws NetworkError
  */
 export const fetchPersonState = async (
-  { apiHost, environmentId, userId }: TJsPersonSyncParams,
+  { apiHost, environmentId, userId }: { apiHost: string; environmentId: string; userId: string },
   noCache = false
 ): Promise<TJsPersonState> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/identify/contacts/${userId}`;

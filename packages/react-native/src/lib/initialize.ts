@@ -1,7 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { wrapThrowsAsync } from "@formbricks/types/error-handlers";
-import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
-import { RN_ASYNC_STORAGE_KEY } from "../../../js-core/src/lib/constants";
+import { type TJsConfig, type TJsConfigInput } from "../types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -10,14 +8,15 @@ import {
   type Result,
   err,
   okVoid,
-} from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
-import { filterSurveys } from "../../../js-core/src/lib/utils";
+} from "../types/errors";
 import { trackAction } from "./actions";
 import { RNConfig } from "./config";
+import { RN_ASYNC_STORAGE_KEY } from "./constants";
 import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
+import { Logger } from "./logger";
 import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
+import { filterSurveys, wrapThrowsAsync } from "./utils";
 
 let isInitialized = false;
 const appConfig = RNConfig.getInstance();

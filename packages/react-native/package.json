@@ -38,11 +38,12 @@
     "dev": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules dist .turbo"
   },
+  "dependencies": {
+    "zod": "3.24.1"
+  },
   "devDependencies": {
     "@formbricks/api": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/lib": "workspace:*",
-    "@formbricks/types": "workspace:*",
     "@react-native-async-storage/async-storage": "2.1.0",
     "@types/react": "18.3.11",
     "react": "18.3.1",

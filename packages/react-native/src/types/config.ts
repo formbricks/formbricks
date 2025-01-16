@@ -1,0 +1,152 @@
+// eslint-disable-next-line import/no-extraneous-dependencies -- Prisma types are transpiled
+import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
+import { z } from "zod";
+import { type TResponseUpdate, ZResponseUpdate } from "./response";
+import { type TJsFileUploadParams, ZJsFileUploadParams } from "./storage";
+
+export type TJsEnvironmentStateSurvey = Pick<
+  Survey,
+  | "id"
+  | "name"
+  | "welcomeCard"
+  | "questions"
+  | "variables"
+  | "type"
+  | "showLanguageSwitch"
+  | "endings"
+  | "autoClose"
+  | "status"
+  | "recontactDays"
+  | "displayLimit"
+  | "displayOption"
+  | "hiddenFields"
+  | "delay"
+  | "projectOverwrites"
+> & {
+  languages: (SurveyLanguage & { language: Language })[];
+  triggers: { actionClass: ActionClass }[];
+  segment?: Segment;
+  displayPercentage: number;
+  type: "link" | "app";
+  styling?: TSurveyStyling;
+};
+
+export type TJsEnvironmentStateProject = Pick<
+  Project,
+  "id" | "recontactDays" | "clickOutsideClose" | "darkOverlay" | "placement" | "inAppSurveyBranding"
+> & {
+  styling: TProjectStyling;
+};
+
+export type TJsEnvironmentStateActionClass = Pick<
+  ActionClass,
+  "id" | "key" | "type" | "name" | "noCodeConfig"
+>;
+
+export interface TJsEnvironmentState {
+  expiresAt: Date;
+  data: {
+    surveys: TJsEnvironmentStateSurvey[];
+    actionClasses: TJsEnvironmentStateActionClass[];
+    project: TJsEnvironmentStateProject;
+  };
+}
+
+export interface TJsPersonState {
+  expiresAt: Date | null;
+  data: {
+    userId: string | null;
+    segments: string[];
+    displays: { surveyId: string; createdAt: Date }[];
+    responses: string[];
+    lastDisplayAt: Date | null;
+  };
+}
+
+export interface TJsConfig {
+  environmentId: string;
+  apiHost: string;
+  environmentState: TJsEnvironmentState;
+  personState: TJsPersonState;
+  filteredSurveys: TJsEnvironmentStateSurvey[];
+  attributes: Record<string, string>;
+  status: {
+    value: "success" | "error";
+    expiresAt: Date | null;
+  };
+}
+
+export type TJsConfigUpdateInput = Omit<TJsConfig, "status"> & {
+  status?: {
+    value: "success" | "error";
+    expiresAt: Date | null;
+  };
+};
+
+export type TAttributes = Record<string, string>;
+
+export interface TJsConfigInput {
+  environmentId: string;
+  apiHost: string;
+}
+
+export interface TStylingColor {
+  light: string;
+  dark?: string | null | undefined;
+}
+
+export interface TBaseStyling {
+  brandColor?: TStylingColor | null;
+  questionColor?: TStylingColor | null;
+  inputColor?: TStylingColor | null;
+  inputBorderColor?: TStylingColor | null;
+  cardBackgroundColor?: TStylingColor | null;
+  cardBorderColor?: TStylingColor | null;
+  cardShadowColor?: TStylingColor | null;
+  highlightBorderColor?: TStylingColor | null;
+  isDarkModeEnabled?: boolean | null;
+  roundness?: number | null;
+  cardArrangement?: {
+    linkSurveys: "casual" | "straight" | "simple";
+    appSurveys: "casual" | "straight" | "simple";
+  } | null;
+  background?: {
+    bg?: string | null;
+    bgType?: "animation" | "color" | "image" | "upload" | null;
+    brightness?: number | null;
+  } | null;
+  hideProgressBar?: boolean | null;
+  isLogoHidden?: boolean | null;
+}
+
+export interface TProjectStyling extends TBaseStyling {
+  allowStyleOverwrite: boolean;
+}
+
+export interface TSurveyStyling extends TBaseStyling {
+  overwriteThemeStyling?: boolean | null;
+}
+
+export interface TJsRNWebViewOnMessageData {
+  onFinished?: boolean | null;
+  onDisplay?: boolean | null;
+  onResponse?: boolean | null;
+  responseUpdate?: TResponseUpdate | null;
+  onRetry?: boolean | null;
+  onClose?: boolean | null;
+  onFileUpload?: boolean | null;
+  fileUploadParams?: TJsFileUploadParams | null;
+  uploadId?: string | null;
+}
+
+export const ZJsRNWebViewOnMessageData = z.object({
+  onFinished: z.boolean().nullish(),
+  onDisplay: z.boolean().nullish(),
+  onResponse: z.boolean().nullish(),
+  responseUpdate: ZResponseUpdate.nullish(),
+  onRetry: z.boolean().nullish(),
+  onClose: z.boolean().nullish(),
+  onFileUpload: z.boolean().nullish(),
+  fileUploadParams: ZJsFileUploadParams.nullish(),
+  uploadId: z.string().nullish(),
+});

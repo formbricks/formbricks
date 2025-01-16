@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- logging required for error logging */
 // shared functions for environment and person state(s)
-import { type TJsEnvironmentState, type TJsEnvironmentSyncParams } from "@formbricks/types/js";
-import { err } from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
-import { filterSurveys } from "../../../js-core/src/lib/utils";
+import type { TJsConfigInput, TJsEnvironmentState } from "../types/config";
+import { err } from "../types/errors";
 import { RNConfig } from "./config";
+import { Logger } from "./logger";
+import { filterSurveys } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -19,7 +19,7 @@ let environmentStateSyncIntervalId: number | null = null;
  * @throws NetworkError
  */
 export const fetchEnvironmentState = async (
-  { apiHost, environmentId }: TJsEnvironmentSyncParams,
+  { apiHost, environmentId }: TJsConfigInput,
   noCache = false
 ): Promise<TJsEnvironmentState> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/environment`;

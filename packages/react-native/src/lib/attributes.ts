@@ -1,11 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
-import type { TAttributes } from "@formbricks/types/attributes";
-import type { ApiErrorResponse } from "@formbricks/types/errors";
-import { type Result, err, ok, okVoid } from "../../../js-core/src/lib/errors";
-import { Logger } from "../../../js-core/src/lib/logger";
-import { filterSurveys } from "../../../js-core/src/lib/utils";
+import type { TAttributes } from "../types/config";
+import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
+import { Logger } from "./logger";
 import { fetchPersonState } from "./person-state";
+import { filterSurveys } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -121,7 +120,7 @@ export const setAttributesInApp = async (
   const result = await updateAttributes(apiHost, environmentId, userId, rest);
 
   if (result.ok) {
-    if (result.value.changed) {
+    if (result.data.changed) {
       const personState = await fetchPersonState(
         {
           apiHost: appConfig.get().apiHost,

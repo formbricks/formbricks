@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-import { type TJsConfigInput } from "@formbricks/types/js";
-import { Logger } from "../../js-core/src/lib/logger";
 import { init } from "./lib";
+import { Logger } from "./lib/logger";
 import { SurveyStore } from "./lib/survey-store";
 import { SurveyWebView } from "./survey-web-view";
+import { type TJsConfigInput } from "./types/config";
 
 interface FormbricksProps {
   initConfig: TJsConfigInput;

@@ -1,9 +1,9 @@
-import { type TJsConfigInput } from "@formbricks/types/js";
-import { Logger } from "../../../js-core/src/lib/logger";
+import { type TJsConfigInput } from "../types/config";
 import { trackCodeAction } from "./actions";
 import { setAttributesInApp } from "./attributes";
 import { CommandQueue } from "./command-queue";
 import { initialize } from "./initialize";
+import { Logger } from "./logger";
 import { resetPerson, setUserIdInApp } from "./person";
 
 const logger = Logger.getInstance();
