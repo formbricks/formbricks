@@ -53,7 +53,6 @@ export const authOptions: NextAuthOptions = {
           console.error(e);
           throw Error("Internal server error. Please try again later");
         }
-        console.log("user", user);
         if (!user) {
           throw new Error("User not found");
         }

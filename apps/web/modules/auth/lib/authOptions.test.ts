@@ -1,20 +1,17 @@
-// authOptions.test.ts
+import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, it, vi } from "vitest";
-// External dependencies used within authOptions:
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
 import { TUser } from "@formbricks/types/user";
-// Some constants used in the module.
-
-// Import the module under test. Adjust the path as needed.
 import { authOptions } from "./authOptions";
 
-const userId = "cm5yzxcp900000cl78fzocjal";
-const hashedPassword = "$2a$12$LZsLq.9nkZlU0YDPx2aLNelnwD/nyavqbewLN.5.Q5h/UxRD8Ymcy";
+const mockUserId = "cm5yzxcp900000cl78fzocjal";
+const mockPassword = "password";
+const mockHashedPassword = "$2a$12$LZsLq.9nkZlU0YDPx2aLNelnwD/nyavqbewLN.5.Q5h/UxRD8Ymcy";
 
 export const mockUser: TUser = {
-  id: "cm5yzxcp900000cl78fzocjal",
+  id: mockUserId,
   name: "mock User",
   email: "test@unit.com",
   emailVerified: new Date(),
@@ -33,16 +30,9 @@ export const mockUser: TUser = {
   locale: "en-US",
 };
 
-// We need to mock the totp authenticator check function.
-vi.mock("./totp", () => ({
-  totpAuthenticatorCheck: vi.fn(),
-}));
-
 // Helper to get the provider by id from authOptions.providers.
-function getProviderById(id: string): any {
-  console.log("authOptions.providers", authOptions.providers[0].options);
-  console.log("authOptions.providers", authOptions.providers[1].options);
-  const provider = authOptions.providers.find((p: any) => p.options.id === id);
+function getProviderById(id: string): Provider {
+  const provider = authOptions.providers.find((p) => p.options.id === id);
   if (!provider) {
     throw new Error(`Provider with id ${id} not found`);
   }
@@ -50,7 +40,6 @@ function getProviderById(id: string): any {
 }
 
 describe("authOptions", () => {
-  // Reset mocks after each test.
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -59,7 +48,6 @@ describe("authOptions", () => {
     const credentialsProvider = getProviderById("credentials");
 
     it("should throw error if credentials are not provided", async () => {
-      // Convert to Promise.resolve() to ensure we're working with a Promise
       await expect(credentialsProvider.options.authorize(undefined, {})).rejects.toThrow(
         "Invalid credentials"
       );
@@ -68,21 +56,19 @@ describe("authOptions", () => {
     it("should throw error if user not found", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(null);
 
-      const credentials = { email: "test@example.com", password: "password123" };
+      const credentials = { email: mockUser.email, password: mockPassword };
 
-      // Ensure the function correctly throws when user is not found
       await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow("User not found");
     });
 
     it("should throw error if user has no password stored", async () => {
-      // Stub prisma call to return a user without a password field
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        id: userId,
-        email: "test@example.com",
+        id: mockUser.id,
+        email: mockUser.email,
         password: null,
-      } as any);
+      });
 
-      const credentials = { email: "test@example.com", password: "password123" };
+      const credentials = { email: mockUser.email, password: mockPassword };
 
       await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
         "User has no password stored"
@@ -91,12 +77,12 @@ describe("authOptions", () => {
 
     it("should throw error if password verification fails", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        id: userId,
-        email: "test@example.com",
-        password: hashedPassword,
+        id: mockUserId,
+        email: mockUser.email,
+        password: mockHashedPassword,
       });
 
-      const credentials = { email: "test@example.com", password: "wrongPassword" };
+      const credentials = { email: mockUser.email, password: "wrongPassword" };
 
       await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
         "Invalid credentials"
@@ -105,9 +91,9 @@ describe("authOptions", () => {
 
     it("should successfully login when credentials are valid", async () => {
       const fakeUser = {
-        id: userId,
-        email: "test@example.com",
-        password: hashedPassword,
+        id: mockUserId,
+        email: mockUser.email,
+        password: mockHashedPassword,
         emailVerified: new Date(),
         imageUrl: "http://example.com/avatar.png",
         twoFactorEnabled: false,
@@ -115,7 +101,7 @@ describe("authOptions", () => {
 
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(fakeUser);
 
-      const credentials = { email: "test@example.com", password: "password" };
+      const credentials = { email: mockUser.email, password: mockPassword };
 
       const result = await credentialsProvider.options.authorize(credentials, {});
       expect(result).toEqual({
@@ -129,15 +115,15 @@ describe("authOptions", () => {
     describe("Two-Factor Backup Code login", () => {
       it("should throw error if backup codes are missing", async () => {
         const mockUser = {
-          id: userId,
+          id: mockUserId,
           email: "2fa@example.com",
-          password: hashedPassword,
+          password: mockHashedPassword,
           twoFactorEnabled: true,
           backupCodes: null,
         };
         vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
 
-        const credentials = { email: "2fa@example.com", password: "password", backupCode: "123456" };
+        const credentials = { email: mockUser.email, password: mockPassword, backupCode: "123456" };
 
         await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
           "No backup codes found"
@@ -148,7 +134,6 @@ describe("authOptions", () => {
 
   describe("CredentialsProvider (token) - Token-based email verification", () => {
     const tokenProvider = getProviderById("token");
-    console.log("tokenProvider", tokenProvider);
 
     it("should throw error if token is not provided", async () => {
       await expect(tokenProvider.options.authorize({}, {})).rejects.toThrow(
@@ -157,8 +142,6 @@ describe("authOptions", () => {
     });
 
     it("should throw error if token is invalid or user not found", async () => {
-      // Stub verifyToken to throw
-
       const credentials = { token: "badtoken" };
 
       await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
@@ -180,14 +163,14 @@ describe("authOptions", () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({ id: mockUser.id, emailVerified: null });
       vi.spyOn(prisma.user, "update").mockResolvedValue({
         ...mockUser,
-        password: hashedPassword,
+        password: mockHashedPassword,
         backupCodes: null,
         twoFactorSecret: null,
         identityProviderAccountId: null,
         groupId: null,
       });
 
-      const credentials = { token: createToken(userId, mockUser.email) };
+      const credentials = { token: createToken(mockUserId, mockUser.email) };
 
       const result = await tokenProvider.options.authorize(credentials, {});
       expect(result.email).toBe(mockUser.email);
@@ -198,7 +181,6 @@ describe("authOptions", () => {
   describe("Callbacks", () => {
     describe("jwt callback", () => {
       it("should add profile information to token if user is found", async () => {
-        // Mock findFirst to return a properly formatted user object
         vi.spyOn(prisma.user, "findFirst").mockResolvedValue({
           id: mockUser.id,
           locale: mockUser.locale,
@@ -207,7 +189,10 @@ describe("authOptions", () => {
         });
 
         const token = { email: mockUser.email };
-        const result = await authOptions?.callbacks?.jwt({ token });
+        if (!authOptions.callbacks?.jwt) {
+          throw new Error("jwt callback is not defined");
+        }
+        const result = await authOptions.callbacks.jwt({ token } as any);
         expect(result).toEqual({
           ...token,
           profile: { id: mockUser.id },
@@ -218,6 +203,9 @@ describe("authOptions", () => {
         vi.spyOn(prisma.user, "findFirst").mockResolvedValue(null);
 
         const token = { email: "nonexistent@example.com" };
+        if (!authOptions.callbacks?.jwt) {
+          throw new Error("jwt callback is not defined");
+        }
         const result = await authOptions.callbacks.jwt({ token } as any);
         expect(result).toEqual(token);
       });
@@ -231,8 +219,10 @@ describe("authOptions", () => {
         };
 
         const session = { user: {} };
+        if (!authOptions.callbacks?.session) {
+          throw new Error("session callback is not defined");
+        }
         const result = await authOptions.callbacks.session({ session, token } as any);
-        // In this implementation the session.user becomes token.profile.
         expect(result.user).toEqual(token.profile);
       });
     });
@@ -242,12 +232,54 @@ describe("authOptions", () => {
         const user = { ...mockUser, emailVerified: null };
         const account = { provider: "credentials" } as any;
         // EMAIL_VERIFICATION_DISABLED is imported from constants.
-        if (!EMAIL_VERIFICATION_DISABLED) {
-          await expect(authOptions?.callbacks?.signIn({ user, account })).rejects.toThrow(
+        if (!EMAIL_VERIFICATION_DISABLED && authOptions.callbacks?.signIn) {
+          await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
             "Email Verification is Pending"
           );
         }
       });
+    });
+  });
+
+  describe("Two-Factor Authentication (TOTP)", () => {
+    const credentialsProvider = getProviderById("credentials");
+
+    it("should throw error if TOTP code is missing when 2FA is enabled", async () => {
+      const mockUser = {
+        id: mockUserId,
+        email: "2fa@example.com",
+        password: mockHashedPassword,
+        twoFactorEnabled: true,
+        twoFactorSecret: "encrypted_secret",
+      };
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      const credentials = { email: mockUser.email, password: mockPassword };
+
+      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+        "second factor required"
+      );
+    });
+
+    it("should throw error if two factor secret is missing", async () => {
+      const mockUser = {
+        id: mockUserId,
+        email: "2fa@example.com",
+        password: mockHashedPassword,
+        twoFactorEnabled: true,
+        twoFactorSecret: null,
+      };
+      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
+
+      const credentials = {
+        email: mockUser.email,
+        password: mockPassword,
+        totpCode: "123456",
+      };
+
+      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+        "Internal Server Error"
+      );
     });
   });
 });
