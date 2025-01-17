@@ -1,6 +1,5 @@
 import { apiKeyCache } from "@/lib/cache/api-key";
-import { Prisma } from "@prisma/client";
-import { ApiKey } from "@prisma/client";
+import { ApiKey, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
