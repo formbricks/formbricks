@@ -6,11 +6,11 @@ import { getEnvironmentIdFromApiKey } from "./lib/api-key";
 export const authenticateRequest = async (request: Request): Promise<TAuthenticationApiKey | null> => {
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
-    const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
-    if (apiKeyData) {
+    const environmentId = await getEnvironmentIdFromApiKey(apiKey);
+    if (environmentId) {
       const authentication: TAuthenticationApiKey = {
         type: "apiKey",
-        environmentId: apiKeyData.environmentId,
+        environmentId,
       };
       return authentication;
     }

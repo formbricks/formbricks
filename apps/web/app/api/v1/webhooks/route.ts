@@ -12,14 +12,14 @@ export const GET = async () => {
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
-  if (!apiKeyData) {
+  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
+  if (!environmentId) {
     return responses.notAuthenticatedResponse();
   }
 
   // get webhooks from database
   try {
-    const webhooks = await getWebhooks(apiKeyData.environmentId);
+    const webhooks = await getWebhooks(environmentId);
     return Response.json({ data: webhooks });
   } catch (error) {
     if (error instanceof DatabaseError) {
@@ -35,8 +35,8 @@ export const POST = async (request: Request) => {
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const apiKeyData = await getEnvironmentIdFromApiKey(apiKey);
-  if (!apiKeyData) {
+  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
+  if (!environmentId) {
     return responses.notAuthenticatedResponse();
   }
   const webhookInput = await request.json();
@@ -52,7 +52,7 @@ export const POST = async (request: Request) => {
 
   // add webhook to database
   try {
-    const webhook = await createWebhook(apiKeyData.environmentId, inputValidation.data);
+    const webhook = await createWebhook(environmentId, inputValidation.data);
     return responses.successResponse(webhook);
   } catch (error) {
     if (error instanceof InvalidInputError) {
