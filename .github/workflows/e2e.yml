@@ -9,7 +9,7 @@ env:
 permissions:
   id-token: write
   contents: read
-  
+
 jobs:
   build:
     name: Run E2E Tests
@@ -60,20 +60,6 @@ jobs:
           echo "E2E_TESTING=1" >> .env
         shell: bash
 
-      - name: Azure login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Azure CLI script
-        uses: azure/cli@v2
-        with:
-          azcliversion: latest
-          inlineScript: |
-            az account show
-
       - name: Build App
         run: |
           pnpm build --filter=@formbricks/web...
@@ -103,11 +89,33 @@ jobs:
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
 
-      - name: Run E2E Tests
+      - name: Azure login
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Azure CLI script
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
+
+      - name: Run E2E Tests (Azure)
+        if: ${{ secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
         env:
           PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
         run: |
           pnpm test-e2e:azure
+
+      - name: Run E2E Tests (Local)
+        if: ${{ secrets.AZURE_CLIENT_ID == '' || secrets.AZURE_TENANT_ID == '' || secrets.AZURE_SUBSCRIPTION_ID == '' }}
+        run: |
+          pnpm test:e2e
 
       - uses: actions/upload-artifact@v4
         if: always()
