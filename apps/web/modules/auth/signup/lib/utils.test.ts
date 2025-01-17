@@ -52,6 +52,15 @@ describe("verifyTurnstileToken", () => {
     const result = await verifyTurnstileToken(secretKey, token);
     expect(result).toBe(false);
   });
+
+  it("should return false when request times out", async () => {
+    const mockAbortError = new Error("The operation was aborted");
+    mockAbortError.name = "AbortError";
+    (global.fetch as any).mockRejectedValue(mockAbortError);
+
+    const result = await verifyTurnstileToken(secretKey, token);
+    expect(result).toBe(false);
+  });
 });
 
 describe("captureFailedSignup", () => {
