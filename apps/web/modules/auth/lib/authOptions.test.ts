@@ -30,6 +30,17 @@ export const mockUser: TUser = {
   locale: "en-US",
 };
 
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    user: {
+      create: vi.fn(),
+      update: vi.fn(),
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+    },
+  },
+}));
+
 // Helper to get the provider by id from authOptions.providers.
 function getProviderById(id: string): Provider {
   const provider = authOptions.providers.find((p) => p.options.id === id);
