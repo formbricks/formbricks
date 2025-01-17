@@ -8,6 +8,7 @@ import {
   resendInviteAction,
 } from "@/modules/organization/settings/teams/actions";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
+import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -16,7 +17,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { TInvite } from "@formbricks/types/invites";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

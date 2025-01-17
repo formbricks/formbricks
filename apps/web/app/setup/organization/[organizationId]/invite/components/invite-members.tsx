@@ -1,6 +1,10 @@
 "use client";
 
 import { inviteOrganizationMemberAction } from "@/app/setup/organization/[organizationId]/invite/actions";
+import {
+  type TInviteMembersFormSchema,
+  ZInviteMembersFormSchema,
+} from "@/app/setup/organization/[organizationId]/invite/types/invites";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -13,7 +17,6 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { TInviteMembersFormSchema, ZInviteMembersFormSchema } from "@formbricks/types/invites";
 
 interface InviteMembersProps {
   IS_SMTP_CONFIGURED: boolean;

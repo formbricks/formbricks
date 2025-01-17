@@ -1,8 +1,8 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
-import { createUser } from "@/modules/auth/lib/user";
-import { updateUser } from "@/modules/auth/lib/user";
+import { createUser, updateUser } from "@/modules/auth/lib/user";
+import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
@@ -10,8 +10,6 @@ import { createTeamMembership } from "@/modules/invite/lib/team";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
-import { getInvite } from "@formbricks/lib/invite/service";
-import { deleteInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";

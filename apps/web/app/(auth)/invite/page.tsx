@@ -1,3 +1,4 @@
+import { deleteInvite, getInvite } from "@/app/(auth)/invite/lib/invite";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createTeamMembership } from "@/modules/invite/lib/team";
@@ -7,7 +8,6 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { after } from "next/server";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";

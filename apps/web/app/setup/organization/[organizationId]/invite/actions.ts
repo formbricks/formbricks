@@ -1,11 +1,11 @@
 "use server";
 
+import { inviteUser } from "@/app/setup/organization/[organizationId]/invite/lib/invite";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { z } from "zod";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
-import { inviteUser } from "@formbricks/lib/invite/service";
 import { ZId } from "@formbricks/types/common";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { ZUserEmail, ZUserName } from "@formbricks/types/user";

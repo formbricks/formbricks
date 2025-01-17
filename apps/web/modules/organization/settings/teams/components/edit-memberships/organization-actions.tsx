@@ -4,6 +4,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
+import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { XIcon } from "lucide-react";
@@ -11,7 +12,6 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TInvitee } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

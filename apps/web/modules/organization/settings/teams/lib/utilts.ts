@@ -1,4 +1,4 @@
-import { TInvite } from "@formbricks/types/invites";
+import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 
 export const isInviteExpired = (invite: TInvite) => {
   const now = new Date();

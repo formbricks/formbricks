@@ -1,15 +1,15 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { Prisma } from "@prisma/client";
+import { Invite, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { ZInvite } from "@formbricks/database/zod/invites";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInvite, ZInvite } from "@formbricks/types/invites";
 
-export const createTeamMembership = async (invite: TInvite, userId: string): Promise<void> => {
+export const createTeamMembership = async (invite: Invite, userId: string): Promise<void> => {
   validateInputs([invite, ZInvite], [userId, ZString]);
 
   const teamIds = invite.teamIds || [];

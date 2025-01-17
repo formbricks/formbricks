@@ -14,13 +14,13 @@ import {
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
+import { deleteInvite, getInvite, inviteUser, resendInvite } from "./lib/invite";
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
