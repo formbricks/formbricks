@@ -150,3 +150,8 @@ export const ZJsRNWebViewOnMessageData = z.object({
   fileUploadParams: ZJsFileUploadParams.nullish(),
   uploadId: z.string().nullish(),
 });
+
+export interface TJsUpdates {
+  userId: string;
+  attributes: TAttributes;
+}

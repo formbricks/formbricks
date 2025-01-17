@@ -1,13 +1,16 @@
 import { FormbricksAPI } from "@formbricks/api";
 import type { TAttributes } from "../types/config";
 import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
-import { RNConfig } from "./config";
+// import { RNConfig } from "./config";
 import { Logger } from "./logger";
-import { fetchPersonState } from "./person-state";
-import { filterSurveys } from "./utils";
+import { UpdateQueue } from "./update-queue";
 
-const appConfig = RNConfig.getInstance();
+// import { fetchPersonState } from "./person-state";
+// import { filterSurveys } from "./utils";
+
+// const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
+const updateQueue = UpdateQueue.getInstance();
 
 export const updateAttributes = async (
   apiHost: string,
@@ -88,67 +91,140 @@ export const updateAttributes = async (
   });
 };
 
-export const setAttributesInApp = async (
-  attributes: Record<string, string>
-): Promise<Result<void, ApiErrorResponse>> => {
-  const { apiHost, environmentId } = appConfig.get();
-  const userId = appConfig.get().personState.data.userId;
+// export const setAttributesInApp = async (
+//   attributes: Record<string, string>
+// ): Promise<Result<void, ApiErrorResponse>> => {
 
-  // Don't proceed if userId is not set
-  if (!userId) {
-    logger.error(
-      "UserId not provided, please provide a userId through the setUserId method before setting attributes."
-    );
-    return okVoid();
-  }
+ 
+// export const setAttributesInApp = async (attributes: Record<string, string>): Promise<void> => {
+//   updateQueue.updateAttributes(attributes);
+//   void updateQueue.processUpdates();
 
-  // can't pass "{}" as attributes
-  if (Object.keys(attributes).length === 0) {
-    logger.debug("No attributes to update. Skipping update.");
-    return okVoid();
-  }
+// const { apiHost, environmentId } = appConfig.get();
+// const userId = appConfig.get().personState.data.userId;
 
-  // can't pass "userId" as a key
-  if (attributes.userId) {
-    logger.debug(
-      "Setting userId is no longer supported. Please set the userId through the setUserId method instead. Skipping userId."
-    );
-  }
+// // Don't proceed if userId is not set
+// if (!userId) {
+//   logger.error(
+//     "UserId not provided, please provide a userId through the setUserId method before setting attributes."
+//   );
+//   return okVoid();
+// }
 
-  const { userId: _, ...rest } = attributes;
+// // can't pass "{}" as attributes
+// if (Object.keys(attributes).length === 0) {
+//   logger.debug("No attributes to update. Skipping update.");
+//   return okVoid();
+// }
 
-  const result = await updateAttributes(apiHost, environmentId, userId, rest);
+// // can't pass "userId" as a key
+// if (attributes.userId) {
+//   logger.debug(
+//     "Setting userId is no longer supported. Please set the userId through the setUserId method instead. Skipping userId."
+//   );
+// }
 
-  if (result.ok) {
-    if (result.data.changed) {
-      const personState = await fetchPersonState(
-        {
-          apiHost: appConfig.get().apiHost,
-          environmentId: appConfig.get().environmentId,
-          userId,
-        },
-        true
-      );
+// const { userId: _, ...rest } = attributes;
 
-      const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
+// const result = await updateAttributes(apiHost, environmentId, userId, rest);
 
-      appConfig.update({
-        ...appConfig.get(),
-        personState,
-        filteredSurveys,
-        attributes: {
-          ...appConfig.get().attributes,
-          ...rest,
-        },
-      });
-    }
+// if (result.ok) {
+//   if (result.data.changed) {
+//     const personState = await fetchPersonState(
+//       {
+//         apiHost: appConfig.get().apiHost,
+//         environmentId: appConfig.get().environmentId,
+//         userId,
+//       },
+//       true
+//     );
 
-    return okVoid();
-  }
-  const error = result.error;
-  if (error.code === "forbidden") {
-    logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
-  }
+//     const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
 
-  return err(result.error);
+//     appConfig.update({
+//       ...appConfig.get(),
+//       personState,
+//       filteredSurveys,
+//       attributes: {
+//         ...appConfig.get().attributes,
+//         ...rest,
+//       },
+//     });
+//   }
+
+//   return okVoid();
+// }
+// const error = result.error;
+// if (error.code === "forbidden") {
+//   logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
+// }
+
+// return err(result.error);
+// const { apiHost, environmentId } = appConfig.get();
+// const userId = appConfig.get().personState.data.userId;
+
+// // Don't proceed if userId is not set
+// if (!userId) {
+//   logger.error(
+//     "UserId not provided, please provide a userId through the setUserId method before setting attributes."
+//   );
+//   return okVoid();
+// }
+
+// // can't pass "{}" as attributes
+// if (Object.keys(attributes).length === 0) {
+//   logger.debug("No attributes to update. Skipping update.");
+//   return okVoid();
+// }
+
+// // can't pass "userId" as a key
+// if (attributes.userId) {
+//   logger.debug(
+//     "Setting userId is no longer supported. Please set the userId through the setUserId method instead. Skipping userId."
+//   );
+// }
+
+// const { userId: _, ...rest } = attributes;
+
+// const result = await updateAttributes(apiHost, environmentId, userId, rest);
+
+// if (result.ok) {
+//   if (result.data.changed) {
+//     const personState = await fetchPersonState(
+//       {
+//         apiHost: appConfig.get().apiHost,
+//         environmentId: appConfig.get().environmentId,
+//         userId,
+//       },
+//       true
+//     );
+
+//     const filteredSurveys = filterSurveys(appConfig.get().environmentState, personState);
+
+//     appConfig.update({
+//       ...appConfig.get(),
+//       personState,
+//       filteredSurveys,
+//       attributes: {
+//         ...appConfig.get().attributes,
+//         ...rest,
+//       },
+//     });
+//   }
+
+//   return okVoid();
+// }
+// const error = result.error;
+// if (error.code === "forbidden") {
+//   logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
+// }
+
+// return err(result.error);
+// };
+
+// eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
+export const setAttributesInApp = async (attributes: Record<string, string>) => {
+  updateQueue.updateAttributes(attributes);
+  void updateQueue.processUpdates();
+  return okVoid();
 };

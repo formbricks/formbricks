@@ -3,6 +3,7 @@ import { trackCodeAction } from "./actions";
 import { setAttributesInApp } from "./attributes";
 import { CommandQueue } from "./command-queue";
 import { initialize } from "./initialize";
+import { setLanguageInApp } from "./language";
 import { Logger } from "./logger";
 import { resetPerson, setUserIdInApp } from "./person";
 
@@ -35,8 +36,12 @@ export const setAttributes = async (attributes: Record<string, string>): Promise
   await queue.wait();
 };
 
+export const setLanguage = async (language: string): Promise<void> => {
+  queue.add(setLanguageInApp, true, language);
+  await queue.wait();
+};
+
 export const logout = async (): Promise<void> => {
-  // queue.add(logoutPerson, true);
   queue.add(resetPerson, true);
   await queue.wait();
 };

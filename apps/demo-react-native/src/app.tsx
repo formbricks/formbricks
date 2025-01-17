@@ -1,7 +1,7 @@
 import { StatusBar } from "expo-status-bar";
 import React, { type JSX } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
-import Formbricks, { logout, setAttributes, setUserId, track } from "@formbricks/react-native";
+import Formbricks, { logout, setAttributes, setLanguage, setUserId, track } from "@formbricks/react-native";
 
 LogBox.ignoreAllLogs();
 
@@ -85,6 +85,29 @@ export default function App(): JSX.Element {
             logout().catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error logging out:", error);
+            });
+          }}
+        />
+
+        <Button
+          title="Test schedule"
+           
+          onPress={() => {
+            setUserId("random-userId-3").catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user id:", error);
+            });
+            setAttributes({ testAttr: "attr-test-6" }).catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user attributes:", error);
+            });
+            setAttributes({ testAttr2: "attr-test-7" }).catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user attributes:", error);
+            });
+            setLanguage("de").catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting language:", error);
             });
           }}
         />

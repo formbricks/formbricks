@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- required for logging errors */
 import { FormbricksAPI } from "@formbricks/api";
 import { type TResponseUpdate } from "../types/response";
 import { type SurveyState } from "./survey-state";
@@ -11,8 +12,10 @@ interface QueueConfig {
   setSurveyState?: (state: SurveyState) => void;
 }
 
-const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms: number): Promise<void> => {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 };
 
 export class ResponseQueue {
@@ -31,7 +34,7 @@ export class ResponseQueue {
     });
   }
 
-  add(responseUpdate: TResponseUpdate) {
+  add(responseUpdate: TResponseUpdate): void {
     // update survey state
     this.surveyState.accumulateResponse(responseUpdate);
     if (this.config.setSurveyState) {
@@ -39,10 +42,10 @@ export class ResponseQueue {
     }
     // add response to queue
     this.queue.push(responseUpdate);
-    this.processQueue();
+    void this.processQueue();
   }
 
-  async processQueue() {
+  async processQueue(): Promise<void> {
     if (this.isRequestInProgress) return;
     if (this.queue.length === 0) return;
 
@@ -57,7 +60,7 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
+      console.error(`Formbricks: Failed to send response. Retrying... ${attempts.toString()}`);
       await delay(1000); // wait for 1 second before retrying
       attempts++;
     }
@@ -75,7 +78,7 @@ export class ResponseQueue {
         this.config.onResponseSendingFinished();
       }
       this.isRequestInProgress = false;
-      this.processQueue(); // process the next item in the queue if any
+      void this.processQueue(); // process the next item in the queue if any
     }
   }
 
@@ -87,8 +90,8 @@ export class ResponseQueue {
         const response = await this.api.client.response.create({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
-          userId: this.surveyState.userId || null,
-          singleUseId: this.surveyState.singleUseId || null,
+          userId: this.surveyState.userId ?? null,
+          singleUseId: this.surveyState.singleUseId ?? null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
         });
@@ -108,7 +111,7 @@ export class ResponseQueue {
   }
 
   // update surveyState
-  updateSurveyState(surveyState: SurveyState) {
+  updateSurveyState(surveyState: SurveyState): void {
     this.surveyState = surveyState;
   }
 }

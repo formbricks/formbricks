@@ -62,12 +62,6 @@ export class CommandQueue {
       } else if (!result.data.ok) {
         console.error("🧱 Formbricks - Global error: ", result.data.error);
       }
-
-      // if (!result.ok) {
-      //   errorHandler.handle(result.error);
-      // } else if (!result.data.ok) {
-      //   errorHandler.handle(result.data.error);
-      // }
     }
     this.running = false;
     if (this.resolvePromise) {
