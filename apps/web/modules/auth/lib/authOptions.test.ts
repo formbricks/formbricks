@@ -135,19 +135,19 @@ describe("authOptions", () => {
   describe("CredentialsProvider (token) - Token-based email verification", () => {
     const tokenProvider = getProviderById("token");
 
-    // it("should throw error if token is not provided", async () => {
-    //   await expect(tokenProvider.options.authorize({}, {})).rejects.toThrow(
-    //     "Either a user does not match the provided token or the token is invalid"
-    //   );
-    // });
+    it("should throw error if token is not provided", async () => {
+      await expect(tokenProvider.options.authorize({}, {})).rejects.toThrow(
+        "Either a user does not match the provided token or the token is invalid"
+      );
+    });
 
-    // it("should throw error if token is invalid or user not found", async () => {
-    //   const credentials = { token: "badtoken" };
+    it("should throw error if token is invalid or user not found", async () => {
+      const credentials = { token: "badtoken" };
 
-    //   await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
-    //     "Either a user does not match the provided token or the token is invalid"
-    //   );
-    // });
+      await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
+        "Either a user does not match the provided token or the token is invalid"
+      );
+    });
 
     it("should throw error if email is already verified", async () => {
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser);
