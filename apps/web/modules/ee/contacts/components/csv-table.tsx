@@ -18,9 +18,11 @@ export const CsvTable = ({ data }: CsvTableProps) => {
         className="grid gap-4 border-b-2 border-slate-100 bg-slate-100 p-4 text-left"
         style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
         {columns.map((header, index) => (
-          <div key={index} className="font-semibold capitalize">
+          <span
+            key={index}
+            className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold capitalize">
             {header.replace(/_/g, " ")}
-          </div>
+          </span>
         ))}
       </div>
 
@@ -30,9 +32,9 @@ export const CsvTable = ({ data }: CsvTableProps) => {
           className="grid gap-4 border-b border-gray-200 bg-white p-4 text-left last:border-b-0"
           style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
           {columns.map((header, colIndex) => (
-            <div key={colIndex} className="overflow-hidden text-ellipsis whitespace-nowrap">
+            <span key={colIndex} className="overflow-hidden text-ellipsis whitespace-nowrap text-sm">
               {row[header]}
-            </div>
+            </span>
           ))}
         </div>
       ))}
