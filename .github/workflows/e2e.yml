@@ -1,6 +1,17 @@
 name: E2E Tests
+
 on:
   workflow_call:
+    secrets:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      PLAYWRIGHT_SERVICE_URL:
+        required: false
+      # Add other secrets if necessary
   workflow_dispatch:
 
 env:
