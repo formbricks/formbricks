@@ -149,7 +149,6 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          console.error(e);
           throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
