@@ -4,7 +4,37 @@ import { prisma } from "@formbricks/database";
 import { createCustomerIoCustomer } from "@formbricks/lib/customerio";
 import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TUser } from "@formbricks/types/user";
 import { createUser, getUser, getUserByEmail, updateUser } from "./user";
+
+const mockUser: TUser = {
+  id: "cm5xj580r00000cmgdj9ohups",
+  name: "mock User",
+  email: "test@unit.com",
+  emailVerified: new Date(),
+  imageUrl: "https://www.google.com",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  twoFactorEnabled: false,
+  identityProvider: "google",
+  objective: "improve_user_retention",
+  notificationSettings: {
+    alert: {},
+    weeklySummary: {},
+    unsubscribedOrganizationIds: [],
+  },
+  role: "other",
+  locale: "en-US",
+};
+
+const mockPrismaUser = {
+  ...mockUser,
+  password: "password",
+  identityProviderAccountId: "identityProviderAccountId",
+  twoFactorSecret: "twoFactorSecret",
+  backupCodes: "backupCodes",
+  groupId: "groupId",
+};
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -37,22 +67,19 @@ describe("User Management", () => {
   });
 
   describe("createUser", () => {
-    const mockUserData = {
-      email: "test@example.com",
-      name: "Test User",
-      locale: "en-US",
-    };
-
     it("creates a user successfully", async () => {
-      const mockCreatedUser = { ...mockUserData, id: "cm5xic7rn00010clbg6eucw1p", notificationSettings: {} };
-      vi.mocked(prisma.user.create).mockResolvedValueOnce(mockCreatedUser);
+      vi.mocked(prisma.user.create).mockResolvedValueOnce(mockPrismaUser);
 
-      const result = await createUser(mockUserData);
+      const result = await createUser({
+        email: mockUser.email,
+        name: mockUser.name,
+        locale: mockUser.locale,
+      });
 
-      expect(result).toEqual(mockCreatedUser);
+      expect(result).toEqual(mockPrismaUser);
       expect(createCustomerIoCustomer).toHaveBeenCalledWith({
-        id: mockCreatedUser.id,
-        email: mockCreatedUser.email,
+        id: mockPrismaUser.id,
+        email: mockPrismaUser.email,
       });
       expect(userCache.revalidate).toHaveBeenCalled();
     });
@@ -64,26 +91,25 @@ describe("User Management", () => {
       });
       vi.mocked(prisma.user.create).mockRejectedValueOnce(errToThrow);
 
-      await expect(createUser(mockUserData)).rejects.toThrow(InvalidInputError);
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: mockUser.name,
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow(InvalidInputError);
     });
   });
 
   describe("updateUser", () => {
-    const mockUserId = "user123";
     const mockUpdateData = { name: "Updated Name" };
 
     it("updates a user successfully", async () => {
-      const mockUpdatedUser = {
-        id: mockUserId,
-        email: "test@example.com",
-        locale: "en",
-        emailVerified: null,
-      };
-      vi.mocked(prisma.user.update).mockResolvedValueOnce(mockUpdatedUser);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockPrismaUser, name: mockUpdateData.name });
 
-      const result = await updateUser(mockUserId, mockUpdateData);
+      const result = await updateUser(mockUser.id, mockUpdateData);
 
-      expect(result).toEqual(mockUpdatedUser);
+      expect(result).toEqual({ ...mockPrismaUser, name: mockUpdateData.name });
       expect(userCache.revalidate).toHaveBeenCalled();
     });
 
@@ -94,7 +120,7 @@ describe("User Management", () => {
       });
       vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
 
-      await expect(updateUser(mockUserId, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
+      await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
     });
   });
 

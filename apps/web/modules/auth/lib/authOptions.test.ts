@@ -10,7 +10,7 @@ const mockUserId = "cm5yzxcp900000cl78fzocjal";
 const mockPassword = "password";
 const mockHashedPassword = "$2a$12$LZsLq.9nkZlU0YDPx2aLNelnwD/nyavqbewLN.5.Q5h/UxRD8Ymcy";
 
-export const mockUser: TUser = {
+const mockUser: TUser = {
   id: mockUserId,
   name: "mock User",
   email: "test@unit.com",
