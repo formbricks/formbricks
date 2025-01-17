@@ -20,12 +20,6 @@ export const ZDisplayCreateInput = z.object({
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
 
-export const ZDisplaysWithSurveyName = ZDisplay.extend({
-  surveyName: z.string(),
-});
-
-export type TDisplaysWithSurveyName = z.infer<typeof ZDisplaysWithSurveyName>;
-
 export const ZDisplayFilters = z.object({
   createdAt: z
     .object({
