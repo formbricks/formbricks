@@ -7,8 +7,11 @@ import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInsight } from "@formbricks/types/insights";
-import { TSurveyQuestionId, ZSurveyQuestionId } from "@formbricks/types/surveys/types";
+import {
+  TSurveyQuestionId,
+  TSurveyQuestionSummaryOpenText,
+  ZSurveyQuestionId,
+} from "@formbricks/types/surveys/types";
 
 export const getInsightsBySurveyIdQuestionId = reactCache(
   async (
@@ -16,7 +19,7 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
     questionId: TSurveyQuestionId,
     limit?: number,
     offset?: number
-  ): Promise<TInsight[]> =>
+  ): Promise<TSurveyQuestionSummaryOpenText["insights"]> =>
     cache(
       async () => {
         validateInputs([surveyId, ZId], [questionId, ZSurveyQuestionId]);
