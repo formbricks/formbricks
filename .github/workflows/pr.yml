@@ -1,9 +1,11 @@
 name: PR Update
 
-# Add default permissions for all jobs
+# Update permissions to include all necessary ones
 permissions:
   contents: read
   pull-requests: read
+  actions: read
+  checks: write
 
 on:
   pull_request:
