@@ -2573,7 +2573,12 @@ export const ZSurveyQuestionSummaryMatrix = z.object({
   data: z.array(
     z.object({
       rowLabel: z.string(),
-      columnPercentages: z.record(z.string(), z.number()),
+      columnPercentages: z.array(
+        z.object({
+          column: z.string(),
+          percentage: z.number(),
+        })
+      ),
       totalResponsesForRow: z.number(),
     })
   ),

@@ -778,13 +778,15 @@ export const getQuestionSummary = async (
             totalResponsesForRow += countMap[row][col];
           });
 
-          const columnPercentages = columns.reduce((acc, col) => {
+          const columnPercentages = columns.map((col) => {
             const count = countMap[row][col];
             const percentage =
               totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
-            acc[col] = percentage;
-            return acc;
-          }, {});
+            return {
+              column: col,
+              percentage: Number(percentage),
+            };
+          });
 
           return { rowLabel: row, columnPercentages, totalResponsesForRow };
         });
