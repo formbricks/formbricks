@@ -1,14 +1,48 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { apiKeyCache } from "@/lib/cache/api-key";
+import { TApiKeyCreateInput, ZApiKeyCreateInput } from "@/modules/projects/settings/api-keys/types/api-keys";
+import { TApiKey } from "@/modules/projects/settings/api-keys/types/api-keys";
+import { ApiKey, Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { apiKeyCache } from "@formbricks/lib/apiKey/cache";
+import { cache } from "@formbricks/lib/cache";
+import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { TApiKey, TApiKeyCreateInput, ZApiKeyCreateInput } from "@formbricks/types/api-keys";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const deleteApiKey = async (id: string): Promise<TApiKey | null> => {
+export const getApiKeys = reactCache(
+  async (environmentId: string, page?: number): Promise<ApiKey[]> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+
+        try {
+          const apiKeys = await prisma.apiKey.findMany({
+            where: {
+              environmentId,
+            },
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+
+          return apiKeys;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+          throw error;
+        }
+      },
+      [`getApiKeys-${environmentId}-${page}`],
+      {
+        tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
+export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
   validateInputs([id, ZId]);
 
   try {

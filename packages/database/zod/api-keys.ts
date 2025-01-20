@@ -1,3 +1,4 @@
+import { type ApiKey } from "@prisma/client";
 import { z } from "zod";
 
 export const ZApiKey = z.object({
@@ -7,12 +8,4 @@ export const ZApiKey = z.object({
   label: z.string().nullable(),
   hashedKey: z.string(),
   environmentId: z.string().cuid2(),
-  apiKey: z.string().optional(),
-});
-
-export type TApiKey = z.infer<typeof ZApiKey>;
-
-export const ZApiKeyCreateInput = z.object({
-  label: z.string(),
-});
-export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;
+}) satisfies z.ZodType<ApiKey>;
