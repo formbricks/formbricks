@@ -1,5 +1,5 @@
-import { InviteWithCreator } from "@/app/(auth)/invite/types/invites";
 import { inviteCache } from "@/lib/cache/invite";
+import { type InviteWithCreator } from "@/modules/auth/signup/types/invites";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
