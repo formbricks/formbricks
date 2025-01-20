@@ -8,10 +8,10 @@ import {
   getProjectIdFromApiKeyId,
   getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
-import { createApiKey, deleteApiKey } from "@/modules/projects/settings/lib/api-key";
+import { createApiKey, deleteApiKey } from "@/modules/projects/settings/api-keys/lib/api-key";
 import { z } from "zod";
-import { ZApiKeyCreateInput } from "@formbricks/types/api-keys";
 import { ZId } from "@formbricks/types/common";
+import { ZApiKeyCreateInput } from "./types/api-keys";
 
 const ZDeleteApiKeyAction = z.object({
   id: ZId,
