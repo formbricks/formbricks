@@ -1,5 +1,5 @@
-import { WebhookOverviewTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookOverviewTab";
-import { WebhookSettingsTab } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookSettingsTab";
+import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
+import { WebhookSettingsTab } from "@/modules/integrations/webhooks/components/webhook-settings-tab";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { Webhook } from "@prisma/client";
 import { WebhookIcon } from "lucide-react";

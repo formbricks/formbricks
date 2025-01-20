@@ -1,6 +1,6 @@
 "use client";
 
-import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
+import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { Webhook } from "@prisma/client";
 import { useTranslations } from "next-intl";
