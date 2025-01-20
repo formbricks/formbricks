@@ -567,6 +567,7 @@
       "this_action_will_be_triggered_when_the_page_is_loaded": "Cette action sera déclenchée lorsque la page sera chargée.",
       "this_action_will_be_triggered_when_the_user_scrolls_50_percent_of_the_page": "Cette action sera déclenchée lorsque l'utilisateur fera défiler 50 % de la page.",
       "this_action_will_be_triggered_when_the_user_tries_to_leave_the_page": "Cette action sera déclenchée lorsque l'utilisateur essaiera de quitter la page.",
+      "this_is_a_code_action_please_make_changes_in_your_code_base": "Ceci est une action de code. Veuillez apporter des modifications à votre base de code.",
       "this_is_a_code_action_you_can_only_change_the_description": "Ceci est une action de code. Vous ne pouvez changer que la description.",
       "track_new_user_action": "Suivre l'action des nouveaux utilisateurs",
       "track_user_action_to_display_surveys_or_create_user_segment": "Suivre l'action de l'utilisateur pour afficher des enquêtes ou créer un segment d'utilisateur.",

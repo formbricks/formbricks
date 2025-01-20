@@ -163,7 +163,6 @@ export const ThemeStyling = ({
                   setOpen={setBackgroundStylingOpen}
                   environmentId={environmentId}
                   colors={colors}
-                  key={form.watch("background.bg")}
                   isSettingsPage
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
