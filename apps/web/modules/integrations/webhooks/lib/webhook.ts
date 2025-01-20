@@ -138,6 +138,9 @@ export const getWebhooks = (environmentId: string, page?: number): Promise<Webho
 
 export const testEndpoint = async (url: string): Promise<boolean> => {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -146,16 +149,23 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       headers: {
         "Content-Type": "application/json",
       },
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
     const statusCode = response.status;
 
     if (statusCode >= 200 && statusCode < 300) {
       return true;
     } else {
-      const errorMessage = await response.text();
+      const errorMessage = await response.text().then(text => 
+        text.substring(0, 1000)  // Limit error message size
+      );
       throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
     }
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new UnknownError('Request timed out after 5 seconds');
+    }
     throw new UnknownError(`Error while fetching the URL: ${error.message}`);
   }
 };
