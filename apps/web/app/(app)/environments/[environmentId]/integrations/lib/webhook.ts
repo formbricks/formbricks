@@ -1,5 +1,6 @@
 import { webhookCache } from "@/lib/cache/webhook";
 import { Prisma, Webhook } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -9,7 +10,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 export const getWebhookCountBySource = (environmentId: string, source?: Webhook["source"]): Promise<number> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [source, ZId]);
+      validateInputs([environmentId, ZId], [source, z.string().optional()]);
 
       try {
         const count = await prisma.webhook.count({

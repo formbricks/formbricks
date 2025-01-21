@@ -2,9 +2,8 @@ import { webhookCache } from "@/lib/cache/webhook";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import {
   DatabaseError,
   InvalidInputError,
@@ -108,18 +107,19 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
   }
 };
 
-export const getWebhooks = (environmentId: string, page?: number): Promise<Webhook[]> =>
+export const getWebhooks = (environmentId: string): Promise<Webhook[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentId, ZId]);
 
       try {
         const webhooks = await prisma.webhook.findMany({
           where: {
             environmentId: environmentId,
           },
-          take: page ? ITEMS_PER_PAGE : undefined,
-          skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          orderBy: {
+            createdAt: "desc",
+          },
         });
         return webhooks;
       } catch (error) {
@@ -130,7 +130,7 @@ export const getWebhooks = (environmentId: string, page?: number): Promise<Webho
         throw error;
       }
     },
-    [`getWebhooks-${environmentId}-${page}`],
+    [`getWebhooks-${environmentId}`],
     {
       tags: [webhookCache.tag.byEnvironmentId(environmentId)],
     }
@@ -140,7 +140,7 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
-    
+
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -157,14 +157,14 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     if (statusCode >= 200 && statusCode < 300) {
       return true;
     } else {
-      const errorMessage = await response.text().then(text => 
-        text.substring(0, 1000)  // Limit error message size
+      const errorMessage = await response.text().then(
+        (text) => text.substring(0, 1000) // Limit error message size
       );
       throw new UnknownError(`Request failed with status code ${statusCode}: ${errorMessage}`);
     }
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new UnknownError('Request timed out after 5 seconds');
+    if (error.name === "AbortError") {
+      throw new UnknownError("Request timed out after 5 seconds");
     }
     throw new UnknownError(`Error while fetching the URL: ${error.message}`);
   }

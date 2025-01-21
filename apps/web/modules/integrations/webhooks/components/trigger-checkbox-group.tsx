@@ -9,18 +9,21 @@ interface TriggerCheckboxGroupProps {
   allowChanges: boolean;
 }
 
-const triggers = [
+const triggers: {
+  title: string;
+  value: PipelineTriggers;
+}[] = [
   {
     title: "environments.integrations.webhooks.response_created",
-    value: "responseCreated" as PipelineTriggers,
+    value: "responseCreated",
   },
   {
     title: "environments.integrations.webhooks.response_updated",
-    value: "responseUpdated" as PipelineTriggers,
+    value: "responseUpdated",
   },
   {
     title: "environments.integrations.webhooks.response_finished",
-    value: "responseFinished" as PipelineTriggers,
+    value: "responseFinished",
   },
 ];
 

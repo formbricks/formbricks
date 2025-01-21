@@ -21,7 +21,7 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 export const WebhooksPage = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [session, organization, webhooksUnsorted, surveys, environment] = await Promise.all([
+  const [session, organization, webhooks, surveys, environment] = await Promise.all([
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(params.environmentId),
     getWebhooks(params.environmentId),
@@ -49,12 +49,6 @@ export const WebhooksPage = async (props) => {
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
-
-  const webhooks = webhooksUnsorted.sort((a, b) => {
-    if (a.createdAt > b.createdAt) return -1;
-    if (a.createdAt < b.createdAt) return 1;
-    return 0;
-  });
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
   const locale = await findMatchingLocale();
