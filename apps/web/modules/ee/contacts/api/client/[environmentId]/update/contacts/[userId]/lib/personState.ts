@@ -1,9 +1,5 @@
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { updateAttributes } from "@/modules/ee/contacts/api/client/[environmentId]/contacts/[userId]/attributes/lib/attributes";
-import { getContactByUserIdWithAttributes } from "@/modules/ee/contacts/api/client/[environmentId]/contacts/[userId]/attributes/lib/contact";
-import { getContactByUserId } from "@/modules/ee/contacts/api/client/[environmentId]/identify/contacts/[userId]/lib/contact";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
@@ -14,9 +10,9 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { responseCache } from "@formbricks/lib/response/cache";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
+import { getContactByUserIdWithAttributes } from "./contact";
 import { getPersonSegmentIds } from "./segments";
 
 /**
@@ -38,18 +34,19 @@ export const getPersonState = async ({
   environmentId: string;
   userId: string;
   device: "phone" | "desktop";
-  attributes?: TContactAttributes;
+  attributes?: Record<string, string>;
 }): Promise<{
   state: TJsPersonState["data"];
-  updateAttrResponse: {
-    success: boolean;
-    details?: Record<string, string>;
-  } | null;
+  attributesInfo: {
+    shouldUpdate: boolean;
+    contactId: string;
+  };
   revalidateProps?: { contactId: string; revalidate: boolean };
 }> =>
   cache(
     async () => {
       let revalidatePerson = false;
+      let attributesUpToDate = true;
       const environment = await getEnvironment(environmentId);
 
       if (!environment) {
@@ -65,7 +62,6 @@ export const getPersonState = async ({
       let contact = await getContactByUserIdWithAttributes(environmentId, userId, attributes ?? {});
 
       if (!contact) {
-        // If the contact does not exist, create it
         contact = await prisma.contact.create({
           data: {
             environment: {
@@ -102,32 +98,20 @@ export const getPersonState = async ({
         revalidatePerson = true;
       }
 
-      let updateAttrResponse: {
-        success: boolean;
-        details?: Record<string, string>;
-      } | null = null;
-
-      // Update the contact attributes
       if (attributes && Object.keys(attributes).length > 0) {
-        const oldAttributes = new Map(contact.attributes.map((attr) => [attr.attributeKey.key, attr.value]));
+        const oldAttributes = contact.attributes.reduce(
+          (acc, ctx) => {
+            acc[ctx.attributeKey.key] = ctx.value;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
 
-        let isUpToDate = true;
         for (const [key, value] of Object.entries(attributes)) {
-          if (value !== oldAttributes.get(key)) {
-            isUpToDate = false;
+          if (value !== oldAttributes[key]) {
+            attributesUpToDate = false;
             break;
           }
-        }
-
-        if (isUpToDate) {
-          updateAttrResponse = {
-            success: true,
-            details: {
-              message: "No updates were necessary; the person is already up to date.",
-            },
-          };
-        } else {
-          updateAttrResponse = await updateAttributes(contact.id, userId, environmentId, attributes);
         }
       }
 
@@ -140,7 +124,7 @@ export const getPersonState = async ({
         },
       });
 
-      const contactDisplayes = await prisma.display.findMany({
+      const contactDisplays = await prisma.display.findMany({
         where: {
           contactId: contact.id,
         },
@@ -157,20 +141,23 @@ export const getPersonState = async ({
         userId,
         segments,
         displays:
-          contactDisplayes?.map((display) => ({
+          contactDisplays?.map((display) => ({
             surveyId: display.surveyId,
             createdAt: display.createdAt,
           })) ?? [],
         responses: contactResponses?.map((response) => response.surveyId) ?? [],
         lastDisplayAt:
-          contactDisplayes.length > 0
-            ? contactDisplayes.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+          contactDisplays.length > 0
+            ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
             : null,
       };
 
       return {
         state: userState,
-        updateAttrResponse,
+        attributesInfo: {
+          shouldUpdate: !attributesUpToDate,
+          contactId: contact.id,
+        },
         revalidateProps: revalidatePerson ? { contactId: contact.id, revalidate: true } : undefined,
       };
     },
@@ -182,7 +169,6 @@ export const getPersonState = async ({
         organizationCache.tag.byEnvironmentId(environmentId),
         contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        contactAttributeKeyCache.tag.byEnvironmentId(environmentId),
         displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         segmentCache.tag.byEnvironmentId(environmentId),

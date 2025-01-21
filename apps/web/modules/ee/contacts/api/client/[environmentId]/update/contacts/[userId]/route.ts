@@ -5,8 +5,12 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZJsContactsUpdateAttributeInput, ZJsPersonIdentifyInput } from "@formbricks/types/js";
-import { getPersonState } from "./lib/personState";
+import {
+  TJsPersonState,
+  ZJsContactsUpdateAttributeInput,
+  ZJsPersonIdentifyInput,
+} from "@formbricks/types/js";
+import { updateContact } from "./lib/updateContact";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -49,34 +53,43 @@ export const POST = async (
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
-    let attributesUpdatesToSend: TContactAttributes | null = null;
+    let attributeUpdatesToSend: TContactAttributes | null = null;
     if (parsedInput.data?.attributes) {
       const { attributes } = parsedInput.data;
+
+      // remove userId and id from attributes
       const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
-      attributesUpdatesToSend = updatedAttributes;
+      attributeUpdatesToSend = updatedAttributes;
     }
 
     const { device } = userAgent(request);
     const deviceType = device ? "phone" : "desktop";
 
     try {
-      const personState = await getPersonState({
+      const { personState, details } = await updateContact(
         environmentId,
         userId,
-        device: deviceType,
-        attributes: attributesUpdatesToSend ?? undefined,
-      });
+        deviceType,
+        attributeUpdatesToSend ?? undefined
+      );
 
-      if (personState.updateAttrResponse)
-        if (personState.revalidateProps?.revalidate) {
-          contactCache.revalidate({
-            environmentId,
-            userId,
-            id: personState.revalidateProps.contactId,
-          });
-        }
+      if (personState.revalidateProps?.revalidate) {
+        contactCache.revalidate({
+          environmentId,
+          userId,
+          id: personState.revalidateProps.contactId,
+        });
+      }
 
-      return responses.successResponse(personState.state, true);
+      let responseJson: { state: TJsPersonState["data"]; details?: Record<string, string> } = {
+        state: personState.state,
+      };
+
+      if (personState.attributesInfo.shouldUpdate && Object.keys(details).length > 0) {
+        responseJson.details = details;
+      }
+
+      return responses.successResponse(responseJson, true);
     } catch (err) {
       if (err instanceof ResourceNotFoundError) {
         return responses.notFoundResponse(err.resourceType, err.resourceId);
