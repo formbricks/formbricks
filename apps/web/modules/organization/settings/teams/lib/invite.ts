@@ -112,7 +112,7 @@ export const inviteUser = async ({
   organizationId: string;
   invitee: TInvitee;
   currentUserId: string;
-}): Promise<Pick<Invite, "id">> => {
+}): Promise<string> => {
   validateInputs([organizationId, ZString], [invitee, ZInvitee]);
 
   try {
@@ -172,7 +172,7 @@ export const inviteUser = async ({
       organizationId: invite.organizationId,
     });
 
-    return { id: invite.id };
+    return invite.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -245,7 +245,7 @@ export const getInvite = reactCache(
           throw error;
         }
       },
-      [`getInvite-${inviteId}`],
+      [`teams-getInvite-${inviteId}`],
       {
         tags: [inviteCache.tag.byId(inviteId)],
       }

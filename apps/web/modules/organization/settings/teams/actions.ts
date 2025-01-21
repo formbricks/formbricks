@@ -206,7 +206,7 @@ export const inviteUserAction = authenticatedActionClient
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    const invite = await inviteUser({
+    const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
         email: parsedInput.email,
@@ -217,9 +217,9 @@ export const inviteUserAction = authenticatedActionClient
       currentUserId: ctx.user.id,
     });
 
-    if (invite) {
+    if (inviteId) {
       await sendInviteMemberEmail(
-        invite.id,
+        inviteId,
         parsedInput.email,
         ctx.user.name ?? "",
         parsedInput.name ?? "",
@@ -229,7 +229,7 @@ export const inviteUserAction = authenticatedActionClient
       );
     }
 
-    return invite;
+    return inviteId;
   });
 
 const ZLeaveOrganizationAction = z.object({

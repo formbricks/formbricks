@@ -71,7 +71,7 @@ export const getInvite = reactCache(
           throw error;
         }
       },
-      [`getInvite-${inviteId}`],
+      [`signup-getInvite-${inviteId}`],
       {
         tags: [inviteCache.tag.byId(inviteId)],
       }

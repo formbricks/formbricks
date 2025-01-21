@@ -13,7 +13,11 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
 import { ContentLayout } from "./components/content-layout";
 
-export const InvitePage = async (props) => {
+interface InvitePageProps {
+  searchParams: Promise<{ token: string }>;
+}
+
+export const InvitePage = async (props: InvitePageProps) => {
   const searchParams = await props.searchParams;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
@@ -76,7 +80,9 @@ export const InvitePage = async (props) => {
           description={t("auth.invite.invite_expired_description")}
         />
       );
-    } else if (!session) {
+    }
+
+    if (!session) {
       const redirectUrl = WEBAPP_URL + "/invite?token=" + searchParams.token;
       const encodedEmail = encodeURIComponent(email);
       return (
@@ -95,7 +101,9 @@ export const InvitePage = async (props) => {
           </Button>
         </ContentLayout>
       );
-    } else if (user?.email?.toLowerCase() !== email?.toLowerCase()) {
+    }
+
+    if (user?.email?.toLowerCase() !== email?.toLowerCase()) {
       return (
         <ContentLayout
           headline={t("auth.invite.email_does_not_match")}
@@ -105,20 +113,20 @@ export const InvitePage = async (props) => {
           </Button>
         </ContentLayout>
       );
-    } else {
-      after(async () => {
-        await createMembershipAction();
-      });
-      return (
-        <ContentLayout
-          headline={t("auth.invite.welcome_to_organization")}
-          description={t("auth.invite.welcome_to_organization_description")}>
-          <Button asChild>
-            <Link href="/">{t("auth.invite.go_to_app")}</Link>
-          </Button>
-        </ContentLayout>
-      );
     }
+
+    after(async () => {
+      await createMembershipAction();
+    });
+    return (
+      <ContentLayout
+        headline={t("auth.invite.welcome_to_organization")}
+        description={t("auth.invite.welcome_to_organization_description")}>
+        <Button asChild>
+          <Link href="/">{t("auth.invite.go_to_app")}</Link>
+        </Button>
+      </ContentLayout>
+    );
   } catch (e) {
     console.error(e);
     return (
