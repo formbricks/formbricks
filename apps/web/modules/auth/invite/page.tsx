@@ -1,7 +1,7 @@
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
+import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
-import { createTeamMembership } from "@/modules/invite/lib/team";
 import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";

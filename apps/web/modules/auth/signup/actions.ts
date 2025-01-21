@@ -1,12 +1,12 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
-import { createTeamMembership } from "@/modules/invite/lib/team";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
