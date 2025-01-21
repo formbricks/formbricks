@@ -14,6 +14,7 @@ const getTelemetryId = (): string => {
 };
 
 export const captureTelemetry = async (eventName: string, properties = {}) => {
+  console.log("🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀");
   if (env.TELEMETRY_DISABLED !== "1" && process.env.NODE_ENV === "production") {
     try {
       await fetch("https://telemetry.formbricks.com/capture/", {
