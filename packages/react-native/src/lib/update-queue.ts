@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- required for logging errors */
-/* eslint-disable @typescript-eslint/require-await -- required for async functions */
 /* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
 import type { TAttributes, TJsUpdates } from "../types/config";
+import { sendUpdates } from "./updates";
 
 export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
@@ -73,10 +73,16 @@ export class UpdateQueue {
       const handler = async (): Promise<void> => {
         try {
           const currentUpdates = { ...this.updates };
-          console.log("updates to send now: ", currentUpdates);
 
-          // TODO: Add your API call here to send the updates to the server
-          // await api.sendUpdates(currentUpdates);
+          if (Object.keys(currentUpdates).length > 0) {
+            // TODO: fix the currentUpdates checks for undefined userId and attributes
+            await sendUpdates({
+              updates: {
+                userId: currentUpdates.userId ?? "",
+                attributes: currentUpdates.attributes ?? {},
+              },
+            });
+          }
 
           this.clearUpdates();
           resolve();
