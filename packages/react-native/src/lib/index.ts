@@ -5,7 +5,7 @@ import { CommandQueue } from "./command-queue";
 import { initialize } from "./initialize";
 import { setLanguageInApp } from "./language";
 import { Logger } from "./logger";
-import { resetPerson, setUserIdInApp } from "./person";
+import { resetUser, setUserIdInApp } from "./user";
 
 const logger = Logger.getInstance();
 logger.debug("Create command queue");
@@ -42,6 +42,6 @@ export const setLanguage = async (language: string): Promise<void> => {
 };
 
 export const logout = async (): Promise<void> => {
-  queue.add(resetPerson, true);
+  queue.add(resetUser, true);
   await queue.wait();
 };

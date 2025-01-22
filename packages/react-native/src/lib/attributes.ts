@@ -1,101 +1,8 @@
-import { FormbricksAPI } from "@formbricks/api";
-import type { TAttributes } from "../types/config";
-import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
-// import { RNConfig } from "./config";
-import { Logger } from "./logger";
+import { type NetworkError, type Result, okVoid } from "../types/errors";
 import { UpdateQueue } from "./update-queue";
 
-// import { fetchPersonState } from "./person-state";
-// import { filterSurveys } from "./utils";
-
-// const appConfig = RNConfig.getInstance();
-const logger = Logger.getInstance();
 const updateQueue = UpdateQueue.getInstance();
 
-export const updateAttributes = async (
-  apiHost: string,
-  environmentId: string,
-  userId: string,
-  attributes: TAttributes
-): Promise<
-  Result<
-    {
-      changed: boolean;
-      message: string;
-      details?: Record<string, string>;
-    },
-    ApiErrorResponse
-  >
-> => {
-  // clean attributes and remove existing attributes if config already exists
-  const updatedAttributes = { ...attributes };
-
-  logger.debug(`Updating attributes: ${JSON.stringify(updatedAttributes)}`);
-
-  const api = new FormbricksAPI({
-    apiHost,
-    environmentId,
-  });
-
-  const res = await api.client.attribute.update({ userId, attributes: updatedAttributes });
-
-  if (res.ok) {
-    if (res.data.details) {
-      Object.entries(res.data.details).forEach(([key, value]) => {
-        logger.debug(`${key}: ${value}`);
-      });
-    }
-
-    if (res.data.changed) {
-      const message = "Attributes updated in Formbricks";
-      logger.debug(message);
-
-      return ok({
-        changed: true,
-        message,
-        ...(res.data.details && {
-          details: res.data.details,
-        }),
-      });
-    }
-
-    const message = "Attributes already updated in Formbricks, skipping update.";
-    logger.debug(message);
-
-    return ok({
-      changed: false,
-      message,
-      ...(res.data.details && {
-        details: res.data.details,
-      }),
-    });
-  }
-
-  const responseError = res.error;
-
-  // We ignore the error and return ok with changed: false
-  if (responseError.details?.ignore) {
-    logger.error(responseError.message);
-    return ok({
-      changed: false,
-      message: responseError.message,
-    });
-  }
-
-  return err({
-    code: responseError.code,
-    status: responseError.status,
-    message: `Error updating person with userId ${userId}`,
-    url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
-    responseMessage: responseError.responseMessage,
-  });
-};
-
-// export const setAttributesInApp = async (
-//   attributes: Record<string, string>
-// ): Promise<Result<void, ApiErrorResponse>> => {
-
- 
 // export const setAttributesInApp = async (attributes: Record<string, string>): Promise<void> => {
 //   updateQueue.updateAttributes(attributes);
 //   void updateQueue.processUpdates();
@@ -222,8 +129,10 @@ export const updateAttributes = async (
 // return err(result.error);
 // };
 
-// eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
-export const setAttributesInApp = async (attributes: Record<string, string>) => {
+export const setAttributesInApp = async (
+  attributes: Record<string, string>
+  // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
+): Promise<Result<void, NetworkError>> => {
   updateQueue.updateAttributes(attributes);
   void updateQueue.processUpdates();
   return okVoid();

@@ -52,7 +52,7 @@ export interface TJsEnvironmentState {
   };
 }
 
-export interface TJsPersonState {
+export interface TJsUserState {
   expiresAt: Date | null;
   data: {
     userId: string | null;
@@ -66,8 +66,8 @@ export interface TJsPersonState {
 export interface TJsConfig {
   environmentId: string;
   apiHost: string;
-  environmentState: TJsEnvironmentState;
-  personState: TJsPersonState;
+  environment: TJsEnvironmentState;
+  user: TJsUserState;
   filteredSurveys: TJsEnvironmentStateSurvey[];
   attributes: Record<string, string>;
   status: {
@@ -153,5 +153,5 @@ export const ZJsRNWebViewOnMessageData = z.object({
 
 export interface TJsUpdates {
   userId: string;
-  attributes: TAttributes;
+  attributes?: TAttributes;
 }

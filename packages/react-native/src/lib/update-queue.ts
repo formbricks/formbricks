@@ -7,7 +7,7 @@ export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
   private updates: TJsUpdates | null = null;
   private debounceTimeout: NodeJS.Timeout | null = null;
-  private readonly DEBOUNCE_DELAY = 5000;
+  private readonly DEBOUNCE_DELAY = 500;
 
   private constructor() {}
 

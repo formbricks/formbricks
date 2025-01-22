@@ -49,7 +49,7 @@ export const trackCodeAction = (
   code: string
 ): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
-    environmentState: {
+    environment: {
       data: { actionClasses = [] },
     },
   } = appConfig.get();

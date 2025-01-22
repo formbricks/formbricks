@@ -11,11 +11,7 @@ import { StorageAPI } from "./lib/storage";
 import { SurveyState } from "./lib/survey-state";
 import { SurveyStore } from "./lib/survey-store";
 import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "./lib/utils";
-import {
-  type TJsEnvironmentStateSurvey,
-  type TJsPersonState,
-  ZJsRNWebViewOnMessageData,
-} from "./types/config";
+import { type TJsEnvironmentStateSurvey, type TJsUserState, ZJsRNWebViewOnMessageData } from "./types/config";
 import type { TResponseUpdate } from "./types/response";
 import type { TJsFileUploadParams, TUploadFileConfig } from "./types/storage";
 import type { SurveyInlineProps } from "./types/surveys";
@@ -35,7 +31,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const [isSurveyRunning, setIsSurveyRunning] = useState(false);
   const [showSurvey, setShowSurvey] = useState(false);
 
-  const project = appConfig.get().environmentState.data.project;
+  const project = appConfig.get().environment.data.project;
   const attributes = appConfig.get().attributes;
 
   const styling = getStyling(project, survey);
@@ -43,7 +39,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const isMultiLanguageSurvey = survey.languages.length > 1;
 
   const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, null, null, appConfig.get().personState.data.userId)
+    new SurveyState(survey.id, null, null, appConfig.get().user.data.userId)
   );
 
   const responseQueue = useMemo(
@@ -88,7 +84,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   }
 
   const addResponseToQueue = (responseUpdate: TResponseUpdate): void => {
-    const { userId } = appConfig.get().personState.data;
+    const { userId } = appConfig.get().user.data;
     if (userId) surveyState.updateUserId(userId);
 
     responseQueue.updateSurveyState(surveyState);
@@ -103,13 +99,13 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   };
 
   const onCloseSurvey = (): void => {
-    const { environmentState, personState } = appConfig.get();
+    const { environment: environmentState, user: personState } = appConfig.get();
     const filteredSurveys = filterSurveys(environmentState, personState);
 
     appConfig.update({
       ...appConfig.get(),
-      environmentState,
-      personState,
+      environment: environmentState,
+      user: personState,
       filteredSurveys,
     });
 
@@ -118,7 +114,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   };
 
   const createDisplay = async (surveyId: string): Promise<{ id: string }> => {
-    const { userId } = appConfig.get().personState.data;
+    const { userId } = appConfig.get().user.data;
 
     const api = new FormbricksAPI({
       apiHost: appConfig.get().apiHost,
@@ -213,27 +209,27 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               const { id } = await createDisplay(survey.id);
               surveyState.updateDisplayId(id);
 
-              const existingDisplays = appConfig.get().personState.data.displays;
+              const existingDisplays = appConfig.get().user.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
 
               const displays = [...existingDisplays, newDisplay];
               const previousConfig = appConfig.get();
 
               const updatedPersonState = {
-                ...previousConfig.personState,
+                ...previousConfig.user,
                 data: {
-                  ...previousConfig.personState.data,
+                  ...previousConfig.user.data,
                   displays,
                   lastDisplayAt: new Date(),
                 },
               };
 
-              const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
+              const filteredSurveys = filterSurveys(previousConfig.environment, updatedPersonState);
 
               appConfig.update({
                 ...previousConfig,
-                environmentState: previousConfig.environmentState,
-                personState: updatedPersonState,
+                environment: previousConfig.environment,
+                user: updatedPersonState,
                 filteredSurveys,
               });
             }
@@ -243,21 +239,21 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               const isNewResponse = surveyState.responseId === null;
 
               if (isNewResponse) {
-                const responses = appConfig.get().personState.data.responses;
-                const newPersonState: TJsPersonState = {
-                  ...appConfig.get().personState,
+                const responses = appConfig.get().user.data.responses;
+                const newPersonState: TJsUserState = {
+                  ...appConfig.get().user,
                   data: {
-                    ...appConfig.get().personState.data,
+                    ...appConfig.get().user.data,
                     responses: [...responses, surveyState.surveyId],
                   },
                 };
 
-                const filteredSurveys = filterSurveys(appConfig.get().environmentState, newPersonState);
+                const filteredSurveys = filterSurveys(appConfig.get().environment, newPersonState);
 
                 appConfig.update({
                   ...appConfig.get(),
-                  environmentState: appConfig.get().environmentState,
-                  personState: newPersonState,
+                  environment: appConfig.get().environment,
+                  user: newPersonState,
                   filteredSurveys,
                 });
               }

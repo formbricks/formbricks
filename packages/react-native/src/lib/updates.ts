@@ -1,6 +1,7 @@
 /* eslint-disable no-console -- required for logging errors */
-import { type TJsPersonState, type TJsUpdates } from "../types/config";
-import { err } from "../types/errors";
+import { FormbricksAPI } from "@formbricks/api";
+import { type TJsUpdates, type TJsUserState } from "../types/config";
+import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { Logger } from "./logger";
 import { filterSurveys } from "./utils";
@@ -10,15 +11,27 @@ const logger = Logger.getInstance();
 
 export const sendUpdatesToBackend = async (
   {
+    apiHost,
+    environmentId,
     updates,
   }: {
+    apiHost: string;
+    environmentId: string;
     updates: TJsUpdates;
   },
   noCache = false
-): Promise<TJsPersonState> => {
-  const { apiHost, environmentId } = config.get();
-  // update endpoint call
+): Promise<
+  Result<
+    {
+      state: TJsUserState;
+      details?: Record<string, string>;
+    },
+    ApiErrorResponse
+  >
+> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`;
+
+  const api = new FormbricksAPI({ apiHost, environmentId });
 
   try {
     const fetchOptions: RequestInit = {};
@@ -28,57 +41,52 @@ export const sendUpdatesToBackend = async (
       logger.debug("No cache option set for sync");
     }
 
-    const response = await fetch(url, {
-      ...fetchOptions,
-      method: "POST",
-      body: JSON.stringify({
-        attributes: updates.attributes,
-      }),
+    const response = await api.client.user.createOrUpdate({
+      userId: updates.userId,
+      attributes: updates.attributes,
     });
 
     if (!response.ok) {
-      const jsonRes = (await response.json()) as { code: string; message: string };
-
-      const error = err({
-        code: jsonRes.code === "forbidden" ? "forbidden" : "network_error",
-        status: response.status,
-        message: "Error syncing with backend",
-        url: new URL(url),
-        responseMessage: jsonRes.message,
+      console.log("from error: ", JSON.stringify(response, null, 2));
+      return err({
+        code: response.error.code,
+        status: response.error.status,
+        message: `Error updating user with userId ${updates.userId}`,
+        url: new URL(`${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`),
+        responseMessage: response.error.message,
       });
-
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
-      throw error.error;
     }
 
-    const responseData = (await response.json()) as {
-      data: {
-        state: TJsPersonState["data"];
-        details?: Record<string, string>;
-      };
-    };
+    const { state } = response.data;
 
-    const { state } = responseData.data;
+    // const defaultPersonState: TJsPersonState = {
+    //   expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+    //   data: {
+    //     userId: updates.userId,
+    //     segments: [],
+    //     displays: [],
+    //     responses: [],
+    //     lastDisplayAt: null,
+    //   },
+    // };
 
-    const defaultPersonState: TJsPersonState = {
-      expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-      data: {
-        userId: updates.userId,
-        segments: [],
-        displays: [],
-        responses: [],
-        lastDisplayAt: null,
+    // if (!Object.keys(state).length) {
+    //   return ok({ state: defaultPersonState });
+    // }
+
+    // return {
+    //   data: { ...state },
+    //   expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+    // };
+
+    return ok({
+      state: {
+        expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+        data: {
+          ...state,
+        },
       },
-    };
-
-    if (!Object.keys(state).length) {
-      return defaultPersonState;
-    }
-
-    return {
-      data: { ...state },
-      expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-    };
+    });
   } catch (e: unknown) {
     const errorTyped = e as { message?: string };
 
@@ -102,18 +110,49 @@ export const sendUpdates = async (
     updates: TJsUpdates;
   },
   noCache = false
-) => {
+): Promise<Result<void, ApiErrorResponse>> => {
+  const { apiHost, environmentId } = config.get();
+  // update endpoint call
+  const url = `${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`;
+
   try {
-    const personState = await sendUpdatesToBackend({ updates }, noCache);
+    const updatesResponse = await sendUpdatesToBackend({ apiHost, environmentId, updates }, noCache);
 
-    const filteredSurveys = filterSurveys(config.get().environmentState, personState);
+    if (updatesResponse.ok) {
+      // data => {state: TJsPersonState; details?: Record<string, string> }
+      const personState = updatesResponse.data.state;
+      const filteredSurveys = filterSurveys(config.get().environment, personState);
 
-    config.update({
-      ...config.get(),
-      personState,
-      filteredSurveys,
-    });
+      // details => Record<string, string> - contains the details of the attributes update
+      // for example, if the attribute "email" was being used for some user or not
+      // we should log the details
+      const details = updatesResponse.data.details;
+
+      if (details && Object.keys(details).length > 0) {
+        for (const [key, value] of Object.entries(details)) {
+          logger.debug(`Attribute ${key} update details: ${value}`);
+        }
+      }
+
+      config.update({
+        ...config.get(),
+        user: personState,
+        filteredSurveys,
+      });
+
+      return okVoid();
+    }
+
+    return err(updatesResponse.error);
   } catch (e) {
     console.error("error in sending updates: ", e);
+
+    return err({
+      code: "network_error",
+      message: "Error sending updates",
+      status: 500,
+      url: new URL(url),
+      responseMessage: "Unknown error",
+    });
   }
 };

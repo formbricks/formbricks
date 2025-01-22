@@ -1,3 +1,4 @@
+ 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type TJsConfig, type TJsConfigInput } from "../types/config";
 import {
@@ -15,7 +16,8 @@ import { RN_ASYNC_STORAGE_KEY } from "./constants";
 import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { Logger } from "./logger";
-import { DEFAULT_PERSON_STATE_NO_USER_ID, fetchPersonState } from "./person-state";
+import { sendUpdatesToBackend } from "./updates";
+import { DEFAULT_USER_STATE_NO_USER_ID } from "./user-state";
 import { filterSurveys, wrapThrowsAsync } from "./utils";
 
 let isInitialized = false;
@@ -27,7 +29,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const initialize = async (
-  configInput: Pick<TJsConfigInput, "environmentId" | "apiHost">
+  configInput: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
@@ -75,22 +77,22 @@ export const initialize = async (
   }
 
   if (
-    existingConfig?.environmentState &&
+    existingConfig?.environment &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.apiHost === configInput.apiHost
   ) {
     logger.debug("Configuration fits init parameters.");
     let isEnvironmentStateExpired = false;
-    let isPersonStateExpired = false;
+    let isUserStateExpired = false;
 
-    if (new Date(existingConfig.environmentState.expiresAt) < new Date()) {
+    if (new Date(existingConfig.environment.expiresAt) < new Date()) {
       logger.debug("Environment state expired. Syncing.");
       isEnvironmentStateExpired = true;
     }
 
-    if (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()) {
+    if (existingConfig.user.expiresAt && new Date(existingConfig.user.expiresAt) < new Date()) {
       logger.debug("Person state expired. Syncing.");
-      isPersonStateExpired = true;
+      isUserStateExpired = true;
     }
 
     // if (
@@ -110,35 +112,54 @@ export const initialize = async (
             apiHost: configInput.apiHost,
             environmentId: configInput.environmentId,
           })
-        : existingConfig.environmentState;
+        : existingConfig.environment;
 
       // fetch the person state (if expired)
 
-      let { personState } = existingConfig;
+      let { user: userState } = existingConfig;
 
-      if (isPersonStateExpired) {
+      if (isUserStateExpired) {
         // If the existing person state (expired) has a userId, we need to fetch the person state
         // If the existing person state (expired) has no userId, we need to set the person state to the default
 
-        if (personState.data.userId) {
-          personState = await fetchPersonState({
+        if (userState.data.userId) {
+          const updatesResponse = await sendUpdatesToBackend({
             apiHost: configInput.apiHost,
             environmentId: configInput.environmentId,
-            userId: personState.data.userId,
+            updates: {
+              userId: userState.data.userId,
+            },
           });
+
+          if (updatesResponse.ok) {
+            userState = updatesResponse.data.state;
+          } else {
+            logger.error(
+              `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
+            );
+            return err({
+              code: "network_error",
+              message: "Error updating user state",
+              status: 500,
+              url: new URL(
+                `${configInput.apiHost}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
+              ),
+              responseMessage: "Unknown error",
+            });
+          }
         } else {
-          personState = DEFAULT_PERSON_STATE_NO_USER_ID;
+          userState = DEFAULT_USER_STATE_NO_USER_ID;
         }
       }
 
       // filter the environment state wrt the person state
-      const filteredSurveys = filterSurveys(environmentState, personState);
+      const filteredSurveys = filterSurveys(environmentState, userState);
 
       // update the appConfig with the new filtered surveys and person state
       appConfig.update({
         ...existingConfig,
-        environmentState,
-        personState,
+        environment: environmentState,
+        user: userState,
         filteredSurveys,
       });
 
@@ -176,7 +197,7 @@ export const initialize = async (
       //     )
       //   : DEFAULT_PERSON_STATE_NO_USER_ID;
 
-      const personState = DEFAULT_PERSON_STATE_NO_USER_ID;
+      const personState = DEFAULT_USER_STATE_NO_USER_ID;
 
       const filteredSurveys = filterSurveys(environmentState, personState);
 
@@ -209,8 +230,8 @@ export const initialize = async (
       appConfig.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
-        personState,
-        environmentState,
+        user: personState,
+        environment: environmentState,
         filteredSurveys,
         attributes: {},
       });
@@ -253,7 +274,7 @@ export const deinitalize = async (): Promise<void> => {
   // clear the user state and set it to the default value
   appConfig.update({
     ...appConfig.get(),
-    personState: DEFAULT_PERSON_STATE_NO_USER_ID,
+    user: DEFAULT_USER_STATE_NO_USER_ID,
   });
   setIsInitialize(false);
   removeAllEventListeners();

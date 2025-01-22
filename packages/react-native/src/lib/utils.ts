@@ -3,7 +3,7 @@ import type {
   TJsEnvironmentState,
   TJsEnvironmentStateProject,
   TJsEnvironmentStateSurvey,
-  TJsPersonState,
+  TJsUserState,
   TProjectStyling,
   TSurveyStyling,
 } from "../types/config";
@@ -41,7 +41,7 @@ export const wrapThrowsAsync =
 // takes the environment and person state and returns the filtered surveys
 export const filterSurveys = (
   environmentState: TJsEnvironmentState,
-  personState: TJsPersonState
+  personState: TJsUserState
 ): TJsEnvironmentStateSurvey[] => {
   const { project, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = personState.data;

@@ -55,7 +55,7 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Set User Attributes (multiple)"
+          title="Set User Attributess (multiple)"
           onPress={() => {
             setAttributes({
               testAttr: "attr-test",
@@ -91,7 +91,6 @@ export default function App(): JSX.Element {
 
         <Button
           title="Test schedule"
-           
           onPress={() => {
             setUserId("random-userId-3").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps

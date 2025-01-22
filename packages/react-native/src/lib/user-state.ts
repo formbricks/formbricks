@@ -1,0 +1,54 @@
+import type { TJsUserState } from "../types/config";
+import { RNConfig } from "./config";
+
+const config = RNConfig.getInstance();
+let userStateSyncIntervalId: number | null = null;
+
+export const DEFAULT_USER_STATE_NO_USER_ID: TJsUserState = {
+  expiresAt: null,
+  data: {
+    userId: null,
+    segments: [],
+    displays: [],
+    responses: [],
+    lastDisplayAt: null,
+  },
+} as const;
+
+/**
+ * Add a listener to check if the user state has expired with a certain interval
+ */
+export const addUserStateExpiryCheckListener = (): void => {
+  const updateInterval = 1000 * 60; // every 60 seconds
+
+  if (userStateSyncIntervalId === null) {
+    const intervalHandler = (): void => {
+      const userId = config.get().user.data.userId;
+
+      if (!userId) {
+        return;
+      }
+
+      // extend the personState validity by 30 minutes:
+      config.update({
+        ...config.get(),
+        user: {
+          ...config.get().user,
+          expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+        },
+      });
+    };
+
+    userStateSyncIntervalId = setInterval(intervalHandler, updateInterval) as unknown as number;
+  }
+};
+
+/**
+ * Clear the person state expiry check listener
+ */
+export const clearUserStateExpiryCheckListener = (): void => {
+  if (userStateSyncIntervalId) {
+    clearInterval(userStateSyncIntervalId);
+    userStateSyncIntervalId = null;
+  }
+};

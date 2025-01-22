@@ -3,12 +3,14 @@ import { AttributeAPI } from "./attribute";
 import { DisplayAPI } from "./display";
 import { ResponseAPI } from "./response";
 import { StorageAPI } from "./storage";
+import { UserAPI } from "./user";
 
 export class Client {
   response: ResponseAPI;
   display: DisplayAPI;
   storage: StorageAPI;
   attribute: AttributeAPI;
+  user: UserAPI;
 
   constructor(options: ApiConfig) {
     const { apiHost, environmentId } = options;
@@ -17,5 +19,6 @@ export class Client {
     this.display = new DisplayAPI(apiHost, environmentId);
     this.attribute = new AttributeAPI(apiHost, environmentId);
     this.storage = new StorageAPI(apiHost, environmentId);
+    this.user = new UserAPI(apiHost, environmentId);
   }
 }

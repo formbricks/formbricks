@@ -2,24 +2,19 @@ import { type NetworkError, type Result, err, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
-// import { fetchPersonState } from "./person-state";
 import { UpdateQueue } from "./update-queue";
-
-// import { filterSurveys } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 const updateQueue = UpdateQueue.getInstance();
 
 // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
-export const setUserIdInApp = async (userId: string) => {
+export const setUserIdInApp = async (userId: string): Promise<Result<void, NetworkError>> => {
   updateQueue.updateUserId(userId);
   void updateQueue.processUpdates();
   return okVoid();
 };
 
-// export const setUserIdInApp = async (userId: string): Promise<Result<void, NetworkError>> => {
- 
 // export const setUserIdInApp = async (userId: string): Promise<void> => {
 //   // const { apiHost, environmentId, environmentState } = appConfig.get();
 //   updateQueue.updateUserId(userId);
@@ -57,21 +52,18 @@ export const setUserIdInApp = async (userId: string) => {
 // }
 // };
 
-export const logoutPerson = async (): Promise<void> => {
+export const logoutUser = async (): Promise<void> => {
   await deinitalize();
 };
 
-export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
+export const resetUser = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
-  const userId = appConfig.get().personState.data.userId;
   const syncParams = {
     environmentId: appConfig.get().environmentId,
     apiHost: appConfig.get().apiHost,
-    ...(userId && { userId }),
-    attributes: appConfig.get().attributes,
   };
 
-  void logoutPerson();
+  void logoutUser();
   try {
     await initialize(syncParams);
     return okVoid();

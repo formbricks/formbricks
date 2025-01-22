@@ -80,7 +80,7 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
 
   if (environmentStateSyncIntervalId === null) {
     const intervalHandler = async (): Promise<void> => {
-      const expiresAt = appConfig.get().environmentState.expiresAt;
+      const expiresAt = appConfig.get().environment.expiresAt;
 
       try {
         // check if the environmentState has not expired yet
@@ -91,7 +91,7 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
 
         logger.debug("Environment State has expired. Starting sync.");
 
-        const personState = appConfig.get().personState;
+        const personState = appConfig.get().user;
         const environmentState = await fetchEnvironmentState(
           {
             apiHost: appConfig.get().apiHost,
@@ -104,7 +104,7 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
 
         appConfig.update({
           ...appConfig.get(),
-          environmentState,
+          environment: environmentState,
           filteredSurveys,
         });
       } catch (e) {
