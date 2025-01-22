@@ -75,6 +75,10 @@ export const RankingQuestionForm = ({
   const addOption = () => {
     const choices = !question.choices ? [] : question.choices;
 
+    if (choices.length >= 25) {
+      return;
+    }
+
     const newChoice = {
       id: createId(),
       label: createI18nString("", surveyLanguageCodes),
@@ -224,6 +228,7 @@ export const RankingQuestionForm = ({
               variant="secondary"
               EndIcon={PlusIcon}
               type="button"
+              disabled={question.choices?.length >= 25}
               onClick={() => addOption()}>
               {t("environments.surveys.edit.add_option")}
             </Button>
