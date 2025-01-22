@@ -3,6 +3,15 @@ import { UpdateQueue } from "./update-queue";
 
 const updateQueue = UpdateQueue.getInstance();
 
+export const setAttributesInApp = async (
+  attributes: Record<string, string>
+  // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
+): Promise<Result<void, NetworkError>> => {
+  updateQueue.updateAttributes(attributes);
+  void updateQueue.processUpdates();
+  return okVoid();
+};
+
 // export const setAttributesInApp = async (attributes: Record<string, string>): Promise<void> => {
 //   updateQueue.updateAttributes(attributes);
 //   void updateQueue.processUpdates();
@@ -128,12 +137,3 @@ const updateQueue = UpdateQueue.getInstance();
 
 // return err(result.error);
 // };
-
-export const setAttributesInApp = async (
-  attributes: Record<string, string>
-  // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
-): Promise<Result<void, NetworkError>> => {
-  updateQueue.updateAttributes(attributes);
-  void updateQueue.processUpdates();
-  return okVoid();
-};

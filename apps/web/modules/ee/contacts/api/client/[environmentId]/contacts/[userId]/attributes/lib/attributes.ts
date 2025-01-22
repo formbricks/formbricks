@@ -122,9 +122,9 @@ export const updateAttributes = async (
     );
 
     // Revalidate cache for existing attributes
-    existingAttributes.map(({ key }) =>
-      contactAttributeCache.revalidate({ environmentId, contactId, userId, key })
-    );
+    for (const attribute of existingAttributes) {
+      contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
+    }
   }
 
   // Then, try to create new attributes if any exist
@@ -155,10 +155,11 @@ export const updateAttributes = async (
       );
 
       // Batch revalidate caches for new attributes
-      newAttributes.forEach(({ key }) => {
-        contactAttributeKeyCache.revalidate({ environmentId, key });
-        contactAttributeCache.revalidate({ environmentId, contactId, userId, key });
-      });
+      for (const attribute of newAttributes) {
+        contactAttributeKeyCache.revalidate({ environmentId, key: attribute.key });
+        contactAttributeCache.revalidate({ environmentId, contactId, userId, key: attribute.key });
+      }
+
       contactAttributeKeyCache.revalidate({ environmentId });
     }
   }

@@ -47,7 +47,6 @@ export const sendUpdatesToBackend = async (
     });
 
     if (!response.ok) {
-      console.log("from error: ", JSON.stringify(response, null, 2));
       return err({
         code: response.error.code,
         status: response.error.status,

@@ -1,7 +1,11 @@
 /* eslint-disable no-console -- required for logging errors */
 /* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
 import type { TAttributes, TJsUpdates } from "../types/config";
+import { RNConfig } from "./config";
+import { Logger } from "./logger";
 import { sendUpdates } from "./updates";
+
+const logger = Logger.getInstance();
 
 export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
@@ -34,14 +38,19 @@ export class UpdateQueue {
   }
 
   public updateAttributes(attributes: TAttributes): void {
+    const config = RNConfig.getInstance();
+    // Get userId from updates first, then fallback to config
+    const userId = this.updates?.userId ?? config.get().user.data.userId ?? "";
+
     if (!this.updates) {
       this.updates = {
-        userId: "",
+        userId,
         attributes,
       };
     } else {
       this.updates = {
         ...this.updates,
+        userId,
         attributes: { ...this.updates.attributes, ...attributes },
       };
     }
@@ -68,20 +77,37 @@ export class UpdateQueue {
       clearTimeout(this.debounceTimeout);
     }
 
-    // Return a promise that resolves when the debounced operation completes
     return new Promise((resolve, reject) => {
       const handler = async (): Promise<void> => {
         try {
           const currentUpdates = { ...this.updates };
+          const config = RNConfig.getInstance();
 
           if (Object.keys(currentUpdates).length > 0) {
-            // TODO: fix the currentUpdates checks for undefined userId and attributes
-            await sendUpdates({
-              updates: {
-                userId: currentUpdates.userId ?? "",
-                attributes: currentUpdates.attributes ?? {},
-              },
-            });
+            // Check if we have any attributes to update
+            const hasAttributes =
+              currentUpdates.attributes && Object.keys(currentUpdates.attributes).length > 0;
+
+            // Get userId from either updates or config
+            const effectiveUserId = currentUpdates.userId ?? config.get().user.data.userId;
+
+            if (hasAttributes && !effectiveUserId) {
+              const errorMessage =
+                "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
+              logger.error(errorMessage);
+              this.clearUpdates();
+              throw new Error(errorMessage);
+            }
+
+            // Only send updates if we have a userId (either from updates or local storage)
+            if (effectiveUserId) {
+              await sendUpdates({
+                updates: {
+                  userId: effectiveUserId,
+                  attributes: currentUpdates.attributes ?? {},
+                },
+              });
+            }
           }
 
           this.clearUpdates();
