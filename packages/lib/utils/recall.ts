@@ -1,5 +1,5 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TAttributes } from "@formbricks/types/attributes";
+import { TContactAttributes } from "@formbricks/types/contact-attribute";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
@@ -58,7 +58,7 @@ const getRecallItemLabel = <T extends TSurvey>(
   recallItemId: string,
   survey: T,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  contactAttributeKeys: TContactAttributeKey[]
 ): string | undefined => {
   const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
   if (isHiddenField) return recallItemId;
@@ -66,10 +66,10 @@ const getRecallItemLabel = <T extends TSurvey>(
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
   if (surveyQuestion) return surveyQuestion.headline[languageCode];
 
-  const attributeClass = attributeClasses.find(
-    (attributeClass) => attributeClass.name.replaceAll(" ", "nbsp") === recallItemId
+  const attributeClass = contactAttributeKeys.find(
+    (attributeClass) => attributeClass.key.replaceAll(" ", "nbsp") === recallItemId
   );
-  if (attributeClass) return attributeClass?.name;
+  if (attributeClass) return attributeClass?.key;
 
   const variable = survey.variables?.find((variable) => variable.id === recallItemId);
   if (variable) return variable.name;
@@ -81,7 +81,7 @@ export const recallToHeadline = <T extends TSurvey>(
   survey: T,
   withSlash: boolean,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  contactAttributeKeys: TContactAttributeKey[]
 ): TI18nString => {
   let newHeadline = structuredClone(headline);
   const localizedHeadline = newHeadline[languageCode];
@@ -97,7 +97,7 @@ export const recallToHeadline = <T extends TSurvey>(
       if (!recallItemId) break;
 
       let recallItemLabel =
-        getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses) || recallItemId;
+        getRecallItemLabel(recallItemId, survey, languageCode, contactAttributeKeys) || recallItemId;
 
       while (recallItemLabel.includes("#recall:")) {
         const nestedRecallInfo = extractRecallInfo(recallItemLabel);
@@ -149,7 +149,7 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
 export const replaceHeadlineRecall = <T extends TSurvey>(
   survey: T,
   language: string,
-  attributeClasses: TAttributeClass[]
+  contactAttributeKeys: TContactAttributeKey[]
 ): T => {
   const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
@@ -158,7 +158,7 @@ export const replaceHeadlineRecall = <T extends TSurvey>(
       modifiedSurvey,
       false,
       language,
-      attributeClasses
+      contactAttributeKeys
     );
   });
   return modifiedSurvey;
@@ -169,7 +169,7 @@ export const getRecallItems = (
   text: string,
   survey: TSurvey,
   languageCode: string,
-  attributeClasses: TAttributeClass[]
+  attributeClasses: TContactAttributeKey[]
 ): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
@@ -232,15 +232,15 @@ export const headlineToRecall = (
 
 export const parseRecallInfo = (
   text: string,
-  attributes?: TAttributes,
+  contactAttributes?: TContactAttributes,
   responseData?: TResponseData,
   variables?: TResponseVariables,
   withSlash: boolean = false
 ) => {
   let modifiedText = text;
-  const attributeKeys = attributes ? Object.keys(attributes) : [];
+  const attributeKeys = contactAttributes ? Object.keys(contactAttributes) : [];
   const questionIds = responseData ? Object.keys(responseData) : [];
-  if (attributes && attributeKeys.length > 0) {
+  if (contactAttributes && attributeKeys.length > 0) {
     attributeKeys.forEach((attributeKey) => {
       const recallPattern = `#recall:${attributeKey}`;
       while (modifiedText.includes(recallPattern)) {
@@ -251,7 +251,7 @@ export const parseRecallInfo = (
         if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
 
         const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-        let value = attributes[recallItemId.replace("nbsp", " ")] || fallback;
+        let value = contactAttributes[recallItemId.replace("nbsp", " ")] || fallback;
         if (withSlash) {
           modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
         } else {

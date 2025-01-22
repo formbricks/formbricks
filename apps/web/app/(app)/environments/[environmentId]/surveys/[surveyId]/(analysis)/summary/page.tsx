@@ -4,6 +4,7 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -12,7 +13,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   DEFAULT_LOCALE,
   DOCUMENTS_PER_PAGE,
@@ -28,7 +28,7 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
 
-const Page = async (props) => {
+const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
@@ -42,10 +42,10 @@ const Page = async (props) => {
     return notFound();
   }
 
-  const [survey, environment, attributeClasses] = await Promise.all([
+  const [survey, environment, contactAttributeKeys] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
   ]);
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
@@ -118,7 +118,7 @@ const Page = async (props) => {
         webAppUrl={WEBAPP_URL}
         user={user}
         totalResponseCount={totalResponseCount}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
         isReadOnly={isReadOnly}
@@ -128,4 +128,4 @@ const Page = async (props) => {
   );
 };
 
-export default Page;
+export default SurveyPage;

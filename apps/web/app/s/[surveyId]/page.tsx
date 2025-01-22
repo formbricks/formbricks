@@ -6,17 +6,15 @@ import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { updateAttributes } from "@formbricks/lib/attribute/service";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
+import { getContactAttributeKeys } from "./lib/contact-attribute-key";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -25,7 +23,6 @@ interface LinkSurveyPageProps {
   }>;
   searchParams: Promise<{
     suId?: string;
-    userId?: string;
     verify?: string;
     lang?: string;
     embed?: string;
@@ -133,7 +130,7 @@ const Page = async (props: LinkSurveyPageProps) => {
     throw new Error("Project not found");
   }
 
-  const attributeClasses = await getAttributeClasses(survey.environmentId);
+  const contactAttributeKeys = await getContactAttributeKeys(survey.environmentId);
 
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
@@ -153,24 +150,6 @@ const Page = async (props: LinkSurveyPageProps) => {
 
   const languageCode = getLanguageCode();
 
-  const userId = searchParams.userId;
-  if (userId) {
-    // make sure the person exists or get's created
-    let person = await getPersonByUserId(survey.environmentId, userId);
-    if (!person) {
-      person = await createPerson(survey.environmentId, userId);
-    }
-
-    // update attributes for the person
-    const updatedAttributes = {
-      ...(searchParams.email && { email: searchParams.email }),
-      ...(searchParams.country && { country: searchParams.country }),
-      ...(searchParams.language && { language: searchParams.language }),
-    };
-
-    await updateAttributes(person.id, updatedAttributes);
-  }
-
   const isSurveyPinProtected = Boolean(!!survey && survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
@@ -179,7 +158,6 @@ const Page = async (props: LinkSurveyPageProps) => {
       <PinScreen
         surveyId={survey.id}
         project={project}
-        userId={userId}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
@@ -189,7 +167,7 @@ const Page = async (props: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         isEmbed={isEmbed}
         locale={locale}
         isPreview={isPreview}
@@ -201,7 +179,6 @@ const Page = async (props: LinkSurveyPageProps) => {
     <LinkSurvey
       survey={survey}
       project={project}
-      userId={userId}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
@@ -209,7 +186,7 @@ const Page = async (props: LinkSurveyPageProps) => {
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      attributeClasses={attributeClasses}
+      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

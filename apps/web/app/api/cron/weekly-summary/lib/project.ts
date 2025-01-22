@@ -75,7 +75,7 @@ export const getProjectsByOrganizationId = async (
               hiddenFields: true,
             },
           },
-          attributeClasses: {
+          attributeKeys: {
             select: {
               id: true,
               createdAt: true,
@@ -84,7 +84,8 @@ export const getProjectsByOrganizationId = async (
               description: true,
               type: true,
               environmentId: true,
-              archived: true,
+              key: true,
+              isUnique: true,
             },
           },
         },

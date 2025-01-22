@@ -217,33 +217,6 @@ export const getUsersWithOrganization = async (organizationId: string): Promise<
   }
 };
 
-export const userIdRelatedToApiKey = async (apiKey: string) => {
-  validateInputs([apiKey, z.string()]);
-
-  try {
-    const userId = await prisma.apiKey.findUnique({
-      where: { id: apiKey },
-      select: {
-        environment: {
-          select: {
-            people: {
-              select: {
-                userId: true,
-              },
-            },
-          },
-        },
-      },
-    });
-    return userId;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
 export const getUserLocale = reactCache(
   async (id: string): Promise<TUserLocale | undefined> =>
     cache(

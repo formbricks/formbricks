@@ -175,7 +175,7 @@ export const sendResponseFinishedEmail = async (
   responseCount: number,
   locale: string
 ): Promise<void> => {
-  const personEmail = response.personAttributes?.email;
+  const personEmail = response.contactAttributes?.email;
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {

@@ -1,7 +1,7 @@
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { InboxIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -10,19 +10,20 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
-export const CTASummary = ({ questionSummary, survey, attributeClasses, locale }: CTASummaryProps) => {
+export const CTASummary = ({ questionSummary, survey, contactAttributeKeys, locale }: CTASummaryProps) => {
   const t = useTranslations();
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         survey={survey}
         questionSummary={questionSummary}
         showResponses={false}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           <>

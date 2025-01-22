@@ -22,7 +22,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TSurvey,
@@ -41,7 +41,7 @@ interface EditEndingCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
@@ -58,7 +58,7 @@ export const EditEndingCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  attributeClasses,
+  contactAttributeKeys,
   plan,
   addEndingCard,
   isFormbricksCloud,
@@ -276,7 +276,7 @@ export const EditEndingCard = ({
                       localSurvey,
                       true,
                       selectedLanguageCode,
-                      attributeClasses
+                      contactAttributeKeys
                     )[selectedLanguageCode]
                       ? formatTextWithSlashes(
                           recallToHeadline(
@@ -284,7 +284,7 @@ export const EditEndingCard = ({
                             localSurvey,
                             true,
                             selectedLanguageCode,
-                            attributeClasses
+                            contactAttributeKeys
                           )[selectedLanguageCode]
                         )
                       : t("environments.surveys.edit.ending_card"))}
@@ -346,7 +346,7 @@ export const EditEndingCard = ({
               isInvalid={isInvalid}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              attributeClasses={attributeClasses}
+              contactAttributeKeys={contactAttributeKeys}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
               locale={locale}

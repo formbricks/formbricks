@@ -6,9 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -17,7 +17,7 @@ interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
@@ -27,7 +27,7 @@ export const OpenTextSummary = ({
   questionSummary,
   environmentId,
   survey,
-  attributeClasses,
+  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
   locale,
@@ -64,7 +64,7 @@ export const OpenTextSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
+        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
@@ -104,16 +104,16 @@ export const OpenTextSummary = ({
               <TableBody>
                 {questionSummary.samples.slice(0, visibleResponses).map((response) => (
                   <TableRow key={response.id}>
-                    <TableCell width={180}>
-                      {response.person ? (
+                    <TableCell>
+                      {response.contact ? (
                         <Link
                           className="ph-no-capture group flex items-center"
-                          href={`/environments/${environmentId}/people/${response.person.id}`}>
+                          href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
                           <div className="hidden md:flex">
-                            <PersonAvatar personId={response.person.id} />
+                            <PersonAvatar personId={response.contact.id} />
                           </div>
-                          <p className="ph-no-capture break-normal text-slate-600 group-hover:underline md:ml-2">
-                            {getPersonIdentifier(response.person, response.personAttributes)}
+                          <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
+                            {getContactIdentifier(response.contact, response.contactAttributes)}
                           </p>
                         </Link>
                       ) : (
