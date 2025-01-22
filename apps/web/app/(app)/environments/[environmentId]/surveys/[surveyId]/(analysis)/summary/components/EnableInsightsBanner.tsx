@@ -29,7 +29,6 @@ export const EnableInsightsBanner = ({
       duration: 3000,
     });
     setIsGeneratingInsights(true);
-    toast.success(t("environments.surveys.summary.enable_ai_insights_banner_success"));
     generateInsightsForSurveyAction({ surveyId });
   };
 
