@@ -37,7 +37,7 @@ export const updateUser = async (
   }
 
   return {
-    personState: userState,
+    userState,
     messages,
   };
 };

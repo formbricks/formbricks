@@ -62,26 +62,26 @@ export const POST = async (
     const deviceType = device ? "phone" : "desktop";
 
     try {
-      const { personState, messages } = await updateUser(
+      const { userState, messages } = await updateUser(
         environmentId,
         userId,
         deviceType,
         attributeUpdatesToSend ?? undefined
       );
 
-      if (personState.revalidateProps?.revalidate) {
+      if (userState.revalidateProps?.revalidate) {
         contactCache.revalidate({
           environmentId,
           userId,
-          id: personState.revalidateProps.contactId,
+          id: userState.revalidateProps.contactId,
         });
       }
 
       let responseJson: { state: TJsPersonState["data"]; messages?: string[] } = {
-        state: personState.state,
+        state: userState.state,
       };
 
-      if (personState.attributesInfo.shouldUpdate && messages.length > 0) {
+      if (userState.attributesInfo.shouldUpdate && messages.length > 0) {
         responseJson.messages = messages;
       }
 
