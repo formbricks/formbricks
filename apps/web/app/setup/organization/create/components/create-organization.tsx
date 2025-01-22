@@ -1,6 +1,6 @@
 "use client";
 
-import { createOrganizationAction } from "@/modules/organization/actions";
+import { createOrganizationAction } from "@/app/setup/organization/create/actions";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
