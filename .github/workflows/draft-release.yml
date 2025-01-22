@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - uses: ./.github/actions/dangerous-git-checkout
+
       - name: Configure git
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions"
-
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
-      - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
