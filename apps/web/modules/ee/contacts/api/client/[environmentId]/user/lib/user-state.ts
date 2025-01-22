@@ -25,7 +25,7 @@ import { getPersonSegmentIds } from "./segments";
  * @throws {ValidationError} - If the input is invalid
  * @throws {ResourceNotFoundError} - If the environment or organization is not found
  */
-export const getPersonState = async ({
+export const getUserState = async ({
   environmentId,
   userId,
   device,
@@ -168,7 +168,6 @@ export const getPersonState = async ({
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),
         contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
-        contactCache.tag.byEnvironmentId(environmentId),
         contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId),

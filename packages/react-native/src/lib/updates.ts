@@ -24,12 +24,12 @@ export const sendUpdatesToBackend = async (
   Result<
     {
       state: TJsUserState;
-      details?: Record<string, string>;
+      messages?: string[];
     },
     ApiErrorResponse
   >
 > => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/user`;
 
   const api = new FormbricksAPI({ apiHost, environmentId });
 
@@ -44,7 +44,6 @@ export const sendUpdatesToBackend = async (
     const response = await api.client.user.createOrUpdate({
       userId: updates.userId,
       attributes: updates.attributes,
-      language: updates.language,
     });
 
     if (!response.ok) {
@@ -52,7 +51,7 @@ export const sendUpdatesToBackend = async (
         code: response.error.code,
         status: response.error.status,
         message: `Error updating user with userId ${updates.userId}`,
-        url: new URL(`${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`),
+        url: new URL(url),
         responseMessage: response.error.message,
       });
     }
@@ -113,7 +112,7 @@ export const sendUpdates = async (
 ): Promise<Result<void, ApiErrorResponse>> => {
   const { apiHost, environmentId } = config.get();
   // update endpoint call
-  const url = `${apiHost}/api/v1/client/${environmentId}/update/contacts/${updates.userId}`;
+  const url = `${apiHost}/api/v1/client/${environmentId}/user`;
 
   try {
     const updatesResponse = await sendUpdatesToBackend({ apiHost, environmentId, updates }, noCache);
@@ -126,18 +125,19 @@ export const sendUpdates = async (
       // details => Record<string, string> - contains the details of the attributes update
       // for example, if the attribute "email" was being used for some user or not
       // we should log the details
-      const details = updatesResponse.data.details;
+      const messages = updatesResponse.data.messages;
 
-      if (details && Object.keys(details).length > 0) {
-        for (const [key, value] of Object.entries(details)) {
-          logger.debug(`Attribute ${key} update details: ${value}`);
+      if (messages && messages.length > 0) {
+        for (const message of messages) {
+          logger.debug(`User update message: ${message}`);
         }
       }
 
       config.update({
         ...config.get(),
-        user: personState,
-        ...(updates.language ? { language: updates.language } : {}),
+        user: {
+          ...personState,
+        },
         filteredSurveys,
       });
 

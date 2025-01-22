@@ -92,7 +92,7 @@ export default function App(): JSX.Element {
         <Button
           title="Test schedule"
           onPress={() => {
-            setUserId("random-userId-3").catch((error: unknown) => {
+            setUserId("random-userId-4").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting user id:", error);
             });

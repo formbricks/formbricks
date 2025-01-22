@@ -60,6 +60,7 @@ export interface TJsUserState {
     displays: { surveyId: string; createdAt: Date }[];
     responses: string[];
     lastDisplayAt: Date | null;
+    language?: string;
   };
 }
 
@@ -74,7 +75,6 @@ export interface TJsConfig {
     value: "success" | "error";
     expiresAt: Date | null;
   };
-  language?: string;
 }
 
 export type TJsConfigUpdateInput = Omit<TJsConfig, "status"> & {
@@ -155,5 +155,4 @@ export const ZJsRNWebViewOnMessageData = z.object({
 export interface TJsUpdates {
   userId: string;
   attributes?: TAttributes;
-  language?: string;
 }

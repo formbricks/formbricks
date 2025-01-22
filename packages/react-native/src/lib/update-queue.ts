@@ -56,21 +56,6 @@ export class UpdateQueue {
     }
   }
 
-  public updateLanguage(language: string): void {
-    if (!this.updates) {
-      this.updates = {
-        userId: "",
-        attributes: {},
-        language,
-      };
-    } else {
-      this.updates = {
-        ...this.updates,
-        language,
-      };
-    }
-  }
-
   public getUpdates(): TJsUpdates | null {
     return this.updates;
   }
@@ -106,6 +91,23 @@ export class UpdateQueue {
             // Get userId from either updates or config
             const effectiveUserId = currentUpdates.userId ?? config.get().user.data.userId;
 
+            const isLanguageInUpdates = currentUpdates.attributes?.language;
+
+            if (!effectiveUserId && isLanguageInUpdates) {
+              // no use id set but the updates contain a language
+              // we need to set this language in the local config:
+              config.update({
+                ...config.get(),
+                user: {
+                  ...config.get().user,
+                  data: {
+                    ...config.get().user.data,
+                    language: currentUpdates.attributes?.language,
+                  },
+                },
+              });
+            }
+
             if (hasAttributes && !effectiveUserId) {
               const errorMessage =
                 "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
@@ -120,7 +122,6 @@ export class UpdateQueue {
                 updates: {
                   userId: effectiveUserId,
                   attributes: currentUpdates.attributes ?? {},
-                  language: currentUpdates.language,
                 },
               });
             }

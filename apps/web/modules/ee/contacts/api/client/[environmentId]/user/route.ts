@@ -5,12 +5,8 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import {
-  TJsPersonState,
-  ZJsContactsUpdateAttributeInput,
-  ZJsPersonIdentifyInput,
-} from "@formbricks/types/js";
-import { updateContact } from "./lib/updateContact";
+import { TJsPersonState, ZJsPersonIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
+import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
@@ -18,19 +14,19 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const POST = async (
   request: NextRequest,
-  props: { params: Promise<{ environmentId: string; userId: string }> }
+  props: { params: Promise<{ environmentId: string }> }
 ): Promise<Response> => {
   const params = await props.params;
 
   try {
-    const { environmentId, userId } = params;
+    const { environmentId } = params;
     const jsonInput = await request.json();
 
     // Validate input
-    const syncInputValidation = ZJsPersonIdentifyInput.safeParse({
+    const syncInputValidation = ZJsPersonIdentifyInput.pick({ environmentId: true }).safeParse({
       environmentId,
-      userId,
     });
+
     if (!syncInputValidation.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
@@ -39,7 +35,7 @@ export const POST = async (
       );
     }
 
-    const parsedInput = ZJsContactsUpdateAttributeInput.optional().safeParse(jsonInput);
+    const parsedInput = ZJsUserUpdateInput.safeParse(jsonInput);
     if (!parsedInput.success) {
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
@@ -48,35 +44,29 @@ export const POST = async (
       );
     }
 
+    const { userId, attributes } = parsedInput.data;
+
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
     let attributeUpdatesToSend: TContactAttributes | null = null;
-    let language: string | null = null;
-    if (parsedInput.data?.attributes) {
-      const { attributes } = parsedInput.data;
-
+    if (attributes) {
       // remove userId and id from attributes
       const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
       attributeUpdatesToSend = updatedAttributes;
-    }
-
-    if (parsedInput.data?.language) {
-      language = parsedInput.data.language;
     }
 
     const { device } = userAgent(request);
     const deviceType = device ? "phone" : "desktop";
 
     try {
-      const { personState, details } = await updateContact(
+      const { personState, messages } = await updateUser(
         environmentId,
         userId,
         deviceType,
-        attributeUpdatesToSend ?? undefined,
-        language ?? undefined
+        attributeUpdatesToSend ?? undefined
       );
 
       if (personState.revalidateProps?.revalidate) {
@@ -87,12 +77,12 @@ export const POST = async (
         });
       }
 
-      let responseJson: { state: TJsPersonState["data"]; details?: Record<string, string> } = {
+      let responseJson: { state: TJsPersonState["data"]; messages?: string[] } = {
         state: personState.state,
       };
 
-      if (personState.attributesInfo.shouldUpdate && Object.keys(details).length > 0) {
-        responseJson.details = details;
+      if (personState.attributesInfo.shouldUpdate && messages.length > 0) {
+        responseJson.messages = messages;
       }
 
       return responses.successResponse(responseJson, true);

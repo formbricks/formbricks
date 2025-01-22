@@ -11,11 +11,7 @@ export class UserAPI {
     this.environmentId = environmentId;
   }
 
-  async createOrUpdate(userUpdateInput: {
-    userId: string;
-    attributes?: Record<string, string>;
-    language?: string;
-  }): Promise<
+  async createOrUpdate(userUpdateInput: { userId: string; attributes?: Record<string, string> }): Promise<
     Result<
       {
         state: {
@@ -36,11 +32,9 @@ export class UserAPI {
       attributes[key] = String(userUpdateInput.attributes[key]);
     }
 
-    return makeRequest(
-      this.apiHost,
-      `/api/v1/client/${this.environmentId}/update/contacts/${userUpdateInput.userId}`,
-      "POST",
-      { attributes, language: userUpdateInput.language }
-    );
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/user`, "POST", {
+      userId: userUpdateInput.userId,
+      attributes,
+    });
   }
 }
