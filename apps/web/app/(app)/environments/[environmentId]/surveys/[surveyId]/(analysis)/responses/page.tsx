@@ -5,7 +5,7 @@ import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surv
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -20,7 +20,7 @@ import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -45,9 +45,9 @@ const Page = async (props) => {
   if (!survey) {
     throw new Error(t("common.survey_not_found"));
   }
-  const product = await getProductByEnvironmentId(environment.id);
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  const project = await getProjectByEnvironmentId(environment.id);
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const user = await getUser(session.user.id);
@@ -66,7 +66,7 @@ const Page = async (props) => {
 
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const permission = await getProductPermissionByUserId(session.user.id, product.id);
+  const permission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasReadAccess } = getTeamPermissionFlags(permission);
 
   const isReadOnly = isMember && hasReadAccess;

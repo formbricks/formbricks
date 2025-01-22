@@ -9,6 +9,7 @@ export const CLOUD_PRICING_DATA = {
       mainFeatures: [
         "environments.settings.billing.unlimited_surveys",
         "environments.settings.billing.unlimited_team_members",
+        "environments.settings.billing.3_projects",
         "environments.settings.billing.1500_monthly_responses",
         "environments.settings.billing.2000_monthly_identified_users",
         "environments.settings.billing.website_surveys",
@@ -33,6 +34,7 @@ export const CLOUD_PRICING_DATA = {
         "environments.settings.billing.unlimited_surveys",
         "environments.settings.billing.remove_branding",
         "environments.settings.billing.email_support",
+        "environments.settings.billing.3_projects",
         "environments.settings.billing.5000_monthly_responses",
         "environments.settings.billing.7500_monthly_identified_users",
       ],
@@ -50,6 +52,7 @@ export const CLOUD_PRICING_DATA = {
         "environments.settings.billing.multi_language_surveys",
         "environments.settings.billing.advanced_targeting",
         "environments.settings.billing.priority_support",
+        "environments.settings.billing.5_projects",
         "environments.settings.billing.10000_monthly_responses",
         "environments.settings.billing.30000_monthly_identified_users",
       ],
@@ -66,6 +69,7 @@ export const CLOUD_PRICING_DATA = {
       },
       mainFeatures: [
         "environments.settings.billing.everything_in_scale",
+        "environments.settings.billing.custom_project_limit",
         "environments.settings.billing.custom_miu_limit",
         "environments.settings.billing.premium_support_with_slas",
         "environments.settings.billing.uptime_sla_99",

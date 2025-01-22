@@ -87,7 +87,7 @@ export const CalQuestionForm = ({
           <Button
             size="sm"
             className="mt-3"
-            variant="minimal"
+            variant="secondary"
             type="button"
             onClick={() => {
               updateQuestion(questionIdx, {
@@ -99,7 +99,7 @@ export const CalQuestionForm = ({
             {t("environments.surveys.edit.add_description")}
           </Button>
         )}
-        <div className="mt-3 flex flex-col gap-6">
+        <div className="mt-5 flex flex-col gap-6">
           <div className="flex flex-col gap-3">
             <Label htmlFor="calUserName">{t("environments.surveys.edit.cal_username")}</Label>
             <div>

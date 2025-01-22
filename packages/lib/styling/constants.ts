@@ -127,7 +127,7 @@ export const getPreviewSurvey = (locale: string) => {
     isVerifyEmailEnabled: false,
     isSingleResponsePerEmailEnabled: false,
     redirectUrl: null,
-    productOverwrites: null,
+    projectOverwrites: null,
     surveyClosedMessage: null,
     singleUse: {
       enabled: false,

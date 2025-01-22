@@ -8,9 +8,9 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromSegmentId,
-  getProductIdFromSurveyId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromSegmentId,
+  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getAdvancedTargetingPermission } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
@@ -63,9 +63,9 @@ export const createSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -104,9 +104,9 @@ export const updateSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -153,9 +153,9 @@ export const loadNewSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
+          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -191,9 +191,9 @@ export const cloneSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(surveyEnvironmentId),
+          projectId: await getProjectIdFromEnvironmentId(surveyEnvironmentId),
         },
       ],
     });
@@ -221,9 +221,9 @@ export const deleteSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -251,9 +251,9 @@ export const resetSegmentFiltersAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });

@@ -1,12 +1,12 @@
 import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
-import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission, ZTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import {
   TOrganizationMember,
-  TOrganizationProduct,
+  TOrganizationProject,
   TTeam,
-  TTeamProduct,
+  TTeamProject,
   ZTeam,
 } from "@/modules/ee/teams/team-details/types/teams";
 import { TTeamRole, ZTeamRole } from "@/modules/ee/teams/team-list/types/teams";
@@ -17,7 +17,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { organizationCache } from "@formbricks/lib/organization/cache";
-import { productCache } from "@formbricks/lib/product/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
@@ -117,9 +117,9 @@ export const updateTeamName = async (teamId: string, name: string): Promise<{ na
       select: {
         organizationId: true,
         name: true,
-        productTeams: {
+        projectTeams: {
           select: {
-            productId: true,
+            projectId: true,
           },
         },
       },
@@ -127,8 +127,8 @@ export const updateTeamName = async (teamId: string, name: string): Promise<{ na
 
     teamCache.revalidate({ id: teamId, organizationId: updatedTeam.organizationId });
 
-    for (const productTeam of updatedTeam.productTeams) {
-      teamCache.revalidate({ productId: productTeam.productId });
+    for (const projectTeam of updatedTeam.projectTeams) {
+      teamCache.revalidate({ projectId: projectTeam.projectId });
     }
 
     return { name: updatedTeam.name };
@@ -150,9 +150,9 @@ export const deleteTeam = async (teamId: string): Promise<boolean> => {
       },
       select: {
         organizationId: true,
-        productTeams: {
+        projectTeams: {
           select: {
-            productId: true,
+            projectId: true,
           },
         },
       },
@@ -160,8 +160,8 @@ export const deleteTeam = async (teamId: string): Promise<boolean> => {
 
     teamCache.revalidate({ id: teamId, organizationId: deletedTeam.organizationId });
 
-    for (const productTeam of deletedTeam.productTeams) {
-      teamCache.revalidate({ productId: productTeam.productId });
+    for (const projectTeam of deletedTeam.projectTeams) {
+      teamCache.revalidate({ projectId: projectTeam.projectId });
     }
 
     return true;
@@ -254,12 +254,12 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       },
       select: {
         organizationId: true,
-        productTeams: {
+        projectTeams: {
           where: {
             teamId,
           },
           select: {
-            productId: true,
+            projectId: true,
           },
         },
       },
@@ -297,10 +297,10 @@ export const removeTeamMember = async (teamId: string, userId: string): Promise<
       organizationId: team.organizationId,
     });
 
-    productCache.revalidate({ userId });
+    projectCache.revalidate({ userId });
 
-    for (const productTeam of team.productTeams) {
-      teamCache.revalidate({ productId: productTeam.productId });
+    for (const projectTeam of team.projectTeams) {
+      teamCache.revalidate({ projectId: projectTeam.projectId });
     }
 
     return true;
@@ -372,7 +372,7 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
         organizationId: true,
         organization: {
           select: {
-            products: {
+            projects: {
               select: {
                 id: true,
               },
@@ -420,14 +420,14 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
       });
 
       teamCache.revalidate({ userId });
-      productCache.revalidate({ userId });
+      projectCache.revalidate({ userId });
     }
 
-    for (const product of team.organization.products) {
-      teamCache.revalidate({ productId: product.id });
+    for (const project of team.organization.projects) {
+      teamCache.revalidate({ projectId: project.id });
     }
 
-    productCache.revalidate({ organizationId: team.organizationId });
+    projectCache.revalidate({ organizationId: team.organizationId });
     teamCache.revalidate({ id: teamId, organizationId: team.organizationId });
 
     return true;
@@ -440,19 +440,19 @@ export const addTeamMembers = async (teamId: string, userIds: string[]): Promise
   }
 };
 
-export const getTeamProducts = reactCache(
-  async (teamId: string): Promise<TTeamProduct[]> =>
+export const getTeamProjects = reactCache(
+  async (teamId: string): Promise<TTeamProject[]> =>
     cache(
       async () => {
         validateInputs([teamId, ZId]);
 
         try {
-          const products = await prisma.productTeam.findMany({
+          const projects = await prisma.projectTeam.findMany({
             where: {
               teamId,
             },
             select: {
-              product: {
+              project: {
                 select: {
                   id: true,
                   name: true,
@@ -462,10 +462,10 @@ export const getTeamProducts = reactCache(
             },
           });
 
-          return products.map((product) => ({
-            id: product.product.id,
-            name: product.product.name,
-            permission: product.permission,
+          return projects.map((project) => ({
+            id: project.project.id,
+            name: project.project.name,
+            permission: project.permission,
           }));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -475,35 +475,35 @@ export const getTeamProducts = reactCache(
           throw error;
         }
       },
-      [`getTeamProducts-${teamId}`],
+      [`getTeamProjects-${teamId}`],
       { tags: [teamCache.tag.byId(teamId)] }
     )()
 );
 
-export const updateTeamProductPermission = async (
+export const updateTeamProjectPermission = async (
   teamId: string,
-  productId: string,
+  projectId: string,
   permission: TTeamPermission
 ): Promise<boolean> => {
-  validateInputs([teamId, ZId], [productId, ZId], [permission, ZTeamPermission]);
+  validateInputs([teamId, ZId], [projectId, ZId], [permission, ZTeamPermission]);
   try {
-    const productTeam = await prisma.productTeam.findUnique({
+    const projectTeam = await prisma.projectTeam.findUnique({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
     });
 
-    if (!productTeam) {
-      throw new ResourceNotFoundError("productTeam", null);
+    if (!projectTeam) {
+      throw new ResourceNotFoundError("projectTeam", null);
     }
 
-    await prisma.productTeam.update({
+    await prisma.projectTeam.update({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
@@ -512,8 +512,8 @@ export const updateTeamProductPermission = async (
       },
     });
 
-    teamCache.revalidate({ id: teamId, productId });
-    productCache.revalidate({ id: productId });
+    teamCache.revalidate({ id: teamId, projectId: projectId });
+    projectCache.revalidate({ id: projectId });
 
     return true;
   } catch (error) {
@@ -525,12 +525,12 @@ export const updateTeamProductPermission = async (
   }
 };
 
-export const removeTeamProduct = async (teamId: string, productId: string): Promise<boolean> => {
-  validateInputs([teamId, ZId], [productId, ZId]);
+export const removeTeamProject = async (teamId: string, projectId: string): Promise<boolean> => {
+  validateInputs([teamId, ZId], [projectId, ZId]);
   try {
-    const product = await prisma.product.findUnique({
+    const project = await prisma.project.findUnique({
       where: {
-        id: productId,
+        id: projectId,
       },
       select: {
         id: true,
@@ -543,35 +543,35 @@ export const removeTeamProduct = async (teamId: string, productId: string): Prom
       },
     });
 
-    if (!product) {
-      throw new ResourceNotFoundError("product", productId);
+    if (!project) {
+      throw new ResourceNotFoundError("project", projectId);
     }
-    const productTeam = await prisma.productTeam.findUnique({
+    const projectTeam = await prisma.projectTeam.findUnique({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
     });
 
-    if (!productTeam) {
-      throw new ResourceNotFoundError("productTeam", null);
+    if (!projectTeam) {
+      throw new ResourceNotFoundError("projectTeam", null);
     }
 
-    await prisma.productTeam.delete({
+    await prisma.projectTeam.delete({
       where: {
-        productId_teamId: {
-          productId,
+        projectId_teamId: {
+          projectId,
           teamId,
         },
       },
     });
 
-    teamCache.revalidate({ id: teamId, productId });
-    productCache.revalidate({ id: productId, organizationId: product.organizationId });
+    teamCache.revalidate({ id: teamId, projectId: projectId });
+    projectCache.revalidate({ id: projectId, organizationId: project.organizationId });
 
-    for (const environment of product.environments) {
+    for (const environment of project.environments) {
       organizationCache.revalidate({ environmentId: environment.id });
     }
 
@@ -585,14 +585,14 @@ export const removeTeamProduct = async (teamId: string, productId: string): Prom
   }
 };
 
-export const getProductsByOrganizationId = reactCache(
-  async (organizationId: string): Promise<TOrganizationProduct[]> =>
+export const getProjectsByOrganizationId = reactCache(
+  async (organizationId: string): Promise<TOrganizationProject[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZString]);
 
         try {
-          const products = await prisma.product.findMany({
+          const projects = await prisma.project.findMany({
             where: {
               organizationId,
             },
@@ -602,9 +602,9 @@ export const getProductsByOrganizationId = reactCache(
             },
           });
 
-          return products.map((product) => ({
-            id: product.id,
-            name: product.name,
+          return projects.map((project) => ({
+            id: project.id,
+            name: project.name,
           }));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -612,18 +612,18 @@ export const getProductsByOrganizationId = reactCache(
             throw new DatabaseError(error.message);
           }
 
-          throw new UnknownError("Error while fetching products");
+          throw new UnknownError("Error while fetching projects");
         }
       },
-      [`getProductsByOrganizationId-${organizationId}`],
+      [`getProjectsByOrganizationId-${organizationId}`],
       {
-        tags: [productCache.tag.byOrganizationId(organizationId)],
+        tags: [projectCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
 
-export const addTeamProducts = async (teamId: string, productIds: string[]): Promise<boolean> => {
-  validateInputs([teamId, ZId], [productIds, z.array(ZId)]);
+export const addTeamProjects = async (teamId: string, projectIds: string[]): Promise<boolean> => {
+  validateInputs([teamId, ZId], [projectIds, z.array(ZId)]);
   try {
     const team = await prisma.team.findUnique({
       where: {
@@ -638,10 +638,10 @@ export const addTeamProducts = async (teamId: string, productIds: string[]): Pro
       throw new ResourceNotFoundError("team", teamId);
     }
 
-    for (const productId of productIds) {
-      const product = await prisma.product.findUnique({
+    for (const projectId of projectIds) {
+      const project = await prisma.project.findUnique({
         where: {
-          id: productId,
+          id: projectId,
           organizationId: team.organizationId,
         },
         select: {
@@ -653,35 +653,35 @@ export const addTeamProducts = async (teamId: string, productIds: string[]): Pro
         },
       });
 
-      if (!product) {
-        throw new ResourceNotFoundError("product", productId);
+      if (!project) {
+        throw new ResourceNotFoundError("project", projectId);
       }
 
-      const productTeam = await prisma.productTeam.findUnique({
+      const projectTeam = await prisma.projectTeam.findUnique({
         where: {
-          productId_teamId: {
-            productId,
+          projectId_teamId: {
+            projectId,
             teamId,
           },
         },
       });
 
-      if (productTeam) {
+      if (projectTeam) {
         continue;
       }
 
-      await prisma.productTeam.create({
+      await prisma.projectTeam.create({
         data: {
-          productId,
+          projectId,
           teamId,
           permission: "read",
         },
       });
 
-      teamCache.revalidate({ id: teamId, productId });
-      productCache.revalidate({ id: productId, organizationId: team.organizationId });
+      teamCache.revalidate({ id: teamId, projectId: projectId });
+      projectCache.revalidate({ id: projectId, organizationId: team.organizationId });
 
-      for (const environment of product.environments) {
+      for (const environment of project.environments) {
         organizationCache.revalidate({ environmentId: environment.id });
       }
     }

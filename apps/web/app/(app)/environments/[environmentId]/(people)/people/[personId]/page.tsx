@@ -2,7 +2,7 @@ import { AttributesSection } from "@/app/(app)/environments/[environmentId]/(peo
 import { DeletePersonButton } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/DeletePersonButton";
 import { ResponseSection } from "@/app/(app)/environments/[environmentId]/(people)/people/[personId]/components/ResponseSection";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProductPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -16,17 +16,17 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getPerson } from "@formbricks/lib/person/service";
 import { getPersonIdentifier } from "@formbricks/lib/person/utils";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [environment, environmentTags, product, session, organization, person, attributes, attributeClasses] =
+  const [environment, environmentTags, project, session, organization, person, attributes, attributeClasses] =
     await Promise.all([
       getEnvironment(params.environmentId),
       getTagsByEnvironmentId(params.environmentId),
-      getProductByEnvironmentId(params.environmentId),
+      getProjectByEnvironmentId(params.environmentId),
       getServerSession(authOptions),
       getOrganizationByEnvironmentId(params.environmentId),
       getPerson(params.personId),
@@ -34,8 +34,8 @@ const Page = async (props) => {
       getAttributeClasses(params.environmentId),
     ]);
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!environment) {
@@ -57,8 +57,8 @@ const Page = async (props) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
 
-  const productPermission = await getProductPermissionByUserId(session.user.id, product.id);
-  const { hasReadAccess } = getTeamPermissionFlags(productPermission);
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
   const isReadOnly = isMember && hasReadAccess;
 

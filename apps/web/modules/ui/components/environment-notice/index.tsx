@@ -15,7 +15,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
     throw new Error("Environment not found");
   }
 
-  const environments = await getEnvironments(environment.productId);
+  const environments = await getEnvironments(environment.projectId);
   const otherEnvironmentId = environments.filter((e) => e.id !== environment.id)[0].id;
 
   return (

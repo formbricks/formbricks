@@ -10,8 +10,8 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import type { TProduct } from "@formbricks/types/product";
-import { TProductStyling } from "@formbricks/types/product";
+import type { TProject } from "@formbricks/types/project";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Modal } from "./components/modal";
@@ -23,7 +23,7 @@ interface PreviewSurveyProps {
   survey: TSurvey;
   questionId?: string | null;
   previewType?: TPreviewType;
-  product: TProduct;
+  project: TProject;
   environment: TEnvironment;
   languageCode: string;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
@@ -64,7 +64,7 @@ export const PreviewSurvey = ({
   questionId,
   survey,
   previewType,
-  product,
+  project,
   environment,
   languageCode,
   onFileUpload,
@@ -78,7 +78,7 @@ export const PreviewSurvey = ({
   const [previewPosition, setPreviewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink, setShrink] = useState(false);
-  const { productOverwrites } = survey || {};
+  const { projectOverwrites } = survey || {};
   const previewScreenVariants: Variants = {
     expanded: {
       right: "5%",
@@ -114,35 +114,35 @@ export const PreviewSurvey = ({
     },
   };
 
-  const { placement: surveyPlacement } = productOverwrites || {};
-  const { darkOverlay: surveyDarkOverlay } = productOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } = productOverwrites || {};
+  const { placement: surveyPlacement } = projectOverwrites || {};
+  const { darkOverlay: surveyDarkOverlay } = projectOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
 
-  const placement = surveyPlacement || product.placement;
-  const darkOverlay = surveyDarkOverlay ?? product.darkOverlay;
-  const clickOutsideClose = surveyClickOutsideClose ?? product.clickOutsideClose;
+  const placement = surveyPlacement || project.placement;
+  const darkOverlay = surveyDarkOverlay ?? project.darkOverlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
 
   const widgetSetupCompleted = appSetupCompleted;
 
-  const styling: TSurveyStyling | TProductStyling = useMemo(() => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
+  const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
+    // allow style overwrite is disabled from the project
+    if (!project.styling.allowStyleOverwrite) {
+      return project.styling;
     }
 
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the project
+    if (project.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
+        return project.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return product.styling;
-  }, [product.styling, survey.styling]);
+    return project.styling;
+  }, [project.styling, survey.styling]);
 
   const updateQuestionId = useCallback(
     (newQuestionId: TSurveyQuestionId) => {
@@ -251,7 +251,7 @@ export const PreviewSurvey = ({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -263,7 +263,7 @@ export const PreviewSurvey = ({
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
                     survey={survey}
-                    isBrandingEnabled={product.inAppSurveyBranding}
+                    isBrandingEnabled={project.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     onFileUpload={onFileUpload}
@@ -280,13 +280,13 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-end">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                      <ClientLogo environmentId={environment.id} project={project} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
                       survey={{ ...survey, type: "link" }}
-                      isBrandingEnabled={product.linkSurveyBranding}
+                      isBrandingEnabled={project.linkSurveyBranding}
                       onFileUpload={onFileUpload}
                       languageCode={languageCode}
                       responseCount={42}
@@ -365,7 +365,7 @@ export const PreviewSurvey = ({
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
                   survey={survey}
-                  isBrandingEnabled={product.inAppSurveyBranding}
+                  isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   onFileUpload={onFileUpload}
@@ -379,16 +379,16 @@ export const PreviewSurvey = ({
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} product={product} ContentRef={ContentRef} isEditorView>
+              <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo environmentId={environment.id} product={product} previewSurvey />
+                    <ClientLogo environmentId={environment.id} project={project} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-lg rounded-lg border-transparent">
                   <SurveyInline
                     survey={{ ...survey, type: "link" }}
-                    isBrandingEnabled={product.linkSurveyBranding}
+                    isBrandingEnabled={project.linkSurveyBranding}
                     isRedirectDisabled={true}
                     onFileUpload={onFileUpload}
                     languageCode={languageCode}

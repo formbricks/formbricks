@@ -1,7 +1,7 @@
 "use client";
 
 import { FollowUpsView } from "@/modules/ee/survey-follow-ups/components/follow-ups-view";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -12,12 +12,12 @@ import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
-import { refetchProductAction } from "../actions";
+import { refetchProjectAction } from "../actions";
 import { LoadingSkeleton } from "./LoadingSkeleton";
 import { QuestionsAudienceTabs } from "./QuestionsStylingSettingsTabs";
 import { QuestionsView } from "./QuestionsView";
@@ -27,7 +27,7 @@ import { SurveyMenuBar } from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  product: TProduct;
+  project: TProject;
   environment: TEnvironment;
   actionClasses: TActionClass[];
   attributeClasses: TAttributeClass[];
@@ -42,16 +42,16 @@ interface SurveyEditorProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
+  projectPermission: TTeamPermission | null;
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
-  productPermission: TTeamPermission | null;
   userEmail: string;
   environmentTags: TTag[];
 }
 
 export const SurveyEditor = ({
   survey,
-  product,
+  project,
   environment,
   actionClasses,
   environmentTags,
@@ -67,9 +67,9 @@ export const SurveyEditor = ({
   plan,
   isCxMode = false,
   locale,
+  projectPermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
-  productPermission,
   userEmail,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("questions");
@@ -78,19 +78,19 @@ export const SurveyEditor = ({
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
-  const [localProduct, setLocalProduct] = useState<TProduct>(product);
+  const [localProject, setLocalProject] = useState<TProject>(project);
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const fetchLatestProduct = useCallback(async () => {
-    const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
-    if (refetchProductResponse?.data) {
-      setLocalProduct(refetchProductResponse.data);
+  const fetchLatestProject = useCallback(async () => {
+    const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
+    if (refetchProjectResponse?.data) {
+      setLocalProject(refetchProjectResponse.data);
     }
-  }, [localProduct.id]);
+  }, [localProject.id]);
 
-  useDocumentVisibility(fetchLatestProduct);
+  useDocumentVisibility(fetchLatestProject);
 
   useEffect(() => {
     if (survey) {
@@ -110,20 +110,20 @@ export const SurveyEditor = ({
   useEffect(() => {
     const listener = () => {
       if (document.visibilityState === "visible") {
-        const fetchLatestProduct = async () => {
-          const refetchProductResponse = await refetchProductAction({ productId: localProduct.id });
-          if (refetchProductResponse?.data) {
-            setLocalProduct(refetchProductResponse.data);
+        const fetchLatestProject = async () => {
+          const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
+          if (refetchProjectResponse?.data) {
+            setLocalProject(refetchProjectResponse.data);
           }
         };
-        fetchLatestProduct();
+        fetchLatestProject();
       }
     };
     document.addEventListener("visibilitychange", listener);
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
-  }, [localProduct.id]);
+  }, [localProject.id]);
 
   // when the survey type changes, we need to reset the active question id to the first question
   useEffect(() => {
@@ -155,7 +155,7 @@ export const SurveyEditor = ({
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
-        product={localProduct}
+        project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
@@ -170,7 +170,7 @@ export const SurveyEditor = ({
             activeId={activeView}
             setActiveId={setActiveView}
             isCxMode={isCxMode}
-            isStylingTabVisible={!!product.styling.allowStyleOverwrite}
+            isStylingTabVisible={!!project.styling.allowStyleOverwrite}
             isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
           />
 
@@ -180,7 +180,7 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
-              product={localProduct}
+              project={localProject}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
               selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
@@ -194,13 +194,13 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "styling" && product.styling.allowStyleOverwrite && (
+          {activeView === "styling" && project.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
               environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              product={localProduct}
+              project={localProject}
               styling={styling ?? null}
               setStyling={setStyling}
               localStylingChanges={localStylingChanges}
@@ -223,8 +223,8 @@ export const SurveyEditor = ({
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              product={localProduct}
-              productPermission={productPermission}
+              project={localProject}
+              projectPermission={projectPermission}
             />
           )}
 
@@ -245,7 +245,7 @@ export const SurveyEditor = ({
           <PreviewSurvey
             survey={localSurvey}
             questionId={activeQuestionId}
-            product={localProduct}
+            project={localProject}
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}

@@ -3,7 +3,7 @@
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProductIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
@@ -27,9 +27,9 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -70,9 +70,9 @@ export const generateResultShareUrlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -108,8 +108,8 @@ export const getResultShareUrlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
@@ -139,9 +139,9 @@ export const deleteResultShareUrlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -170,9 +170,9 @@ export const getEmailHtmlAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
