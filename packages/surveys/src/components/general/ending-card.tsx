@@ -57,25 +57,30 @@ export function EndingCard({
     </div>
   );
 
+  const processAndRedirect = (urlString: string) => {
+    try {
+      const url = replaceRecallInfo(urlString, responseData, variablesData);
+      if (url && new URL(url)) {
+        window.top?.location.replace(url);
+      }
+    } catch (error) {
+      console.error("Invalid URL after recall processing:", error);
+    }
+  };
+
   const handleSubmit = () => {
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
-      window.top?.location.replace(endingCard.buttonLink);
+      processAndRedirect(endingCard.buttonLink);
     }
   };
 
   useEffect(() => {
     if (isCurrent) {
       if (!isRedirectDisabled && endingCard.type === "redirectToUrl" && endingCard.url) {
-        try {
-          const url = replaceRecallInfo(endingCard.url, responseData, variablesData);
-          if (url && new URL(url)) {
-            window.top?.location.replace(url);
-          }
-        } catch (error) {
-          console.error("Invalid URL after recall processing:", error);
-        }
+        processAndRedirect(endingCard.url);
       }
     }
+
     const handleEnter = (e: KeyboardEvent) => {
       if (e.key === "Enter") {
         handleSubmit();
