@@ -28,7 +28,7 @@ export const EmptySpaceFiller = ({
             {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex w-full items-center justify-center"
-                href={`/environments/${environment.id}/product/app-connection`}>
+                href={`/environments/${environment.id}/project/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
                   {t("environments.surveys.summary.install_widget")}{" "}
                   <strong>{t("environments.surveys.summary.go_to_setup_checklist")} </strong>
@@ -58,7 +58,7 @@ export const EmptySpaceFiller = ({
             {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environment.id}/product/app-connection`}>
+                href={`/environments/${environment.id}/project/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
                   {t("environments.surveys.summary.install_widget")}{" "}
                   <strong>{t("environments.surveys.summary.go_to_setup_checklist")} </strong>
@@ -90,7 +90,7 @@ export const EmptySpaceFiller = ({
             {!environment.appSetupCompleted && !noWidgetRequired && (
               <Link
                 className="flex h-full w-full items-center justify-center"
-                href={`/environments/${environment.id}/product/app-connection`}>
+                href={`/environments/${environment.id}/project/app-connection`}>
                 <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
                   {t("environments.surveys.summary.install_widget")}{" "}
                   <strong>{t("environments.surveys.summary.go_to_setup_checklist")} 👉</strong>
@@ -98,7 +98,7 @@ export const EmptySpaceFiller = ({
               </Link>
             )}
             {(environment.appSetupCompleted || noWidgetRequired) && (
-              <span className="text-center">{t("environments.product.tags.empty_message")}</span>
+              <span className="text-center">{t("environments.project.tags.empty_message")}</span>
             )}
           </div>
           <div className="h-12 w-full rounded-full bg-slate-50/50"></div>
@@ -139,7 +139,7 @@ export const EmptySpaceFiller = ({
           {!environment.appSetupCompleted && !noWidgetRequired && (
             <Link
               className="flex h-full w-full items-center justify-center"
-              href={`/environments/${environment.id}/product/app-connection`}>
+              href={`/environments/${environment.id}/project/app-connection`}>
               <span className="decoration-brand-dark underline transition-all duration-300 ease-in-out">
                 {t("environments.surveys.summary.install_widget")}{" "}
                 <strong>{t("environments.surveys.summary.go_to_setup_checklist")} 👉</strong>

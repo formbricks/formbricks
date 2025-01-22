@@ -13,7 +13,7 @@ import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TResponse,
   TResponseData,
@@ -30,7 +30,7 @@ let setResponseData = (_: TResponseData) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
-  product: TProduct;
+  project: TProject;
   userId?: string;
   emailVerificationStatus?: string;
   singleUseId?: string;
@@ -50,7 +50,7 @@ interface LinkSurveyProps {
 
 export const LinkSurvey = ({
   survey,
-  product,
+  project,
   userId,
   emailVerificationStatus,
   singleUseId,
@@ -177,7 +177,7 @@ export const LinkSurvey = ({
           survey={survey}
           isErrorComponent={true}
           languageCode={languageCode}
-          styling={product.styling}
+          styling={project.styling}
           attributeClasses={attributeClasses}
           locale={locale}
         />
@@ -189,7 +189,7 @@ export const LinkSurvey = ({
         singleUseId={suId ?? ""}
         survey={survey}
         languageCode={languageCode}
-        styling={product.styling}
+        styling={project.styling}
         attributeClasses={attributeClasses}
         locale={locale}
       />
@@ -197,23 +197,23 @@ export const LinkSurvey = ({
   }
 
   const determineStyling = () => {
-    // allow style overwrite is disabled from the product
-    if (!product.styling.allowStyleOverwrite) {
-      return product.styling;
+    // allow style overwrite is disabled from the project
+    if (!project.styling.allowStyleOverwrite) {
+      return project.styling;
     }
 
-    // allow style overwrite is enabled from the product
-    if (product.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the project
+    if (project.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return product.styling;
+        return project.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return product.styling;
+    return project.styling;
   };
 
   const handleResetSurvey = () => {
@@ -223,7 +223,7 @@ export const LinkSurvey = ({
 
   return (
     <LinkSurveyWrapper
-      product={product}
+      project={project}
       survey={survey}
       isPreview={isPreview}
       handleResetSurvey={handleResetSurvey}
@@ -237,7 +237,7 @@ export const LinkSurvey = ({
         survey={survey}
         styling={determineStyling()}
         languageCode={languageCode}
-        isBrandingEnabled={product.linkSurveyBranding}
+        isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
         getSetIsError={(f: (value: boolean) => void) => {
           setIsError = f;

@@ -5,7 +5,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware"
 import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
-  getProductIdFromEnvironmentId,
+  getProjectIdFromEnvironmentId,
 } from "@/lib/utils/helper";
 import { z } from "zod";
 import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
@@ -30,9 +30,9 @@ export const createWebhookAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "read",
-          productId: await getProductIdFromEnvironmentId(parsedInput.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });
@@ -56,9 +56,9 @@ export const deleteWebhookAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(parsedInput.id),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.id),
         },
       ],
     });
@@ -83,9 +83,9 @@ export const updateWebhookAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(parsedInput.webhookId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.webhookId),
         },
       ],
     });

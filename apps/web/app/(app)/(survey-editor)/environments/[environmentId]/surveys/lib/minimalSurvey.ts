@@ -30,7 +30,7 @@ export const getMinimalSurvey = (locale: string): TSurvey => ({
   surveyClosedMessage: {
     enabled: false,
   },
-  productOverwrites: null,
+  projectOverwrites: null,
   singleUse: null,
   styling: null,
   resultShareKey: null,

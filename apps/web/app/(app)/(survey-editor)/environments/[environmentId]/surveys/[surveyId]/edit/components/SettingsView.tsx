@@ -1,11 +1,11 @@
 import { SurveyGeneralSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyGeneralSettings";
 import { AdvancedTargetingCard } from "@/modules/ee/advanced-targeting/components/advanced-targeting-card";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -26,8 +26,8 @@ interface SettingsViewProps {
   membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
   isFormbricksCloud: boolean;
-  productPermission: TTeamPermission | null;
-  product: TProduct;
+  projectPermission: TTeamPermission | null;
+  project: TProject;
   environmentTags: TTag[];
 }
 
@@ -42,9 +42,9 @@ export const SettingsView = ({
   membershipRole,
   isUserTargetingAllowed = false,
   isFormbricksCloud,
-  product,
+  project,
   environmentTags,
-  productPermission,
+  projectPermission,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -53,7 +53,7 @@ export const SettingsView = ({
       <SurveyGeneralSettings
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        product={product}
+        project={project}
         environmentTags={environmentTags}
         environmentId={environment.id}
       />
@@ -91,7 +91,7 @@ export const SettingsView = ({
         environmentId={environment.id}
         propActionClasses={actionClasses}
         membershipRole={membershipRole}
-        productPermission={productPermission}
+        projectPermission={projectPermission}
       />
 
       <ResponseOptionsCard

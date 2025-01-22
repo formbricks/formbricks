@@ -13,7 +13,7 @@ import { ChevronDownIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TFilterOption, TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 import { SurveyFilterDropdown } from "./SurveyFilterDropdown";
 import { TTag } from "@formbricks/types/tags";
@@ -21,7 +21,7 @@ import { TTag } from "@formbricks/types/tags";
 interface SurveyFilterProps {
   surveyFilters: TSurveyFilters;
   setSurveyFilters: React.Dispatch<React.SetStateAction<TSurveyFilters>>;
-  currentProductChannel: TProductConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
   environmentTags: TTag[];
 }
 
@@ -59,7 +59,7 @@ const sortOptions: TSortOption[] = [
 export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
-  currentProductChannel,
+  currentProjectChannel,
   environmentTags,
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type, tag } = surveyFilters;
@@ -179,7 +179,7 @@ export const SurveyFilters = ({
             toggleDropdown={toggleDropdown}
           />
         </div>
-        {currentProductChannel !== "link" && (
+        {currentProjectChannel !== "link" && (
           <div>
             <SurveyFilterDropdown
               title={t("common.type")}

@@ -158,7 +158,7 @@ export const RankingQuestionForm = ({
         {question.subheader === undefined && (
           <Button
             size="sm"
-            variant="minimal"
+            variant="secondary"
             className="mt-3"
             type="button"
             onClick={() => {
@@ -195,7 +195,7 @@ export const RankingQuestionForm = ({
               updateQuestion(questionIdx, { choices: newChoices });
             }}>
             <SortableContext items={question.choices} strategy={verticalListSortingStrategy}>
-              <div className="flex flex-col" ref={parent}>
+              <div className="flex flex-col gap-2" ref={parent}>
                 {question.choices &&
                   question.choices.map((choice, choiceIdx) => (
                     <QuestionOptionChoice

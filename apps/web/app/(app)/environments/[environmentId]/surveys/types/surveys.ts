@@ -25,9 +25,9 @@ export const ZSurvey = z.object({
 export type TSurvey = z.infer<typeof ZSurvey>;
 
 export const ZSurveyCopyFormValidation = z.object({
-  products: z.array(
+  projects: z.array(
     z.object({
-      product: z.string(),
+      project: z.string(),
       environments: z.array(z.string()),
     })
   ),

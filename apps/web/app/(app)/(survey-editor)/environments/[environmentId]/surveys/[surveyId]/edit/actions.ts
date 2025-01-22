@@ -5,12 +5,12 @@ import { actionClient, authenticatedActionClient } from "@/lib/utils/action-clie
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import {
   getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromProductId,
+  getOrganizationIdFromProjectId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
-  getProductIdFromEnvironmentId,
-  getProductIdFromSegmentId,
-  getProductIdFromSurveyId,
+  getProjectIdFromEnvironmentId,
+  getProjectIdFromSegmentId,
+  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { getSegment, getSurvey } from "@/lib/utils/services";
 import { getSurveyFollowUpsPermission } from "@/modules/ee/license-check/lib/utils";
@@ -19,7 +19,7 @@ import { z } from "zod";
 import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
-import { getProduct } from "@formbricks/lib/product/service";
+import { getProject } from "@formbricks/lib/project/service";
 import {
   cloneSegment,
   createSegment,
@@ -67,8 +67,8 @@ export const updateSurveyAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
-          productId: await getProductIdFromSurveyId(parsedInput.id),
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.id),
           minPermission: "readWrite",
         },
       ],
@@ -85,30 +85,30 @@ export const updateSurveyAction = authenticatedActionClient
     return await updateSurvey(parsedInput);
   });
 
-const ZRefetchProductAction = z.object({
-  productId: ZId,
+const ZRefetchProjectAction = z.object({
+  projectId: ZId,
 });
 
-export const refetchProductAction = authenticatedActionClient
-  .schema(ZRefetchProductAction)
+export const refetchProjectAction = authenticatedActionClient
+  .schema(ZRefetchProjectAction)
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromProductId(parsedInput.productId),
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: parsedInput.productId,
+          projectId: parsedInput.projectId,
         },
       ],
     });
 
-    return await getProduct(parsedInput.productId);
+    return await getProject(parsedInput.projectId);
   });
 
 const ZCreateBasicSegmentAction = z.object({
@@ -142,9 +142,9 @@ export const createBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -189,9 +189,9 @@ export const updateBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSegmentId(parsedInput.segmentId),
+          projectId: await getProjectIdFromSegmentId(parsedInput.segmentId),
         },
       ],
     });
@@ -243,9 +243,9 @@ export const loadNewBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -286,9 +286,9 @@ export const cloneBasicSegmentAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -312,9 +312,9 @@ export const resetBasicSegmentFiltersAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -417,9 +417,9 @@ export const createActionClassAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "productTeam",
+          type: "projectTeam",
           minPermission: "readWrite",
-          productId: await getProductIdFromEnvironmentId(parsedInput.action.environmentId),
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.action.environmentId),
         },
       ],
     });

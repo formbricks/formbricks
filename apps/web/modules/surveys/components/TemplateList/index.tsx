@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
-import { type TProduct, ZProductConfigChannel, ZProductConfigIndustry } from "@formbricks/types/product";
+import { type TProject, ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
@@ -18,7 +18,7 @@ import { TemplateFilters } from "./components/TemplateFilters";
 interface TemplateListProps {
   user: TUser;
   environment: TEnvironment;
-  product: TProduct;
+  project: TProject;
   templateSearch?: string;
   showFilters?: boolean;
   prefilledFilters: TTemplateFilter[];
@@ -28,7 +28,7 @@ interface TemplateListProps {
 
 export const TemplateList = ({
   user,
-  product,
+  project,
   environment,
   showFilters = true,
   templateSearch,
@@ -42,21 +42,21 @@ export const TemplateList = ({
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
 
   const surveyType: TSurveyType = useMemo(() => {
-    if (product.config.channel) {
-      if (product.config.channel === "website") {
+    if (project.config.channel) {
+      if (project.config.channel === "website") {
         return "app";
       }
 
-      return product.config.channel;
+      return project.config.channel;
     }
 
     return "link";
-  }, [product.config.channel]);
+  }, [project.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
-    activeTemplate.preset.reward = product.defaultRewardInUSD;
-    activeTemplate.preset.redirectOnFailUrl = product.defaultRedirectOnFailUrl;
+    activeTemplate.preset.reward = project.defaultRewardInUSD;
+    activeTemplate.preset.redirectOnFailUrl = project.defaultRedirectOnFailUrl;
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
@@ -82,8 +82,8 @@ export const TemplateList = ({
       }
 
       // Parse and validate the filters
-      const channelParseResult = ZProductConfigChannel.nullable().safeParse(selectedFilter[0]);
-      const industryParseResult = ZProductConfigIndustry.nullable().safeParse(selectedFilter[1]);
+      const channelParseResult = ZProjectConfigChannel.nullable().safeParse(selectedFilter[0]);
+      const industryParseResult = ZProjectConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
       // Ensure all validations are successful
@@ -121,7 +121,7 @@ export const TemplateList = ({
           activeTemplate={activeTemplate}
           setActiveTemplate={setActiveTemplate}
           onTemplateClick={onTemplateClick}
-          product={product}
+          project={project}
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
@@ -136,7 +136,7 @@ export const TemplateList = ({
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}
                 onTemplateClick={onTemplateClick}
-                product={product}
+                project={project}
                 createSurvey={createSurvey}
                 loading={loading}
                 selectedFilter={selectedFilter}

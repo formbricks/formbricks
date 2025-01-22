@@ -17,7 +17,7 @@ import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TAttributeClass } from "@formbricks/types/attribute-classes";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import {
   TI18nString,
   TSurvey,
@@ -44,7 +44,7 @@ import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
-  product: TProduct;
+  project: TProject;
   question: TSurveyQuestion;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;
@@ -67,7 +67,7 @@ interface QuestionCardProps {
 
 export const QuestionCard = ({
   localSurvey,
-  product,
+  project,
   question,
   questionIdx,
   moveQuestion,
@@ -192,7 +192,7 @@ export const QuestionCard = ({
               {/*  <div className="-ml-0.5 mr-3 h-6 min-w-[1.5rem] text-slate-400">
                 {QUESTIONS_ICON_MAP[question.type]}
               </div> */}
-              <div className="grow" dir="auto">
+              <div className="flex grow flex-col justify-center" dir="auto">
                 <p className="text-sm font-semibold">
                   {recallToHeadline(
                     question.headline,
@@ -232,7 +232,7 @@ export const QuestionCard = ({
                 translateCard={translateQuestion}
                 moveCard={moveQuestion}
                 card={question}
-                product={product}
+                project={project}
                 updateCard={updateQuestion}
                 addCard={addQuestion}
                 cardType="question"
@@ -364,7 +364,7 @@ export const QuestionCard = ({
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
               localSurvey={localSurvey}
-              product={product}
+              project={project}
               question={question}
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}

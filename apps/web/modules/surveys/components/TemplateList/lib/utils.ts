@@ -1,43 +1,43 @@
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { TProduct, TProductConfigChannel, TProductConfigIndustry } from "@formbricks/types/product";
+import { TProject, TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 
 export const replaceQuestionPresetPlaceholders = (
   question: TSurveyQuestion,
-  product: TProduct
+  project: TProject
 ): TSurveyQuestion => {
-  if (!product) return question;
+  if (!project) return question;
   const newQuestion = structuredClone(question);
   const defaultLanguageCode = "default";
   if (newQuestion.headline) {
     newQuestion.headline[defaultLanguageCode] = getLocalizedValue(
       newQuestion.headline,
       defaultLanguageCode
-    ).replace("{{productName}}", product.name);
+    ).replace("{{projectName}}", project.name);
   }
   if (newQuestion.subheader) {
     newQuestion.subheader[defaultLanguageCode] = getLocalizedValue(
       newQuestion.subheader,
       defaultLanguageCode
-    )?.replace("{{productName}}", product.name);
+    )?.replace("{{projectName}}", project.name);
   }
   return newQuestion;
 };
 
-// replace all occurences of productName with the actual product name in the current template
-export const replacePresetPlaceholders = (template: TTemplate, product: any) => {
+// replace all occurences of projectName with the actual project name in the current template
+export const replacePresetPlaceholders = (template: TTemplate, project: any) => {
   const preset = structuredClone(template.preset);
-  preset.name = preset.name.replace("{{productName}}", product.name);
+  preset.name = preset.name.replace("{{projectName}}", project.name);
   preset.questions = preset.questions.map((question) => {
-    return replaceQuestionPresetPlaceholders(question, product);
+    return replaceQuestionPresetPlaceholders(question, project);
   });
   return { ...template, preset };
 };
 
 export const channelMapping: {
-  value: TProductConfigChannel;
+  value: TProjectConfigChannel;
   label: string;
 }[] = [
   { value: "website", label: "common.website_survey" },
@@ -45,7 +45,7 @@ export const channelMapping: {
   { value: "link", label: "common.link_survey" },
 ];
 
-export const industryMapping: { value: TProductConfigIndustry; label: string }[] = [
+export const industryMapping: { value: TProjectConfigIndustry; label: string }[] = [
   { value: "eCommerce", label: "common.e_commerce" },
   { value: "saas", label: "common.saas" },
   { value: "other", label: "common.other" },

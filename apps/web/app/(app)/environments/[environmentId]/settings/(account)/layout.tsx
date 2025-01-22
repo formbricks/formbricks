@@ -2,7 +2,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
 const AccountSettingsLayout = async (props) => {
   const params = await props.params;
@@ -10,9 +10,9 @@ const AccountSettingsLayout = async (props) => {
   const { children } = props;
 
   const t = await getTranslations();
-  const [organization, product, session] = await Promise.all([
+  const [organization, project, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
@@ -20,8 +20,8 @@ const AccountSettingsLayout = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  if (!product) {
-    throw new Error(t("common.product_not_found"));
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!session) {

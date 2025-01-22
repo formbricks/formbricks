@@ -6,7 +6,7 @@ import { CheckIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import Select from "react-select";
 import { cn } from "@formbricks/lib/cn";
-import { TProduct } from "@formbricks/types/product";
+import { TProject } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { Input } from "@/modules/ui/components/input";
@@ -16,7 +16,7 @@ import { Switch } from "@/modules/ui/components/switch";
 interface SurveyGeneralSettingsProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((s: TSurvey) => TSurvey)) => void;
-  product: TProduct;
+  project: TProject;
   environmentTags: TTag[];
   environmentId: string;
 }
@@ -24,14 +24,14 @@ interface SurveyGeneralSettingsProps {
 export function SurveyGeneralSettings({
   localSurvey,
   setLocalSurvey,
-  product,
+  project,
   environmentTags,
   environmentId,
 }: SurveyGeneralSettingsProps) {
   const [open, setOpen] = useState(true);
   const [customReward, setCustomReward] = useState(localSurvey.reward);
   const [usingCustomReward, setUsingCustomReward] = useState(
-    localSurvey.reward !== product.defaultRewardInUSD
+    localSurvey.reward !== project.defaultRewardInUSD
   );
   const [timerEnabled, setTimerEnabled] = useState(
     localSurvey.timerDuration !== null && localSurvey.timerDuration !== undefined
@@ -44,7 +44,7 @@ export function SurveyGeneralSettings({
     setUsingCustomReward(isChecked);
     setLocalSurvey({
       ...localSurvey,
-      reward: isChecked ? customReward : product.defaultRewardInUSD,
+      reward: isChecked ? customReward : project.defaultRewardInUSD,
     });
   };
 

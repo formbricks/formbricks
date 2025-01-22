@@ -64,7 +64,7 @@ const WebAppTab = ({ environmentId }) => {
         <li>
           {t("common.follow_these")}{" "}
           <Link
-            href={`/environments/${environmentId}/product/app-connection`}
+            href={`/environments/${environmentId}/project/app-connection`}
             target="_blank"
             className="decoration-brand-dark font-medium underline underline-offset-2">
             {t("environments.surveys.summary.setup_instructions")}

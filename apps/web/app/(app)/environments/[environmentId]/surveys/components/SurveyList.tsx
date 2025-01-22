@@ -10,7 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
-import { TProductConfigChannel } from "@formbricks/types/product";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
@@ -25,7 +25,7 @@ interface SurveysListProps {
   WEBAPP_URL: string;
   userId: string;
   surveysPerPage: number;
-  currentProductChannel: TProductConfigChannel;
+  currentProjectChannel: TProjectConfigChannel;
   environmentTags: TTag[];
   locale: TUserLocale;
 }
@@ -46,7 +46,7 @@ export const SurveysList = ({
   WEBAPP_URL,
   userId,
   surveysPerPage: surveysLimit,
-  currentProductChannel,
+  currentProjectChannel,
   environmentTags,
   locale,
 }: SurveysListProps) => {
@@ -142,7 +142,7 @@ export const SurveysList = ({
       <SurveyFilters
         surveyFilters={surveyFilters}
         setSurveyFilters={setSurveyFilters}
-        currentProductChannel={currentProductChannel}
+        currentProjectChannel={currentProjectChannel}
         environmentTags={environmentTags}
       />
       {surveys.length > 0 ? (

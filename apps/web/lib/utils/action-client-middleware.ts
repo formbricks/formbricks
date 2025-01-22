@@ -1,5 +1,5 @@
-import { getProductPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
-import { TTeamPermission } from "@/modules/ee/teams/product-teams/types/teams";
+import { getProjectPermissionByUserId, getTeamRoleByTeamIdUserId } from "@/modules/ee/teams/lib/roles";
+import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/teams";
 import { TTeamRole } from "@/modules/ee/teams/team-list/types/teams";
 import { returnValidationErrors } from "next-safe-action";
 import { ZodIssue, z } from "zod";
@@ -20,21 +20,21 @@ const formatErrors = (issues: ZodIssue[]): Record<string, { _errors: string[] }>
 
 export type TAccess<T extends z.ZodRawShape> =
   | {
-      type: "organization";
-      schema?: z.ZodObject<T>;
-      data?: z.ZodObject<T>["_output"];
-      roles: TOrganizationRole[];
-    }
+    type: "organization";
+    schema?: z.ZodObject<T>;
+    data?: z.ZodObject<T>["_output"];
+    roles: TOrganizationRole[];
+  }
   | {
-      type: "productTeam";
-      minPermission?: TTeamPermission;
-      productId: string;
-    }
+    type: "projectTeam";
+    minPermission?: TTeamPermission;
+    projectId: string;
+  }
   | {
-      type: "team";
-      minPermission?: TTeamRole;
-      teamId: string;
-    };
+    type: "team";
+    minPermission?: TTeamRole;
+    teamId: string;
+  };
 
 const teamPermissionWeight = {
   read: 1,
@@ -73,12 +73,12 @@ export const checkAuthorizationUpdated = async <T extends z.ZodRawShape>({
         return true;
       }
     } else {
-      if (accessItem.type === "productTeam") {
-        const productPermission = await getProductPermissionByUserId(userId, accessItem.productId);
+      if (accessItem.type === "projectTeam") {
+        const projectPermission = await getProjectPermissionByUserId(userId, accessItem.projectId);
         if (
-          !productPermission ||
+          !projectPermission ||
           (accessItem.minPermission !== undefined &&
-            teamPermissionWeight[productPermission] < teamPermissionWeight[accessItem.minPermission])
+            teamPermissionWeight[projectPermission] < teamPermissionWeight[accessItem.minPermission])
         ) {
           continue;
         }

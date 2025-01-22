@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZProductConfigChannel, ZProductConfigIndustry } from "./product";
+import { ZProjectConfigChannel, ZProjectConfigIndustry } from "./project";
 import {
   ZSurveyEndings,
   ZSurveyHiddenFields,
@@ -50,8 +50,8 @@ export const ZXMTemplate = z.object({
 export type TXMTemplate = z.infer<typeof ZXMTemplate>;
 
 export const ZTemplateFilter = z.union([
-  ZProductConfigChannel,
-  ZProductConfigIndustry,
+  ZProjectConfigChannel,
+  ZProjectConfigIndustry,
   ZTemplateRole,
   z.null(),
 ]);
