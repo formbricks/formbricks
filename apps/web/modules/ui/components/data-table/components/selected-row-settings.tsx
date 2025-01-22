@@ -9,7 +9,7 @@ import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   deleteRows: (rowId: string[]) => void;
-  type: "response" | "person";
+  type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
 }
 
@@ -40,8 +40,8 @@ export const SelectedRowSettings = <T,>({
 
       if (type === "response") {
         await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
-      } else if (type === "person") {
-        await Promise.all(rowsToBeDeleted.map((personId) => deleteAction(personId)));
+      } else if (type === "contact") {
+        await Promise.all(rowsToBeDeleted.map((responseId) => deleteAction(responseId)));
       }
 
       deleteRows(rowsToBeDeleted);
@@ -75,7 +75,7 @@ export const SelectedRowSettings = <T,>({
   return (
     <div className="flex items-center gap-x-2 rounded-md bg-slate-900 p-1 px-2 text-xs text-white">
       <div>
-        {selectedRowCount} {type}s selected
+        {selectedRowCount} {t(`common.${type}`)}s {t("common.selected")}
       </div>
       <Separator />
       <SelectableOption label={t("common.select_all")} onClick={() => handleToggleAllRowsSelection(true)} />
@@ -93,7 +93,7 @@ export const SelectedRowSettings = <T,>({
       <DeleteDialog
         open={isDeleteDialogOpen}
         setOpen={setIsDeleteDialogOpen}
-        deleteWhat={type}
+        deleteWhat={t(`common.${type}`)}
         onDelete={handleDelete}
         isDeleting={isDeleting}
       />

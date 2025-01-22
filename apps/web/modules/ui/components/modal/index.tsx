@@ -31,7 +31,7 @@ const sizeClassName = {
   md: "sm:max-w-xl",
   lg: "sm:max-w-[820px]",
   xl: "sm:max-w-[960px]",
-  xxl: "sm:max-w-[1240px]",
+  xxl: "sm:max-w-[1240px] sm:max-h-[760px]",
 };
 
 const DialogContent = React.forwardRef<

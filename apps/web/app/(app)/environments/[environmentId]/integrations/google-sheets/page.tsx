@@ -8,7 +8,6 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
   GOOGLE_SHEETS_CLIENT_SECRET,
@@ -23,17 +22,18 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
-  const [session, surveys, integrations, environment, attributeClasses] = await Promise.all([
+  const [session, surveys, integrations, environment, contactAttributeKeys] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
-    getAttributeClasses(params.environmentId),
+    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -81,7 +81,7 @@ const Page = async (props) => {
           surveys={surveys}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
-          attributeClasses={attributeClasses}
+          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
       </div>

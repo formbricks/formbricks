@@ -1,4 +1,5 @@
 import { TAttributes } from "@formbricks/types/attributes";
+import { type ForbiddenError } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
@@ -125,7 +126,7 @@ const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } =
 
 export const initialize = async (
   configInput: TJsConfigInput
-): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError | ForbiddenError>> => {
   const isDebug = getIsDebug();
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
@@ -286,26 +287,6 @@ export const initialize = async (
     config.resetConfig();
     logger.debug("Syncing.");
 
-    let updatedAttributes: TAttributes | null = null;
-    if (configInput.attributes) {
-      if (configInput.userId) {
-        const res = await updateAttributes(
-          configInput.apiHost,
-          configInput.environmentId,
-          configInput.userId,
-          configInput.attributes
-        );
-
-        if (res.ok !== true) {
-          return err(res.error);
-        }
-
-        updatedAttributes = res.value;
-      } else {
-        updatedAttributes = { ...configInput.attributes };
-      }
-    }
-
     try {
       const environmentState = await fetchEnvironmentState(
         {
@@ -314,6 +295,7 @@ export const initialize = async (
         },
         false
       );
+
       const personState = configInput.userId
         ? await fetchPersonState(
             {
@@ -327,6 +309,29 @@ export const initialize = async (
 
       const filteredSurveys = filterSurveys(environmentState, personState);
 
+      let updatedAttributes: TAttributes | null = null;
+      if (configInput.attributes) {
+        if (configInput.userId) {
+          const res = await updateAttributes(
+            configInput.apiHost,
+            configInput.environmentId,
+            configInput.userId,
+            configInput.attributes
+          );
+
+          if (res.ok !== true) {
+            if (res.error.code === "forbidden") {
+              logger.error(`Authorization error: ${res.error.responseMessage}`);
+            }
+            return err(res.error);
+          }
+
+          updatedAttributes = res.value;
+        } else {
+          updatedAttributes = { ...configInput.attributes };
+        }
+      }
+
       config.update({
         apiHost: configInput.apiHost,
         environmentId: configInput.environmentId,
@@ -336,7 +341,7 @@ export const initialize = async (
         attributes: updatedAttributes ?? {},
       });
     } catch (e) {
-      handleErrorOnFirstInit();
+      handleErrorOnFirstInit(e as Error);
     }
 
     // and track the new session event
@@ -356,7 +361,11 @@ export const initialize = async (
   return okVoid();
 };
 
-export const handleErrorOnFirstInit = () => {
+export const handleErrorOnFirstInit = (e: any) => {
+  if (e.error.code === "forbidden") {
+    logger.error(`Authorization error: ${e.error.responseMessage}`);
+  }
+
   if (getIsDebug()) {
     logger.debug("Not putting formbricks in error state because debug mode is active (no error state)");
     return;
