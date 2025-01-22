@@ -1,4 +1,4 @@
-import { type NetworkError, type Result, err, okVoid } from "../types/errors";
+import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 import { Logger } from "./logger";
@@ -9,7 +9,23 @@ const logger = Logger.getInstance();
 const updateQueue = UpdateQueue.getInstance();
 
 // eslint-disable-next-line @typescript-eslint/require-await -- we want to use promises here
-export const setUserIdInApp = async (userId: string): Promise<Result<void, NetworkError>> => {
+export const setUserIdInApp = async (userId: string): Promise<Result<void, ApiErrorResponse>> => {
+  const {
+    data: { userId: currentUserId },
+  } = appConfig.get().user;
+
+  if (currentUserId) {
+    logger.error(
+      "A userId is already set in formbricks, please first call the logout function and then set a new userId"
+    );
+    return err({
+      code: "forbidden",
+      message: "User already set",
+      responseMessage: "User already set",
+      status: 403,
+    });
+  }
+
   updateQueue.updateUserId(userId);
   void updateQueue.processUpdates();
   return okVoid();

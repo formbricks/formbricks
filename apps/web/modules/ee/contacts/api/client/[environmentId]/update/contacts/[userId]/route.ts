@@ -54,12 +54,17 @@ export const POST = async (
     }
 
     let attributeUpdatesToSend: TContactAttributes | null = null;
+    let language: string | null = null;
     if (parsedInput.data?.attributes) {
       const { attributes } = parsedInput.data;
 
       // remove userId and id from attributes
       const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
       attributeUpdatesToSend = updatedAttributes;
+    }
+
+    if (parsedInput.data?.language) {
+      language = parsedInput.data.language;
     }
 
     const { device } = userAgent(request);
@@ -70,7 +75,8 @@ export const POST = async (
         environmentId,
         userId,
         deviceType,
-        attributeUpdatesToSend ?? undefined
+        attributeUpdatesToSend ?? undefined,
+        language ?? undefined
       );
 
       if (personState.revalidateProps?.revalidate) {

@@ -6,8 +6,14 @@ export const updateContact = async (
   environmentId: string,
   userId: string,
   device: "phone" | "desktop",
-  attributes?: Record<string, string>
+  attributesParam?: Record<string, string>,
+  language?: string
 ) => {
+  const attributes = {
+    ...attributesParam,
+    ...(language ? { language } : {}),
+  };
+
   const personState = await getPersonState({
     environmentId,
     userId,

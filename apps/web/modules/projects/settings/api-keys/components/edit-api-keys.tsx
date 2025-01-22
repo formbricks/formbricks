@@ -60,7 +60,6 @@ export const EditAPIKeys = ({
       environmentId: environmentTypeId,
       apiKeyData: { label: data.label },
     });
-    console.log("createApiKeyResponse", createApiKeyResponse);
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);

@@ -32,7 +32,7 @@ export interface ApiErrorResponse {
     | "network_error";
   message: string;
   status: number;
-  url: URL;
+  url?: URL;
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
   responseMessage?: string;
 }

@@ -147,6 +147,7 @@ export const ZJsPeopleUserIdInput = z.object({
 
 export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
+  language: z.string().optional(),
 });
 
 export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;

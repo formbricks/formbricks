@@ -56,6 +56,21 @@ export class UpdateQueue {
     }
   }
 
+  public updateLanguage(language: string): void {
+    if (!this.updates) {
+      this.updates = {
+        userId: "",
+        attributes: {},
+        language,
+      };
+    } else {
+      this.updates = {
+        ...this.updates,
+        language,
+      };
+    }
+  }
+
   public getUpdates(): TJsUpdates | null {
     return this.updates;
   }
@@ -105,6 +120,7 @@ export class UpdateQueue {
                 updates: {
                   userId: effectiveUserId,
                   attributes: currentUpdates.attributes ?? {},
+                  language: currentUpdates.language,
                 },
               });
             }

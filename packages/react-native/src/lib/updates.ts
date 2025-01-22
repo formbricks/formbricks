@@ -44,6 +44,7 @@ export const sendUpdatesToBackend = async (
     const response = await api.client.user.createOrUpdate({
       userId: updates.userId,
       attributes: updates.attributes,
+      language: updates.language,
     });
 
     if (!response.ok) {
@@ -136,6 +137,7 @@ export const sendUpdates = async (
       config.update({
         ...config.get(),
         user: personState,
+        ...(updates.language ? { language: updates.language } : {}),
         filteredSurveys,
       });
 

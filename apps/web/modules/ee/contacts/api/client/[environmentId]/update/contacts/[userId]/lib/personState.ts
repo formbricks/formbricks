@@ -168,6 +168,7 @@ export const getPersonState = async ({
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),
         contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
+        contactCache.tag.byEnvironmentId(environmentId),
         contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         displayCache.tag.byEnvironmentIdAndUserId(environmentId, userId),
         responseCache.tag.byEnvironmentIdAndUserId(environmentId, userId),

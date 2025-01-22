@@ -11,7 +11,11 @@ export class UserAPI {
     this.environmentId = environmentId;
   }
 
-  async createOrUpdate(userUpdateInput: { userId: string; attributes?: Record<string, string> }): Promise<
+  async createOrUpdate(userUpdateInput: {
+    userId: string;
+    attributes?: Record<string, string>;
+    language?: string;
+  }): Promise<
     Result<
       {
         state: {
@@ -36,7 +40,7 @@ export class UserAPI {
       this.apiHost,
       `/api/v1/client/${this.environmentId}/update/contacts/${userUpdateInput.userId}`,
       "POST",
-      { attributes }
+      { attributes, language: userUpdateInput.language }
     );
   }
 }
