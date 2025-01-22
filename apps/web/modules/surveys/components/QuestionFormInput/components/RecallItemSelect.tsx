@@ -73,7 +73,8 @@ export const RecallItemSelect = ({
       question.type === "consent" ||
       question.type === "pictureSelection" ||
       question.type === "cal" ||
-      question.type === "matrix"
+      question.type === "matrix" ||
+      question.type === "contactInfo"
     );
   };
 
