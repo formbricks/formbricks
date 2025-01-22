@@ -385,7 +385,7 @@ export const QuestionFormInput = ({
                         {recallComponents}
                       </div>
 
-                      <div>
+                      <>
                         {id === "headline" && !isWelcomeCard && (
                           <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_photo_or_video")}>
                             <Button
@@ -418,7 +418,7 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                      </div>
+                      </>
                     </div>
                   </div>
                 );
