@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type TConfig, type TConfigInput } from "../types/config";
+import { fetchEnvironmentState } from "../environment/environment-state";
+import { trackAction } from "../survey/action";
+import { type TConfig, type TConfigInput, type TEnvironmentState } from "../types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -8,15 +10,13 @@ import {
   type Result,
   err,
   okVoid,
-} from "../types/errors";
-import { trackAction } from "./actions";
+} from "../types/error";
+import { DEFAULT_USER_STATE_NO_USER_ID } from "../user/user-state";
+import { sendUpdatesToBackend } from "../user/user-update";
 import { RNConfig } from "./config";
 import { RN_ASYNC_STORAGE_KEY } from "./constants";
-import { fetchEnvironmentState } from "./environment-state";
 import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
 import { Logger } from "./logger";
-import { sendUpdatesToBackend } from "./updates";
-import { DEFAULT_USER_STATE_NO_USER_ID } from "./user-state";
 import { filterSurveys, wrapThrowsAsync } from "./utils";
 
 let isInitialized = false;
@@ -66,7 +66,7 @@ export const init = async (
     });
   }
 
-  if (!configInput.apiHost) {
+  if (!configInput.appUrl) {
     logger.debug("No apiHost provided");
 
     return err({
@@ -78,7 +78,7 @@ export const init = async (
   if (
     existingConfig?.environment &&
     existingConfig.environmentId === configInput.environmentId &&
-    existingConfig.apiHost === configInput.apiHost
+    existingConfig.appUrl; === configInput.appUrl
   ) {
     logger.debug("Configuration fits init parameters.");
     let isEnvironmentStateExpired = false;
@@ -96,63 +96,82 @@ export const init = async (
 
     try {
       // fetch the environment state (if expired)
-      const environmentState = isEnvironmentStateExpired
-        ? await fetchEnvironmentState({
-            apiHost: configInput.apiHost,
-            environmentId: configInput.environmentId,
-          })
-        : existingConfig.environment;
+      let environmentState: TEnvironmentState;
 
-      // fetch the person state (if expired)
-      let { user: userState } = existingConfig;
+      if (isEnvironmentStateExpired) {
+        const environmentStateResponse = await fetchEnvironmentState({
+          appUrl: configInput.appUrl,
+          environmentId: configInput.environmentId,
+        });
 
-      if (isUserStateExpired) {
-        // If the existing person state (expired) has a userId, we need to fetch the person state
-        // If the existing person state (expired) has no userId, we need to set the person state to the default
-
-        if (userState.data.userId) {
-          const updatesResponse = await sendUpdatesToBackend({
-            apiHost: configInput.apiHost,
-            environmentId: configInput.environmentId,
-            updates: {
-              userId: userState.data.userId,
-            },
-          });
-
-          if (updatesResponse.ok) {
-            userState = updatesResponse.data.state;
-          } else {
-            logger.error(
-              `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
-            );
-            return err({
-              code: "network_error",
-              message: "Error updating user state",
-              status: 500,
-              url: new URL(
-                `${configInput.apiHost}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
-              ),
-              responseMessage: "Unknown error",
-            });
-          }
+        if (environmentStateResponse.ok) {
+          environmentState = environmentStateResponse.data;
         } else {
-          userState = DEFAULT_USER_STATE_NO_USER_ID;
+          logger.error(
+            `Error fetching environment state: ${environmentStateResponse.error.code} - ${environmentStateResponse.error.responseMessage ?? ""}`
+          );
+          return err({
+            code: "network_error",
+            message: "Error fetching environment state",
+            status: 500,
+            url: new URL(`${configInput.appUrl}/api/v1/client/${configInput.environmentId}/environment`),
+            responseMessage: environmentStateResponse.error.message,
+          });
         }
+
+        // fetch the person state (if expired)
+        let { user: userState } = existingConfig;
+
+        if (isUserStateExpired) {
+          // If the existing person state (expired) has a userId, we need to fetch the person state
+          // If the existing person state (expired) has no userId, we need to set the person state to the default
+
+          if (userState.data.userId) {
+            const updatesResponse = await sendUpdatesToBackend({
+              apiHost: configInput.appUrl,
+              environmentId: configInput.environmentId,
+              updates: {
+                userId: userState.data.userId,
+              },
+            });
+
+            if (updatesResponse.ok) {
+              userState = updatesResponse.data.state;
+            } else {
+              logger.error(
+                `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
+              );
+              return err({
+                code: "network_error",
+                message: "Error updating user state",
+                status: 500,
+                url: new URL(
+                  `${configInput.appUrl}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
+                ),
+                responseMessage: "Unknown error",
+              });
+            }
+          } else {
+            userState = DEFAULT_USER_STATE_NO_USER_ID;
+          }
+        }
+
+        // filter the environment state wrt the person state
+        const filteredSurveys = filterSurveys(environmentState, userState);
+
+        // update the appConfig with the new filtered surveys and person state
+        appConfig.update({
+          ...existingConfig,
+          environment: environmentState,
+          user: userState,
+          filteredSurveys,
+        });
+
+        const surveyNames = filteredSurveys.map((s) => s.name);
+        logger.debug(
+          `Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`
+        );
       }
-
-      // filter the environment state wrt the person state
-      const filteredSurveys = filterSurveys(environmentState, userState);
-
-      // update the appConfig with the new filtered surveys and person state
-      appConfig.update({
-        ...existingConfig,
-        environment: environmentState,
-        user: userState,
-        filteredSurveys,
-      });
-
-      const surveyNames = filteredSurveys.map((s) => s.name);
-      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
     } catch {
       logger.debug("Error during sync. Please try again.");
     }
@@ -166,20 +185,23 @@ export const init = async (
     // The person state will be fetched when the `setUserId` method is called.
 
     try {
-      const environmentState = await fetchEnvironmentState(
-        {
-          apiHost: configInput.apiHost,
-          environmentId: configInput.environmentId,
-        },
-        false
-      );
+      const environmentStateResponse = await fetchEnvironmentState({
+        appUrl: configInput.appUrl,
+        environmentId: configInput.environmentId,
+      });
+
+      if (!environmentStateResponse.ok) {
+        // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is ApiErrorResponse
+        throw environmentStateResponse.error;
+      }
 
       const personState = DEFAULT_USER_STATE_NO_USER_ID;
+      const environmentState = environmentStateResponse.data;
 
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       appConfig.update({
-        apiHost: configInput.apiHost,
+        appUrl: appUr;: configInput.appUrl,
         environmentId: configInput.environmentId,
         user: personState,
         environment: environmentState,

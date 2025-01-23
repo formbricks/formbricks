@@ -7,7 +7,7 @@ import type {
   TSurveyStyling,
   TUserState,
 } from "../types/config";
-import type { Result } from "../types/errors";
+import type { Result } from "../types/error";
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date): number => {
@@ -34,17 +34,17 @@ export const wrapThrowsAsync =
 /**
  * Filters surveys based on the displayOption, recontactDays, and segments
  * @param environmentSate -  The environment state
- * @param personState - The person state
+ * @param userState - The user state
  * @returns The filtered surveys
  */
 
-// takes the environment and person state and returns the filtered surveys
+// takes the environment and user state and returns the filtered surveys
 export const filterSurveys = (
   environmentState: TEnvironmentState,
-  personState: TUserState
+  userState: TUserState
 ): TEnvironmentStateSurvey[] => {
   const { project, surveys } = environmentState.data;
-  const { displays, responses, lastDisplayAt, segments, userId } = personState.data;
+  const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
 
   // Function to filter surveys based on displayOption criteria
   let filteredSurveys = surveys.filter((survey: TEnvironmentStateSurvey) => {

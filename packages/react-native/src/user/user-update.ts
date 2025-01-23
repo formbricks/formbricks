@@ -1,26 +1,23 @@
 /* eslint-disable no-console -- required for logging errors */
 import { FormbricksAPI } from "@formbricks/api";
+import { RNConfig } from "../common/config";
+import { Logger } from "../common/logger";
+import { filterSurveys } from "../common/utils";
 import { type TUpdates, type TUserState } from "../types/config";
-import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
-import { RNConfig } from "./config";
-import { Logger } from "./logger";
-import { filterSurveys } from "./utils";
+import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/error";
 
 const config = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
-export const sendUpdatesToBackend = async (
-  {
-    apiHost,
-    environmentId,
-    updates,
-  }: {
-    apiHost: string;
-    environmentId: string;
-    updates: TUpdates;
-  },
-  noCache = false
-): Promise<
+export const sendUpdatesToBackend = async ({
+  apiHost,
+  environmentId,
+  updates,
+}: {
+  apiHost: string;
+  environmentId: string;
+  updates: TUpdates;
+}): Promise<
   Result<
     {
       state: TUserState;
@@ -30,17 +27,9 @@ export const sendUpdatesToBackend = async (
   >
 > => {
   const url = `${apiHost}/api/v1/client/${environmentId}/user`;
-
   const api = new FormbricksAPI({ apiHost, environmentId });
 
   try {
-    const fetchOptions: RequestInit = {};
-
-    if (noCache) {
-      fetchOptions.cache = "no-cache";
-      logger.debug("No cache option set for sync");
-    }
-
     const response = await api.client.user.createOrUpdate({
       userId: updates.userId,
       attributes: updates.attributes,
@@ -57,26 +46,6 @@ export const sendUpdatesToBackend = async (
     }
 
     const { state } = response.data;
-
-    // const defaultPersonState: TJsPersonState = {
-    //   expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-    //   data: {
-    //     userId: updates.userId,
-    //     segments: [],
-    //     displays: [],
-    //     responses: [],
-    //     lastDisplayAt: null,
-    //   },
-    // };
-
-    // if (!Object.keys(state).length) {
-    //   return ok({ state: defaultPersonState });
-    // }
-
-    // return {
-    //   data: { ...state },
-    //   expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-    // };
 
     return ok({
       state: {
@@ -102,29 +71,24 @@ export const sendUpdatesToBackend = async (
   }
 };
 
-export const sendUpdates = async (
-  {
-    updates,
-  }: {
-    updates: TUpdates;
-  },
-  noCache = false
-): Promise<Result<void, ApiErrorResponse>> => {
-  const { apiHost, environmentId } = config.get();
+export const sendUpdates = async ({
+  updates,
+}: {
+  updates: TUpdates;
+}): Promise<Result<void, ApiErrorResponse>> => {
+  const { appUr;: apiHost, environmentId } = config.get();
   // update endpoint call
   const url = `${apiHost}/api/v1/client/${environmentId}/user`;
 
   try {
-    const updatesResponse = await sendUpdatesToBackend({ apiHost, environmentId, updates }, noCache);
+    const updatesResponse = await sendUpdatesToBackend({ apiHost, environmentId, updates });
 
     if (updatesResponse.ok) {
-      // data => {state: TJsPersonState; details?: Record<string, string> }
-      const personState = updatesResponse.data.state;
-      const filteredSurveys = filterSurveys(config.get().environment, personState);
+      const userState = updatesResponse.data.state;
+      const filteredSurveys = filterSurveys(config.get().environment, userState);
 
-      // details => Record<string, string> - contains the details of the attributes update
+      // messages => string[] - contains the details of the attributes update
       // for example, if the attribute "email" was being used for some user or not
-      // we should log the details
       const messages = updatesResponse.data.messages;
 
       if (messages && messages.length > 0) {
@@ -136,7 +100,7 @@ export const sendUpdates = async (
       config.update({
         ...config.get(),
         user: {
-          ...personState,
+          ...userState,
         },
         filteredSurveys,
       });

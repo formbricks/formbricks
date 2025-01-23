@@ -63,7 +63,7 @@ export interface TUserState {
 
 export interface TConfig {
   environmentId: string;
-  apiHost: string;
+  appUrl: string;
   environment: TEnvironmentState;
   user: TUserState;
   filteredSurveys: TEnvironmentStateSurvey[];
@@ -85,7 +85,7 @@ export type TAttributes = Record<string, string>;
 
 export interface TConfigInput {
   environmentId: string;
-  apiHost: string;
+  appUrl: string;
 }
 
 export interface TStylingColor {

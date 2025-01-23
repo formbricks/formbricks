@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- logging required for error logging */
-// shared functions for environment and person state(s)
+import { FormbricksAPI } from "@formbricks/api";
+import { RNConfig } from "../common/config";
+import { Logger } from "../common/logger";
+import { filterSurveys } from "../common/utils";
 import type { TConfigInput, TEnvironmentState } from "../types/config";
-import { err } from "../types/errors";
-import { RNConfig } from "./config";
-import { Logger } from "./logger";
-import { filterSurveys } from "./utils";
+import { type ApiErrorResponse, type Result, err, ok } from "../types/error";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -14,61 +14,42 @@ let environmentStateSyncIntervalId: number | null = null;
  * Fetch the environment state from the backend
  * @param apiHost - The API host
  * @param environmentId - The environment ID
- * @param noCache - Whether to skip the cache
  * @returns The environment state
  * @throws NetworkError
  */
-export const fetchEnvironmentState = async (
-  { apiHost, environmentId }: TConfigInput,
-  noCache = false
-): Promise<TEnvironmentState> => {
+export const fetchEnvironmentState = async ({
+  appUrl: apiHost,
+  environmentId,
+}: TConfigInput): Promise<Result<TEnvironmentState, ApiErrorResponse>> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/environment`;
+  const api = new FormbricksAPI({ apiHost, environmentId });
 
   try {
-    const fetchOptions: RequestInit = {};
-
-    if (noCache) {
-      fetchOptions.cache = "no-cache";
-      logger.debug("No cache option set for sync");
-    }
-
-    const response = await fetch(url, fetchOptions);
+    const response = await api.client.environment.getState();
 
     if (!response.ok) {
-      const jsonRes = (await response.json()) as { message: string };
-
-      const error = err({
-        code: "network_error",
-        status: response.status,
+      return err({
+        code: response.error.code,
+        status: response.error.status,
         message: "Error syncing with backend",
         url: new URL(url),
-        responseMessage: jsonRes.message,
+        responseMessage: response.error.message,
       });
-
-      // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
-      throw error.error;
     }
 
-    const data = (await response.json()) as { data: TEnvironmentState["data"] };
-    const { data: state } = data;
-
-    return {
-      data: { ...state },
+    return ok({
+      data: { ...response.data },
       expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-    };
+    }) as Result<TEnvironmentState, ApiErrorResponse>;
   } catch (e: unknown) {
-    const errorTyped = e as { message?: string };
-
-    const error = err({
+    const errorTyped = e as ApiErrorResponse;
+    return err({
       code: "network_error",
-      message: errorTyped.message ?? "Error fetching the environment state",
+      message: errorTyped.message,
       status: 500,
       url: new URL(url),
-      responseMessage: errorTyped.message ?? "Unknown error",
+      responseMessage: errorTyped.responseMessage ?? "Network error",
     });
-
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
-    throw error.error;
   }
 };
 
@@ -92,26 +73,35 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
         logger.debug("Environment State has expired. Starting sync.");
 
         const personState = appConfig.get().user;
-        const environmentState = await fetchEnvironmentState(
-          {
-            apiHost: appConfig.get().apiHost,
-            environmentId: appConfig.get().environmentId,
-          },
-          true
-        );
-
-        const filteredSurveys = filterSurveys(environmentState, personState);
-
-        appConfig.update({
-          ...appConfig.get(),
-          environment: environmentState,
-          filteredSurveys,
+        const environmentState = await fetchEnvironmentState({
+          appUrl: appConfig.get().appUrl;,
+          environmentId: appConfig.get().environmentId,
         });
+
+        if (environmentState.ok) {
+          const { data: state } = environmentState;
+          const filteredSurveys = filterSurveys(state, personState);
+
+          appConfig.update({
+            ...appConfig.get(),
+            environment: state,
+            filteredSurveys,
+          });
+        } else {
+          // eslint-disable-next-line @typescript-eslint/only-throw-error -- error is an ApiErrorResponse
+          throw environmentState.error;
+        }
       } catch (e) {
-        console.error(`Error during expiry check: ${e as string}`);
+        console.error(`Error during expiry check: `, e);
         logger.debug("Extending config and try again later.");
         const existingConfig = appConfig.get();
-        appConfig.update(existingConfig);
+        appConfig.update({
+          ...existingConfig,
+          environment: {
+            ...existingConfig.environment,
+            expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
+          },
+        });
       }
     };
 

@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- Required for error logging */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { TConfig, TConfigUpdateInput } from "../types/config";
-import { type Result, err, ok } from "../types/errors";
+import { type Result, err, ok } from "../types/error";
 import { RN_ASYNC_STORAGE_KEY } from "./constants";
 import { wrapThrowsAsync } from "./utils";
 

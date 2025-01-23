@@ -1,9 +1,9 @@
+import { RNConfig } from "../common/config";
+import { Logger } from "../common/logger";
+import { shouldDisplayBasedOnPercentage } from "../common/utils";
 import type { TEnvironmentStateSurvey } from "../types/config";
-import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "../types/errors";
-import { RNConfig } from "./config";
-import { Logger } from "./logger";
+import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "../types/error";
 import { SurveyStore } from "./survey-store";
-import { shouldDisplayBasedOnPercentage } from "./utils";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();

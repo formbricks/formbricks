@@ -1,8 +1,8 @@
-import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "../types/errors";
-import { RNConfig } from "./config";
-import { deinitalize, init } from "./initialize";
-import { Logger } from "./logger";
-import { UpdateQueue } from "./update-queue";
+import { RNConfig } from "../common/config";
+import { deinitalize, init } from "../common/initialize";
+import { Logger } from "../common/logger";
+import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "../types/error";
+import { UpdateQueue } from "./user-update-queue";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -39,7 +39,7 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
   const syncParams = {
     environmentId: appConfig.get().environmentId,
-    apiHost: appConfig.get().apiHost,
+    apiHost: appConfig.get().appUrl;,
   };
 
   void logoutUser();

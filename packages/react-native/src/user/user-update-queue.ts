@@ -1,9 +1,9 @@
 /* eslint-disable no-console -- required for logging errors */
 /* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
+import { RNConfig } from "../common/config";
+import { Logger } from "../common/logger";
 import type { TAttributes, TUpdates } from "../types/config";
-import { RNConfig } from "./config";
-import { Logger } from "./logger";
-import { sendUpdates } from "./updates";
+import { sendUpdates } from "./user-update";
 
 const logger = Logger.getInstance();
 

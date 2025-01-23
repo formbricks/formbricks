@@ -1,5 +1,5 @@
 /* eslint-disable no-console -- we need to log global errors */
-import type { Result } from "../types/errors";
+import type { Result } from "../types/error";
 import { checkInitialized } from "./initialize";
 import { wrapThrowsAsync } from "./utils";
 

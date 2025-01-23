@@ -4,17 +4,17 @@ import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { FormbricksAPI } from "@formbricks/api";
-import { RNConfig } from "./lib/config";
-import { Logger } from "./lib/logger";
-import { ResponseQueue } from "./lib/response-queue";
-import { StorageAPI } from "./lib/storage";
-import { SurveyState } from "./lib/survey-state";
-import { SurveyStore } from "./lib/survey-store";
-import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "./lib/utils";
-import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "./types/config";
-import type { TResponseUpdate } from "./types/response";
-import type { TFileUploadParams, TUploadFileConfig } from "./types/storage";
-import type { SurveyInlineProps } from "./types/surveys";
+import { RNConfig } from "../common/config";
+import { Logger } from "../common/logger";
+import { ResponseQueue } from "../common/response-queue";
+import { StorageAPI } from "../common/storage";
+import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "../common/utils";
+import { SurveyState } from "../survey/survey-state";
+import { SurveyStore } from "../survey/survey-store";
+import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "../types/config";
+import type { TResponseUpdate } from "../types/response";
+import type { TFileUploadParams, TUploadFileConfig } from "../types/storage";
+import type { SurveyInlineProps } from "../types/survey";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -46,7 +46,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     () =>
       new ResponseQueue(
         {
-          apiHost: appConfig.get().apiHost,
+          apiHost: appConfig.get().appUrl;,
           environmentId: appConfig.get().environmentId,
           retryAttempts: 2,
           setSurveyState,
@@ -117,7 +117,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     const { userId } = appConfig.get().user.data;
 
     const api = new FormbricksAPI({
-      apiHost: appConfig.get().apiHost,
+      apiHost: appConfig.get().appUrl;,
       environmentId: appConfig.get().environmentId,
     });
 
@@ -134,7 +134,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   };
 
   const uploadFile = async (file: TFileUploadParams["file"], params?: TUploadFileConfig): Promise<string> => {
-    const storage = new StorageAPI(appConfig.get().apiHost, appConfig.get().environmentId);
+    const storage = new StorageAPI(appConfig.get().appUrl;, appConfig.get().environmentId);
     return await storage.uploadFile(file, params);
   };
 
@@ -155,7 +155,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             isBrandingEnabled,
             styling,
             languageCode,
-            apiHost: appConfig.get().apiHost,
+            apiHost: appConfig.get().appUrl;,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
