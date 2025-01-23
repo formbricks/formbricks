@@ -1,16 +1,13 @@
-import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
-import { createTeamMembership } from "@/modules/auth/invite/lib/team";
+import { createMembershipAction } from "@/modules/auth/invite/actions";
+import { getInvite } from "@/modules/auth/invite/lib/invite";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { after } from "next/server";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
-import { createMembership } from "@formbricks/lib/membership/service";
-import { getUser, updateUser } from "@formbricks/lib/user/service";
+import { getUser } from "@formbricks/lib/user/service";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {
@@ -38,47 +35,6 @@ export const InvitePage = async (props: InvitePageProps) => {
     }
 
     const isInviteExpired = new Date(invite.expiresAt) < new Date();
-
-    const createMembershipAction = async () => {
-      "use server";
-
-      if (!session || !user) return;
-
-      await createMembership(invite.organizationId, session.user.id, {
-        accepted: true,
-        role: invite.role,
-      });
-      if (invite.teamIds) {
-        await createTeamMembership(
-          {
-            organizationId: invite.organizationId,
-            role: invite.role,
-            teamIds: invite.teamIds,
-          },
-          user.id
-        );
-      }
-      await deleteInvite(inviteId);
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        user?.name ?? "",
-        invite.creator.email,
-        user?.locale ?? DEFAULT_LOCALE
-      );
-      await updateUser(session.user.id, {
-        notificationSettings: {
-          ...user.notificationSettings,
-          alert: user.notificationSettings.alert ?? {},
-          weeklySummary: user.notificationSettings.weeklySummary ?? {},
-          unsubscribedOrganizationIds: Array.from(
-            new Set([
-              ...(user.notificationSettings?.unsubscribedOrganizationIds || []),
-              invite.organizationId,
-            ])
-          ),
-        },
-      });
-    };
 
     if (isInviteExpired) {
       return (
@@ -122,9 +78,7 @@ export const InvitePage = async (props: InvitePageProps) => {
       );
     }
 
-    after(async () => {
-      await createMembershipAction();
-    });
+    await createMembershipAction({ invite });
     return (
       <ContentLayout
         headline={t("auth.invite.welcome_to_organization")}

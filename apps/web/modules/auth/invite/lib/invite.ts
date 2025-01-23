@@ -47,6 +47,7 @@ export const getInvite = reactCache(
               id: inviteId,
             },
             select: {
+              id: true,
               expiresAt: true,
               organizationId: true,
               role: true,
