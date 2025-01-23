@@ -1,14 +1,15 @@
+import { randomBytes } from "crypto";
 import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
-import { mockUser } from "@formbricks/lib/survey/tests/__mock__/survey.mock";
 import { authOptions } from "./authOptions";
+import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
 
 const mockUserId = "cm5yzxcp900000cl78fzocjal";
-const mockPassword = Math.random().toString(36).slice(-8);
+const mockPassword = randomBytes(12).toString("hex");
 const mockHashedPassword = await hashPassword(mockPassword);
 
 vi.mock("@formbricks/database", () => ({

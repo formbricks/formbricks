@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
+import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -98,13 +99,13 @@ export const mockEnvironment: TEnvironment = {
 };
 
 export const mockUser: TUser = {
-  id: "cm5xj580r00000cmgdj9ohups",
+  id: mockId,
   name: "mock User",
   email: "test@unit.com",
-  emailVerified: new Date(),
+  emailVerified: currentDate,
   imageUrl: "https://www.google.com",
-  createdAt: new Date(),
-  updatedAt: new Date(),
+  createdAt: currentDate,
+  updatedAt: currentDate,
   twoFactorEnabled: false,
   identityProvider: "google",
   objective: "improve_user_retention",
@@ -114,7 +115,6 @@ export const mockUser: TUser = {
     unsubscribedOrganizationIds: [],
   },
   role: "other",
-  locale: "en-US",
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{

@@ -2,9 +2,9 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { createCustomerIoCustomer } from "@formbricks/lib/customerio";
-import { mockUser } from "@formbricks/lib/survey/tests/__mock__/survey.mock";
 import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { mockUser } from "./mock-data";
 import { createUser, getUser, getUserByEmail, updateUser } from "./user";
 
 const mockPrismaUser = {
