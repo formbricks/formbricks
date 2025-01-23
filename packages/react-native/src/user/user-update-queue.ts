@@ -80,21 +80,16 @@ export class UpdateQueue {
     return new Promise((resolve, reject) => {
       const handler = async (): Promise<void> => {
         try {
-          const currentUpdates = { ...this.updates };
+          let currentUpdates = { ...this.updates };
           const config = RNConfig.getInstance();
 
           if (Object.keys(currentUpdates).length > 0) {
-            // Check if we have any attributes to update
-            const hasAttributes =
-              currentUpdates.attributes && Object.keys(currentUpdates.attributes).length > 0;
-
             // Get userId from either updates or config
             const effectiveUserId = currentUpdates.userId ?? config.get().user.data.userId;
-
             const isLanguageInUpdates = currentUpdates.attributes?.language;
 
             if (!effectiveUserId && isLanguageInUpdates) {
-              // no use id set but the updates contain a language
+              // no user id set but the updates contain a language
               // we need to set this language in the local config:
               config.update({
                 ...config.get(),
@@ -106,9 +101,17 @@ export class UpdateQueue {
                   },
                 },
               });
+
+              const { language: _, ...remainingAttributes } = currentUpdates.attributes ?? {};
+
+              // remove language from attributes
+              currentUpdates = {
+                ...currentUpdates,
+                attributes: remainingAttributes,
+              };
             }
 
-            if (hasAttributes && !effectiveUserId) {
+            if (Object.keys(currentUpdates.attributes ?? {}).length > 0 && !effectiveUserId) {
               const errorMessage =
                 "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
               logger.error(errorMessage);

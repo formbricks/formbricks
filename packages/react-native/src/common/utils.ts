@@ -1,5 +1,4 @@
 import type {
-  TAttributes,
   TEnvironmentState,
   TEnvironmentStateProject,
   TEnvironmentStateSurvey,
@@ -138,11 +137,7 @@ export const getDefaultLanguageCode = (survey: TEnvironmentStateSurvey): string 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getLanguageCode = (
-  survey: TEnvironmentStateSurvey,
-  attributes: TAttributes
-): string | undefined => {
-  const language = attributes.language;
+export const getLanguageCode = (survey: TEnvironmentStateSurvey, language?: string): string | undefined => {
   const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
   if (!language) return "default";
 

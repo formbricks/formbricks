@@ -101,6 +101,10 @@ export const sendUpdates = async ({
         ...config.get(),
         user: {
           ...userState,
+          data: {
+            ...userState.data,
+            language: updates.attributes?.language,
+          },
         },
         filteredSurveys,
       });

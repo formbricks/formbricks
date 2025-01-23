@@ -32,7 +32,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const [showSurvey, setShowSurvey] = useState(false);
 
   const project = appConfig.get().environment.data.project;
-  const attributes = appConfig.get().attributes;
+  const language = appConfig.get().user.data.language;
 
   const styling = getStyling(project, survey);
   const isBrandingEnabled = project.inAppSurveyBranding;
@@ -73,7 +73,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, attributes);
+    const displayLanguage = getLanguageCode(survey, language);
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);
