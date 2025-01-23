@@ -78,7 +78,6 @@ export const writeDataToSlack = async (
 ) => {
   try {
     const [responses, questions] = values;
-    console.log("this are the calues", values);
     let blockResponse = [
       {
         type: "section",
@@ -109,7 +108,6 @@ export const writeDataToSlack = async (
         },
       };
       blockResponse.push(questionSection, responseSection);
-      console.log("this is the block response", blockResponse);
     }
 
     const response = await fetch("https://slack.com/api/chat.postMessage", {
@@ -131,7 +129,6 @@ export const writeDataToSlack = async (
     const data = await response.json();
 
     if (!data.ok) {
-      console.log("this is the data", data);
       throw new Error(data.error);
     }
   } catch (error) {
