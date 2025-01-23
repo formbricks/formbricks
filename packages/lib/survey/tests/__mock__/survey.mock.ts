@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
