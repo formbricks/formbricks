@@ -1,9 +1,8 @@
 import { Prisma } from "@prisma/client";
-import { SLACK_MESSAGE_LIMIT } from "constants";
-import { TRUNCATION_INDICATOR } from "constants";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { SLACK_MESSAGE_LIMIT, TRUNCATION_INDICATOR } from "../constants";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
