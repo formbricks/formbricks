@@ -148,7 +148,7 @@ export const AddIntegrationModal = ({
       {
         id: "createdAt",
         name: t("common.created_at"),
-        type: TSurveyQuestionTypeEnum.OpenText,
+        type: TSurveyQuestionTypeEnum.Date,
       },
     ];
 
