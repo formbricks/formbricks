@@ -12,8 +12,6 @@ test.use({
 test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
 
-  test.slow();
-
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();
     await user.login();

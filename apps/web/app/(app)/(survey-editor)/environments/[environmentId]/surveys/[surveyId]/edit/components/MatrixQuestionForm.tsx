@@ -161,7 +161,7 @@ export const MatrixQuestionForm = ({
               <div
                 className="flex items-center"
                 onKeyDown={(e) => handleKeyDown(e, "row")}
-                key={`row-${index}-${question.rows.length}`}>
+                key={`row-${index}`}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -213,7 +213,7 @@ export const MatrixQuestionForm = ({
               <div
                 className="flex items-center"
                 onKeyDown={(e) => handleKeyDown(e, "column")}
-                key={`column-${index}-${question.columns.length}`}>
+                key={`column-${index}`}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}
