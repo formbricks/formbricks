@@ -3,34 +3,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
-import { TUser } from "@formbricks/types/user";
+import { mockUser } from "@formbricks/lib/survey/tests/__mock__/survey.mock";
 import { authOptions } from "./authOptions";
 import { hashPassword } from "./utils";
 
 const mockUserId = "cm5yzxcp900000cl78fzocjal";
 const mockPassword = Math.random().toString(36).slice(-8);
 const mockHashedPassword = await hashPassword(mockPassword);
-const mockEmail = "test@unit.com";
-
-const mockUser: TUser = {
-  id: mockUserId,
-  name: "mock User",
-  email: mockEmail,
-  emailVerified: new Date(),
-  imageUrl: "https://www.google.com",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  twoFactorEnabled: false,
-  identityProvider: "google",
-  objective: "improve_user_retention",
-  notificationSettings: {
-    alert: {},
-    weeklySummary: {},
-    unsubscribedOrganizationIds: [],
-  },
-  role: "other",
-  locale: "en-US",
-};
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

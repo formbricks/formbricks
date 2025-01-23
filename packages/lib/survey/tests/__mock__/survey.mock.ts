@@ -99,13 +99,13 @@ export const mockEnvironment: TEnvironment = {
 };
 
 export const mockUser: TUser = {
-  id: mockId,
+  id: "cm5xj580r00000cmgdj9ohups",
   name: "mock User",
   email: "test@unit.com",
-  emailVerified: currentDate,
+  emailVerified: new Date(),
   imageUrl: "https://www.google.com",
-  createdAt: currentDate,
-  updatedAt: currentDate,
+  createdAt: new Date(),
+  updatedAt: new Date(),
   twoFactorEnabled: false,
   identityProvider: "google",
   objective: "improve_user_retention",
@@ -115,6 +115,7 @@ export const mockUser: TUser = {
     unsubscribedOrganizationIds: [],
   },
   role: "other",
+  locale: "en-US",
 };
 
 export const mockPrismaPerson: Prisma.PersonGetPayload<{

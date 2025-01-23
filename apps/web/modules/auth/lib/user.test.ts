@@ -2,32 +2,10 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { createCustomerIoCustomer } from "@formbricks/lib/customerio";
+import { mockUser } from "@formbricks/lib/survey/tests/__mock__/survey.mock";
 import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TUser } from "@formbricks/types/user";
 import { createUser, getUser, getUserByEmail, updateUser } from "./user";
-
-const mockEmail = "test@unit.com";
-
-const mockUser: TUser = {
-  id: "cm5xj580r00000cmgdj9ohups",
-  name: "mock User",
-  email: mockEmail,
-  emailVerified: new Date(),
-  imageUrl: "https://www.google.com",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  twoFactorEnabled: false,
-  identityProvider: "google",
-  objective: "improve_user_retention",
-  notificationSettings: {
-    alert: {},
-    weeklySummary: {},
-    unsubscribedOrganizationIds: [],
-  },
-  role: "other",
-  locale: "en-US",
-};
 
 const mockPrismaUser = {
   ...mockUser,
