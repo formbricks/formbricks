@@ -1,5 +1,12 @@
 name: PR Update
 
+# Update permissions to include all necessary ones
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+  checks: write
+
 on:
   pull_request:
     branches:
@@ -42,6 +49,10 @@ jobs:
     needs: [lint, test, build, e2e-test, docs]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
     steps:
       - name: fail if conditional jobs failed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')
