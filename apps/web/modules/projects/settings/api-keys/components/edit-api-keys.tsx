@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { TApiKey } from "@/modules/projects/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FilesIcon, TrashIcon } from "lucide-react";
@@ -8,7 +9,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TApiKey } from "@formbricks/types/api-keys";
 import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
@@ -60,7 +60,6 @@ export const EditAPIKeys = ({
       environmentId: environmentTypeId,
       apiKeyData: { label: data.label },
     });
-    console.log("createApiKeyResponse", createApiKeyResponse);
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
