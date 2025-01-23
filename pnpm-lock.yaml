@@ -910,6 +910,9 @@ importers:
       '@formbricks/database':
         specifier: workspace:*
         version: link:../database
+      '@formbricks/lib':
+        specifier: workspace:*
+        version: 'link:'
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { CHARACTOR_LIMIT } from "constants";
+import { SLACK_MESSAGE_LIMIT, TRUNCATION_INDICATOR } from "@formbricks/lib/constants";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
@@ -99,15 +99,16 @@ export const writeDataToSlack = async (
           text: `*${questions[i]}*`,
         },
       };
-      if (responses[i].length > CHARACTOR_LIMIT) {
-        responses[i] = responses[i].substring(0, CHARACTOR_LIMIT) + ".......and more";
-      }
-
+      const responseText = responses[i];
+      const text =
+        responseText.length > SLACK_MESSAGE_LIMIT
+          ? `${responseText.substring(0, SLACK_MESSAGE_LIMIT)}${TRUNCATION_INDICATOR}`
+          : responseText;
       let responseSection = {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `${responses[i]}\n`,
+          text: `${text}\n`,
         },
       };
       blockResponse.push(questionSection, responseSection);
