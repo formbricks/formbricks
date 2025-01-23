@@ -1,4 +1,3 @@
- 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type TJsConfig, type TJsConfigInput } from "../types/config";
 import {
@@ -28,7 +27,7 @@ export const setIsInitialize = (state: boolean): void => {
   isInitialized = state;
 };
 
-export const initialize = async (
+export const init = async (
   configInput: TJsConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
@@ -95,16 +94,6 @@ export const initialize = async (
       isUserStateExpired = true;
     }
 
-    // if (
-    //   configInput.userId &&
-    //   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- personState could be null
-    //   (existingConfig.personState === null ||
-    //     (existingConfig.personState.expiresAt && new Date(existingConfig.personState.expiresAt) < new Date()))
-    // ) {
-    //   logger.debug("Person state needs syncing - either null or expired");
-    //   isPersonStateExpired = true;
-    // }
-
     try {
       // fetch the environment state (if expired)
       const environmentState = isEnvironmentStateExpired
@@ -115,7 +104,6 @@ export const initialize = async (
         : existingConfig.environment;
 
       // fetch the person state (if expired)
-
       let { user: userState } = existingConfig;
 
       if (isUserStateExpired) {
@@ -186,46 +174,9 @@ export const initialize = async (
         false
       );
 
-      // const personState = configInput.userId
-      //   ? await fetchPersonState(
-      //       {
-      //         apiHost: configInput.apiHost,
-      //         environmentId: configInput.environmentId,
-      //         userId: configInput.userId,
-      //       },
-      //       false
-      //     )
-      //   : DEFAULT_PERSON_STATE_NO_USER_ID;
-
       const personState = DEFAULT_USER_STATE_NO_USER_ID;
 
       const filteredSurveys = filterSurveys(environmentState, personState);
-
-      // let updatedAttributes: TAttributes | null = null;
-      // if (configInput.attributes) {
-      //   if (configInput.userId) {
-      //     const res = await updateAttributes(
-      //       configInput.apiHost,
-      //       configInput.environmentId,
-      //       configInput.userId,
-      //       configInput.attributes
-      //     );
-
-      //     if (!res.ok) {
-      //       if (res.error.code === "forbidden") {
-      //         logger.error(`Authorization error: ${res.error.responseMessage ?? ""}`);
-      //       }
-      //       return err(res.error) as unknown as Result<
-      //         void,
-      //         MissingFieldError | NetworkError | MissingPersonError
-      //       >;
-      //     }
-
-      //     updatedAttributes = res.value;
-      //   } else {
-      //     updatedAttributes = { ...configInput.attributes };
-      //   }
-      // }
 
       appConfig.update({
         apiHost: configInput.apiHost,

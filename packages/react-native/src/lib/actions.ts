@@ -9,6 +9,10 @@ const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 const surveyStore = SurveyStore.getInstance();
 
+/**
+ * Triggers the display of a survey if it meets the display percentage criteria
+ * @param survey - The survey configuration to potentially display
+ */
 export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
@@ -22,6 +26,12 @@ export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
   surveyStore.setSurvey(survey);
 };
 
+/**
+ * Tracks an action name and triggers associated surveys
+ * @param name - The name of the action to track
+ * @param alias - Optional alias for the action name
+ * @returns Result indicating success or network error
+ */
 export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
   const aliasName = alias ?? name;
 
@@ -45,9 +55,12 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
   return okVoid();
 };
 
-export const trackCodeAction = (
-  code: string
-): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
+/**
+ * Tracks an action by its code and triggers associated surveys (used for code actions only)
+ * @param code - The action code to track
+ * @returns Result indicating success, network error, or invalid code error
+ */
+export const track = (code: string): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
   const {
     environment: {
       data: { actionClasses = [] },
