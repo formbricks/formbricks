@@ -1,5 +1,5 @@
+import { getApiKeys } from "@/modules/projects/settings/api-keys/lib/api-key";
 import { getTranslations } from "next-intl/server";
-import { getApiKeys } from "@formbricks/lib/apiKey/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TUserLocale } from "@formbricks/types/user";
