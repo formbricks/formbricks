@@ -1,5 +1,5 @@
 import { type NetworkError, type Result, okVoid } from "../types/error";
-import { UpdateQueue } from "../user/user-update-queue";
+import { UpdateQueue } from "./user-update-queue";
 
 const updateQueue = UpdateQueue.getInstance();
 

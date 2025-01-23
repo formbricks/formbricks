@@ -37,14 +37,15 @@ export const logoutUser = async (): Promise<void> => {
 
 export const logout = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
-  const syncParams = {
+  const initParams = {
     environmentId: appConfig.get().environmentId,
-    apiHost: appConfig.get().appUrl;,
+    appUrl: appConfig.get().appUrl,
   };
 
   void logoutUser();
+
   try {
-    await init(syncParams);
+    await init(initParams);
     return okVoid();
   } catch (e) {
     return err(e as NetworkError);

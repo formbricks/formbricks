@@ -46,7 +46,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     () =>
       new ResponseQueue(
         {
-          apiHost: appConfig.get().appUrl;,
+          appUrl: appConfig.get().appUrl,
           environmentId: appConfig.get().environmentId,
           retryAttempts: 2,
           setSurveyState,
@@ -117,7 +117,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     const { userId } = appConfig.get().user.data;
 
     const api = new FormbricksAPI({
-      apiHost: appConfig.get().appUrl;,
+      apiHost: appConfig.get().appUrl,
       environmentId: appConfig.get().environmentId,
     });
 
@@ -134,7 +134,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   };
 
   const uploadFile = async (file: TFileUploadParams["file"], params?: TUploadFileConfig): Promise<string> => {
-    const storage = new StorageAPI(appConfig.get().appUrl;, appConfig.get().environmentId);
+    const storage = new StorageAPI(appConfig.get().appUrl, appConfig.get().environmentId);
     return await storage.uploadFile(file, params);
   };
 
@@ -155,7 +155,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             isBrandingEnabled,
             styling,
             languageCode,
-            apiHost: appConfig.get().appUrl;,
+            appUrl: appConfig.get().appUrl,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
@@ -319,7 +319,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   );
 }
 
-const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }): string => {
+const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): string => {
   return `
   <!doctype html>
   <html>
@@ -417,7 +417,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { apiHost?: string }):
       }
 
       const script = document.createElement("script");
-      script.src = "${options.apiHost ?? "http://localhost:3000"}/js/surveys.umd.cjs";
+      script.src = "${options.appUrl ?? "http://localhost:3000"}/js/surveys.umd.cjs";
       script.async = true;
       script.onload = () => loadSurvey();
       script.onerror = (error) => {

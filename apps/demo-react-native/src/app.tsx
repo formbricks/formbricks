@@ -10,19 +10,9 @@ export default function App(): JSX.Element {
     throw new Error("EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID is required");
   }
 
-  if (!process.env.EXPO_PUBLIC_API_HOST) {
-    throw new Error("EXPO_PUBLIC_API_HOST is required");
+  if (!process.env.EXPO_PUBLIC_APP_URL) {
+    throw new Error("EXPO_PUBLIC_APP_URL is required");
   }
-
-  const config = {
-    environmentId: process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID as string,
-    apiHost: process.env.EXPO_PUBLIC_API_HOST as string,
-    userId: "random-user-id",
-    attributes: {
-      language: "en",
-      testAttr: "attr-test",
-    },
-  };
 
   return (
     <View style={styles.container}>
@@ -113,7 +103,10 @@ export default function App(): JSX.Element {
       </View>
 
       <StatusBar style="auto" />
-      <Formbricks initConfig={config} />
+      <Formbricks
+        appUrl={process.env.EXPO_PUBLIC_APP_URL as string}
+        environmentId={process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID as string}
+      />
     </View>
   );
 }

@@ -4,7 +4,7 @@ import { type SurveyState } from "../survey/survey-state";
 import { type TResponseUpdate } from "../types/response";
 
 interface QueueConfig {
-  apiHost: string;
+  appUrl: string;
   environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
@@ -29,7 +29,7 @@ export class ResponseQueue {
     this.config = config;
     this.surveyState = surveyState;
     this.api = new FormbricksAPI({
-      apiHost: config.apiHost,
+      apiHost: config.appUrl,
       environmentId: config.environmentId,
     });
   }

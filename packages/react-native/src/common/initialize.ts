@@ -67,18 +67,18 @@ export const init = async (
   }
 
   if (!configInput.appUrl) {
-    logger.debug("No apiHost provided");
+    logger.debug("No appUrl provided");
 
     return err({
       code: "missing_field",
-      field: "apiHost",
+      field: "appUrl",
     });
   }
 
   if (
     existingConfig?.environment &&
     existingConfig.environmentId === configInput.environmentId &&
-    existingConfig.appUrl; === configInput.appUrl
+    existingConfig.appUrl === configInput.appUrl
   ) {
     logger.debug("Configuration fits init parameters.");
     let isEnvironmentStateExpired = false;
@@ -128,7 +128,7 @@ export const init = async (
 
           if (userState.data.userId) {
             const updatesResponse = await sendUpdatesToBackend({
-              apiHost: configInput.appUrl,
+              appUrl: configInput.appUrl,
               environmentId: configInput.environmentId,
               updates: {
                 userId: userState.data.userId,
@@ -201,7 +201,7 @@ export const init = async (
       const filteredSurveys = filterSurveys(environmentState, personState);
 
       appConfig.update({
-        appUrl: appUr;: configInput.appUrl,
+        appUrl: configInput.appUrl,
         environmentId: configInput.environmentId,
         user: personState,
         environment: environmentState,

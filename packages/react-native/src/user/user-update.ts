@@ -10,11 +10,11 @@ const config = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const sendUpdatesToBackend = async ({
-  apiHost,
+  appUrl,
   environmentId,
   updates,
 }: {
-  apiHost: string;
+  appUrl: string;
   environmentId: string;
   updates: TUpdates;
 }): Promise<
@@ -26,8 +26,8 @@ export const sendUpdatesToBackend = async ({
     ApiErrorResponse
   >
 > => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/user`;
-  const api = new FormbricksAPI({ apiHost, environmentId });
+  const url = `${appUrl}/api/v1/client/${environmentId}/user`;
+  const api = new FormbricksAPI({ apiHost: appUrl, environmentId });
 
   try {
     const response = await api.client.user.createOrUpdate({
@@ -76,12 +76,12 @@ export const sendUpdates = async ({
 }: {
   updates: TUpdates;
 }): Promise<Result<void, ApiErrorResponse>> => {
-  const { appUr;: apiHost, environmentId } = config.get();
+  const { appUrl, environmentId } = config.get();
   // update endpoint call
-  const url = `${apiHost}/api/v1/client/${environmentId}/user`;
+  const url = `${appUrl}/api/v1/client/${environmentId}/user`;
 
   try {
-    const updatesResponse = await sendUpdatesToBackend({ apiHost, environmentId, updates });
+    const updatesResponse = await sendUpdatesToBackend({ appUrl, environmentId, updates });
 
     if (updatesResponse.ok) {
       const userState = updatesResponse.data.state;

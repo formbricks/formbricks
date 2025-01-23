@@ -1,5 +1,5 @@
 import { okVoid } from "../types/error";
-import { UpdateQueue } from "../user/user-update-queue";
+import { UpdateQueue } from "./user-update-queue";
 
 const updatesQueue = UpdateQueue.getInstance();
 

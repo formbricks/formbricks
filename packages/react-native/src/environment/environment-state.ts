@@ -12,17 +12,17 @@ let environmentStateSyncIntervalId: number | null = null;
 
 /**
  * Fetch the environment state from the backend
- * @param apiHost - The API host
+ * @param appUrl - The app URL
  * @param environmentId - The environment ID
  * @returns The environment state
  * @throws NetworkError
  */
 export const fetchEnvironmentState = async ({
-  appUrl: apiHost,
+  appUrl,
   environmentId,
 }: TConfigInput): Promise<Result<TEnvironmentState, ApiErrorResponse>> => {
-  const url = `${apiHost}/api/v1/client/${environmentId}/environment`;
-  const api = new FormbricksAPI({ apiHost, environmentId });
+  const url = `${appUrl}/api/v1/client/${environmentId}/environment`;
+  const api = new FormbricksAPI({ apiHost: appUrl, environmentId });
 
   try {
     const response = await api.client.environment.getState();
@@ -74,7 +74,7 @@ export const addEnvironmentStateExpiryCheckListener = (): void => {
 
         const personState = appConfig.get().user;
         const environmentState = await fetchEnvironmentState({
-          appUrl: appConfig.get().appUrl;,
+          appUrl: appConfig.get().appUrl,
           environmentId: appConfig.get().environmentId,
         });
 
