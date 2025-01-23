@@ -54,7 +54,7 @@ export const authOptions: NextAuthOptions = {
           throw Error("Internal server error. Please try again later");
         }
         if (!user) {
-          throw new Error("User not found");
+          throw new Error("Invalid credentials");
         }
         if (!user.password) {
           throw new Error("User has no password stored");

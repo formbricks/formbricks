@@ -7,10 +7,12 @@ import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/erro
 import { TUser } from "@formbricks/types/user";
 import { createUser, getUser, getUserByEmail, updateUser } from "./user";
 
+const mockEmail = "test@unit.com";
+
 const mockUser: TUser = {
   id: "cm5xj580r00000cmgdj9ohups",
   name: "mock User",
-  email: "test@unit.com",
+  email: mockEmail,
   emailVerified: new Date(),
   imageUrl: "https://www.google.com",
   createdAt: new Date(),

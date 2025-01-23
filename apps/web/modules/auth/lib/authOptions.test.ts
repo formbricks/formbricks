@@ -5,15 +5,17 @@ import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
 import { TUser } from "@formbricks/types/user";
 import { authOptions } from "./authOptions";
+import { hashPassword } from "./utils";
 
 const mockUserId = "cm5yzxcp900000cl78fzocjal";
-const mockPassword = "password";
-const mockHashedPassword = "$2a$12$LZsLq.9nkZlU0YDPx2aLNelnwD/nyavqbewLN.5.Q5h/UxRD8Ymcy";
+const mockPassword = Math.random().toString(36).slice(-8);
+const mockHashedPassword = await hashPassword(mockPassword);
+const mockEmail = "test@unit.com";
 
 const mockUser: TUser = {
   id: mockUserId,
   name: "mock User",
-  email: "test@unit.com",
+  email: mockEmail,
   emailVerified: new Date(),
   imageUrl: "https://www.google.com",
   createdAt: new Date(),
@@ -69,7 +71,9 @@ describe("authOptions", () => {
 
       const credentials = { email: mockUser.email, password: mockPassword };
 
-      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow("User not found");
+      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+        "Invalid credentials"
+      );
     });
 
     it("should throw error if user has no password stored", async () => {
