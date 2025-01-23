@@ -1,8 +1,10 @@
 import { Invite } from "@prisma/client";
 
-export interface InviteWithCreator extends Invite {
+export interface InviteWithCreator extends Pick<Invite, "expiresAt" | "organizationId" | "role" | "teamIds"> {
   creator: {
     name: string | null;
     email: string;
   };
 }
+
+export interface CreateMembershipInvite extends Pick<Invite, "organizationId" | "role" | "teamIds"> {}

@@ -4,13 +4,9 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const deleteInvite = async (inviteId: string): Promise<boolean> => {
-  validateInputs([inviteId, ZString]);
-
   try {
     const invite = await prisma.invite.delete({
       where: {
@@ -45,14 +41,16 @@ export const getInvite = reactCache(
   async (inviteId: string): Promise<InviteWithCreator | null> =>
     cache(
       async () => {
-        validateInputs([inviteId, ZString]);
-
         try {
           const invite = await prisma.invite.findUnique({
             where: {
               id: inviteId,
             },
-            include: {
+            select: {
+              id: true,
+              organizationId: true,
+              role: true,
+              teamIds: true,
               creator: {
                 select: {
                   name: true,

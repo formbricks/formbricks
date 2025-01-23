@@ -1,9 +1,9 @@
 "use server";
 
-import { inviteUser } from "@/app/setup/organization/[organizationId]/invite/lib/invite";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { sendInviteMemberEmail } from "@/modules/email";
+import { inviteUser } from "@/modules/setup/organization/[organizationId]/invite/lib/invite";
 import { z } from "zod";
 import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { ZId } from "@formbricks/types/common";
@@ -34,19 +34,17 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       ],
     });
 
-    const invite = await inviteUser({
+    const invitedUserId = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
         email: parsedInput.email,
         name: parsedInput.name,
-        role: "owner",
-        teamIds: [],
       },
       currentUserId: ctx.user.id,
     });
 
     await sendInviteMemberEmail(
-      invite.id,
+      invitedUserId,
       parsedInput.email,
       ctx.user.name,
       "",
@@ -55,5 +53,5 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       ctx.user.locale
     );
 
-    return invite;
+    return invitedUserId;
   });

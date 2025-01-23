@@ -1,23 +1,21 @@
 import { inviteCache } from "@/lib/cache/invite";
 import { Invite, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
   InvalidInputError,
   ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { type TInvite, type TInviteWithCreator, type TInvitee, ZInvitee } from "../types/invites";
+import { type InviteWithCreator, type TInvite, type TInvitee } from "../types/invites";
 
 export const resendInvite = async (inviteId: string): Promise<Pick<Invite, "email" | "name">> => {
-  validateInputs([inviteId, ZString]);
-
   try {
     const invite = await prisma.invite.findUnique({
       where: {
@@ -71,7 +69,7 @@ export const getInvitesByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TInvite[]> =>
     cache(
       async () => {
-        validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
+        validateInputs([organizationId, z.string()], [page, z.number().optional()]);
 
         try {
           const invites = await prisma.invite.findMany({
@@ -113,8 +111,6 @@ export const inviteUser = async ({
   invitee: TInvitee;
   currentUserId: string;
 }): Promise<string> => {
-  validateInputs([organizationId, ZString], [invitee, ZInvitee]);
-
   try {
     const { name, email, role, teamIds } = invitee;
 
@@ -183,8 +179,6 @@ export const inviteUser = async ({
 };
 
 export const deleteInvite = async (inviteId: string): Promise<boolean> => {
-  validateInputs([inviteId, ZString]);
-
   try {
     const invite = await prisma.invite.delete({
       where: {
@@ -216,11 +210,9 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
 };
 
 export const getInvite = reactCache(
-  async (inviteId: string): Promise<TInviteWithCreator | null> =>
+  async (inviteId: string): Promise<InviteWithCreator | null> =>
     cache(
       async () => {
-        validateInputs([inviteId, ZString]);
-
         try {
           const invite = await prisma.invite.findUnique({
             where: {

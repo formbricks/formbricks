@@ -1,11 +1,9 @@
-import { TInvitee, ZInvitee } from "@/app/setup/organization/[organizationId]/invite/types/invites";
 import { inviteCache } from "@/lib/cache/invite";
-import { Invite, Prisma } from "@prisma/client";
+import { TInvitee } from "@/modules/setup/organization/[organizationId]/invite/types/invites";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZString } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const inviteUser = async ({
   invitee,
@@ -15,11 +13,9 @@ export const inviteUser = async ({
   organizationId: string;
   invitee: TInvitee;
   currentUserId: string;
-}): Promise<Pick<Invite, "id">> => {
-  validateInputs([organizationId, ZString], [invitee, ZInvitee]);
-
+}): Promise<string> => {
   try {
-    const { name, email, role, teamIds } = invitee;
+    const { name, email } = invitee;
 
     const existingInvite = await prisma.invite.findFirst({ where: { email, organizationId } });
 
@@ -37,23 +33,6 @@ export const inviteUser = async ({
       }
     }
 
-    const teamIdsSet = new Set(teamIds);
-
-    if (teamIdsSet.size !== teamIds.length) {
-      throw new ValidationError("teamIds must be unique");
-    }
-
-    const teams = await prisma.team.findMany({
-      where: {
-        id: { in: teamIds },
-        organizationId,
-      },
-    });
-
-    if (teams.length !== teamIds.length) {
-      throw new ValidationError("Invalid teamIds");
-    }
-
     const expiresIn = 7 * 24 * 60 * 60 * 1000; // 7 days
     const expiresAt = new Date(Date.now() + expiresIn);
 
@@ -64,9 +43,8 @@ export const inviteUser = async ({
         organization: { connect: { id: organizationId } },
         creator: { connect: { id: currentUserId } },
         acceptor: user ? { connect: { id: user.id } } : undefined,
-        role,
+        role: "owner",
         expiresAt,
-        teamIds: { set: teamIds },
       },
     });
 
@@ -75,7 +53,7 @@ export const inviteUser = async ({
       organizationId: invite.organizationId,
     });
 
-    return { id: invite.id };
+    return invite.id;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

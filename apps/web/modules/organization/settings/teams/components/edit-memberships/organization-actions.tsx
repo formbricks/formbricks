@@ -84,7 +84,7 @@ export const OrganizationActions = ({
             email: email.toLowerCase(),
             name,
             role,
-            teamIds: teamIds,
+            teamIds,
           });
           return {
             email,

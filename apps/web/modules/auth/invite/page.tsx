@@ -49,7 +49,14 @@ export const InvitePage = async (props: InvitePageProps) => {
         role: invite.role,
       });
       if (invite.teamIds) {
-        await createTeamMembership(invite, user.id);
+        await createTeamMembership(
+          {
+            organizationId: invite.organizationId,
+            role: invite.role,
+            teamIds: invite.teamIds,
+          },
+          user.id
+        );
       }
       await deleteInvite(inviteId);
       await sendInviteAcceptedEmail(

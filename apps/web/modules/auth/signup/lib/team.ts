@@ -1,6 +1,6 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
-import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
+import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";

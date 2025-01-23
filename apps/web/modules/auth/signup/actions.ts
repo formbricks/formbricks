@@ -1,9 +1,9 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
-import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
@@ -72,7 +72,14 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
     });
 
     if (invite.teamIds) {
-      await createTeamMembership(invite, user.id);
+      await createTeamMembership(
+        {
+          organizationId: invite.organizationId,
+          role: invite.role,
+          teamIds: invite.teamIds,
+        },
+        user.id
+      );
     }
 
     await updateUser(user.id, {

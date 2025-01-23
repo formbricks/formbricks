@@ -6,7 +6,7 @@ import { ZUserName } from "@formbricks/types/user";
 export interface TInvite
   extends Omit<Invite, "deprecatedRole" | "organizationId" | "creatorId" | "acceptorId" | "teamIds"> {}
 
-export interface TInviteWithCreator extends Pick<Invite, "email"> {
+export interface InviteWithCreator extends Pick<Invite, "email"> {
   creator: {
     name: string;
   };
