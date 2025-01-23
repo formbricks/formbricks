@@ -19,7 +19,6 @@
     "@aws-sdk/client-s3": "3.712.0",
     "@aws-sdk/s3-presigned-post": "3.712.0",
     "@aws-sdk/s3-request-presigner": "3.712.0",
-    "@formbricks/lib": "workspace:*",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/types": "workspace:*",
