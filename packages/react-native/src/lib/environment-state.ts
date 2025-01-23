@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- logging required for error logging */
 // shared functions for environment and person state(s)
-import type { TJsConfigInput, TJsEnvironmentState } from "../types/config";
+import type { TConfigInput, TEnvironmentState } from "../types/config";
 import { err } from "../types/errors";
 import { RNConfig } from "./config";
 import { Logger } from "./logger";
@@ -19,9 +19,9 @@ let environmentStateSyncIntervalId: number | null = null;
  * @throws NetworkError
  */
 export const fetchEnvironmentState = async (
-  { apiHost, environmentId }: TJsConfigInput,
+  { apiHost, environmentId }: TConfigInput,
   noCache = false
-): Promise<TJsEnvironmentState> => {
+): Promise<TEnvironmentState> => {
   const url = `${apiHost}/api/v1/client/${environmentId}/environment`;
 
   try {
@@ -49,7 +49,7 @@ export const fetchEnvironmentState = async (
       throw error.error;
     }
 
-    const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
+    const data = (await response.json()) as { data: TEnvironmentState["data"] };
     const { data: state } = data;
 
     return {

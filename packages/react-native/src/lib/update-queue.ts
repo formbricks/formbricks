@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- required for logging errors */
 /* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
-import type { TAttributes, TJsUpdates } from "../types/config";
+import type { TAttributes, TUpdates } from "../types/config";
 import { RNConfig } from "./config";
 import { Logger } from "./logger";
 import { sendUpdates } from "./updates";
@@ -9,7 +9,7 @@ const logger = Logger.getInstance();
 
 export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
-  private updates: TJsUpdates | null = null;
+  private updates: TUpdates | null = null;
   private debounceTimeout: NodeJS.Timeout | null = null;
   private readonly DEBOUNCE_DELAY = 500;
 
@@ -56,7 +56,7 @@ export class UpdateQueue {
     }
   }
 
-  public getUpdates(): TJsUpdates | null {
+  public getUpdates(): TUpdates | null {
     return this.updates;
   }
 

@@ -1,10 +1,10 @@
-import type { TJsUserState } from "../types/config";
+import type { TUserState } from "../types/config";
 import { RNConfig } from "./config";
 
 const config = RNConfig.getInstance();
 let userStateSyncIntervalId: number | null = null;
 
-export const DEFAULT_USER_STATE_NO_USER_ID: TJsUserState = {
+export const DEFAULT_USER_STATE_NO_USER_ID: TUserState = {
   expiresAt: null,
   data: {
     userId: null,

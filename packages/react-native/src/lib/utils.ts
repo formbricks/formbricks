@@ -1,11 +1,11 @@
 import type {
   TAttributes,
-  TJsEnvironmentState,
-  TJsEnvironmentStateProject,
-  TJsEnvironmentStateSurvey,
-  TJsUserState,
+  TEnvironmentState,
+  TEnvironmentStateProject,
+  TEnvironmentStateSurvey,
   TProjectStyling,
   TSurveyStyling,
+  TUserState,
 } from "../types/config";
 import type { Result } from "../types/errors";
 
@@ -40,14 +40,14 @@ export const wrapThrowsAsync =
 
 // takes the environment and person state and returns the filtered surveys
 export const filterSurveys = (
-  environmentState: TJsEnvironmentState,
-  personState: TJsUserState
-): TJsEnvironmentStateSurvey[] => {
+  environmentState: TEnvironmentState,
+  personState: TUserState
+): TEnvironmentStateSurvey[] => {
   const { project, surveys } = environmentState.data;
   const { displays, responses, lastDisplayAt, segments, userId } = personState.data;
 
   // Function to filter surveys based on displayOption criteria
-  let filteredSurveys = surveys.filter((survey: TJsEnvironmentStateSurvey) => {
+  let filteredSurveys = surveys.filter((survey: TEnvironmentStateSurvey) => {
     switch (survey.displayOption) {
       case "respondMultiple":
         return true;
@@ -113,8 +113,8 @@ export const filterSurveys = (
 };
 
 export const getStyling = (
-  project: TJsEnvironmentStateProject,
-  survey: TJsEnvironmentStateSurvey
+  project: TEnvironmentStateProject,
+  survey: TEnvironmentStateSurvey
 ): TProjectStyling | TSurveyStyling => {
   // allow style overwrite is enabled from the project
   if (project.styling.allowStyleOverwrite) {
@@ -131,7 +131,7 @@ export const getStyling = (
   return project.styling;
 };
 
-export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
+export const getDefaultLanguageCode = (survey: TEnvironmentStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
     return surveyLanguage.default;
   });
@@ -139,7 +139,7 @@ export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): strin
 };
 
 export const getLanguageCode = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TEnvironmentStateSurvey,
   attributes: TAttributes
 ): string | undefined => {
   const language = attributes.language;

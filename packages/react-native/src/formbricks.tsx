@@ -3,10 +3,10 @@ import { init } from "./lib";
 import { Logger } from "./lib/logger";
 import { SurveyStore } from "./lib/survey-store";
 import { SurveyWebView } from "./survey-web-view";
-import { type TJsConfigInput } from "./types/config";
+import { type TConfigInput } from "./types/config";
 
 interface FormbricksProps {
-  initConfig: TJsConfigInput;
+  initConfig: TConfigInput;
 }
 const surveyStore = SurveyStore.getInstance();
 const logger = Logger.getInstance();

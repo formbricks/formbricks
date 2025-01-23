@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- required for logging errors */
 import { FormbricksAPI } from "@formbricks/api";
-import { type TJsUpdates, type TJsUserState } from "../types/config";
+import { type TUpdates, type TUserState } from "../types/config";
 import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { Logger } from "./logger";
@@ -17,13 +17,13 @@ export const sendUpdatesToBackend = async (
   }: {
     apiHost: string;
     environmentId: string;
-    updates: TJsUpdates;
+    updates: TUpdates;
   },
   noCache = false
 ): Promise<
   Result<
     {
-      state: TJsUserState;
+      state: TUserState;
       messages?: string[];
     },
     ApiErrorResponse
@@ -106,7 +106,7 @@ export const sendUpdates = async (
   {
     updates,
   }: {
-    updates: TJsUpdates;
+    updates: TUpdates;
   },
   noCache = false
 ): Promise<Result<void, ApiErrorResponse>> => {

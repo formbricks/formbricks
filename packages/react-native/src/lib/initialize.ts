@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type TJsConfig, type TJsConfigInput } from "../types/config";
+import { type TConfig, type TConfigInput } from "../types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -28,14 +28,14 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 export const init = async (
-  configInput: TJsConfigInput
+  configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
     return okVoid();
   }
 
-  let existingConfig: TJsConfig | undefined;
+  let existingConfig: TConfig | undefined;
   try {
     existingConfig = appConfig.get();
     logger.debug("Found existing configuration.");
@@ -244,7 +244,7 @@ export const handleErrorOnFirstInit = async (e: {
   }
 
   // put formbricks in error state (by creating a new config) and throw error
-  const initialErrorConfig: Partial<TJsConfig> = {
+  const initialErrorConfig: Partial<TConfig> = {
     status: {
       value: "error",
       expiresAt: new Date(new Date().getTime() + 10 * 60000), // 10 minutes in the future

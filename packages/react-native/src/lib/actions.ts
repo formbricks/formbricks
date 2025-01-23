@@ -1,4 +1,4 @@
-import type { TJsEnvironmentStateSurvey } from "../types/config";
+import type { TEnvironmentStateSurvey } from "../types/config";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "../types/errors";
 import { RNConfig } from "./config";
 import { Logger } from "./logger";
@@ -13,7 +13,7 @@ const surveyStore = SurveyStore.getInstance();
  * Triggers the display of a survey if it meets the display percentage criteria
  * @param survey - The survey configuration to potentially display
  */
-export const triggerSurvey = (survey: TJsEnvironmentStateSurvey): void => {
+export const triggerSurvey = (survey: TEnvironmentStateSurvey): void => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);

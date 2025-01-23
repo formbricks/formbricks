@@ -1,13 +1,10 @@
-import type { TJsEnvironmentStateSurvey } from "../types/config";
+import type { TEnvironmentStateSurvey } from "../types/config";
 
-type Listener = (
-  state: TJsEnvironmentStateSurvey | null,
-  prevSurvey: TJsEnvironmentStateSurvey | null
-) => void;
+type Listener = (state: TEnvironmentStateSurvey | null, prevSurvey: TEnvironmentStateSurvey | null) => void;
 
 export class SurveyStore {
   private static instance: SurveyStore | undefined;
-  private survey: TJsEnvironmentStateSurvey | null = null;
+  private survey: TEnvironmentStateSurvey | null = null;
   private listeners = new Set<Listener>();
 
   static getInstance(): SurveyStore {
@@ -17,11 +14,11 @@ export class SurveyStore {
     return SurveyStore.instance;
   }
 
-  public getSurvey(): TJsEnvironmentStateSurvey | null {
+  public getSurvey(): TEnvironmentStateSurvey | null {
     return this.survey;
   }
 
-  public setSurvey(survey: TJsEnvironmentStateSurvey): void {
+  public setSurvey(survey: TEnvironmentStateSurvey): void {
     const prevSurvey = this.survey;
     if (prevSurvey !== survey) {
       this.survey = survey;

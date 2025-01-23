@@ -19,7 +19,7 @@ export interface TUploadFileResponse {
   };
 }
 
-export interface TJsFileUploadParams {
+export interface TFileUploadParams {
   file: { type: string; name: string; base64: string };
   params: TUploadFileConfig;
 }
@@ -29,7 +29,7 @@ export const ZUploadFileConfig = z.object({
   surveyId: z.string().optional(),
 });
 
-export const ZJsFileUploadParams = z.object({
+export const ZFileUploadParams = z.object({
   file: z.object({ type: z.string(), name: z.string(), base64: z.string() }),
   params: ZUploadFileConfig,
 });

@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- Required for error logging */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { TJsConfig, TJsConfigUpdateInput } from "../types/config";
+import type { TConfig, TConfigUpdateInput } from "../types/config";
 import { type Result, err, ok } from "../types/errors";
 import { RN_ASYNC_STORAGE_KEY } from "./constants";
 import { wrapThrowsAsync } from "./utils";
@@ -8,7 +8,7 @@ import { wrapThrowsAsync } from "./utils";
 export class RNConfig {
   private static instance: RNConfig | null = null;
 
-  private config: TJsConfig | null = null;
+  private config: TConfig | null = null;
 
   private constructor() {
     this.loadFromStorage()
@@ -30,7 +30,7 @@ export class RNConfig {
     return RNConfig.instance;
   }
 
-  public update(newConfig: TJsConfigUpdateInput): void {
+  public update(newConfig: TConfigUpdateInput): void {
     this.config = {
       ...this.config,
       ...newConfig,
@@ -43,18 +43,18 @@ export class RNConfig {
     void this.saveToStorage();
   }
 
-  public get(): TJsConfig {
+  public get(): TConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public async loadFromStorage(): Promise<Result<TJsConfig>> {
+  public async loadFromStorage(): Promise<Result<TConfig>> {
     try {
       const savedConfig = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
       if (savedConfig) {
-        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+        const parsedConfig = JSON.parse(savedConfig) as TConfig;
 
         // check if the config has expired
         if (

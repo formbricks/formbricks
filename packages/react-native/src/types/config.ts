@@ -2,9 +2,9 @@
 import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
 import { z } from "zod";
 import { type TResponseUpdate, ZResponseUpdate } from "./response";
-import { type TJsFileUploadParams, ZJsFileUploadParams } from "./storage";
+import { type TFileUploadParams, ZFileUploadParams } from "./storage";
 
-export type TJsEnvironmentStateSurvey = Pick<
+export type TEnvironmentStateSurvey = Pick<
   Survey,
   | "id"
   | "name"
@@ -31,28 +31,25 @@ export type TJsEnvironmentStateSurvey = Pick<
   styling?: TSurveyStyling;
 };
 
-export type TJsEnvironmentStateProject = Pick<
+export type TEnvironmentStateProject = Pick<
   Project,
   "id" | "recontactDays" | "clickOutsideClose" | "darkOverlay" | "placement" | "inAppSurveyBranding"
 > & {
   styling: TProjectStyling;
 };
 
-export type TJsEnvironmentStateActionClass = Pick<
-  ActionClass,
-  "id" | "key" | "type" | "name" | "noCodeConfig"
->;
+export type TEnvironmentStateActionClass = Pick<ActionClass, "id" | "key" | "type" | "name" | "noCodeConfig">;
 
-export interface TJsEnvironmentState {
+export interface TEnvironmentState {
   expiresAt: Date;
   data: {
-    surveys: TJsEnvironmentStateSurvey[];
-    actionClasses: TJsEnvironmentStateActionClass[];
-    project: TJsEnvironmentStateProject;
+    surveys: TEnvironmentStateSurvey[];
+    actionClasses: TEnvironmentStateActionClass[];
+    project: TEnvironmentStateProject;
   };
 }
 
-export interface TJsUserState {
+export interface TUserState {
   expiresAt: Date | null;
   data: {
     userId: string | null;
@@ -64,12 +61,12 @@ export interface TJsUserState {
   };
 }
 
-export interface TJsConfig {
+export interface TConfig {
   environmentId: string;
   apiHost: string;
-  environment: TJsEnvironmentState;
-  user: TJsUserState;
-  filteredSurveys: TJsEnvironmentStateSurvey[];
+  environment: TEnvironmentState;
+  user: TUserState;
+  filteredSurveys: TEnvironmentStateSurvey[];
   attributes: Record<string, string>;
   status: {
     value: "success" | "error";
@@ -77,7 +74,7 @@ export interface TJsConfig {
   };
 }
 
-export type TJsConfigUpdateInput = Omit<TJsConfig, "status"> & {
+export type TConfigUpdateInput = Omit<TConfig, "status"> & {
   status?: {
     value: "success" | "error";
     expiresAt: Date | null;
@@ -86,7 +83,7 @@ export type TJsConfigUpdateInput = Omit<TJsConfig, "status"> & {
 
 export type TAttributes = Record<string, string>;
 
-export interface TJsConfigInput {
+export interface TConfigInput {
   environmentId: string;
   apiHost: string;
 }
@@ -128,7 +125,7 @@ export interface TSurveyStyling extends TBaseStyling {
   overwriteThemeStyling?: boolean | null;
 }
 
-export interface TJsRNWebViewOnMessageData {
+export interface TWebViewOnMessageData {
   onFinished?: boolean | null;
   onDisplay?: boolean | null;
   onResponse?: boolean | null;
@@ -136,7 +133,7 @@ export interface TJsRNWebViewOnMessageData {
   onRetry?: boolean | null;
   onClose?: boolean | null;
   onFileUpload?: boolean | null;
-  fileUploadParams?: TJsFileUploadParams | null;
+  fileUploadParams?: TFileUploadParams | null;
   uploadId?: string | null;
 }
 
@@ -148,11 +145,11 @@ export const ZJsRNWebViewOnMessageData = z.object({
   onRetry: z.boolean().nullish(),
   onClose: z.boolean().nullish(),
   onFileUpload: z.boolean().nullish(),
-  fileUploadParams: ZJsFileUploadParams.nullish(),
+  fileUploadParams: ZFileUploadParams.nullish(),
   uploadId: z.string().nullish(),
 });
 
-export interface TJsUpdates {
+export interface TUpdates {
   userId: string;
   attributes?: TAttributes;
 }

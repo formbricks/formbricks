@@ -1,9 +1,9 @@
-import type { TJsEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "./config";
+import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "./config";
 import type { TResponseData, TResponseUpdate } from "./response";
-import type { TJsFileUploadParams, TUploadFileConfig } from "./storage";
+import type { TFileUploadParams, TUploadFileConfig } from "./storage";
 
 export interface SurveyBaseProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TEnvironmentStateSurvey;
   styling: TSurveyStyling | TProjectStyling;
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
@@ -20,7 +20,7 @@ export interface SurveyBaseProps {
   prefillResponseData?: TResponseData;
   skipPrefilled?: boolean;
   languageCode: string;
-  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  onFileUpload: (file: TFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;

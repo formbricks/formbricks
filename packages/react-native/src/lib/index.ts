@@ -1,4 +1,4 @@
-import { type TJsConfigInput } from "../types/config";
+import { type TConfigInput } from "../types/config";
 import * as Actions from "./actions";
 import * as Attributes from "./attributes";
 import { CommandQueue } from "./command-queue";
@@ -11,7 +11,7 @@ const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-export const init = async (initConfig: Pick<TJsConfigInput, "apiHost" | "environmentId">): Promise<void> => {
+export const init = async (initConfig: Pick<TConfigInput, "apiHost" | "environmentId">): Promise<void> => {
   queue.add(Initialize.init, false, initConfig);
   await queue.wait();
 };

@@ -11,9 +11,9 @@ import { StorageAPI } from "./lib/storage";
 import { SurveyState } from "./lib/survey-state";
 import { SurveyStore } from "./lib/survey-store";
 import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "./lib/utils";
-import { type TJsEnvironmentStateSurvey, type TJsUserState, ZJsRNWebViewOnMessageData } from "./types/config";
+import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "./types/config";
 import type { TResponseUpdate } from "./types/response";
-import type { TJsFileUploadParams, TUploadFileConfig } from "./types/storage";
+import type { TFileUploadParams, TUploadFileConfig } from "./types/storage";
 import type { SurveyInlineProps } from "./types/surveys";
 
 const appConfig = RNConfig.getInstance();
@@ -23,7 +23,7 @@ logger.configure({ logLevel: "debug" });
 const surveyStore = SurveyStore.getInstance();
 
 interface SurveyWebViewProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TEnvironmentStateSurvey;
 }
 
 export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | undefined {
@@ -133,10 +133,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     return res.data;
   };
 
-  const uploadFile = async (
-    file: TJsFileUploadParams["file"],
-    params?: TUploadFileConfig
-  ): Promise<string> => {
+  const uploadFile = async (file: TFileUploadParams["file"], params?: TUploadFileConfig): Promise<string> => {
     const storage = new StorageAPI(appConfig.get().apiHost, appConfig.get().environmentId);
     return await storage.uploadFile(file, params);
   };
@@ -240,7 +237,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 
               if (isNewResponse) {
                 const responses = appConfig.get().user.data.responses;
-                const newPersonState: TJsUserState = {
+                const newPersonState: TUserState = {
                   ...appConfig.get().user,
                   data: {
                     ...appConfig.get().user.data,
@@ -277,7 +274,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               const fileDataUri = fileUploadParams.file.base64;
 
               if (fileDataUri) {
-                const file: TJsFileUploadParams["file"] = {
+                const file: TFileUploadParams["file"] = {
                   // uri: Platform.OS === "android" ? `data:${fileType};base64,${base64Data}` : base64Data,
                   base64: fileUploadParams.file.base64,
                   type: fileType,
