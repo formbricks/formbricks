@@ -19,7 +19,6 @@ import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
 import { TWebhook } from "@formbricks/types/webhooks";
-import { getContactAttributes } from "./lib/contact-attribute";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -44,7 +43,6 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
-  const contactAttributes = response.contact?.id ? await getContactAttributes(response.contact?.id) : {};
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
@@ -107,7 +105,7 @@ export const POST = async (request: Request) => {
     }
 
     if (integrations.length > 0) {
-      await handleIntegrations(integrations, inputValidation.data, survey, contactAttributes);
+      await handleIntegrations(integrations, inputValidation.data, survey);
     }
 
     // Fetch users with notifications in a single query
@@ -219,7 +217,6 @@ export const POST = async (request: Request) => {
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                contactAttributes,
                 response.data,
                 response.variables
               );
