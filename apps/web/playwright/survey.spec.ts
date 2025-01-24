@@ -12,8 +12,6 @@ test.use({
 test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
 
-  test.slow();
-
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -615,7 +613,7 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  test.setTimeout(240000);
+  test.setTimeout(300000);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {

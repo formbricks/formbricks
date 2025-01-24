@@ -1,6 +1,10 @@
 name: Lint
 on:
   workflow_call:
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Linters
@@ -8,16 +12,16 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Setup Node.js 20.x
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: 20.x
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2
 
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
