@@ -14,7 +14,6 @@ module.exports = {
       typescript: {
         project: "tsconfig.json",
       },
-      caseSensitive: false,
     },
   },
 };
