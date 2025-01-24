@@ -17,6 +17,15 @@ The following rate limits apply to various endpoints:
 
 If a request exceeds the defined rate limit, the server will respond with:
 
+```
+
+{
+    code: 429,
+    error: "Too many requests, Please try after a while!"
+}
+
+```
+
 
 ## Disabling Rate Limiting
 
