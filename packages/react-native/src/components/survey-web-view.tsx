@@ -37,6 +37,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const styling = getStyling(project, survey);
   const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
+  const [languageCode, setLanguageCode] = useState("default");
 
   const [surveyState, setSurveyState] = useState(
     new SurveyState(survey.id, null, null, appConfig.get().user.data.userId)
@@ -57,7 +58,30 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   );
 
   useEffect(() => {
-    if (!isSurveyRunning && survey.delay) {
+    if (isMultiLanguageSurvey) {
+      const displayLanguage = getLanguageCode(survey, language);
+      if (!displayLanguage) {
+        logger.debug(`Survey "${survey.name}" is not available in specified language.`);
+        setIsSurveyRunning(false);
+        setShowSurvey(false);
+        surveyStore.resetSurvey();
+        return;
+      }
+      setLanguageCode(displayLanguage);
+      setIsSurveyRunning(true);
+    } else {
+      setIsSurveyRunning(true);
+    }
+  }, [isMultiLanguageSurvey, language, survey]);
+
+  useEffect(() => {
+    if (!isSurveyRunning) {
+      setShowSurvey(false);
+      return;
+    }
+
+    if (survey.delay) {
+      logger.debug(`Delaying survey "${survey.name}" by ${String(survey.delay)} seconds`);
       const timerId = setTimeout(() => {
         setShowSurvey(true);
       }, survey.delay * 1000);
@@ -65,23 +89,10 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
       return () => {
         clearTimeout(timerId);
       };
-    } else if (!survey.delay) {
-      setShowSurvey(true);
     }
-  }, [survey.delay, isSurveyRunning]);
 
-  let languageCode = "default";
-
-  if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, language);
-    //if survey is not available in selected language, survey wont be shown
-    if (!displayLanguage) {
-      logger.debug(`Survey "${survey.name}" is not available in specified language.`);
-      setIsSurveyRunning(true);
-      return;
-    }
-    languageCode = displayLanguage;
-  }
+    setShowSurvey(true);
+  }, [survey.delay, isSurveyRunning, survey.name]);
 
   const addResponseToQueue = (responseUpdate: TResponseUpdate): void => {
     const { userId } = appConfig.get().user.data;
@@ -141,10 +152,11 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   return (
     <Modal
       animationType="slide"
-      visible={showSurvey ? !isSurveyRunning : undefined}
+      visible={showSurvey}
       transparent
       onRequestClose={() => {
         setShowSurvey(false);
+        setIsSurveyRunning(false);
       }}>
       <WebView
         ref={webViewRef}

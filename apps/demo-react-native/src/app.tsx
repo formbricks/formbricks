@@ -35,6 +35,16 @@ export default function App(): JSX.Element {
         />
 
         <Button
+          title="Trigger Another Code Action"
+          onPress={() => {
+            track("code1").catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error tracking event:", error);
+            });
+          }}
+        />
+
+        <Button
           title="Set User Id"
           onPress={() => {
             setUserId("random-user-id-2").catch((error: unknown) => {
@@ -80,9 +90,9 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Set Language (hi)"
+          title="Set Language (fr)"
           onPress={() => {
-            setLanguage("hi").catch((error: unknown) => {
+            setLanguage("fr").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting language:", error);
             });
