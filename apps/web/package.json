@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "3.1.0",
+  "version": "3.1.2",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -129,7 +129,7 @@
     "@types/nodemailer": "6.4.17",
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
-    "vite": "6.0.3",
+    "vite": "6.0.9",
     "vitest": "2.1.8",
     "vitest-mock-extended": "2.0.2"
   }

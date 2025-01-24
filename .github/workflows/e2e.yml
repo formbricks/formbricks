@@ -1,9 +1,28 @@
 name: E2E Tests
+
 on:
   workflow_call:
+    secrets:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      PLAYWRIGHT_SERVICE_URL:
+        required: false
+      # Add other secrets if necessary
   workflow_dispatch:
+
 env:
   TELEMETRY_DISABLED: 1
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build:
     name: Run E2E Tests
@@ -83,7 +102,31 @@ jobs:
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
 
-      - name: Run E2E Tests
+      - name: Set Azure Secret Variables
+        run: |
+          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
+            echo "AZURE_ENABLED=true" >> $GITHUB_ENV
+          else
+            echo "AZURE_ENABLED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Azure login
+        if: env.AZURE_ENABLED == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run E2E Tests (Azure)
+        if: env.AZURE_ENABLED == 'true'
+        env:
+          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+        run: |
+          pnpm test-e2e:azure
+
+      - name: Run E2E Tests (Local)
+        if: env.AZURE_ENABLED == 'false'
         run: |
           pnpm test:e2e
 

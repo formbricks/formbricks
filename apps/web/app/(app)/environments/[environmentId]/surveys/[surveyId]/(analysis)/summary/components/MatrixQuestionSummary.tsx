@@ -48,7 +48,9 @@ export const MatrixQuestionSummary = ({
     return "";
   };
 
-  const columns = questionSummary.data[0] ? Object.keys(questionSummary.data[0].columnPercentages) : [];
+  const columns = questionSummary.data[0]
+    ? questionSummary.data[0].columnPercentages.map((c) => c.column)
+    : [];
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -81,7 +83,7 @@ export const MatrixQuestionSummary = ({
                     <p className="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{rowLabel}</p>
                   </TooltipRenderer>
                 </td>
-                {Object.entries(columnPercentages).map(([column, percentage]) => (
+                {columnPercentages.map(({ column, percentage }) => (
                   <td
                     key={column}
                     className="text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">
