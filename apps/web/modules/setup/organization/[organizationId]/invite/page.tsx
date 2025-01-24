@@ -8,16 +8,13 @@ import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
 import { AuthenticationError } from "@formbricks/types/errors";
 
-type Params = Promise<{
-  organizationId: string;
-}>;
 export const metadata: Metadata = {
   title: "Invite",
   description: "Open-source Experience Management. Free & open source.",
 };
 
 interface InvitePageProps {
-  params: Params;
+  params: Promise<{ organizationId: string }>;
 }
 
 export const InvitePage = async (props: InvitePageProps) => {

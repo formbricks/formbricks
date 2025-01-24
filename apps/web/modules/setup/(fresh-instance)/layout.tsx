@@ -7,7 +7,7 @@ export const FreshInstanceLayout = async ({ children }: { children: React.ReactN
   const session = await getServerSession(authOptions);
   const isFreshInstance = await getIsFreshInstance();
 
-  if (session ?? !isFreshInstance) {
+  if (session || !isFreshInstance) {
     return notFound();
   }
   return <>{children}</>;
