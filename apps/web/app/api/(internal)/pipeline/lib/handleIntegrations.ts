@@ -1,3 +1,4 @@
+import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -14,7 +15,6 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 

@@ -1,10 +1,10 @@
 import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
+import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
+import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
-import { createWebhook, getWebhooks } from "@formbricks/lib/webhook/service";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { ZWebhookInput } from "@formbricks/types/webhooks";
 
 export const GET = async () => {
   const headersList = await headers();
