@@ -43,7 +43,7 @@ x-environment: &environment
     # SMTP_AUTHENTICATED:
 
     # (Additional option for TLS (port 465) only)
-    # SMTP_SECURE_ENABLED: 1
+    # SMTP_SECURE_ENABLED:
 
     # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
     # SMTP_REJECT_UNAUTHORIZED_TLS: 0
