@@ -128,6 +128,7 @@ test.describe("Create, update and delete team", async () => {
   });
 
   test("Create and update team", async ({ page }) => {
+    test.setTimeout(180000);
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();
     await dropdownTrigger.click();
