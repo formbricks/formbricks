@@ -1,4 +1,4 @@
-import type { TEnvironmentStateSurvey } from "../types/config";
+import type { TEnvironmentStateSurvey } from "@/types/config";
 
 type Listener = (state: TEnvironmentStateSurvey | null, prevSurvey: TEnvironmentStateSurvey | null) => void;
 

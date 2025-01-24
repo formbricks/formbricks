@@ -1,9 +1,10 @@
 /* eslint-disable no-console -- Required for error logging */
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { TConfig, TConfigUpdateInput } from "../types/config";
-import { type Result, err, ok } from "../types/error";
-import { RN_ASYNC_STORAGE_KEY } from "./constants";
-import { wrapThrowsAsync } from "./utils";
+import { wrapThrowsAsync } from "@/lib/common/utils";
+import type { TConfig, TConfigUpdateInput } from "@/types/config";
+import { type Result, err, ok } from "@/types/error";
+
+export const RN_ASYNC_STORAGE_KEY = "formbricks-react-native";
 
 export class RNConfig {
   private static instance: RNConfig | null = null;

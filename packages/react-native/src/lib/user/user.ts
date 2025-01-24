@@ -1,8 +1,8 @@
-import { RNConfig } from "../common/config";
-import { deinitalize, init } from "../common/initialize";
-import { Logger } from "../common/logger";
-import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "../types/error";
-import { UpdateQueue } from "./user-update-queue";
+import { RNConfig } from "@/lib/common/config";
+import { deinitalize, init } from "@/lib/common/initialize";
+import { Logger } from "@/lib/common/logger";
+import { UpdateQueue } from "@/lib/user/update-queue";
+import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "@/types/error";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();

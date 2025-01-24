@@ -1,4 +1,4 @@
-import { type TResponseUpdate } from "../types/response";
+import { type TResponseUpdate } from "@/types/response";
 
 export class SurveyState {
   responseId: string | null = null;

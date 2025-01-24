@@ -1,5 +1,5 @@
-import { RNConfig } from "../common/config";
-import type { TUserState } from "../types/config";
+import { RNConfig } from "@/lib/common/config";
+import type { TUserState } from "@/types/config";
 
 const config = RNConfig.getInstance();
 let userStateSyncIntervalId: number | null = null;

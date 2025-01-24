@@ -1,12 +1,12 @@
-import { CommandQueue } from "./common/command-queue";
-import * as Initialize from "./common/initialize";
-import { Logger } from "./common/logger";
-import { Formbricks } from "./components/formbricks";
-import * as Actions from "./survey/action";
-import { type TConfigInput } from "./types/config";
-import * as Attributes from "./user/attribute";
-import * as Language from "./user/language";
-import * as User from "./user/user";
+import { Formbricks } from "@/components/formbricks";
+import { CommandQueue } from "@/lib/common/command-queue";
+import * as Initialize from "@/lib/common/initialize";
+import { Logger } from "@/lib/common/logger";
+import * as Actions from "@/lib/survey/action";
+import * as Attributes from "@/lib/user/attribute";
+import * as Language from "@/lib/user/language";
+import * as User from "@/lib/user/user";
+import { type TConfigInput } from "@/types/config";
 
 const logger = Logger.getInstance();
 logger.debug("Create command queue");

@@ -5,8 +5,8 @@ import type {
   TProjectStyling,
   TSurveyStyling,
   TUserState,
-} from "../types/config";
-import type { Result } from "../types/error";
+} from "@/types/config";
+import type { Result } from "@/types/error";
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date): number => {

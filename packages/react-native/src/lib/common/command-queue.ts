@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- we need to log global errors */
-import type { Result } from "../types/error";
-import { checkInitialized } from "./initialize";
-import { wrapThrowsAsync } from "./utils";
+import { checkInitialized } from "@/lib/common/initialize";
+import { wrapThrowsAsync } from "@/lib/common/utils";
+import type { Result } from "@/types/error";
 
 export class CommandQueue {
   private queue: {

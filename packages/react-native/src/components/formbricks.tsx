@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
-import { init } from "../common/initialize";
-import { Logger } from "../common/logger";
-import { SurveyStore } from "../survey/survey-store";
-import { SurveyWebView } from "./survey-web-view";
+import { SurveyWebView } from "@/components/survey-web-view";
+import { init } from "@/lib/common/initialize";
+import { Logger } from "@/lib/common/logger";
+import { SurveyStore } from "@/lib/survey/store";
 
 interface FormbricksProps {
   appUrl: string;

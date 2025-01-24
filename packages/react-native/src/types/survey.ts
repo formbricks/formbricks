@@ -1,6 +1,6 @@
-import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "./config";
-import type { TResponseData, TResponseUpdate } from "./response";
-import type { TFileUploadParams, TUploadFileConfig } from "./storage";
+import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "@/types/config";
+import type { TResponseData, TResponseUpdate } from "@/types/response";
+import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
 
 export interface SurveyBaseProps {
   survey: TEnvironmentStateSurvey;

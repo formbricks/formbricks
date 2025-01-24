@@ -1,8 +1,8 @@
 import {
   addEnvironmentStateExpiryCheckListener,
   clearEnvironmentStateExpiryCheckListener,
-} from "../environment/environment-state";
-import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "../user/user-state";
+} from "@/lib/environment/state";
+import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "@/lib/user/state";
 
 let areRemoveEventListenersAdded = false;
 

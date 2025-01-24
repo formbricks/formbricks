@@ -1,7 +1,16 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { fetchEnvironmentState } from "../environment/environment-state";
-import { trackAction } from "../survey/action";
-import { type TConfig, type TConfigInput, type TEnvironmentState } from "../types/config";
+import { RNConfig, RN_ASYNC_STORAGE_KEY } from "@/lib/common/config";
+import {
+  addCleanupEventListeners,
+  addEventListeners,
+  removeAllEventListeners,
+} from "@/lib/common/event-listeners";
+import { Logger } from "@/lib/common/logger";
+import { filterSurveys, wrapThrowsAsync } from "@/lib/common/utils";
+import { fetchEnvironmentState } from "@/lib/environment/state";
+import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
+import { sendUpdatesToBackend } from "@/lib/user/update";
+import { type TConfig, type TConfigInput, type TEnvironmentState } from "@/types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -10,14 +19,7 @@ import {
   type Result,
   err,
   okVoid,
-} from "../types/error";
-import { DEFAULT_USER_STATE_NO_USER_ID } from "../user/user-state";
-import { sendUpdatesToBackend } from "../user/user-update";
-import { RNConfig } from "./config";
-import { RN_ASYNC_STORAGE_KEY } from "./constants";
-import { addCleanupEventListeners, addEventListeners, removeAllEventListeners } from "./event-listeners";
-import { Logger } from "./logger";
-import { filterSurveys, wrapThrowsAsync } from "./utils";
+} from "@/types/error";
 
 let isInitialized = false;
 const appConfig = RNConfig.getInstance();
@@ -211,9 +213,6 @@ export const init = async (
     } catch (e) {
       await handleErrorOnFirstInit(e as { code: string; responseMessage: string });
     }
-
-    // and track the new session event
-    trackAction("New Session");
   }
 
   logger.debug("Adding event listeners");

@@ -1,9 +1,8 @@
-/* eslint-disable no-console -- required for logging errors */
 /* eslint-disable @typescript-eslint/no-empty-function -- required for singleton pattern */
-import { RNConfig } from "../common/config";
-import { Logger } from "../common/logger";
-import type { TAttributes, TUpdates } from "../types/config";
-import { sendUpdates } from "./user-update";
+import { RNConfig } from "@/lib/common/config";
+import { Logger } from "@/lib/common/logger";
+import { sendUpdates } from "@/lib/user/update";
+import type { TAttributes, TUpdates } from "@/types/config";
 
 const logger = Logger.getInstance();
 
@@ -132,8 +131,10 @@ export class UpdateQueue {
 
           this.clearUpdates();
           resolve();
-        } catch (error) {
-          console.error("Failed to process updates:", error);
+        } catch (error: unknown) {
+          logger.error(
+            `Failed to process updates: ${error instanceof Error ? error.message : "Unknown error"}`
+          );
           reject(error as Error);
         }
       };

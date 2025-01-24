@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- required for logging errors */
 import { FormbricksAPI } from "@formbricks/api";
-import { RNConfig } from "../common/config";
-import { Logger } from "../common/logger";
-import { filterSurveys } from "../common/utils";
-import { type TUpdates, type TUserState } from "../types/config";
-import { type ApiErrorResponse, type Result, err, ok, okVoid } from "../types/error";
+import { RNConfig } from "@/lib/common/config";
+import { Logger } from "@/lib/common/logger";
+import { filterSurveys } from "@/lib/common/utils";
+import { type TUpdates, type TUserState } from "@/types/config";
+import { type ApiErrorResponse, type Result, err, ok, okVoid } from "@/types/error";
 
 const config = RNConfig.getInstance();
 const logger = Logger.getInstance();
