@@ -10,13 +10,12 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
-import { TWebhookInput, ZWebhookInput } from "../types/webhooks";
+import { TWebhookInput } from "../types/webhooks";
 
 export const updateWebhook = async (
   webhookId: string,
   webhookInput: Partial<TWebhookInput>
 ): Promise<boolean> => {
-  validateInputs([webhookId, ZId], [webhookInput, ZWebhookInput]);
   try {
     const updatedWebhook = await prisma.webhook.update({
       where: {
@@ -47,8 +46,6 @@ export const updateWebhook = async (
 };
 
 export const deleteWebhook = async (id: string): Promise<boolean> => {
-  validateInputs([id, ZId]);
-
   try {
     let deletedWebhook = await prisma.webhook.delete({
       where: {
@@ -72,8 +69,6 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 };
 
 export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
-  validateInputs([environmentId, ZId], [webhookInput, ZWebhookInput]);
-
   try {
     const createdWebhook = await prisma.webhook.create({
       data: {
