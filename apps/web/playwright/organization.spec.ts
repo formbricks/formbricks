@@ -128,7 +128,6 @@ test.describe("Create, update and delete team", async () => {
   });
 
   test("Create and update team", async ({ page }) => {
-    test.setTimeout(180000);
     const dropdownTrigger = page.locator("#userDropdownTrigger");
     await expect(dropdownTrigger).toBeVisible();
     await dropdownTrigger.click();
@@ -139,6 +138,7 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
+    await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
     await expect(page.getByText("Teams")).toBeVisible();
     await page.getByText("Teams").click();
