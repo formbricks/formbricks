@@ -144,6 +144,7 @@ export const navigation: NavGroup[] = [
       { title: "Integrations", href: "/self-hosting/integrations" },
       { title: "License", href: "/self-hosting/license" },
       { title: "Cluster Setup", href: "/self-hosting/cluster-setup" },
+      { title: "Rate Limiting", href: "/self-hosting/rate-limiting" },
     ],
   },
   {
