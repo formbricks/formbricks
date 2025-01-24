@@ -27,6 +27,9 @@ const config = (): UserConfig => {
       },
     },
     plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/api", "@formbricks/types"] })],
+    test: {
+      setupFiles: ["./vitest.setup.ts"],
+    },
   });
 };
 
