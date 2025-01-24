@@ -42,7 +42,7 @@ interface ContactsTableProps {
   searchValue: string;
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
-  refreshContacts: () => void;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({

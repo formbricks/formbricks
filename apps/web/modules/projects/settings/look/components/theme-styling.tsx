@@ -163,7 +163,6 @@ export const ThemeStyling = ({
                   setOpen={setBackgroundStylingOpen}
                   environmentId={environmentId}
                   colors={colors}
-                  key={form.watch("background.bg")}
                   isSettingsPage
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
@@ -192,7 +191,7 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                survey={getPreviewSurvey(locale) as TSurvey}
+                survey={getPreviewSurvey(locale, project.name) as TSurvey}
                 project={{
                   ...project,
                   styling: form.watch(),

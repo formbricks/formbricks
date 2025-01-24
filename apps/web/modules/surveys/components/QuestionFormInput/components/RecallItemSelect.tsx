@@ -7,6 +7,7 @@ import { Input } from "@/modules/ui/components/input";
 import { DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import {
   CalendarDaysIcon,
+  ContactIcon,
   EyeOffIcon,
   FileDigitIcon,
   FileTextIcon,
@@ -40,6 +41,7 @@ const questionIconMapping = {
   date: CalendarDaysIcon,
   cal: PhoneIcon,
   address: HomeIcon,
+  contactInfo: ContactIcon,
   ranking: ListOrderedIcon,
 };
 
@@ -92,20 +94,20 @@ export const RecallItemSelect = ({
         }));
     }
     return [];
-  }, [localSurvey.hiddenFields]);
+  }, [localSurvey.hiddenFields, recallItemIds]);
 
-  const attributeClassRecallItems = useMemo(() => {
+  const contactAttributekeysRecallItems = useMemo(() => {
     if (localSurvey.type !== "app") return [];
     return contactAttributeKeys
       .filter((attributeKey) => !recallItemIds.includes(attributeKey.key.replaceAll(" ", "nbsp")))
       .map((attributeKey) => {
         return {
           id: attributeKey.key.replaceAll(" ", "nbsp"),
-          label: attributeKey.name ?? attributeKey.key,
+          label: attributeKey.key,
           type: "attributeClass" as const,
         };
       });
-  }, [contactAttributeKeys]);
+  }, [contactAttributeKeys, localSurvey.type, recallItemIds]);
 
   const variableRecallItems = useMemo(() => {
     if (localSurvey.variables.length) {
@@ -146,7 +148,7 @@ export const RecallItemSelect = ({
     return [
       ...surveyQuestionRecallItems,
       ...hiddenFieldRecallItems,
-      ...attributeClassRecallItems,
+      ...contactAttributekeysRecallItems,
       ...variableRecallItems,
     ].filter((recallItems) => {
       if (searchValue.trim() === "") return true;
@@ -157,7 +159,7 @@ export const RecallItemSelect = ({
   }, [
     surveyQuestionRecallItems,
     hiddenFieldRecallItems,
-    attributeClassRecallItems,
+    contactAttributekeysRecallItems,
     variableRecallItems,
     searchValue,
   ]);

@@ -21,6 +21,7 @@ export const DEFAULT_BRAND_COLOR = "#64748b";
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
+export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
@@ -71,13 +72,14 @@ export const SMTP_PORT = env.SMTP_PORT;
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
+export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
-export const RESPONSES_PER_PAGE = 20;
+export const RESPONSES_PER_PAGE = 25;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 export const INSIGHTS_PER_PAGE = 10;
 export const DOCUMENTS_PER_PAGE = 10;
@@ -246,3 +248,7 @@ export const IS_AI_CONFIGURED = Boolean(
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
 
 export const IS_INTERCOM_CONFIGURED = Boolean(env.NEXT_PUBLIC_INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+
+export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
+
+export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);

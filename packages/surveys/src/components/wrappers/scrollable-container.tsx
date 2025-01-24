@@ -7,11 +7,9 @@ interface ScrollableContainerProps {
 }
 
 export function ScrollableContainer({ children }: ScrollableContainerProps) {
-  const [isOverflowHidden, setIsOverflowHidden] = useState(true);
   const [isAtBottom, setIsAtBottom] = useState(false);
   const [isAtTop, setIsAtTop] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isSurveyPreview = Boolean(document.getElementById("survey-preview"));
 
   const checkScroll = () => {
@@ -21,18 +19,6 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
     setIsAtBottom(Math.round(scrollTop) + clientHeight >= scrollHeight);
 
     setIsAtTop(scrollTop === 0);
-  };
-
-  const toggleOverflow = (hide: boolean) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (hide) {
-      timeoutRef.current = setTimeout(() => {
-        setIsOverflowHidden(true);
-      }, 1000);
-    } else {
-      setIsOverflowHidden(false);
-      checkScroll();
-    }
   };
 
   useEffect(() => {
@@ -56,7 +42,7 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
   return (
     <div className="fb-relative">
       {!isAtTop && (
-        <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-4 fb-bg-gradient-to-b fb-to-transparent" />
+        <div className="fb-from-survey-bg fb-absolute fb-left-0 fb-right-2 fb-top-0 fb-z-10 fb-h-6 fb-bg-gradient-to-b fb-to-transparent" />
       )}
       <div
         ref={containerRef}
@@ -64,16 +50,7 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={cn(
-          "fb-overflow-auto fb-px-4 fb-pb-1",
-          isOverflowHidden ? "fb-no-scrollbar" : "fb-bg-survey-bg"
-        )}
-        onMouseEnter={() => {
-          toggleOverflow(false);
-        }}
-        onMouseLeave={() => {
-          toggleOverflow(true);
-        }}>
+        className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-bg-survey-bg")}>
         {children}
       </div>
       {!isAtBottom && (

@@ -2,6 +2,7 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Table } from "@tanstack/react-table";
 import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
+import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { SelectedRowSettings } from "./selected-row-settings";
 
@@ -13,7 +14,7 @@ interface DataTableToolbarProps<T> {
   deleteRows: (rowIds: string[]) => void;
   type: "response" | "contact";
   deleteAction: (id: string) => Promise<void>;
-  refreshContacts?: () => void;
+  refreshContacts?: () => Promise<void>;
 }
 
 export const DataTableToolbar = <T,>({
@@ -41,9 +42,19 @@ export const DataTableToolbar = <T,>({
             tooltipContent={t("environments.contacts.contacts_table_refresh")}
             shouldRender={true}>
             <div
-              onClick={() => refreshContacts?.()}
+              onClick={async () => {
+                if (refreshContacts) {
+                  try {
+                    await refreshContacts();
+                    toast.success(t("environments.contacts.contacts_table_refresh_success"));
+                  } catch (err) {
+                    console.error(err);
+                    toast.error(t("environments.contacts.contacts_table_refresh_error"));
+                  }
+                }
+              }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
-              <RefreshCcwIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
+              <RefreshCcwIcon strokeWidth={1.5} className={cn("m-1 h-6 w-6 p-0.5")} />
             </div>
           </TooltipRenderer>
         ) : null}

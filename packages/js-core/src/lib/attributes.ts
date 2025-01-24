@@ -1,10 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TAttributes } from "@formbricks/types/attributes";
-import { ForbiddenError } from "@formbricks/types/errors";
+import { type TAttributes } from "@formbricks/types/attributes";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { Config } from "./config";
-import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
+import { type Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
-import { fetchPersonState } from "./personState";
+import { fetchPersonState } from "./person-state";
 import { filterSurveys } from "./utils";
 
 const config = Config.getInstance();
@@ -20,7 +20,7 @@ export const updateAttribute = async (
       message: string;
       details?: Record<string, string>;
     },
-    NetworkError | ForbiddenError
+    ApiErrorResponse
   >
 > => {
   const { apiHost, environmentId } = config.get();
@@ -31,7 +31,7 @@ export const updateAttribute = async (
       code: "network_error",
       status: 500,
       message: "Missing userId",
-      url: `${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId ?? ""}/attributes`),
       responseMessage: "Missing userId",
     });
   }
@@ -44,9 +44,9 @@ export const updateAttribute = async (
   const res = await api.client.attribute.update({ userId, attributes: { [key]: value } });
 
   if (!res.ok) {
-    // @ts-expect-error
-    if (res.error.details?.ignore) {
-      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
+    const responseError = res.error;
+    if (responseError.details?.ignore) {
+      logger.error(responseError.message);
       return {
         ok: true,
         value: {
@@ -57,8 +57,8 @@ export const updateAttribute = async (
     }
 
     return err({
-      code: (res.error as ForbiddenError).code ?? "network_error",
-      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
+      code: res.error.code,
+      status: res.error.status,
       message: `Error updating person with userId ${userId}`,
       url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`),
       responseMessage: res.error.message,
@@ -66,8 +66,8 @@ export const updateAttribute = async (
   }
 
   if (res.data.details) {
-    Object.entries(res.data.details).forEach(([key, value]) => {
-      logger.error(`${key}: ${value}`);
+    Object.entries(res.data.details).forEach(([detailsKey, detailsValue]) => {
+      logger.error(`${detailsKey}: ${detailsValue}`);
     });
   }
 
@@ -103,7 +103,7 @@ export const updateAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TAttributes
-): Promise<Result<TAttributes, NetworkError | ForbiddenError>> => {
+): Promise<Result<TAttributes, ApiErrorResponse>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
 
@@ -113,7 +113,7 @@ export const updateAttributes = async (
     return ok(updatedAttributes);
   }
 
-  logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
+  logger.debug(`Updating attributes: ${JSON.stringify(updatedAttributes)}`);
 
   const api = new FormbricksAPI({
     apiHost,
@@ -130,27 +130,28 @@ export const updateAttributes = async (
     }
 
     return ok(updatedAttributes);
-  } else {
-    // @ts-expect-error
-    if (res.error.details?.ignore) {
-      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
-      return ok(updatedAttributes);
-    }
-
-    return err({
-      code: (res.error as ForbiddenError).code ?? "network_error",
-      status: (res.error as NetworkError | ForbiddenError).status ?? 500,
-      message: `Error updating person with userId ${userId}`,
-      url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
-      responseMessage: res.error.message,
-    });
   }
+
+  const responseError = res.error;
+
+  if (responseError.details?.ignore) {
+    logger.error(responseError.message);
+    return ok(updatedAttributes);
+  }
+
+  return err({
+    code: responseError.code,
+    status: responseError.status,
+    message: `Error updating person with userId ${userId}`,
+    url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
+    responseMessage: responseError.responseMessage,
+  });
 };
 
 export const setAttributeInApp = async (
   key: string,
-  value: any
-): Promise<Result<void, NetworkError | MissingPersonError>> => {
+  value: string
+): Promise<Result<void, ApiErrorResponse>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
     return okVoid();
@@ -158,7 +159,7 @@ export const setAttributeInApp = async (
 
   const userId = config.get().personState.data.userId;
 
-  logger.debug("Setting attribute: " + key + " to value: " + value);
+  logger.debug(`Setting attribute: ${key} to value: ${value}`);
 
   if (!userId) {
     logger.error(
@@ -194,12 +195,11 @@ export const setAttributeInApp = async (
     }
 
     return okVoid();
-  } else {
-    const error = result.error;
-    if (error && error.code === "forbidden") {
-      logger.error(`Authorization error: ${error.responseMessage}`);
-    }
+  }
+  const error = result.error;
+  if (error.code === "forbidden") {
+    logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
   }
 
-  return err(result.error as NetworkError);
+  return err(result.error);
 };

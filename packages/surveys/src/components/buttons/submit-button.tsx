@@ -1,7 +1,7 @@
-import { type JSX } from "preact";
-import { useCallback } from "preact/hooks";
+import { ButtonHTMLAttributes, useRef } from "preact/compat";
+import { useCallback, useEffect } from "preact/hooks";
 
-interface SubmitButtonProps extends JSX.HTMLAttributes<HTMLButtonElement> {
+interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel: string | undefined;
   isLastQuestion: boolean;
   focus?: boolean;
@@ -17,16 +17,33 @@ export function SubmitButton({
   type,
   ...props
 }: SubmitButtonProps) {
-  const buttonRef = useCallback(
-    (currentButton: HTMLButtonElement | null) => {
-      if (currentButton && focus) {
-        setTimeout(() => {
-          currentButton.focus();
-        }, 200);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && !disabled) {
+        event.preventDefault();
+        const button = buttonRef.current;
+        if (button) {
+          button.click();
+        }
       }
     },
-    [focus]
+    [disabled]
   );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  useEffect(() => {
+    if (buttonRef.current && focus) {
+      setTimeout(() => {
+        buttonRef.current?.focus();
+      }, 200);
+    }
+  }, [focus]);
 
   return (
     <button

@@ -8,6 +8,7 @@ import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "preact/hooks";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -138,7 +139,7 @@ export function PictureSelectionQuestion({
                     <img
                       src={choice.imageUrl}
                       id={choice.id}
-                      alt={choice.imageUrl.split("/").pop()}
+                      alt={getOriginalFileNameFromUrl(choice.imageUrl)}
                       className="fb-h-full fb-w-full fb-object-cover"
                     />
                     <a

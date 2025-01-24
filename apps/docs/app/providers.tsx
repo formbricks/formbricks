@@ -3,14 +3,14 @@
 import { ThemeProvider, useTheme } from "next-themes";
 import { useEffect } from "react";
 
-const ThemeWatcher = () => {
-  let { resolvedTheme, setTheme } = useTheme();
+function ThemeWatcher() {
+  const { resolvedTheme, setTheme } = useTheme();
 
   useEffect(() => {
-    let media = window.matchMedia("(prefers-color-scheme: dark)");
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
 
     const onMediaChange = () => {
-      let systemTheme = media.matches ? "dark" : "light";
+      const systemTheme = media.matches ? "dark" : "light";
       if (resolvedTheme === systemTheme) {
         setTheme("system");
       }
@@ -25,13 +25,13 @@ const ThemeWatcher = () => {
   }, [resolvedTheme, setTheme]);
 
   return null;
-};
+}
 
-export const Providers = ({ children }: { children: React.ReactNode }) => {
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider attribute="class" disableTransitionOnChange>
       <ThemeWatcher />
       {children}
     </ThemeProvider>
   );
-};
+}

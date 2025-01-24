@@ -301,9 +301,9 @@ export function AddFilterModal({
           </div>
         ) : null}
 
-        {allFiltersFiltered.map((filters) => {
+        {allFiltersFiltered.map((filters, index) => {
           return (
-            <>
+            <div key={index}>
               {filters.attributes.map((attributeKey) => {
                 return (
                   <div
@@ -373,7 +373,7 @@ export function AddFilterModal({
                   <span>{deviceType.name}</span>
                 </div>
               ))}
-            </>
+            </div>
           );
         })}
       </>

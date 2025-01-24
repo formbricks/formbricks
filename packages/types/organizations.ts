@@ -33,6 +33,12 @@ export const ZOrganizationBilling = z.object({
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
 
+export const ZOrganizationWhitelabel = z.object({
+  logoUrl: z.string().nullable(),
+});
+
+export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;
+
 export const ZOrganization = z.object({
   id: z.string().cuid2(),
   createdAt: z.date(),
@@ -40,6 +46,7 @@ export const ZOrganization = z.object({
   name: z.string({ message: "Organization name is required" }).trim().min(1, {
     message: "Organization name must be at least 1 character long",
   }),
+  whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling,
   isAIEnabled: z.boolean().default(false),
 });
@@ -53,6 +60,7 @@ export type TOrganizationCreateInput = z.infer<typeof ZOrganizationCreateInput>;
 
 export const ZOrganizationUpdateInput = z.object({
   name: z.string(),
+  whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling.optional(),
   isAIEnabled: z.boolean().optional(),
 });

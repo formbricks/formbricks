@@ -75,6 +75,31 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
+export const uploadFileForFileUploadQuestion = async (page: Page) => {
+  try {
+    const fileInput = page.locator('input[type="file"]');
+    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+    const buffer1 = Buffer.from(await response1.arrayBuffer());
+    const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+    await fileInput.setInputFiles([
+      {
+        name: "puppy-1-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer1,
+      },
+      {
+        name: "puppy-2-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer2,
+      },
+    ]);
+  } catch (error) {
+    console.error("Error uploading files:", error);
+  }
+};
+
 export const finishOnboarding = async (
   page: Page,
   projectChannel: TProjectConfigChannel = "website"
@@ -83,12 +108,10 @@ export const finishOnboarding = async (
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (projectChannel === "website") {
-    await page.getByRole("button", { name: "Built for scale Public website" }).click();
-  } else if (projectChannel === "app") {
-    await page.getByRole("button", { name: "Enrich user profiles App with" }).click();
+  if (projectChannel === "app") {
+    await page.getByRole("button", { name: "In-product surveys" }).click();
   } else {
-    await page.getByRole("button", { name: "Anywhere online Link" }).click();
+    await page.getByRole("button", { name: "Link & email surveys" }).click();
   }
 
   // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
@@ -97,9 +120,7 @@ export const finishOnboarding = async (
   await page.locator("#form-next-button").click();
 
   if (projectChannel !== "link") {
-    await page.getByRole("button", { name: "I don't know how to do it" }).click();
-    await page.waitForTimeout(500);
-    await page.getByRole("button", { name: "Not now" }).click();
+    await page.getByRole("button", { name: "I'll do it later" }).click();
   }
 
   await page.waitForURL(/\/environments\/[^/]+\/surveys/);
@@ -241,8 +262,11 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .click();
   await page.getByRole("button", { name: "Picture Selection" }).click();
   await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
-  await page.getByRole("button", { name: "Add description", exact: true }).click();
+  await page.getByRole("button", { name: "Add description" }).click();
   await page.locator('input[name="subheader"]').fill(params.pictureSelectQuestion.description);
+
+  // Handle file uploads
+  await uploadFileForFileUploadQuestion(page);
 
   // File Upload Question
   await page
@@ -253,7 +277,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("button", { name: "File Upload" }).click();
   await page.getByLabel("Question*").fill(params.fileUploadQuestion.question);
 
-  // File Upload Question
+  // Matrix Upload Question
   await page
     .locator("div")
     .filter({ hasText: new RegExp(`^${addQuestion}$`) })
@@ -267,14 +291,17 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator("#row-0").fill(params.matrix.rows[0]);
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
+  await page.getByRole("button", { name: "Add row" }).click();
   await page.locator("#row-2").click();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
+  await page.getByRole("button", { name: "Add column" }).click();
   await page.locator("#column-2").click();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
+  await page.getByRole("button", { name: "Add column" }).click();
   await page.locator("#column-3").click();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
@@ -312,6 +339,20 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
     .nth(1)
     .click();
   await page.getByRole("button", { name: "Ranking" }).click();
+  await page.getByLabel("Question*").fill(params.ranking.question);
+  await page.getByPlaceholder("Option 1").click();
+  await page.getByPlaceholder("Option 1").fill(params.ranking.choices[0]);
+  await page.getByPlaceholder("Option 2").click();
+  await page.getByPlaceholder("Option 2").fill(params.ranking.choices[1]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 3").click();
+  await page.getByPlaceholder("Option 3").fill(params.ranking.choices[2]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 4").click();
+  await page.getByPlaceholder("Option 4").fill(params.ranking.choices[3]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 5").click();
+  await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
 
   // Thank You Card
   await page
@@ -402,6 +443,25 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByLabel("Question*").fill(params.pictureSelectQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
   await page.locator('input[name="subheader"]').fill(params.pictureSelectQuestion.description);
+  const fileInput = page.locator('input[type="file"]');
+  const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+  const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+  const buffer1 = Buffer.from(await response1.arrayBuffer());
+  const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+  await fileInput.setInputFiles([
+    {
+      name: "puppy-1-small.jpg",
+      mimeType: "image/jpeg",
+      buffer: buffer1,
+    },
+    {
+      name: "puppy-2-small.jpg",
+      mimeType: "image/jpeg",
+      buffer: buffer2,
+    },
+  ]);
+
   await page.getByLabel("Required").click();
 
   // Rating Question
@@ -436,6 +496,19 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Ranking" }).click();
   await page.getByLabel("Question*").fill(params.ranking.question);
+  await page.getByPlaceholder("Option 1").click();
+  await page.getByPlaceholder("Option 1").fill(params.ranking.choices[0]);
+  await page.getByPlaceholder("Option 2").click();
+  await page.getByPlaceholder("Option 2").fill(params.ranking.choices[1]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 3").click();
+  await page.getByPlaceholder("Option 3").fill(params.ranking.choices[2]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 4").click();
+  await page.getByPlaceholder("Option 4").fill(params.ranking.choices[3]);
+  await page.getByRole("button", { name: "Add option" }).click();
+  await page.getByPlaceholder("Option 5").click();
+  await page.getByPlaceholder("Option 5").fill(params.ranking.choices[4]);
   await page.getByLabel("Required").click();
 
   // Matrix Question
@@ -452,14 +525,17 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#row-0").fill(params.matrix.rows[0]);
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
+  await page.getByRole("button", { name: "Add row" }).click();
   await page.locator("#row-2").click();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
+  await page.getByRole("button", { name: "Add column" }).click();
   await page.locator("#column-2").click();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
+  await page.getByRole("button", { name: "Add column" }).click();
   await page.locator("#column-3").click();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
@@ -501,6 +577,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
     .click();
   await page.getByRole("button", { name: "Date" }).click();
   await page.getByLabel("Question*").fill(params.date.question);
+  await page.getByLabel("Required").click();
 
   // Cal Question
   await page

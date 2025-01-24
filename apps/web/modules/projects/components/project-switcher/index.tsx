@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { ModalButton } from "@/modules/ui/components/empty-content";
+import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { BlendIcon, ChevronRightIcon, GlobeIcon, GlobeLockIcon, LinkIcon, PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -89,12 +89,12 @@ export const ProjectSwitcher = ({
         return [
           {
             text: t("environments.settings.billing.get_in_touch"),
-            href: "https://cal.com/johannes/license",
+            href: "https://formbricks.com/upgrade-self-hosting-license",
             onClick: () => setOpenLimitModal(false),
           },
           {
             text: t("common.learn_more"),
-            href: "https://formbricks.com/docs/self-hosting/license",
+            href: "https://formbricks.com/learn-more-self-hosting-license",
             onClick: () => setOpenLimitModal(false),
           },
         ];
@@ -106,12 +106,12 @@ export const ProjectSwitcher = ({
             organization.billing.plan === "free"
               ? t("common.start_free_trial")
               : t("environments.settings.billing.get_in_touch"),
-          href: "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+          href: "https://formbricks.com/upgrade-self-hosting-license",
           onClick: () => setOpenLimitModal(false),
         },
         {
           text: t("common.learn_more"),
-          href: "https://formbricks.com/docs/self-hosting/license",
+          href: "https://formbricks.com/learn-more-self-hosting-license",
           onClick: () => setOpenLimitModal(false),
         },
       ];

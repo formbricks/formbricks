@@ -2,22 +2,27 @@ import "server-only";
 import { getInsightsBySurveyIdQuestionId } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/insights";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { RESPONSES_PER_PAGE } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { getDisplayCountBySurveyId } from "@formbricks/lib/display/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { responseCache } from "@formbricks/lib/response/cache";
-import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { buildWhereClause } from "@formbricks/lib/response/utils";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  TResponse,
+  TResponseContact,
+  TResponseContactAttributes,
   TResponseData,
   TResponseFilterCriteria,
+  TResponseTtc,
   TResponseVariables,
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
@@ -42,8 +47,19 @@ import {
 } from "@formbricks/types/surveys/types";
 import { convertFloatTo2Decimal } from "./utils";
 
+interface TSurveySummaryResponse {
+  id: string;
+  data: TResponseData;
+  updatedAt: Date;
+  contact: TResponseContact | null;
+  contactAttributes: TResponseContactAttributes;
+  language: string | null;
+  ttc: TResponseTtc;
+  finished: boolean;
+}
+
 export const getSurveySummaryMeta = (
-  responses: TResponse[],
+  responses: TSurveySummaryResponse[],
   displayCount: number
 ): TSurveySummary["meta"] => {
   const completedResponses = responses.filter((response) => response.finished).length;
@@ -132,7 +148,7 @@ const evaluateLogicAndGetNextQuestionId = (
 
 export const getSurveySummaryDropOff = (
   survey: TSurvey,
-  responses: TResponse[],
+  responses: TSurveySummaryResponse[],
   displayCount: number
 ): TSurveySummary["dropOff"] => {
   const initialTtc = survey.questions.reduce((acc: Record<string, number>, question) => {
@@ -258,16 +274,16 @@ const getLanguageCode = (surveyLanguages: TSurveyLanguage[], languageCode: strin
   return language?.default ? "default" : language?.language.code || "default";
 };
 
-const checkForI18n = (response: TResponse, id: string, survey: TSurvey, languageCode: string) => {
+const checkForI18n = (responseData: TResponseData, id: string, survey: TSurvey, languageCode: string) => {
   const question = survey.questions.find((question) => question.id === id);
 
   if (question?.type === "multipleChoiceMulti" || question?.type === "ranking") {
     // Initialize an array to hold the choice values
     let choiceValues = [] as string[];
 
-    (typeof response.data[id] === "string"
-      ? ([response.data[id]] as string[])
-      : (response.data[id] as string[])
+    (typeof responseData[id] === "string"
+      ? ([responseData[id]] as string[])
+      : (responseData[id] as string[])
     )?.forEach((data) => {
       choiceValues.push(
         getLocalizedValue(
@@ -283,15 +299,15 @@ const checkForI18n = (response: TResponse, id: string, survey: TSurvey, language
 
   // Return the localized value of the choice fo multiSelect single question
   const choice = (question as TSurveyMultipleChoiceQuestion)?.choices.find(
-    (choice) => choice.label[languageCode] === response.data[id]
+    (choice) => choice.label[languageCode] === responseData[id]
   );
 
-  return getLocalizedValue(choice?.label, "default") || response.data[id];
+  return getLocalizedValue(choice?.label, "default") || responseData[id];
 };
 
 export const getQuestionSummary = async (
   survey: TSurvey,
-  responses: TResponse[],
+  responses: TSurveySummaryResponse[],
   dropOff: TSurveySummary["dropOff"]
 ): Promise<TSurveySummary["summary"]> => {
   const VALUES_LIMIT = 50;
@@ -353,7 +369,7 @@ export const getQuestionSummary = async (
           const answer =
             responseLanguageCode === "default"
               ? response.data[question.id]
-              : checkForI18n(response, question.id, survey, responseLanguageCode);
+              : checkForI18n(response.data, question.id, survey, responseLanguageCode);
 
           let hasValidAnswer = false;
 
@@ -399,7 +415,7 @@ export const getQuestionSummary = async (
             value: label,
             count,
             percentage:
-              totalSelectionCount > 0 ? convertFloatTo2Decimal((count / totalSelectionCount) * 100) : 0,
+              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
           });
         });
 
@@ -408,8 +424,8 @@ export const getQuestionSummary = async (
             value: getLocalizedValue(lastChoice.label, "default") || "Other",
             count: otherValues.length,
             percentage:
-              totalSelectionCount > 0
-                ? convertFloatTo2Decimal((otherValues.length / totalSelectionCount) * 100)
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((otherValues.length / totalResponseCount) * 100)
                 : 0,
             others: otherValues.slice(0, VALUES_LIMIT),
           });
@@ -452,8 +468,8 @@ export const getQuestionSummary = async (
             imageUrl: choice.imageUrl,
             count: choiceCountMap[choice.id],
             percentage:
-              totalSelectionCount > 0
-                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalSelectionCount) * 100)
+              totalResponseCount > 0
+                ? convertFloatTo2Decimal((choiceCountMap[choice.id] / totalResponseCount) * 100)
                 : 0,
           });
         });
@@ -762,13 +778,15 @@ export const getQuestionSummary = async (
             totalResponsesForRow += countMap[row][col];
           });
 
-          const columnPercentages = columns.reduce((acc, col) => {
+          const columnPercentages = columns.map((col) => {
             const count = countMap[row][col];
             const percentage =
               totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
-            acc[col] = percentage;
-            return acc;
-          }, {});
+            return {
+              column: col,
+              percentage: Number(percentage),
+            };
+          });
 
           return { rowLabel: row, columnPercentages, totalResponsesForRow };
         });
@@ -824,7 +842,7 @@ export const getQuestionSummary = async (
           const answer =
             responseLanguageCode === "default"
               ? response.data[question.id]
-              : checkForI18n(response, question.id, survey, responseLanguageCode);
+              : checkForI18n(response.data, question.id, survey, responseLanguageCode);
 
           if (Array.isArray(answer)) {
             totalResponseCount++;
@@ -899,20 +917,23 @@ export const getSurveySummary = reactCache(
             throw new ResourceNotFoundError("Survey", surveyId);
           }
 
-          const batchSize = 3000;
-          const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-          const filteredResponseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
+          const batchSize = 5000;
+          const responseCount = await getResponseCountBySurveyId(surveyId, filterCriteria);
 
-          const hasFilter = totalResponseCount !== filteredResponseCount;
+          const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
 
-          const pages = Math.ceil(filteredResponseCount / batchSize);
+          const pages = Math.ceil(responseCount / batchSize);
 
-          const responsesArray = await Promise.all(
-            Array.from({ length: pages }, (_, i) => {
-              return getResponses(surveyId, batchSize, i * batchSize, filterCriteria);
-            })
+          // Create an array of batch fetch promises
+          const batchPromises = Array.from({ length: pages }, (_, i) =>
+            getResponsesForSummary(surveyId, batchSize, i * batchSize, filterCriteria)
           );
-          const responses = responsesArray.flat();
+
+          // Fetch all batches in parallel
+          const batchResults = await Promise.all(batchPromises);
+
+          // Combine all batch results
+          const responses = batchResults.flat();
 
           const responseIds = hasFilter ? responses.map((response) => response.id) : [];
 
@@ -922,8 +943,10 @@ export const getSurveySummary = reactCache(
           });
 
           const dropOff = getSurveySummaryDropOff(survey, responses, displayCount);
-          const meta = getSurveySummaryMeta(responses, displayCount);
-          const questionWiseSummary = await getQuestionSummary(survey, responses, dropOff);
+          const [meta, questionWiseSummary] = await Promise.all([
+            getSurveySummaryMeta(responses, displayCount),
+            getQuestionSummary(survey, responses, dropOff),
+          ]);
 
           return { meta, dropOff, summary: questionWiseSummary };
         } catch (error) {
@@ -941,6 +964,89 @@ export const getSurveySummary = reactCache(
           responseCache.tag.bySurveyId(surveyId),
           displayCache.tag.bySurveyId(surveyId),
         ],
+      }
+    )()
+);
+
+export const getResponsesForSummary = reactCache(
+  async (
+    surveyId: string,
+    limit: number,
+    offset: number,
+    filterCriteria?: TResponseFilterCriteria
+  ): Promise<TSurveySummaryResponse[]> =>
+    cache(
+      async () => {
+        validateInputs(
+          [surveyId, ZId],
+          [limit, ZOptionalNumber],
+          [offset, ZOptionalNumber],
+          [filterCriteria, ZResponseFilterCriteria.optional()]
+        );
+
+        const queryLimit = limit ?? RESPONSES_PER_PAGE;
+        const survey = await getSurvey(surveyId);
+        if (!survey) return [];
+        try {
+          const responses = await prisma.response.findMany({
+            where: {
+              surveyId,
+              ...buildWhereClause(survey, filterCriteria),
+            },
+            select: {
+              id: true,
+              data: true,
+              updatedAt: true,
+              contact: {
+                select: {
+                  id: true,
+                  attributes: {
+                    select: { attributeKey: true, value: true },
+                  },
+                },
+              },
+              contactAttributes: true,
+              language: true,
+              ttc: true,
+              finished: true,
+            },
+            orderBy: [
+              {
+                createdAt: "desc",
+              },
+            ],
+            take: queryLimit,
+            skip: offset,
+          });
+
+          const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
+            responses.map((responsePrisma) => {
+              return {
+                ...responsePrisma,
+                contact: responsePrisma.contact
+                  ? {
+                      id: responsePrisma.contact.id as string,
+                      userId: responsePrisma.contact.attributes.find(
+                        (attribute) => attribute.attributeKey.key === "userId"
+                      )?.value as string,
+                    }
+                  : null,
+              };
+            })
+          );
+
+          return transformedResponses;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getResponsesForSummary-${surveyId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId)],
       }
     )()
 );

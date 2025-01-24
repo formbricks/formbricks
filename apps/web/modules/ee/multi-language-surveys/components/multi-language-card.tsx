@@ -5,7 +5,7 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { UpgradePlanNotice } from "@/modules/ui/components/upgrade-plan-notice";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
@@ -224,17 +224,24 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-6"}`} ref={parent}>
           <div className="space-y-4">
-            {!isMultiLanguageAllowed && !isFormbricksCloud && !isMultiLanguageActivated ? (
-              <UpgradePlanNotice
-                message={t("environments.surveys.edit.to_enable_multi_language_surveys_you_need_an_active")}
-                textForUrl={t("common.enterprise_license")}
-                url={`/environments/${environmentId}/settings/enterprise`}
-              />
-            ) : !isMultiLanguageAllowed && isFormbricksCloud && !isMultiLanguageActivated ? (
-              <UpgradePlanNotice
-                message={t("environments.surveys.edit.to_enable_multi_language_surveys_you_need_an_active")}
-                textForUrl={t("common.enterprise_license")}
-                url={`/environments/${environmentId}/settings/billing`}
+            {!isMultiLanguageAllowed && !isMultiLanguageActivated ? (
+              <UpgradePrompt
+                title={t("environments.surveys.edit.upgrade_notice_title")}
+                description={t("environments.surveys.edit.upgrade_notice_description")}
+                buttons={[
+                  {
+                    text: t("common.start_free_trial"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+                  },
+                  {
+                    text: t("common.learn_more"),
+                    href: isFormbricksCloud
+                      ? `/environments/${environmentId}/settings/billing`
+                      : "https://formbricks.com/learn-more-self-hosting-license",
+                  },
+                ]}
               />
             ) : (
               <>

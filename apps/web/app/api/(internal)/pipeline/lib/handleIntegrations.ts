@@ -1,3 +1,4 @@
+import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -14,7 +15,6 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TPipelineInput } from "@formbricks/types/pipelines";
 import { TResponseMeta } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
@@ -348,16 +348,16 @@ const buildNotionPayloadProperties = (
   mapping.forEach((map) => {
     if (map.question.id === "metadata") {
       properties[map.column.name] = {
-        [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)),
+        [map.column.type]: getValue(map.column.type, convertMetaObjectToString(data.response.meta)) || null,
       };
     } else if (map.question.id === "createdAt") {
       properties[map.column.name] = {
-        [map.column.type]: getValue(map.column.type, data.response.createdAt.toISOString()),
+        [map.column.type]: getValue(map.column.type, data.response.createdAt) || null,
       };
     } else {
       const value = responses[map.question.id];
       properties[map.column.name] = {
-        [map.column.type]: getValue(map.column.type, value),
+        [map.column.type]: getValue(map.column.type, value) || null,
       };
     }
   });
@@ -367,16 +367,21 @@ const buildNotionPayloadProperties = (
 
 // notion requires specific payload for each column type
 // * TYPES NOT SUPPORTED BY NOTION API - rollup, created_by, created_time, last_edited_by, or last_edited_time
-const getValue = (colType: string, value: string | string[] | number | Record<string, string>) => {
+const getValue = (colType: string, value: string | string[] | Date | number | Record<string, string>) => {
   try {
     switch (colType) {
       case "select":
-        return {
-          name: value,
-        };
+        if (!value) return null;
+        if (typeof value === "string") {
+          // Replace commas
+          const sanitizedValue = value.replace(/,/g, "");
+          return {
+            name: sanitizedValue,
+          };
+        }
       case "multi_select":
         if (Array.isArray(value)) {
-          return value.map((v: string) => ({ name: v }));
+          return value.map((v: string) => ({ name: v.replace(/,/g, "") }));
         }
       case "title":
         return [
@@ -402,7 +407,7 @@ const getValue = (colType: string, value: string | string[] | number | Record<st
         return value === "accepted" || value === "clicked";
       case "date":
         return {
-          start: new Date(value as string).toISOString().substring(0, 10),
+          start: value,
         };
       case "email":
         return value;

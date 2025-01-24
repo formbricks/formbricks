@@ -60,7 +60,7 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState("");
+  const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
 
   useEffect(() => {
     if (survey.type !== "link") {
@@ -91,6 +91,7 @@ export const ShareEmbedSurvey = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTitle className="sr-only" />
       <DialogContent className="w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
         {showView === "start" ? (
           <div className="h-full max-w-full overflow-hidden">
@@ -137,7 +138,12 @@ export const ShareEmbedSurvey = ({
                   className="relative flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-sm text-slate-500 hover:border-slate-200 md:p-8">
                   <UsersRound className="h-6 w-6 text-slate-700" />
                   {t("environments.surveys.summary.send_to_panel")}
-                  <Badge size="tiny" type="success" text="New" className="absolute right-3 top-3" />
+                  <Badge
+                    size="tiny"
+                    type="success"
+                    className="absolute right-3 top-3"
+                    text={t("common.new")}
+                  />
                 </button>
               </div>
             </div>

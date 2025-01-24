@@ -2,10 +2,10 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { prisma } from "@formbricks/database";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { updateAttributes } from "./lib/attributes";
+import { getContactByUserIdWithAttributes } from "./lib/contact";
 
 export const OPTIONS = async () => {
   // cors headers
@@ -45,33 +45,20 @@ export const PUT = async (
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
     }
 
+    // ignore userId and id
     const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = parsedInput.data.attributes;
 
-    // ignore userId and id
-
-    const contact = await prisma.contact.findFirst({
-      where: {
-        environmentId,
-        attributes: { some: { attributeKey: { key: "userId", environmentId }, value: userId } },
-      },
-      select: { id: true, attributes: { select: { attributeKey: { select: { key: true } }, value: true } } },
-    });
+    const contact = await getContactByUserIdWithAttributes(environmentId, userId, updatedAttributes);
 
     if (!contact) {
       return responses.notFoundResponse("contact", userId, true);
     }
 
-    const oldAttributes = contact.attributes.reduce(
-      (acc, attr) => {
-        acc[attr.attributeKey.key] = attr.value;
-        return acc;
-      },
-      {} as Record<string, string>
-    );
+    const oldAttributes = new Map(contact.attributes.map((attr) => [attr.attributeKey.key, attr.value]));
 
     let isUpToDate = true;
-    for (const key in updatedAttributes) {
-      if (updatedAttributes[key] !== oldAttributes[key]) {
+    for (const [key, value] of Object.entries(updatedAttributes)) {
+      if (value !== oldAttributes.get(key)) {
         isUpToDate = false;
         break;
       }

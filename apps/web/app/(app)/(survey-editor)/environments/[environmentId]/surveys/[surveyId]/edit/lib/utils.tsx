@@ -23,7 +23,7 @@ import {
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { TLogicRuleOption, logicRules } from "./logicRuleEngine";
+import { TLogicRuleOption, getLogicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes
 export const formatTextWithSlashes = (text: string) => {
@@ -144,24 +144,27 @@ export const replaceEndingCardHeadlineRecall = (
   return modifiedSurvey;
 };
 
-export const actionObjectiveOptions: TComboboxOption[] = [
-  { label: "environments.surveys.edit.calculate", value: "calculate" },
-  { label: "environments.surveys.edit.require_answer", value: "requireAnswer" },
-  { label: "environments.surveys.edit.jump_to_question", value: "jumpToQuestion" },
+export const getActionObjectiveOptions = (t: (key: string) => string): TComboboxOption[] => [
+  { label: t("environments.surveys.edit.calculate"), value: "calculate" },
+  { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
+  { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToQuestion" },
 ];
 
 export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean => {
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[] => {
+const getQuestionOperatorOptions = (
+  question: TSurveyQuestion,
+  t: (key: string) => string
+): TComboboxOption[] => {
   let options: TLogicRuleOption;
 
   if (question.type === "openText") {
     const inputType = question.inputType === "number" ? "number" : "text";
-    options = logicRules.question[`openText.${inputType}`].options;
+    options = getLogicRules(t).question[`openText.${inputType}`].options;
   } else {
-    options = logicRules.question[question.type].options;
+    options = getLogicRules(t).question[question.type].options;
   }
 
   if (question.required) {
@@ -171,30 +174,34 @@ const getQuestionOperatorOptions = (question: TSurveyQuestion): TComboboxOption[
   return options;
 };
 
-export const getDefaultOperatorForQuestion = (question: TSurveyQuestion): TSurveyLogicConditionsOperator => {
-  const options = getQuestionOperatorOptions(question);
+export const getDefaultOperatorForQuestion = (
+  question: TSurveyQuestion,
+  t: (key: string) => string
+): TSurveyLogicConditionsOperator => {
+  const options = getQuestionOperatorOptions(question, t);
 
   return options[0].value.toString() as TSurveyLogicConditionsOperator;
 };
 
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
-  localSurvey: TSurvey
+  localSurvey: TSurvey,
+  t: (key: string) => string
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables ?? [];
     const variableType =
       variables.find((variable) => variable.id === condition.leftOperand.value)?.type || "text";
-    return logicRules[`variable.${variableType}`].options;
+    return getLogicRules(t)[`variable.${variableType}`].options;
   } else if (condition.leftOperand.type === "hiddenField") {
-    return logicRules.hiddenField.options;
+    return getLogicRules(t).hiddenField.options;
   } else if (condition.leftOperand.type === "question") {
     const questions = localSurvey.questions ?? [];
     const question = questions.find((question) => question.id === condition.leftOperand.value);
 
     if (!question) return [];
 
-    return getQuestionOperatorOptions(question);
+    return getQuestionOperatorOptions(question, t);
   }
   return [];
 };
@@ -202,6 +209,7 @@ export const getConditionOperatorOptions = (
 export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
+  questionIdx: number,
   t: (key: string) => string
 ): {
   show?: boolean;
@@ -223,7 +231,7 @@ export const getMatchValueProps = (
     return { show: false, options: [] };
   }
 
-  let questions = localSurvey.questions ?? [];
+  let questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
   let variables = localSurvey.variables ?? [];
   let hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
 
@@ -774,7 +782,7 @@ export const getActionTargetOptions = (
   currQuestionIdx: number,
   t: (key: string) => string
 ): TComboboxOption[] => {
-  let questions = localSurvey.questions.filter((_, idx) => idx !== currQuestionIdx);
+  let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
   if (action.objective === "requireAnswer") {
     questions = questions.filter((question) => !question.required);
@@ -863,11 +871,12 @@ export const getActionOperatorOptions = (
 export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
+  questionIdx: number,
   t: (key: string) => string
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
-  const questions = localSurvey.questions;
+  const questions = localSurvey.questions.filter((_, idx) => idx <= questionIdx);
 
   const hiddenFieldsOptions = hiddenFields.map((field) => {
     return {

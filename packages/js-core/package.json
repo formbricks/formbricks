@@ -20,9 +20,9 @@
     "dist"
   ],
   "exports": {
+    "types": "./dist/index.d.ts",
     "import": "./dist/index.js",
-    "require": "./dist/index.umd.cjs",
-    "types": "./dist/index.d.ts"
+    "require": "./dist/index.umd.cjs"
   },
   "typesVersions": {
     "*": {
@@ -46,8 +46,8 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "terser": "5.31.6",
-    "vite": "5.4.8",
-    "vite-plugin-dts": "3.9.1"
+    "terser": "5.37.0",
+    "vite": "6.0.9",
+    "vite-plugin-dts": "4.3.0"
   }
 }

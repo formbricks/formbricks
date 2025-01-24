@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { Muted, P } from "@/modules/ui/components/typography";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import type { Control } from "react-hook-form";
@@ -14,7 +15,7 @@ import { Controller } from "react-hook-form";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
-  control: Control<{ name: string; email: string; role: TOrganizationRole }>;
+  control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
 }
@@ -25,13 +26,21 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
     : Object.keys(OrganizationRole).filter((role) => role !== "billing");
 
   const t = useTranslations();
+
+  const rolesDescription = {
+    owner: t("environments.settings.teams.owner_role_description"),
+    manager: t("environments.settings.teams.manager_role_description"),
+    member: t("environments.settings.teams.member_role_description"),
+    billing: t("environments.settings.teams.billing_role_description"),
+  };
+
   return (
     <Controller
       control={control}
       name="role"
       render={({ field: { onChange, value } }) => (
-        <div>
-          <Label>{t("common.role")}</Label>
+        <div className="flex flex-col space-y-2">
+          <Label>{t("common.role_organization")}</Label>
           <Select
             defaultValue="owner"
             disabled={!canDoRoleManagement}
@@ -40,13 +49,16 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
             }}
             value={value}>
             <SelectTrigger className="capitalize">
-              <SelectValue />
+              <SelectValue>
+                <P>{value}</P>
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
                 {roles.map((role) => (
-                  <SelectItem className="capitalize" key={role} value={role}>
-                    {role}
+                  <SelectItem key={role} value={role}>
+                    <P className="capitalize">{role}</P>
+                    <Muted className="text-slate-500">{rolesDescription[role]}</Muted>
                   </SelectItem>
                 ))}
               </SelectGroup>

@@ -13,8 +13,6 @@ export const TermsPrivacyLinks = ({ termsUrl, privacyUrl }: TermsPrivacyLinksPro
 
   return (
     <div className="mt-3 text-center text-xs text-slate-500">
-      {t("auth.signup.terms_of_service")}
-      <br />
       {termsUrl && (
         <Link className="font-semibold" href={termsUrl} rel="noreferrer" target="_blank">
           {t("auth.signup.terms_of_service")}

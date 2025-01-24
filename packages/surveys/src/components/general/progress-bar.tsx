@@ -17,20 +17,21 @@ export function ProgressBar({ survey, questionId }: ProgressBarProps) {
   const endingCardIds = useMemo(() => survey.endings.map((ending) => ending.id), [survey.endings]);
 
   const calculateProgress = useCallback(
-    (index: number, questionsLength: number) => {
+    (index: number) => {
+      let totalCards = survey.questions.length;
+      if (endingCardIds.length > 0) totalCards += 1;
       let idx = index;
 
-      if (questionsLength === 0) return 0;
       if (index === -1) idx = 0;
 
-      const elementIdx = calculateElementIdx(survey, idx);
-      return elementIdx / questionsLength;
+      const elementIdx = calculateElementIdx(survey, idx, totalCards);
+      return elementIdx / totalCards;
     },
     [survey]
   );
 
   const progressArray = useMemo(() => {
-    return survey.questions.map((_, index) => calculateProgress(index, survey.questions.length));
+    return survey.questions.map((_, index) => calculateProgress(index));
   }, [calculateProgress, survey]);
 
   const progressValue = useMemo(() => {

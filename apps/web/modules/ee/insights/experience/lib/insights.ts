@@ -1,5 +1,10 @@
 import { insightCache } from "@/lib/cache/insight";
-import { Prisma } from "@prisma/client";
+import {
+  TInsightFilterCriteria,
+  TInsightWithDocumentCount,
+  ZInsightFilterCriteria,
+} from "@/modules/ee/insights/experience/types/insights";
+import { Insight, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -8,7 +13,6 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInsight, TInsightFilterCriteria, ZInsightFilterCriteria } from "@formbricks/types/insights";
 
 export const getInsights = reactCache(
   async (
@@ -16,7 +20,7 @@ export const getInsights = reactCache(
     limit?: number,
     offset?: number,
     filterCriteria?: TInsightFilterCriteria
-  ): Promise<TInsight[]> =>
+  ): Promise<TInsightWithDocumentCount[]> =>
     cache(
       async () => {
         validateInputs(
@@ -84,7 +88,7 @@ export const getInsights = reactCache(
     )()
 );
 
-export const updateInsight = async (insightId: string, updates: Partial<TInsight>): Promise<void> => {
+export const updateInsight = async (insightId: string, updates: Partial<Insight>): Promise<void> => {
   try {
     const updatedInsight = await prisma.insight.update({
       where: { id: insightId },

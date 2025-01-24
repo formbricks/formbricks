@@ -1,63 +1,58 @@
-import { Body, Column, Container, Html, Img, Link, Row, Section, Tailwind } from "@react-email/components";
+import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
-export function EmailTemplate({ children }): React.JSX.Element {
+const fbLogoUrl =
+  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
+const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
+
+interface EmailTemplateProps {
+  children: React.ReactNode;
+  logoUrl?: string;
+}
+
+export function EmailTemplate({ children, logoUrl }: EmailTemplateProps): React.JSX.Element {
+  const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
+
   return (
     <Html>
       <Tailwind>
         <Body
-          className="m-0 h-full w-full justify-center bg-slate-100 bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
+          className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-base font-medium text-slate-800"
           style={{
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
           <Section>
-            <Link href="https://formbricks.com?utm_source=email_header&utm_medium=email" target="_blank">
-              <Img
-                alt="Formbricks Logo"
-                className="mx-auto w-80"
-                src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png"
-              />
-            </Link>
+            {isDefaultLogo ? (
+              <Link href={logoLink} target="_blank">
+                <Img alt="Logo" className="mx-auto w-80" src={fbLogoUrl} />
+              </Link>
+            ) : (
+              <Img alt="Logo" className="mx-auto max-h-[100px] w-80 object-contain" src={logoUrl} />
+            )}
           </Section>
-          <Container className="mx-auto my-8 max-w-xl bg-white p-4 text-left">{children}</Container>
+          <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left">
+            {children}
+          </Container>
 
-          <Section>
-            <Row>
-              <Column align="right" key="twitter">
-                <Link href="https://twitter.com/formbricks" target="_blank">
-                  <Img
-                    alt="Tw"
-                    src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Twitter-transp.png"
-                    title="Twitter"
-                    width="32"
-                  />
+          <Section className="mt-4 text-center text-sm">
+            <Text className="m-0 font-normal text-slate-500">This email was sent via Formbricks.</Text>
+            {IMPRINT_ADDRESS && (
+              <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
+            )}
+            <Text className="m-0 font-normal text-slate-500 opacity-50">
+              {IMPRINT_URL && (
+                <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
+                  Imprint{" "}
                 </Link>
-              </Column>
-              <Column align="center" className="w-20" key="github">
-                <Link href="https://formbricks.com/github" target="_blank">
-                  <Img
-                    alt="GitHub"
-                    src="https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Github-transp.png"
-                    title="GitHub"
-                    width="32"
-                  />
+              )}
+              {IMPRINT_URL && PRIVACY_URL && "•"}
+              {PRIVACY_URL && (
+                <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
+                  {" "}
+                  Privacy Policy
                 </Link>
-              </Column>
-            </Row>
-          </Section>
-          <Section className="mt-4 text-center">
-            Formbricks {new Date().getFullYear()}. All rights reserved.
-            <br />
-            <Link
-              href="https://formbricks.com/imprint?utm_source=email_footer&utm_medium=email"
-              target="_blank">
-              Imprint
-            </Link>{" "}
-            |{" "}
-            <Link
-              href="https://formbricks.com/privacy-policy?utm_source=email_footer&utm_medium=email"
-              target="_blank">
-              Privacy Policy
-            </Link>
+              )}
+            </Text>
           </Section>
         </Body>
       </Tailwind>
