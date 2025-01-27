@@ -136,7 +136,11 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const isDiscordWebhook = url.includes("discord.com/api/webhooks");
+    const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
+
+    const webhookUrl = new URL(url);
+
+    const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
 
     const payload = isDiscordWebhook
       ? {
