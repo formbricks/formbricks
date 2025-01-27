@@ -1,4 +1,5 @@
 import { writeData as airtableWriteData } from "@formbricks/lib/airtable/service";
+import { NOTION_RICH_TEXT_LIMIT } from "@formbricks/lib/constants";
 import { writeData } from "@formbricks/lib/googleSheet/service";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { writeData as writeNotionData } from "@formbricks/lib/notion/service";
@@ -6,6 +7,7 @@ import { processResponseData } from "@formbricks/lib/responses";
 import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { truncateText } from "@formbricks/lib/utils/strings";
 import { TAttributes } from "@formbricks/types/attributes";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { Result } from "@formbricks/types/error-handlers";
@@ -392,6 +394,16 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
           },
         ];
       case "rich_text":
+        if (typeof value === "string") {
+          return [
+            {
+              text: {
+                content:
+                  value.length > NOTION_RICH_TEXT_LIMIT ? truncateText(value, NOTION_RICH_TEXT_LIMIT) : value,
+              },
+            },
+          ];
+        }
         return [
           {
             text: {

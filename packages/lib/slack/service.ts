@@ -1,8 +1,9 @@
 import { Prisma } from "@prisma/client";
+import { truncateText } from "utils/strings";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
-import { SLACK_MESSAGE_LIMIT, TRUNCATION_INDICATOR } from "../constants";
+import { SLACK_MESSAGE_LIMIT } from "../constants";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
@@ -102,7 +103,7 @@ export const writeDataToSlack = async (
       const responseText = responses[i];
       const text =
         responseText.length > SLACK_MESSAGE_LIMIT
-          ? `${responseText.substring(0, SLACK_MESSAGE_LIMIT)}${TRUNCATION_INDICATOR}`
+          ? truncateText(responseText, SLACK_MESSAGE_LIMIT)
           : responseText;
       let responseSection = {
         type: "section",
