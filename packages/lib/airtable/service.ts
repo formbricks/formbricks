@@ -1,5 +1,4 @@
 import { Prisma } from "@prisma/client";
-import { truncateText } from "utils/strings";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
@@ -14,6 +13,7 @@ import {
 } from "@formbricks/types/integration/airtable";
 import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
+import { truncateText } from "../utils/strings";
 
 export const getBases = async (key: string) => {
   const req = await fetch("https://api.airtable.com/v0/meta/bases", {
@@ -154,8 +154,10 @@ const addRecords = async (
       typecast: true,
     }),
   });
+  const res = await req.json();
+  console.log(res);
 
-  return await req.json();
+  return res;
 };
 
 const addField = async (

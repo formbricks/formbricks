@@ -1,6 +1,5 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { truncateText } from "utils/strings";
 import { z } from "zod";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
@@ -15,6 +14,7 @@ import {
 } from "../constants";
 import { GOOGLE_SHEET_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration } from "../integration/service";
+import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
