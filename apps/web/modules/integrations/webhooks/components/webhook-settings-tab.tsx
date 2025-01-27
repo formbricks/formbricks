@@ -1,13 +1,14 @@
 "use client";
 
-import { SurveyCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/SurveyCheckboxGroup";
-import { TriggerCheckboxGroup } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/TriggerCheckboxGroup";
-import { validWebHookURL } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/lib/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
+import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
+import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { PipelineTriggers, Webhook } from "@prisma/client";
 import clsx from "clsx";
 import { TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -16,13 +17,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
-import { TPipelineTrigger } from "@formbricks/types/pipelines";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TWebhook, TWebhookInput } from "@formbricks/types/webhooks";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
+import { TWebhookInput } from "../types/webhooks";
 
 interface ActionSettingsTabProps {
-  webhook: TWebhook;
+  webhook: Webhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
@@ -42,7 +42,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
 
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [isUpdatingWebhook, setIsUpdatingWebhook] = useState(false);
-  const [selectedTriggers, setSelectedTriggers] = useState<TPipelineTrigger[]>(webhook.triggers);
+  const [selectedTriggers, setSelectedTriggers] = useState<PipelineTriggers[]>(webhook.triggers);
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>(webhook.surveyIds);
   const [testEndpointInput, setTestEndpointInput] = useState(webhook.url);
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();

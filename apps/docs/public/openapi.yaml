@@ -24,6 +24,9 @@ info:
   version: 1.0.0
 servers:
   - url: http://{{baseurl}}
+    variables:
+      baseurl:
+        default: "localhost:3000"
 tags:
   - name: Client API
     description: >-
@@ -151,7 +154,7 @@ tags:
         
 
       Methods allowed: Get All, Get ,Create, and Delete Webhooks
-  
+
 paths:
   /api/v1/client/{environmentId}/displays:
     post:

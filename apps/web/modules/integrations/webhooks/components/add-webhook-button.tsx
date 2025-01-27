@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { AddWebhookModal } from "./AddWebhookModal";
+import { AddWebhookModal } from "./add-webhook-modal";
 
 interface AddWebhookButtonProps {
   environment: TEnvironment;
