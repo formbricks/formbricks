@@ -1,10 +1,10 @@
+import { Webhook } from "@prisma/client";
 import { revalidateTag } from "next/cache";
-import { TWebhookInput } from "@formbricks/types/webhooks";
 
 interface RevalidateProps {
   id?: string;
   environmentId?: string;
-  source?: TWebhookInput["source"];
+  source?: Webhook["source"];
 }
 
 export const webhookCache = {
@@ -15,7 +15,7 @@ export const webhookCache = {
     byEnvironmentId(environmentId: string) {
       return `environments-${environmentId}-webhooks`;
     },
-    byEnvironmentIdAndSource(environmentId: string, source: TWebhookInput["source"]) {
+    byEnvironmentIdAndSource(environmentId: string, source?: Webhook["source"]) {
       return `environments-${environmentId}-sources-${source}-webhooks`;
     },
   },
