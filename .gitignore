@@ -69,3 +69,5 @@ packages/lib/uploads
 .idea/
 # js compiled assets
 apps/web/public/js
+
+.qodo
