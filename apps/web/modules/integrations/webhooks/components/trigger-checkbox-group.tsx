@@ -1,26 +1,29 @@
 import { Checkbox } from "@/modules/ui/components/checkbox";
+import { PipelineTriggers } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import React from "react";
-import { TPipelineTrigger } from "@formbricks/types/pipelines";
 
 interface TriggerCheckboxGroupProps {
-  selectedTriggers: TPipelineTrigger[];
-  onCheckboxChange: (selectedValue: TPipelineTrigger) => void;
+  selectedTriggers: PipelineTriggers[];
+  onCheckboxChange: (selectedValue: PipelineTriggers) => void;
   allowChanges: boolean;
 }
 
-const triggers = [
+const triggers: {
+  title: string;
+  value: PipelineTriggers;
+}[] = [
   {
     title: "environments.integrations.webhooks.response_created",
-    value: "responseCreated" as TPipelineTrigger,
+    value: "responseCreated",
   },
   {
     title: "environments.integrations.webhooks.response_updated",
-    value: "responseUpdated" as TPipelineTrigger,
+    value: "responseUpdated",
   },
   {
     title: "environments.integrations.webhooks.response_finished",
-    value: "responseFinished" as TPipelineTrigger,
+    value: "responseFinished",
   },
 ];
 
