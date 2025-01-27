@@ -25,13 +25,15 @@ export class ResponseQueue {
   private isRequestInProgress = false;
   private api: FormbricksAPI;
 
-  constructor(config: QueueConfig, surveyState: SurveyState) {
+  constructor(config: QueueConfig, surveyState: SurveyState, apiInstance?: FormbricksAPI) {
     this.config = config;
     this.surveyState = surveyState;
-    this.api = new FormbricksAPI({
-      apiHost: config.appUrl,
-      environmentId: config.environmentId,
-    });
+    this.api =
+      apiInstance ??
+      new FormbricksAPI({
+        apiHost: config.appUrl,
+        environmentId: config.environmentId,
+      });
   }
 
   add(responseUpdate: TResponseUpdate): void {

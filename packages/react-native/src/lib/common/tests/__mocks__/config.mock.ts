@@ -1,11 +1,11 @@
 import type { TConfig } from "@/types/config";
 
 // ids
-const mockEnvironmentId = "ggskhsue85p2xrxrc7x3qagg";
-const mockProjectId = "f5kptre0saxmltl7ram364qt";
-const mockLanguageId = "n4ts6u7wy5lbn4q3jovikqot";
-const mockSurveyId = "lz5m554yqh1i3moa3y230wei";
-const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
+export const mockEnvironmentId = "ggskhsue85p2xrxrc7x3qagg";
+export const mockProjectId = "f5kptre0saxmltl7ram364qt";
+export const mockLanguageId = "n4ts6u7wy5lbn4q3jovikqot";
+export const mockSurveyId = "lz5m554yqh1i3moa3y230wei";
+export const mockActionClassId = "wypzu5qw7adgy66vq8s77tso";
 
 export const mockConfig: TConfig = {
   environmentId: mockEnvironmentId,
