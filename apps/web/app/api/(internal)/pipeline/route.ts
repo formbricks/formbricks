@@ -1,10 +1,13 @@
 import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
 import { sendSurveyFollowUps } from "@/app/api/(internal)/pipeline/lib/survey-follow-up";
+import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { webhookCache } from "@/lib/cache/webhook";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -16,9 +19,6 @@ import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
-import { webhookCache } from "@formbricks/lib/webhook/cache";
-import { TPipelineTrigger, ZPipelineInput } from "@formbricks/types/pipelines";
-import { TWebhook } from "@formbricks/types/webhooks";
 import { getContactAttributes } from "./lib/contact-attribute";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
@@ -53,7 +53,7 @@ export const POST = async (request: Request) => {
 
   // Fetch webhooks
   const getWebhooksForPipeline = cache(
-    async (environmentId: string, event: TPipelineTrigger, surveyId: string) => {
+    async (environmentId: string, event: PipelineTriggers, surveyId: string) => {
       const webhooks = await prisma.webhook.findMany({
         where: {
           environmentId,
@@ -68,7 +68,7 @@ export const POST = async (request: Request) => {
       tags: [webhookCache.tag.byEnvironmentId(environmentId)],
     }
   );
-  const webhooks: TWebhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
+  const webhooks: Webhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
   // Prepare webhook and email promises
 
   // Fetch with timeout of 5 seconds to prevent hanging

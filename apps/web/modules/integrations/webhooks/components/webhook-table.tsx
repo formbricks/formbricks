@@ -1,16 +1,16 @@
 "use client";
 
-import { WebhookModal } from "@/app/(app)/environments/[environmentId]/integrations/webhooks/components/WebhookDetailModal";
+import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { Webhook } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TWebhook } from "@formbricks/types/webhooks";
 
 interface WebhookTableProps {
   environment: TEnvironment;
-  webhooks: TWebhook[];
+  webhooks: Webhook[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
@@ -25,7 +25,7 @@ export const WebhookTable = ({
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const t = useTranslations();
-  const [activeWebhook, setActiveWebhook] = useState<TWebhook>({
+  const [activeWebhook, setActiveWebhook] = useState<Webhook>({
     environmentId: environment.id,
     id: "",
     name: "",
@@ -37,7 +37,7 @@ export const WebhookTable = ({
     updatedAt: new Date(),
   });
 
-  const handleOpenWebhookDetailModalClick = (e, webhook: TWebhook) => {
+  const handleOpenWebhookDetailModalClick = (e, webhook: Webhook) => {
     e.preventDefault();
     setActiveWebhook(webhook);
     setWebhookDetailModalOpen(true);
