@@ -1,7 +1,7 @@
 import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
+import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
-import { deleteWebhook, getWebhook } from "@formbricks/lib/webhook/service";
 
 export const GET = async (_: Request, props: { params: Promise<{ webhookId: string }> }) => {
   const params = await props.params;
