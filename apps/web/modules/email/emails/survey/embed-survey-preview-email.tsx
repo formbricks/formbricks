@@ -17,7 +17,7 @@ export function EmbedSurveyPreviewEmail({
   logoUrl,
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} locale={locale}>
       <Container>
         <Heading>{translateEmailText("embed_survey_preview_email_heading", locale)}</Heading>
         <Text>{translateEmailText("embed_survey_preview_email_text", locale)}</Text>

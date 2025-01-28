@@ -12,7 +12,7 @@ interface ForgotPasswordEmailProps {
 
 export function ForgotPasswordEmail({ verifyLink, locale }: ForgotPasswordEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Heading>{translateEmailText("forgot_password_email_heading", locale)}</Heading>
         <Text>{translateEmailText("forgot_password_email_text", locale)}</Text>
@@ -24,7 +24,7 @@ export function ForgotPasswordEmail({ verifyLink, locale }: ForgotPasswordEmailP
           {translateEmailText("forgot_password_email_link_valid_for_24_hours", locale)}
         </Text>
         <Text className="mb-0">{translateEmailText("forgot_password_email_did_not_request", locale)}</Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );

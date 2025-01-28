@@ -117,7 +117,7 @@ export const sendForgotPasswordEmail = async (user: {
   const html = await render(ForgotPasswordEmail({ verifyLink, locale: user.locale }));
   return await sendEmail({
     to: user.email,
-    subject: "Reset your Formbricks password",
+    subject: translateEmailText("forgot_password_email_subject", user.locale),
     html,
   });
 };
@@ -129,7 +129,7 @@ export const sendPasswordResetNotifyEmail = async (user: {
   const html = await render(PasswordResetNotifyEmail({ locale: user.locale }));
   return await sendEmail({
     to: user.email,
-    subject: "Your Formbricks password has been changed",
+    subject: translateEmailText("password_reset_notify_email_subject", user.locale),
     html,
   });
 };
@@ -155,14 +155,16 @@ export const sendInviteMemberEmail = async (
     );
     return await sendEmail({
       to: email,
-      subject: `${inviterName} needs a hand setting up Formbricks.  Can you help out?`,
+      subject: translateEmailText("onboarding_invite_email_subject", locale, {
+        inviterName,
+      }),
       html,
     });
   } else {
     const html = await render(InviteEmail({ inviteeName, inviterName, verifyLink, locale }));
     return await sendEmail({
       to: email,
-      subject: `You're invited to collaborate on Formbricks!`,
+      subject: translateEmailText("invite_member_email_subject", locale),
       html,
     });
   }
@@ -177,7 +179,7 @@ export const sendInviteAcceptedEmail = async (
   const html = await render(InviteAcceptedEmail({ inviteeName, inviterName, locale }));
   await sendEmail({
     to: email,
-    subject: `You've got a new organization member!`,
+    subject: translateEmailText("invite_accepted_email_subject", locale),
     html,
   });
 };
@@ -212,8 +214,13 @@ export const sendResponseFinishedEmail = async (
   await sendEmail({
     to: email,
     subject: personEmail
-      ? `${personEmail} just completed your ${survey.name} survey ✅`
-      : `A response for ${survey.name} was completed ✅`,
+      ? translateEmailText("response_finished_email_subject_with_email", locale, {
+          personEmail,
+          surveyName: survey.name,
+        })
+      : translateEmailText("response_finished_email_subject", locale, {
+          surveyName: survey.name,
+        }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
   });
@@ -270,7 +277,7 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const html = await render(LinkSurveyEmail({ surveyName, surveyLink, locale, logoUrl }));
   return await sendEmail({
     to: data.email,
-    subject: "Your survey is ready to be filled out.",
+    subject: translateEmailText("verified_link_survey_email_subject", locale),
     html,
   });
 };

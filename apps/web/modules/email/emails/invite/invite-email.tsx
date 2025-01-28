@@ -19,7 +19,7 @@ export function InviteEmail({
   locale,
 }: InviteEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Text>
           {translateEmailText("invite_email_heading", locale)} {inviteeName},
@@ -28,8 +28,8 @@ export function InviteEmail({
           {translateEmailText("invite_email_text_par1", locale)} {inviterName}{" "}
           {translateEmailText("invite_email_text_par2", locale)}
         </Text>
-        <EmailButton href={verifyLink} label="Join organization" />
-        <EmailFooter />
+        <EmailButton href={verifyLink} label={translateEmailText("invite_email_button_label", locale)} />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );
