@@ -26,7 +26,6 @@ import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
 import { useTranslations } from "next-intl";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -40,7 +39,6 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   totalResponseCount: number;
-  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
@@ -52,7 +50,6 @@ export const SummaryList = ({
   responseCount,
   survey,
   totalResponseCount,
-  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
   locale,
@@ -137,7 +134,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 isAIEnabled={isAIEnabled}
                 documentsPerPage={documentsPerPage}
                 locale={locale}
@@ -155,7 +151,6 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 surveyType={survey.type}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -167,7 +162,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -179,7 +173,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -190,7 +183,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -202,7 +194,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -214,7 +205,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -227,7 +217,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -239,7 +228,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -251,7 +239,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -262,7 +249,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 setFilter={setFilter}
                 locale={locale}
               />
@@ -275,7 +261,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -287,7 +272,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 surveyType={survey.type}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );
@@ -309,7 +293,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             );

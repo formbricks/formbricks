@@ -14,7 +14,6 @@ import { useTranslations } from "next-intl";
 import { type JSX, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TShuffleOption,
@@ -34,7 +33,6 @@ interface MultipleChoiceQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -46,7 +44,6 @@ export const MultipleChoiceQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
   const t = useTranslations();
@@ -180,7 +177,6 @@ export const MultipleChoiceQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -198,7 +194,6 @@ export const MultipleChoiceQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -267,7 +262,6 @@ export const MultipleChoiceQuestionForm = ({
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
-                      contactAttributeKeys={contactAttributeKeys}
                       locale={locale}
                     />
                   ))}
