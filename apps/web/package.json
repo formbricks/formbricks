@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "3.0.0",
+  "version": "3.1.2",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -9,7 +9,8 @@
     "build": "next build",
     "build:dev": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "dotenv -e ../../.env -- vitest run"
   },
   "dependencies": {
     "@ai-sdk/azure": "1.0.10",
@@ -87,10 +88,11 @@
     "lru-cache": "11.0.2",
     "lucide-react": "0.468.0",
     "mime": "4.0.4",
-    "next": "15.1.0",
+    "next": "15.1.2",
     "next-auth": "4.24.11",
     "next-intl": "3.26.1",
     "next-safe-action": "7.10.2",
+    "nodemailer": "6.9.16",
     "optional": "0.1.4",
     "otplib": "12.0.1",
     "papaparse": "5.4.1",
@@ -127,6 +129,8 @@
     "@types/nodemailer": "6.4.17",
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
-    "nodemailer": "6.9.16"
+    "vite": "6.0.9",
+    "vitest": "2.1.8",
+    "vitest-mock-extended": "2.0.2"
   }
 }

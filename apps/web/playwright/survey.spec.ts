@@ -12,8 +12,6 @@ test.use({
 test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
 
-  test.slow();
-
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -184,8 +182,16 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 
       // Address Question
       await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
+      await expect(
+        page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+      ).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+        .fill("This is my Address");
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Contact Info Question
@@ -523,6 +529,28 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.addressQuestion.question);
+    await page.locator('[id="addressLine1\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine1\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine1);
+    await page.locator('[id="addressLine2\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine2\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine2);
+    await page.locator('[id="city\\.placeholder"]').click();
+    await page
+      .locator('[id="city\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.city);
+    await page.locator('[id="state\\.placeholder"]').click();
+    await page
+      .locator('[id="state\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.state);
+    await page.locator('[id="zip\\.placeholder"]').click();
+    await page.locator('[id="zip\\.placeholder"]').fill(surveys.germanCreate.addressQuestion.placeholder.zip);
+    await page.locator('[id="country\\.placeholder"]').click();
+    await page
+      .locator('[id="country\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.country);
     await page.getByText("Show Advanced settings").first().click();
     await page.getByPlaceholder("Next").click();
     await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
@@ -585,7 +613,7 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  test.setTimeout(240000);
+  test.setTimeout(300000);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -810,10 +838,22 @@ test.describe("Testing Survey with advanced logic", async () => {
 
       // Address Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.address.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)).toBeVisible();
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+      ).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+      ).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+        .fill("This is my city");
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip)
+      ).toBeVisible();
+      await page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear

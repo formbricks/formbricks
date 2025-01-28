@@ -409,7 +409,7 @@ export function Survey({
       <AutoCloseWrapper survey={localSurvey} onClose={onClose} offset={offset}>
         <div
           className={cn(
-            "fb-no-scrollbar sm:fb-rounded-custom fb-rounded-t-custom fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
+            "fb-no-scrollbar fb-rounded-custom fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
             cardArrangement === "simple" ? "fb-survey-shadow" : "",
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>

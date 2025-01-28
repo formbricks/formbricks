@@ -78,7 +78,6 @@ export const SingleResponseCardBody = ({
                     {formatTextWithSlashes(
                       parseRecallInfo(
                         getLocalizedValue(question.headline, "default"),
-                        {},
                         response.data,
                         response.variables,
                         true

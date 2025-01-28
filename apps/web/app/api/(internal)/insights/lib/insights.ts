@@ -2,7 +2,7 @@ import { createDocument } from "@/app/api/(internal)/insights/lib/document";
 import { doesResponseHasAnyOpenTextAnswer } from "@/app/api/(internal)/insights/lib/utils";
 import { documentCache } from "@/lib/cache/document";
 import { insightCache } from "@/lib/cache/insight";
-import { Prisma } from "@prisma/client";
+import { Insight, InsightCategory, Prisma } from "@prisma/client";
 import { embed } from "ai";
 import { prisma } from "@formbricks/database";
 import { embeddingsModel } from "@formbricks/lib/aiModels";
@@ -13,18 +13,12 @@ import { ZId } from "@formbricks/types/common";
 import { TCreatedDocument } from "@formbricks/types/documents";
 import { DatabaseError } from "@formbricks/types/errors";
 import {
-  TInsight,
-  TInsightCategory,
-  TInsightCreateInput,
-  ZInsightCreateInput,
-} from "@formbricks/types/insights";
-import {
   TSurvey,
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
-import { getContactAttributes } from "./contact-attribute";
+import { TInsightCreateInput, TNearestInsights, ZInsightCreateInput } from "./types";
 
 export const generateInsightsForSurveyResponsesConcept = async (
   survey: Pick<TSurvey, "id" | "name" | "environmentId" | "questions">
@@ -104,9 +98,6 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
         const answersForDocumentCreationPromises = await Promise.all(
           responsesWithOpenTextAnswers.map(async (response) => {
-            const contactAttributes = response.contactId
-              ? await getContactAttributes(response.contactId)
-              : {};
             const responseEntries = openTextQuestionsWithInsights.map((question) => {
               const responseText = response.data[question.id] as string;
               if (!responseText) {
@@ -115,7 +106,6 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                contactAttributes,
                 response.data,
                 response.variables
               );
@@ -260,8 +250,6 @@ export const generateInsightsForSurveyResponses = async (
       const createDocumentPromises: Promise<TCreatedDocument | undefined>[] = [];
 
       for (const response of responsesWithOpenTextAnswers) {
-        const contactAttributes = response.contactId ? await getContactAttributes(response.contactId) : {};
-
         for (const question of openTextQuestionsWithInsights) {
           const responseText = response.data[question.id] as string;
           if (!responseText) {
@@ -270,7 +258,6 @@ export const generateInsightsForSurveyResponses = async (
 
           const headline = parseRecallInfo(
             question.headline[response.language ?? "default"],
-            contactAttributes,
             response.data,
             response.variables
           );
@@ -328,22 +315,15 @@ export const getQuestionResponseReferenceId = (surveyId: string, questionId: TSu
   return `${surveyId}-${questionId}`;
 };
 
-export const createInsight = async (insightGroupInput: TInsightCreateInput): Promise<TInsight> => {
+export const createInsight = async (insightGroupInput: TInsightCreateInput): Promise<Insight> => {
   validateInputs([insightGroupInput, ZInsightCreateInput]);
 
   try {
     // create document
     const { vector, ...data } = insightGroupInput;
-    const prismaInsight = await prisma.insight.create({
+    const insight = await prisma.insight.create({
       data,
     });
-
-    const insight = {
-      ...prismaInsight,
-      _count: {
-        documentInsights: 0,
-      },
-    };
 
     // update document vector with the embedding
     const vectorString = `[${insightGroupInput.vector.join(",")}]`;
@@ -373,7 +353,7 @@ export const handleInsightAssignments = async (
   insight: {
     title: string;
     description: string;
-    category: TInsightCategory;
+    category: InsightCategory;
   }
 ) => {
   try {
@@ -427,21 +407,15 @@ export const findNearestInsights = async (
   vector: number[],
   limit: number = 5,
   threshold: number = 0.5
-): Promise<TInsight[]> => {
+): Promise<TNearestInsights[]> => {
   validateInputs([environmentId, ZId]);
   // Convert the embedding array to a JSON-like string representation
   const vectorString = `[${vector.join(",")}]`;
 
   // Execute raw SQL query to find nearest neighbors and exclude the vector column
-  const insights: TInsight[] = await prisma.$queryRaw`
+  const insights: TNearestInsights[] = await prisma.$queryRaw`
     SELECT
-      id,
-      created_at AS "createdAt",
-      updated_at AS "updatedAt",
-      title,
-      description,
-      category,
-      "environmentId"
+      id
     FROM "Insight" d
     WHERE d."environmentId" = ${environmentId}
       AND d."vector" <=> ${vectorString}::vector(512) <= ${threshold}

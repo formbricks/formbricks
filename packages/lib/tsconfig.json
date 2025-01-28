@@ -18,6 +18,7 @@
     ".",
     "../types/*.d.ts",
     "../../apps/web/lib/cache/contact-attribute-key.ts",
-    "../../apps/web/modules/utils/hooks"
+    "../../apps/web/modules/utils/hooks",
+    "../../apps/web/lib/cache/api-key.ts"
   ]
 }

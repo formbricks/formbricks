@@ -72,13 +72,14 @@ export const SMTP_PORT = env.SMTP_PORT;
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
+export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
-export const RESPONSES_PER_PAGE = 20;
+export const RESPONSES_PER_PAGE = 25;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 export const INSIGHTS_PER_PAGE = 10;
 export const DOCUMENTS_PER_PAGE = 10;
@@ -86,6 +87,11 @@ export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 
 export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
 export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
+
+export const SLACK_MESSAGE_LIMIT = 2995;
+export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
+export const AIRTABLE_MESSAGE_LIMIT = 99995;
+export const NOTION_RICH_TEXT_LIMIT = 1995;
 
 // Storage constants
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;

@@ -277,7 +277,7 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="flex h-full w-full flex-col justify-end">
+                <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} project={project} previewSurvey />

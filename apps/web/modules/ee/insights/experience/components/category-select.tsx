@@ -1,14 +1,14 @@
 import { BadgeSelect, TBadgeSelectOption } from "@/modules/ui/components/badge-select";
+import { InsightCategory } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
-import { TInsight } from "@formbricks/types/insights";
 import { updateInsightAction } from "../actions";
 
 interface CategoryBadgeProps {
-  category: TInsight["category"];
+  category: InsightCategory;
   insightId: string;
-  onCategoryChange?: (insightId: string, category: TInsight["category"]) => void;
+  onCategoryChange?: (insightId: string, category: InsightCategory) => void;
 }
 
 const categoryOptions: TBadgeSelectOption[] = [
@@ -18,14 +18,14 @@ const categoryOptions: TBadgeSelectOption[] = [
   { text: "Other", type: "gray" },
 ];
 
-const categoryMapping: Record<string, TInsight["category"]> = {
+const categoryMapping: Record<string, InsightCategory> = {
   Complaint: "complaint",
   Request: "featureRequest",
   Praise: "praise",
   Other: "other",
 };
 
-const getCategoryIndex = (category: TInsight["category"]) => {
+const getCategoryIndex = (category: InsightCategory) => {
   switch (category) {
     case "complaint":
       return 0;
@@ -41,7 +41,7 @@ const getCategoryIndex = (category: TInsight["category"]) => {
 const CategoryBadge = ({ category, insightId, onCategoryChange }: CategoryBadgeProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const t = useTranslations();
-  const handleUpdateCategory = async (newCategory: TInsight["category"]) => {
+  const handleUpdateCategory = async (newCategory: InsightCategory) => {
     setIsUpdating(true);
     try {
       await updateInsightAction({ insightId, data: { category: newCategory } });

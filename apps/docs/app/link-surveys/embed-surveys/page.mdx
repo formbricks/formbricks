@@ -1,5 +1,5 @@
-import { MdxImage } from "@/components/MdxImage";
-import { TellaVideo } from "@/components/TellaVideo";
+import { MdxImage } from "@/components/mdx-image";
+import { TellaVideo } from "@/components/tella-video";
 
 import EmailContentWithSurvey from "./images/email-content-with-survey.webp";
 import EmailContentWithoutSurvey from "./images/email-content-without-survey.webp";
@@ -67,8 +67,7 @@ The iframe fires a **formbricksSurveyCompleted** event when a user finishes a su
 3. Check if the received message indicates that the survey is completed by comparing the `event.data` with the value `formbricksSurveyCompleted`.
 
 <Note>
-  It is important to verify the origin of the message to ensure it comes from the iframe containing your
-  survey, enhancing the security of your event handling.
+  It is important to verify the origin of the message to ensure it comes from the iframe containing your survey, enhancing the security of your event handling.
 </Note>
 
 4. Implement your custom actions within the callback function based on the survey completion.
@@ -150,8 +149,7 @@ Different email clients have different support for HTML and CSS. We recommend te
 Below are some of the methods and services that we know that allows HTML embedding and how you can use them:
 
 <Note>
-  Please use the below methods at your own discretion. We do not officially endorse any of the services
-  mentioned below.
+  Please use the below methods at your own discretion. We do not officially endorse any of the services mentioned below.
 </Note>
 
 ### 1. Gmail

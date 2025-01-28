@@ -1,6 +1,6 @@
-import type { NavGroup } from "@/components/Navigation";
+import type { NavGroup } from "@/components/navigation";
 
-export const navigation: Array<NavGroup> = [
+export const navigation: NavGroup[] = [
   {
     title: "Introduction",
     links: [
@@ -144,6 +144,7 @@ export const navigation: Array<NavGroup> = [
       { title: "Integrations", href: "/self-hosting/integrations" },
       { title: "License", href: "/self-hosting/license" },
       { title: "Cluster Setup", href: "/self-hosting/cluster-setup" },
+      { title: "Rate Limiting", href: "/self-hosting/rate-limiting" },
     ],
   },
   {

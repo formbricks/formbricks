@@ -1,11 +1,7 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { DeleteContactButton } from "@/modules/ee/contacts/[contactId]/components/delete-contact-button";
-import {
-  getContact,
-  getContactAttributeKeys,
-  getContactAttributes,
-} from "@/modules/ee/contacts/lib/contacts";
+import { getContact, getContactAttributes } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -26,25 +22,16 @@ export const SingleContactPage = async (props: {
 }) => {
   const params = await props.params;
   const t = await getTranslations();
-  const [
-    environment,
-    environmentTags,
-    project,
-    session,
-    organization,
-    contact,
-    contactAttributeKeys,
-    contactAttributes,
-  ] = await Promise.all([
-    getEnvironment(params.environmentId),
-    getTagsByEnvironmentId(params.environmentId),
-    getProjectByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-    getOrganizationByEnvironmentId(params.environmentId),
-    getContact(params.contactId),
-    getContactAttributeKeys(params.environmentId),
-    getContactAttributes(params.contactId),
-  ]);
+  const [environment, environmentTags, project, session, organization, contact, contactAttributes] =
+    await Promise.all([
+      getEnvironment(params.environmentId),
+      getTagsByEnvironmentId(params.environmentId),
+      getProjectByEnvironmentId(params.environmentId),
+      getServerSession(authOptions),
+      getOrganizationByEnvironmentId(params.environmentId),
+      getContact(params.contactId),
+      getContactAttributes(params.contactId),
+    ]);
 
   if (!project) {
     throw new Error(t("common.project_not_found"));
@@ -94,7 +81,6 @@ export const SingleContactPage = async (props: {
             environment={environment}
             contactId={params.contactId}
             environmentTags={environmentTags}
-            contactAttributeKeys={contactAttributeKeys}
           />
         </div>
       </section>

@@ -1,7 +1,7 @@
-import { Button } from "@/components/Button";
-import { HeroPattern } from "@/components/HeroPattern";
+import { Button } from "@/components/button";
+import { HeroPattern } from "@/components/hero-pattern";
 
-const NotFound = () => {
+export default function NotFound(): React.JSX.Element {
   return (
     <>
       <HeroPattern />
@@ -17,6 +17,4 @@ const NotFound = () => {
       </div>
     </>
   );
-};
-
-export default NotFound;
+}

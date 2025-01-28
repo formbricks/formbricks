@@ -61,12 +61,15 @@ export const getShuffledChoicesIds = (
   return shuffledChoices.map((choice) => choice.id);
 };
 
-export const calculateElementIdx = (survey: TJsEnvironmentStateSurvey, currentQustionIdx: number): number => {
+export const calculateElementIdx = (
+  survey: TJsEnvironmentStateSurvey,
+  currentQustionIdx: number,
+  totalCards: number
+): number => {
   const currentQuestion = survey.questions[currentQustionIdx];
-  const surveyLength = survey.questions.length;
-  const middleIdx = Math.floor(surveyLength / 2);
+  const middleIdx = Math.floor(totalCards / 2);
   const possibleNextQuestions = getPossibleNextQuestions(currentQuestion);
-
+  const endingCardIds = survey.endings.map((ending) => ending.id);
   const getLastQuestionIndex = () => {
     const lastQuestion = survey.questions
       .filter((q) => possibleNextQuestions.includes(q.id))
@@ -79,7 +82,7 @@ export const calculateElementIdx = (survey: TJsEnvironmentStateSurvey, currentQu
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
-  if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
+  if (possibleNextQuestions.some((id) => endingCardIds.includes(id))) elementIdx = middleIdx;
   return elementIdx;
 };
 

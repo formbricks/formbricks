@@ -11,8 +11,9 @@ import {
   ZIntegrationAirtableTablesWithFields,
   ZIntegrationAirtableTokenSchema,
 } from "@formbricks/types/integration/airtable";
-import { AIRTABLE_CLIENT_ID } from "../constants";
+import { AIRTABLE_CLIENT_ID, AIRTABLE_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration, deleteIntegration, getIntegrationByType } from "../integration/service";
+import { truncateText } from "../utils/strings";
 
 export const getBases = async (key: string) => {
   const req = await fetch("https://api.airtable.com/v0/meta/bases", {
@@ -153,8 +154,9 @@ const addRecords = async (
       typecast: true,
     }),
   });
+  const res = await req.json();
 
-  return await req.json();
+  return res;
 };
 
 const addField = async (
@@ -185,7 +187,10 @@ export const writeData = async (
 
   const data: Record<string, string> = {};
   for (let i = 0; i < questions.length; i++) {
-    data[questions[i]] = responses[i];
+    data[questions[i]] =
+      responses[i].length > AIRTABLE_MESSAGE_LIMIT
+        ? truncateText(responses[i], AIRTABLE_MESSAGE_LIMIT)
+        : responses[i];
   }
 
   const req = await tableFetcher(key, configData.baseId);

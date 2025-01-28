@@ -158,7 +158,11 @@ export const surveys = {
     },
     address: {
       question: "Where do you live?",
-      placeholder: "Address Line 1",
+      placeholder: {
+        addressLine1: "Address Line 1",
+        city: "City",
+        zip: "Zip",
+      },
     },
     contactInfo: {
       question: "Contact Info",
@@ -233,7 +237,11 @@ export const surveys = {
     },
     address: {
       question: "Where do you live?",
-      placeholder: "Address Line 1",
+      placeholder: {
+        addressLine1: "Address Line 1",
+        city: "City",
+        zip: "Zip",
+      },
     },
     ranking: {
       question: "This is my Ranking Question",
@@ -307,6 +315,14 @@ export const surveys = {
     },
     addressQuestion: {
       question: "Wo wohnst du ?",
+      placeholder: {
+        addressLine1: "Adresse",
+        addressLine2: "Adresse",
+        city: "Adresse",
+        state: "Adresse",
+        zip: "Adresse",
+        country: "Adresse",
+      },
     },
     ranking: {
       question: "Was ist für Sie im Leben am wichtigsten?",

@@ -94,8 +94,16 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
     try {
       if (!invite) return;
 
-      await resendInviteAction({ inviteId: invite.id, organizationId: organization.id });
-      toast.success(t("environments.settings.general.invitation_sent_once_more"));
+      const resendInviteResponse = await resendInviteAction({
+        inviteId: invite.id,
+        organizationId: organization.id,
+      });
+      if (resendInviteResponse?.data) {
+        toast.success(t("environments.settings.general.invitation_sent_once_more"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(resendInviteResponse);
+        toast.error(errorMessage);
+      }
     } catch (err) {
       toast.error(`${t("common.error")}: ${err.message}`);
     }
