@@ -98,7 +98,7 @@ test.describe("JS Package Test", async () => {
 
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
     await expect(
-      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Opinodo Surveys" })
+      page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
     ).toBeVisible();
 
     // Fill the survey

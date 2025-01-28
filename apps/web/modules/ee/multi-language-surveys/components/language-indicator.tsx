@@ -1,7 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import { useRef, useState } from "react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageIndicatorProps {
@@ -39,9 +39,9 @@ export function LanguageIndicator({
       : language.language.code === selectedLanguageCode;
   });
 
-  // useClickOutside(languageDropdownRef, () => {
-  //   setShowLanguageDropdown(false);
-  // });
+  useClickOutside(languageDropdownRef, () => {
+    setShowLanguageDropdown(false);
+  });
 
   return (
     <div className="absolute right-2 top-2 z-10">

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
-// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -32,9 +32,9 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
     setIsOpen(!isOpen);
   };
 
-  // useClickOutside(languageSelectRef, () => {
-  //   setIsOpen(false);
-  // });
+  useClickOutside(languageSelectRef, () => {
+    setIsOpen(false);
+  });
 
   const handleOptionSelect = (option: TIso639Language) => {
     setSelectedOption(option);

@@ -3,7 +3,7 @@ import { Languages } from "lucide-react";
 import { useRef, useState } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -18,7 +18,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
   const languageDropdownRef = useRef(null);
   const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
 
-  // useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
+  useClickOutside(languageDropdownRef, () => setShowLanguageSelect(false));
 
   return (
     enabledLanguages.length > 1 && (

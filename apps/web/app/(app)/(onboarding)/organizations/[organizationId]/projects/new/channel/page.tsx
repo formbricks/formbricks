@@ -2,7 +2,7 @@ import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizatio
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import {PictureInPicture2Icon, SendIcon, XIcon} from "lucide-react";
+import { PictureInPicture2Icon, SendIcon, XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";

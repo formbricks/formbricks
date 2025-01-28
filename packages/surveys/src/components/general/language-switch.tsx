@@ -1,7 +1,7 @@
 import { GlobeIcon } from "@/components/general/globe-icon";
 import { useRef, useState } from "preact/hooks";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageSwitchProps {
@@ -36,9 +36,9 @@ export function LanguageSwitch({
     setShowLanguageDropdown(false);
   };
 
-  // useClickOutside(languageDropdownRef, () => {
-  //   setShowLanguageDropdown(false);
-  // });
+  useClickOutside(languageDropdownRef, () => {
+    setShowLanguageDropdown(false);
+  });
 
   return (
     <div className="fb-z-[1001] fb-flex fb-w-fit fb-items-center even:fb-pr-1">
