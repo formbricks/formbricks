@@ -1,4 +1,4 @@
-import { LogicEditor } from "@/modules/survey/survey-editor/components/LogicEditor";
+import { LogicEditor } from "@/modules/survey/survey-editor/components/logic-editor";
 import {
   getDefaultOperatorForQuestion,
   replaceEndingCardHeadlineRecall,

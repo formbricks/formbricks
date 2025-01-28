@@ -1,17 +1,17 @@
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { TargetingLockedCard } from "@/modules/survey/survey-editor/components/TargetingLockedCard";
+import { HowToSendCard } from "@/modules/survey/survey-editor/components/how-to-send-card";
+import { RecontactOptionsCard } from "@/modules/survey/survey-editor/components/recontact-options-card";
+import { ResponseOptionsCard } from "@/modules/survey/survey-editor/components/response-options-card";
+import { SurveyPlacementCard } from "@/modules/survey/survey-editor/components/survey-placement-card";
+import { TargetingLockedCard } from "@/modules/survey/survey-editor/components/targeting-locked-card";
+import { WhenToSendCard } from "@/modules/survey/survey-editor/components/when-to-send-card";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { HowToSendCard } from "./HowToSendCard";
-import { RecontactOptionsCard } from "./RecontactOptionsCard";
-import { ResponseOptionsCard } from "./ResponseOptionsCard";
-import { SurveyPlacementCard } from "./SurveyPlacementCard";
-import { WhenToSendCard } from "./WhenToSendCard";
 
 interface SettingsViewProps {
   environment: TEnvironment;

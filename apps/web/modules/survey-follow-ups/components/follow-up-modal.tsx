@@ -1,5 +1,9 @@
-import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import FollowUpActionMultiEmailInput from "@/modules/survey-follow-ups/components/follow-up-action-multi-email-input";
+import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/survey-editor/lib/utils";
+import {
+  TCreateSurveyFollowUpForm,
+  ZCreateSurveyFollowUpFormSchema,
+} from "@/modules/survey/survey-editor/types/survey-follow-up";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";
@@ -35,10 +39,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import {
-  TCreateSurveyFollowUpForm,
-  ZCreateSurveyFollowUpFormSchema,
-} from "../../../app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/types/survey-follow-up";
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;

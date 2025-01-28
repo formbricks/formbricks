@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionOptionChoice } from "@/modules/survey/survey-editor/components/question-option-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/survey-editor/lib/utils";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Button } from "@/modules/ui/components/button";
@@ -23,7 +24,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;

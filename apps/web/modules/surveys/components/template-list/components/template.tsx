@@ -4,7 +4,7 @@ import { cn } from "@formbricks/lib/cn";
 import { TProject } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
-import { TemplateTags } from "./TemplateTags";
+import { TemplateTags } from "./template-tags";
 
 interface TemplateProps {
   template: TTemplate;

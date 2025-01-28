@@ -1,12 +1,12 @@
 "use client";
 
+import { SurveyVariablesCardItem } from "@/modules/survey/survey-editor/components/survey-variables-card-item";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { FileDigitIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { SurveyVariablesCardItem } from "./SurveyVariablesCardItem";
 
 interface SurveyVariablesCardProps {
   localSurvey: TSurvey;

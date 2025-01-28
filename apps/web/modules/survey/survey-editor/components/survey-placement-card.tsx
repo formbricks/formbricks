@@ -1,5 +1,6 @@
 "use client";
 
+import { Placement } from "@/modules/survey/survey-editor/components/placement";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -10,7 +11,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyProjectOverwrites } from "@formbricks/types/surveys/types";
-import { Placement } from "./Placement";
 
 interface SurveyPlacementCardProps {
   localSurvey: TSurvey;

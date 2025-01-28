@@ -1,11 +1,11 @@
 "use client";
 
+import { CreateNewActionTab } from "@/modules/survey/survey-editor/components/create-new-action-tab";
+import { SavedActionsTab } from "@/modules/survey/survey-editor/components/saved-actions-tab";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { CreateNewActionTab } from "./CreateNewActionTab";
-import { SavedActionsTab } from "./SavedActionsTab";
 
 interface AddActionModalProps {
   open: boolean;

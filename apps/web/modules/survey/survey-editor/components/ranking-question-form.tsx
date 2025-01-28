@@ -1,5 +1,6 @@
 "use client";
 
+import { QuestionOptionChoice } from "@/modules/survey/survey-editor/components/question-option-choice";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -15,7 +16,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TI18nString, TSurvey, TSurveyRankingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { QuestionOptionChoice } from "./QuestionOptionChoice";
 
 interface RankingQuestionFormProps {
   localSurvey: TSurvey;

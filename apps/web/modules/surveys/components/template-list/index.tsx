@@ -11,9 +11,9 @@ import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
-import { StartFromScratchTemplate } from "./components/StartFromScratchTemplate";
-import { Template } from "./components/Template";
-import { TemplateFilters } from "./components/TemplateFilters";
+import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
+import { Template } from "./components/template";
+import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
   user: TUser;

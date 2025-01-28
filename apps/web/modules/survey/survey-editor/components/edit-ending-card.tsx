@@ -1,8 +1,8 @@
 "use client";
 
-import { EditorCardMenu } from "@/modules/survey/survey-editor/components/EditorCardMenu";
-import { EndScreenForm } from "@/modules/survey/survey-editor/components/EndScreenForm";
-import { RedirectUrlForm } from "@/modules/survey/survey-editor/components/RedirectUrlForm";
+import { EditorCardMenu } from "@/modules/survey/survey-editor/components/editor-card-menu";
+import { EndScreenForm } from "@/modules/survey/survey-editor/components/end-screen-form";
+import { RedirectUrlForm } from "@/modules/survey/survey-editor/components/redirect-url-form";
 import { findEndingCardUsedInLogic, formatTextWithSlashes } from "@/modules/survey/survey-editor/lib/utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";

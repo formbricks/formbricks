@@ -1,8 +1,13 @@
 "use client";
 
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
-import { AddEndingCardButton } from "@/modules/survey/survey-editor/components/AddEndingCardButton";
-import { SurveyVariablesCard } from "@/modules/survey/survey-editor/components/SurveyVariablesCard";
+import { AddEndingCardButton } from "@/modules/survey/survey-editor/components/add-ending-card-button";
+import { AddQuestionButton } from "@/modules/survey/survey-editor/components/add-question-button";
+import { EditEndingCard } from "@/modules/survey/survey-editor/components/edit-ending-card";
+import { EditWelcomeCard } from "@/modules/survey/survey-editor/components/edit-welcome-card";
+import { HiddenFieldsCard } from "@/modules/survey/survey-editor/components/hidden-fields-card";
+import { QuestionsDroppable } from "@/modules/survey/survey-editor/components/questions-droppable";
+import { SurveyVariablesCard } from "@/modules/survey/survey-editor/components/survey-variables-card";
 import { findQuestionUsedInLogic } from "@/modules/survey/survey-editor/lib/utils";
 import {
   DndContext,
@@ -42,11 +47,6 @@ import {
   validateQuestion,
   validateSurveyQuestionsInBatch,
 } from "../lib/validation";
-import { AddQuestionButton } from "./AddQuestionButton";
-import { EditEndingCard } from "./EditEndingCard";
-import { EditWelcomeCard } from "./EditWelcomeCard";
-import { HiddenFieldsCard } from "./HiddenFieldsCard";
-import { QuestionsDroppable } from "./QuestionsDroppable";
 
 interface QuestionsViewProps {
   localSurvey: TSurvey;

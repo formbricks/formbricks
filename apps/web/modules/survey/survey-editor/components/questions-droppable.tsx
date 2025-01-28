@@ -1,10 +1,10 @@
+import { QuestionCard } from "@/modules/survey/survey-editor/components/question-card";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { QuestionCard } from "./QuestionCard";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;

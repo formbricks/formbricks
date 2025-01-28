@@ -1,5 +1,19 @@
-import { ContactInfoQuestionForm } from "@/modules/survey/survey-editor/components/ContactInfoQuestionForm";
-import { RankingQuestionForm } from "@/modules/survey/survey-editor/components/RankingQuestionForm";
+import { AddressQuestionForm } from "@/modules/survey/survey-editor/components/address-question-form";
+import { AdvancedSettings } from "@/modules/survey/survey-editor/components/advanced-settings";
+import { CalQuestionForm } from "@/modules/survey/survey-editor/components/cal-question-form";
+import { ConsentQuestionForm } from "@/modules/survey/survey-editor/components/consent-question-form";
+import { ContactInfoQuestionForm } from "@/modules/survey/survey-editor/components/contact-info-question-form";
+import { CTAQuestionForm } from "@/modules/survey/survey-editor/components/cta-question-form";
+import { DateQuestionForm } from "@/modules/survey/survey-editor/components/date-question-form";
+import { EditorCardMenu } from "@/modules/survey/survey-editor/components/editor-card-menu";
+import { FileUploadQuestionForm } from "@/modules/survey/survey-editor/components/file-upload-question-form";
+import { MatrixQuestionForm } from "@/modules/survey/survey-editor/components/matrix-question-form";
+import { MultipleChoiceQuestionForm } from "@/modules/survey/survey-editor/components/multiple-choice-question-form";
+import { NPSQuestionForm } from "@/modules/survey/survey-editor/components/nps-question-form";
+import { OpenQuestionForm } from "@/modules/survey/survey-editor/components/open-question-form";
+import { PictureSelectionForm } from "@/modules/survey/survey-editor/components/picture-selection-form";
+import { RankingQuestionForm } from "@/modules/survey/survey-editor/components/ranking-question-form";
+import { RatingQuestionForm } from "@/modules/survey/survey-editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/survey-editor/lib/utils";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Label } from "@/modules/ui/components/label";
@@ -24,20 +38,6 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { AddressQuestionForm } from "./AddressQuestionForm";
-import { AdvancedSettings } from "./AdvancedSettings";
-import { CTAQuestionForm } from "./CTAQuestionForm";
-import { CalQuestionForm } from "./CalQuestionForm";
-import { ConsentQuestionForm } from "./ConsentQuestionForm";
-import { DateQuestionForm } from "./DateQuestionForm";
-import { EditorCardMenu } from "./EditorCardMenu";
-import { FileUploadQuestionForm } from "./FileUploadQuestionForm";
-import { MatrixQuestionForm } from "./MatrixQuestionForm";
-import { MultipleChoiceQuestionForm } from "./MultipleChoiceQuestionForm";
-import { NPSQuestionForm } from "./NPSQuestionForm";
-import { OpenQuestionForm } from "./OpenQuestionForm";
-import { PictureSelectionForm } from "./PictureSelectionForm";
-import { RatingQuestionForm } from "./RatingQuestionForm";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;

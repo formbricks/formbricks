@@ -1,4 +1,4 @@
-import { LoadingSkeleton } from "./components/LoadingSkeleton";
+import { LoadingSkeleton } from "./components/loading-skeleton";
 
 export const SurveyEditorLoading = () => {
   return <LoadingSkeleton />;

@@ -1,5 +1,6 @@
 "use client";
 
+import { SurveyBgSelectorTab } from "@/modules/survey/survey-editor/components/survey-bg-selector-tab";
 import { Badge } from "@/modules/ui/components/badge";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Slider } from "@/modules/ui/components/slider";
@@ -11,7 +12,6 @@ import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import { SurveyBgSelectorTab } from "./SurveyBgSelectorTab";
 
 interface BackgroundStylingCardProps {
   open: boolean;

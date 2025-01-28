@@ -2,6 +2,12 @@
 
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { FollowUpsView } from "@/modules/survey-follow-ups/components/follow-ups-view";
+import { LoadingSkeleton } from "@/modules/survey/survey-editor/components/loading-skeleton";
+import { QuestionsView } from "@/modules/survey/survey-editor/components/questions-view";
+import { SettingsView } from "@/modules/survey/survey-editor/components/settings-view";
+import { StylingView } from "@/modules/survey/survey-editor/components/styling-view";
+import { SurveyEditorTabs } from "@/modules/survey/survey-editor/components/survey-editor-tabs";
+import { SurveyMenuBar } from "@/modules/survey/survey-editor/components/survey-menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -17,12 +23,6 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { refetchProjectAction } from "../actions";
-import { LoadingSkeleton } from "./LoadingSkeleton";
-import { QuestionsView } from "./QuestionsView";
-import { SettingsView } from "./SettingsView";
-import { StylingView } from "./StylingView";
-import { SurveyEditorTabs } from "./SurveyEditorTabs";
-import { SurveyMenuBar } from "./SurveyMenuBar";
 
 interface SurveyEditorProps {
   survey: TSurvey;

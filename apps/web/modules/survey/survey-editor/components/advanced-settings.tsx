@@ -1,7 +1,7 @@
-import { ConditionalLogic } from "@/modules/survey/survey-editor/components/ConditionalLogic";
+import { ConditionalLogic } from "@/modules/survey/survey-editor/components/conditional-logic";
+import { UpdateQuestionId } from "@/modules/survey/survey-editor/components/update-question-id";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
-import { UpdateQuestionId } from "./UpdateQuestionId";
 
 interface AdvancedSettingsProps {
   question: TSurveyQuestion;

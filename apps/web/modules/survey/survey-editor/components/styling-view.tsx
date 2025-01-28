@@ -1,3 +1,6 @@
+import { BackgroundStylingCard } from "@/modules/survey/survey-editor/components/background-styling-card";
+import { CardStylingSettings } from "@/modules/survey/survey-editor/components/card-styling-settings";
+import { FormStylingSettings } from "@/modules/survey/survey-editor/components/form-styling-settings";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -19,9 +22,6 @@ import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { BackgroundStylingCard } from "./BackgroundStylingCard";
-import { CardStylingSettings } from "./CardStylingSettings";
-import { FormStylingSettings } from "./FormStylingSettings";
 
 interface StylingViewProps {
   environment: TEnvironment;

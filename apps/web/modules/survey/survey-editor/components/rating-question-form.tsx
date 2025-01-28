@@ -1,3 +1,4 @@
+import { Dropdown } from "@/modules/survey/survey-editor/components/rating-type-dropdown";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -9,7 +10,6 @@ import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/uti
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { Dropdown } from "./RatingTypeDropdown";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;

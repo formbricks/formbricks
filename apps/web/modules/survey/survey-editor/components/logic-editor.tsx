@@ -1,5 +1,5 @@
-import { LogicEditorActions } from "@/modules/survey/survey-editor/components/LogicEditorActions";
-import { LogicEditorConditions } from "@/modules/survey/survey-editor/components/LogicEditorConditions";
+import { LogicEditorActions } from "@/modules/survey/survey-editor/components/logic-editor-actions";
+import { LogicEditorConditions } from "@/modules/survey/survey-editor/components/logic-editor-conditions";
 import {
   Select,
   SelectContent,

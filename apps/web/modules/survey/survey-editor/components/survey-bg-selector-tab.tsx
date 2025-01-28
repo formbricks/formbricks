@@ -1,11 +1,11 @@
+import { AnimatedSurveyBg } from "@/modules/survey/survey-editor/components/animated-survey-bg";
+import { ColorSurveyBg } from "@/modules/survey/survey-editor/components/color-survey-bg";
+import { UploadImageSurveyBg } from "@/modules/survey/survey-editor/components/image-survey-bg";
+import { ImageFromUnsplashSurveyBg } from "@/modules/survey/survey-editor/components/unsplash-images";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import { AnimatedSurveyBg } from "./AnimatedSurveyBg";
-import { ColorSurveyBg } from "./ColorSurveyBg";
-import { UploadImageSurveyBg } from "./ImageSurveyBg";
-import { ImageFromUnsplashSurveyBg } from "./UnsplashImages";
 
 interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;

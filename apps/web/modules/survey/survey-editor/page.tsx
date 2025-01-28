@@ -25,7 +25,7 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
-import { SurveyEditor } from "./components/SurveyEditor";
+import { SurveyEditor } from "./components/survey-editor";
 
 export const generateMetadata = async (props) => {
   const params = await props.params;
