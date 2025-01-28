@@ -19,8 +19,8 @@ import {
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
@@ -47,7 +47,7 @@ export const ThemeStyling = ({
   locale,
   isReadOnly,
 }: ThemeStylingProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const form = useForm<TProjectStyling>({

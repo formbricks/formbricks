@@ -6,8 +6,8 @@ import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -52,7 +52,7 @@ export const RecontactOptionsCard = ({
   setLocalSurvey,
   environmentId,
 }: RecontactOptionsCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(

@@ -3,7 +3,7 @@
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
 
@@ -32,7 +32,7 @@ export const Placement = ({
   setClickOutsideClose,
   clickOutsideClose,
 }: TPlacementProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const overlayStyle =
     currentPlacement === "center" && overlay === "dark" ? "bg-slate-700/80" : "bg-slate-200";
   return (

@@ -1,6 +1,8 @@
+"use client";
+
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { SplitIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
@@ -65,7 +67,7 @@ const getChannelTag = (
 };
 
 export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(

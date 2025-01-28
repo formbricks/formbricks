@@ -1,5 +1,7 @@
+"use client";
+
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
@@ -33,7 +35,7 @@ export const NPSSummary = ({
   setFilter,
   locale,
 }: NPSSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {

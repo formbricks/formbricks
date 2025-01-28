@@ -1,5 +1,7 @@
+"use client";
+
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
@@ -112,7 +114,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   isFetchingFirstPage,
   locale,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const data = mapResponsesToTableData(responses, survey, t);
 
   return (

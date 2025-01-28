@@ -4,9 +4,9 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
+import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
@@ -29,7 +29,7 @@ interface ProjectSettingsPageProps {
 const Page = async (props: ProjectSettingsPageProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
 
   if (!session || !session.user) {

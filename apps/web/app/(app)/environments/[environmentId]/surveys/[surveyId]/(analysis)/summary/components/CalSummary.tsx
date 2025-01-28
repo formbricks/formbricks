@@ -1,6 +1,8 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -15,7 +17,7 @@ interface CalSummaryProps {
 }
 
 export const CalSummary = ({ questionSummary, survey, contactAttributeKeys, locale }: CalSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -1,6 +1,8 @@
+"use client";
+
 import { ProBadge } from "@/modules/ui/components/pro-badge";
+import { useTranslate } from "@tolgee/react";
 import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { type JSX, useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
@@ -27,7 +29,7 @@ export const SurveyEditorTabs = ({
   isCxMode,
   isSurveyFollowUpsAllowed = false,
 }: SurveyEditorTabsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabsComputed = useMemo(() => {
     const tabs: Tab[] = [
       {

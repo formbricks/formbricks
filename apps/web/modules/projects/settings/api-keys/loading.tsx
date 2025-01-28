@@ -3,10 +3,10 @@
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 const LoadingCard = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="w-full max-w-4xl rounded-xl border border-slate-200 bg-white py-4 shadow-sm">
       <div className="grid content-center border-b border-slate-200 px-4 pb-4 text-left text-slate-900">
@@ -39,7 +39,7 @@ const LoadingCard = () => {
 };
 
 export const APIKeysLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.configuration")}>

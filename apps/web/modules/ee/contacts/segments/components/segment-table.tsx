@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment } from "@formbricks/types/segment";
 import { SegmentTableDataRowContainer } from "./segment-table-data-row-container";
@@ -16,7 +18,7 @@ export const SegmentTable = ({
   isContactsEnabled,
   isReadOnly,
 }: TSegmentTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">

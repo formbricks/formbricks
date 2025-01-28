@@ -6,9 +6,9 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -57,7 +57,7 @@ export const SurveyMenuBar = ({
   isCxMode,
   locale,
 }: SurveyMenuBarProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
   const [isLinkSurvey, setIsLinkSurvey] = useState(true);

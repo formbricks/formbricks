@@ -7,7 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FormField } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
@@ -30,7 +30,7 @@ const passwordInputProps = {
 };
 
 export const ResetPasswordForm = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const searchParams = useSearchParams();
   const router = useRouter();
 

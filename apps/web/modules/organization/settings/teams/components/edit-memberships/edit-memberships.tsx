@@ -1,6 +1,6 @@
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -21,7 +21,7 @@ export const EditMemberships = async ({
 }: EditMembershipsProps) => {
   const members = await getMembershipByOrganizationId(organization.id);
   const invites = await getInvitesByOrganizationId(organization.id);
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   return (
     <div>

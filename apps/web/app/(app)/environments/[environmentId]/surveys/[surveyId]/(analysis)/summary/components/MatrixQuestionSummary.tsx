@@ -1,5 +1,7 @@
+"use client";
+
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
@@ -32,7 +34,7 @@ export const MatrixQuestionSummary = ({
   setFilter,
   locale,
 }: MatrixQuestionSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;

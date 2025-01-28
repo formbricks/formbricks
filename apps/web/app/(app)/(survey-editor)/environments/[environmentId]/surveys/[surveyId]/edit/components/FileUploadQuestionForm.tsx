@@ -6,8 +6,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -48,7 +48,7 @@ export const FileUploadQuestionForm = ({
   locale,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,

@@ -1,5 +1,7 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 interface PasswordChecksProps {
@@ -27,7 +29,7 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
   );
 
 export const PasswordChecks = ({ password }: PasswordChecksProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const validations = useMemo(() => {
     if (password === null) return DEFAULT_VALIDATIONS;

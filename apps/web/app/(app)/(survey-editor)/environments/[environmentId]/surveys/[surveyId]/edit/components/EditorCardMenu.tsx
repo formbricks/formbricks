@@ -13,8 +13,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   QUESTIONS_ICON_MAP,
@@ -62,7 +62,7 @@ export const EditorCardMenu = ({
   isCxMode = false,
   locale,
 }: EditorCardMenuProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {

@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import {
   ERRORS,
@@ -9,8 +11,8 @@ import { Button } from "@/modules/ui/components/button";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -52,7 +54,7 @@ export const AddIntegrationModal = ({
   contactAttributeKeys,
   locale,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);

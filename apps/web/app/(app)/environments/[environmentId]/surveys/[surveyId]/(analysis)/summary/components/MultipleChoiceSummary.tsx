@@ -1,8 +1,10 @@
+"use client";
+
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -44,7 +46,7 @@ export const MultipleChoiceSummary = ({
   setFilter,
   locale,
 }: MultipleChoiceSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array

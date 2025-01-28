@@ -1,6 +1,8 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -36,7 +38,7 @@ export const PictureChoiceSummary = ({
   locale,
 }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader

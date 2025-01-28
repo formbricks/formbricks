@@ -1,5 +1,7 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
@@ -33,7 +35,7 @@ export const ConsentSummary = ({
   setFilter,
   locale,
 }: ConsentSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const summaryItems = [
     {
       title: t("common.accepted"),

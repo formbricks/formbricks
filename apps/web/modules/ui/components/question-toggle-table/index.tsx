@@ -1,6 +1,8 @@
+"use client";
+
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -67,7 +69,7 @@ export const QuestionToggleTable = ({
     });
   };
 
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <table className="mt-4 w-full table-fixed">
       <thead>

@@ -6,7 +6,7 @@ import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Separator } from "@/modules/ui/components/separator";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
@@ -31,7 +31,7 @@ export const TemplateContainerWithPreview = ({
   prefilledFilters,
   isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const initialTemplate = getCustomSurveyTemplate(user.locale);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);

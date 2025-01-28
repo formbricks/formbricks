@@ -3,14 +3,14 @@
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { TeamPermissionMapping } from "@/modules/ee/teams/utils/teams";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface AccessTableProps {
   teams: TProjectTeam[];
 }
 
 export const AccessTable = ({ teams }: AccessTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="overflow-hidden rounded-lg">

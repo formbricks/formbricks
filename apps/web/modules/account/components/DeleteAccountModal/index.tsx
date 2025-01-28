@@ -2,8 +2,8 @@
 
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -27,7 +27,7 @@ export const DeleteAccountModal = ({
   formbricksLogout,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,3 +1,5 @@
+"use client";
+
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import FollowUpActionMultiEmailInput from "@/modules/survey-follow-ups/components/follow-up-action-multi-email-input";
 import { Button } from "@/modules/ui/components/button";
@@ -24,9 +26,9 @@ import {
 import { cn } from "@/modules/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import DOMpurify from "isomorphic-dompurify";
 import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -71,7 +73,7 @@ export const FollowUpModal = ({
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 

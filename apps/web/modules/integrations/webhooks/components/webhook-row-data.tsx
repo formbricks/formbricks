@@ -1,6 +1,8 @@
+"use client";
+
 import { Badge } from "@/modules/ui/components/badge";
 import { Webhook } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -62,7 +64,7 @@ export const WebhookRowData = ({
   surveys: TSurvey[];
   locale: TUserLocale;
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
       <div className="col-span-3 flex items-center truncate pl-6 text-sm">

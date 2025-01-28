@@ -1,6 +1,8 @@
+"use client";
+
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -24,7 +26,7 @@ export const AddressSummary = ({
   contactAttributeKeys,
   locale,
 }: AddressSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader

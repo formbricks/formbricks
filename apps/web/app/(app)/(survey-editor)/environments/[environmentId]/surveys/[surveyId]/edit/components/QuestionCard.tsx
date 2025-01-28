@@ -10,8 +10,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
@@ -87,7 +87,7 @@ export const QuestionCard = ({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
-  const t = useTranslations();
+  const { t } = useTranslate();
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   const [parent] = useAutoAnimate();

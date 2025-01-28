@@ -1,12 +1,12 @@
 import { SlackIcon } from "@/modules/ui/components/icons";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface IntegrationsTipProps {
   environmentId: string;
 }
 
 export const IntegrationsTip = ({ environmentId }: IntegrationsTipProps) => {
-  const t = useTranslations("environments.settings.notifications");
+  const t = useTranslate("environments.settings.notifications");
   return (
     <div>
       <div className="flex max-w-4xl items-center space-y-3 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">

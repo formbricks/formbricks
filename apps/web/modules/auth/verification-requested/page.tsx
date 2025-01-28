@@ -1,11 +1,11 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { RequestVerificationEmail } from "@/modules/auth/verification-requested/components/request-verification-email";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { getEmailFromEmailToken } from "@formbricks/lib/jwt";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   try {
     const email = getEmailFromEmailToken(searchParams.token);
     const parsedEmail = ZUserEmail.safeParse(email);

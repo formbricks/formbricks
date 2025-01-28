@@ -4,8 +4,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
@@ -69,7 +69,7 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
 };
 
 export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [languages, setLanguages] = useState<TLanguage[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({

@@ -2,7 +2,7 @@
 
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -45,7 +45,7 @@ export const PricingTable = ({
   stripePriceLookupKeys,
   hasBillingRights,
 }: PricingTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [planPeriod, setPlanPeriod] = useState<TOrganizationBillingPeriod>(
     organization.billing.period ?? "monthly"
   );

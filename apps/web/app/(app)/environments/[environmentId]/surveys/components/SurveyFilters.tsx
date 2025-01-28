@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { SearchBar } from "@/modules/ui/components/search-bar";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 import { TProjectConfigChannel } from "@formbricks/types/project";
@@ -61,7 +61,7 @@ export const SurveyFilters = ({
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());

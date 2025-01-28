@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -21,7 +23,7 @@ export const RankingSummary = ({
   locale,
 }: RankingSummaryProps) => {
   // sort by count and transform to array
-  const t = useTranslations();
+  const { t } = useTranslate();
   const results = Object.values(questionSummary.choices).sort((a, b) => {
     return a.avgRanking - b.avgRanking; // Sort by count
   });

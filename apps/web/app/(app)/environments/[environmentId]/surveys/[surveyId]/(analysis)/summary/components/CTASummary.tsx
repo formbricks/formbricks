@@ -1,6 +1,8 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -15,7 +17,7 @@ interface CTASummaryProps {
 }
 
 export const CTASummary = ({ questionSummary, survey, contactAttributeKeys, locale }: CTASummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">

@@ -1,8 +1,10 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -36,7 +38,7 @@ export const RatingSummary = ({
   setFilter,
   locale,
 }: RatingSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;

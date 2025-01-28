@@ -19,7 +19,7 @@ import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -61,7 +61,7 @@ export const ProjectSettings = ({
   const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
 
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const addProject = async (data: TProjectUpdateInput) => {
     try {
       const createProjectResponse = await createProjectAction({

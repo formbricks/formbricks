@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
@@ -6,7 +8,7 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -44,7 +46,7 @@ export const AddChannelMappingModal = ({
   contactAttributeKeys,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);

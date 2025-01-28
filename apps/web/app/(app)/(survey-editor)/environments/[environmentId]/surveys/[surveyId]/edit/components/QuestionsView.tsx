@@ -15,7 +15,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -83,7 +83,7 @@ export const QuestionsView = ({
   isCxMode,
   locale,
 }: QuestionsViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();

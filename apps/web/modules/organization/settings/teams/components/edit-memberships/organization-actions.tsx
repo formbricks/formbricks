@@ -6,8 +6,8 @@ import { inviteUserAction, leaveOrganizationAction } from "@/modules/organizatio
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
+import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -41,7 +41,7 @@ export const OrganizationActions = ({
   isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);

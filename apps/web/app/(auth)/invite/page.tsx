@@ -2,8 +2,8 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createTeamMembership } from "@/modules/invite/lib/team";
 import { Button } from "@/modules/ui/components/button";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { after } from "next/server";
 import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -15,7 +15,7 @@ import { ContentLayout } from "./components/ContentLayout";
 
 const Page = async (props) => {
   const searchParams = await props.searchParams;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
 

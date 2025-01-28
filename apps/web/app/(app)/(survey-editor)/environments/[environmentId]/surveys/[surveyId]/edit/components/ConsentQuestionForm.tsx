@@ -3,7 +3,7 @@
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
@@ -33,7 +33,7 @@ export const ConsentQuestionForm = ({
   locale,
 }: ConsentQuestionFormProps): JSX.Element => {
   const [firstRender, setFirstRender] = useState(true);
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <form>
       <QuestionFormInput

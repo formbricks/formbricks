@@ -1,6 +1,8 @@
+"use client";
+
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
 import { timeSince } from "@formbricks/lib/time";
@@ -26,7 +28,7 @@ export const DateQuestionSummary = ({
   contactAttributeKeys,
   locale,
 }: DateQuestionSummary) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
   const handleLoadMore = () => {

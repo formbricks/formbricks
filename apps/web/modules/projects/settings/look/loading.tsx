@@ -9,7 +9,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 
 const placements = [
@@ -21,7 +21,7 @@ const placements = [
 ];
 
 export const ProjectLookSettingsLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.configuration")}>

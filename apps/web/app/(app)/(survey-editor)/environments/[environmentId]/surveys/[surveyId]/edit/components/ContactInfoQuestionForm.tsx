@@ -4,8 +4,8 @@ import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInpu
 import { Button } from "@/modules/ui/components/button";
 import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -36,7 +36,7 @@ export const ContactInfoQuestionForm = ({
   contactAttributeKeys,
   locale,
 }: ContactInfoQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
 
   const fields = [

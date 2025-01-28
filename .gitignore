@@ -58,4 +58,6 @@ packages/lib/uploads
 # js compiled assets
 apps/web/public/js
 
+branch.json
+
 packages/database/migrations

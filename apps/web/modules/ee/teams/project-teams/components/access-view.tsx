@@ -4,7 +4,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { AccessTable } from "@/modules/ee/teams/project-teams/components/access-table";
 import { ManageTeam } from "@/modules/ee/teams/project-teams/components/manage-team";
 import { TProjectTeam } from "@/modules/ee/teams/project-teams/types/team";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface AccessViewProps {
   teams: TProjectTeam[];
@@ -13,7 +13,7 @@ interface AccessViewProps {
 }
 
 export const AccessView = ({ teams, environmentId, isOwnerOrManager }: AccessViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       <SettingsCard

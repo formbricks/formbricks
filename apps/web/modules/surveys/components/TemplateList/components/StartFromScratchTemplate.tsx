@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import { TProject } from "@formbricks/types/project";
@@ -28,7 +30,7 @@ export const StartFromScratchTemplate = ({
   noPreview,
   locale,
 }: StartFromScratchTemplateProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const customSurvey = getCustomSurveyTemplate(locale);
   return (
     <div

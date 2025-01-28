@@ -5,8 +5,8 @@ import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -25,7 +25,7 @@ interface HowToSendCardProps {
 export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);

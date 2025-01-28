@@ -3,8 +3,8 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import {
@@ -23,7 +23,7 @@ interface AddQuestionButtonProps {
 }
 
 export const AddQuestionButton = ({ addQuestion, project, isCxMode, locale }: AddQuestionButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
   const availableQuestionTypes = isCxMode ? getCXQuestionTypes(locale) : getQuestionTypes(locale);

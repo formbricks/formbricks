@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "@/modules/ui/components/card";
 import { Textarea } from "@/modules/ui/components/textarea";
+import { useTranslate } from "@tolgee/react";
 import { Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -23,7 +23,7 @@ interface FormbricksAICardProps {
 }
 
 export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [aiPrompt, setAiPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);

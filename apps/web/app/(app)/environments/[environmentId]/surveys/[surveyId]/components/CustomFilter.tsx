@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import {
   differenceInDays,
   endOfMonth,
@@ -30,7 +31,6 @@ import {
   subYears,
 } from "date-fns";
 import { ArrowDownToLineIcon, ChevronDown, ChevronUp, DownloadIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -263,7 +263,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       <div className="relative flex justify-between">
