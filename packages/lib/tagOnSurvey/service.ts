@@ -32,7 +32,7 @@ export const addTagToSurvey = async (surveyId: string, tagId: string): Promise<T
       environmentId: updatedSurvey.environmentId,
     });
 
-    return transformPrismaSurvey(updatedSurvey);
+    return transformPrismaSurvey<TSurvey>(updatedSurvey);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

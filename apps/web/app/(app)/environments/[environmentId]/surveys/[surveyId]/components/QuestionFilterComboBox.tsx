@@ -19,7 +19,7 @@ import { ChevronDown, ChevronUp, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 type QuestionFilterComboBoxProps = {
@@ -49,7 +49,7 @@ export const QuestionFilterComboBox = ({
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
   const defaultLanguageCode = "default";
-  useClickOutside(commandRef, () => setOpen(false));
+  // useClickOutside(commandRef, () => setOpen(false));
   const t = useTranslations();
   // multiple when question type is multi selection
   const isMultiple =
@@ -133,8 +133,9 @@ export const QuestionFilterComboBox = ({
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
                 {typeof filterComboBoxValue !== "string" &&
-                  filterComboBoxValue?.map((o) => (
+                  filterComboBoxValue?.map((o, index) => (
                     <button
+                      key={`${o}-${index}`}
                       type="button"
                       onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
                       className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">

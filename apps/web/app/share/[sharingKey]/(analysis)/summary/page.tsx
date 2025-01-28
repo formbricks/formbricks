@@ -10,9 +10,17 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 
-const Page = async (props) => {
-  const params = await props.params;
+type Params = Promise<{
+  sharingKey: string;
+}>;
+
+interface SummaryPageProps {
+  params: Params;
+}
+
+const Page = async (props: SummaryPageProps) => {
   const t = await getTranslations();
+  const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
@@ -58,7 +66,6 @@ const Page = async (props) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          contactAttributeKeys={[]} // not showing any attributes for the sharing page
           isAIEnabled={false} // Disable AI for sharing page for now
           isReadOnly={true}
           locale={DEFAULT_LOCALE}

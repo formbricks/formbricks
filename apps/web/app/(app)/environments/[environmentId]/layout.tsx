@@ -31,7 +31,7 @@ const EnvLayout = async (props: {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    return redirect(`/auth/login`);
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
@@ -62,7 +62,7 @@ const EnvLayout = async (props: {
           organizationName={organization.name}
           organizationBilling={organization.billing}
         />
-        <FormbricksClient session={session} userEmail={user.email} />
+        <FormbricksClient userId={user.id} email={user.email} />
         <ToasterClient />
         <EnvironmentStorageHandler environmentId={params.environmentId} />
         <EnvironmentLayout environmentId={params.environmentId} session={session}>

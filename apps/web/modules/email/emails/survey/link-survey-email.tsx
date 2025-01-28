@@ -9,11 +9,17 @@ interface LinkSurveyEmailProps {
   surveyName: string;
   surveyLink: string;
   locale: string;
+  logoUrl: string;
 }
 
-export function LinkSurveyEmail({ surveyName, surveyLink, locale }: LinkSurveyEmailProps): React.JSX.Element {
+export function LinkSurveyEmail({
+  surveyName,
+  surveyLink,
+  locale,
+  logoUrl,
+}: LinkSurveyEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate logoUrl={logoUrl}>
       <Container>
         <Heading>{translateEmailText("verification_email_hey", locale)}</Heading>
         <Text>{translateEmailText("verification_email_thanks", locale)}</Text>

@@ -174,7 +174,7 @@ export const ActionActivityTab = ({
                 copyAction(actionClass);
               }}
               className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4 focus:ring-0 focus:ring-offset-0"
-              variant="minimal">
+              variant="ghost">
               {environment.type === "development" ? "Copy to Production" : "Copy to Development"}
             </Button>
           </div>

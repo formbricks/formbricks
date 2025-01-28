@@ -44,11 +44,8 @@ export const EmbedView = ({
     <div className="h-full overflow-hidden">
       {!disableBack && (
         <div className="border-b border-slate-200 py-2 pl-2">
-          <Button
-            variant="minimal"
-            className="focus:ring-0"
-            onClick={handleInitialPageButton}
-            StartIcon={ArrowLeftIcon}>
+          <Button variant="ghost" className="focus:ring-0" onClick={handleInitialPageButton}>
+            <ArrowLeftIcon />
             {t("common.back")}
           </Button>
         </div>
@@ -58,20 +55,19 @@ export const EmbedView = ({
           <div className={cn("col-span-1 hidden flex-col gap-3 border-r border-slate-200 p-4 lg:flex")}>
             {tabs.map((tab) => (
               <Button
-                StartIcon={tab.icon}
-                startIconClassName="h-4 w-4"
-                variant="minimal"
+                variant="ghost"
                 key={tab.id}
                 onClick={() => setActiveId(tab.id)}
                 autoFocus={tab.id === activeId}
                 className={cn(
-                  "rounded-md border px-4 py-2 text-slate-600",
+                  "flex justify-start rounded-md border px-4 py-2 text-slate-600",
                   // "focus:ring-0 focus:ring-offset-0", // enable these classes to remove the focus rings on buttons
                   tab.id === activeId
                     ? "border-slate-200 bg-slate-100 font-semibold text-slate-900"
                     : "border-transparent text-slate-500 hover:text-slate-700"
                 )}
                 aria-current={tab.id === activeId ? "page" : undefined}>
+                <tab.icon />
                 {tab.label}
               </Button>
             ))}
@@ -97,7 +93,7 @@ export const EmbedView = ({
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (
               <Button
-                variant="minimal"
+                variant="ghost"
                 key={tab.id}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(

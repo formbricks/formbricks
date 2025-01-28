@@ -1,10 +1,13 @@
-import { type TSurvey } from "@formbricks/types/surveys/types";
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
-type Listener = (state: TSurvey | null, prevSurvey: TSurvey | null) => void;
+type Listener = (
+  state: TJsEnvironmentStateSurvey | null,
+  prevSurvey: TJsEnvironmentStateSurvey | null
+) => void;
 
 export class SurveyStore {
   private static instance: SurveyStore | undefined;
-  private survey: TSurvey | null = null;
+  private survey: TJsEnvironmentStateSurvey | null = null;
   private listeners = new Set<Listener>();
 
   static getInstance(): SurveyStore {
@@ -14,11 +17,11 @@ export class SurveyStore {
     return SurveyStore.instance;
   }
 
-  public getSurvey(): TSurvey | null {
+  public getSurvey(): TJsEnvironmentStateSurvey | null {
     return this.survey;
   }
 
-  public setSurvey(survey: TSurvey): void {
+  public setSurvey(survey: TJsEnvironmentStateSurvey): void {
     const prevSurvey = this.survey;
     if (prevSurvey !== survey) {
       this.survey = survey;

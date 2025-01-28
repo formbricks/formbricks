@@ -50,10 +50,10 @@ export const ConfirmDeleteSegmentModal = ({
       </div>
 
       <div className="mt-4 space-x-2 text-right">
-        <Button variant="minimal" onClick={() => setOpen(false)}>
+        <Button variant="ghost" onClick={() => setOpen(false)}>
           {t("common.cancel")}
         </Button>
-        <Button variant="warn" onClick={handleDelete} disabled={segmentHasSurveys}>
+        <Button variant="destructive" onClick={handleDelete} disabled={segmentHasSurveys}>
           {t("common.delete")}
         </Button>
       </div>

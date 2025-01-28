@@ -1,11 +1,14 @@
 import { Button } from "@/modules/ui/components/button";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 
 export const BackToLoginButton = async () => {
   const t = await getTranslations();
   return (
-    <Button size="base" variant="secondary" href="/auth/login" className="w-full justify-center">
-      {t("auth.signup.log_in")}
+    <Button variant="secondary" className="w-full justify-center">
+      <Link href="/auth/login" className="h-full w-full">
+        {t("auth.signup.log_in")}
+      </Link>
     </Button>
   );
 };

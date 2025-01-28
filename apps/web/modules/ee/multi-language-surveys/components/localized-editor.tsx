@@ -69,7 +69,6 @@ export function LocalizedEditor({
         key={`${questionIdx}-${selectedLanguageCode}`}
         setFirstRender={setFirstRender}
         setText={(v: string) => {
-          if (!value) return;
           const translatedHtml = {
             ...value,
             [selectedLanguageCode]: v,
@@ -99,7 +98,7 @@ export function LocalizedEditor({
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, "default", []).default ?? ""
+                    recallToHeadline(value, localSurvey, false, "default").default ?? ""
                   ),
                 }}
               />

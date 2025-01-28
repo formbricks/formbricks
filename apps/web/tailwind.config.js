@@ -30,6 +30,7 @@ module.exports = {
         "card-sm": "0px 0.5px 12px -5px rgba(30,41,59,0.20)",
         "card-md": "0px 1px 25px -10px rgba(30,41,59,0.30)",
         "card-lg": "0px 2px 51px -19px rgba(30,41,59,0.40)",
+        "card-xl": "0px 20px 25px -5px rgba(0, 0, 0, 0.10), 0px 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
       colors: {
         brand: {
@@ -40,20 +41,21 @@ module.exports = {
         focus: "var(--formbricks-focus, #1982fc)",
         error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
-        borderColor: {
-          primary: "var(--formbricks-border-primary, #e0e0e0)",
-          secondary: "var(--formbricks-border-secondary, #0f172a)",
-          disabled: "var(--formbricks-border-disabled, #ececec)",
+        primary: {
+          DEFAULT: "#0f172a",
+          foreground: "#fefefe",
         },
-        labelColor: {
-          primary: "var(--formbricks-label-primary, #0f172a)",
-          secondary: "var(--formbricks-label-secondary, #384258)",
-          disabled: "var(--formbricks-label-disabled, #bdbdbd)",
+        destructive: {
+          DEFAULT: "#FF6B6B", // A softer, coral-like red
+          foreground: "#FFF5F5",
         },
-        fill: {
-          primary: "var(--formbricks-fill-primary, #fefefe)",
-          secondary: "var(--formbricks-fill-secondary, #0f172a)",
-          disabled: "var(--formbricks-fill-disabled, #e0e0e0)",
+        secondary: {
+          DEFAULT: "#f1f5f9",
+          foreground: "#0f172a",
+        },
+        accent: {
+          DEFAULT: "#f4f6f8", // light gray background
+          foreground: "#0f172a", // same as primary default for consistency
         },
       },
       keyframes: {

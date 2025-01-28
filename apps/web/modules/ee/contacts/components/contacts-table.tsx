@@ -42,7 +42,7 @@ interface ContactsTableProps {
   searchValue: string;
   setSearchValue: (value: string) => void;
   isReadOnly: boolean;
-  refreshContacts: () => void;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactsTable = ({
@@ -302,9 +302,7 @@ export const ContactsTable = ({
 
         {data && hasMore && data.length > 0 && (
           <div className="mt-4 flex justify-center">
-            <Button onClick={fetchNextPage} className="bg-blue-500 text-white">
-              {t("common.load_more")}
-            </Button>
+            <Button onClick={fetchNextPage}>{t("common.load_more")}</Button>
           </div>
         )}
 

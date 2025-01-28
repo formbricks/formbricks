@@ -69,7 +69,7 @@ export const StylingTabs = <T extends string | number>({
               className="sr-only"
             />
             <span className="text-slate-900">{option.label}</span>
-            <div>{option.icon}</div>
+            {option.icon && <div>{option.icon}</div>}
           </label>
         ))}
       </div>

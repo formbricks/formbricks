@@ -1,13 +1,15 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { useRef } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -17,7 +19,6 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  contactAttributeKeys: TContactAttributeKey[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
@@ -30,13 +31,13 @@ export const EndScreenForm = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   updateSurvey,
   endingCard,
   defaultRedirect,
   locale,
 }: EndScreenFormProps) => {
   const t = useTranslations();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&
       (!!getLocalizedValue(endingCard.buttonLabel, selectedLanguageCode) || !!endingCard.buttonLink)
@@ -60,7 +61,6 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -74,7 +74,6 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div className="mt-4">
@@ -112,7 +111,7 @@ export const EndScreenForm = ({
                 id="buttonLabel"
                 label={t("environments.surveys.edit.button_label")}
                 placeholder={t("environments.surveys.edit.take_more_surveys")}
-                className="bg-white"
+                className="rounded-md"
                 value={endingCard.buttonLabel}
                 localSurvey={localSurvey}
                 questionIdx={localSurvey.questions.length + endingCardIndex}
@@ -120,20 +119,64 @@ export const EndScreenForm = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
             <div className="space-y-2">
               <Label>{t("environments.surveys.edit.button_url")}</Label>
-              <Input
-                id="buttonLink"
-                name="buttonLink"
-                className="bg-white"
-                placeholder="https://member.digiopinion.com/overview"
-                value={endingCard.buttonLink ?? defaultRedirect}
-                onChange={(e) => updateSurvey({ buttonLink: e.target.value })}
-              />
+              <div className="rounded-md bg-white">
+                <RecallWrapper
+                  value={endingCard.buttonLink ?? ""}
+                  questionId={endingCard.id}
+                  onChange={(val, recallItems, fallbacks) => {
+                    const updatedValue = {
+                      ...endingCard,
+                      buttonLink:
+                        recallItems && fallbacks ? headlineToRecall(val, recallItems, fallbacks) : val,
+                    };
+
+                    updateSurvey(updatedValue);
+                  }}
+                  onAddFallback={() => {
+                    inputRef.current?.focus();
+                  }}
+                  isRecallAllowed
+                  localSurvey={localSurvey}
+                  usedLanguageCode={"default"}
+                  render={({ value, onChange, highlightedJSX, children }) => {
+                    return (
+                      <div className="group relative">
+                        {/* The highlight container is absolutely positioned behind the input */}
+                        <div
+                          className={`no-scrollbar absolute top-0 z-0 mt-0.5 flex h-10 w-full overflow-scroll whitespace-nowrap px-3 py-2 text-center text-sm text-transparent`}
+                          dir="auto"
+                          key={highlightedJSX.toString()}>
+                          {highlightedJSX}
+                        </div>
+                        <Input
+                          ref={inputRef}
+                          id="buttonLink"
+                          name="buttonLink"
+                          className="relative text-black caret-black"
+                          placeholder="https://member.digiopinion.com/overview"
+                          value={
+                            recallToHeadline(
+                              {
+                                [selectedLanguageCode]: value,
+                              },
+                              localSurvey,
+                              false,
+                              "default"
+                            )[selectedLanguageCode]
+                          }
+                          onChange={(e) => onChange(e.target.value)}
+                        />
+                        {children}
+                      </div>
+                    );
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}

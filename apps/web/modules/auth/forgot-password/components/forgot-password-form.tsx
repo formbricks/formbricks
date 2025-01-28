@@ -6,6 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -74,8 +75,8 @@ export const ForgotPasswordForm = () => {
             {t("auth.forgot-password.reset_password")}
           </Button>
           <div className="mt-3 text-center">
-            <Button variant="minimal" href="/auth/login" className="w-full justify-center">
-              {t("auth.forgot-password.back_to_login")}
+            <Button variant="ghost" className="w-full justify-center" asChild>
+              <Link href="/auth/login">{t("auth.forgot-password.back_to_login")}</Link>
             </Button>
           </div>
         </div>

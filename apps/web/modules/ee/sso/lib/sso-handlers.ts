@@ -65,7 +65,12 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
     }
 
     const userProfile = await createUser({
-      name: user.name || user.email.split("@")[0],
+      name:
+        user.name ||
+        user.email
+          .split("@")[0]
+          .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
+          .trim(),
       email: user.email,
       emailVerified: new Date(Date.now()),
       identityProvider: provider,

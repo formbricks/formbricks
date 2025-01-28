@@ -19,7 +19,7 @@ import {
 } from "@/lib/utils/services";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getFormattedErrorMessage = (result) => {
+export const getFormattedErrorMessage = (result): string => {
   let message = "";
 
   if (result.serverError) {
@@ -319,6 +319,15 @@ export const getProjectIdFromIntegrationId = async (integrationId: string) => {
   }
 
   return await getProjectIdFromEnvironmentId(integration.environmentId);
+};
+
+export const getProjectIdFromWebhookId = async (webhookId: string) => {
+  const webhook = await getWebhook(webhookId);
+  if (!webhook) {
+    throw new ResourceNotFoundError("webhook", webhookId);
+  }
+
+  return await getProjectIdFromEnvironmentId(webhook.environmentId);
 };
 
 // environment id helpers

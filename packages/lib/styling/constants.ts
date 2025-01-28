@@ -1,4 +1,5 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { translate } from "../templates";
 
@@ -13,7 +14,44 @@ export const COLOR_DEFAULTS = {
   highlightBorderColor: "#64748b",
 } as const;
 
-export const getPreviewSurvey = (locale: string) => {
+export const defaultStyling: TProjectStyling = {
+  allowStyleOverwrite: true,
+  brandColor: {
+    light: COLOR_DEFAULTS.brandColor,
+  },
+  questionColor: {
+    light: COLOR_DEFAULTS.questionColor,
+  },
+  inputColor: {
+    light: COLOR_DEFAULTS.inputColor,
+  },
+  inputBorderColor: {
+    light: COLOR_DEFAULTS.inputBorderColor,
+  },
+  cardBackgroundColor: {
+    light: COLOR_DEFAULTS.cardBackgroundColor,
+  },
+  cardBorderColor: {
+    light: COLOR_DEFAULTS.cardBorderColor,
+  },
+  cardShadowColor: {
+    light: COLOR_DEFAULTS.cardShadowColor,
+  },
+  isLogoHidden: false,
+  highlightBorderColor: undefined,
+  isDarkModeEnabled: false,
+  background: {
+    bg: "#fff",
+    bgType: "color",
+  },
+  roundness: 8,
+  cardArrangement: {
+    linkSurveys: "straight",
+    appSurveys: "straight",
+  },
+};
+
+export const getPreviewSurvey = (locale: string, projectName: string) => {
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),
@@ -38,38 +76,23 @@ export const getPreviewSurvey = (locale: string) => {
     segment: null,
     questions: [
       {
-        id: "tunaz8ricd4regvkz1j0rbf6",
-        type: "openText",
-        headline: {
-          default: translate("preview_survey_question_1_headline", locale),
-        },
-        required: true,
-        inputType: "text",
-        subheader: {
-          default: translate("preview_survey_question_1_subheader", locale),
-        },
-        placeholder: {
-          default: translate("preview_survey_question_1_placeholder", locale),
-        },
-      },
-      {
         id: "lbdxozwikh838yc6a8vbwuju",
         type: "rating",
         range: 5,
         scale: "star",
         isDraft: true,
         headline: {
-          default: translate("preview_survey_question_2_headline", locale),
+          default: translate("preview_survey_question_1_headline", locale, { projectName }),
         },
         required: true,
         subheader: {
-          default: translate("preview_survey_question_2_subheader", locale),
+          default: translate("preview_survey_question_1_subheader", locale),
         },
         lowerLabel: {
-          default: translate("preview_survey_question_2_lower_label", locale),
+          default: translate("preview_survey_question_1_lower_label", locale),
         },
         upperLabel: {
-          default: translate("preview_survey_question_2_upper_label", locale),
+          default: translate("preview_survey_question_1_upper_label", locale),
         },
       },
       {
@@ -79,24 +102,24 @@ export const getPreviewSurvey = (locale: string) => {
           {
             id: "x6wty2s72v7vd538aadpurqx",
             label: {
-              default: translate("preview_survey_question_3_choice_1_label", locale),
+              default: translate("preview_survey_question_2_choice_1_label", locale),
             },
           },
           {
             id: "fbcj4530t2n357ymjp2h28d6",
             label: {
-              default: translate("preview_survey_question_3_choice_2_label", locale),
+              default: translate("preview_survey_question_2_choice_2_label", locale),
             },
           },
         ],
         isDraft: true,
         headline: {
-          default: translate("preview_survey_question_3_headline", locale),
+          default: translate("preview_survey_question_2_headline", locale),
+        },
+        backButtonLabel: {
+          default: translate("preview_survey_question_2_back_button_label", locale),
         },
         required: true,
-        subheader: {
-          default: translate("preview_survey_question_3_subheader", locale),
-        },
         shuffleOption: "none",
       },
     ],
@@ -104,10 +127,8 @@ export const getPreviewSurvey = (locale: string) => {
       {
         id: "cltyqp5ng000108l9dmxw6nde",
         type: "endScreen",
-        headline: { default: translate("default_ending_card_headline", locale) },
-        subheader: { default: translate("default_ending_card_subheader", locale) },
-        buttonLabel: { default: translate("default_ending_card_button_label", locale) },
-        buttonLink: "https://formbricks.com",
+        headline: { default: translate("preview_survey_ending_card_headline", locale) },
+        subheader: { default: translate("preview_survey_ending_card_description", locale) },
       },
     ],
     hiddenFields: {

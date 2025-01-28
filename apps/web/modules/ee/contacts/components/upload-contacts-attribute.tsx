@@ -126,7 +126,7 @@ export const UploadContactsAttributes = ({
 
   return (
     <div className="flex w-full items-center justify-start gap-4">
-      <span className="w-20 font-medium text-slate-700">{csvColumn}</span>
+      <span className="w-25 overflow-hidden text-ellipsis font-medium text-slate-700">{csvColumn}</span>
       <h4 className="text-sm font-medium text-slate-500">
         {t("environments.contacts.upload_contacts_modal_attributes_should_be_mapped_to")}
       </h4>
@@ -145,9 +145,9 @@ export const UploadContactsAttributes = ({
         {isNewTag ? (
           <Badge
             size="normal"
-            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
             type="success"
             className="rounded-md"
+            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
           />
         ) : null}
       </div>

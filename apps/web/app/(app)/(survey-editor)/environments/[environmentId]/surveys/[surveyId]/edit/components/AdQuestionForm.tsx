@@ -1,5 +1,5 @@
 "use client";
-
+import { type JSX } from "react";
 interface AdQuestionFormProps {}
 
 export const AdQuestionForm = ({}: AdQuestionFormProps): JSX.Element => {

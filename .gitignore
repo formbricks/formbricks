@@ -43,9 +43,6 @@ production.env
 !packages/database/.env
 !apps/web/.env
 
-# Prisma generated files
-packages/database/zod
-
 # turbo
 .turbo
 
@@ -70,4 +67,5 @@ packages/lib/uploads
 # js compiled assets
 apps/web/public/js
 
+packages/database/migrations
 .qodo

@@ -35,7 +35,7 @@ export const createInviteToken = (inviteId: string, email: string, options = {})
   return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, env.NEXTAUTH_SECRET, options);
 };
 
-export const verifyTokenForLinkSurvey = (token: string, surveyId: string) => {
+export const verifyTokenForLinkSurvey = (token: string, surveyId: string): string | null => {
   try {
     const { email } = jwt.verify(token, env.NEXTAUTH_SECRET + surveyId) as JwtPayload;
     try {
@@ -55,6 +55,10 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   // First decode to get the ID
   const decoded = jwt.decode(token);
   const payload: JwtPayload = decoded as JwtPayload;
+
+  if (!payload) {
+    throw new Error("Token is invalid");
+  }
 
   const { id } = payload;
   if (!id) {

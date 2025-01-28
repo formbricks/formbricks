@@ -1,4 +1,5 @@
 import { Badge } from "@/modules/ui/components/badge";
+import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 
 export const SettingsCard = ({
@@ -18,6 +19,7 @@ export const SettingsCard = ({
   beta?: boolean;
   className?: string;
 }) => {
+  const t = useTranslations();
   return (
     <div
       className={cn(
@@ -29,8 +31,10 @@ export const SettingsCard = ({
         <div className="flex">
           <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">
-            {beta && <Badge text="Beta" size="normal" type="warning" />}
-            {soon && <Badge text="coming soon" size="normal" type="success" />}
+            {beta && <Badge size="normal" type="warning" text="Beta" />}
+            {soon && (
+              <Badge size="normal" type="success" text={t("environments.settings.enterprise.coming_soon")} />
+            )}
           </div>
         </div>
         <p className="mt-1 text-sm text-slate-500">{description}</p>

@@ -15,6 +15,7 @@ import {
 } from "@/app/share/[sharingKey]/actions";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -107,6 +108,10 @@ export const ResponsePage = ({
     }
   };
 
+  const surveyMemoized = useMemo(() => {
+    return replaceHeadlineRecall(survey, "default");
+  }, [survey]);
+
   useEffect(() => {
     if (!searchParams?.get("referer")) {
       resetState();
@@ -134,7 +139,7 @@ export const ResponsePage = ({
       setResponseCount(responseCount);
     };
     handleResponsesCount();
-  }, [JSON.stringify(filters), isSharingPage, sharingKey, surveyId]);
+  }, [filters, isSharingPage, sharingKey, surveyId]);
 
   useEffect(() => {
     const fetchInitialResponses = async () => {
@@ -171,18 +176,18 @@ export const ResponsePage = ({
       }
     };
     fetchInitialResponses();
-  }, [surveyId, JSON.stringify(filters), responsesPerPage, sharingKey, isSharingPage]);
+  }, [surveyId, filters, responsesPerPage, sharingKey, isSharingPage]);
 
   useEffect(() => {
     setPage(1);
     setHasMore(true);
     setResponses([]);
-  }, [JSON.stringify(filters)]);
+  }, [filters]);
 
   return (
     <>
       <div className="flex gap-1.5">
-        <CustomFilter survey={survey} />
+        <CustomFilter survey={surveyMemoized} />
         {!isReadOnly && !isSharingPage && <ResultsShareButton survey={survey} webAppUrl={webAppUrl} />}
       </div>
       <ResponseDataView

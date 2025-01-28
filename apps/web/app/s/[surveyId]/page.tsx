@@ -1,7 +1,7 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
-import { LinkSurvey } from "@/app/s/[surveyId]/components/LinkSurvey";
-import { PinScreen } from "@/app/s/[surveyId]/components/PinScreen";
-import { SurveyInactive } from "@/app/s/[surveyId]/components/SurveyInactive";
+import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
+import { PinScreen } from "@/app/s/[surveyId]/components/pin-screen";
+import { SurveyInactive } from "@/app/s/[surveyId]/components/survey-inactive";
 import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import type { Metadata } from "next";
@@ -14,7 +14,6 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
-import { getContactAttributeKeys } from "./lib/contact-attribute-key";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -57,18 +56,18 @@ const Page = async (props: LinkSurveyPageProps) => {
   const langParam = searchParams.lang; //can either be language code or alias
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
-  const isEmbed = searchParams.embed === "true" ? true : false;
+  const isEmbed = searchParams.embed === "true";
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
   }
 
-  const organization = await getOrganizationByEnvironmentId(survey?.environmentId);
+  const organization = await getOrganizationByEnvironmentId(survey.environmentId);
   if (!organization) {
     throw new Error("Organization not found");
   }
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
 
-  if (survey && survey.status !== "inProgress" && !isPreview) {
+  if (survey.status !== "inProgress" && !isPreview) {
     return (
       <SurveyInactive
         status={survey.status}
@@ -108,14 +107,11 @@ const Page = async (props: LinkSurveyPageProps) => {
   }
 
   // verify email: Check if the survey requires email verification
-  let emailVerificationStatus: string = "";
+  let emailVerificationStatus = "";
   let verifiedEmail: string | undefined = undefined;
 
   if (survey.isVerifyEmailEnabled) {
-    const token =
-      searchParams && Object.keys(searchParams).length !== 0 && searchParams.hasOwnProperty("verify")
-        ? searchParams.verify
-        : undefined;
+    const token = searchParams.verify;
 
     if (token) {
       const emailVerificationDetails = await getEmailVerificationDetails(survey.id, token);
@@ -130,8 +126,6 @@ const Page = async (props: LinkSurveyPageProps) => {
     throw new Error("Project not found");
   }
 
-  const contactAttributeKeys = await getContactAttributeKeys(survey.environmentId);
-
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -144,13 +138,13 @@ const Page = async (props: LinkSurveyPageProps) => {
       if (selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
       }
-      return selectedLanguage ? selectedLanguage.language.code : "default";
+      return selectedLanguage.language.code;
     }
   };
 
   const languageCode = getLanguageCode();
 
-  const isSurveyPinProtected = Boolean(!!survey && survey.pin);
+  const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
   if (isSurveyPinProtected) {
@@ -167,7 +161,6 @@ const Page = async (props: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
-        contactAttributeKeys={contactAttributeKeys}
         isEmbed={isEmbed}
         locale={locale}
         isPreview={isPreview}
@@ -175,7 +168,7 @@ const Page = async (props: LinkSurveyPageProps) => {
     );
   }
 
-  return survey ? (
+  return (
     <LinkSurvey
       survey={survey}
       project={project}
@@ -186,7 +179,6 @@ const Page = async (props: LinkSurveyPageProps) => {
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
@@ -194,7 +186,7 @@ const Page = async (props: LinkSurveyPageProps) => {
       locale={locale}
       isPreview={isPreview}
     />
-  ) : null;
+  );
 };
 
 export default Page;

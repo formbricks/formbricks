@@ -23,6 +23,7 @@ export const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
+export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
@@ -76,13 +77,14 @@ export const SMTP_PORT = env.SMTP_PORT;
 export const SMTP_SECURE_ENABLED = env.SMTP_SECURE_ENABLED === "1";
 export const SMTP_USER = env.SMTP_USER;
 export const SMTP_PASSWORD = env.SMTP_PASSWORD;
+export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
 export const SURVEYS_PER_PAGE = 12;
-export const RESPONSES_PER_PAGE = 20;
+export const RESPONSES_PER_PAGE = 25;
 export const TEXT_RESPONSES_PER_PAGE = 5;
 export const INSIGHTS_PER_PAGE = 10;
 export const DOCUMENTS_PER_PAGE = 10;
@@ -90,6 +92,11 @@ export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 
 export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
 export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
+
+export const SLACK_MESSAGE_LIMIT = 2995;
+export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
+export const AIRTABLE_MESSAGE_LIMIT = 99995;
+export const NOTION_RICH_TEXT_LIMIT = 1995;
 
 // Storage constants
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
@@ -152,8 +159,8 @@ export const LOGIN_RATE_LIMIT = {
 };
 
 export const CLIENT_SIDE_API_RATE_LIMIT = {
-  interval: 5 * 60, // 5 minutes
-  allowedPerInterval: 200,
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
 };
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
@@ -197,7 +204,7 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR"];
 
 // Billing constants
 
@@ -251,3 +258,7 @@ export const IS_AI_CONFIGURED = Boolean(
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
 
 export const IS_INTERCOM_CONFIGURED = Boolean(env.NEXT_PUBLIC_INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+
+export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
+
+export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);

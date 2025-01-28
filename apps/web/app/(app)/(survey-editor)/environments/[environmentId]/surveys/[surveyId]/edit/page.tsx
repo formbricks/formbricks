@@ -2,13 +2,10 @@ import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environm
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import {
-  getIsContactsEnabled,
-  getMultiLanguagePermission,
-  getSurveyFollowUpsPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";

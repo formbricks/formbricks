@@ -1,22 +1,21 @@
 "use client";
 
+import { translateText } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { FileInput } from "@/modules/ui/components/file-input";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Label } from "@/modules/ui/components/label";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { Switch } from "@/modules/ui/components/switch";
-import { translateText } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { Hand, LanguagesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
-import React, {useState} from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
-import {cn} from "@formbricks/lib/cn";
-import {TContactAttributeKey} from "@formbricks/types/contact-attribute-key";
-import {TSurvey, TSurveyQuestionId, TSurveyWelcomeCard} from "@formbricks/types/surveys/types";
-import {TUserLocale} from "@formbricks/types/user";
+import { cn } from "@formbricks/lib/cn";
+import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -26,7 +25,6 @@ interface EditWelcomeCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -38,7 +36,6 @@ export const EditWelcomeCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: EditWelcomeCardProps) => {
   const t = useTranslations();
@@ -209,7 +206,6 @@ export const EditWelcomeCard = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -246,7 +242,6 @@ export const EditWelcomeCard = ({
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
                     setSelectedLanguageCode={setSelectedLanguageCode}
-                    contactAttributeKeys={contactAttributeKeys}
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                   />

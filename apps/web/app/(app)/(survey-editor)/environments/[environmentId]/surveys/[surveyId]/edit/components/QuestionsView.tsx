@@ -5,6 +5,7 @@ import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[e
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import {
   DndContext,
   DragEndEvent,
@@ -17,14 +18,13 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { useTranslations } from "next-intl";
-import React, {SetStateAction, useEffect, useMemo, useState} from "react";
+import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import {
@@ -41,7 +41,6 @@ import {
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TUserLocale } from "@formbricks/types/user";
 import {
   isEndingCardValid,
@@ -67,7 +66,6 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -85,7 +83,6 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  contactAttributeKeys,
   plan,
   isCxMode,
   locale,
@@ -519,6 +516,7 @@ export const QuestionsView = ({
     const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
+    setActiveQuestionId(newEndingCard.id);
 
     setLocalSurvey(updatedSurvey);
   };
@@ -614,7 +612,6 @@ export const QuestionsView = ({
             isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -638,8 +635,6 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
-          internalQuestionIdMap={internalQuestionIdMap}
-          contactAttributeKeys={contactAttributeKeys}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
@@ -668,7 +663,6 @@ export const QuestionsView = ({
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
-                  contactAttributeKeys={contactAttributeKeys}
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}

@@ -8,17 +8,8 @@ import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { type JSX, useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-
-const options = [
-  {
-    value: "internal",
-    label: "environments.surveys.edit.button_to_continue_in_survey",
-  },
-  { value: "external", label: "environments.surveys.edit.button_to_link_to_external_url" },
-];
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -29,7 +20,6 @@ interface CTAQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -42,11 +32,17 @@ export const CTAQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: CTAQuestionFormProps): JSX.Element => {
-  const [firstRender, setFirstRender] = useState(true);
   const t = useTranslations();
+  const options = [
+    {
+      value: "internal",
+      label: t("environments.surveys.edit.button_to_continue_in_survey"),
+    },
+    { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
+  ];
+  const [firstRender, setFirstRender] = useState(true);
   const [parent] = useAutoAnimate();
   return (
     <form ref={parent}>
@@ -60,7 +56,6 @@ export const CTAQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -104,7 +99,6 @@ export const CTAQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
 
@@ -121,7 +115,6 @@ export const CTAQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              contactAttributeKeys={contactAttributeKeys}
               locale={locale}
             />
           )}
@@ -156,7 +149,6 @@ export const CTAQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>

@@ -38,17 +38,23 @@ export const UploadContactsCSVButton = ({
   const [error, setErrror] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleFileUpload = (e) => {
-    let selectedFiles = Array.from(e.target?.files || []);
-    let csvFile = selectedFiles[0] as File;
+  const processCSVFile = async (file: File) => {
+    if (!file) return;
 
-    if (!csvFile) {
+    // Check file type
+    if (!file.type && !file.name.endsWith(".csv")) {
+      setErrror("Please upload a CSV file");
+      return;
+    }
+
+    if (file.type && file.type !== "text/csv" && !file.type.includes("csv")) {
+      setErrror("Please upload a CSV file");
       return;
     }
 
     // Max file size check (800KB)
-    const maxSizeInBytes = 800 * 1024; // 800KB
-    if (csvFile.size > maxSizeInBytes) {
+    const maxSizeInBytes = 800 * 1024;
+    if (file.size > maxSizeInBytes) {
       setErrror("File size exceeds the maximum limit of 800KB");
       return;
     }
@@ -77,7 +83,14 @@ export const UploadContactsCSVButton = ({
       }
     };
 
-    reader.readAsText(csvFile); // Trigger file read
+    reader.readAsText(file);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target?.files?.[0];
+    if (file) {
+      processCSVFile(file);
+    }
   };
 
   const csvColumns = useMemo(() => {
@@ -210,10 +223,57 @@ export const UploadContactsCSVButton = ({
     }
   }, [error]);
 
+  // Function to download an example CSV
+  const handleDownloadExampleCSV = () => {
+    const exampleData = [
+      { email: "user1@example.com", userId: "1001", firstName: "John", lastName: "Doe" },
+      { email: "user2@example.com", userId: "1002", firstName: "Jane", lastName: "Smith" },
+      { email: "user3@example.com", userId: "1003", firstName: "Mark", lastName: "Jones" },
+      { email: "user4@example.com", userId: "1004", firstName: "Emily", lastName: "Brown" },
+      { email: "user5@example.com", userId: "1005", firstName: "David", lastName: "Wilson" },
+    ];
+
+    const headers = Object.keys(exampleData[0]);
+    const csvRows = [headers.join(","), ...exampleData.map((row) => headers.map((h) => row[h]).join(","))];
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "example.csv");
+    document.body.appendChild(link); // Required for Firefox
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Only show copy cursor if file is CSV
+    const items = Array.from(e.dataTransfer.items);
+    const isCSV = items.some(
+      (item) => item.type === "text/csv" || (item.type === "" && item.kind === "file") // For when type isn't available
+    );
+
+    e.dataTransfer.dropEffect = isCSV ? "copy" : "none";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processCSVFile(file);
+    }
+  };
+
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)} EndIcon={PlusIcon}>
+      <Button size="sm" onClick={() => setOpen(true)}>
         {t("common.upload")} CSV
+        <PlusIcon />
       </Button>
       <Modal
         open={open}
@@ -221,7 +281,7 @@ export const UploadContactsCSVButton = ({
         noPadding
         closeOnOutsideClick={false}
         className="overflow-auto"
-        size="xxl"
+        size="xl"
         hideCloseButton>
         <div className="sticky top-0 flex h-full flex-col rounded-lg">
           <button
@@ -261,40 +321,52 @@ export const UploadContactsCSVButton = ({
         ) : null}
 
         <div className="flex flex-col gap-8 px-6 py-4">
-          <div className="no-scrollbar max-h-[400px] overflow-auto rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
-            {!csvResponse.length ? (
-              <label
-                htmlFor="file"
-                className={cn(
-                  "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
-                )}
-                // onDragOver={(e) => handleDragOver(e)}
-                // onDrop={(e) => handleDrop(e)}>
-              >
-                <div className="flex flex-col items-center justify-center pb-6 pt-5">
-                  <ArrowUpFromLineIcon className="h-6 text-slate-500" />
-                  <p className={cn("mt-2 text-center text-sm text-slate-500")}>
-                    <span className="font-semibold">{t("common.upload_input_description")}</span>
-                  </p>
-                  <input
-                    type="file"
-                    id={"file"}
-                    name={"file"}
-                    accept=".csv"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                  />
+          <div className="flex flex-col gap-2">
+            <div className="no-scrollbar max-h-[400px] overflow-auto rounded-md border-2 border-dashed border-slate-300 bg-slate-50 p-4">
+              {!csvResponse.length ? (
+                <div>
+                  <label
+                    htmlFor="file"
+                    className={cn(
+                      "relative flex cursor-pointer flex-col items-center justify-center rounded-lg hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-700 dark:hover:border-slate-500 dark:hover:bg-slate-800"
+                    )}
+                    onDragOver={(e) => handleDragOver(e)}
+                    onDrop={(e) => handleDrop(e)}>
+                    <div className="flex flex-col items-center justify-center pb-6 pt-5">
+                      <ArrowUpFromLineIcon className="h-6 text-slate-500" />
+                      <p className={cn("mt-2 text-center text-sm text-slate-500")}>
+                        <span className="font-semibold">{t("common.upload_input_description")}</span>
+                      </p>
+                      <input
+                        type="file"
+                        id={"file"}
+                        name={"file"}
+                        accept=".csv"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+                  </label>
                 </div>
-              </label>
-            ) : (
-              <div className="flex flex-col items-center gap-8">
-                <h3 className="font-medium text-slate-500">
-                  {t("environments.contacts.upload_contacts_modal_preview")}
-                </h3>
-                <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
-                  <CsvTable data={[...csvResponse.slice(0, 11)]} />
+              ) : (
+                <div className="flex flex-col items-center gap-8">
+                  <h3 className="font-medium text-slate-500">
+                    {t("environments.contacts.upload_contacts_modal_preview")}
+                  </h3>
+                  <div className="h-[300px] w-full overflow-auto rounded-md border border-slate-300">
+                    <CsvTable data={[...csvResponse.slice(0, 11)]} />
+                  </div>
                 </div>
-              </div>
+              )}
+            </div>
+            {!csvResponse.length && (
+              <p>
+                <a
+                  onClick={handleDownloadExampleCSV}
+                  className="cursor-pointer text-right text-sm text-slate-500">
+                  {t("environments.contacts.upload_contacts_modal_download_example_csv")}{" "}
+                </a>
+              </p>
             )}
           </div>
 
@@ -381,7 +453,6 @@ export const UploadContactsCSVButton = ({
 
             <Button
               size="sm"
-              variant="primary"
               onClick={handleUpload}
               loading={loading}
               disabled={loading || !csvResponse.length}>

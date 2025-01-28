@@ -105,7 +105,7 @@ export const SurveysList = ({
       };
       fetchInitialSurveys();
     }
-  }, [environment.id, surveysLimit, filters]);
+  }, [environment.id, surveysLimit, filters, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);

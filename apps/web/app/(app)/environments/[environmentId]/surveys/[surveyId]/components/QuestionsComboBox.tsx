@@ -34,7 +34,7 @@ import {
 import { useTranslations } from "next-intl";
 import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export enum OptionsType {
@@ -145,7 +145,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
   const t = useTranslations();
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
-  useClickOutside(commandRef, () => setOpen(false));
+  // useClickOutside(commandRef, () => setOpen(false));
 
   return (
     <Command ref={commandRef} className="h-10 overflow-visible bg-transparent hover:bg-slate-50">

@@ -20,9 +20,17 @@ const getMessages = (locale: string) => {
   return messageCache[locale];
 };
 
-export const translate = (text: string, locale: string) => {
+export const translate = (text: string, locale: string, replacements?: Record<string, string>) => {
   const messages = getMessages(locale ?? defaultLocale);
-  return messages.templates[text];
+  let translatedText = messages.templates[text];
+
+  if (replacements) {
+    Object.entries(replacements).forEach(([key, value]) => {
+      translatedText = translatedText.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    });
+  }
+
+  return translatedText;
 };
 
 export const getDefaultEndingCard = (languages: TSurveyLanguage[], locale: string): TSurveyEndScreenCard => {
@@ -47,6 +55,7 @@ export const getDefaultWelcomeCard = (locale: string): TSurveyWelcomeCard => {
     enabled: false,
     headline: { default: translate("default_welcome_card_headline", locale) },
     html: { default: translate("default_welcome_card_html", locale) },
+    buttonLabel: { default: translate("default_welcome_card_button_label", locale) },
     timeToFinish: false,
     showResponseCount: false,
   };
@@ -154,6 +163,9 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("card_abandonment_survey_question_3_headline", locale),
           },
@@ -250,6 +262,9 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("card_abandonment_survey_question_7_headline", locale) },
           required: true,
           inputType: "email",
@@ -261,11 +276,14 @@ const cartAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("card_abandonment_survey_question_8_headline", locale) },
           required: false,
           inputType: "text",
           buttonLabel: { default: translate("finish", locale) },
-          backButtonLabel: { default: translate("finish", locale) },
+          backButtonLabel: { default: translate("back", locale) },
         },
       ],
     },
@@ -365,6 +383,9 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("site_abandonment_survey_question_4_headline", locale),
           },
@@ -461,6 +482,9 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("site_abandonment_survey_question_8_headline", locale) },
           buttonLabel: { default: translate("next", locale) },
           backButtonLabel: { default: translate("back", locale) },
@@ -472,6 +496,9 @@ const siteAbandonmentSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("site_abandonment_survey_question_9_headline", locale) },
           buttonLabel: { default: translate("finish", locale) },
           backButtonLabel: { default: translate("back", locale) },
@@ -598,6 +625,9 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("product_market_fit_superhuman_question_4_headline", locale) },
           required: true,
           buttonLabel: { default: translate("next", locale) },
@@ -607,6 +637,9 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("product_market_fit_superhuman_question_5_headline", locale) },
           required: true,
           buttonLabel: { default: translate("next", locale) },
@@ -616,6 +649,9 @@ const productMarketFitSuperhuman = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("product_market_fit_superhuman_question_6_headline", locale) },
           subheader: { default: translate("product_market_fit_superhuman_question_6_subheader", locale) },
           required: true,
@@ -931,6 +967,9 @@ const churnSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1006,6 +1045,9 @@ const churnSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1147,6 +1189,9 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1183,6 +1228,9 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("earned_advocacy_score_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("earned_advocacy_score_question_3_placeholder", locale) },
@@ -1242,6 +1290,9 @@ const earnedAdvocacyScore = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("earned_advocacy_score_question_5_headline", locale) },
           required: true,
           placeholder: { default: translate("earned_advocacy_score_question_5_placeholder", locale) },
@@ -1453,6 +1504,9 @@ const improveTrialConversion = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1488,6 +1542,9 @@ const improveTrialConversion = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1565,6 +1622,9 @@ const improveTrialConversion = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1601,6 +1661,9 @@ const improveTrialConversion = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -1760,6 +1823,9 @@ const reviewPrompt = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("review_prompt_question_3_headline", locale) },
           required: true,
           subheader: { default: translate("review_prompt_question_3_subheader", locale) },
@@ -1964,6 +2030,9 @@ const improveActivationRate = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -2000,6 +2069,9 @@ const improveActivationRate = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -2036,6 +2108,9 @@ const improveActivationRate = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -2072,6 +2147,9 @@ const improveActivationRate = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -2108,6 +2186,9 @@ const improveActivationRate = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [],
           headline: { default: translate("improve_activation_rate_question_6_headline", locale) },
           required: false,
@@ -2180,6 +2261,9 @@ const employeeSatisfaction = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("employee_satisfaction_question_3_headline", locale) },
           required: false,
           placeholder: { default: translate("employee_satisfaction_question_3_placeholder", locale) },
@@ -2234,6 +2318,9 @@ const employeeSatisfaction = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("employee_satisfaction_question_6_headline", locale) },
           required: false,
           placeholder: { default: translate("employee_satisfaction_question_6_placeholder", locale) },
@@ -2351,6 +2438,9 @@ const uncoverStrengthsAndWeaknesses = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("uncover_strengths_and_weaknesses_question_3_headline", locale) },
           required: false,
           subheader: { default: translate("uncover_strengths_and_weaknesses_question_3_subheader", locale) },
@@ -2401,6 +2491,9 @@ const productMarketFitShort = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("product_market_fit_short_question_2_headline", locale) },
           subheader: { default: translate("product_market_fit_short_question_2_subheader", locale) },
           required: true,
@@ -2770,6 +2863,9 @@ const feedbackBox = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -2869,6 +2965,9 @@ const feedbackBox = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("feedback_box_question_4_headline", locale) },
           required: true,
           subheader: { default: translate("feedback_box_question_4_subheader", locale) },
@@ -2941,6 +3040,9 @@ const integrationSetupSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("integration_setup_survey_question_2_headline", locale) },
           required: false,
           placeholder: { default: translate("integration_setup_survey_question_2_placeholder", locale) },
@@ -2951,6 +3053,9 @@ const integrationSetupSurvey = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("integration_setup_survey_question_3_headline", locale) },
           required: false,
           subheader: { default: translate("integration_setup_survey_question_3_subheader", locale) },
@@ -3043,6 +3148,9 @@ const docsFeedback = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("docs_feedback_question_2_headline", locale) },
           required: false,
           inputType: "text",
@@ -3052,6 +3160,9 @@ const docsFeedback = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("docs_feedback_question_3_headline", locale) },
           required: false,
           inputType: "text",
@@ -3088,6 +3199,9 @@ const NPS = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("nps_question_2_headline", locale) },
           required: false,
           inputType: "text",
@@ -3278,6 +3392,9 @@ const customerSatisfactionScore = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[9],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("csat_question_10_headline", locale) },
           required: false,
           placeholder: { default: translate("csat_question_10_placeholder", locale) },
@@ -3357,6 +3474,9 @@ const collectFeedback = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -3394,6 +3514,9 @@ const collectFeedback = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("collect_feedback_question_3_headline", locale) },
           required: true,
           longAnswer: true,
@@ -3418,6 +3541,9 @@ const collectFeedback = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("collect_feedback_question_5_headline", locale) },
           required: false,
           longAnswer: true,
@@ -3445,6 +3571,9 @@ const collectFeedback = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("collect_feedback_question_7_headline", locale) },
           required: false,
           inputType: "email",
@@ -3564,6 +3693,9 @@ const prioritizeFeatures = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("prioritize_features_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("prioritize_features_question_3_placeholder", locale) },
@@ -3603,6 +3735,9 @@ const gaugeFeatureSatisfaction = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("gauge_feature_satisfaction_question_2_headline", locale) },
           required: false,
           inputType: "text",
@@ -3653,6 +3788,9 @@ const marketSiteClarity = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("market_site_clarity_question_2_headline", locale) },
           required: false,
           inputType: "text",
@@ -3701,6 +3839,9 @@ const customerEffortScore = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("customer_effort_score_question_2_headline", locale) },
           required: true,
           placeholder: { default: translate("customer_effort_score_question_2_placeholder", locale) },
@@ -4063,6 +4204,9 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4099,6 +4243,9 @@ const rateCheckoutExperience = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("rate_checkout_experience_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("rate_checkout_experience_question_3_placeholder", locale) },
@@ -4170,6 +4317,9 @@ const measureSearchExperience = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4206,6 +4356,9 @@ const measureSearchExperience = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("measure_search_experience_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("measure_search_experience_question_3_placeholder", locale) },
@@ -4277,6 +4430,9 @@ const evaluateContentQuality = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4313,6 +4469,9 @@ const evaluateContentQuality = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("evaluate_content_quality_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("evaluate_content_quality_question_3_placeholder", locale) },
@@ -4494,6 +4653,9 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4538,6 +4700,9 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4581,6 +4746,9 @@ const measureTaskAccomplishment = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("measure_task_accomplishment_question_5_headline", locale) },
           required: true,
           buttonLabel: { default: translate("measure_task_accomplishment_question_5_button_label", locale) },
@@ -4878,6 +5046,9 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4914,6 +5085,9 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4950,6 +5124,9 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -4986,6 +5163,9 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5022,6 +5202,9 @@ const identifySignUpBarriers = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[7],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("identify_sign_up_barriers_question_8_headline", locale) },
           required: true,
           placeholder: { default: translate("identify_sign_up_barriers_question_8_placeholder", locale) },
@@ -5079,6 +5262,9 @@ const buildProductRoadmap = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("build_product_roadmap_question_2_headline", locale),
           },
@@ -5236,6 +5422,9 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5280,6 +5469,9 @@ const understandPurchaseIntention = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("understand_purchase_intention_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("understand_purchase_intention_question_3_placeholder", locale) },
@@ -5379,6 +5571,9 @@ const improveNewsletterContent = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5554,6 +5749,9 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("evaluate_a_product_idea_question_3_headline", locale) },
           required: true,
           placeholder: { default: translate("evaluate_a_product_idea_question_3_placeholder", locale) },
@@ -5650,6 +5848,9 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5686,6 +5887,9 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[6],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("evaluate_a_product_idea_question_7_headline", locale) },
           required: true,
           placeholder: { default: translate("evaluate_a_product_idea_question_7_placeholder", locale) },
@@ -5696,6 +5900,9 @@ const evaluateAProductIdea = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[7],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("evaluate_a_product_idea_question_8_headline", locale) },
           required: false,
           placeholder: { default: translate("evaluate_a_product_idea_question_8_placeholder", locale) },
@@ -5899,6 +6106,9 @@ const understandLowEngagement = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[1],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5935,6 +6145,9 @@ const understandLowEngagement = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[2],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -5971,6 +6184,9 @@ const understandLowEngagement = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[3],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -6007,6 +6223,9 @@ const understandLowEngagement = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[4],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [
             {
               id: createId(),
@@ -6043,6 +6262,9 @@ const understandLowEngagement = (locale: string): TTemplate => {
         {
           id: reusableQuestionIds[5],
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           logic: [],
           headline: { default: translate("understand_low_engagement_question_6_headline", locale) },
           required: false,
@@ -6124,6 +6346,9 @@ const employeeWellBeing = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("employee_well_being_question_4_headline", locale) },
           required: false,
           placeholder: { default: translate("employee_well_being_question_4_placeholder", locale) },
@@ -6164,6 +6389,9 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("long_term_retention_check_in_question_2_headline", locale) },
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_2_placeholder", locale) },
@@ -6220,6 +6448,9 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("long_term_retention_check_in_question_5_headline", locale),
           },
@@ -6274,6 +6505,9 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("long_term_retention_check_in_question_8_headline", locale) },
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_8_placeholder", locale) },
@@ -6297,6 +6531,9 @@ const longTermRetentionCheckIn = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: { default: translate("long_term_retention_check_in_question_10_headline", locale) },
           required: false,
           placeholder: { default: translate("long_term_retention_check_in_question_10_placeholder", locale) },
@@ -6381,6 +6618,9 @@ const professionalDevelopmentGrowth = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("professional_development_growth_survey_question_4_headline", locale),
           },
@@ -6469,6 +6709,9 @@ const recognitionAndReward = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("recognition_and_reward_survey_question_4_headline", locale),
           },
@@ -6557,6 +6800,9 @@ const alignmentAndEngagement = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("alignment_and_engagement_survey_question_4_headline", locale),
           },
@@ -6645,6 +6891,9 @@ const supportiveWorkCulture = (locale: string): TTemplate => {
         {
           id: createId(),
           type: TSurveyQuestionTypeEnum.OpenText,
+          charLimit: {
+            enabled: false,
+          },
           headline: {
             default: translate("supportive_work_culture_survey_question_4_headline", locale),
           },
@@ -6727,6 +6976,9 @@ export const getCustomSurveyTemplate = (locale: string): TTemplate => ({
         buttonLabel: { default: translate("next", locale) },
         required: true,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       } as TSurveyOpenTextQuestion,
     ],
   },

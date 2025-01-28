@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createTeamAction } from "@/modules/ee/teams/team-list/actions";
+import { createTeamAction } from "@/modules/ee/teams/team-list/action";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -82,7 +82,7 @@ export const CreateTeamModal = ({ open, setOpen, organizationId, onCreate }: Cre
             }}>
             {t("common.cancel")}
           </Button>
-          <Button variant="primary" disabled={!teamName || isLoading} loading={isLoading} type="submit">
+          <Button disabled={!teamName || isLoading} loading={isLoading} type="submit">
             {t("environments.settings.teams.create")}
           </Button>
         </div>

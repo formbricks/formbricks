@@ -80,7 +80,7 @@ export const SurveyTagsWrapper: React.FC<SurveyTagsWrapperProps> = ({
     <div className="flex items-center gap-3 border-t border-slate-200 px-6 py-4">
       {!isViewer && (
         <Button
-          variant="minimal"
+          variant="ghost"
           size="sm"
           className="cursor-pointer p-0"
           onClick={() => {

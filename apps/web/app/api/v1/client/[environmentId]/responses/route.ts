@@ -24,9 +24,16 @@ export const OPTIONS = async (): Promise<Response> => {
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
   const requestHeaders = await headers();
+  let responseInput;
+  try {
+    responseInput = await request.json();
+  } catch (error) {
+    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+  }
 
   const { environmentId } = params;
   const environmentIdValidation = ZId.safeParse(environmentId);
+  const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
     return responses.badRequestResponse(
@@ -36,25 +43,26 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  const responseInput = await request.json();
+  if (!responseInputValidation.success) {
+    return responses.badRequestResponse(
+      "Fields are missing or incorrectly formatted",
+      transformErrorToDetails(responseInputValidation.error),
+      true
+    );
+  }
 
-  const agent = UAParser(request.headers.get("user-agent"));
+  const userAgent = request.headers.get("user-agent") || undefined;
+  const agent = new UAParser(userAgent);
+
   const country =
     requestHeaders.get("CF-IPCountry") ||
     requestHeaders.get("X-Vercel-IP-Country") ||
     requestHeaders.get("CloudFront-Viewer-Country") ||
     undefined;
-  const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
-  if (!inputValidation.success) {
-    return responses.badRequestResponse(
-      "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
-      true
-    );
-  }
+  const responseInputData = responseInputValidation.data;
 
-  if (inputValidation.data.userId) {
+  if (responseInputData.userId) {
     const isContactsEnabled = await getIsContactsEnabled();
     if (!isContactsEnabled) {
       return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
@@ -62,9 +70,9 @@ export const POST = async (request: Request, context: Context): Promise<Response
   }
 
   // get and check survey
-  const survey = await getSurvey(responseInput.surveyId);
+  const survey = await getSurvey(responseInputData.surveyId);
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
+    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
   }
   if (survey.environmentId !== environmentId) {
     return responses.badRequestResponse(
@@ -80,21 +88,21 @@ export const POST = async (request: Request, context: Context): Promise<Response
   let response: TResponse;
   try {
     const meta: TResponseInput["meta"] = {
-      source: responseInput?.meta?.source,
-      url: responseInput?.meta?.url,
+      source: responseInputData?.meta?.source,
+      url: responseInputData?.meta?.url,
       userAgent: {
-        browser: agent?.browser.name,
-        device: agent?.device.type || "desktop",
-        os: agent?.os.name,
+        browser: agent.getBrowser().name,
+        device: agent.getDevice().type || "desktop",
+        os: agent.getOS().name,
       },
       country: country,
-      action: responseInput?.meta?.action,
+      action: responseInputData?.meta?.action,
     };
 
     response = await createResponse({
-      ...inputValidation.data,
+      ...responseInputData,
       meta,
-      panelistId: inputValidation.data.userId || "",
+      panelistId: responseInputData.userId || "",
     });
   } catch (error) {
     if (error instanceof InvalidInputError) {

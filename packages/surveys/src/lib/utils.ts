@@ -1,17 +1,17 @@
+import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
-  TShuffleOption,
-  TSurvey,
-  TSurveyLogic,
-  TSurveyLogicAction,
-  TSurveyQuestion,
-  TSurveyQuestionChoice,
+  type TShuffleOption,
+  type TSurveyLogic,
+  type TSurveyLogicAction,
+  type TSurveyQuestion,
+  type TSurveyQuestionChoice,
 } from "@formbricks/types/surveys/types";
 
 export const cn = (...classes: string[]) => {
   return classes.filter(Boolean).join(" ");
 };
 
-const shuffle = (array: any[]) => {
+const shuffle = (array: unknown[]) => {
   for (let i = 0; i < array.length; i++) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
@@ -20,7 +20,7 @@ const shuffle = (array: any[]) => {
 
 export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption): number[] => {
   // Create an array with numbers from 0 to n-1
-  let array = Array.from(Array(n).keys());
+  const array = Array.from(Array(n).keys());
 
   if (shuffleOption === "all") {
     shuffle(array);
@@ -61,12 +61,15 @@ export const getShuffledChoicesIds = (
   return shuffledChoices.map((choice) => choice.id);
 };
 
-export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number): number => {
+export const calculateElementIdx = (
+  survey: TJsEnvironmentStateSurvey,
+  currentQustionIdx: number,
+  totalCards: number
+): number => {
   const currentQuestion = survey.questions[currentQustionIdx];
-  const surveyLength = survey.questions.length;
-  const middleIdx = Math.floor(surveyLength / 2);
+  const middleIdx = Math.floor(totalCards / 2);
   const possibleNextQuestions = getPossibleNextQuestions(currentQuestion);
-
+  const endingCardIds = survey.endings.map((ending) => ending.id);
   const getLastQuestionIndex = () => {
     const lastQuestion = survey.questions
       .filter((q) => possibleNextQuestions.includes(q.id))
@@ -79,7 +82,7 @@ export const calculateElementIdx = (survey: TSurvey, currentQustionIdx: number):
   const lastprevQuestionIdx = getLastQuestionIndex();
 
   if (lastprevQuestionIdx > 0) elementIdx = Math.min(middleIdx, lastprevQuestionIdx - 1);
-  if (possibleNextQuestions.includes("end")) elementIdx = middleIdx;
+  if (possibleNextQuestions.some((id) => endingCardIds.includes(id))) elementIdx = middleIdx;
   return elementIdx;
 };
 
