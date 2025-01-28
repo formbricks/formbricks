@@ -56,6 +56,10 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   const decoded = jwt.decode(token);
   const payload: JwtPayload = decoded as JwtPayload;
 
+  if (!payload) {
+    throw new Error("Token is invalid");
+  }
+
   const { id } = payload;
   if (!id) {
     throw new Error("Token missing required field: id");

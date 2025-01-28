@@ -1,23 +1,22 @@
-import {createDocumentAndAssignInsight} from "@/app/api/(internal)/pipeline/lib/documents";
-import {ZPipelineInput} from "@/app/api/(internal)/pipeline/types/pipelines";
-import {responses} from "@/app/lib/api/response";
-import {transformErrorToDetails} from "@/app/lib/api/validator";
-import {webhookCache} from "@/lib/cache/webhook";
-import {getIsAIEnabled} from "@/modules/ee/license-check/lib/utils";
-import {PipelineTriggers, Webhook} from "@prisma/client";
-import {createHmac} from "crypto";
-import {headers} from "next/headers";
-import {prisma} from "@formbricks/database";
-import {cache} from "@formbricks/lib/cache";
-import {CRON_SECRET, IS_AI_CONFIGURED, WEBHOOK_SECRET} from "@formbricks/lib/constants";
-import {getIntegrations} from "@formbricks/lib/integration/service";
-import {getOrganizationByEnvironmentId} from "@formbricks/lib/organization/service";
-import {getSurvey} from "@formbricks/lib/survey/service";
-import {convertDatesInObject} from "@formbricks/lib/time";
-import {getPromptText} from "@formbricks/lib/utils/ai";
-import {parseRecallInfo} from "@formbricks/lib/utils/recall";
-import {getContactAttributes} from "./lib/contact-attribute";
-import {handleIntegrations} from "./lib/handleIntegrations";
+import { createDocumentAndAssignInsight } from "@/app/api/(internal)/pipeline/lib/documents";
+import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
+import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { webhookCache } from "@/lib/cache/webhook";
+import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { PipelineTriggers, Webhook } from "@prisma/client";
+import { createHmac } from "crypto";
+import { headers } from "next/headers";
+import { prisma } from "@formbricks/database";
+import { cache } from "@formbricks/lib/cache";
+import { CRON_SECRET, IS_AI_CONFIGURED, WEBHOOK_SECRET } from "@formbricks/lib/constants";
+import { getIntegrations } from "@formbricks/lib/integration/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { getSurvey } from "@formbricks/lib/survey/service";
+import { convertDatesInObject } from "@formbricks/lib/time";
+import { getPromptText } from "@formbricks/lib/utils/ai";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
   const requestHeaders = await headers();
@@ -41,7 +40,6 @@ export const POST = async (request: Request) => {
   }
 
   const { environmentId, surveyId, event, response } = inputValidation.data;
-  const contactAttributes = response.contact?.id ? await getContactAttributes(response.contact?.id) : {};
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
@@ -104,7 +102,7 @@ export const POST = async (request: Request) => {
     }
 
     if (integrations.length > 0) {
-      await handleIntegrations(integrations, inputValidation.data, survey, contactAttributes);
+      await handleIntegrations(integrations, inputValidation.data, survey);
     }
 
     // Await webhook and email promises with allSettled to prevent early rejection
@@ -133,7 +131,6 @@ export const POST = async (request: Request) => {
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                contactAttributes,
                 response.data,
                 response.variables
               );

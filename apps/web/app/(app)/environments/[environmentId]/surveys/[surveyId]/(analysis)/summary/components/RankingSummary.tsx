@@ -1,5 +1,4 @@
 import { useTranslations } from "next-intl";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryRanking, TSurveyType } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -9,17 +8,10 @@ interface RankingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRanking;
   surveyType: TSurveyType;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
-export const RankingSummary = ({
-  questionSummary,
-  surveyType,
-  survey,
-  contactAttributeKeys,
-  locale,
-}: RankingSummaryProps) => {
+export const RankingSummary = ({ questionSummary, surveyType, survey, locale }: RankingSummaryProps) => {
   // sort by count and transform to array
   const t = useTranslations();
   const results = Object.values(questionSummary.choices).sort((a, b) => {
@@ -28,12 +20,7 @@ export const RankingSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {results.map((result, resultsIdx) => (
           <div key={result.value} className="group cursor-pointer">

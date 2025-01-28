@@ -66,7 +66,6 @@ const Page = async (props: SummaryPageProps) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          contactAttributeKeys={[]} // not showing any attributes for the sharing page
           isAIEnabled={false} // Disable AI for sharing page for now
           isReadOnly={true}
           locale={DEFAULT_LOCALE}

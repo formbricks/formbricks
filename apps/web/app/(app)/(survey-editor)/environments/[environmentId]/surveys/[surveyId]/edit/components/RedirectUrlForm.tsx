@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import React, { useEffect } from "react";
 import { useRef } from "react";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 
 interface RedirectUrlFormProps {
@@ -13,12 +12,10 @@ interface RedirectUrlFormProps {
   endingCard: TSurveyRedirectUrlCard;
   updateSurvey: (input: Partial<TSurveyRedirectUrlCard>) => void;
   defaultRedirect: string;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const RedirectUrlForm = ({
   localSurvey,
-  contactAttributeKeys,
   endingCard,
   updateSurvey,
   defaultRedirect,
@@ -32,7 +29,6 @@ export const RedirectUrlForm = ({
       updateSurvey({ url: defaultRedirect });
     }
   }, [endingCard.url, defaultRedirect, updateSurvey]);
-
 
   return (
     <form className="mt-3 space-y-3">
@@ -52,7 +48,6 @@ export const RedirectUrlForm = ({
           onAddFallback={() => {
             inputRef.current?.focus();
           }}
-          contactAttributeKeys={contactAttributeKeys}
           isRecallAllowed
           localSurvey={localSurvey}
           usedLanguageCode={"default"}
@@ -79,8 +74,7 @@ export const RedirectUrlForm = ({
                       },
                       localSurvey,
                       false,
-                      "default",
-                      contactAttributeKeys
+                      "default"
                     )[selectedLanguageCode]
                   }
                   onChange={(e) => onChange(e.target.value)}

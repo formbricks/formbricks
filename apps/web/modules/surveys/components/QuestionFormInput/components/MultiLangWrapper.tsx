@@ -3,7 +3,6 @@ import { useTranslations } from "next-intl";
 import React, { ReactNode, useMemo } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -22,7 +21,6 @@ interface MultiLangWrapperProps {
   setSelectedLanguageCode: (code: string) => void;
   locale: TUserLocale;
   render: (props: MultiLangWrapperRenderProps) => ReactNode;
-  contactAttributeKeys?: TContactAttributeKey[];
 }
 
 export const MultiLangWrapper = ({
@@ -34,7 +32,6 @@ export const MultiLangWrapper = ({
   locale,
   render,
   onChange,
-  contactAttributeKeys,
 }: MultiLangWrapperProps) => {
   const t = useTranslations();
 
@@ -83,9 +80,7 @@ export const MultiLangWrapper = ({
           {usedLanguageCode !== "default" && value && typeof value["default"] !== "undefined" && (
             <div className="mt-1 text-xs text-slate-500">
               <strong>{t("environments.project.languages.translate")}:</strong>{" "}
-              {contactAttributeKeys
-                ? recallToHeadline(value, localSurvey, false, "default", contactAttributeKeys)["default"]
-                : value.default}
+              {recallToHeadline(value, localSurvey, false, "default")["default"]}
             </div>
           )}
 

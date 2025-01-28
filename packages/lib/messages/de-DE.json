@@ -754,6 +754,7 @@
         "connect_your_first_slack_channel": "Verbinde deinen ersten Slack Kanal, um loszulegen.",
         "connected_with_team": "Verbunden mit {team}",
         "create_at_least_one_channel_error": "Du musst mindestens einen Kanal erstellen, um diese Integration einrichten zu können.",
+        "dont_see_your_channel": "Siehst du deinen Kanal nicht?",
         "link_channel": "Kanal verknüpfen",
         "link_slack_channel": "Slack Kanal verknüpfen",
         "please_select_a_channel": "Bitte wähle einen Kanal aus",
