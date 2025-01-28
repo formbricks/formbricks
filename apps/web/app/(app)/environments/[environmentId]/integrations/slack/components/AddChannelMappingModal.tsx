@@ -6,8 +6,10 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { CircleHelpIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -213,9 +215,18 @@ export const AddChannelMappingModal = ({
                     setSelectedItem={setSelectedChannel}
                     disabled={channels.length === 0}
                   />
+                  <Link
+                    href="https://formbricks.com/docs/developer-docs/integrations/slack"
+                    target="_blank"
+                    className="text-xs">
+                    <Button variant="ghost" size="sm" className="my-2" type="button">
+                      <CircleHelpIcon className="h-4 w-4" />
+                      {t("environments.integrations.slack.dont_see_your_channel")}
+                    </Button>
+                  </Link>
                   {selectedChannel && hasMatchingId && (
                     <p className="text-xs text-amber-700">
-                      <strong>{t("environments.integrations.slack.note")}:</strong>{" "}
+                      <strong>{t("common.note")}:</strong>{" "}
                       {t("environments.integrations.slack.already_connected_another_survey")}
                     </p>
                   )}
