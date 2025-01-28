@@ -29,6 +29,11 @@ const config = (): UserConfig => {
     plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/api", "@formbricks/types"] })],
     test: {
       setupFiles: ["./vitest.setup.ts"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+        include: ["src/lib/**/*.ts"],
+      },
     },
   });
 };
