@@ -14,6 +14,7 @@ import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
+  console.log("SurveyEditorEnvironmentLayout", "⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕⭕");
   const params = await props.params;
 
   const { children } = props;

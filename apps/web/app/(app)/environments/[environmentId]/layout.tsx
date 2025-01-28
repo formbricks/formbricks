@@ -19,6 +19,7 @@ const EnvLayout = async (props: {
   params: Promise<{ environmentId: string }>;
   children: React.ReactNode;
 }) => {
+  console.log("EnvLayout", "🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨🚨");
   const params = await props.params;
 
   const { children } = props;

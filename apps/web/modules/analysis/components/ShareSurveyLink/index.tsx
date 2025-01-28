@@ -1,5 +1,5 @@
-import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { generateSingleUseIdAction } from "@/modules/survey/survey-list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useTranslations } from "next-intl";
