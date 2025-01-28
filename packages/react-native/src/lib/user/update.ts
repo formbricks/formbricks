@@ -6,9 +6,6 @@ import { filterSurveys } from "@/lib/common/utils";
 import { type TUpdates, type TUserState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok, okVoid } from "@/types/error";
 
-const config = RNConfig.getInstance();
-const logger = Logger.getInstance();
-
 export const sendUpdatesToBackend = async ({
   appUrl,
   environmentId,
@@ -76,6 +73,9 @@ export const sendUpdates = async ({
 }: {
   updates: TUpdates;
 }): Promise<Result<void, ApiErrorResponse>> => {
+  const config = RNConfig.getInstance();
+  const logger = Logger.getInstance();
+
   const { appUrl, environmentId } = config.get();
   // update endpoint call
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;

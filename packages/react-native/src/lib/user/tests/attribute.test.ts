@@ -1,6 +1,11 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { setAttributes } from "@/lib/user/attribute";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+
+export const mockAttributes = {
+  name: "John Doe",
+  email: "john@example.com",
+};
 
 // Mock the UpdateQueue
 vi.mock("@/lib/user/update-queue", () => ({
@@ -27,15 +32,10 @@ describe("User Attributes", () => {
 
   describe("setAttributes", () => {
     test("successfully updates attributes and triggers processing", async () => {
-      const attributes = {
-        name: "John Doe",
-        email: "john@example.com",
-      };
-
-      const result = await setAttributes(attributes);
+      const result = await setAttributes(mockAttributes);
 
       // Verify UpdateQueue methods were called correctly
-      expect(mockUpdateQueue.updateAttributes).toHaveBeenCalledWith(attributes);
+      expect(mockUpdateQueue.updateAttributes).toHaveBeenCalledWith(mockAttributes);
       expect(mockUpdateQueue.processUpdates).toHaveBeenCalled();
 
       // Verify result is ok
@@ -43,8 +43,8 @@ describe("User Attributes", () => {
     });
 
     test("processes multiple attribute updates", async () => {
-      const firstAttributes = { name: "John" };
-      const secondAttributes = { email: "john@example.com" };
+      const firstAttributes = { name: mockAttributes.name };
+      const secondAttributes = { email: mockAttributes.email };
 
       await setAttributes(firstAttributes);
       await setAttributes(secondAttributes);
@@ -56,7 +56,7 @@ describe("User Attributes", () => {
     });
 
     test("processes updates asynchronously", async () => {
-      const attributes = { name: "John" };
+      const attributes = { name: mockAttributes.name };
 
       // Mock processUpdates to be async
       mockUpdateQueue.processUpdates.mockImplementation(

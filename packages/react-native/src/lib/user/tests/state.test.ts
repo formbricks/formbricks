@@ -1,6 +1,8 @@
+import { type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
 import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "@/lib/user/state";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+const mockUserId = "user_123";
 
 vi.mock("@/lib/common/config", () => ({
   RNConfig: {
@@ -12,17 +14,13 @@ vi.mock("@/lib/common/config", () => ({
 }));
 
 describe("User State Expiry Check Listener", () => {
-  const mockRNConfig = {
-    get: vi.fn(),
-    update: vi.fn(),
-  };
+  let mockRNConfig: MockInstance<() => RNConfig>;
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers(); // Simulate timers
 
-    const getRnConfigInstanceMock = vi.spyOn(RNConfig, "getInstance");
-    getRnConfigInstanceMock.mockReturnValue(mockRNConfig as unknown as RNConfig);
+    mockRNConfig = vi.spyOn(RNConfig, "getInstance");
   });
 
   afterEach(() => {
@@ -30,52 +28,76 @@ describe("User State Expiry Check Listener", () => {
   });
 
   test("should set an interval if not already set and update user state expiry when userId exists", () => {
-    mockRNConfig.get.mockReturnValue({
-      user: { data: { userId: "user_123" } },
-    });
+    const mockConfig = {
+      get: vi.fn().mockReturnValue({
+        user: { data: { userId: mockUserId } },
+      }),
+      update: vi.fn(),
+    };
+
+    mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
 
     addUserStateExpiryCheckListener();
-    // expect(setInterval).toHaveBeenCalledTimes(1); // Ensures interval is set once
 
     // Fast-forward time by 1 minute (60,000 ms)
     vi.advanceTimersByTime(60_000);
 
     // Ensure config.update was called with extended expiry time
-    expect(mockRNConfig.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        user: expect.objectContaining({
-          expiresAt: expect.any(Date), // Ensures expiry was updated
-        }),
-      })
-    );
+    expect(mockConfig.update).toHaveBeenCalledWith({
+      user: {
+        data: { userId: mockUserId },
+        expiresAt: expect.any(Date) as Date,
+      },
+    });
   });
 
   test("should not update user state expiry if userId does not exist", () => {
-    mockRNConfig.get.mockReturnValue({
-      user: { data: { userId: null } },
-    });
+    const mockConfig = {
+      get: vi.fn().mockReturnValue({
+        user: { data: { userId: null } },
+      }),
+      update: vi.fn(),
+    };
+
+    mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
 
     addUserStateExpiryCheckListener();
     vi.advanceTimersByTime(60_000); // Fast-forward 1 minute
 
-    expect(mockRNConfig.update).not.toHaveBeenCalled(); // Ensures no update when no userId
+    expect(mockConfig.update).not.toHaveBeenCalled(); // Ensures no update when no userId
   });
 
   test("should not set multiple intervals if already set", () => {
-    mockRNConfig.get.mockReturnValue({
-      user: { data: { userId: "user_123" } },
-    });
+    const mockConfig = {
+      get: vi.fn().mockReturnValue({
+        user: { data: { userId: mockUserId } },
+      }),
+      update: vi.fn(),
+    };
+
+    mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
 
     addUserStateExpiryCheckListener();
     addUserStateExpiryCheckListener(); // Call again to check if it prevents multiple intervals
 
-    expect(setInterval).toHaveBeenCalledTimes(1); // Should still be called only once
+    vi.advanceTimersByTime(60_000); // Fast-forward 1 minute
+
+    expect(mockConfig.update).toHaveBeenCalledTimes(1);
   });
 
   test("should clear interval when clearUserStateExpiryCheckListener is called", () => {
+    const mockConfig = {
+      get: vi.fn(),
+      update: vi.fn(),
+    };
+
+    mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
+
     addUserStateExpiryCheckListener();
     clearUserStateExpiryCheckListener();
 
-    expect(clearInterval).toHaveBeenCalledTimes(1); // Ensures interval was cleared
+    vi.advanceTimersByTime(60_000); // Fast-forward 1 minute
+
+    expect(mockConfig.update).not.toHaveBeenCalled();
   });
 });

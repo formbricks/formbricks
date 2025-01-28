@@ -1,7 +1,6 @@
 import { RNConfig } from "@/lib/common/config";
 import type { TUserState } from "@/types/config";
 
-const config = RNConfig.getInstance();
 let userStateSyncIntervalId: number | null = null;
 
 export const DEFAULT_USER_STATE_NO_USER_ID: TUserState = {
@@ -19,6 +18,7 @@ export const DEFAULT_USER_STATE_NO_USER_ID: TUserState = {
  * Add a listener to check if the user state has expired with a certain interval
  */
 export const addUserStateExpiryCheckListener = (): void => {
+  const config = RNConfig.getInstance();
   const updateInterval = 1000 * 60; // every 60 seconds
 
   if (userStateSyncIntervalId === null) {
