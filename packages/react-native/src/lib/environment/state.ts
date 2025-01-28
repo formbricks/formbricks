@@ -1,13 +1,11 @@
 /* eslint-disable no-console -- logging required for error logging */
-import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
 import type { TConfigInput, TEnvironmentState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok } from "@/types/error";
+import { FormbricksAPI } from "@formbricks/api";
 
-const appConfig = RNConfig.getInstance();
-const logger = Logger.getInstance();
 let environmentStateSyncIntervalId: number | null = null;
 
 /**
@@ -57,6 +55,9 @@ export const fetchEnvironmentState = async ({
  * Add a listener to check if the environment state has expired with a certain interval
  */
 export const addEnvironmentStateExpiryCheckListener = (): void => {
+  const appConfig = RNConfig.getInstance();
+  const logger = Logger.getInstance();
+
   const updateInterval = 1000 * 60; // every minute
 
   if (environmentStateSyncIntervalId === null) {

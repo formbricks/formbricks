@@ -4,7 +4,6 @@ import * as Initialize from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
 import * as Actions from "@/lib/survey/action";
 import * as Attributes from "@/lib/user/attribute";
-import * as Language from "@/lib/user/language";
 import * as User from "@/lib/user/user";
 import { type TConfigInput } from "@/types/config";
 
@@ -38,7 +37,7 @@ export const setAttributes = async (attributes: Record<string, string>): Promise
 };
 
 export const setLanguage = async (language: string): Promise<void> => {
-  queue.add(Language.setLanguage, true, language);
+  queue.add(Attributes.setAttributes, true, { language });
   await queue.wait();
 };
 

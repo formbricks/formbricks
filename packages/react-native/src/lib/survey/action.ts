@@ -5,15 +5,14 @@ import { SurveyStore } from "@/lib/survey/store";
 import type { TEnvironmentStateSurvey } from "@/types/config";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
 
-const appConfig = RNConfig.getInstance();
-const logger = Logger.getInstance();
-const surveyStore = SurveyStore.getInstance();
-
 /**
  * Triggers the display of a survey if it meets the display percentage criteria
  * @param survey - The survey configuration to potentially display
  */
 export const triggerSurvey = (survey: TEnvironmentStateSurvey): void => {
+  const surveyStore = SurveyStore.getInstance();
+  const logger = Logger.getInstance();
+
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
@@ -33,6 +32,12 @@ export const triggerSurvey = (survey: TEnvironmentStateSurvey): void => {
  * @returns Result indicating success or network error
  */
 export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
+  // const appConfigInstance = RNConfig.getInstance();
+  // const surveyStoreInstance = SurveyStore.getInstance();
+  const logger = Logger.getInstance();
+  const surveyStore = SurveyStore.getInstance();
+  const appConfig = RNConfig.getInstance();
+
   const aliasName = alias ?? name;
 
   logger.debug(`Formbricks: Action "${aliasName}" tracked`);
@@ -44,7 +49,7 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          triggerSurvey(survey);
+          surveyStore.setSurvey(survey);
         }
       }
     }
@@ -61,6 +66,8 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
  * @returns Result indicating success, network error, or invalid code error
  */
 export const track = (code: string): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
+  const appConfig = RNConfig.getInstance();
+
   const {
     environment: {
       data: { actionClasses = [] },
