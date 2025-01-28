@@ -1,27 +1,45 @@
 "use server";
 
-import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { deleteInvite } from "@/modules/auth/invite/lib/invite";
+import { actionClient } from "@/lib/utils/action-client";
+import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
-import { ZInviteWithCreator } from "@/modules/auth/invite/types/invites";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { z } from "zod";
 import { DEFAULT_LOCALE } from "@formbricks/lib/constants";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
-import { updateUser } from "@formbricks/lib/user/service";
+import { getUser, updateUser } from "@formbricks/lib/user/service";
+import { InvalidInputError } from "@formbricks/types/errors";
 
 const ZCreateMembershipAction = z.object({
-  invite: ZInviteWithCreator,
+  token: z.string(),
+  userId: z.string(),
 });
 
-export const createMembershipAction = authenticatedActionClient
+export const createMembershipAction = actionClient
   .schema(ZCreateMembershipAction)
-  .action(async ({ ctx, parsedInput }) => {
-    if (!ctx.user) return;
+  .action(async ({ parsedInput }) => {
+    const { userId, token } = parsedInput;
 
-    const { invite } = parsedInput;
+    const { inviteId, email } = verifyInviteToken(token);
 
-    await createMembership(invite.organizationId, ctx.user.id, {
+    const invite = await getInvite(inviteId);
+
+    if (!invite) {
+      throw new InvalidInputError("Invite not found");
+    }
+
+    const user = await getUser(userId);
+
+    if (!user) {
+      throw new InvalidInputError("User not found");
+    }
+
+    if (user?.email?.toLowerCase() !== email?.toLowerCase()) {
+      throw new InvalidInputError("User email does not match invite email");
+    }
+
+    await createMembership(invite.organizationId, user.id, {
       accepted: true,
       role: invite.role,
     });
@@ -33,28 +51,25 @@ export const createMembershipAction = authenticatedActionClient
           role: invite.role,
           teamIds: invite.teamIds,
         },
-        ctx.user.id
+        user.id
       );
     }
 
     await deleteInvite(invite.id);
     await sendInviteAcceptedEmail(
       invite.creator.name ?? "",
-      ctx.user.name ?? "",
+      user.name ?? "",
       invite.creator.email,
-      ctx.user.locale ?? DEFAULT_LOCALE
+      user.locale ?? DEFAULT_LOCALE
     );
 
-    await updateUser(ctx.user.id, {
+    await updateUser(user.id, {
       notificationSettings: {
-        ...ctx.user.notificationSettings,
-        alert: ctx.user.notificationSettings.alert ?? {},
-        weeklySummary: ctx.user.notificationSettings.weeklySummary ?? {},
+        ...user.notificationSettings,
+        alert: user.notificationSettings.alert ?? {},
+        weeklySummary: user.notificationSettings.weeklySummary ?? {},
         unsubscribedOrganizationIds: Array.from(
-          new Set([
-            ...(ctx.user.notificationSettings?.unsubscribedOrganizationIds || []),
-            invite.organizationId,
-          ])
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), invite.organizationId])
         ),
       },
     });

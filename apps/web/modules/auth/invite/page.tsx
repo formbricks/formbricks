@@ -5,6 +5,7 @@ import { Button } from "@/modules/ui/components/button";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { after } from "next/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { getUser } from "@formbricks/lib/user/service";
@@ -78,7 +79,13 @@ export const InvitePage = async (props: InvitePageProps) => {
       );
     }
 
-    await createMembershipAction({ invite });
+    after(async () => {
+      await createMembershipAction({
+        token: searchParams.token,
+        userId: user.id,
+      });
+    });
+
     return (
       <ContentLayout
         headline={t("auth.invite.welcome_to_organization")}
