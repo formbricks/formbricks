@@ -18,7 +18,6 @@ import {
   TSurveyQuestionTypeEnum,
   ZSurveyQuestions,
 } from "@formbricks/types/surveys/types";
-import { getContactAttributes } from "./contact-attribute";
 import { TInsightCreateInput, TNearestInsights, ZInsightCreateInput } from "./types";
 
 export const generateInsightsForSurveyResponsesConcept = async (
@@ -99,9 +98,6 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
         const answersForDocumentCreationPromises = await Promise.all(
           responsesWithOpenTextAnswers.map(async (response) => {
-            const contactAttributes = response.contactId
-              ? await getContactAttributes(response.contactId)
-              : {};
             const responseEntries = openTextQuestionsWithInsights.map((question) => {
               const responseText = response.data[question.id] as string;
               if (!responseText) {
@@ -110,7 +106,6 @@ export const generateInsightsForSurveyResponsesConcept = async (
 
               const headline = parseRecallInfo(
                 question.headline[response.language ?? "default"],
-                contactAttributes,
                 response.data,
                 response.variables
               );
@@ -255,8 +250,6 @@ export const generateInsightsForSurveyResponses = async (
       const createDocumentPromises: Promise<TCreatedDocument | undefined>[] = [];
 
       for (const response of responsesWithOpenTextAnswers) {
-        const contactAttributes = response.contactId ? await getContactAttributes(response.contactId) : {};
-
         for (const question of openTextQuestionsWithInsights) {
           const responseText = response.data[question.id] as string;
           if (!responseText) {
@@ -265,7 +258,6 @@ export const generateInsightsForSurveyResponses = async (
 
           const headline = parseRecallInfo(
             question.headline[response.language ?? "default"],
-            contactAttributes,
             response.data,
             response.variables
           );
