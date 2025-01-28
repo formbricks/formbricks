@@ -1,0 +1,43 @@
+import { ZId } from "@formbricks/types/common";
+import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
+import { BREVO_API_KEY, BREVO_LIST_ID } from "./constants";
+import { validateInputs } from "./utils/validate";
+
+export const createBrevoCustomer = async ({ id, email }: { id: string; email: TUserEmail }) => {
+  if (!BREVO_API_KEY) {
+    return;
+  }
+
+  validateInputs([id, ZId], [email, ZUserEmail]);
+
+  try {
+    const requestBody: any = {
+      attributes: {
+        id,
+        email,
+      },
+      updateEnabled: false,
+    };
+
+    // Add `listIds` only if `BREVO_LIST_ID` is defined
+    if (BREVO_LIST_ID) {
+      requestBody.listIds = [BREVO_LIST_ID];
+    }
+
+    const res = await fetch("https://api.brevo.com/v3/contacts", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${BREVO_API_KEY}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (res.status !== 200) {
+      console.log("Error sending user to Brevo:", await res.text());
+    }
+  } catch (error) {
+    console.log("Error sending user to Brevo:", error);
+  }
+};

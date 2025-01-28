@@ -1,8 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { createBrevoCustomer } from "@formbricks/lib/brevo";
 import { cache } from "@formbricks/lib/cache";
-import { createCustomerIoCustomer } from "@formbricks/lib/customerio";
 import { userCache } from "@formbricks/lib/user/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
@@ -129,7 +129,7 @@ export const createUser = async (data: TUserCreateInput) => {
     });
 
     // send new user customer.io to customer.io
-    createCustomerIoCustomer({ id: user.id, email: user.email });
+    createBrevoCustomer({ id: user.id, email: user.email });
     return user;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
