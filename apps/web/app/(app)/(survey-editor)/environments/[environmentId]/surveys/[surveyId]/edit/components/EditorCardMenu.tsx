@@ -11,6 +11,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, LanguagesIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -93,7 +94,14 @@ export const EditorCardMenu = ({
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
         card.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
       (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
-        card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        card.type === TSurveyQuestionTypeEnum.Ranking) ||
+      (type === TSurveyQuestionTypeEnum.Ranking &&
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
+        card.type === TSurveyQuestionTypeEnum.Ranking) ||
+      (type === TSurveyQuestionTypeEnum.Ranking && card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
     ) {
       updateCard(cardIdx, {
         choices: card.choices,
@@ -146,71 +154,76 @@ export const EditorCardMenu = ({
 
   return (
     <div className="flex">
-      <Button
-        variant="minimal"
-        size="icon"
-        StartIcon={LanguagesIcon}
-        tooltip={t("common.translate")}
-        disabled={isTranslateDisabled}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isTranslateDisabled) return;
-          translateCard(cardIdx);
-        }}
-        className="disabled:border-none"
-      />
-      <Button
-        variant="minimal"
-        size="icon"
-        StartIcon={ArrowUpIcon}
-        tooltip={t("common.move_up")}
-        disabled={cardIdx === 0}
-        onClick={(e) => {
-          if (cardIdx !== 0) {
+      <TooltipRenderer tooltipContent={t("common.translate")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={isTranslateDisabled}
+          onClick={(e) => {
             e.stopPropagation();
-            moveCard(cardIdx, true);
-          }
-        }}
-        className="disabled:border-none"
-      />
-      <Button
-        variant="minimal"
-        size="icon"
-        StartIcon={ArrowDownIcon}
-        tooltip={t("common.move_down")}
-        disabled={lastCard}
-        onClick={(e) => {
-          if (!lastCard) {
+            if (isTranslateDisabled) return;
+            translateCard(cardIdx);
+          }}
+          className="disabled:border-none">
+          <LanguagesIcon />
+        </Button>
+      </TooltipRenderer>
+      <TooltipRenderer tooltipContent={t("common.move_up")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={cardIdx === 0}
+          onClick={(e) => {
+            if (cardIdx !== 0) {
+              e.stopPropagation();
+              moveCard(cardIdx, true);
+            }
+          }}
+          className="disabled:border-none">
+          <ArrowUpIcon />
+        </Button>
+      </TooltipRenderer>
+      <TooltipRenderer tooltipContent={t("common.move_down")} triggerClass="disabled:border-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={lastCard}
+          onClick={(e) => {
+            if (!lastCard) {
+              e.stopPropagation();
+              moveCard(cardIdx, false);
+            }
+          }}
+          className="disabled:border-none">
+          <ArrowDownIcon />
+        </Button>
+      </TooltipRenderer>
+      <TooltipRenderer tooltipContent={t("common.duplicate")} triggerClass="disabled:border-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={(e) => {
             e.stopPropagation();
-            moveCard(cardIdx, false);
-          }
-        }}
-        className="disabled:border-none"
-      />
-      <Button
-        variant="minimal"
-        size="icon"
-        StartIcon={CopyIcon}
-        tooltip={t("common.duplicate")}
-        onClick={(e) => {
-          e.stopPropagation();
-          duplicateCard(cardIdx);
-        }}
-        className="disabled:border-none"
-      />
-      <Button
-        variant="minimal"
-        size="icon"
-        StartIcon={TrashIcon}
-        tooltip={t("common.delete")}
-        disabled={isDeleteDisabled}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (isDeleteDisabled) return;
-          deleteCard(cardIdx);
-        }}
-        className="disabled:border-none"
-      />
+            duplicateCard(cardIdx);
+          }}
+          className="disabled:border-none">
+          <CopyIcon />
+        </Button>
+      </TooltipRenderer>
+      <TooltipRenderer tooltipContent={t("common.delete")} triggerClass="disabled:border-none">
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={isDeleteDisabled}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isDeleteDisabled) return;
+            deleteCard(cardIdx);
+          }}
+          className="disabled:border-none">
+          <TrashIcon />
+        </Button>
+      </TooltipRenderer>
       <DropdownMenu>
         <DropdownMenuTrigger className="h-10 w-10 rounded-lg border border-transparent p-2 hover:border-slate-200">
           <EllipsisIcon className="mx-auto h-4 w-4 text-slate-700 hover:text-slate-600" />

@@ -83,9 +83,7 @@ export const AddressQuestionForm = ({
       .filter((field) => field.show)
       .every((field) => !field.required);
 
-    if (allFieldsAreOptional) {
-      updateQuestion(questionIdx, { required: false });
-    }
+    updateQuestion(questionIdx, { required: !allFieldsAreOptional });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     question.addressLine1,
@@ -152,25 +150,13 @@ export const AddressQuestionForm = ({
         <QuestionToggleTable
           type="address"
           fields={fields}
-          onShowToggle={(field, show) => {
-            updateQuestion(questionIdx, {
-              [field.id]: {
-                show,
-                required: field.required,
-              },
-              // when show changes, and the field is required, the question should be required
-              ...(show && field.required && { required: true }),
-            });
-          }}
-          onRequiredToggle={(field, required) => {
-            updateQuestion(questionIdx, {
-              [field.id]: {
-                show: field.show,
-                required,
-              },
-              required: true,
-            });
-          }}
+          localSurvey={localSurvey}
+          questionIdx={questionIdx}
+          isInvalid={isInvalid}
+          updateQuestion={updateQuestion}
+          selectedLanguageCode={selectedLanguageCode}
+          setSelectedLanguageCode={setSelectedLanguageCode}
+          locale={locale}
         />
       </div>
     </form>

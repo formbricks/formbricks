@@ -194,7 +194,7 @@ export const InputCombobox = ({
         <div className="flex items-center gap-2 truncate">
           {option.icon && <option.icon className="h-5 w-5 shrink-0 text-slate-400" />}
           {option.imgSrc && <Image src={option.imgSrc} alt={option.label} width={24} height={24} />}
-          <span className="truncate">{t(option.label)}</span>
+          <span className="truncate">{option.label}</span>
         </div>
       );
     }
@@ -288,13 +288,13 @@ export const InputCombobox = ({
                           className="mr-2 shrink-0"
                         />
                       )}
-                      <span className="truncate">{t(option.label)}</span>
+                      <span className="truncate">{option.label}</span>
                     </CommandItem>
                   ))}
                 </CommandGroup>
               )}
               {groupedOptions?.map((group, idx) => (
-                <>
+                <div key={idx}>
                   {idx !== 0 && <CommandSeparator key={idx} className="bg-slate-300" />}
                   <CommandGroup heading={group.label}>
                     {group.options.map((option) => (
@@ -319,7 +319,7 @@ export const InputCombobox = ({
                       </CommandItem>
                     ))}
                   </CommandGroup>
-                </>
+                </div>
               ))}
             </CommandList>
           </Command>

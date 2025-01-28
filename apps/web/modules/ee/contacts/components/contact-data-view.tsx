@@ -1,10 +1,12 @@
 "use client";
 
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { debounce } from "lodash";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
+import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { deleteContactAction, getContactsAction } from "../actions";
@@ -22,7 +24,7 @@ interface ContactDataViewProps {
   itemsPerPage: number;
   isReadOnly: boolean;
   hasMore: boolean;
-  refreshContacts: () => void;
+  refreshContacts: () => Promise<void>;
 }
 
 export const ContactDataView = ({
@@ -39,12 +41,56 @@ export const ContactDataView = ({
   const [hasMore, setHasMore] = useState<boolean>(initialHasMore);
   const [loadingNextPage, setLoadingNextPage] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState<string>("");
+  const [isDataLoaded, setIsDataLoaded] = useState(true);
+
+  const isFirstRender = useRef(true);
 
   const environmentAttributes = useMemo(() => {
     return contactAttributeKeys.filter(
       (attr) => !["userId", "email", "firstName", "lastName"].includes(attr.key)
     );
   }, [contactAttributeKeys]);
+
+  useEffect(() => {
+    if (!isFirstRender.current) {
+      const fetchData = async () => {
+        setIsDataLoaded(false);
+        try {
+          setHasMore(true);
+          const getPersonActionData = await getContactsAction({
+            environmentId: environment.id,
+            offset: 0,
+            searchValue,
+          });
+          const personData = getPersonActionData?.data;
+          if (getPersonActionData?.data) {
+            setContacts(getPersonActionData.data);
+          }
+          if (personData && personData.length < itemsPerPage) {
+            setHasMore(false);
+          }
+        } catch (error) {
+          console.error("Error fetching people data:", error);
+          toast.error("Error fetching people data. Please try again.");
+        } finally {
+          setIsDataLoaded(true);
+        }
+      };
+
+      const debouncedFetchData = debounce(fetchData, 300);
+      debouncedFetchData();
+
+      return () => {
+        debouncedFetchData.cancel();
+      };
+    }
+  }, [environment.id, itemsPerPage, searchValue]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+    }
+  }, []);
 
   // Fetch next page of contacts
   const fetchNextPage = async () => {
@@ -100,7 +146,7 @@ export const ContactDataView = ({
       data={contactsTableData}
       fetchNextPage={fetchNextPage}
       hasMore={hasMore}
-      isDataLoaded
+      isDataLoaded={isFirstRender.current ? true : isDataLoaded}
       deleteContacts={deleteContacts}
       environmentId={environment.id}
       searchValue={searchValue}

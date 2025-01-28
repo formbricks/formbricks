@@ -15,6 +15,9 @@
       "dependsOn": ["@formbricks/js#build"],
       "persistent": true
     },
+    "@formbricks/demo#lint": {
+      "dependsOn": ["@formbricks/js#build"]
+    },
     "@formbricks/js#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -30,6 +33,9 @@
     },
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
+    },
+    "@formbricks/js-core#lint": {
+      "dependsOn": ["@formbricks/api#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
@@ -107,6 +113,7 @@
         "HTTP_PROXY",
         "HTTPS_PROXY",
         "IMPRINT_URL",
+        "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_SECRET_KEY",
@@ -127,6 +134,7 @@
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
         "OPENTELEMETRY_LISTENER_URL",
         "NEXT_RUNTIME",
         "NEXTAUTH_SECRET",
@@ -160,12 +168,14 @@
         "SMTP_SECURE_ENABLED",
         "SMTP_USER",
         "SMTP_REJECT_UNAUTHORIZED_TLS",
+        "SMTP_AUTHENTICATED",
         "STRAPI_API_KEY",
         "STRIPE_SECRET_KEY",
         "STRIPE_WEBHOOK_SECRET",
         "SURVEYS_PACKAGE_MODE",
         "SURVEYS_PACKAGE_BUILD",
         "TELEMETRY_DISABLED",
+        "TURNSTILE_SECRET_KEY",
         "TERMS_URL",
         "UPLOADS_DIR",
         "VERCEL",
@@ -190,13 +200,11 @@
       "outputs": []
     },
     "db:migrate:deploy": {
+      "cache": false,
       "outputs": []
     },
     "db:migrate:dev": {
-      "outputs": []
-    },
-    "db:migrate:vercel": {
-      "env": ["MIGRATE_DATABASE_URL", "DATABASE_URL"],
+      "cache": false,
       "outputs": []
     },
     "db:push": {

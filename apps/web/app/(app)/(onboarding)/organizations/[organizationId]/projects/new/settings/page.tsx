@@ -1,5 +1,4 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
-import { getCustomHeadline } from "@/app/(app)/(onboarding)/lib/utils";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
@@ -8,6 +7,7 @@ import { Header } from "@/modules/ui/components/header";
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -40,7 +40,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
-  const customHeadline = getCustomHeadline(channel);
   const projects = await getUserProjects(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
@@ -59,17 +58,10 @@ const Page = async (props: ProjectSettingsPageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
-      {channel === "link" || mode === "cx" ? (
-        <Header
-          title={t("organizations.projects.new.settings.channel_settings_title")}
-          subtitle={t("organizations.projects.new.settings.channel_settings_subtitle")}
-        />
-      ) : (
-        <Header
-          title={t(customHeadline)}
-          subtitle={t("organizations.projects.new.settings.channel_settings_description")}
-        />
-      )}
+      <Header
+        title={t("organizations.projects.new.settings.project_settings_title")}
+        subtitle={t("organizations.projects.new.settings.project_settings_subtitle")}
+      />
       <ProjectSettings
         organizationId={params.organizationId}
         projectMode={mode}
@@ -79,13 +71,16 @@ const Page = async (props: ProjectSettingsPageProps) => {
         organizationTeams={organizationTeams}
         canDoRoleManagement={canDoRoleManagement}
         locale={locale ?? DEFAULT_LOCALE}
+        userProjectsCount={projects.length}
       />
       {projects.length >= 1 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
-          variant="minimal"
-          href={"/"}>
-          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          variant="ghost"
+          asChild>
+          <Link href={"/"}>
+            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          </Link>
         </Button>
       )}
     </div>

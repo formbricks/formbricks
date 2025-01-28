@@ -1,8 +1,9 @@
 import { type NetworkError, type Result, err, okVoid } from "../../../js-core/src/lib/errors";
 import { Logger } from "../../../js-core/src/lib/logger";
-import { appConfig } from "./config";
+import { RNConfig } from "./config";
 import { deinitalize, initialize } from "./initialize";
 
+const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
 
 export const logoutPerson = async (): Promise<void> => {
@@ -12,11 +13,12 @@ export const logoutPerson = async (): Promise<void> => {
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {
   logger.debug("Resetting state & getting new state from backend");
+  const userId = appConfig.get().personState.data.userId;
   const syncParams = {
     environmentId: appConfig.get().environmentId,
     apiHost: appConfig.get().apiHost,
-    userId: appConfig.get().userId,
-    attributes: appConfig.get().state.attributes,
+    ...(userId && { userId }),
+    attributes: appConfig.get().attributes,
   };
   await logoutPerson();
   try {

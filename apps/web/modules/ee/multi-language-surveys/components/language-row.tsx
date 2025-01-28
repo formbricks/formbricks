@@ -34,7 +34,7 @@ export function LanguageRow({ language, isEditing, onLanguageChange, onDelete, l
         value={language.alias || ""}
       />
       {language.id !== "new" && isEditing ? (
-        <Button className="w-fit" onClick={onDelete} size="sm" variant="warn">
+        <Button className="w-fit" onClick={onDelete} size="sm" variant="destructive">
           {t("common.remove")}
         </Button>
       ) : null}

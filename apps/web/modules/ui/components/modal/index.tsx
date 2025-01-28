@@ -30,7 +30,7 @@ interface DialogContentProps
 const sizeClassName = {
   md: "sm:max-w-xl",
   lg: "sm:max-w-[820px]",
-  xl: "sm:max-w-[960px]",
+  xl: "sm:max-w-[960px] sm:max-h-[640px]",
   xxl: "sm:max-w-[1240px] sm:max-h-[760px]",
 };
 

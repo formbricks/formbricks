@@ -65,7 +65,7 @@ export const FormStylingSettings = ({
       setBackgroundColor(mixColor(brandColor, "#ffffff", 0.855));
     }
 
-    if (!highlightBorderColor) {
+    if (highlightBorderColor) {
       setHighlightBorderColor(brandColor);
     }
   };
@@ -140,10 +140,10 @@ export const FormStylingSettings = ({
               type="button"
               variant="secondary"
               size="sm"
-              EndIcon={SparklesIcon}
               className="w-fit"
               onClick={() => suggestColors()}>
               {t("environments.surveys.edit.suggest_colors")}
+              <SparklesIcon />
             </Button>
           </div>
 

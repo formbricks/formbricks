@@ -12,7 +12,9 @@ import {
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "../constants";
+import { GOOGLE_SHEET_MESSAGE_LIMIT } from "../constants";
 import { createOrUpdateIntegration } from "../integration/service";
+import { truncateText } from "../utils/strings";
 import { validateInputs } from "../utils/validate";
 
 const { google } = require("googleapis");
@@ -31,7 +33,13 @@ export const writeData = async (
   try {
     const authClient = await authorize(integrationData);
     const sheets = google.sheets({ version: "v4", auth: authClient });
-    const responses = { values: [values[0]] };
+    const responses = {
+      values: [
+        values[0].map((value) =>
+          value.length > GOOGLE_SHEET_MESSAGE_LIMIT ? truncateText(value, GOOGLE_SHEET_MESSAGE_LIMIT) : value
+        ),
+      ],
+    };
     const question = { values: [values[1]] };
     sheets.spreadsheets.values.update(
       {

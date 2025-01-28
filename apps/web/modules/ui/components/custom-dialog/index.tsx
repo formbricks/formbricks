@@ -47,7 +47,7 @@ export const CustomDialog = ({
           }}>
           {cancelBtnText || t("common.cancel")}
         </Button>
-        <Button variant="warn" onClick={onOk} loading={isLoading} disabled={disabled}>
+        <Button variant="destructive" onClick={onOk} loading={isLoading} disabled={disabled}>
           {okBtnText || t("common.yes")}
         </Button>
       </div>

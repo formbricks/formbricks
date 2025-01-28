@@ -1,12 +1,13 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getEnterpriseLicense, getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -42,9 +43,17 @@ const Page = async (props) => {
 
   const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
-
   const paidFeatures = [
+    {
+      title: t("environments.settings.billing.remove_branding"),
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.sso"),
+      comingSoon: false,
+      onRequest: false,
+    },
     {
       title: t("environments.project.languages.multi_language_surveys"),
       comingSoon: false,
@@ -56,9 +65,19 @@ const Page = async (props) => {
       onRequest: false,
     },
     {
-      title: t("environments.settings.enterprise.advanced_targeting_and_segmentation"),
+      title: t("environments.settings.enterprise.teams"),
       comingSoon: false,
       onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.contacts_and_segments"),
+      comingSoon: false,
+      onRequest: false,
+    },
+    {
+      title: t("environments.settings.enterprise.ai"),
+      comingSoon: false,
+      onRequest: true,
     },
     {
       title: t("environments.settings.enterprise.audit_logs"),
@@ -80,11 +99,6 @@ const Page = async (props) => {
       comingSoon: false,
       onRequest: true,
     },
-    {
-      title: t("environments.settings.enterprise.custom_feature_development"),
-      comingSoon: false,
-      onRequest: true,
-    },
   ];
 
   return (
@@ -95,7 +109,6 @@ const Page = async (props) => {
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="enterprise"
-          canDoRoleManagement={canDoRoleManagement}
         />
       </PageHeader>
       {isEnterpriseEdition ? (
@@ -185,8 +198,14 @@ const Page = async (props) => {
                   "environments.settings.enterprise.no_call_needed_no_strings_attached_request_a_free_30_day_trial_license_to_test_all_features_by_filling_out_this_form"
                 )}
               </p>
-              <Button href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5" target="_blank">
-                {t("environments.settings.enterprise.request_30_day_trial_license")}
+              <Button asChild>
+                <Link
+                  href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                  referrerPolicy="no-referrer">
+                  {t("environments.settings.enterprise.request_30_day_trial_license")}
+                </Link>
               </Button>
               <p className="mt-2 text-xs text-slate-500">
                 {t("environments.settings.enterprise.no_credit_card_no_sales_call_just_test_it")}

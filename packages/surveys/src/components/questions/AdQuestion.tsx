@@ -1,9 +1,9 @@
-import { BackButton } from "@/components/buttons/BackButton";
-import { SubmitButton } from "@/components/buttons/SubmitButton";
-import { Headline } from "@/components/general/Headline.tsx";
-import { QuestionMedia } from "@/components/general/QuestionMedia";
+import { BackButton } from "@/components/buttons/back-button";
+import { SubmitButton } from "@/components/buttons/submit-button";
+import { Headline } from "@/components/general/headline";
+import { QuestionMedia } from "@/components/general/question-media";
 import AdExplanation from "@/components/questions/AdExplanation.tsx";
-import { ScrollableContainer } from "@/components/wrappers/ScrollableContainer";
+import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
 import { surveyTranslations } from "@/lib/surveyTranslations.ts";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { Adsense } from "@ctrl/react-adsense";

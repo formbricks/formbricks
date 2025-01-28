@@ -164,7 +164,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
                 {t("environments.project.look.replace_logo")}
               </Button>
               <Button
-                variant="warn"
+                variant="destructive"
                 size="sm"
                 onClick={() => setConfirmRemoveLogoModalOpen(true)}
                 disabled={!isEditing}>

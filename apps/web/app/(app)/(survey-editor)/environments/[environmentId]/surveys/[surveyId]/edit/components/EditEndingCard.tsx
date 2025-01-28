@@ -355,8 +355,10 @@ export const EditEndingCard = ({
           )}
           {endingCard.type === "redirectToUrl" && (
             <RedirectUrlForm
+              localSurvey={localSurvey}
               endingCard={endingCard}
               updateSurvey={updateSurvey}
+              contactAttributeKeys={contactAttributeKeys}
               defaultRedirect={defaultRedirect}
             />
           )}

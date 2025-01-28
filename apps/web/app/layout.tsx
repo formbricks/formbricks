@@ -1,4 +1,5 @@
 import { GoogleTagManager } from "@next/third-parties/google";
+import { PHProvider } from "@/modules/ui/components/post-hog-client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
@@ -28,7 +29,9 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
       {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
       <GoogleTagManager gtmId={"GTM-PJ6M9K9P"} />
       <body className="flex h-dvh flex-col transition-all ease-in-out">
-        <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        <PHProvider>
+          <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+        </PHProvider>
       </body>
     </html>
   );

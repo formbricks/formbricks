@@ -53,7 +53,7 @@ export function ConditionalLogic({
   }, [localSurvey, contactAttributeKeys]);
 
   const addLogic = () => {
-    const operator = getDefaultOperatorForQuestion(question);
+    const operator = getDefaultOperatorForQuestion(question, t);
 
     const initialCondition: TSurveyLogic = {
       id: createId(),
@@ -190,9 +190,9 @@ export function ConditionalLogic({
           name="logicJumps"
           size="sm"
           variant="secondary"
-          EndIcon={PlusIcon}
           onClick={addLogic}>
           {t("environments.surveys.edit.add_logic")}
+          <PlusIcon />
         </Button>
       </div>
     </div>

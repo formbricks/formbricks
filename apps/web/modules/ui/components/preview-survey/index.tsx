@@ -7,7 +7,7 @@ import { SurveyInline } from "@/modules/ui/components/survey";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {RefObject, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import type { TProject } from "@formbricks/types/project";
@@ -251,7 +251,7 @@ export const PreviewSurvey = ({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground survey={survey} project={project} ContentRef={ContentRef as RefObject<HTMLDivElement>} isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -277,7 +277,7 @@ export const PreviewSurvey = ({
                   />
                 </Modal>
               ) : (
-                <div className="flex h-full w-full flex-col justify-end">
+                <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
                       <ClientLogo environmentId={environment.id} project={project} previewSurvey />
@@ -379,7 +379,7 @@ export const PreviewSurvey = ({
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isEditorView>
+              <MediaBackground survey={survey} project={project} ContentRef={ContentRef as RefObject<HTMLDivElement>} isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
                     <ClientLogo environmentId={environment.id} project={project} previewSurvey />

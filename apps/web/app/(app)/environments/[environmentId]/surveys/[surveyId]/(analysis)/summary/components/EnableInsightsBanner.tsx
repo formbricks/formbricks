@@ -4,6 +4,7 @@ import { generateInsightsForSurveyAction } from "@/modules/ee/insights/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -44,26 +45,27 @@ export const EnableInsightsBanner = ({
       <div className="flex-1">
         <AlertTitle>
           <span className="mr-2">{t("environments.surveys.summary.enable_ai_insights_banner_title")}</span>
-          <Badge text="Beta" type="gray" size="normal" />
+          <Badge type="gray" size="normal" text="Beta" />
         </AlertTitle>
         <AlertDescription className="flex items-start justify-between gap-4">
           {t("environments.surveys.summary.enable_ai_insights_banner_description")}
         </AlertDescription>
       </div>
-      <Button
-        variant="primary"
-        size="sm"
-        className="shrink-0"
-        onClick={handleInsightGeneration}
-        loading={isGeneratingInsights}
-        disabled={surveyResponseCount > maxResponseCount}
-        tooltip={
+      <TooltipRenderer
+        tooltipContent={
           surveyResponseCount > maxResponseCount
             ? t("environments.surveys.summary.enable_ai_insights_banner_tooltip")
             : undefined
         }>
-        {t("environments.surveys.summary.enable_ai_insights_banner_button")}
-      </Button>
+        <Button
+          size="sm"
+          className="shrink-0"
+          onClick={handleInsightGeneration}
+          loading={isGeneratingInsights}
+          disabled={surveyResponseCount > maxResponseCount}>
+          {t("environments.surveys.summary.enable_ai_insights_banner_button")}
+        </Button>
+      </TooltipRenderer>
     </Alert>
   );
 };

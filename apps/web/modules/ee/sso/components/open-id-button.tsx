@@ -33,9 +33,7 @@ export const OpenIdButton = ({ inviteUrl, lastUsed, directRedirect = false, text
 
   return (
     <Button
-      size="base"
       type="button"
-      startIconClassName="ml-2"
       onClick={handleLogin}
       variant="secondary"
       className="relative w-full justify-center">

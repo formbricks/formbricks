@@ -55,6 +55,9 @@ test.describe("API Tests", () => {
               placeholder: {
                 default: "Type your answer here...",
               },
+              charLimit: {
+                enabled: false,
+              },
             },
           ],
         },

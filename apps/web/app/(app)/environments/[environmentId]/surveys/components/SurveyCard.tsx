@@ -35,15 +35,21 @@ export const SurveyCard = ({
   duplicateSurvey,
   locale,
 }: SurveyCardProps) => {
-  const isSurveyCreationDeletionDisabled = isReadOnly;
   const t = useTranslations();
-  const surveyStatusLabel = useMemo(() => {
-    if (survey.status === "inProgress") return t("common.in_progress");
-    else if (survey.status === "scheduled") return t("common.scheduled");
-    else if (survey.status === "completed") return t("common.completed");
-    else if (survey.status === "draft") return t("common.draft");
-    else if (survey.status === "paused") return t("common.paused");
-  }, [survey]);
+  const surveyStatusLabel =
+    survey.status === "inProgress"
+      ? t("common.in_progress")
+      : survey.status === "scheduled"
+        ? t("common.scheduled")
+        : survey.status === "completed"
+          ? t("common.completed")
+          : survey.status === "draft"
+            ? t("common.draft")
+            : survey.status === "paused"
+              ? t("common.paused")
+              : undefined;
+
+  const isSurveyCreationDeletionDisabled = isReadOnly;
 
   const [singleUseId, setSingleUseId] = useState<string | undefined>();
 
@@ -74,9 +80,15 @@ export const SurveyCard = ({
       : `/environments/${environment.id}/surveys/${survey.id}/summary`;
   }, [survey.status, survey.id, environment.id]);
 
-  return (
-    <Link href={linkHref} key={survey.id} className="relative block">
-      <div className="grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-sm transition-colors ease-in-out hover:border-slate-400">
+  const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;
+
+  const CardContent = (
+    <>
+      <div
+        className={cn(
+          "grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8 shadow-sm transition-colors ease-in-out",
+          !isDraftAndReadOnly && "hover:border-slate-400"
+        )}>
         <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
           <div className="w-full truncate">{survey.name}</div>
         </div>
@@ -94,7 +106,6 @@ export const SurveyCard = ({
         <div className="col-span-1 flex justify-between">
           <SurveyTypeIndicator type={survey.type} />
         </div>
-
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {convertDateString(survey.createdAt.toString())}
         </div>
@@ -113,12 +124,21 @@ export const SurveyCard = ({
           environment={environment}
           otherEnvironment={otherEnvironment!}
           webAppUrl={WEBAPP_URL}
+          disabled={isDraftAndReadOnly}
           singleUseId={singleUseId}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}
         />
       </div>
+    </>
+  );
+
+  return isDraftAndReadOnly ? (
+    <div className="relative block">{CardContent}</div>
+  ) : (
+    <Link href={linkHref} key={survey.id} className="relative block">
+      {CardContent}
     </Link>
   );
 };

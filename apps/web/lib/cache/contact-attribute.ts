@@ -22,19 +22,19 @@ export const contactAttributeCache = {
       return `contactAttributes-${environmentId}`;
     },
   },
-  revalidate({ contactId, environmentId, userId, key }: RevalidateProps): void {
+  revalidate: ({ contactId, environmentId, userId, key }: RevalidateProps): void => {
     if (environmentId) {
-      revalidateTag(this.tag.byEnvironmentId(environmentId));
+      revalidateTag(contactAttributeCache.tag.byEnvironmentId(environmentId));
     }
 
     if (environmentId && userId) {
-      revalidateTag(this.tag.byEnvironmentIdAndUserId(environmentId, userId));
+      revalidateTag(contactAttributeCache.tag.byEnvironmentIdAndUserId(environmentId, userId));
     }
     if (contactId) {
-      revalidateTag(this.tag.byContactId(contactId));
+      revalidateTag(contactAttributeCache.tag.byContactId(contactId));
     }
     if (contactId && key) {
-      revalidateTag(this.tag.byKeyAndContactId(key, contactId));
+      revalidateTag(contactAttributeCache.tag.byKeyAndContactId(key, contactId));
     }
   },
 };

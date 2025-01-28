@@ -11,7 +11,7 @@ interface AlertDialogProps {
   mainText: string;
   confirmBtnLabel: string;
   declineBtnLabel?: string;
-  declineBtnVariant?: "warn" | "minimal";
+  declineBtnVariant?: "destructive" | "ghost";
   onDecline: () => void;
   onConfirm?: () => void;
 }
@@ -24,7 +24,7 @@ export const AlertDialog = ({
   declineBtnLabel,
   onDecline,
   confirmBtnLabel,
-  declineBtnVariant = "minimal",
+  declineBtnVariant = "ghost",
   onConfirm,
 }: AlertDialogProps) => {
   const t = useTranslations();

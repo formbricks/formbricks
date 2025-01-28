@@ -1,9 +1,10 @@
+/* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
+import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZAllowedFileExtension, ZColor, ZId, ZPlacement, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
-import { ZInsight } from "../insights";
 import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZBaseStyling } from "../styling";
@@ -39,9 +40,45 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
 
 export type TSurveyEndScreenCard = z.infer<typeof ZSurveyEndScreenCard>;
 
+const validateUrlWithRecall = (url: string): string | null => {
+  try {
+    if (!url.startsWith("https://")) {
+      return "URL must start with https://";
+    }
+
+    if (url.includes(" ") && !url.endsWith(" ")) {
+      return "URL must not contain spaces";
+    }
+
+    new URL(url);
+
+    return null;
+  } catch {
+    const hostname = url.split("https://")[1];
+    if (hostname.includes("#recall:")) {
+      return "Recall information cannot be used in the hostname part of the URL";
+    }
+
+    return "Invalid Redirect URL";
+  }
+};
+
 export const ZSurveyRedirectUrlCard = ZSurveyEndingBase.extend({
   type: z.literal("redirectToUrl"),
-  url: getZSafeUrl("Invalid Redirect Url").optional(),
+  url: z
+    .string()
+    .optional()
+    .superRefine((url, ctx) => {
+      if (!url) return;
+
+      const error = validateUrlWithRecall(url);
+      if (error) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: error,
+        });
+      }
+    }),
   label: z.string().optional(),
 });
 
@@ -483,6 +520,41 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   longAnswer: z.boolean().optional(),
   inputType: ZSurveyOpenTextQuestionInputType.optional().default("text"),
   insightsEnabled: z.boolean().default(false).optional(),
+  charLimit: z
+    .object({
+      enabled: z.boolean().default(false).optional(),
+      min: z.number().optional(),
+      max: z.number().optional(),
+    })
+    .default({ enabled: false }),
+}).superRefine((data, ctx) => {
+  if (data.charLimit.enabled && data.charLimit.min === undefined && data.charLimit.max === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Enter the values for either minimum or maximum field",
+    });
+  }
+
+  if (
+    (data.charLimit.min !== undefined && data.charLimit.min < 0) ||
+    (data.charLimit.max !== undefined && data.charLimit.max < 0)
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "The character limit values should be positive",
+    });
+  }
+
+  if (
+    data.charLimit.min !== undefined &&
+    data.charLimit.max !== undefined &&
+    data.charLimit.min > data.charLimit.max
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Minimum value cannot be greater than the maximum value",
+    });
+  }
 });
 
 export type TSurveyOpenTextQuestion = z.infer<typeof ZSurveyOpenTextQuestion>;
@@ -594,30 +666,34 @@ export const ZSurveyMatrixQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyMatrixQuestion = z.infer<typeof ZSurveyMatrixQuestion>;
 
-const ZSurveyShowRequiredToggle = z.object({
+const ZToggleInputConfig = z.object({
   show: z.boolean(),
   required: z.boolean(),
+  placeholder: ZI18nString,
 });
+
+export type TInputFieldConfig = z.infer<typeof ZToggleInputConfig>;
 
 export const ZSurveyAddressQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Address),
-  addressLine1: ZSurveyShowRequiredToggle,
-  addressLine2: ZSurveyShowRequiredToggle,
-  city: ZSurveyShowRequiredToggle,
-  state: ZSurveyShowRequiredToggle,
-  zip: ZSurveyShowRequiredToggle,
-  country: ZSurveyShowRequiredToggle,
+  addressLine1: ZToggleInputConfig,
+  addressLine2: ZToggleInputConfig,
+  city: ZToggleInputConfig,
+  state: ZToggleInputConfig,
+  zip: ZToggleInputConfig,
+  country: ZToggleInputConfig,
 });
-export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.ContactInfo),
-  firstName: ZSurveyShowRequiredToggle,
-  lastName: ZSurveyShowRequiredToggle,
-  email: ZSurveyShowRequiredToggle,
-  phone: ZSurveyShowRequiredToggle,
-  company: ZSurveyShowRequiredToggle,
+  firstName: ZToggleInputConfig,
+  lastName: ZToggleInputConfig,
+  email: ZToggleInputConfig,
+  phone: ZToggleInputConfig,
+  company: ZToggleInputConfig,
 });
+
+export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
 
@@ -1089,7 +1165,13 @@ export const ZSurvey = z
 
       if (question.type === TSurveyQuestionTypeEnum.ContactInfo) {
         const { company, email, firstName, lastName, phone } = question;
-        const fields = [company, email, firstName, lastName, phone];
+        const fields = [
+          { ...company, label: "Company" },
+          { ...email, label: "Email" },
+          { ...firstName, label: "First Name" },
+          { ...lastName, label: "Last Name" },
+          { ...phone, label: "Phone" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1098,11 +1180,32 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.type === TSurveyQuestionTypeEnum.Address) {
         const { addressLine1, addressLine2, city, state, zip, country } = question;
-        const fields = [addressLine1, addressLine2, city, state, zip, country];
+        const fields = [
+          { ...addressLine1, label: "Address Line 1" },
+          { ...addressLine2, label: "Address Line 2" },
+          { ...city, label: "City" },
+          { ...state, label: "State" },
+          { ...zip, label: "Zip" },
+          { ...country, label: "Country" },
+        ];
 
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
@@ -1111,6 +1214,20 @@ export const ZSurvey = z
             path: ["questions", questionIndex],
           });
         }
+        fields.forEach((field) => {
+          const multiLangIssueInPlaceholder =
+            field.show &&
+            validateQuestionLabels(
+              `Placeholder for field ${field.label}`,
+              field.placeholder,
+              languages,
+              questionIndex,
+              true
+            );
+          if (multiLangIssueInPlaceholder) {
+            ctx.addIssue(multiLangIssueInPlaceholder);
+          }
+        });
       }
 
       if (question.logic) {
@@ -1353,6 +1470,11 @@ const isInvalidOperatorsForQuestionType = (
       break;
     case TSurveyQuestionTypeEnum.Matrix:
       if (!["isPartiallySubmitted", "isCompletelySubmitted", "isSkipped"].includes(operator)) {
+        isInvalidOperator = true;
+      }
+      break;
+    case TSurveyQuestionTypeEnum.ContactInfo:
+      if (!["isSubmitted", "isSkipped"].includes(operator)) {
         isInvalidOperator = true;
       }
       break;
@@ -1993,7 +2115,9 @@ const validateActions = (
   logicIndex: number,
   actions: TSurveyLogicAction[]
 ): z.ZodIssue[] => {
-  const questionIds = survey.questions.map((q) => q.id);
+  const previousQuestions = survey.questions.filter((_, idx) => idx <= questionIndex);
+  const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
+  const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
   const actionIssues: (z.ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
@@ -2064,7 +2188,7 @@ const validateActions = (
       if (action.value.type === "question") {
         const allowedQuestions = [TSurveyQuestionTypeEnum.Rating, TSurveyQuestionTypeEnum.NPS];
 
-        const selectedQuestion = survey.questions.find((q) => q.id === action.value.value);
+        const selectedQuestion = previousQuestions.find((q) => q.id === action.value.value);
 
         if (
           !selectedQuestion ||
@@ -2083,7 +2207,7 @@ const validateActions = (
       const endingIds = survey.endings.map((ending) => ending.id);
 
       const possibleQuestionIds =
-        action.objective === "jumpToQuestion" ? [...questionIds, ...endingIds] : questionIds;
+        action.objective === "jumpToQuestion" ? [...nextQuestionsIds, ...endingIds] : nextQuestionsIds;
 
       if (!possibleQuestionIds.includes(action.target)) {
         return {
@@ -2094,7 +2218,7 @@ const validateActions = (
       }
 
       if (action.objective === "requireAnswer") {
-        const optionalQuestionIds = survey.questions
+        const optionalQuestionIds = nextQuestions
           .filter((question) => !question.required)
           .map((question) => question.id);
 
@@ -2270,7 +2394,13 @@ export const ZSurveyQuestionSummaryOpenText = z.object({
       contactAttributes: ZContactAttributes.nullable(),
     })
   ),
-  insights: z.array(ZInsight),
+  insights: z.array(
+    ZInsight.extend({
+      _count: z.object({
+        documentInsights: z.number(),
+      }),
+    })
+  ),
   insightsEnabled: z.boolean().optional(),
 });
 
@@ -2481,7 +2611,12 @@ export const ZSurveyQuestionSummaryMatrix = z.object({
   data: z.array(
     z.object({
       rowLabel: z.string(),
-      columnPercentages: z.record(z.string(), z.number()),
+      columnPercentages: z.array(
+        z.object({
+          column: z.string(),
+          percentage: z.number(),
+        })
+      ),
       totalResponsesForRow: z.number(),
     })
   ),
@@ -2645,7 +2780,7 @@ export const ZSurveyFilterCriteria = z.object({
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;
 
-const ZSurveyFilters = z.object({
+export const ZSurveyFilters = z.object({
   name: z.string(),
   createdBy: z.array(z.enum(["you", "others"])),
   status: z.array(ZSurveyStatus),
@@ -2656,14 +2791,14 @@ const ZSurveyFilters = z.object({
 
 export type TSurveyFilters = z.infer<typeof ZSurveyFilters>;
 
-const ZFilterOption = z.object({
+export const ZFilterOption = z.object({
   label: z.string(),
   value: z.string(),
 });
 
 export type TFilterOption = z.infer<typeof ZFilterOption>;
 
-const ZSortOption = z.object({
+export const ZSortOption = z.object({
   label: z.string(),
   value: z.enum(["createdAt", "updatedAt", "name", "relevance"]),
 });

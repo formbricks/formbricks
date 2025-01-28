@@ -7,7 +7,7 @@ import { ResetProgressButton } from "@/modules/ui/components/reset-progress-butt
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Variants, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Fragment, useRef, useState } from "react";
+import {Fragment, RefObject, useRef, useState} from "react";
 import type { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 
@@ -173,7 +173,7 @@ export const ThemeStylingPreviewSurvey = ({
               </Fragment>
             </Modal>
           ) : (
-            <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isEditorView>
+            <MediaBackground survey={survey} project={project} ContentRef={ContentRef as RefObject<HTMLDivElement>} isEditorView>
               {!project.styling?.isLogoHidden && (
                 <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                   <ClientLogo project={project} previewSurvey />

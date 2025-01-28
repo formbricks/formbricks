@@ -132,23 +132,19 @@ export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<str
   try {
     const organizations = await getOrganizationsByUserId(userId);
     if (organizations.length === 0) {
-      throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
+      return null;
     }
     const firstOrganization = organizations[0];
     const projects = await getUserProjects(userId, firstOrganization.id);
     if (projects.length === 0) {
-      throw new Error(
-        `Unable to get first environment: Organization ${firstOrganization.id} has no projects`
-      );
+      return null;
     }
     const firstProject = projects[0];
     const productionEnvironment = firstProject.environments.find(
       (environment) => environment.type === "production"
     );
     if (!productionEnvironment) {
-      throw new Error(
-        `Unable to get first environment: Project ${firstProject.id} has no production environment`
-      );
+      return null;
     }
     return productionEnvironment.id;
   } catch (error) {

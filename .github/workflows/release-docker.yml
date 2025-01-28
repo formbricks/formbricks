@@ -8,6 +8,8 @@ on:
 jobs:
   release-image-on-dockerhub:
     name: Release on Dockerhub
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}

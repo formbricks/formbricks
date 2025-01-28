@@ -1,6 +1,5 @@
 "use client";
 
-import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -90,7 +89,7 @@ export const SurveyMenuBar = ({
     return () => {
       window.removeEventListener("beforeunload", handleWindowClose);
     };
-  }, [localSurvey, survey]);
+  }, [localSurvey, survey, t]);
 
   const clearSurveyLocalStorage = () => {
     if (typeof localStorage !== "undefined") {
@@ -114,13 +113,6 @@ export const SurveyMenuBar = ({
 
     if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
   }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
-
-  // write a function which updates the local survey status
-  const updateLocalSurveyStatus = (status: TSurvey["status"]) => {
-    const updatedSurvey = { ...localSurvey };
-    updatedSurvey.status = status;
-    setLocalSurvey(updatedSurvey);
-  };
 
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;
@@ -258,6 +250,7 @@ export const SurveyMenuBar = ({
       } else {
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
+        return false;
       }
 
       return true;
@@ -319,10 +312,10 @@ export const SurveyMenuBar = ({
               size="sm"
               variant="secondary"
               className="h-full"
-              StartIcon={ArrowLeftIcon}
               onClick={() => {
                 handleBack();
               }}>
+              <ArrowLeftIcon />
               {t("common.back")}
             </Button>
           )}
@@ -354,13 +347,6 @@ export const SurveyMenuBar = ({
           </div>
         )}
         <div className="mt-3 flex sm:ml-4 sm:mt-0">
-          <div className="mr-4 flex items-center">
-            <SurveyStatusDropdown
-              survey={survey}
-              environment={environment}
-              updateLocalSurveyStatus={updateLocalSurveyStatus}
-            />
-          </div>
           {!isCxMode && (
             <Button
               disabled={disableSave}
@@ -390,9 +376,9 @@ export const SurveyMenuBar = ({
               onClick={() => {
                 setAudiencePrompt(false);
                 setActiveId("settings");
-              }}
-              EndIcon={SettingsIcon}>
+              }}>
               {t("environments.surveys.edit.continue_to_settings")}
+              <SettingsIcon />
             </Button>
           )}
           {/* Always display Publish button for link surveys for better CR */}
@@ -415,7 +401,7 @@ export const SurveyMenuBar = ({
           mainText={t("environments.surveys.edit.unsaved_changes_warning")}
           confirmBtnLabel={t("common.save")}
           declineBtnLabel={t("common.discard")}
-          declineBtnVariant="warn"
+          declineBtnVariant="destructive"
           onDecline={() => {
             setConfirmDialogOpen(false);
             router.back();

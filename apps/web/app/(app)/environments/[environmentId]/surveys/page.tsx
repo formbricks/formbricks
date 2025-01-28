@@ -10,6 +10,7 @@ import { PlusIcon } from "lucide-react";
 import { Metadata, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
@@ -94,8 +95,11 @@ const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProp
   const locale = await findMatchingLocale();
   const CreateSurveyButton = () => {
     return (
-      <Button size="sm" href={`/environments/${environment.id}/surveys/templates`} EndIcon={PlusIcon}>
-        {t("environments.surveys.new_survey")}
+      <Button size="sm" asChild>
+        <Link href={`/environments/${environment.id}/surveys/templates`}>
+          {t("environments.surveys.new_survey")}
+          <PlusIcon />
+        </Link>
       </Button>
     );
   };

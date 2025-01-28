@@ -25,7 +25,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { COLOR_DEFAULTS, getPreviewSurvey } from "@formbricks/lib/styling/constants";
+import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
+import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TProject, TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
@@ -50,35 +51,7 @@ export const ThemeStyling = ({
   const router = useRouter();
 
   const form = useForm<TProjectStyling>({
-    defaultValues: {
-      ...project.styling,
-
-      // specify the default values for the colors
-      allowStyleOverwrite: project.styling.allowStyleOverwrite ?? true,
-      brandColor: { light: project.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor },
-      questionColor: { light: project.styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor },
-      inputColor: { light: project.styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor },
-      inputBorderColor: { light: project.styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor },
-      cardBackgroundColor: {
-        light: project.styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
-      },
-      cardBorderColor: { light: project.styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor },
-      cardShadowColor: { light: project.styling.cardShadowColor?.light ?? COLOR_DEFAULTS.cardShadowColor },
-      highlightBorderColor: project.styling.highlightBorderColor?.light
-        ? {
-            light: project.styling.highlightBorderColor.light,
-          }
-        : undefined,
-      isDarkModeEnabled: project.styling.isDarkModeEnabled ?? false,
-      roundness: project.styling.roundness ?? 8,
-      cardArrangement: project.styling.cardArrangement ?? {
-        linkSurveys: "straight",
-        appSurveys: "straight",
-      },
-      background: project.styling.background,
-      hideProgressBar: project.styling.hideProgressBar ?? false,
-      isLogoHidden: project.styling.isLogoHidden ?? false,
-    },
+    defaultValues: { ...defaultStyling, ...project.styling },
     resolver: zodResolver(ZProjectStyling),
   });
 
@@ -90,40 +63,6 @@ export const ThemeStyling = ({
   const [backgroundStylingOpen, setBackgroundStylingOpen] = useState(false);
 
   const onReset = useCallback(async () => {
-    const defaultStyling: TProjectStyling = {
-      allowStyleOverwrite: true,
-      brandColor: {
-        light: COLOR_DEFAULTS.brandColor,
-      },
-      questionColor: {
-        light: COLOR_DEFAULTS.questionColor,
-      },
-      inputColor: {
-        light: COLOR_DEFAULTS.inputColor,
-      },
-      inputBorderColor: {
-        light: COLOR_DEFAULTS.inputBorderColor,
-      },
-      cardBackgroundColor: {
-        light: COLOR_DEFAULTS.cardBackgroundColor,
-      },
-      cardBorderColor: {
-        light: COLOR_DEFAULTS.cardBorderColor,
-      },
-      isLogoHidden: false,
-      highlightBorderColor: undefined,
-      isDarkModeEnabled: false,
-      background: {
-        bg: "#fff",
-        bgType: "color",
-      },
-      roundness: 8,
-      cardArrangement: {
-        linkSurveys: "straight",
-        appSurveys: "straight",
-      },
-    };
-
     const updatedProjectResponse = await updateProjectAction({
       projectId: project.id,
       data: {
@@ -224,7 +163,6 @@ export const ThemeStyling = ({
                   setOpen={setBackgroundStylingOpen}
                   environmentId={environmentId}
                   colors={colors}
-                  key={form.watch("background.bg")}
                   isSettingsPage
                   isUnsplashConfigured={isUnsplashConfigured}
                   form={form as UseFormReturn<TProjectStyling | TSurveyStyling>}
@@ -239,7 +177,7 @@ export const ThemeStyling = ({
               <Button
                 type="button"
                 size="sm"
-                variant="minimal"
+                variant="ghost"
                 className="flex items-center gap-2"
                 onClick={() => setConfirmResetStylingModalOpen(true)}>
                 {t("common.reset_to_default")}
@@ -253,10 +191,10 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                survey={getPreviewSurvey(locale) as TSurvey}
+                survey={getPreviewSurvey(locale, project.name) as TSurvey}
                 project={{
                   ...project,
-                  styling: form.getValues(),
+                  styling: form.watch(),
                 }}
                 previewType={previewSurveyType}
                 setPreviewType={setPreviewSurveyType}

@@ -58,7 +58,7 @@ export function LogicEditorConditions({
   const [parent] = useAutoAnimate();
 
   const handleAddConditionBelow = (resourceId: string) => {
-    const operator = getDefaultOperatorForQuestion(question);
+    const operator = getDefaultOperatorForQuestion(question, t);
 
     const condition: TSingleCondition = {
       id: createId(),
@@ -241,8 +241,13 @@ export function LogicEditorConditions({
     }
 
     const conditionValueOptions = getConditionValueOptions(localSurvey, questionIdx, t);
-    const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey);
-    const { show, options, showInput = false, inputType } = getMatchValueProps(condition, localSurvey, t);
+    const conditionOperatorOptions = getConditionOperatorOptions(condition, localSurvey, t);
+    const {
+      show,
+      options,
+      showInput = false,
+      inputType,
+    } = getMatchValueProps(condition, localSurvey, questionIdx, t);
 
     const allowMultiSelect = [
       "equalsOneOf",

@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
 import fbsetup from "../public/fb-setup.png";
 
-declare const window: any;
+declare const window: Window;
 
-const AppPage = ({}) => {
+export default function AppPage(): React.JSX.Element {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
 
@@ -19,44 +19,53 @@ const AppPage = ({}) => {
   }, [darkMode]);
 
   useEffect(() => {
-    // enable Formbricks debug mode by adding formbricksDebug=true GET parameter
-    const addFormbricksDebugParam = () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (!urlParams.has("formbricksDebug")) {
-        urlParams.set("formbricksDebug", "true");
-        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
-        window.history.replaceState({}, "", newUrl);
+    const initFormbricks = () => {
+      // enable Formbricks debug mode by adding formbricksDebug=true GET parameter
+      const addFormbricksDebugParam = (): void => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (!urlParams.has("formbricksDebug")) {
+          urlParams.set("formbricksDebug", "true");
+          const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+          window.history.replaceState({}, "", newUrl);
+        }
+      };
+
+      addFormbricksDebugParam();
+
+      if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+        const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+        const userInitAttributes = {
+          language: "de",
+          "Init Attribute 1": "eight",
+          "Init Attribute 2": "two",
+        };
+
+        void formbricks.init({
+          environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
+          apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
+          userId,
+          attributes: userInitAttributes,
+        });
+      }
+
+      // Connect next.js router to Formbricks
+      if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
+        const handleRouteChange = formbricks.registerRouteChange;
+
+        router.events.on("routeChangeComplete", () => {
+          void handleRouteChange();
+        });
+
+        return () => {
+          router.events.off("routeChangeComplete", () => {
+            void handleRouteChange();
+          });
+        };
       }
     };
 
-    addFormbricksDebugParam();
-
-    if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-      const userInitAttributes = {
-        language: "de",
-        "Init Attribute 1": "eight",
-        "Init Attribute 2": "two",
-      };
-
-      formbricks.init({
-        environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-        apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        userId,
-        attributes: userInitAttributes,
-      });
-    }
-
-    // Connect next.js router to Formbricks
-    if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-      const handleRouteChange = formbricks?.registerRouteChange;
-      router.events.on("routeChangeComplete", handleRouteChange);
-
-      return () => {
-        router.events.off("routeChangeComplete", handleRouteChange);
-      };
-    }
-  }, []);
+    initFormbricks();
+  }, [router.events]);
 
   return (
     <div className="min-h-screen bg-white px-12 py-6 dark:bg-slate-800">
@@ -74,8 +83,11 @@ const AppPage = ({}) => {
         </div>
 
         <button
+          type="button"
           className="mt-2 rounded-lg bg-slate-200 px-6 py-1 dark:bg-slate-700 dark:text-slate-100"
-          onClick={() => setDarkMode(!darkMode)}>
+          onClick={() => {
+            setDarkMode(!darkMode);
+          }}>
           {darkMode ? "Toggle Light Mode" : "Toggle Dark Mode"}
         </button>
       </div>
@@ -96,8 +108,8 @@ const AppPage = ({}) => {
                   {process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID}
                 </strong>
                 <span className="relative ml-2 flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75"></span>
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500" />
                 </span>
               </div>
             </div>
@@ -108,9 +120,6 @@ const AppPage = ({}) => {
               Look at the logs to understand how the widget works.{" "}
               <strong className="dark:text-white">Open your browser console</strong> to see the logs.
             </p>
-            {/* <div className="max-h-[40vh] overflow-y-auto py-4">
-              <LogsContainer />
-            </div> */}
           </div>
         </div>
 
@@ -125,8 +134,9 @@ const AppPage = ({}) => {
             </p>
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+              type="button"
               onClick={() => {
-                formbricks.reset();
+                void formbricks.reset();
               }}>
               Reset
             </button>
@@ -138,7 +148,9 @@ const AppPage = ({}) => {
 
           <div className="p-6">
             <div>
-              <button className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+              <button
+                type="button"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 No-Code Action
               </button>
             </div>
@@ -147,6 +159,7 @@ const AppPage = ({}) => {
                 This button sends a{" "}
                 <a
                   href="https://formbricks.com/docs/actions/no-code"
+                  rel="noopener noreferrer"
                   className="underline dark:text-blue-500"
                   target="_blank">
                   No Code Action
@@ -154,6 +167,7 @@ const AppPage = ({}) => {
                 as long as you created it beforehand in the Formbricks App.{" "}
                 <a
                   href="https://formbricks.com/docs/actions/no-code"
+                  rel="noopener noreferrer"
                   target="_blank"
                   className="underline dark:text-blue-500">
                   Here are instructions on how to do it.
@@ -164,8 +178,9 @@ const AppPage = ({}) => {
           <div className="p-6">
             <div>
               <button
+                type="button"
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Free");
+                  void formbricks.setAttribute("Plan", "Free");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Free&apos;
@@ -177,6 +192,7 @@ const AppPage = ({}) => {
                 <a
                   href="https://formbricks.com/docs/attributes/custom-attributes"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
                   attribute
                 </a>{" "}
@@ -187,8 +203,9 @@ const AppPage = ({}) => {
           <div className="p-6">
             <div>
               <button
+                type="button"
                 onClick={() => {
-                  formbricks.setAttribute("Plan", "Paid");
+                  void formbricks.setAttribute("Plan", "Paid");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Plan to &apos;Paid&apos;
@@ -200,6 +217,7 @@ const AppPage = ({}) => {
                 <a
                   href="https://formbricks.com/docs/attributes/custom-attributes"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
                   attribute
                 </a>{" "}
@@ -210,8 +228,9 @@ const AppPage = ({}) => {
           <div className="p-6">
             <div>
               <button
+                type="button"
                 onClick={() => {
-                  formbricks.setEmail("test@web.com");
+                  void formbricks.setEmail("test@web.com");
                 }}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
                 Set Email
@@ -223,6 +242,7 @@ const AppPage = ({}) => {
                 <a
                   href="https://formbricks.com/docs/attributes/identify-users"
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
                   user email
                 </a>{" "}
@@ -234,6 +254,4 @@ const AppPage = ({}) => {
       </div>
     </div>
   );
-};
-
-export default AppPage;
+}

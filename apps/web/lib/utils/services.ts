@@ -1,12 +1,13 @@
 "use server";
 
+import { apiKeyCache } from "@/lib/cache/api-key";
 import { contactCache } from "@/lib/cache/contact";
 import { teamCache } from "@/lib/cache/team";
+import { webhookCache } from "@/lib/cache/webhook";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { apiKeyCache } from "@formbricks/lib/apiKey/cache";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { environmentCache } from "@formbricks/lib/environment/cache";
@@ -18,7 +19,6 @@ import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { tagCache } from "@formbricks/lib/tag/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { webhookCache } from "@formbricks/lib/webhook/cache";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
@@ -104,10 +104,8 @@ export const getEnvironment = reactCache(
           return environment;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
             throw new DatabaseError(error.message);
           }
-
           throw error;
         }
       },
@@ -194,7 +192,6 @@ export const getLanguage = async (languageId: string): Promise<{ projectId: stri
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -205,15 +202,13 @@ export const getProject = reactCache(
   async (projectId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
-        let projectPrisma;
         try {
-          projectPrisma = await prisma.project.findUnique({
+          const projectPrisma = await prisma.project.findUnique({
             where: {
               id: projectId,
             },
             select: { organizationId: true },
           });
-
           return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -306,7 +301,6 @@ export const getSurvey = reactCache(
           return survey;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -324,21 +318,15 @@ export const getTag = reactCache(
     cache(
       async () => {
         validateInputs([id, ZId]);
-
-        try {
-          const tag = await prisma.tag.findUnique({
-            where: {
-              id,
-            },
-            select: {
-              environmentId: true,
-            },
-          });
-
-          return tag;
-        } catch (error) {
-          throw error;
-        }
+        const tag = await prisma.tag.findUnique({
+          where: {
+            id,
+          },
+          select: {
+            environmentId: true,
+          },
+        });
+        return tag;
       },
       [`utils-getTag-${id}`],
       {
@@ -476,29 +464,19 @@ export const isProjectPartOfOrganization = async (
   organizationId: string,
   projectId: string
 ): Promise<boolean> => {
-  try {
-    const project = await getProject(projectId);
-    if (!project) {
-      throw new ResourceNotFoundError("Project", projectId);
-    }
-
-    return project.organizationId === organizationId;
-  } catch (error) {
-    throw error;
+  const project = await getProject(projectId);
+  if (!project) {
+    throw new ResourceNotFoundError("Project", projectId);
   }
+  return project.organizationId === organizationId;
 };
 
 export const isTeamPartOfOrganization = async (organizationId: string, teamId: string): Promise<boolean> => {
-  try {
-    const team = await getTeam(teamId);
-    if (!team) {
-      throw new ResourceNotFoundError("Team", teamId);
-    }
-
-    return team.organizationId === organizationId;
-  } catch (error) {
-    throw error;
+  const team = await getTeam(teamId);
+  if (!team) {
+    throw new ResourceNotFoundError("Team", teamId);
   }
+  return team.organizationId === organizationId;
 };
 
 export const getContact = reactCache(

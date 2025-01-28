@@ -51,6 +51,9 @@ const NPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("nps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
@@ -58,6 +61,9 @@ const NPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("nps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -65,9 +71,10 @@ const NPSSurvey = (locale: string): TXMTemplate => {
 
 const StarRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("star_rating_survey_name", locale),
     questions: [
       {
@@ -136,7 +143,7 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
@@ -156,6 +163,9 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
         buttonLabel: { default: "Send" },
         placeholder: { default: "Type your answer here..." },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -163,9 +173,10 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
 
 const CSATSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("csat_survey_name", locale),
     questions: [
       {
@@ -233,7 +244,7 @@ const CSATSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
@@ -242,6 +253,9 @@ const CSATSurvey = (locale: string): TXMTemplate => {
         required: false,
         placeholder: { default: translate("csat_survey_question_2_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: reusableQuestionIds[2],
@@ -250,6 +264,9 @@ const CSATSurvey = (locale: string): TXMTemplate => {
         required: false,
         placeholder: { default: translate("csat_survey_question_3_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -278,6 +295,9 @@ const CESSurvey = (locale: string): TXMTemplate => {
         required: true,
         placeholder: { default: translate("cess_survey_question_2_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -285,9 +305,10 @@ const CESSurvey = (locale: string): TXMTemplate => {
 
 const SmileysRatingSurvey = (locale: string): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(locale);
 
   return {
-    ...getXMSurveyDefault(locale),
+    ...defaultSurvey,
     name: translate("smileys_survey_name", locale),
     questions: [
       {
@@ -356,7 +377,7 @@ const SmileysRatingSurvey = (locale: string): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: getXMSurveyDefault(locale).endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
@@ -376,6 +397,9 @@ const SmileysRatingSurvey = (locale: string): TXMTemplate => {
         buttonLabel: { default: translate("smileys_survey_question_3_button_label", locale) },
         placeholder: { default: translate("smileys_survey_question_3_placeholder", locale) },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
@@ -403,6 +427,9 @@ const eNPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("enps_survey_question_2_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
@@ -410,6 +437,9 @@ const eNPSSurvey = (locale: string): TXMTemplate => {
         headline: { default: translate("enps_survey_question_3_headline", locale) },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };

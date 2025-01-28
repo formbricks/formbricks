@@ -34,7 +34,7 @@ import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+// import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { ResponseFilter } from "./ResponseFilter";
 
@@ -262,7 +262,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
     }
   };
 
-  useClickOutside(datePickerRef, () => handleDatePickerClose());
+  // useClickOutside(datePickerRef, () => handleDatePickerClose());
   const t = useTranslations();
   return (
     <>

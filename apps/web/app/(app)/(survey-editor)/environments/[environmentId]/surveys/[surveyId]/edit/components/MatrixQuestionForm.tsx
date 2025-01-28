@@ -4,6 +4,7 @@ import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInpu
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -165,7 +166,7 @@ export const MatrixQuestionForm = ({
               <div
                 className="flex items-center"
                 onKeyDown={(e) => handleKeyDown(e, "row")}
-                key={`row-${index}-${question.rows.length}`}>
+                key={`row-${index}`}>
                 <QuestionFormInput
                   id={`row-${index}`}
                   label={""}
@@ -182,17 +183,18 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.rows.length > 2 && (
-                  <Button
-                    variant="minimal"
-                    size="icon"
-                    className="ml-2"
-                    StartIcon={TrashIcon}
-                    tooltip={t("common.delete")}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDeleteLabel("row", index);
-                    }}
-                  />
+                  <TooltipRenderer tooltipContent={t("common.delete")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteLabel("row", index);
+                      }}>
+                      <TrashIcon />
+                    </Button>
+                  </TooltipRenderer>
                 )}
               </div>
             ))}
@@ -200,12 +202,12 @@ export const MatrixQuestionForm = ({
               variant="secondary"
               size="sm"
               className="w-fit"
-              StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("row");
               }}>
-              <span>{t("environments.surveys.edit.add_row")}</span>
+              <PlusIcon />
+              {t("environments.surveys.edit.add_row")}
             </Button>
           </div>
         </div>
@@ -217,7 +219,7 @@ export const MatrixQuestionForm = ({
               <div
                 className="flex items-center"
                 onKeyDown={(e) => handleKeyDown(e, "column")}
-                key={`column-${index}-${question.columns.length}`}>
+                key={`column-${index}`}>
                 <QuestionFormInput
                   id={`column-${index}`}
                   label={""}
@@ -234,17 +236,18 @@ export const MatrixQuestionForm = ({
                   locale={locale}
                 />
                 {question.columns.length > 2 && (
-                  <Button
-                    variant="minimal"
-                    size="icon"
-                    className="ml-2"
-                    StartIcon={TrashIcon}
-                    tooltip={t("common.delete")}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleDeleteLabel("column", index);
-                    }}
-                  />
+                  <TooltipRenderer tooltipContent={t("common.delete")}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-2"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleDeleteLabel("column", index);
+                      }}>
+                      <TrashIcon />
+                    </Button>
+                  </TooltipRenderer>
                 )}
               </div>
             ))}
@@ -252,12 +255,12 @@ export const MatrixQuestionForm = ({
               variant="secondary"
               size="sm"
               className="w-fit"
-              StartIcon={PlusIcon}
               onClick={(e) => {
                 e.preventDefault();
                 handleAddLabel("column");
               }}>
-              <span>{t("environments.surveys.edit.add_column")}</span>
+              <PlusIcon />
+              {t("environments.surveys.edit.add_column")}
             </Button>
           </div>
           <div className="mt-3 flex flex-1 items-center justify-end gap-2">
