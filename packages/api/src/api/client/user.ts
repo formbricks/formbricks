@@ -21,7 +21,7 @@ export class UserAPI {
           responses: string[];
           lastDisplayAt: Date | null;
         };
-        details?: Record<string, string>;
+        messages?: string[];
       },
       ApiErrorResponse
     >

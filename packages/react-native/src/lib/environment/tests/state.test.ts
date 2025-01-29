@@ -1,15 +1,15 @@
-// environment-state.test.ts
+// state.test.ts
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
-// import { filterSurveys } from "@/lib/common/utils";
+import { Logger } from "@/lib/common/logger";
+import { filterSurveys } from "@/lib/common/utils";
 import {
   addEnvironmentStateExpiryCheckListener,
   clearEnvironmentStateExpiryCheckListener,
   fetchEnvironmentState,
 } from "@/lib/environment/state";
-// import * as state from "@/lib/environment/state";
 import type { TEnvironmentState } from "@/types/config";
-import { Mock, MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { FormbricksAPI } from "@formbricks/api";
 
 // Mock the FormbricksAPI so we can control environment.getState
 vi.mock("@formbricks/api", () => ({
@@ -48,11 +48,6 @@ vi.mock("@/lib/common/config", () => {
         get: vi.fn(),
         update: vi.fn(),
       })),
-    },
-    // Export the mock object so we can adjust it in tests
-    __mockConfig: {
-      get: vi.fn(),
-      update: vi.fn(),
     },
   };
 });
@@ -155,6 +150,13 @@ describe("environment/state.ts", () => {
 
   describe("addEnvironmentStateExpiryCheckListener()", () => {
     let mockRNConfig: MockInstance<() => RNConfig>;
+    let mockLoggerInstance: MockInstance<() => Logger>;
+
+    const mockLogger = {
+      debug: vi.fn(),
+      error: vi.fn(),
+    };
+
     beforeEach(() => {
       vi.clearAllMocks();
       vi.useFakeTimers();
@@ -172,137 +174,131 @@ describe("environment/state.ts", () => {
       };
 
       mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
+
+      mockLoggerInstance = vi.spyOn(Logger, "getInstance");
+      mockLoggerInstance.mockReturnValue(mockLogger as unknown as Logger);
     });
 
     afterEach(() => {
       clearEnvironmentStateExpiryCheckListener(); // clear after each test
     });
 
-    test("sets an interval if not already set, does nothing if environment not expired", () => {
-      addEnvironmentStateExpiryCheckListener();
-      // The first call sets the interval
-      // Calling again shouldn't set a second one
+    test("starts interval check and updates state when expired", async () => {
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          environment: {
+            expiresAt: new Date(Date.now() - 1000).toISOString(), // expired
+          },
+          appUrl: "https://test.com",
+          environmentId: "env_123",
+          user: { data: {} },
+        }),
+        update: vi.fn(),
+      };
+
+      const mockNewState = {
+        data: {
+          expiresAt: new Date(Date.now() + 1000 * 60 * 30).toISOString(),
+        },
+      };
+
+      mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
+
+      (FormbricksAPI as Mock).mockImplementation(() => ({
+        client: {
+          environment: {
+            getState: vi.fn().mockResolvedValue({
+              ok: true,
+              data: mockNewState,
+            }),
+          },
+        },
+      }));
+
+      (filterSurveys as Mock).mockReturnValue([]);
+
+      // Add listener
       addEnvironmentStateExpiryCheckListener();
 
-      // Advance time by a minute
-      vi.advanceTimersByTime(60_000);
+      // Fast-forward time
+      await vi.advanceTimersByTimeAsync(1000 * 60);
 
-      // environment not expired => no fetch call
-      const formbricksInstances = (FormbricksAPI as unknown as Mock).mock.instances;
-      expect(formbricksInstances.length).toBe(0);
+      // Verify the update was called
+      expect(mockConfig.update).toHaveBeenCalled();
     });
 
-    // test("when environment is expired, fetches new environment and updates config", async () => {
-    //   // set environment expired right away
+    test("extends expiry on error", async () => {
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          environment: {
+            expiresAt: new Date(Date.now() - 1000).toISOString(),
+          },
+          appUrl: "https://test.com",
+          environmentId: "env_123",
+        }),
+        update: vi.fn(),
+      };
 
-    //   const mockConfig = {
-    //     get: vi.fn().mockReturnValue({
-    //       environment: {
-    //         expiresAt: new Date(Date.now() - 1), // already expired
-    //       },
-    //     }),
-    //     update: vi.fn(),
-    //   };
+      mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
 
-    //   mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
+      // Mock API to throw an error
+      (FormbricksAPI as Mock).mockImplementation(() => ({
+        client: {
+          environment: {
+            getState: vi.fn().mockRejectedValue(new Error("Network error")),
+          },
+        },
+      }));
 
-    //   (filterSurveys as unknown as Mock).mockReturnValue([{ id: "s1" }]);
-    //   (FormbricksAPI as unknown as Mock).mockImplementation(() => ({
-    //     client: {
-    //       environment: {
-    //         getState: vi.fn().mockResolvedValue({
-    //           ok: true,
-    //           data: { env: "fresh" },
-    //         }),
-    //       },
-    //     },
-    //   }));
+      addEnvironmentStateExpiryCheckListener();
 
-    //   addEnvironmentStateExpiryCheckListener();
-    //   // interval triggers every minute, let's fast-forward
-    //   vi.advanceTimersByTime(60_000);
+      // Fast-forward time
+      await vi.advanceTimersByTimeAsync(1000 * 60);
 
-    //   const fetchEnvironmentStateMock = vi.spyOn(state, "fetchEnvironmentState").mockResolvedValue({
-    //     ok: true,
-    //     data: { env: "fresh" },
-    //   });
+      // Verify the config was updated with extended expiry
+      expect(mockConfig.update).toHaveBeenCalled();
+    });
 
-    //   // expect(fetchEnvironmentStateMock).toHaveBeenCalled();
+    test("does not fetch new state if not expired", async () => {
+      const futureDate = new Date(Date.now() + 1000 * 60 * 60); // 1 hour in future
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          environment: {
+            expiresAt: futureDate.toISOString(),
+          },
+          appUrl: "https://test.com",
+          environmentId: "env_123",
+        }),
+        update: vi.fn(),
+      };
 
-    //   // Expect we called environment.getState
-    //   // const instances = (FormbricksAPI as unknown as Mock).mock.instances;
-    //   // console.log("instances", instances);
-    //   // expect(instances.length).toBe(1);
-    //   // const client = instances[0].client.environment.getState;
+      mockRNConfig.mockReturnValue(mockConfig as unknown as RNConfig);
 
-    //   // expect(client).toHaveBeenCalled();
+      const apiMock = vi.fn().mockImplementation(() => ({
+        client: {
+          environment: {
+            getState: vi.fn(),
+          },
+        },
+      }));
 
-    //   // filterSurveys called
-    //   expect(filterSurveys).toHaveBeenCalledWith(
-    //     {
-    //       data: { env: "fresh" },
-    //       expiresAt: expect.any(Date),
-    //     },
-    //     { data: {} } // user
-    //   );
+      (FormbricksAPI as Mock).mockImplementation(apiMock);
 
-    //   // config.update called with new environment + filteredSurveys
-    //   expect(mockRNConfig.__mockConfig.update).toHaveBeenCalledWith(
-    //     expect.objectContaining({
-    //       environment: expect.objectContaining({
-    //         data: { env: "fresh" },
-    //       }),
-    //       filteredSurveys: [{ id: "s1" }],
-    //     })
-    //   );
-    // });
+      addEnvironmentStateExpiryCheckListener();
 
-    // test("on error, logs and extends environment expiry by 30 minutes", async () => {
-    //   mockRNConfig.__mockConfig.get.mockReturnValue({
-    //     environment: {
-    //       expiresAt: new Date(Date.now() - 1), // expired
-    //     },
-    //     user: {},
-    //     environmentId: "env_123",
-    //     appUrl: "https://fake.host",
-    //   });
+      // Fast-forward time by less than expiry
+      await vi.advanceTimersByTimeAsync(1000 * 60);
 
-    //   (FormbricksAPI as unknown as vi.Mock).mockImplementation(() => ({
-    //     client: {
-    //       environment: {
-    //         getState: vi.fn().mockResolvedValue({
-    //           ok: false,
-    //           error: { code: "forbidden", message: "No access" },
-    //         }),
-    //       },
-    //     },
-    //   }));
+      expect(mockConfig.update).not.toHaveBeenCalled();
+    });
 
-    //   addEnvironmentStateExpiryCheckListener();
-    //   vi.advanceTimersByTime(60_000);
+    test("clears interval when clearEnvironmentStateExpiryCheckListener is called", () => {
+      const clearIntervalSpy = vi.spyOn(global, "clearInterval");
 
-    //   expect(mockRNConfig.__mockConfig.update).toHaveBeenCalledWith(
-    //     expect.objectContaining({
-    //       environment: expect.objectContaining({
-    //         expiresAt: expect.any(Date),
-    //       }),
-    //     })
-    //   );
-    // });
+      addEnvironmentStateExpiryCheckListener();
+      clearEnvironmentStateExpiryCheckListener();
+
+      expect(clearIntervalSpy).toHaveBeenCalled();
+    });
   });
-
-  // ////////////////////////////////////////////////////////////////////////////////
-  // // clearEnvironmentStateExpiryCheckListener
-  // ////////////////////////////////////////////////////////////////////////////////
-  // describe("clearEnvironmentStateExpiryCheckListener()", () => {
-  //   test("clears interval and sets environmentStateSyncIntervalId to null", () => {
-  //     addEnvironmentStateExpiryCheckListener(); // sets it
-  //     expect(setInterval).toHaveBeenCalledTimes(1);
-  //     clearEnvironmentStateExpiryCheckListener();
-  //     expect(clearInterval).toHaveBeenCalledTimes(1);
-  //     // Also ensures subsequent calls won't crash
-  //     clearEnvironmentStateExpiryCheckListener();
-  //     expect(clearInterval).toHaveBeenCalledTimes(1);
-  //   });
-  // });
 });

@@ -42,7 +42,7 @@ export const sendUpdatesToBackend = async ({
       });
     }
 
-    const { state } = response.data;
+    const { state, messages } = response.data;
 
     return ok({
       state: {
@@ -51,6 +51,7 @@ export const sendUpdatesToBackend = async ({
           ...state,
         },
       },
+      messages,
     });
   } catch (e: unknown) {
     const errorTyped = e as { message?: string };

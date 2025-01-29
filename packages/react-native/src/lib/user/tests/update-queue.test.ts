@@ -23,6 +23,7 @@ vi.mock("@/lib/common/config", () => ({
 vi.mock("@/lib/common/logger", () => ({
   Logger: {
     getInstance: vi.fn(() => ({
+      debug: vi.fn(),
       error: vi.fn(),
     })),
   },
@@ -111,6 +112,11 @@ describe("UpdateQueue", () => {
 
   test("processUpdates debounces multiple calls", async () => {
     // Call processUpdates multiple times in quick succession
+
+    (sendUpdates as Mock).mockReturnValue({
+      ok: true,
+    });
+
     updateQueue.updateAttributes({ name: mockAttributes.name });
     updateQueue.updateAttributes({ email: mockAttributes.email });
 
