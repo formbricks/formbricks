@@ -1,5 +1,3 @@
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
@@ -57,19 +55,13 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
 const getRecallItemLabel = <T extends TSurvey>(
   recallItemId: string,
   survey: T,
-  languageCode: string,
-  contactAttributeKeys: TContactAttributeKey[]
+  languageCode: string
 ): string | undefined => {
   const isHiddenField = survey.hiddenFields.fieldIds?.includes(recallItemId);
   if (isHiddenField) return recallItemId;
 
   const surveyQuestion = survey.questions.find((question) => question.id === recallItemId);
   if (surveyQuestion) return surveyQuestion.headline[languageCode];
-
-  const attributeClass = contactAttributeKeys.find(
-    (attributeClass) => attributeClass.key.replaceAll(" ", "nbsp") === recallItemId
-  );
-  if (attributeClass) return attributeClass?.key;
 
   const variable = survey.variables?.find((variable) => variable.id === recallItemId);
   if (variable) return variable.name;
@@ -80,8 +72,7 @@ export const recallToHeadline = <T extends TSurvey>(
   headline: TI18nString,
   survey: T,
   withSlash: boolean,
-  languageCode: string,
-  contactAttributeKeys: TContactAttributeKey[]
+  languageCode: string
 ): TI18nString => {
   let newHeadline = structuredClone(headline);
   const localizedHeadline = newHeadline[languageCode];
@@ -96,8 +87,7 @@ export const recallToHeadline = <T extends TSurvey>(
       const recallItemId = extractId(recallInfo);
       if (!recallItemId) break;
 
-      let recallItemLabel =
-        getRecallItemLabel(recallItemId, survey, languageCode, contactAttributeKeys) || recallItemId;
+      let recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode) || recallItemId;
 
       while (recallItemLabel.includes("#recall:")) {
         const nestedRecallInfo = extractRecallInfo(recallItemLabel);
@@ -146,31 +136,16 @@ export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): T
 };
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
-export const replaceHeadlineRecall = <T extends TSurvey>(
-  survey: T,
-  language: string,
-  contactAttributeKeys: TContactAttributeKey[]
-): T => {
+export const replaceHeadlineRecall = <T extends TSurvey>(survey: T, language: string): T => {
   const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.questions.forEach((question) => {
-    question.headline = recallToHeadline(
-      question.headline,
-      modifiedSurvey,
-      false,
-      language,
-      contactAttributeKeys
-    );
+    question.headline = recallToHeadline(question.headline, modifiedSurvey, false, language);
   });
   return modifiedSurvey;
 };
 
 // Retrieves an array of survey questions referenced in a text containing recall information.
-export const getRecallItems = (
-  text: string,
-  survey: TSurvey,
-  languageCode: string,
-  attributeClasses: TContactAttributeKey[]
-): TSurveyRecallItem[] => {
+export const getRecallItems = (text: string, survey: TSurvey, languageCode: string): TSurveyRecallItem[] => {
   if (!text.includes("#recall:")) return [];
 
   const ids = extractIds(text);
@@ -180,23 +155,25 @@ export const getRecallItems = (
     const isSurveyQuestion = survey.questions.find((question) => question.id === recallItemId);
     const isVariable = survey.variables.find((variable) => variable.id === recallItemId);
 
-    const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode, attributeClasses);
+    const recallItemLabel = getRecallItemLabel(recallItemId, survey, languageCode);
 
     const getRecallItemType = () => {
       if (isHiddenField) return "hiddenField";
       if (isSurveyQuestion) return "question";
       if (isVariable) return "variable";
-      return "attributeClass";
     };
 
     if (recallItemLabel) {
       let recallItemLabelTemp = recallItemLabel;
       recallItemLabelTemp = replaceRecallInfoWithUnderline(recallItemLabelTemp);
-      recallItems.push({
-        id: recallItemId,
-        label: recallItemLabelTemp,
-        type: getRecallItemType(),
-      });
+      const recallItemType = getRecallItemType();
+      if (recallItemType) {
+        recallItems.push({
+          id: recallItemId,
+          label: recallItemLabelTemp,
+          type: recallItemType,
+        });
+      }
     }
   });
   return recallItems;
@@ -232,34 +209,12 @@ export const headlineToRecall = (
 
 export const parseRecallInfo = (
   text: string,
-  contactAttributes?: TContactAttributes,
   responseData?: TResponseData,
   variables?: TResponseVariables,
   withSlash: boolean = false
 ) => {
   let modifiedText = text;
-  const attributeKeys = contactAttributes ? Object.keys(contactAttributes) : [];
   const questionIds = responseData ? Object.keys(responseData) : [];
-  if (contactAttributes && attributeKeys.length > 0) {
-    attributeKeys.forEach((attributeKey) => {
-      const recallPattern = `#recall:${attributeKey}`;
-      while (modifiedText.includes(recallPattern)) {
-        const recallInfo = extractRecallInfo(modifiedText, attributeKey);
-        if (!recallInfo) break; // Exit the loop if no recall info is found
-
-        const recallItemId = extractId(recallInfo);
-        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
-
-        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-        let value = contactAttributes[recallItemId.replace("nbsp", " ")] || fallback;
-        if (withSlash) {
-          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
-        } else {
-          modifiedText = modifiedText.replace(recallInfo, value);
-        }
-      }
-    });
-  }
 
   const variableIds = Object.keys(variables || {});
 
@@ -298,7 +253,7 @@ export const parseRecallInfo = (
       const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
       let value;
 
-      // Fetching value from responseData or attributes based on recallItemId
+      // Fetching value from responseData based on recallItemId
       if (responseData[recallItemId]) {
         value = (responseData[recallItemId] as string) ?? fallback;
       }

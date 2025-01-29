@@ -6,7 +6,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { Dropdown } from "./RatingTypeDropdown";
@@ -20,7 +19,6 @@ interface RatingQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -32,7 +30,6 @@ export const RatingQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: RatingQuestionFormProps) => {
   const t = useTranslations();
@@ -50,7 +47,6 @@ export const RatingQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -68,7 +64,6 @@ export const RatingQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -144,7 +139,6 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -160,7 +154,6 @@ export const RatingQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -180,7 +173,6 @@ export const RatingQuestionForm = ({
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              contactAttributeKeys={contactAttributeKeys}
               locale={locale}
             />
           </div>

@@ -19,7 +19,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -37,7 +36,6 @@ interface AddIntegrationModalProps {
   notionIntegration: TIntegrationNotion;
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -49,7 +47,6 @@ export const AddIntegrationModal = ({
   notionIntegration,
   databases,
   selectedIntegration,
-  contactAttributeKeys,
   locale,
 }: AddIntegrationModalProps) => {
   const t = useTranslations();
@@ -116,7 +113,7 @@ export const AddIntegrationModal = ({
 
   const questionItems = useMemo(() => {
     const questions = selectedSurvey
-      ? replaceHeadlineRecall(selectedSurvey, "default", contactAttributeKeys)?.questions.map((q) => ({
+      ? replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((q) => ({
           id: q.id,
           name: getLocalizedValue(q.headline, "default"),
           type: q.type,

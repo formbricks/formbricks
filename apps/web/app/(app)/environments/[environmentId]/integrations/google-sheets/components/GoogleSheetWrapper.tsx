@@ -5,7 +5,6 @@ import { authorize } from "@/app/(app)/environments/[environmentId]/integrations
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
@@ -21,7 +20,6 @@ interface GoogleSheetWrapperProps {
   surveys: TSurvey[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -31,7 +29,6 @@ export const GoogleSheetWrapper = ({
   surveys,
   googleSheetIntegration,
   webAppUrl,
-  contactAttributeKeys,
   locale,
 }: GoogleSheetWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
@@ -61,7 +58,6 @@ export const GoogleSheetWrapper = ({
             setOpen={setModalOpen}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
-            contactAttributeKeys={contactAttributeKeys}
           />
           <ManageIntegration
             environment={environment}
