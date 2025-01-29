@@ -192,8 +192,9 @@ export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
-export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
-export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
+export const BREVO_API_KEY = env.BREVO_API_KEY;
+export const BREVO_LIST_ID = env.BREVO_LIST_ID;
+
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
