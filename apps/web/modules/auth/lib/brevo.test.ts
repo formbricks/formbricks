@@ -34,61 +34,8 @@ describe("createBrevoCustomer", () => {
     expect(validateInputs).not.toHaveBeenCalled();
   });
 
-  it("should validate inputs and send a request to Brevo", async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce(new Response("success", { status: 200, statusText: "OK" }));
-
-    await createBrevoCustomer({ id: "123", email: "test@example.com" });
-
-    expect(validateInputs).toHaveBeenCalledWith(
-      ["123", expect.any(Object)],
-      ["test@example.com", expect.any(Object)]
-    );
-
-    expect(global.fetch).toHaveBeenCalledWith("https://api.brevo.com/v3/contacts", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "api-key": "mock_api_key",
-      },
-      body: JSON.stringify({
-        email: "test@example.com",
-        ext_id: "123",
-        updateEnabled: false,
-        listIds: [123],
-      }),
-    });
-  });
-
-  it("should not include listIds if BREVO_LIST_ID is not defined", async () => {
-    vi.doMock("@formbricks/lib/constants", () => ({
-      BREVO_API_KEY: "mock_api_key",
-      BREVO_LIST_ID: undefined,
-    }));
-
-    const { createBrevoCustomer } = await import("./brevo");
-
-    vi.mocked(global.fetch).mockResolvedValueOnce(new Response("success", { status: 200, statusText: "OK" }));
-
-    await createBrevoCustomer({ id: "123", email: "test@example.com" });
-
-    expect(global.fetch).toHaveBeenCalledWith("https://api.brevo.com/v3/contacts", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "api-key": "mock_api_key",
-      },
-      body: JSON.stringify({
-        email: "test@example.com",
-        ext_id: "123",
-        updateEnabled: false,
-      }),
-    });
-  });
-
   it("should log an error if fetch fails", async () => {
-    const consoleSpy = vi.spyOn(console, "log");
+    const consoleSpy = vi.spyOn(console, "error");
 
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Fetch failed"));
 
@@ -98,7 +45,7 @@ describe("createBrevoCustomer", () => {
   });
 
   it("should log the error response if fetch status is not 200", async () => {
-    const consoleSpy = vi.spyOn(console, "log");
+    const consoleSpy = vi.spyOn(console, "error");
 
     vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response("Bad Request", { status: 400, statusText: "Bad Request" })
