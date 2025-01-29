@@ -4,7 +4,6 @@ import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import Image from "next/image";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -19,7 +18,6 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface PictureChoiceSummaryProps {
   questionSummary: TSurveyQuestionSummaryPictureSelection;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -33,7 +31,6 @@ interface PictureChoiceSummaryProps {
 export const PictureChoiceSummary = ({
   questionSummary,
   survey,
-  contactAttributeKeys,
   setFilter,
   locale,
 }: PictureChoiceSummaryProps) => {
@@ -44,7 +41,6 @@ export const PictureChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           questionSummary.question.allowMulti ? (

@@ -10,7 +10,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -19,7 +18,6 @@ interface OpenTextSummaryProps {
   questionSummary: TSurveyQuestionSummaryOpenText;
   environmentId: string;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
@@ -29,7 +27,6 @@ export const OpenTextSummary = ({
   questionSummary,
   environmentId,
   survey,
-  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
   locale,
@@ -66,7 +63,6 @@ export const OpenTextSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (

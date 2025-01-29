@@ -23,7 +23,6 @@ import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import {
@@ -60,7 +59,6 @@ interface QuestionsViewProps {
   setSelectedLanguageCode: (languageCode: string) => void;
   isMultiLanguageAllowed?: boolean;
   isFormbricksCloud: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -78,7 +76,6 @@ export const QuestionsView = ({
   selectedLanguageCode,
   isMultiLanguageAllowed,
   isFormbricksCloud,
-  contactAttributeKeys,
   plan,
   isCxMode,
   locale,
@@ -435,7 +432,6 @@ export const QuestionsView = ({
             isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
             setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -458,7 +454,6 @@ export const QuestionsView = ({
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
-          contactAttributeKeys={contactAttributeKeys}
           addQuestion={addQuestion}
           isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
@@ -487,7 +482,6 @@ export const QuestionsView = ({
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
-                  contactAttributeKeys={contactAttributeKeys}
                   plan={plan}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}

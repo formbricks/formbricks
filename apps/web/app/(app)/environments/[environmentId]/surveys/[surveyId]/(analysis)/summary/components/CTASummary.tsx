@@ -3,7 +3,6 @@
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
@@ -12,11 +11,10 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
-export const CTASummary = ({ questionSummary, survey, contactAttributeKeys, locale }: CTASummaryProps) => {
+export const CTASummary = ({ questionSummary, survey, locale }: CTASummaryProps) => {
   const { t } = useTranslate();
 
   return (
@@ -25,7 +23,6 @@ export const CTASummary = ({ questionSummary, survey, contactAttributeKeys, loca
         survey={survey}
         questionSummary={questionSummary}
         showResponses={false}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           <>

@@ -76,7 +76,6 @@ export const QuestionSkip = ({
                             questions.find((question) => question.id === questionId)!.headline,
                             "default"
                           ),
-                          {},
                           responseData
                         )}
                       </p>
@@ -110,7 +109,6 @@ export const QuestionSkip = ({
                             questions.find((question) => question.id === questionId)!.headline,
                             "default"
                           ),
-                          {},
                           responseData
                         )}
                       </p>

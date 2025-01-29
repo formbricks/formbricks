@@ -1,5 +1,5 @@
-name: Draft release
-run-name: Draft release ${{ inputs.next_version }}
+name: Prepare release
+run-name: Prepare release ${{ inputs.next_version }}
 
 on:
   workflow_dispatch:
@@ -11,9 +11,10 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
-  draft_release:
+  prepare_release:
     runs-on: ubuntu-latest
 
     steps:
@@ -42,14 +43,20 @@ jobs:
           cd apps/web
           pnpm version ${{ inputs.next_version }} --no-workspaces-update
 
-      - name: Commit changes
+      - name: Commit changes and create a branch
         run: |
+          branch_name="release-v${{ inputs.next_version }}"
+          git checkout -b "$branch_name"
           git add .
           git commit -m "chore: release v${{ inputs.next_version }}"
-          git push
+          git push origin "$branch_name"
 
-      - name: Draft release
-        run: gh release create v${{ inputs.next_version }} --generate-notes --draft
+      - name: Create pull request
+        run: |
+          gh pr create \
+            --base main \
+            --head "release-v${{ inputs.next_version }}" \
+            --title "chore: bump version to v${{ inputs.next_version }}" \
+            --body "This PR contains the changes for the v${{ inputs.next_version }} release."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ inputs.next_version }}

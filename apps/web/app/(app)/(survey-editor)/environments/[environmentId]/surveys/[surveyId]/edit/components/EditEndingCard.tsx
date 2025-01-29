@@ -20,7 +20,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TSurvey,
@@ -39,7 +38,6 @@ interface EditEndingCardProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  contactAttributeKeys: TContactAttributeKey[];
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
   isFormbricksCloud: boolean;
@@ -55,7 +53,6 @@ export const EditEndingCard = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   plan,
   addEndingCard,
   isFormbricksCloud,
@@ -200,21 +197,13 @@ export const EditEndingCard = ({
                 <p className="text-sm font-semibold">
                   {endingCard.type === "endScreen" &&
                     (endingCard.headline &&
-                    recallToHeadline(
-                      endingCard.headline,
-                      localSurvey,
-                      true,
-                      selectedLanguageCode,
-                      contactAttributeKeys
-                    )[selectedLanguageCode]
+                    recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
+                      selectedLanguageCode
+                    ]
                       ? formatTextWithSlashes(
-                          recallToHeadline(
-                            endingCard.headline,
-                            localSurvey,
-                            true,
-                            selectedLanguageCode,
-                            contactAttributeKeys
-                          )[selectedLanguageCode]
+                          recallToHeadline(endingCard.headline, localSurvey, true, selectedLanguageCode)[
+                            selectedLanguageCode
+                          ]
                         )
                       : t("environments.surveys.edit.ending_card"))}
                   {endingCard.type === "redirectToUrl" &&
@@ -274,19 +263,13 @@ export const EditEndingCard = ({
               isInvalid={isInvalid}
               selectedLanguageCode={selectedLanguageCode}
               setSelectedLanguageCode={setSelectedLanguageCode}
-              contactAttributeKeys={contactAttributeKeys}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
               locale={locale}
             />
           )}
           {endingCard.type === "redirectToUrl" && (
-            <RedirectUrlForm
-              localSurvey={localSurvey}
-              endingCard={endingCard}
-              updateSurvey={updateSurvey}
-              contactAttributeKeys={contactAttributeKeys}
-            />
+            <RedirectUrlForm localSurvey={localSurvey} endingCard={endingCard} updateSurvey={updateSurvey} />
           )}
         </Collapsible.CollapsibleContent>
       </Collapsible.Root>

@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useRef } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyEndScreenCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -20,7 +19,6 @@ interface EndScreenFormProps {
   isInvalid: boolean;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
-  contactAttributeKeys: TContactAttributeKey[];
   updateSurvey: (input: Partial<TSurveyEndScreenCard>) => void;
   endingCard: TSurveyEndScreenCard;
   locale: TUserLocale;
@@ -32,7 +30,6 @@ export const EndScreenForm = ({
   isInvalid,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   updateSurvey,
   endingCard,
   locale,
@@ -55,7 +52,6 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -69,7 +65,6 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div className="mt-4">
@@ -115,7 +110,6 @@ export const EndScreenForm = ({
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -137,7 +131,6 @@ export const EndScreenForm = ({
                   onAddFallback={() => {
                     inputRef.current?.focus();
                   }}
-                  contactAttributeKeys={contactAttributeKeys}
                   isRecallAllowed
                   localSurvey={localSurvey}
                   usedLanguageCode={"default"}
@@ -164,8 +157,7 @@ export const EndScreenForm = ({
                               },
                               localSurvey,
                               false,
-                              "default",
-                              contactAttributeKeys
+                              "default"
                             )[selectedLanguageCode]
                           }
                           onChange={(e) => onChange(e.target.value)}

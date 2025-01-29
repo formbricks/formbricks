@@ -4,7 +4,6 @@ import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -35,10 +34,9 @@ const Page = async (props) => {
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
-  const [survey, environment, contactAttributeKeys] = await Promise.all([
+  const [survey, environment] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!environment) {
@@ -112,7 +110,6 @@ const Page = async (props) => {
         webAppUrl={WEBAPP_URL}
         environmentTags={tags}
         user={user}
-        contactAttributeKeys={contactAttributeKeys}
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
         isReadOnly={isReadOnly}

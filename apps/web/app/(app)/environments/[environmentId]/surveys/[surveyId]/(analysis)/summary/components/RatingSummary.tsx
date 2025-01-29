@@ -6,7 +6,6 @@ import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -20,7 +19,6 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -31,13 +29,7 @@ interface RatingSummaryProps {
   locale: TUserLocale;
 }
 
-export const RatingSummary = ({
-  questionSummary,
-  survey,
-  contactAttributeKeys,
-  setFilter,
-  locale,
-}: RatingSummaryProps) => {
+export const RatingSummary = ({ questionSummary, survey, setFilter, locale }: RatingSummaryProps) => {
   const { t } = useTranslate();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
@@ -51,7 +43,6 @@ export const RatingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">

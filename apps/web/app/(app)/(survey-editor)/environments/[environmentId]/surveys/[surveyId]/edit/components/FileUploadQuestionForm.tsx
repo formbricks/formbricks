@@ -14,7 +14,6 @@ import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -29,7 +28,6 @@ interface FileUploadFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   isFormbricksCloud: boolean;
   locale: TUserLocale;
 }
@@ -43,7 +41,6 @@ export const FileUploadQuestionForm = ({
   project,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   isFormbricksCloud,
   locale,
 }: FileUploadFormProps): JSX.Element => {
@@ -141,7 +138,6 @@ export const FileUploadQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div ref={parent}>
@@ -158,7 +154,6 @@ export const FileUploadQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>

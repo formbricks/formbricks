@@ -8,7 +8,6 @@ import { InboxIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -26,7 +25,6 @@ interface MultipleChoiceSummaryProps {
   environmentId: string;
   surveyType: TSurveyType;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -42,7 +40,6 @@ export const MultipleChoiceSummary = ({
   environmentId,
   surveyType,
   survey,
-  contactAttributeKeys,
   setFilter,
   locale,
 }: MultipleChoiceSummaryProps) => {
@@ -75,7 +72,6 @@ export const MultipleChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
         additionalInfo={
           questionSummary.type === "multipleChoiceMulti" ? (
