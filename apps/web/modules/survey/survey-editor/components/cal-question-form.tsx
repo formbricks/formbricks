@@ -1,4 +1,4 @@
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";

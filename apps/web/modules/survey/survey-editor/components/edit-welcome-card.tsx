@@ -1,7 +1,7 @@
 "use client";
 
 import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";

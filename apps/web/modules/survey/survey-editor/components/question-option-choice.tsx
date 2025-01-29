@@ -1,4 +1,4 @@
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";

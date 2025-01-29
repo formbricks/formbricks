@@ -1,4 +1,4 @@
-import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
+import { RecallWrapper } from "@/modules/surveys/components/question-form-input/components/recall-wrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslations } from "next-intl";

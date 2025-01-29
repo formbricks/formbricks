@@ -15,7 +15,7 @@ import { PictureSelectionForm } from "@/modules/survey/survey-editor/components/
 import { RankingQuestionForm } from "@/modules/survey/survey-editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/survey-editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/survey-editor/lib/utils";
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";

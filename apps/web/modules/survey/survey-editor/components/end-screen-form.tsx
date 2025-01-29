@@ -1,7 +1,7 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
-import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
+import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
+import { RecallWrapper } from "@/modules/surveys/components/question-form-input/components/recall-wrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
