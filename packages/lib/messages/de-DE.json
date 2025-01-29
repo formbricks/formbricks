@@ -446,6 +446,7 @@
     "accept": "Annehmen",
     "click_or_drag_to_upload_files": "Klicke oder ziehe, um Dateien hochzuladen.",
     "email_customization_preview_email_heading": "Hey {userName}",
+    "email_customization_preview_email_subject": "Formbricks E-Mail-Umfrage Vorschau",
     "email_customization_preview_email_text": "Dies ist eine E-Mail-Vorschau, um dir zu zeigen, welches Logo in den E-Mails gerendert wird.",
     "email_footer_text_1": "Einen schönen Tag noch!",
     "email_footer_text_2": "Dein Formbricks Team",
@@ -454,6 +455,7 @@
     "embed_survey_preview_email_environment_id": "Umgebungs-ID",
     "embed_survey_preview_email_fight_spam": "Hilf uns, Spam zu bekämpfen, und leite diese Mail an hola@formbricks.com weiter.",
     "embed_survey_preview_email_heading": "Vorschau Einbettung in E-Mail",
+    "embed_survey_preview_email_subject": "Formbricks E-Mail-Umfrage Vorschau",
     "embed_survey_preview_email_text": "So sieht die Umfrage eingebettet in eine E-Mail aus:",
     "forgot_password_email_change_password": "Passwort ändern",
     "forgot_password_email_did_not_request": "Wenn Du sie nicht angefordert hast, ignoriere bitte diese E-Mail.",
@@ -503,7 +505,7 @@
     "password_changed_email_heading": "Passwort geändert",
     "password_changed_email_text": "Dein Passwort wurde erfolgreich geändert.",
     "password_reset_notify_email_subject": "Dein Formbricks-Passwort wurde geändert",
-    "privacy_policy": "Datenschutz",
+    "privacy_policy": "Datenschutzerklärung",
     "reject": "Ablehnen",
     "response_finished_email_subject": "Eine Antwort für {surveyName} wurde abgeschlossen ✅",
     "response_finished_email_subject_with_email": "{personEmail} hat deine Umfrage {surveyName} abgeschlossen ✅",
@@ -537,7 +539,8 @@
     "weekly_summary_create_reminder_notification_body_need_help": "Brauchst Du Hilfe, die richtige Umfrage für dein Produkt zu finden?",
     "weekly_summary_create_reminder_notification_body_reply_email": "oder antworte auf diese E-Mail :)",
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Neue Umfrage einrichten",
-    "weekly_summary_create_reminder_notification_body_text": "Wir würden dir gerne eine wöchentliche Zusammenfassung schicken, aber momentan laufen keine Umfragen für {projectName}."
+    "weekly_summary_create_reminder_notification_body_text": "Wir würden dir gerne eine wöchentliche Zusammenfassung schicken, aber momentan laufen keine Umfragen für {projectName}.",
+    "weekly_summary_email_subject": "{projectName} Nutzer-Insights – Letzte Woche von Formbricks"
   },
   "environments": {
     "actions": {

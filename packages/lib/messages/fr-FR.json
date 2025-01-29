@@ -446,6 +446,7 @@
     "accept": "Accepter",
     "click_or_drag_to_upload_files": "Cliquez ou faites glisser pour télécharger des fichiers.",
     "email_customization_preview_email_heading": "Salut {userName}",
+    "email_customization_preview_email_subject": "Aperçu de la personnalisation des e-mails Formbricks",
     "email_customization_preview_email_text": "C'est une prévisualisation d'e-mail pour vous montrer quel logo sera rendu dans les e-mails.",
     "email_footer_text_1": "Passe une belle journée !",
     "email_footer_text_2": "L'équipe Formbricks",
@@ -454,6 +455,7 @@
     "embed_survey_preview_email_environment_id": "ID d'environnement",
     "embed_survey_preview_email_fight_spam": "Aidez-nous à lutter contre le spam et transférez ce mail à hola@formbricks.com.",
     "embed_survey_preview_email_heading": "Aperçu de l'email intégré",
+    "embed_survey_preview_email_subject": "Aperçu du sondage par e-mail Formbricks",
     "embed_survey_preview_email_text": "C'est ainsi que le code s'affiche intégré dans un e-mail :",
     "forgot_password_email_change_password": "Changer le mot de passe",
     "forgot_password_email_did_not_request": "Si vous n'avez pas demandé cela, veuillez ignorer cet e-mail.",
@@ -537,7 +539,8 @@
     "weekly_summary_create_reminder_notification_body_need_help": "Besoin d'aide pour trouver le bon sondage pour votre produit ?",
     "weekly_summary_create_reminder_notification_body_reply_email": "ou répondez à cet e-mail :)",
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurer une nouvelle enquête",
-    "weekly_summary_create_reminder_notification_body_text": "Nous aimerions vous envoyer un résumé hebdomadaire, mais actuellement, il n'y a pas d'enquêtes en cours pour {projectName}."
+    "weekly_summary_create_reminder_notification_body_text": "Nous aimerions vous envoyer un résumé hebdomadaire, mais actuellement, il n'y a pas d'enquêtes en cours pour {projectName}.",
+    "weekly_summary_email_subject": "Aperçu des utilisateurs de {projectName} – La semaine dernière par Formbricks"
   },
   "environments": {
     "actions": {

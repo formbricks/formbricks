@@ -446,6 +446,7 @@
     "accept": "Aceitar",
     "click_or_drag_to_upload_files": "Clique ou arraste para fazer o upload de arquivos.",
     "email_customization_preview_email_heading": "Oi {userName}",
+    "email_customization_preview_email_subject": "Aperçu de la personnalisation des e-mails Formbricks",
     "email_customization_preview_email_text": "Esta é uma pré-visualização de e-mail para mostrar qual logo será renderizado nos e-mails.",
     "email_footer_text_1": "Tenha um ótimo dia!",
     "email_footer_text_2": "O time Formbricks",
@@ -454,6 +455,7 @@
     "embed_survey_preview_email_environment_id": "ID do Ambiente",
     "embed_survey_preview_email_fight_spam": "Ajude a gente a combater spam e encaminhe este e-mail para hola@formbricks.com",
     "embed_survey_preview_email_heading": "Pré-visualizar Incorporação de Email",
+    "embed_survey_preview_email_subject": "Prévia da pesquisa por e-mail do Formbricks",
     "embed_survey_preview_email_text": "É assim que o trecho de código fica embutido em um e-mail:",
     "forgot_password_email_change_password": "Mudar senha",
     "forgot_password_email_did_not_request": "Se você não solicitou isso, por favor ignore este e-mail.",
@@ -537,7 +539,8 @@
     "weekly_summary_create_reminder_notification_body_need_help": "Precisa de ajuda pra encontrar a pesquisa certa pro seu produto?",
     "weekly_summary_create_reminder_notification_body_reply_email": "ou responde a esse e-mail :)",
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurar uma nova pesquisa",
-    "weekly_summary_create_reminder_notification_body_text": "Adoraríamos te enviar um Resumo Semanal, mas no momento não há pesquisas em andamento para {projectName}."
+    "weekly_summary_create_reminder_notification_body_text": "Adoraríamos te enviar um Resumo Semanal, mas no momento não há pesquisas em andamento para {projectName}.",
+    "weekly_summary_email_subject": "Insights de usuários do {projectName} – Semana passada por Formbricks"
   },
   "environments": {
     "actions": {

@@ -446,6 +446,7 @@
     "accept": "Accept",
     "click_or_drag_to_upload_files": "Click or drag to upload files.",
     "email_customization_preview_email_heading": "Hey {userName}",
+    "email_customization_preview_email_subject": "Formbricks Email Customization Preview",
     "email_customization_preview_email_text": "This is an email preview to show you which logo will be rendered in the emails.",
     "email_footer_text_1": "Have a great day!",
     "email_footer_text_2": "The Formbricks Team",
@@ -454,6 +455,7 @@
     "embed_survey_preview_email_environment_id": "Environment ID",
     "embed_survey_preview_email_fight_spam": "Help us fight spam and forward this mail to hola@formbricks.com",
     "embed_survey_preview_email_heading": "Preview Email Embed",
+    "embed_survey_preview_email_subject": "Formbricks Email Survey Preview",
     "embed_survey_preview_email_text": "This is how the code snippet looks embedded into an email:",
     "forgot_password_email_change_password": "Change password",
     "forgot_password_email_did_not_request": "If you didn't request this, please ignore this email.",
@@ -537,7 +539,8 @@
     "weekly_summary_create_reminder_notification_body_need_help": "Need help finding the right survey for your product?",
     "weekly_summary_create_reminder_notification_body_reply_email": "or reply to this email :)",
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Setup a new survey",
-    "weekly_summary_create_reminder_notification_body_text": "We'd love to send you a Weekly Summary, but currently there are no surveys running for {projectName}."
+    "weekly_summary_create_reminder_notification_body_text": "We'd love to send you a Weekly Summary, but currently there are no surveys running for {projectName}.",
+    "weekly_summary_email_subject": "{projectName} User Insights - Last Week by Formbricks"
   },
   "environments": {
     "actions": {

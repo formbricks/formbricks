@@ -46,8 +46,10 @@ interface SendEmailDataProps {
   html: string;
 }
 
-const getEmailSubject = (projectName: string): string => {
-  return `${projectName} User Insights - Last Week by Formbricks`;
+const getEmailSubject = (projectName: string, locale: string): string => {
+  return translateEmailText("weekly_summary_email_subject", locale, {
+    projectName,
+  });
 };
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
@@ -228,7 +230,6 @@ export const sendResponseFinishedEmail = async (
 
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
-  subject: string,
   innerHtml: string,
   environmentId: string,
   locale: string,
@@ -237,14 +238,13 @@ export const sendEmbedSurveyPreviewEmail = async (
   const html = await render(EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, locale, logoUrl }));
   return await sendEmail({
     to,
-    subject,
+    subject: translateEmailText("embed_survey_preview_email_subject", locale),
     html,
   });
 };
 
 export const sendEmailCustomizationPreviewEmail = async (
   to: string,
-  subject: string,
   userName: string,
   locale: string,
   logoUrl?: string
@@ -253,7 +253,7 @@ export const sendEmailCustomizationPreviewEmail = async (
 
   return await sendEmail({
     to,
-    subject,
+    subject: translateEmailText("email_customization_preview_email_subject", locale),
     html: emailHtmlBody,
   });
 };
@@ -309,7 +309,7 @@ export const sendWeeklySummaryNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.projectName),
+    subject: getEmailSubject(notificationData.projectName, locale),
     html,
   });
 };
@@ -341,7 +341,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.projectName),
+    subject: getEmailSubject(notificationData.projectName, locale),
     html,
   });
 };
