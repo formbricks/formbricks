@@ -14,7 +14,6 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
-import { getContactAttributeKeys } from "./lib/contact-attribute-key";
 import { getEmailVerificationDetails } from "./lib/helpers";
 
 interface LinkSurveyPageProps {
@@ -124,8 +123,6 @@ const Page = async (props: LinkSurveyPageProps) => {
     throw new Error("Project not found");
   }
 
-  const contactAttributeKeys = await getContactAttributeKeys(survey.environmentId);
-
   const getLanguageCode = (): string => {
     if (!langParam || !isMultiLanguageAllowed) return "default";
     else {
@@ -161,7 +158,6 @@ const Page = async (props: LinkSurveyPageProps) => {
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
-        contactAttributeKeys={contactAttributeKeys}
         isEmbed={isEmbed}
         locale={locale}
         isPreview={isPreview}
@@ -180,7 +176,6 @@ const Page = async (props: LinkSurveyPageProps) => {
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

@@ -118,7 +118,6 @@ export const QuestionToggleTable = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={[]}
                 locale={locale}
               />
             </td>

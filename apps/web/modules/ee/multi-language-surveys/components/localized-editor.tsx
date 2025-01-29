@@ -98,7 +98,7 @@ export function LocalizedEditor({
                 className="fb-htmlbody ml-1" // styles are in global.css
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(
-                    recallToHeadline(value, localSurvey, false, "default", []).default ?? ""
+                    recallToHeadline(value, localSurvey, false, "default").default ?? ""
                   ),
                 }}
               />

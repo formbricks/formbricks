@@ -25,11 +25,9 @@ export const getNotificationResponse = (
   const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
-    const parsedSurvey = replaceHeadlineRecall(
-      survey as unknown as TSurvey,
-      "default",
-      environment.attributeKeys
-    ) as TSurvey & { responses: TWeeklyEmailResponseData[] };
+    const parsedSurvey = replaceHeadlineRecall(survey as unknown as TSurvey, "default") as TSurvey & {
+      responses: TWeeklyEmailResponseData[];
+    };
     const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,

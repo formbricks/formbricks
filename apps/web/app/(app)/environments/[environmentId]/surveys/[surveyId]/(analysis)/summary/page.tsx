@@ -4,7 +4,6 @@ import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -42,10 +41,9 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     return notFound();
   }
 
-  const [survey, environment, contactAttributeKeys] = await Promise.all([
+  const [survey, environment] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
@@ -118,7 +116,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         webAppUrl={WEBAPP_URL}
         user={user}
         totalResponseCount={totalResponseCount}
-        contactAttributeKeys={contactAttributeKeys}
         isAIEnabled={isAIEnabled}
         documentsPerPage={DOCUMENTS_PER_PAGE}
         isReadOnly={isReadOnly}
