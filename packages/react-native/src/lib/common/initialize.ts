@@ -22,8 +22,6 @@ import {
 } from "@/types/error";
 
 let isInitialized = false;
-const appConfig = RNConfig.getInstance();
-const logger = Logger.getInstance();
 
 export const setIsInitialize = (state: boolean): void => {
   isInitialized = state;
@@ -32,6 +30,9 @@ export const setIsInitialize = (state: boolean): void => {
 export const init = async (
   configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  const appConfig = RNConfig.getInstance();
+  const logger = Logger.getInstance();
+
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");
     return okVoid();
@@ -227,6 +228,7 @@ export const init = async (
 };
 
 export const checkInitialized = (): Result<void, NotInitializedError> => {
+  const logger = Logger.getInstance();
   logger.debug("Check if initialized");
 
   if (!isInitialized) {
@@ -241,6 +243,9 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 
 // eslint-disable-next-line @typescript-eslint/require-await -- disabled for now
 export const deinitalize = async (): Promise<void> => {
+  const logger = Logger.getInstance();
+  const appConfig = RNConfig.getInstance();
+
   logger.debug("Setting person state to default");
   // await appConfig.resetConfig();
   // clear the user state and set it to the default value
@@ -256,6 +261,8 @@ export const handleErrorOnFirstInit = async (e: {
   code: string;
   responseMessage: string;
 }): Promise<never> => {
+  const logger = Logger.getInstance();
+
   if (e.code === "forbidden") {
     logger.error(`Authorization error: ${e.responseMessage}`);
   } else {

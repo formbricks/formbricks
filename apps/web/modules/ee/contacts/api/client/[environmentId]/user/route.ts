@@ -5,7 +5,7 @@ import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TJsPersonState, ZJsPersonIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
+import { TJsPersonState, ZJsUserIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
 import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -23,7 +23,7 @@ export const POST = async (
     const jsonInput = await request.json();
 
     // Validate input
-    const syncInputValidation = ZJsPersonIdentifyInput.pick({ environmentId: true }).safeParse({
+    const syncInputValidation = ZJsUserIdentifyInput.pick({ environmentId: true }).safeParse({
       environmentId,
     });
 

@@ -120,12 +120,18 @@ export class UpdateQueue {
 
             // Only send updates if we have a userId (either from updates or local storage)
             if (effectiveUserId) {
-              await sendUpdates({
+              const result = await sendUpdates({
                 updates: {
                   userId: effectiveUserId,
                   attributes: currentUpdates.attributes ?? {},
                 },
               });
+
+              if (result.ok) {
+                logger.debug("Updates sent successfully");
+              } else {
+                logger.error("Failed to send updates");
+              }
             }
           }
 

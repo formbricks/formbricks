@@ -97,12 +97,12 @@ export const ZJsPersonState = z.object({
 
 export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
-export const ZJsPersonIdentifyInput = z.object({
+export const ZJsUserIdentifyInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string(),
 });
 
-export type TJsPersonIdentifyInput = z.infer<typeof ZJsPersonIdentifyInput>;
+export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
 
 export const ZJsConfig = z.object({
   environmentId: z.string().cuid(),

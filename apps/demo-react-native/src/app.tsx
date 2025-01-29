@@ -51,6 +51,24 @@ export default function App(): JSX.Element {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting user id:", error);
             });
+            setAttributes({ testAttr: "maa chuda le apni bkl" }).catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user attributes:", error);
+            });
+          }}
+        />
+
+        <Button
+          title="Set Another User Id"
+          onPress={() => {
+            setUserId("random-user-id-3").catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user id:", error);
+            });
+            setAttributes({ testAttr: "maa chuda" }).catch((error: unknown) => {
+              // eslint-disable-next-line no-console -- logging is allowed in demo apps
+              console.error("Error setting user attributes:", error);
+            });
           }}
         />
 
