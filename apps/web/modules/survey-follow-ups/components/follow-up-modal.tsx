@@ -102,7 +102,7 @@ export const FollowUpModal = ({
 
     return [
       ...openTextAndContactQuestions.map((question) => ({
-        label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode, [])[
+        label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
           selectedLanguageCode
         ],
         id: question.id,
