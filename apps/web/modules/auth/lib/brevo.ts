@@ -19,7 +19,7 @@ export const createBrevoCustomer = async ({ id, email }: { id: string; email: TU
 
     // Add `listIds` only if `BREVO_LIST_ID` is defined
     const listId = BREVO_LIST_ID ? parseInt(BREVO_LIST_ID, 10) : null;
-    if (listId && !isNaN(listId)) {
+    if (listId && !Number.isNaN(listId)) {
       requestBody.listIds = [listId];
     }
 

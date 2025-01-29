@@ -54,6 +54,13 @@ export const fetchPersonState = async (
       responseMessage: jsonRes.message,
     });
 
+    if (error.error.code === "forbidden") {
+      logger.error(
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we want to log the error message if it exists
+        error.error.responseMessage ?? "User identification is not available for this environment"
+      );
+    }
+
     throw new Error(error.error.message);
   }
 

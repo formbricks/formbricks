@@ -141,7 +141,7 @@ const getQuestionColumnsData = (
                 <span className="h-4 w-4">{QUESTIONS_ICON_MAP[question.type]}</span>
                 <span className="truncate">
                   {getLocalizedValue(
-                    recallToHeadline(question.headline, survey, false, "default", []),
+                    recallToHeadline(question.headline, survey, false, "default"),
                     "default"
                   )}
                 </span>
