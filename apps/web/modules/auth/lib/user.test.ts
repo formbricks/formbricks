@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { createCustomerIoCustomer } from "@formbricks/lib/customerio";
 import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { mockUser } from "./mock-data";
@@ -25,10 +24,6 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
   },
-}));
-
-vi.mock("@formbricks/lib/customerio", () => ({
-  createCustomerIoCustomer: vi.fn(),
 }));
 
 vi.mock("@formbricks/lib/user/cache", () => ({
@@ -57,10 +52,6 @@ describe("User Management", () => {
       });
 
       expect(result).toEqual(mockPrismaUser);
-      expect(createCustomerIoCustomer).toHaveBeenCalledWith({
-        id: mockPrismaUser.id,
-        email: mockPrismaUser.email,
-      });
       expect(userCache.revalidate).toHaveBeenCalled();
     });
 
