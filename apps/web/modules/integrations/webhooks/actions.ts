@@ -8,11 +8,15 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromWebhookId,
 } from "@/lib/utils/helper";
+import {
+  createWebhook,
+  deleteWebhook,
+  testEndpoint,
+  updateWebhook,
+} from "@/modules/integrations/webhooks/lib/webhook";
+import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 import { z } from "zod";
-import { createWebhook, deleteWebhook, updateWebhook } from "@formbricks/lib/webhook/service";
-import { testEndpoint } from "@formbricks/lib/webhook/utils";
 import { ZId } from "@formbricks/types/common";
-import { ZWebhookInput } from "@formbricks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({
   environmentId: ZId,

@@ -1,16 +1,16 @@
 import { Label } from "@/modules/ui/components/label";
+import { Webhook } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TWebhook } from "@formbricks/types/webhooks";
 
 interface ActivityTabProps {
-  webhook: TWebhook;
+  webhook: Webhook;
   surveys: TSurvey[];
 }
 
-const getSurveyNamesForWebhook = (webhook: TWebhook, allSurveys: TSurvey[]): string[] => {
+const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): string[] => {
   if (webhook.surveyIds.length === 0) {
     return allSurveys.map((survey) => survey.name);
   } else {

@@ -1,6 +1,5 @@
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslations } from "next-intl";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -14,7 +13,6 @@ import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -28,7 +26,6 @@ interface MatrixQuestionSummaryProps {
 export const MatrixQuestionSummary = ({
   questionSummary,
   survey,
-  contactAttributeKeys,
   setFilter,
   locale,
 }: MatrixQuestionSummaryProps) => {
@@ -54,12 +51,7 @@ export const MatrixQuestionSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">

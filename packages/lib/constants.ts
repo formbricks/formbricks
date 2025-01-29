@@ -88,6 +88,11 @@ export const MAX_RESPONSES_FOR_INSIGHT_GENERATION = 500;
 export const DEFAULT_ORGANIZATION_ID = env.DEFAULT_ORGANIZATION_ID;
 export const DEFAULT_ORGANIZATION_ROLE = env.DEFAULT_ORGANIZATION_ROLE;
 
+export const SLACK_MESSAGE_LIMIT = 2995;
+export const GOOGLE_SHEET_MESSAGE_LIMIT = 49995;
+export const AIRTABLE_MESSAGE_LIMIT = 99995;
+export const NOTION_RICH_TEXT_LIMIT = 1995;
+
 // Storage constants
 export const S3_ACCESS_KEY = env.S3_ACCESS_KEY;
 export const S3_SECRET_KEY = env.S3_SECRET_KEY;
@@ -183,8 +188,9 @@ export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 
-export const CUSTOMER_IO_SITE_ID = env.CUSTOMER_IO_SITE_ID;
-export const CUSTOMER_IO_API_KEY = env.CUSTOMER_IO_API_KEY;
+export const BREVO_API_KEY = env.BREVO_API_KEY;
+export const BREVO_LIST_ID = env.BREVO_LIST_ID;
+
 export const UNSPLASH_ACCESS_KEY = env.UNSPLASH_ACCESS_KEY;
 export const UNSPLASH_ALLOWED_DOMAINS = ["api.unsplash.com"];
 
