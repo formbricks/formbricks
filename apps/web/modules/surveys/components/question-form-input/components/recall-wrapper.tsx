@@ -16,7 +16,6 @@ import {
   recallToHeadline,
   replaceRecallInfoWithUnderline,
 } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 
 interface RecallWrapperRenderProps {
@@ -32,7 +31,6 @@ interface RecallWrapperProps {
   onChange: (val: string, recallItems: TSurveyRecallItem[], fallbacks: { [id: string]: string }) => void;
   localSurvey: TSurvey;
   questionId: string;
-  contactAttributeKeys: TContactAttributeKey[];
   render: (props: RecallWrapperRenderProps) => React.ReactNode;
   usedLanguageCode: string;
   isRecallAllowed: boolean;
@@ -44,7 +42,6 @@ export const RecallWrapper = ({
   onChange,
   localSurvey,
   questionId,
-  contactAttributeKeys,
   render,
   usedLanguageCode,
   isRecallAllowed,
@@ -54,9 +51,7 @@ export const RecallWrapper = ({
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(
-    value.includes("#recall:")
-      ? getRecallItems(value, localSurvey, usedLanguageCode, contactAttributeKeys)
-      : []
+    value.includes("#recall:") ? getRecallItems(value, localSurvey, usedLanguageCode) : []
   );
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(
     value.includes("/fallback:") ? getFallbackValues(value) : {}
@@ -84,9 +79,7 @@ export const RecallWrapper = ({
         [usedLanguageCode]: newVal,
       };
 
-      const val = recallToHeadline(updatedText, localSurvey, false, usedLanguageCode, contactAttributeKeys)[
-        usedLanguageCode
-      ];
+      const val = recallToHeadline(updatedText, localSurvey, false, usedLanguageCode)[usedLanguageCode];
 
       setInternalValue(newVal);
 
@@ -96,16 +89,7 @@ export const RecallWrapper = ({
 
       onChange(newVal, recallItems, fallbacks);
     },
-    [
-      checkForRecallSymbol,
-      contactAttributeKeys,
-      isRecallAllowed,
-      localSurvey,
-      onChange,
-      recallItems,
-      fallbacks,
-      usedLanguageCode,
-    ]
+    [checkForRecallSymbol, isRecallAllowed, localSurvey, onChange, recallItems, fallbacks, usedLanguageCode]
   );
 
   const addRecallItem = useCallback(
@@ -217,8 +201,7 @@ export const RecallWrapper = ({
         { [usedLanguageCode]: internalValue },
         localSurvey,
         false,
-        usedLanguageCode,
-        contactAttributeKeys
+        usedLanguageCode
       )[usedLanguageCode];
 
       filterRecallItems(remainingText);
@@ -288,7 +271,6 @@ export const RecallWrapper = ({
                 recallItems={recallItems}
                 selectedLanguageCode={usedLanguageCode}
                 hiddenFields={localSurvey.hiddenFields}
-                contactAttributeKeys={contactAttributeKeys}
               />
             )}
 

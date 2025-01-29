@@ -10,7 +10,6 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
@@ -24,7 +23,6 @@ interface MatrixQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -36,7 +34,6 @@ export const MatrixQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
@@ -118,7 +115,6 @@ export const MatrixQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div ref={parent}>
@@ -135,7 +131,6 @@ export const MatrixQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -179,7 +174,6 @@ export const MatrixQuestionForm = ({
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
                   }
-                  contactAttributeKeys={contactAttributeKeys}
                   locale={locale}
                 />
                 {question.rows.length > 2 && (
@@ -232,7 +226,6 @@ export const MatrixQuestionForm = ({
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
                   }
-                  contactAttributeKeys={contactAttributeKeys}
                   locale={locale}
                 />
                 {question.columns.length > 2 && (

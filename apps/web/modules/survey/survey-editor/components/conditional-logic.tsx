@@ -26,7 +26,6 @@ import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface ConditionalLogicProps {
@@ -34,11 +33,9 @@ interface ConditionalLogicProps {
   questionIdx: number;
   question: TSurveyQuestion;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export function ConditionalLogic({
-  contactAttributeKeys,
   localSurvey,
   question,
   questionIdx,
@@ -46,11 +43,11 @@ export function ConditionalLogic({
 }: ConditionalLogicProps) {
   const t = useTranslations();
   const transformedSurvey = useMemo(() => {
-    let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default", contactAttributeKeys);
-    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default", contactAttributeKeys);
+    let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default");
+    modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default");
 
     return modifiedSurvey;
-  }, [localSurvey, contactAttributeKeys]);
+  }, [localSurvey]);
 
   const addLogic = () => {
     const operator = getDefaultOperatorForQuestion(question, t);

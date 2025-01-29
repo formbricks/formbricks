@@ -6,7 +6,6 @@ import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { translate } from "@formbricks/lib/templates";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -124,21 +123,11 @@ export const getConditionValueOptions = (
   return groupedOptions;
 };
 
-export const replaceEndingCardHeadlineRecall = (
-  survey: TSurvey,
-  language: string,
-  contactAttributeKeys: TContactAttributeKey[]
-) => {
+export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: string) => {
   const modifiedSurvey = structuredClone(survey);
   modifiedSurvey.endings.forEach((ending) => {
     if (ending.type === "endScreen") {
-      ending.headline = recallToHeadline(
-        ending.headline || {},
-        modifiedSurvey,
-        false,
-        language,
-        contactAttributeKeys
-      );
+      ending.headline = recallToHeadline(ending.headline || {}, modifiedSurvey, false, language);
     }
   });
   return modifiedSurvey;

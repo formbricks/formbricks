@@ -11,7 +11,6 @@ import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProject } from "@formbricks/types/project";
 import {
@@ -38,7 +37,6 @@ interface LinkSurveyProps {
   responseCount?: number;
   verifiedEmail?: string;
   languageCode: string;
-  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -57,7 +55,6 @@ export const LinkSurvey = ({
   responseCount,
   verifiedEmail,
   languageCode,
-  contactAttributeKeys,
   isEmbed,
   IMPRINT_URL,
   PRIVACY_URL,
@@ -171,7 +168,6 @@ export const LinkSurvey = ({
           survey={survey}
           isErrorComponent={true}
           languageCode={languageCode}
-          contactAttributeKeys={contactAttributeKeys}
           styling={project.styling}
           locale={locale}
         />
@@ -183,7 +179,6 @@ export const LinkSurvey = ({
         singleUseId={suId ?? ""}
         survey={survey}
         languageCode={languageCode}
-        contactAttributeKeys={contactAttributeKeys}
         styling={project.styling}
         locale={locale}
       />

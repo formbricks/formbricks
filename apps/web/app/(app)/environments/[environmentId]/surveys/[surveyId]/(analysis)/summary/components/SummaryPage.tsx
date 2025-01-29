@@ -18,7 +18,6 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -47,7 +46,6 @@ interface SummaryPageProps {
   webAppUrl: string;
   user?: TUser;
   totalResponseCount: number;
-  contactAttributeKeys: TContactAttributeKey[];
   isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
@@ -60,7 +58,6 @@ export const SummaryPage = ({
   surveyId,
   webAppUrl,
   totalResponseCount,
-  contactAttributeKeys,
   isAIEnabled,
   documentsPerPage,
   locale,
@@ -156,8 +153,8 @@ export const SummaryPage = ({
   );
 
   const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
-  }, [survey, contactAttributeKeys]);
+    return replaceHeadlineRecall(survey, "default");
+  }, [survey]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {
@@ -173,13 +170,7 @@ export const SummaryPage = ({
         setShowDropOffs={setShowDropOffs}
         isLoading={isLoading}
       />
-      {showDropOffs && (
-        <SummaryDropOffs
-          dropOff={surveySummary.dropOff}
-          survey={surveyMemoized}
-          contactAttributeKeys={contactAttributeKeys}
-        />
-      )}
+      {showDropOffs && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
       <div className="flex gap-1.5">
         <CustomFilter survey={surveyMemoized} />
         {!isReadOnly && !isSharingPage && (
@@ -193,7 +184,6 @@ export const SummaryPage = ({
         survey={surveyMemoized}
         environment={environment}
         totalResponseCount={totalResponseCount}
-        contactAttributeKeys={contactAttributeKeys}
         isAIEnabled={isAIEnabled}
         documentsPerPage={documentsPerPage}
         locale={locale}

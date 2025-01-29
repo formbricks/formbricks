@@ -15,7 +15,6 @@ import { RefObject, useCallback, useMemo, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -54,7 +53,6 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -75,7 +73,6 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  contactAttributeKeys,
   locale,
 }: QuestionFormInputProps) => {
   const t = useTranslations();
@@ -283,11 +280,9 @@ export const QuestionFormInput = ({
           setText(updatedText);
           debouncedHandleUpdate(updatedText[usedLanguageCode]);
         }}
-        contactAttributeKeys={contactAttributeKeys}
         render={({ value, onChange, children: languageIndicator }) => {
           return (
             <RecallWrapper
-              contactAttributeKeys={contactAttributeKeys}
               localSurvey={localSurvey}
               questionId={questionId}
               value={value[usedLanguageCode]}
@@ -357,8 +352,7 @@ export const QuestionFormInput = ({
                               },
                               localSurvey,
                               false,
-                              usedLanguageCode,
-                              contactAttributeKeys
+                              usedLanguageCode
                             )[usedLanguageCode]
                           }
                           dir="auto"
