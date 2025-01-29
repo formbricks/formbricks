@@ -34,9 +34,9 @@ export const createBrevoCustomer = async ({ id, email }: { id: string; email: TU
     });
 
     if (res.status !== 200) {
-      console.log("Error sending user to Brevo:", await res.text());
+      console.error("Error sending user to Brevo:", await res.text());
     }
   } catch (error) {
-    console.log("Error sending user to Brevo:", error);
+    console.error("Error sending user to Brevo:", error);
   }
 };
