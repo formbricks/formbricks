@@ -3,16 +3,14 @@ import { TimerIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getQuestionIcon } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryDropOffsProps {
   dropOff: TSurveySummary["dropOff"];
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
-export const SummaryDropOffs = ({ dropOff, survey, contactAttributeKeys }: SummaryDropOffsProps) => {
+export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const t = useTranslations();
   const getIcon = (questionType: TSurveyQuestionType) => {
     const Icon = getQuestionIcon(questionType);
@@ -71,8 +69,7 @@ export const SummaryDropOffs = ({ dropOff, survey, contactAttributeKeys }: Summa
                     },
                     survey,
                     true,
-                    "default",
-                    contactAttributeKeys
+                    "default"
                   )["default"]
                 )}
               </p>
