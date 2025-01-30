@@ -29,7 +29,7 @@ import { getSurveysForEnvironmentState } from "./survey";
  */
 export const getEnvironmentState = async (
   environmentId: string
-): Promise<{ state: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
+): Promise<{ state: TJsEnvironmentState; revalidateEnvironment?: boolean }> =>
   cache(
     async () => {
       let revalidateEnvironment = false;
@@ -102,10 +102,13 @@ export const getEnvironmentState = async (
         (survey) => survey.type === "app" && survey.status === "inProgress"
       );
 
-      const state: TJsEnvironmentState["data"] = {
-        surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
-        actionClasses,
-        project: project,
+      const state: TJsEnvironmentState = {
+        expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+        data: {
+          surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
+          actionClasses,
+          project: project,
+        },
       };
 
       return {

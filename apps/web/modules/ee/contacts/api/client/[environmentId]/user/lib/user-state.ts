@@ -12,7 +12,6 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { responseCache } from "@formbricks/lib/response/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
-import { getContactByUserIdWithAttributes } from "./contact";
 import { getPersonSegmentIds } from "./segments";
 
 /**
@@ -20,7 +19,7 @@ import { getPersonSegmentIds } from "./segments";
  * @param environmentId - The environment id
  * @param userId - The user id
  * @param device - The device type
- * @param attributes - The attributes to update
+ * @param attributes - The contact attributes
  * @returns The person state
  * @throws {ValidationError} - If the input is invalid
  * @throws {ResourceNotFoundError} - If the environment or organization is not found
@@ -28,25 +27,18 @@ import { getPersonSegmentIds } from "./segments";
 export const getUserState = async ({
   environmentId,
   userId,
+  contactId,
   device,
   attributes,
 }: {
   environmentId: string;
   userId: string;
+  contactId: string;
   device: "phone" | "desktop";
-  attributes?: Record<string, string>;
-}): Promise<{
-  state: TJsPersonState["data"];
-  attributesInfo: {
-    shouldUpdate: boolean;
-    contactId: string;
-  };
-  revalidateProps?: { contactId: string; revalidate: boolean };
-}> =>
+  attributes: Record<string, string>;
+}): Promise<TJsPersonState> =>
   cache(
     async () => {
-      let revalidatePerson = false;
-      let attributesUpToDate = true;
       const environment = await getEnvironment(environmentId);
 
       if (!environment) {
@@ -59,65 +51,9 @@ export const getUserState = async ({
         throw new ResourceNotFoundError(`organization`, environmentId);
       }
 
-      let contact = await getContactByUserIdWithAttributes(environmentId, userId, attributes ?? {});
-
-      if (!contact) {
-        contact = await prisma.contact.create({
-          data: {
-            environment: {
-              connect: {
-                id: environmentId,
-              },
-            },
-            attributes: {
-              create: [
-                {
-                  attributeKey: {
-                    connect: { key_environmentId: { key: "userId", environmentId } },
-                  },
-                  value: userId,
-                },
-              ],
-            },
-          },
-          select: {
-            id: true,
-            attributes: {
-              where: {
-                attributeKey: {
-                  key: {
-                    in: Object.keys(attributes ?? {}),
-                  },
-                },
-              },
-              select: { attributeKey: { select: { key: true } }, value: true },
-            },
-          },
-        });
-
-        revalidatePerson = true;
-      }
-
-      if (attributes && Object.keys(attributes).length > 0) {
-        const oldAttributes = contact.attributes.reduce(
-          (acc, ctx) => {
-            acc[ctx.attributeKey.key] = ctx.value;
-            return acc;
-          },
-          {} as Record<string, string>
-        );
-
-        for (const [key, value] of Object.entries(attributes)) {
-          if (value !== oldAttributes[key]) {
-            attributesUpToDate = false;
-            break;
-          }
-        }
-      }
-
       const contactResponses = await prisma.response.findMany({
         where: {
-          contactId: contact.id,
+          contactId,
         },
         select: {
           surveyId: true,
@@ -126,7 +62,7 @@ export const getUserState = async ({
 
       const contactDisplays = await prisma.display.findMany({
         where: {
-          contactId: contact.id,
+          contactId,
         },
         select: {
           surveyId: true,
@@ -134,32 +70,28 @@ export const getUserState = async ({
         },
       });
 
-      const segments = await getPersonSegmentIds(environmentId, contact.id, userId, device);
+      const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
 
       // If the person exists, return the persons's state
-      const userState: TJsPersonState["data"] = {
-        userId,
-        segments,
-        displays:
-          contactDisplays?.map((display) => ({
-            surveyId: display.surveyId,
-            createdAt: display.createdAt,
-          })) ?? [],
-        responses: contactResponses?.map((response) => response.surveyId) ?? [],
-        lastDisplayAt:
-          contactDisplays.length > 0
-            ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
-            : null,
+      const userState: TJsPersonState = {
+        expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+        data: {
+          userId,
+          segments,
+          displays:
+            contactDisplays?.map((display) => ({
+              surveyId: display.surveyId,
+              createdAt: display.createdAt,
+            })) ?? [],
+          responses: contactResponses?.map((response) => response.surveyId) ?? [],
+          lastDisplayAt:
+            contactDisplays.length > 0
+              ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+              : null,
+        },
       };
 
-      return {
-        state: userState,
-        attributesInfo: {
-          shouldUpdate: !attributesUpToDate,
-          contactId: contact.id,
-        },
-        revalidateProps: revalidatePerson ? { contactId: contact.id, revalidate: true } : undefined,
-      };
+      return userState;
     },
     [`personState-${environmentId}-${userId}-${device}`],
     {

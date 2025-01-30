@@ -1,6 +1,5 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { contactCache } from "@/lib/cache/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
@@ -62,26 +61,18 @@ export const POST = async (
     const deviceType = device ? "phone" : "desktop";
 
     try {
-      const { userState, messages } = await updateUser(
+      const { state: userState, messages } = await updateUser(
         environmentId,
         userId,
         deviceType,
         attributeUpdatesToSend ?? undefined
       );
 
-      if (userState.revalidateProps?.revalidate) {
-        contactCache.revalidate({
-          environmentId,
-          userId,
-          id: userState.revalidateProps.contactId,
-        });
-      }
-
-      let responseJson: { state: TJsPersonState["data"]; messages?: string[] } = {
-        state: userState.state,
+      let responseJson: { state: TJsPersonState; messages?: string[] } = {
+        state: userState,
       };
 
-      if (userState.attributesInfo.shouldUpdate && messages.length > 0) {
+      if (messages.length > 0) {
         responseJson.messages = messages;
       }
 

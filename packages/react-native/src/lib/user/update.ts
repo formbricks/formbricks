@@ -42,17 +42,7 @@ export const sendUpdatesToBackend = async ({
       });
     }
 
-    const { state, messages } = response.data;
-
-    return ok({
-      state: {
-        expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-        data: {
-          ...state,
-        },
-      },
-      messages,
-    });
+    return ok(response.data);
   } catch (e: unknown) {
     const errorTyped = e as { message?: string };
 
@@ -102,10 +92,6 @@ export const sendUpdates = async ({
         ...config.get(),
         user: {
           ...userState,
-          data: {
-            ...userState.data,
-            language: updates.attributes?.language,
-          },
         },
         filteredSurveys,
       });

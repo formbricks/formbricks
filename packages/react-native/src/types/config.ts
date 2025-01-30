@@ -67,7 +67,6 @@ export interface TConfig {
   environment: TEnvironmentState;
   user: TUserState;
   filteredSurveys: TEnvironmentStateSurvey[];
-  attributes: Record<string, string>;
   status: {
     value: "success" | "error";
     expiresAt: Date | null;

@@ -209,7 +209,6 @@ export const init = async (
         user: personState,
         environment: environmentState,
         filteredSurveys,
-        attributes: {},
       });
     } catch (e) {
       await handleErrorOnFirstInit(e as { code: string; responseMessage: string });

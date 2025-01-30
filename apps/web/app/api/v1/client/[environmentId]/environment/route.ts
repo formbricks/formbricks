@@ -37,15 +37,18 @@ export const GET = async (
     try {
       const environmentState = await getEnvironmentState(params.environmentId);
 
-      if (environmentState.revalidateEnvironment) {
+      const { state, revalidateEnvironment } = environmentState;
+      const { data } = state;
+
+      if (revalidateEnvironment) {
         environmentCache.revalidate({
           id: inputValidation.data.environmentId,
-          projectId: environmentState.state.project.id,
+          projectId: data.project.id,
         });
       }
 
       return responses.successResponse(
-        environmentState.state,
+        state,
         true,
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );

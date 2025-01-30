@@ -1,7 +1,14 @@
 import { StatusBar } from "expo-status-bar";
 import React, { type JSX } from "react";
 import { Button, LogBox, StyleSheet, Text, View } from "react-native";
-import Formbricks, { logout, setAttributes, setLanguage, setUserId, track } from "@formbricks/react-native";
+import Formbricks, {
+  logout,
+  setAttribute,
+  setAttributes,
+  setLanguage,
+  setUserId,
+  track,
+} from "@formbricks/react-native";
 
 LogBox.ignoreAllLogs();
 
@@ -35,39 +42,11 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Trigger Another Code Action"
-          onPress={() => {
-            track("code1").catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error tracking event:", error);
-            });
-          }}
-        />
-
-        <Button
           title="Set User Id"
           onPress={() => {
-            setUserId("random-user-id-2").catch((error: unknown) => {
+            setUserId("random-user-id").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting user id:", error);
-            });
-            setAttributes({ testAttr: "maa chuda le apni bkl" }).catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user attributes:", error);
-            });
-          }}
-        />
-
-        <Button
-          title="Set Another User Id"
-          onPress={() => {
-            setUserId("random-user-id-3").catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user id:", error);
-            });
-            setAttributes({ testAttr: "maa chuda" }).catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user attributes:", error);
             });
           }}
         />
@@ -90,7 +69,7 @@ export default function App(): JSX.Element {
         <Button
           title="Set User Attributes (single)"
           onPress={() => {
-            setAttributes({ testAttr: "attr-test-6" }).catch((error: unknown) => {
+            setAttribute("testSingleAttr", "testSingleAttr").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting user attributes:", error);
             });
@@ -98,7 +77,7 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Logout (Not working)"
+          title="Logout"
           onPress={() => {
             logout().catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
@@ -108,31 +87,9 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Set Language (fr)"
+          title="Set Language (hi)"
           onPress={() => {
-            setLanguage("fr").catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting language:", error);
-            });
-          }}
-        />
-
-        <Button
-          title="Test schedule"
-          onPress={() => {
-            setUserId("random-userId-4").catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user id:", error);
-            });
-            setAttributes({ testAttr: "attr-test-6" }).catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user attributes:", error);
-            });
-            setAttributes({ testAttr2: "attr-test-7" }).catch((error: unknown) => {
-              // eslint-disable-next-line no-console -- logging is allowed in demo apps
-              console.error("Error setting user attributes:", error);
-            });
-            setLanguage("de").catch((error: unknown) => {
+            setLanguage("hi").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting language:", error);
             });

@@ -15,11 +15,15 @@ export class UserAPI {
     Result<
       {
         state: {
-          userId: string | null;
-          segments: string[];
-          displays: { surveyId: string; createdAt: Date }[];
-          responses: string[];
-          lastDisplayAt: Date | null;
+          expiresAt: Date | null;
+          data: {
+            userId: string | null;
+            segments: string[];
+            displays: { surveyId: string; createdAt: Date }[];
+            responses: string[];
+            lastDisplayAt: Date | null;
+            language?: string;
+          };
         };
         messages?: string[];
       },

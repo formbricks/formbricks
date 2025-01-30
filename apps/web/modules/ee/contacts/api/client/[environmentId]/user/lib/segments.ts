@@ -1,5 +1,4 @@
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { getContactAttributes } from "@/modules/ee/contacts/api/client/[environmentId]/identify/contacts/[userId]/lib/attributes";
 import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -38,6 +37,7 @@ export const getPersonSegmentIds = (
   environmentId: string,
   contactId: string,
   contactUserId: string,
+  attributes: Record<string, string>,
   deviceType: "phone" | "desktop"
 ): Promise<string[]> =>
   cache(
@@ -51,14 +51,12 @@ export const getPersonSegmentIds = (
         return [];
       }
 
-      const contactAttributes = await getContactAttributes(contactId);
-
       const personSegments: { id: string; filters: TBaseFilter[] }[] = [];
 
       for (const segment of segments) {
         const isIncluded = await evaluateSegment(
           {
-            attributes: contactAttributes,
+            attributes,
             deviceType,
             environmentId,
             contactId: contactId,
