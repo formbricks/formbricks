@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { TInvitee } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -53,6 +54,7 @@ export const OrganizationActions = ({
       toast.success(t("environments.settings.general.member_deleted_successfully"));
       router.refresh();
       setLoading(false);
+      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       router.push("/");
     } catch (err) {
       toast.error(`Error: ${err.message}`);
