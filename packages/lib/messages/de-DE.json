@@ -1955,7 +1955,8 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      }
+      },
+      "this_is_tolgee_test_1": "This is german"
     },
     "xm-templates": {
       "ces": "CES",
