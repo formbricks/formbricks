@@ -232,8 +232,10 @@ describe("initialize.ts", () => {
       (fetchEnvironmentState as unknown as Mock).mockResolvedValueOnce({
         ok: true,
         data: {
-          data: { surveys: [{ name: "SurveyA" }] },
-          expiresAt: new Date(Date.now() + 60000),
+          data: {
+            surveys: [{ name: "SurveyA" }],
+            expiresAt: new Date(Date.now() + 60000),
+          },
         },
       });
 
@@ -252,12 +254,13 @@ describe("initialize.ts", () => {
         environmentId: "envX",
         user: DEFAULT_USER_STATE_NO_USER_ID,
         environment: {
-          data: { surveys: [{ name: "SurveyA" }] },
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- required for testing this object
-          expiresAt: expect.any(Date),
+          data: {
+            surveys: [{ name: "SurveyA" }],
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- required for testing this object
+            expiresAt: expect.any(Date),
+          },
         },
         filteredSurveys: [{ name: "SurveyA" }],
-        attributes: {},
       });
     });
 

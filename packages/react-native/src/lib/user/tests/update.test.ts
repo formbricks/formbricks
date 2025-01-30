@@ -52,8 +52,10 @@ describe("sendUpdatesToBackend", () => {
       ok: true,
       data: {
         state: {
-          userId: mockUserId,
-          attributes: mockAttributes,
+          data: {
+            userId: mockUserId,
+            attributes: mockAttributes,
+          },
         },
       },
     };

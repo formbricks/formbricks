@@ -63,7 +63,7 @@ describe("environment/state.ts", () => {
   });
 
   describe("fetchEnvironmentState()", () => {
-    test("returns ok(...) with environment state and sets expiresAt", async () => {
+    test("returns ok(...) with environment state", async () => {
       // Setup mock
       (FormbricksAPI as unknown as Mock).mockImplementationOnce(() => {
         return {
@@ -71,7 +71,7 @@ describe("environment/state.ts", () => {
             environment: {
               getState: vi.fn().mockResolvedValue({
                 ok: true,
-                data: { foo: "bar" },
+                data: { data: { foo: "bar" }, expiresAt: new Date(Date.now() + 1000 * 60 * 30) },
               }),
             },
           },
@@ -82,7 +82,9 @@ describe("environment/state.ts", () => {
         appUrl: "https://fake.host",
         environmentId: "env_123",
       });
+
       expect(result.ok).toBe(true);
+
       if (result.ok) {
         const val: TEnvironmentState = result.data;
         expect(val.data).toEqual({ foo: "bar" });

@@ -246,7 +246,6 @@ export const deinitalize = async (): Promise<void> => {
   const appConfig = RNConfig.getInstance();
 
   logger.debug("Setting person state to default");
-  // await appConfig.resetConfig();
   // clear the user state and set it to the default value
   appConfig.update({
     ...appConfig.get(),
