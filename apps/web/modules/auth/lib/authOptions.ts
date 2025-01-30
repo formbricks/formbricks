@@ -13,6 +13,7 @@ import {
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { TUser } from "@formbricks/types/user";
+import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -161,6 +162,9 @@ export const authOptions: NextAuthOptions = {
         }
 
         user = await updateUser(user.id, { emailVerified: new Date() });
+
+        // send new user to brevo after email verification
+        createBrevoCustomer({ id: user.id, email: user.email });
 
         return user;
       },
