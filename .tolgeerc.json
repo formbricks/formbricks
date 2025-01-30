@@ -1,0 +1,13 @@
+{
+  "$schema": "https://docs.tolgee.io/cli-schema.json",
+  "format": "JSON_TOLGEE",
+  "patterns": ["./apps/web/**/*.ts?(x)"],
+  "projectId": 10304,
+  "pull": {
+    "path": "./packages/lib/messages"
+  },
+  "push": {
+    "forceMode": "OVERRIDE",
+    "path": "./packages/lib/messages"
+  }
+}

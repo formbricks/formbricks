@@ -91,7 +91,7 @@ const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProp
     return (
       <Button size="sm" asChild>
         <Link href={`/environments/${environment.id}/surveys/templates`}>
-          {t("environments.surveys.new_survey_test_1")}
+          {t("environments.surveys.new_survey")}
           <PlusIcon />
         </Link>
       </Button>
