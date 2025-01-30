@@ -15,7 +15,7 @@ export function EmailCustomizationPreviewEmail({
   logoUrl,
 }: EmailCustomizationPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} locale={locale}>
       <Container>
         <Heading>
           {translateEmailText("email_customization_preview_email_heading", locale, {

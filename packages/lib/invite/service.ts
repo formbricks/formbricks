@@ -38,6 +38,7 @@ interface InviteWithCreator extends TInvite {
   creator: {
     name: string | null;
     email: string;
+    locale: string;
   };
 }
 export const getInvitesByOrganizationId = reactCache(
@@ -144,6 +145,7 @@ export const getInvite = reactCache(
                 select: {
                   name: true,
                   email: true,
+                  locale: true,
                 },
               },
             },

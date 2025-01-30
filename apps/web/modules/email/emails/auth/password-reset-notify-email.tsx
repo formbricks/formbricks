@@ -10,11 +10,11 @@ interface PasswordResetNotifyEmailProps {
 
 export function PasswordResetNotifyEmail({ locale }: PasswordResetNotifyEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Heading>{translateEmailText("password_changed_email_heading", locale)}</Heading>
         <Text>{translateEmailText("password_changed_email_text", locale)}</Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );
