@@ -11,14 +11,13 @@ import {
 } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { createActionClass } from "@/modules/survey/survey-editor/lib/action-class";
 import { z } from "zod";
-import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getProject } from "@formbricks/lib/project/service";
 import { updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
-import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 
@@ -74,7 +73,7 @@ export const updateSurveyAction = authenticatedActionClient
   });
 
 const ZRefetchProjectAction = z.object({
-  projectId: ZId,
+  projectId: z.string().cuid2(),
 });
 
 export const refetchProjectAction = authenticatedActionClient
