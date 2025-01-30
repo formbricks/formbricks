@@ -102,7 +102,7 @@ export const PUT = async (
     }
 
     if (surveyUpdate.languages && surveyUpdate.languages.length) {
-      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization);
+      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
       if (!isMultiLanguageEnabled) {
         return responses.forbiddenResponse("Multi language is not enabled for this organization");
       }

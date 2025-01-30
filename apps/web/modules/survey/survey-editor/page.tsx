@@ -84,7 +84,7 @@ export const SurveyEditorPage = async (props) => {
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
   const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
 
   const userEmail = await getUserEmail(session.user.id);

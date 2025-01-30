@@ -45,7 +45,10 @@ export const createAISurveyAction = authenticatedActionClient
       throw new Error("Organization not found");
     }
 
-    const isAIEnabled = await getIsAIEnabled(organization);
+    const isAIEnabled = await getIsAIEnabled({
+      isAIEnabled: organization.isAIEnabled,
+      billing: organization.billing,
+    });
 
     if (!isAIEnabled) {
       throw new Error("AI is not enabled for this organization");

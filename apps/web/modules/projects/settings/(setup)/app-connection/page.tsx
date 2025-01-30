@@ -31,8 +31,8 @@ export const AppConnectionPage = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   return (
     <PageContentWrapper>

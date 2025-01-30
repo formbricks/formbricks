@@ -1,3 +1,4 @@
+import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
@@ -30,7 +31,7 @@ export const getPrefillValue = (
   return Object.keys(prefillAnswer).length > 0 ? prefillAnswer : undefined;
 };
 
-export const checkValidity = (question: TSurveyQuestion, answer: string, language: string): boolean => {
+const checkValidity = (question: TSurveyQuestion, answer: string, language: string): boolean => {
   if (question.required && (!answer || answer === "")) return false;
   try {
     switch (question.type) {
@@ -100,7 +101,7 @@ export const checkValidity = (question: TSurveyQuestion, answer: string, languag
   }
 };
 
-export const transformAnswer = (
+const transformAnswer = (
   question: TSurveyQuestion,
   answer: string,
   language: string
@@ -150,5 +151,30 @@ export const transformAnswer = (
 
     default:
       return "";
+  }
+};
+
+interface emailVerificationDetails {
+  status: "not-verified" | "verified" | "fishy";
+  email?: string;
+}
+
+export const getEmailVerificationDetails = async (
+  surveyId: string,
+  token: string
+): Promise<emailVerificationDetails> => {
+  if (!token) {
+    return { status: "not-verified" };
+  } else {
+    try {
+      const verifiedEmail = verifyTokenForLinkSurvey(token, surveyId);
+      if (verifiedEmail) {
+        return { status: "verified", email: verifiedEmail };
+      } else {
+        return { status: "fishy" };
+      }
+    } catch (error) {
+      return { status: "not-verified" };
+    }
   }
 };

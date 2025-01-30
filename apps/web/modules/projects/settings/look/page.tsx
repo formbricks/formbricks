@@ -43,7 +43,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
     throw new Error(t("common.organization_not_found"));
   }
   const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
-  const canRemoveBranding = await getWhiteLabelPermission(organization);
+  const canRemoveBranding = await getWhiteLabelPermission(organization.billing.plan);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
@@ -53,8 +53,8 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
 
   const isReadOnly = isMember && !hasManageAccess;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   return (
     <PageContentWrapper>

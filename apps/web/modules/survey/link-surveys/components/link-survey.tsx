@@ -3,7 +3,7 @@
 import { LinkSurveyWrapper } from "@/modules/survey/link-surveys/components/link-survey-wrapper";
 import { SurveyLinkUsed } from "@/modules/survey/link-surveys/components/survey-link-used";
 import { VerifyEmail } from "@/modules/survey/link-surveys/components/verify-email";
-import { getPrefillValue } from "@/modules/survey/link-surveys/lib/prefilling";
+import { getPrefillValue } from "@/modules/survey/link-surveys/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";

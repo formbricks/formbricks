@@ -14,7 +14,7 @@ import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 import { TResponse } from "@formbricks/types/responses";
-import { getEmailVerificationDetails } from "./lib/helpers";
+import { getEmailVerificationDetails } from "./lib/utils";
 
 interface LinkSurveyPageProps {
   params: Promise<{
@@ -62,7 +62,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   if (!organization) {
     throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
