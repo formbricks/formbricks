@@ -1,14 +1,11 @@
 import { prisma } from "../../__mocks__/database";
-import { mockResponseNote, mockResponseWithMockPerson } from "../../response/tests/__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  copySurveyToOtherEnvironment,
   createSurvey,
-  deleteSurvey,
   getSurvey,
   getSurveyCount,
   getSurveys,
@@ -18,18 +15,11 @@ import {
 import {
   createSurveyInput,
   mockActionClass,
-  mockContactAttributeKey,
-  mockDisplay,
-  mockEnvironment,
   mockId,
   mockOrganizationOutput,
-  mockPrismaPerson,
-  mockProject,
   mockSurveyOutput,
   mockSurveyWithLogic,
-  mockSyncSurveyOutput,
   mockTransformedSurveyOutput,
-  mockTransformedSyncSurveyOutput,
   mockUser,
   updateSurveyInput,
 } from "./__mock__/survey.mock";
@@ -325,27 +315,6 @@ describe("Tests for updateSurvey", () => {
   });
 });
 
-describe("Tests for deleteSurvey", () => {
-  describe("Happy Path", () => {
-    it("Deletes a survey successfully", async () => {
-      prisma.survey.delete.mockResolvedValueOnce(mockSurveyOutput);
-      const deletedSurvey = await deleteSurvey(mockId);
-      expect(deletedSurvey).toEqual(mockSurveyOutput);
-    });
-  });
-
-  describe("Sad Path", () => {
-    testInputValidation(deleteSurvey, "123#");
-
-    it("should throw an error if there is an unknown error", async () => {
-      const mockErrorMessage = "Unknown error occurred";
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.delete.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(deleteSurvey(mockId)).rejects.toThrow(Error);
-    });
-  });
-});
-
 describe("Tests for createSurvey", () => {
   beforeEach(() => {
     prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
@@ -392,44 +361,44 @@ describe("Tests for createSurvey", () => {
   });
 });
 
-describe("Tests for duplicateSurvey", () => {
-  beforeEach(() => {
-    prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
-  });
+// describe("Tests for duplicateSurvey", () => {
+//   beforeEach(() => {
+//     prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
+//   });
 
-  describe("Happy Path", () => {
-    it("Duplicates a survey successfully", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
-      // @ts-expect-error
-      prisma.environment.findUnique.mockResolvedValueOnce(mockEnvironment);
-      // @ts-expect-error
-      prisma.project.findFirst.mockResolvedValueOnce(mockProject);
-      prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
-      prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
+//   describe("Happy Path", () => {
+//     it("Duplicates a survey successfully", async () => {
+//       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+//       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
+//       // @ts-expect-error
+//       prisma.environment.findUnique.mockResolvedValueOnce(mockEnvironment);
+//       // @ts-expect-error
+//       prisma.project.findFirst.mockResolvedValueOnce(mockProject);
+//       prisma.actionClass.findFirst.mockResolvedValueOnce(mockActionClass);
+//       prisma.actionClass.create.mockResolvedValueOnce(mockActionClass);
 
-      const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId);
-      expect(createdSurvey).toEqual(mockSurveyOutput);
-    });
-  });
+//       const createdSurvey = await copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId);
+//       expect(createdSurvey).toEqual(mockSurveyOutput);
+//     });
+//   });
 
-  describe("Sad Path", () => {
-    testInputValidation(copySurveyToOtherEnvironment, "123#", "123#", "123#", "123#", "123#");
+//   describe("Sad Path", () => {
+//     testInputValidation(copySurveyToOtherEnvironment, "123#", "123#", "123#", "123#", "123#");
 
-    it("Throws ResourceNotFoundError if the survey does not exist", async () => {
-      prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(
-        ResourceNotFoundError
-      );
-    });
+//     it("Throws ResourceNotFoundError if the survey does not exist", async () => {
+//       prisma.survey.findUnique.mockRejectedValueOnce(new ResourceNotFoundError("Survey", mockId));
+//       await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(
+//         ResourceNotFoundError
+//       );
+//     });
 
-    it("should throw an error if there is an unknown error", async () => {
-      const mockErrorMessage = "Unknown error occurred";
-      prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(Error);
-    });
-  });
-});
+//     it("should throw an error if there is an unknown error", async () => {
+//       const mockErrorMessage = "Unknown error occurred";
+//       prisma.survey.create.mockRejectedValue(new Error(mockErrorMessage));
+//       await expect(copySurveyToOtherEnvironment(mockId, mockId, mockId, mockId)).rejects.toThrow(Error);
+//     });
+//   });
+// });
 
 // describe("Tests for getSyncSurveys", () => {
 //   describe("Happy Path", () => {

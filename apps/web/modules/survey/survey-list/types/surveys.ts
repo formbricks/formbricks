@@ -1,3 +1,4 @@
+import { Language, Project } from "@prisma/client";
 import { z } from "zod";
 import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
@@ -35,3 +36,7 @@ export const ZSurveyCopyFormValidation = z.object({
 });
 
 export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
+
+export interface TProjectWithLanguages extends Pick<Project, "id"> {
+  languages: Pick<Language, "code" | "alias">[];
+}

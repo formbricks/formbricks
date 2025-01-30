@@ -2,11 +2,11 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getProjectsByEnvironmentIdAction } from "@/modules/survey/survey-list/actions";
+import { TUserProject } from "@/modules/survey/survey-list/types/projects";
 import { TSurvey } from "@/modules/survey/survey-list/types/surveys";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { TProject } from "@formbricks/types/project";
 import { CopySurveyForm } from "./copy-survey-form";
 
 interface SurveyCopyOptionsProps {
@@ -17,7 +17,7 @@ interface SurveyCopyOptionsProps {
 }
 
 const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
-  const [projects, setProjects] = useState<TProject[]>([]);
+  const [projects, setProjects] = useState<TUserProject[]>([]);
   const [projectLoading, setProjectLoading] = useState(true);
 
   useEffect(() => {

@@ -8,18 +8,21 @@ import {
   getProjectIdFromEnvironmentId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getEnvironment } from "@/lib/utils/services";
-import { getSurvey, getSurveys } from "@/modules/survey/survey-list/lib/surveys";
+import { getProjectIdIfEnvironmentExists } from "@/modules/survey/survey-list/lib/environment";
+import { getUserProjects } from "@/modules/survey/survey-list/lib/project";
+import {
+  copySurveyToOtherEnvironment,
+  deleteSurvey,
+  getSurvey,
+  getSurveys,
+} from "@/modules/survey/survey-list/lib/survey";
 import { z } from "zod";
-import { getUserProjects } from "@formbricks/lib/project/service";
-import { copySurveyToOtherEnvironment, deleteSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseId } from "@formbricks/lib/utils/singleUseSurveys";
-import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
 const ZGetSurveyAction = z.object({
-  surveyId: ZId,
+  surveyId: z.string().cuid2(),
 });
 
 export const getSurveyAction = authenticatedActionClient
@@ -45,21 +48,21 @@ export const getSurveyAction = authenticatedActionClient
   });
 
 const ZCopySurveyToOtherEnvironmentAction = z.object({
-  environmentId: ZId,
-  surveyId: ZId,
-  targetEnvironmentId: ZId,
+  environmentId: z.string().cuid2(),
+  surveyId: z.string().cuid2(),
+  targetEnvironmentId: z.string().cuid2(),
 });
 
 export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
   .schema(ZCopySurveyToOtherEnvironmentAction)
   .action(async ({ ctx, parsedInput }) => {
-    const sourceEnvironment = await getEnvironment(parsedInput.environmentId);
-    const targetEnvironment = await getEnvironment(parsedInput.targetEnvironmentId);
+    const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(parsedInput.environmentId);
+    const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(parsedInput.targetEnvironmentId);
 
-    if (!sourceEnvironment || !targetEnvironment) {
+    if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
       throw new ResourceNotFoundError(
         "Environment",
-        sourceEnvironment ? parsedInput.targetEnvironmentId : parsedInput.environmentId
+        sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : parsedInput.environmentId
       );
     }
 
@@ -74,7 +77,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: sourceEnvironment.projectId,
+          projectId: sourceEnvironmentProjectId,
         },
       ],
     });
@@ -90,7 +93,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: targetEnvironment.projectId,
+          projectId: targetEnvironmentProjectId,
         },
       ],
     });
@@ -104,7 +107,7 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
   });
 
 const ZGetProjectsByEnvironmentIdAction = z.object({
-  environmentId: ZId,
+  environmentId: z.string().cuid2(),
 });
 
 export const getProjectsByEnvironmentIdAction = authenticatedActionClient
@@ -131,7 +134,7 @@ export const getProjectsByEnvironmentIdAction = authenticatedActionClient
   });
 
 const ZDeleteSurveyAction = z.object({
-  surveyId: ZId,
+  surveyId: z.string().cuid2(),
 });
 
 export const deleteSurveyAction = authenticatedActionClient
@@ -157,7 +160,7 @@ export const deleteSurveyAction = authenticatedActionClient
   });
 
 const ZGenerateSingleUseIdAction = z.object({
-  surveyId: ZId,
+  surveyId: z.string().cuid2(),
   isEncrypted: z.boolean(),
 });
 
@@ -184,7 +187,7 @@ export const generateSingleUseIdAction = authenticatedActionClient
   });
 
 const ZGetSurveysAction = z.object({
-  environmentId: ZId,
+  environmentId: z.string().cuid2(),
   limit: z.number().optional(),
   offset: z.number().optional(),
   filterCriteria: ZSurveyFilterCriteria.optional(),

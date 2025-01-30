@@ -1,6 +1,7 @@
 "use client";
 
 import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/survey-list/actions";
+import { TUserProject } from "@/modules/survey/survey-list/types/projects";
 import {
   TSurvey,
   TSurveyCopyFormData,
@@ -14,19 +15,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslations } from "next-intl";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { TProject } from "@formbricks/types/project";
 
-export const CopySurveyForm = ({
-  defaultProjects,
-  survey,
-  onCancel,
-  setOpen,
-}: {
-  defaultProjects: TProject[];
+interface ICopySurveyFormProps {
+  defaultProjects: TUserProject[];
   survey: TSurvey;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
-}) => {
+}
+
+export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: ICopySurveyFormProps) => {
   const t = useTranslations();
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
