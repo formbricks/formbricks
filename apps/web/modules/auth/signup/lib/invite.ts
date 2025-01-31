@@ -55,6 +55,7 @@ export const getInvite = reactCache(
                 select: {
                   name: true,
                   email: true,
+                  locale: true,
                 },
               },
             },
