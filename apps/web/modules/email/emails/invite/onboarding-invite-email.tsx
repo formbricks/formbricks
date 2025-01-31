@@ -20,7 +20,7 @@ export function OnboardingInviteEmail({
   inviteeName,
 }: OnboardingInviteEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Heading>
           {translateEmailText("onboarding_invite_email_heading", locale)} {inviteeName} 👋
@@ -34,8 +34,11 @@ export function OnboardingInviteEmail({
           <li>{translateEmailText("onboarding_invite_email_connect_formbricks", locale)}</li>
           <li>{translateEmailText("onboarding_invite_email_done", locale)} ✅</li>
         </ol>
-        <EmailButton href={verifyLink} label={`Join ${inviterName}'s organization`} />
-        <EmailFooter />
+        <EmailButton
+          href={verifyLink}
+          label={translateEmailText("onboarding_invite_email_button_label", locale, { inviterName })}
+        />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );

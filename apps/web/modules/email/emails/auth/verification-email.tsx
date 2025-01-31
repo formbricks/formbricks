@@ -17,7 +17,7 @@ export function VerificationEmail({
   locale,
 }: VerificationEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Heading>{translateEmailText("verification_email_heading", locale)}</Heading>
         <Text>{translateEmailText("verification_email_text", locale)}</Text>
@@ -38,7 +38,7 @@ export function VerificationEmail({
             {translateEmailText("verification_email_request_new_verification", locale)}
           </Link>
         </Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );

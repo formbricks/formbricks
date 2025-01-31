@@ -1,10 +1,15 @@
+import { translateEmailText } from "@/modules/email/lib/utils";
 import { Text } from "@react-email/components";
 
-export function EmailFooter(): React.JSX.Element {
+interface EmailFooterProps {
+  locale: string;
+}
+
+export function EmailFooter({ locale }: EmailFooterProps): React.JSX.Element {
   return (
     <Text>
-      Have a great day!
-      <br /> The Formbricks Team
+      {translateEmailText("email_footer_text_1", locale)}
+      <br /> {translateEmailText("email_footer_text_2", locale)}
     </Text>
   );
 }
