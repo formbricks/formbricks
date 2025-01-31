@@ -6,11 +6,8 @@ import { segmentCache } from "@formbricks/lib/cache/segment";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { environmentCache } from "@formbricks/lib/environment/cache";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { organizationCache } from "@formbricks/lib/organization/cache";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { responseCache } from "@formbricks/lib/response/cache";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState } from "@formbricks/types/js";
 import { getPersonSegmentIds } from "./segments";
 
@@ -39,18 +36,6 @@ export const getUserState = async ({
 }): Promise<TJsPersonState> =>
   cache(
     async () => {
-      const environment = await getEnvironment(environmentId);
-
-      if (!environment) {
-        throw new ResourceNotFoundError(`environment`, environmentId);
-      }
-
-      const organization = await getOrganizationByEnvironmentId(environmentId);
-
-      if (!organization) {
-        throw new ResourceNotFoundError(`organization`, environmentId);
-      }
-
       const contactResponses = await prisma.response.findMany({
         where: {
           contactId,

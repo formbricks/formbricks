@@ -1,6 +1,9 @@
 import { contactCache } from "@/lib/cache/contact";
 import { updateAttributes } from "@/modules/ee/contacts/api/client/[environmentId]/contacts/[userId]/attributes/lib/attributes";
 import { prisma } from "@formbricks/database";
+import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getContactByUserIdWithAttributes } from "./contact";
 import { getUserState } from "./user-state";
 
@@ -10,6 +13,18 @@ export const updateUser = async (
   device: "phone" | "desktop",
   attributes?: Record<string, string>
 ) => {
+  const environment = await getEnvironment(environmentId);
+
+  if (!environment) {
+    throw new ResourceNotFoundError(`environment`, environmentId);
+  }
+
+  const organization = await getOrganizationByEnvironmentId(environmentId);
+
+  if (!organization) {
+    throw new ResourceNotFoundError(`organization`, environmentId);
+  }
+
   let contact = await getContactByUserIdWithAttributes(environmentId, userId);
 
   if (!contact) {
