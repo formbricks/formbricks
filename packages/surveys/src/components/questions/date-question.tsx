@@ -158,7 +158,7 @@ export function DateQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-text-red-600">
+          <div id="error-message" className="fb-text-red-600" aria-live="assertive">
             <span>{errorMessage}</span>
           </div>
           <div
@@ -166,7 +166,7 @@ export function DateQuestion({
             id="date-picker-root">
             <div className="fb-relative">
               {!datePickerOpen && (
-                <div
+                <button
                   onClick={() => {
                     setDatePickerOpen(true);
                   }}
@@ -174,6 +174,8 @@ export function DateQuestion({
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
                   }}
+                  aria-label={selectedDate ? `You have selected ${formattedDate}` : "Select a date"}
+                  aria-describedby={errorMessage ? "error-message" : undefined}
                   className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
                   <div className="fb-flex fb-items-center fb-gap-2">
                     {selectedDate ? (
@@ -186,7 +188,7 @@ export function DateQuestion({
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               )}
 
               <DatePicker
