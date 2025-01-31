@@ -712,6 +712,249 @@ paths:
                   Unable to complete request: Expected property name or '}' in
                   JSON at position 29
                 details: {}
+
+  /api/v1/client/{environmentId}/user:
+    post:
+      tags:
+        - Client API > User
+      summary: Create or Identify User
+      description: >
+        Endpoint for creating or identifying a user within the specified environment.
+        If the user already exists, this will identify them and potentially
+        update user attributes. If they don't exist, it will create a new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              userId: "hello-user"
+              attributes:
+                plan: "free"
+      parameters:
+        - name: environmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:36:43 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                data:
+                  userId: "hello-user"
+                  attributes:
+                    plan: "free"
+        "400":
+          description: Bad Request
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:36:43 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: bad_request
+                message: userId is required
+                details:
+                  environmentId: clurwouax000azffxt7n5unn3
+        "404":
+          description: Not Found
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            cache-control:
+              schema:
+                type: string
+                example: private, no-store
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:56:29 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: not_found
+                message: Environment not found
+                details:
+                  resource_id: f16ttdvtkx85k5m4s561ruqj
+                  resource_type: Environment
+        "500":
+          description: Internal Server Error
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            cache-control:
+              schema:
+                type: string
+                example: private, no-store
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:56:29 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: internal_server_error
+                message: An unexpected error occurred
+                details: {}
+
   /api/v1/client/{environmentId}/responses:
     post:
       tags:
