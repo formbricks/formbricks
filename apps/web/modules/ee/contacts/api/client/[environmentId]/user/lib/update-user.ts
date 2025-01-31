@@ -1,5 +1,5 @@
 import { contactCache } from "@/lib/cache/contact";
-import { updateAttributes } from "@/modules/ee/contacts/api/client/[environmentId]/contacts/[userId]/attributes/lib/attributes";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { prisma } from "@formbricks/database";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";

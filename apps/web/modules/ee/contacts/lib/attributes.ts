@@ -1,37 +1,11 @@
-import "server-only";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { cache } from "@formbricks/lib/cache";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
-
-export const getContactAttributeKeys = reactCache((environmentId: string) =>
-  cache(
-    async () => {
-      validateInputs([environmentId, ZId]);
-
-      const contactAttributes = await prisma.contactAttributeKey.findMany({
-        where: {
-          environmentId,
-        },
-        select: {
-          id: true,
-          key: true,
-        },
-      });
-
-      return contactAttributes;
-    },
-    [`getContactAttributeKeys-attributes-api-${environmentId}`],
-    {
-      tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
-    }
-  )()
-);
+import { getContactAttributeKeys } from "./contacts";
 
 export const updateAttributes = async (
   contactId: string,

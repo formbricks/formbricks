@@ -1,10 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
-import { updateAttributes } from "./lib/attributes";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
 
 export const OPTIONS = async () => {
