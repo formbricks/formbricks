@@ -130,6 +130,7 @@
     "@types/nodemailer": "6.4.17",
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
+    "@vitest/coverage-v8": "2.1.8",
     "vite": "6.0.9",
     "vitest": "2.1.8",
     "vitest-mock-extended": "2.0.2"
