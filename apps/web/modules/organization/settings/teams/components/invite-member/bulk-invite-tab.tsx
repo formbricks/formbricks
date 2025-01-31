@@ -1,5 +1,6 @@
 "use client";
 
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
@@ -9,7 +10,6 @@ import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { ZInvitees } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface BulkInviteTabProps {
