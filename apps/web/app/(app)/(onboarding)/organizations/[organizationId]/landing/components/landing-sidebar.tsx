@@ -127,7 +127,7 @@ export const LandingSidebar = ({
                 await signOut({ callbackUrl: "/auth/login" });
                 await formbricksLogout();
               }}
-              icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
+              icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
               {t("common.logout")}
             </DropdownMenuItem>
 

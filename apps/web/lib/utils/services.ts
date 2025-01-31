@@ -2,6 +2,7 @@
 
 import { apiKeyCache } from "@/lib/cache/api-key";
 import { contactCache } from "@/lib/cache/contact";
+import { inviteCache } from "@/lib/cache/invite";
 import { teamCache } from "@/lib/cache/team";
 import { webhookCache } from "@/lib/cache/webhook";
 import { Prisma } from "@prisma/client";
@@ -12,7 +13,6 @@ import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { integrationCache } from "@formbricks/lib/integration/cache";
-import { inviteCache } from "@formbricks/lib/invite/cache";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";

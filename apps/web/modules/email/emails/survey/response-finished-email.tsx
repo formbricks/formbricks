@@ -93,7 +93,7 @@ export function ResponseFinishedEmail({
   const questions = getQuestionResponseMapping(survey, response);
 
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Row>
           <Column>
