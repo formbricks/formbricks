@@ -33,6 +33,7 @@ import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import {
@@ -101,7 +102,9 @@ export const FollowUpModal = ({
 
     return [
       ...openTextAndContactQuestions.map((question) => ({
-        label: getLocalizedValue(question.headline, selectedLanguageCode),
+        label: recallToHeadline(question.headline, localSurvey, false, selectedLanguageCode)[
+          selectedLanguageCode
+        ],
         id: question.id,
         type:
           question.type === TSurveyQuestionTypeEnum.OpenText

@@ -14,7 +14,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -28,7 +27,6 @@ interface ManageIntegrationProps {
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -40,15 +38,7 @@ const tableHeaders = [
 ];
 
 export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const {
-    airtableIntegration,
-    environment,
-    environmentId,
-    setIsConnected,
-    surveys,
-    airtableArray,
-    contactAttributeKeys,
-  } = props;
+  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
   const t = useTranslations();
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -175,7 +165,6 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           environmentId={environmentId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
-          contactAttributeKeys={contactAttributeKeys}
           {...data}
         />
       )}
