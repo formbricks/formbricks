@@ -43,8 +43,10 @@ tags:
       - [Displays API](https://formbricks.com/docs/api/client/displays) - Mark
       Survey as Displayed or Responded for a Person
 
-      - [People API](https://formbricks.com/docs/api/client/people) - Create &
-      update people (e.g. attributes)
+      - [Contacts API](https://formbricks.com/docs/api/client/contacts) - Identify &
+      update contacts (e.g. attributes)
+
+      - [User API](https://formbricks.com/docs/api/client/user) - Identify & track users based on their attributes, device type, etc.
 
       - [Responses API](https://formbricks.com/docs/api/client/responses) -
       Create & update responses for a survey
@@ -52,12 +54,18 @@ tags:
     description: >-
       Displays are metrics used to measure the number of times a survey was
       viewed both by unidentified or identified users.
-  - name: Client API > People
+  - name: Client API > Contacts
     description: >-
-      Persons are the identified users on Formbricks app that get initated when
+      Contacts are the identified users on Formbricks app that get initated when
       you pass a userId and have user activation enabled. This now allows you to
-      track & show them targeted surveys based on their actions, attributes,
+      track & show them targeted surveys based on their attributes, device type,
       etc.
+  - name: Client API > User
+    description: >-
+      Users are the identified users on Formbricks app that get initated when
+      you pass a userId and have user activation enabled. This now allows you to
+      track & show them targeted surveys based on their attributes, device type,
+      etc. Currently, this api is only being used in the react-native sdk.
   - name: Client API > Response
     description: >-
       Responses are captured whenever a user fills in your survey either
@@ -436,139 +444,130 @@ paths:
                 code: internal_server_error
                 message: Person with ID 2 not found
                 details: {}
-  /api/v1/client/{environmentId}/people:
-    post:
+  /api/v1/client/{environmentId}/identify/contacts/{userId}:
+    get:
       tags:
-        - Client API > People
-      summary: Create Person
-      description: Creates a person in Formbricks with the given userId, it must be unique.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                userId: "{{userId}}"
+        - Client API > Contacts
+      summary: Get Contact State
+      description: >-
+        Retrieves or creates a contact's state including their segments, displays, responses
+        and other tracking information. If the contact doesn't exist, it will be created.
       parameters:
         - name: environmentId
           in: path
+          required: true
           schema:
             type: string
+          description: The ID of the environment
+        - name: userId
+          in: path
           required: true
+          schema:
+            type: string
+          description: The user ID to identify the contact
       responses:
         "200":
           description: OK
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            cache-control:
-              schema:
-                type: string
-                example: private, no-store
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:35:47 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
           content:
             application/json:
               schema:
                 type: object
-              example:
-                data:
-                  userId: Shubham
-        "400":
-          description: Bad Request
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:36:43 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        description: The user ID of the contact
+                      segments:
+                        type: array
+                        description: List of segment IDs the contact belongs to
+                        items:
+                          type: string
+                      displays:
+                        type: array
+                        description: List of survey displays for this contact
+                        items:
+                          type: object
+                          properties:
+                            surveyId:
+                              type: string
+                            createdAt:
+                              type: string
+                              format: date-time
+                      responses:
+                        type: array
+                        description: List of survey IDs the contact has responded to
+                        items:
+                          type: string
+                      lastDisplayAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: Timestamp of the last survey display
+                example:
+                  userId: "user-123"
+                  segments: ["fi8f9oekza95wwszrptidivq", "zgwrv8eg7vfavdhzv1s0po1w"]
+                  displays: [{ surveyId: "pjogp5a1wyxon6umplmf49b8", createdAt: "2024-04-23T08:59:37.550Z" }]
+                  responses: ["pjogp5a1wyxon6umplmf49b8"]
+                  lastDisplayAt: "2024-04-23T08:59:37.550Z"
+        "403":
+          description: Forbidden
           content:
             application/json:
               schema:
                 type: object
-              example:
-                code: bad_request
-                message: userId is required
-                details:
-                  environmentId: clurwouax000azffxt7n5unn3
-  /api/v1/client/{environmentId}/people/{userId}/attributes:
+                properties:
+                  code:
+                    type: string
+                    example: "forbidden"
+                  message:
+                    type: string
+                    example: "User identification is only available for enterprise users."
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "not_found"
+                  message:
+                    type: string
+                    example: "Environment not found"
+                  details:
+                    type: object
+                    properties:
+                      resource_id:
+                        type: string
+                        example: "tpywklouw2p7tebdu4zv01an"
+                      resource_type:
+                        type: string
+                        example: "environment"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "internal_server_error"
+                  message:
+                    type: string
+                    example: "Unable to complete request: Expected property name or '}' in JSON at position 29"
+                  details:
+                    type: object
+  /api/v1/client/{environmentId}/contacts/{userId}/attributes:
     put:
       tags:
-        - Client API > People
-      summary: Update Person
+        - Client API > Contacts
+      summary: Update Contact (Attributes)
       description: >-
-        Update a person's attributes in Formbricks to keep them in sync with
+        Update a contact's attributes in Formbricks to keep them in sync with
         your app or when you want to set a custom attribute in Formbricks.
       requestBody:
         content:

@@ -1,0 +1,3 @@
+apis:
+  apps/docs/public/openapi.yaml:
+    alias: api-documentation
