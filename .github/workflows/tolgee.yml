@@ -22,6 +22,11 @@ jobs:
       - name: Install Tolgee CLI
         run: npm install -g @tolgee/cli
 
+      - name: Configure Tolgee
+        run: |
+          echo "{ \"apiKey\": \"${{ secrets.TOLGEE_API_KEY }}\" }" > ~/.tolgee/credentials.json
+        shell: bash
+
       - name: Tag Production Keys
         run: |
           npx tolgee tag --filter-extracted --tag production --untag 'draft: *'
