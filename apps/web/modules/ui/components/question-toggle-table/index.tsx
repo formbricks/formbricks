@@ -1,4 +1,4 @@
-import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslations } from "next-intl";
 import {

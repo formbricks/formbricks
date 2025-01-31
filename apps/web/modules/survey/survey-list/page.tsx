@@ -1,8 +1,8 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { TemplateList } from "@/modules/survey/components/template-list";
 import { SurveysList } from "@/modules/survey/survey-list/components/survey-list";
-import { TemplateList } from "@/modules/surveys/components/template-list";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";

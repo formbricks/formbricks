@@ -1,6 +1,6 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 import { useAutoAnimate } from "@formkit/auto-animate/react";

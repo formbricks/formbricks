@@ -1,5 +1,5 @@
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Dropdown } from "@/modules/survey/survey-editor/components/rating-type-dropdown";
-import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";

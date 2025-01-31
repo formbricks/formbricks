@@ -1,8 +1,8 @@
 "use client";
 
+import { TemplateList } from "@/modules/survey/components/template-list";
 import { FormbricksAICard } from "@/modules/survey/survey-templates/components/formbricks-ai-card";
 import { MenuBar } from "@/modules/survey/survey-templates/components/menu-bar";
-import { TemplateList } from "@/modules/surveys/components/template-list";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Separator } from "@/modules/ui/components/separator";

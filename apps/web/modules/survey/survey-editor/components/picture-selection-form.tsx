@@ -1,4 +1,4 @@
-import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";

@@ -1,5 +1,5 @@
-import { FallbackInput } from "@/modules/surveys/components/question-form-input/components/fallback-input";
-import { RecallItemSelect } from "@/modules/surveys/components/question-form-input/components/recall-item-select";
+import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
+import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
 import { Button } from "@/modules/ui/components/button";
 import { PencilIcon } from "lucide-react";
 import { useTranslations } from "next-intl";

@@ -1,7 +1,7 @@
 "use client";
 
-import { MultiLangWrapper } from "@/modules/surveys/components/question-form-input/components/multi-lang-wrapper";
-import { RecallWrapper } from "@/modules/surveys/components/question-form-input/components/recall-wrapper";
+import { MultiLangWrapper } from "@/modules/survey/components/question-form-input/components/multi-lang-wrapper";
+import { RecallWrapper } from "@/modules/survey/components/question-form-input/components/recall-wrapper";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";

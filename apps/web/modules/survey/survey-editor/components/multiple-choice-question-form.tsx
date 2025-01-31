@@ -1,8 +1,8 @@
 "use client";
 
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { QuestionOptionChoice } from "@/modules/survey/survey-editor/components/question-option-choice";
 import { findOptionUsedInLogic } from "@/modules/survey/survey-editor/lib/utils";
-import { QuestionFormInput } from "@/modules/surveys/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
