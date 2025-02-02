@@ -4,12 +4,12 @@ import { getTranslations } from "next-intl/server";
 
 export const VerifyPage = async ({ searchParams }) => {
   const t = await getTranslations();
-  const { token } = await searchParams;
+  const params = await searchParams;
 
-  return searchParams && token ? (
+  return params && params.token ? (
     <FormWrapper>
       <p className="text-center">{t("auth.verify.verifying")}</p>
-      <SignIn token={token} />
+      <SignIn token={params.token} />
     </FormWrapper>
   ) : (
     <p className="text-center">{t("auth.verify.no_token_provided")}</p>
