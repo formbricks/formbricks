@@ -12,12 +12,6 @@ afterEach(() => {
 // Mock react-native
 vi.mock("react-native", () => ({
   Platform: { OS: "ios" },
-  AsyncStorage: {
-    getItem: vi.fn(),
-    setItem: vi.fn(),
-    removeItem: vi.fn(),
-    clear: vi.fn(),
-  },
 }));
 
 // Mock react-native-webview

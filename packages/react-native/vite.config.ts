@@ -17,7 +17,13 @@ const config = (): UserConfig => {
       minify: "terser",
       sourcemap: true,
       rollupOptions: {
-        external: ["react", "react-native", "react-dom", "react-native-webview"],
+        external: [
+          "react",
+          "react-native",
+          "react-dom",
+          "react-native-webview",
+          "@react-native-async-storage/async-storage",
+        ],
       },
       lib: {
         entry: resolve(__dirname, "src/index.ts"),

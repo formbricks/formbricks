@@ -1,4 +1,3 @@
-/* eslint-disable no-console -- degbugging */
 import { RNConfig, RN_ASYNC_STORAGE_KEY } from "@/lib/common/config";
 import {
   addCleanupEventListeners,
@@ -6,11 +5,12 @@ import {
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
+import { AsyncStorage } from "@/lib/common/storage";
 import { filterSurveys, wrapThrowsAsync } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
-import { type TConfig, type TConfigInput, type TEnvironmentState, TUserState } from "@/types/config";
+import { type TConfig, type TConfigInput, type TEnvironmentState, type TUserState } from "@/types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -20,14 +20,6 @@ import {
   err,
   okVoid,
 } from "@/types/error";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
-// Try different logging approaches
-console.log("Direct:", AsyncStorage);
-console.log("Keys:", Object.keys(AsyncStorage));
-console.log("Default:", AsyncStorage.default);
-console.log("Is function?:", typeof AsyncStorage.getItem === "function");
-console.log("Is default function?:", typeof AsyncStorage.default?.getItem === "function");
 
 let isInitialized = false;
 
@@ -36,11 +28,7 @@ export const setIsInitialize = (state: boolean): void => {
 };
 
 const migrateAsyncStorage = async (): Promise<{ changed: boolean; newState?: TConfig }> => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment -- hello
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/ban-ts-comment -- hello
-  const olderConfig = (await AsyncStorage.default.getItem(RN_ASYNC_STORAGE_KEY)) as string | null;
-
-  console.log("olderConfig", olderConfig);
+  const olderConfig = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
 
   if (olderConfig) {
     await AsyncStorage.removeItem(RN_ASYNC_STORAGE_KEY);
@@ -50,7 +38,7 @@ const migrateAsyncStorage = async (): Promise<{ changed: boolean; newState?: TCo
       attributes: Record<string, string>;
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- hello
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- parsedConfig could be falsy
     if (parsedOldConfig.user || parsedOldConfig.environment) {
       // already migrated
       return { changed: false };
@@ -270,17 +258,7 @@ export const init = async (
         environment: environmentState,
         filteredSurveys,
       });
-
-      try {
-        const state = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
-
-        console.log("appConfig: ", state);
-      } catch (e) {
-        console.log("EEEEEEEEEE: ", e);
-      }
     } catch (e) {
-      // eslint-disable-next-line no-console -- logging is allowed in demo apps
-      console.log("PEHLA ERROR: ", e);
       await handleErrorOnFirstInit(e as { code: string; responseMessage: string });
     }
   }
