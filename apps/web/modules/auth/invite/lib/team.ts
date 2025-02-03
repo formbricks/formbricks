@@ -1,17 +1,13 @@
 import "server-only";
 import { teamCache } from "@/lib/cache/team";
+import { CreateMembershipInvite } from "@/modules/auth/invite/types/invites";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { projectCache } from "@formbricks/lib/project/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TInvite, ZInvite } from "@formbricks/types/invites";
 
-export const createTeamMembership = async (invite: TInvite, userId: string): Promise<void> => {
-  validateInputs([invite, ZInvite], [userId, ZString]);
-
+export const createTeamMembership = async (invite: CreateMembershipInvite, userId: string): Promise<void> => {
   const teamIds = invite.teamIds || [];
   const userMembershipRole = invite.role;
   const { isOwner, isManager } = getAccessFlags(userMembershipRole);

@@ -16,13 +16,15 @@ import { TProject } from "@formbricks/types/project";
 interface DeleteProjectRenderProps {
   isDeleteDisabled: boolean;
   isOwnerOrManager: boolean;
-  project: TProject;
+  currentProject: TProject;
+  organizationProjects: TProject[];
 }
 
 export const DeleteProjectRender = ({
   isDeleteDisabled,
   isOwnerOrManager,
-  project,
+  currentProject,
+  organizationProjects,
 }: DeleteProjectRenderProps) => {
   const t = useTranslations();
   const router = useRouter();
@@ -30,9 +32,20 @@ export const DeleteProjectRender = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const handleDeleteProject = async () => {
     setIsDeleting(true);
-    const deleteProjectResponse = await deleteProjectAction({ projectId: project.id });
+    const deleteProjectResponse = await deleteProjectAction({ projectId: currentProject.id });
     if (deleteProjectResponse?.data) {
-      localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      if (organizationProjects.length === 1) {
+        localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      } else if (organizationProjects.length > 1) {
+        // prevents changing of organization when deleting project
+        const remainingProjects = organizationProjects.filter((project) => project.id !== currentProject.id);
+        const productionEnvironment = remainingProjects[0].environments.find(
+          (environment) => environment.type === "production"
+        );
+        if (productionEnvironment) {
+          localStorage.setItem(FORMBRICKS_ENVIRONMENT_ID_LS, productionEnvironment.id);
+        }
+      }
       toast.success(t("environments.project.general.project_deleted_successfully"));
       router.push("/");
     } else {
@@ -51,7 +64,7 @@ export const DeleteProjectRender = ({
             {t(
               "environments.project.general.delete_project_name_includes_surveys_responses_people_and_more",
               {
-                projectName: truncate(project.name, 30),
+                projectName: truncate(currentProject.name, 30),
               }
             )}{" "}
             <strong>{t("environments.project.general.this_action_cannot_be_undone")}</strong>
@@ -81,7 +94,7 @@ export const DeleteProjectRender = ({
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteProject}
         text={t("environments.project.general.delete_project_confirmation", {
-          projectName: truncate(project.name, 30),
+          projectName: truncate(currentProject.name, 30),
         })}
         isDeleting={isDeleting}
       />
