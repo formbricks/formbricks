@@ -1,8 +1,8 @@
+import React, { useCallback, useEffect, useSyncExternalStore } from "react";
 import { SurveyWebView } from "@/components/survey-web-view";
 import { init } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
 import { SurveyStore } from "@/lib/survey/store";
-import React, { useCallback, useEffect, useSyncExternalStore } from "react";
 
 interface FormbricksProps {
   appUrl: string;
@@ -21,10 +21,7 @@ export function Formbricks({ appUrl, environmentId }: FormbricksProps): React.JS
           environmentId,
           appUrl,
         });
-      } catch (e) {
-        // eslint-disable-next-line no-console -- logging is allowed in demo apps
-        console.log("Error aa gayi betichod: ", e);
-
+      } catch {
         logger.debug("Initialization failed");
       }
     };

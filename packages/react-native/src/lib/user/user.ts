@@ -39,6 +39,13 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
   const logger = Logger.getInstance();
   const appConfig = RNConfig.getInstance();
 
+  const { userId } = appConfig.get().user.data;
+
+  if (!userId) {
+    logger.debug("No userId is set, please use the setUserId function to set a userId first");
+    return okVoid();
+  }
+
   logger.debug("Resetting state & getting new state from backend");
   const initParams = {
     environmentId: appConfig.get().environmentId,
