@@ -81,7 +81,7 @@ export const QuestionCard = ({
   isCxMode,
   locale,
 }: QuestionCardProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { active, attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
   });
   const t = useTranslations();
@@ -186,10 +186,10 @@ export const QuestionCard = ({
           open ? "bg-slate-700" : "bg-slate-400",
           "top-0 w-10 rounded-l-lg p-2 text-center text-sm text-white hover:cursor-grab hover:bg-slate-600",
           isInvalid && "bg-red-400 hover:bg-red-600",
-          "flex flex-col items-center justify-between"
+          "flex flex-col items-center justify-between",
+          active?.id === question.id && "bg-slate-800 hover:bg-stone-800"
         )}>
         <div className="mt-3 flex w-full justify-center">{QUESTIONS_ICON_MAP[question.type]}</div>
-
         <button className="opacity-0 hover:cursor-move group-hover:opacity-100">
           <GripIcon className="h-4 w-4" />
         </button>
@@ -236,7 +236,6 @@ export const QuestionCard = ({
                 )}
               </div>
             </div>
-
             <div className="flex items-center space-x-2">
               <EditorCardMenu
                 survey={localSurvey}
@@ -451,7 +450,6 @@ export const QuestionCard = ({
                   ? t("environments.surveys.edit.hide_advanced_settings")
                   : t("environments.surveys.edit.show_advanced_settings")}
               </Collapsible.CollapsibleTrigger>
-
               <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
                 {question.type !== TSurveyQuestionTypeEnum.NPS &&
                 question.type !== TSurveyQuestionTypeEnum.Rating &&
@@ -476,7 +474,6 @@ export const QuestionCard = ({
                             ...question.buttonLabel,
                             [selectedLanguageCode]: e.target.value,
                           };
-
                           if (questionIdx === localSurvey.questions.length - 1) return;
                           updateEmptyButtonLabels(
                             "buttonLabel",
@@ -533,7 +530,6 @@ export const QuestionCard = ({
                       />
                     </div>
                   )}
-
                 <AdvancedSettings
                   question={question}
                   questionIdx={questionIdx}
@@ -544,7 +540,6 @@ export const QuestionCard = ({
             </Collapsible.Root>
           </div>
         </Collapsible.CollapsibleContent>
-
         {open && (
           <div className="mx-4 flex justify-end space-x-6 border-t border-slate-200">
             {question.type === "openText" && (
