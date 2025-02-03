@@ -4,7 +4,7 @@
   "patterns": ["./apps/web/**/*.ts?(x)"],
   "projectId": 10304,
   "pull": {
-    "path": "./apps/web/public/i18n"
+    "path": "./packages/lib/messages"
   },
   "push": {
     "files": [
