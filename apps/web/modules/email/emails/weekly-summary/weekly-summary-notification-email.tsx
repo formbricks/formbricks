@@ -22,7 +22,7 @@ export function WeeklySummaryNotificationEmail({
   endYear,
 }: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate locale={locale}>
+    <EmailTemplate>
       <NotificationHeader
         endDate={endDate}
         endYear={endYear}

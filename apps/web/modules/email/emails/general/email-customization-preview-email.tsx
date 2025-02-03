@@ -14,7 +14,7 @@ export async function EmailCustomizationPreviewEmail({
 }: EmailCustomizationPreviewEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl} locale={locale}>
+    <EmailTemplate logoUrl={logoUrl}>
       <Container>
         <Heading>{t("emails.email_customization_preview_email_heading", { userName })}</Heading>
         <Text>{t("emails.email_customization_preview_email_text")}</Text>

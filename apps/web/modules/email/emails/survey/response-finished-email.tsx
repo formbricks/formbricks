@@ -92,7 +92,7 @@ export async function ResponseFinishedEmail({
   const t = await getTranslate();
 
   return (
-    <EmailTemplate locale={locale}>
+    <EmailTemplate>
       <Container>
         <Row>
           <Column>

@@ -16,7 +16,7 @@ export async function EmbedSurveyPreviewEmail({
 }: EmbedSurveyPreviewEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl} locale={locale}>
+    <EmailTemplate logoUrl={logoUrl}>
       <Container>
         <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
         <Text>{t("emails.embed_survey_preview_email_text")}</Text>
