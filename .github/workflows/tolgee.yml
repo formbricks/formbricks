@@ -31,7 +31,7 @@ jobs:
           npx tolgee tag \
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-extracted \
-            --filter-tag "draft-${BRANCH_NAME}" \
+            --filter-tag "draft: ${BRANCH_NAME}" \
             --tag production \
             --untag "draft: ${BRANCH_NAME}"
 
