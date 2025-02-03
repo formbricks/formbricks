@@ -1,11 +1,12 @@
 name: SonarQube
 on:
   workflow_dispatch:
-#  push:
-#    branches:
-#      - main
-#  pull_request:
-#    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      # - main
+      - branch-test-coverage
+  pull_request:
+    types: [opened, synchronize, reopened]
 permissions:
   contents: read
 jobs:
