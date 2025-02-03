@@ -18,7 +18,7 @@ export async function LinkSurveyEmail({
 }: LinkSurveyEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} locale={locale}>
       <Container>
         <Heading>{t("emails.verification_email_hey")}</Heading>
         <Text>{t("emails.verification_email_thanks")}</Text>
@@ -27,7 +27,7 @@ export async function LinkSurveyEmail({
         <Text className="text-xs text-slate-400">
           {t("emails.verification_email_survey_name")}: {surveyName}
         </Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );

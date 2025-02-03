@@ -46,10 +46,6 @@ interface SendEmailDataProps {
   html: string;
 }
 
-const getEmailSubject = (projectName: string): string => {
-  return `${projectName} User Insights - Last Week by Formbricks`;
-};
-
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
   try {
     const transporter = createTransport({
@@ -233,30 +229,30 @@ export const sendResponseFinishedEmail = async (
 
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
-  subject: string,
   innerHtml: string,
   environmentId: string,
   logoUrl?: string
 ): Promise<boolean> => {
+  const t = await getTranslate();
   const html = await render(await EmbedSurveyPreviewEmail({ html: innerHtml, environmentId, logoUrl }));
   return await sendEmail({
     to,
-    subject,
+    subject: t("emails.embed_survey_preview_email_subject"),
     html,
   });
 };
 
 export const sendEmailCustomizationPreviewEmail = async (
   to: string,
-  subject: string,
   userName: string,
   logoUrl?: string
 ): Promise<boolean> => {
+  const t = await getTranslate();
   const emailHtmlBody = await render(await EmailCustomizationPreviewEmail({ userName, logoUrl }));
 
   return await sendEmail({
     to,
-    subject,
+    subject: t("emails.email_customization_preview_email_subject"),
     html: emailHtmlBody,
   });
 };
@@ -299,6 +295,7 @@ export const sendWeeklySummaryNotificationEmail = async (
   )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
+  const t = await getTranslate();
   const html = await render(
     WeeklySummaryNotificationEmail({
       notificationData,
@@ -310,7 +307,9 @@ export const sendWeeklySummaryNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.projectName),
+    subject: t("emails.weekly_summary_email_subject", {
+      projectName: notificationData.projectName,
+    }),
     html,
   });
 };
@@ -329,6 +328,7 @@ export const sendNoLiveSurveyNotificationEmail = async (
   )}`;
   const startYear = notificationData.lastWeekDate.getFullYear();
   const endYear = notificationData.currentDate.getFullYear();
+  const t = await getTranslate();
   const html = await render(
     NoLiveSurveyNotificationEmail({
       notificationData,
@@ -340,7 +340,9 @@ export const sendNoLiveSurveyNotificationEmail = async (
   );
   await sendEmail({
     to: email,
-    subject: getEmailSubject(notificationData.projectName),
+    subject: t("emails.weekly_summary_email_subject", {
+      projectName: notificationData.projectName,
+    }),
     html,
   });
 };

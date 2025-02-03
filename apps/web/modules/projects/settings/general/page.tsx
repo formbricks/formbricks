@@ -17,7 +17,7 @@ import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
+import { getProjectByEnvironmentId, getProjects } from "@formbricks/lib/project/service";
 import { DeleteProject } from "./components/delete-project";
 import { EditProjectNameForm } from "./components/edit-project-name-form";
 import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
@@ -40,6 +40,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
+
+  const organizationProjects = await getProjects(organization.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
@@ -79,7 +81,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
         description={t("environments.project.general.delete_project_settings_description")}>
         <DeleteProject
           environmentId={params.environmentId}
-          project={project}
+          currentProject={project}
+          organizationProjects={organizationProjects}
           isOwnerOrManager={isOwnerOrManager}
         />
       </SettingsCard>

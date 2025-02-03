@@ -16,7 +16,7 @@ export async function VerificationEmail({
 }: VerificationEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Heading>{t("emails.verification_email_heading")}</Heading>
         <Text>{t("emails.verification_email_text")}</Text>
@@ -32,7 +32,7 @@ export async function VerificationEmail({
             {t("emails.verification_email_request_new_verification")}
           </Link>
         </Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );
