@@ -128,6 +128,7 @@ describe("user.ts", () => {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
           appUrl: mockAppUrl,
+          user: { data: { userId: mockUserId } },
         }),
       };
 
@@ -150,6 +151,7 @@ describe("user.ts", () => {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
           appUrl: mockAppUrl,
+          user: { data: { userId: mockUserId } },
         }),
       };
 

@@ -1,10 +1,10 @@
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { track, trackAction, triggerSurvey } from "@/lib/survey/action";
 import { SurveyStore } from "@/lib/survey/store";
-import { TEnvironmentStateSurvey } from "@/types/config";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type TEnvironmentStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/common/config", () => ({
   RNConfig: {
@@ -109,6 +109,8 @@ describe("survey/action.ts", () => {
     });
 
     test("triggers survey associated with action name", () => {
+      (shouldDisplayBasedOnPercentage as unknown as Mock).mockReturnValue(true);
+
       trackAction("testAction");
 
       // Ensure triggerSurvey is called for the matching survey

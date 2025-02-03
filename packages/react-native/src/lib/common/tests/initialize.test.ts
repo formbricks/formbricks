@@ -15,7 +15,7 @@ import {
   setIsInitialize,
 } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
-import { filterSurveys } from "@/lib/common/utils";
+import { filterSurveys, isNowExpired } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -68,6 +68,7 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
   return {
     ...(await importOriginal<typeof import("@/lib/common/utils")>()),
     filterSurveys: vi.fn(),
+    isNowExpired: vi.fn(),
   };
 });
 
@@ -136,6 +137,8 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
+      (isNowExpired as unknown as Mock).mockReturnValue(true);
+
       const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Formbricks was set to an error state.");
@@ -177,6 +180,8 @@ describe("initialize.ts", () => {
       };
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
+
+      (isNowExpired as unknown as Mock).mockReturnValue(true);
 
       // Mock environment fetch success
       (fetchEnvironmentState as unknown as Mock).mockResolvedValueOnce({
