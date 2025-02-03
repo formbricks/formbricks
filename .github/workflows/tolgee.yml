@@ -33,7 +33,7 @@ jobs:
             --filter-extracted \
             --filter-tag "draft-${BRANCH_NAME}" \
             --tag production \
-            --untag "draft-${BRANCH_NAME}"
+            --untag "draft: ${BRANCH_NAME}"
 
       - name: Tag Deprecated Keys
         run: |
