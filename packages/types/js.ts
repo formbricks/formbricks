@@ -92,6 +92,7 @@ export const ZJsPersonState = z.object({
     ),
     responses: z.array(ZId), // responded survey ids
     lastDisplayAt: z.date().nullable(),
+    language: z.string().optional(),
   }),
 });
 

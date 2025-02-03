@@ -72,7 +72,7 @@ export const POST = async (
         state: userState,
       };
 
-      if (messages.length > 0) {
+      if (messages && messages.length > 0) {
         responseJson.messages = messages;
       }
 

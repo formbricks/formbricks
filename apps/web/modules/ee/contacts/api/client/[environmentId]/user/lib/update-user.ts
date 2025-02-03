@@ -2,8 +2,8 @@ import { contactCache } from "@/lib/cache/contact";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { prisma } from "@formbricks/database";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { TJsPersonState } from "@formbricks/types/js";
 import { getContactByUserIdWithAttributes } from "./contact";
 import { getUserState } from "./user-state";
 
@@ -12,17 +12,11 @@ export const updateUser = async (
   userId: string,
   device: "phone" | "desktop",
   attributes?: Record<string, string>
-) => {
+): Promise<{ state: TJsPersonState; messages?: string[] }> => {
   const environment = await getEnvironment(environmentId);
 
   if (!environment) {
     throw new ResourceNotFoundError(`environment`, environmentId);
-  }
-
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new ResourceNotFoundError(`organization`, environmentId);
   }
 
   let contact = await getContactByUserIdWithAttributes(environmentId, userId);
@@ -124,11 +118,11 @@ export const updateUser = async (
 
   return {
     state: {
-      ...userState,
       data: {
-        ...userState.data,
+        ...userState,
         language,
       },
+      expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
     },
     messages,
   };

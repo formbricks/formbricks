@@ -3,7 +3,6 @@ import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { organizationCache } from "@formbricks/lib/organization/cache";
@@ -33,7 +32,7 @@ export const getUserState = async ({
   contactId: string;
   device: "phone" | "desktop";
   attributes: Record<string, string>;
-}): Promise<TJsPersonState> =>
+}): Promise<TJsPersonState["data"]> =>
   cache(
     async () => {
       const contactResponses = await prisma.response.findMany({
@@ -58,29 +57,25 @@ export const getUserState = async ({
       const segments = await getPersonSegmentIds(environmentId, contactId, userId, attributes, device);
 
       // If the person exists, return the persons's state
-      const userState: TJsPersonState = {
-        expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
-        data: {
-          userId,
-          segments,
-          displays:
-            contactDisplays?.map((display) => ({
-              surveyId: display.surveyId,
-              createdAt: display.createdAt,
-            })) ?? [],
-          responses: contactResponses?.map((response) => response.surveyId) ?? [],
-          lastDisplayAt:
-            contactDisplays.length > 0
-              ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
-              : null,
-        },
+      const userState: TJsPersonState["data"] = {
+        userId,
+        segments,
+        displays:
+          contactDisplays?.map((display) => ({
+            surveyId: display.surveyId,
+            createdAt: display.createdAt,
+          })) ?? [],
+        responses: contactResponses?.map((response) => response.surveyId) ?? [],
+        lastDisplayAt:
+          contactDisplays.length > 0
+            ? contactDisplays.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0].createdAt
+            : null,
       };
 
       return userState;
     },
     [`personState-${environmentId}-${userId}-${device}`],
     {
-      ...(IS_FORMBRICKS_CLOUD && { revalidate: 24 * 60 * 60 }),
       tags: [
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),
