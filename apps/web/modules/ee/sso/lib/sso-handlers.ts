@@ -1,3 +1,4 @@
+import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
 import type { IdentityProvider } from "@prisma/client";
@@ -77,6 +78,9 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       identityProviderAccountId: account.providerAccountId,
       locale: await findMatchingLocale(),
     });
+
+    // send new user to brevo
+    createBrevoCustomer({ id: user.id, email: user.email });
 
     // Default organization assignment if env variable is set
     if (DEFAULT_ORGANIZATION_ID && DEFAULT_ORGANIZATION_ID.length > 0) {
