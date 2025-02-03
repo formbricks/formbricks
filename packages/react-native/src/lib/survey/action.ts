@@ -32,8 +32,6 @@ export const triggerSurvey = (survey: TEnvironmentStateSurvey): void => {
  * @returns Result indicating success or network error
  */
 export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
-  // const appConfigInstance = RNConfig.getInstance();
-  // const surveyStoreInstance = SurveyStore.getInstance();
   const logger = Logger.getInstance();
   const surveyStore = SurveyStore.getInstance();
   const appConfig = RNConfig.getInstance();
