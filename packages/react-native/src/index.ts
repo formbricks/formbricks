@@ -1,20 +1,13 @@
 import { Formbricks } from "@/components/formbricks";
 import { CommandQueue } from "@/lib/common/command-queue";
-import * as Initialize from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
 import * as Actions from "@/lib/survey/action";
 import * as Attributes from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
-import { type TConfigInput } from "@/types/config";
 
 const logger = Logger.getInstance();
 logger.debug("Create command queue");
 const queue = new CommandQueue();
-
-export const init = async (initConfig: TConfigInput): Promise<void> => {
-  queue.add(Initialize.init, false, initConfig);
-  await queue.wait();
-};
 
 export const track = async (name: string): Promise<void> => {
   queue.add(Actions.track, true, name);

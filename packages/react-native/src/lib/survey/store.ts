@@ -20,7 +20,7 @@ export class SurveyStore {
 
   public setSurvey(survey: TEnvironmentStateSurvey): void {
     const prevSurvey = this.survey;
-    if (prevSurvey !== survey) {
+    if (prevSurvey && prevSurvey.id !== survey.id) {
       this.survey = survey;
       this.listeners.forEach((listener) => {
         listener(this.survey, prevSurvey);

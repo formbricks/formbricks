@@ -100,7 +100,7 @@ export const init = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && new Date(expiresAt) > new Date()) {
+    if (expiresAt && new Date(expiresAt) >= new Date()) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
     }

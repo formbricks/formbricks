@@ -101,6 +101,8 @@ export class UpdateQueue {
                 },
               });
 
+              logger.debug("Updated language successfully");
+
               const { language: _, ...remainingAttributes } = currentUpdates.attributes ?? {};
 
               // remove language from attributes
