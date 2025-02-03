@@ -28,6 +28,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
+      - name: create .env
+        run: cp .env.example .env
+
+      - name: Generate Random ENCRYPTION_KEY, CRON_SECRET & NEXTAUTH_SECRET and fill in .env
+        run: |
+          RANDOM_KEY=$(openssl rand -hex 32)
+          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
+          sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+
       - name: Run tests with coverage
         run: |
           cd apps/web
