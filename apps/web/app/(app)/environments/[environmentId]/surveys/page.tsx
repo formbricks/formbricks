@@ -103,7 +103,6 @@ const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProp
       {surveyCount > 0 ? (
         <>
           <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
-          <h2>{t("this_is_a_test")}</h2>
           <SurveysList
             environment={environment}
             otherEnvironment={otherEnvironment}
