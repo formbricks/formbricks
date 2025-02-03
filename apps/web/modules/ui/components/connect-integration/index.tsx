@@ -41,7 +41,7 @@ export const ConnectIntegration = ({
   useEffect(() => {
     const error = searchParams?.get("error");
     if (error) {
-      toast.error(t("environments.surveys.integrations.connecting_integration_failed_please_try_again"));
+      toast.error(t("environments.integrations.connecting_integration_failed_please_try_again"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

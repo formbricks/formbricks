@@ -3439,7 +3439,6 @@ const CollectFeedback = (): TTemplate => {
           scale: "star",
           headline: { default: t("templates.csat_question_1_headline") },
           required: true,
-          subheader: { default: t("templates.csat_question_1_subheader") },
           lowerLabel: { default: t("templates.csat_question_1_lower_label") },
           upperLabel: { default: t("templates.csat_question_1_upper_label") },
           isColorCodingEnabled: false,

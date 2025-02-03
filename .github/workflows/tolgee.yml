@@ -24,7 +24,13 @@ jobs:
 
       - name: Tag Production Keys
         run: |
-          npx tolgee tag --api-key ${{ secrets.TOLGEE_API_KEY }} --filter-extracted --tag production --untag 'draft: *'
+          BRANCH_NAME=${GITHUB_REF##*/}
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-extracted \
+            --filter-tag "draft-${BRANCH_NAME}" \
+            --tag production \
+            --untag "draft-${BRANCH_NAME}"
 
       - name: Tag Deprecated Keys
         run: |

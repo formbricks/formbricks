@@ -227,7 +227,7 @@ export const FileUploadQuestionForm = ({
                   className="underline"
                   target="_blank"
                   href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                  {t("environments.surveys.edit.upgrade_your_plan")}
+                  {t("common.please_upgrade_your_plan")}
                 </Link>
               </p>
             )}

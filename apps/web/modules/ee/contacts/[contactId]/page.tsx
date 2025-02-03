@@ -50,7 +50,7 @@ export const SingleContactPage = async (props: {
   }
 
   if (!contact) {
-    throw new Error(t("common.contact_not_found"));
+    throw new Error(t("environments.contacts.contact_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

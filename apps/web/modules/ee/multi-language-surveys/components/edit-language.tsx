@@ -119,7 +119,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(t("common.something_went_wrong_please_try_again_later"));
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -131,7 +131,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch (err) {
-      toast.error(t("common.something_went_wrong_please_try_again_later"));
+      toast.error(t("common.something_went_wrong_please_try_again"));
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     }
   };

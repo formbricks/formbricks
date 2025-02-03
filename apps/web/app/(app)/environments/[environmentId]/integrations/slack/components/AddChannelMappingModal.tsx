@@ -104,7 +104,7 @@ export const AddChannelMappingModal = ({
       }
 
       if (selectedQuestions.length === 0) {
-        throw new Error(t("environments.integrations.integrations.select_at_least_one_question_error"));
+        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
       const integrationData: TIntegrationSlackConfigData = {

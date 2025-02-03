@@ -72,7 +72,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       navigator.clipboard
         .writeText(currentUrl)
         .then(() => {
-          toast.success(t("common.link_copied_to_clipboard"));
+          toast.success(t("common.copied_to_clipboard"));
         })
         .catch(() => {
           toast.error(t("environments.surveys.failed_to_copy_link_to_results"));
