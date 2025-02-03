@@ -1,1 +1,3 @@
 pnpm lint-staged
+pnpm tolgee-pull
+git add packages/lib/messages/*.json

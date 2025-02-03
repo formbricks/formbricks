@@ -7,6 +7,7 @@
     "continue_with_oidc": "Login mit '{'oidcDisplayName'}'",
     "continue_with_openid": "Login mit OpenID",
     "forgot-password": {
+      "an_error_occurred_when_logging": "Beim Anmelden ist ein Fehler aufgetreten",
       "back_to_login": "Zurück zum Login",
       "email-sent": {
         "heading": "Passwort erfolgreich angefordert",
@@ -41,6 +42,7 @@
     },
     "last_used": "Last used",
     "login": {
+      "an_error_occurred_when_logging_you_in": "Beim Anmelden ist ein Fehler aufgetreten",
       "backup_code": "Backup-Code",
       "create_an_account": "Konto erstellen",
       "enter_your_backup_code": "Gib deinen Backup-Code ein",
@@ -50,10 +52,13 @@
       "login_with_email": "Mit E-Mail einloggen",
       "lost_access": "Zugang verloren?",
       "new_to_formbricks": "Neu bei Formbricks?",
+      "too_many_requests_please_try_again_after_some_time": "Zu viele Anfragen, bitte versuche es später noch einmal!",
+      "two_factor_authentication_code": "Zwei-Faktor-Authentifizierungscode",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
+      "error": "Es ist ein Fehler aufgetreten, als Du Dich angemeldet hast",
       "have_an_account": "Hast Du ein Konto?",
       "log_in": "Einloggen",
       "password_validation_contain_at_least_1_number": "Enthält mindestens 1 Zahl",
@@ -120,8 +125,10 @@
     "app": "App",
     "app_survey": "App-Umfrage",
     "apply_filters": "Filter anwenden",
+    "archive": "Archiv",
     "are_you_sure": "Bist Du sicher?",
     "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "attribute_type": "Attributtyp",
     "attributes": "Attribute",
     "automatic": "Automatisch",
     "avatar": "Avatar",
@@ -137,6 +144,7 @@
     "clear_filters": "Filter löschen",
     "clear_selection": "Auswahl aufheben",
     "click": "Klick",
+    "click_here_to_upload": "Klicke hier, um hochzuladen",
     "clicks": "Klicks",
     "close": "Schließen",
     "code": "Code",
@@ -147,6 +155,7 @@
     "connect": "Verbinden",
     "connect_formbricks": "Formbricks verbinden",
     "connected": "Verbunden",
+    "contact": "Kontakt",
     "contacts": "Kontakte",
     "copied_to_clipboard": "In die Zwischenablage kopiert",
     "copy": "Kopieren",
@@ -593,6 +602,13 @@
       "what_did_your_user_do": "Was hat dein Nutzer gemacht?",
       "what_is_the_user_doing": "Was macht der Nutzer?",
       "you_can_track_code_action_anywhere_in_your_app_using": "Du kannst Code-Aktionen überall in deiner App tracken mit"
+    },
+    "attributes": {
+      "ex_user_property": "Benutzereigenschaft",
+      "how_to_add_attributes": "Wie man Attribute hinzufügt",
+      "show_archived": "Archivierte anzeigen",
+      "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "Dieses Attribut wurde automatisch hinzugefügt. Du kannst keine Änderungen daran vornehmen.",
+      "this_is_a_code_attribute_you_can_only_change_the_description": "Das ist ein Code-Attribut. Du kannst nur die Beschreibung ändern."
     },
     "connect": {
       "congrats": "Glückwunsch!",
@@ -1659,6 +1675,7 @@
         "remove_all_filters": "Alle Filter entfernen",
         "remove_description": "Beschreibung entfernen",
         "remove_translations": "Übersetzungen entfernen",
+        "remove_translations_warning": "Bist Du sicher, dass Du alle Übersetzungen aus dieser Umfrage entfernen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
         "require_answer": "Antwort erforderlich",
         "required": "Erforderlich",
         "reset_all_filters": "Alle Filter zurücksetzen",
@@ -1816,6 +1833,7 @@
       },
       "results_unpublished_successfully": "Ergebnisse wurden nicht erfolgreich veröffentlicht.",
       "search_by_survey_name": "Nach Umfragenamen suchen",
+      "search_templates": "Vorlagen durchsuchen",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filter hinzugefügt für Antworten, bei denen die Antwort auf Frage '{'questionIdx'}' '{'filterComboBoxValue'}' - '{'filterValue'}' ist",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filter hinzugefügt für Antworten, bei denen die Frage '{'questionIdx'}' übersprungen wurde",
@@ -1965,7 +1983,9 @@
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
       },
-      "this_is_tolgee_test_1": "This is german"
+      "this_is_tolgee_test_1": "This is german",
+      "tolgee_test": "Gemrna",
+      "tolgee_test_2": "german"
     },
     "xm-templates": {
       "ces": "CES",
@@ -2992,5 +3012,6 @@
     "understand_purchase_intention_question_2_placeholder": "Tippe deine Antwort hier...",
     "understand_purchase_intention_question_3_headline": "Was, wenn überhaupt, hält Dich heute davon ab, einen Kauf zu tätigen?",
     "understand_purchase_intention_question_3_placeholder": "Tippe deine Antwort hier..."
-  }
+  },
+  "this_is_a_test": "Dies ist ein Test"
 }

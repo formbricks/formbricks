@@ -7,6 +7,7 @@
     "continue_with_oidc": "Continuar com '{'oidcDisplayName'}'",
     "continue_with_openid": "Continuar com OpenID",
     "forgot-password": {
+      "an_error_occurred_when_logging": "Ocorreu um erro ao fazer login",
       "back_to_login": "Voltar para o login",
       "email-sent": {
         "heading": "Pedido de redefinição de senha feito com sucesso",
@@ -41,6 +42,7 @@
     },
     "last_used": "Usado por último",
     "login": {
+      "an_error_occurred_when_logging_you_in": "Ocorreu um erro ao fazer login",
       "backup_code": "Código de backup",
       "create_an_account": "Cria uma conta",
       "enter_your_backup_code": "Digite seu código de backup",
@@ -50,10 +52,13 @@
       "login_with_email": "Entrar com Email",
       "lost_access": "Perdeu o acesso?",
       "new_to_formbricks": "Novo no Formbricks?",
+      "too_many_requests_please_try_again_after_some_time": "Muitas solicitações, por favor tente novamente mais tarde!",
+      "two_factor_authentication_code": "código de autenticação de dois fatores",
       "use_a_backup_code": "Usar um código de backup"
     },
     "signup": {
       "captcha_failed": "reCAPTCHA falhou",
+      "error": "Ocorreu um erro ao te cadastrar",
       "have_an_account": "Já tem uma conta?",
       "log_in": "Fazer login",
       "password_validation_contain_at_least_1_number": "Conter pelo menos 1 número",
@@ -120,8 +125,10 @@
     "app": "app",
     "app_survey": "Pesquisa de App",
     "apply_filters": "Aplicar filtros",
+    "archive": "Arquivo",
     "are_you_sure": "Certeza?",
     "are_you_sure_this_action_cannot_be_undone": "Tem certeza? Essa ação não pode ser desfeita.",
+    "attribute_type": "Tipo de Atributo",
     "attributes": "atributos",
     "automatic": "Automático",
     "avatar": "Avatar",
@@ -137,6 +144,7 @@
     "clear_filters": "Limpar filtros",
     "clear_selection": "Limpar seleção",
     "click": "Clica",
+    "click_here_to_upload": "Clique aqui para enviar",
     "clicks": "cliques",
     "close": "Fechar",
     "code": "Código",
@@ -147,6 +155,7 @@
     "connect": "Conectar",
     "connect_formbricks": "Conectar Formbricks",
     "connected": "conectado",
+    "contact": "Contato",
     "contacts": "Contatos",
     "copied_to_clipboard": "Copiado para a área de transferência",
     "copy": "Copiar",
@@ -593,6 +602,13 @@
       "what_did_your_user_do": "O que seu usuário fez?",
       "what_is_the_user_doing": "O que o usuário tá fazendo?",
       "you_can_track_code_action_anywhere_in_your_app_using": "Você pode rastrear ações de código em qualquer lugar do seu app usando"
+    },
+    "attributes": {
+      "ex_user_property": "Ex. Propriedade do usuário",
+      "how_to_add_attributes": "Como adicionar Atributos",
+      "show_archived": "Mostrar arquivados",
+      "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "Esse atributo foi adicionado automaticamente. Você não pode fazer alterações nele.",
+      "this_is_a_code_attribute_you_can_only_change_the_description": "Esse é um atributo de código. Você só pode mudar a descrição."
     },
     "connect": {
       "congrats": "Parabéns!",
@@ -1659,6 +1675,7 @@
         "remove_all_filters": "Remover todos os filtros",
         "remove_description": "Remover descrição",
         "remove_translations": "Remover traduções",
+        "remove_translations_warning": "Tem certeza de que quer remover todas as traduções desta pesquisa? Essa ação não pode ser desfeita.",
         "require_answer": "Preciso de Resposta",
         "required": "Obrigatório",
         "reset_all_filters": "Redefinir todos os filtros",
@@ -1816,6 +1833,7 @@
       },
       "results_unpublished_successfully": "Resultados não publicados com sucesso.",
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
+      "search_templates": "Pesquisar modelos",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Adicionado filtro para respostas onde a resposta à pergunta '{'questionIdx'}' é '{'filterComboBoxValue'}' - '{'filterValue'}'",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Adicionado filtro para respostas onde a resposta à pergunta '{'questionIdx'}' foi pulada",
@@ -1965,7 +1983,9 @@
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
       },
-      "this_is_tolgee_test_1": "This is portuguese"
+      "this_is_tolgee_test_1": "This is portuguese",
+      "tolgee_test": "port",
+      "tolgee_test_2": "port"
     },
     "xm-templates": {
       "ces": "CES",
@@ -2992,5 +3012,6 @@
     "understand_purchase_intention_question_2_placeholder": "Digite sua resposta aqui...",
     "understand_purchase_intention_question_3_headline": "O que, se é que tem algo, está te impedindo de fazer a compra hoje?",
     "understand_purchase_intention_question_3_placeholder": "Digite sua resposta aqui..."
-  }
+  },
+  "this_is_a_test": "Isto é um teste"
 }

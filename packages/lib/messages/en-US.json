@@ -7,6 +7,7 @@
     "continue_with_oidc": "Continue with '{'oidcDisplayName'}'",
     "continue_with_openid": "Continue with OpenID",
     "forgot-password": {
+      "an_error_occurred_when_logging": "An error occurred when logging you in",
       "back_to_login": "Back to login",
       "email-sent": {
         "heading": "Password reset successfully requested",
@@ -41,6 +42,7 @@
     },
     "last_used": "Last Used",
     "login": {
+      "an_error_occurred_when_logging_you_in": "An error occurred when logging you in",
       "backup_code": "Backup code",
       "create_an_account": "Create an account",
       "enter_your_backup_code": "Enter your backup code",
@@ -50,10 +52,13 @@
       "login_with_email": "Login with Email",
       "lost_access": "Lost Access?",
       "new_to_formbricks": "New to Formbricks?",
+      "too_many_requests_please_try_again_after_some_time": "Too many requests, please try again after some time!",
+      "two_factor_authentication_code": "Two-factor authentication code",
       "use_a_backup_code": "Use a backup code"
     },
     "signup": {
       "captcha_failed": "Captcha failed",
+      "error": "An error occurred when signing you up",
       "have_an_account": "Have an account?",
       "log_in": "Log in",
       "password_validation_contain_at_least_1_number": "Contain at least 1 number",
@@ -120,8 +125,10 @@
     "app": "App",
     "app_survey": "App Survey",
     "apply_filters": "Apply filters",
+    "archive": "Archive",
     "are_you_sure": "Are you sure?",
     "are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
+    "attribute_type": "Attribute Type",
     "attributes": "Attributes",
     "automatic": "Automatic",
     "avatar": "Avatar",
@@ -137,6 +144,7 @@
     "clear_filters": "Clear filters",
     "clear_selection": "Clear selection",
     "click": "Click",
+    "click_here_to_upload": "Click here to upload",
     "clicks": "Clicks",
     "close": "Close",
     "code": "Code",
@@ -147,6 +155,7 @@
     "connect": "Connect",
     "connect_formbricks": "Connect Formbricks",
     "connected": "Connected",
+    "contact": "Contact",
     "contacts": "Contacts",
     "copied_to_clipboard": "Copied to clipboard",
     "copy": "Copy",
@@ -593,6 +602,13 @@
       "what_did_your_user_do": "What did your user do?",
       "what_is_the_user_doing": "What is the user doing?",
       "you_can_track_code_action_anywhere_in_your_app_using": "You can track code action anywhere in your app using"
+    },
+    "attributes": {
+      "ex_user_property": "Ex. User property",
+      "how_to_add_attributes": "How to add Attributes",
+      "show_archived": "Show archived",
+      "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "This attribute was added automatically. You cannot make changes to it.",
+      "this_is_a_code_attribute_you_can_only_change_the_description": "This is a code attribute. You can only change the description."
     },
     "connect": {
       "congrats": "Congrats!",
@@ -1659,6 +1675,7 @@
         "remove_all_filters": "Remove all filters",
         "remove_description": "Remove description",
         "remove_translations": "Remove translations",
+        "remove_translations_warning": "Are you sure you want to remove all the translations from this survey? This action cannot be undone.",
         "require_answer": "Require Answer",
         "required": "Required",
         "reset_all_filters": "Reset all filters",
@@ -1816,6 +1833,7 @@
       },
       "results_unpublished_successfully": "Results unpublished successfully.",
       "search_by_survey_name": "Search by survey name",
+      "search_templates": "Search templates",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Added filter for responses where answer to question '{'questionIdx'}' is '{'filterComboBoxValue'}' - '{'filterValue'}'",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Added filter for responses where answer to question '{'questionIdx'}' is skipped",
@@ -1965,7 +1983,9 @@
         "use_this_template": "Use this template",
         "uses_branching_logic": "This survey uses branching logic."
       },
-      "this_is_tolgee_test_1": "This is english"
+      "this_is_tolgee_test_1": "This is english",
+      "tolgee_test": "English",
+      "tolgee_test_2": "englih"
     },
     "xm-templates": {
       "ces": "CES",
@@ -2992,5 +3012,6 @@
     "understand_purchase_intention_question_2_placeholder": "Type your answer here...",
     "understand_purchase_intention_question_3_headline": "What, if anything, is holding you back from making a purchase today?",
     "understand_purchase_intention_question_3_placeholder": "Type your answer here..."
-  }
+  },
+  "this_is_a_test": "This is a test"
 }

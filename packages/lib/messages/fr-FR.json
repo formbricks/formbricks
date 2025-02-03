@@ -7,6 +7,7 @@
     "continue_with_oidc": "Continuer avec '{'oidcDisplayName'}'",
     "continue_with_openid": "Continuer avec OpenID",
     "forgot-password": {
+      "an_error_occurred_when_logging": "Une erreur est survenue lors de votre connexion.",
       "back_to_login": "Retour à la connexion",
       "email-sent": {
         "heading": "Demande de réinitialisation de mot de passe réussie.",
@@ -41,6 +42,7 @@
     },
     "last_used": "Dernière utilisation",
     "login": {
+      "an_error_occurred_when_logging_you_in": "Une erreur est survenue lors de votre connexion.",
       "backup_code": "Code de sauvegarde",
       "create_an_account": "Créer un compte",
       "enter_your_backup_code": "Entrez votre code de sauvegarde",
@@ -50,10 +52,13 @@
       "login_with_email": "Se connecter avec un e-mail",
       "lost_access": "Accès perdu ?",
       "new_to_formbricks": "Nouveau sur Formbricks ?",
+      "too_many_requests_please_try_again_after_some_time": "Trop de demandes, veuillez réessayer après un certain temps !",
+      "two_factor_authentication_code": "Code d'authentification à deux facteurs",
       "use_a_backup_code": "Utiliser un code de secours"
     },
     "signup": {
       "captcha_failed": "Captcha échoué",
+      "error": "Une erreur est survenue lors de votre inscription.",
       "have_an_account": "Avez-vous un compte ?",
       "log_in": "Se connecter",
       "password_validation_contain_at_least_1_number": "Contenir au moins 1 chiffre",
@@ -119,8 +124,10 @@
     "app": "Application",
     "app_survey": "Sondage d'application",
     "apply_filters": "Appliquer des filtres",
+    "archive": "Archive",
     "are_you_sure": "Es-tu sûr ?",
     "are_you_sure_this_action_cannot_be_undone": "Êtes-vous sûr ? Cette action ne peut pas être annulée.",
+    "attribute_type": "Type d'attribut",
     "attributes": "Attributs",
     "automatic": "Automatique",
     "avatar": "Avatar",
@@ -136,6 +143,7 @@
     "clear_filters": "Effacer les filtres",
     "clear_selection": "Effacer la sélection",
     "click": "Cliquez",
+    "click_here_to_upload": "Cliquez ici pour télécharger",
     "clicks": "Clics",
     "close": "Fermer",
     "code": "Code",
@@ -146,6 +154,7 @@
     "connect": "Connecter",
     "connect_formbricks": "Connecter Formbricks",
     "connected": "Connecté",
+    "contact": "Contact",
     "contacts": "Contacts",
     "copied_to_clipboard": "Copié dans le presse-papiers",
     "copy": "Copier",
@@ -592,6 +601,13 @@
       "what_did_your_user_do": "Que fait votre utilisateur ?",
       "what_is_the_user_doing": "Que fait l'utilisateur ?",
       "you_can_track_code_action_anywhere_in_your_app_using": "Vous pouvez suivre l'action du code partout dans votre application en utilisant"
+    },
+    "attributes": {
+      "ex_user_property": "Propriété utilisateur ex.",
+      "how_to_add_attributes": "Comment ajouter des attributs",
+      "show_archived": "Afficher les archives",
+      "this_attribute_was_added_automatically_you_cannot_make_changes_to_it": "Cet attribut a été ajouté automatiquement. Vous ne pouvez pas le modifier.",
+      "this_is_a_code_attribute_you_can_only_change_the_description": "Ceci est un attribut de code. Vous ne pouvez changer que la description."
     },
     "connect": {
       "congrats": "Félicitations !",
@@ -1658,6 +1674,7 @@
         "remove_all_filters": "Supprimer tous les filtres",
         "remove_description": "Supprimer la description",
         "remove_translations": "Supprimer les traductions",
+        "remove_translations_warning": "Êtes-vous sûr de vouloir supprimer toutes les traductions de cette enquête ? Cette action ne peut pas être annulée.",
         "require_answer": "Réponse requise",
         "required": "Requis",
         "reset_all_filters": "Réinitialiser tous les filtres",
@@ -1815,6 +1832,7 @@
       },
       "results_unpublished_successfully": "Résultats publiés avec succès.",
       "search_by_survey_name": "Recherche par nom d'enquête",
+      "search_templates": "Rechercher des modèles",
       "summary": {
         "added_filter_for_responses_where_answer_to_question": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est '{'filterComboBoxValue'}' - '{'filterValue'}'",
         "added_filter_for_responses_where_answer_to_question_is_skipped": "Filtre ajouté pour les réponses où la réponse à la question '{'questionIdx'}' est ignorée",
@@ -1964,7 +1982,9 @@
         "use_this_template": "Utilisez ce modèle",
         "uses_branching_logic": "Cette enquête utilise une logique de branchement."
       },
-      "this_is_tolgee_test_1": "THis is france"
+      "this_is_tolgee_test_1": "THis is france",
+      "tolgee_test": "France",
+      "tolgee_test_2": "france"
     },
     "xm-templates": {
       "ces": "CES",
@@ -2991,5 +3011,6 @@
     "understand_purchase_intention_question_2_placeholder": "Entrez votre réponse ici...",
     "understand_purchase_intention_question_3_headline": "Qu'est-ce qui vous empêche de faire un achat aujourd'hui, s'il y a quelque chose ?",
     "understand_purchase_intention_question_3_placeholder": "Entrez votre réponse ici..."
-  }
+  },
+  "this_is_a_test": "Ceci est un test"
 }
