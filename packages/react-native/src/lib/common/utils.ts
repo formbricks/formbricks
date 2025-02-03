@@ -164,3 +164,7 @@ export const shouldDisplayBasedOnPercentage = (displayPercentage: number): boole
   const randomNum = Math.floor(Math.random() * 10000) / 100;
   return randomNum <= displayPercentage;
 };
+
+export const isNowExpired = (expirationDate: Date): boolean => {
+  return new Date() >= expirationDate;
+};

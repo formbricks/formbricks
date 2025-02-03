@@ -6,7 +6,7 @@ import {
 } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
 import { AsyncStorage } from "@/lib/common/storage";
-import { filterSurveys, wrapThrowsAsync } from "@/lib/common/utils";
+import { filterSurveys, isNowExpired, wrapThrowsAsync } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -100,7 +100,7 @@ export const init = async (
 
     const expiresAt = existingConfig.status.expiresAt;
 
-    if (expiresAt && new Date(expiresAt) >= new Date()) {
+    if (expiresAt && isNowExpired(expiresAt)) {
       logger.debug("Error state is not expired, skipping initialization");
       return okVoid();
     }
@@ -135,19 +135,20 @@ export const init = async (
     let isEnvironmentStateExpired = false;
     let isUserStateExpired = false;
 
-    if (new Date(existingConfig.environment.expiresAt) < new Date()) {
+    if (isNowExpired(existingConfig.environment.expiresAt)) {
       logger.debug("Environment state expired. Syncing.");
       isEnvironmentStateExpired = true;
     }
 
-    if (existingConfig.user.expiresAt && new Date(existingConfig.user.expiresAt) < new Date()) {
+    if (existingConfig.user.expiresAt && isNowExpired(existingConfig.user.expiresAt)) {
       logger.debug("Person state expired. Syncing.");
       isUserStateExpired = true;
     }
 
     try {
       // fetch the environment state (if expired)
-      let environmentState: TEnvironmentState;
+      let environmentState: TEnvironmentState = existingConfig.environment;
+      let userState: TUserState = existingConfig.user;
 
       if (isEnvironmentStateExpired) {
         const environmentStateResponse = await fetchEnvironmentState({
@@ -169,60 +170,55 @@ export const init = async (
             responseMessage: environmentStateResponse.error.message,
           });
         }
-
-        // fetch the person state (if expired)
-        let { user: userState } = existingConfig;
-
-        if (isUserStateExpired) {
-          // If the existing person state (expired) has a userId, we need to fetch the person state
-          // If the existing person state (expired) has no userId, we need to set the person state to the default
-
-          if (userState.data.userId) {
-            const updatesResponse = await sendUpdatesToBackend({
-              appUrl: configInput.appUrl,
-              environmentId: configInput.environmentId,
-              updates: {
-                userId: userState.data.userId,
-              },
-            });
-
-            if (updatesResponse.ok) {
-              userState = updatesResponse.data.state;
-            } else {
-              logger.error(
-                `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
-              );
-              return err({
-                code: "network_error",
-                message: "Error updating user state",
-                status: 500,
-                url: new URL(
-                  `${configInput.appUrl}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
-                ),
-                responseMessage: "Unknown error",
-              });
-            }
-          } else {
-            userState = DEFAULT_USER_STATE_NO_USER_ID;
-          }
-        }
-
-        // filter the environment state wrt the person state
-        const filteredSurveys = filterSurveys(environmentState, userState);
-
-        // update the appConfig with the new filtered surveys and person state
-        appConfig.update({
-          ...existingConfig,
-          environment: environmentState,
-          user: userState,
-          filteredSurveys,
-        });
-
-        const surveyNames = filteredSurveys.map((s) => s.name);
-        logger.debug(
-          `Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`
-        );
       }
+
+      if (isUserStateExpired) {
+        // If the existing person state (expired) has a userId, we need to fetch the person state
+        // If the existing person state (expired) has no userId, we need to set the person state to the default
+
+        if (userState.data.userId) {
+          const updatesResponse = await sendUpdatesToBackend({
+            appUrl: configInput.appUrl,
+            environmentId: configInput.environmentId,
+            updates: {
+              userId: userState.data.userId,
+            },
+          });
+
+          if (updatesResponse.ok) {
+            userState = updatesResponse.data.state;
+          } else {
+            logger.error(
+              `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
+            );
+            return err({
+              code: "network_error",
+              message: "Error updating user state",
+              status: 500,
+              url: new URL(
+                `${configInput.appUrl}/api/v1/client/${configInput.environmentId}/update/contacts/${userState.data.userId}`
+              ),
+              responseMessage: "Unknown error",
+            });
+          }
+        } else {
+          userState = DEFAULT_USER_STATE_NO_USER_ID;
+        }
+      }
+
+      // filter the environment state wrt the person state
+      const filteredSurveys = filterSurveys(environmentState, userState);
+
+      // update the appConfig with the new filtered surveys and person state
+      appConfig.update({
+        ...existingConfig,
+        environment: environmentState,
+        user: userState,
+        filteredSurveys,
+      });
+
+      const surveyNames = filteredSurveys.map((s) => s.name);
+      logger.debug(`Fetched ${surveyNames.length.toString()} surveys during sync: ${surveyNames.join(", ")}`);
     } catch {
       logger.debug("Error during sync. Please try again.");
     }

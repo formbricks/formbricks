@@ -33,7 +33,6 @@ export const triggerSurvey = (survey: TEnvironmentStateSurvey): void => {
  */
 export const trackAction = (name: string, alias?: string): Result<void, NetworkError> => {
   const logger = Logger.getInstance();
-  const surveyStore = SurveyStore.getInstance();
   const appConfig = RNConfig.getInstance();
 
   const aliasName = alias ?? name;
@@ -47,7 +46,7 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          surveyStore.setSurvey(survey);
+          triggerSurvey(survey);
         }
       }
     }

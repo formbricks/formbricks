@@ -375,7 +375,6 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
         window.ReactNativeWebView.postMessage(JSON.stringify({ onRetry: true }));
       };
 
-
       window.fileUploadPromiseCallbacks = new Map();
 
       function onFileUpload(file, params) {
