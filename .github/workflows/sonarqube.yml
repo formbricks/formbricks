@@ -3,8 +3,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      # - main
-      - branch-test-coverage
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 permissions:
