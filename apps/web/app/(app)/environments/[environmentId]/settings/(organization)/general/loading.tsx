@@ -1,14 +1,12 @@
-"use client";
-
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslate } from "@tolgee/react";
+import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
-const Loading = () => {
-  const { t } = useTranslate();
+const Loading = async () => {
+  const t = await getTranslate();
 
   const cards = [
     {

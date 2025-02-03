@@ -1,15 +1,12 @@
-import { translateEmailText } from "@/modules/email/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 import { Text } from "@react-email/components";
 
-interface EmailFooterProps {
-  locale: string;
-}
-
-export function EmailFooter({ locale }: EmailFooterProps): React.JSX.Element {
+export async function EmailFooter(): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
     <Text>
-      {translateEmailText("email_footer_text_1", locale)}
-      <br /> {translateEmailText("email_footer_text_2", locale)}
+      {t("emails.email_footer_text_1")}
+      <br /> {t("emails.email_footer_text_2")}
     </Text>
   );
 }

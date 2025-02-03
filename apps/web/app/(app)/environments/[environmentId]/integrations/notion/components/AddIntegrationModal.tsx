@@ -28,7 +28,6 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -38,7 +37,6 @@ interface AddIntegrationModalProps {
   notionIntegration: TIntegrationNotion;
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
-  locale: TUserLocale;
 }
 
 export const AddIntegrationModal = ({
@@ -49,7 +47,6 @@ export const AddIntegrationModal = ({
   notionIntegration,
   databases,
   selectedIntegration,
-  locale,
 }: AddIntegrationModalProps) => {
   const { t } = useTranslate();
   const { handleSubmit } = useForm();
@@ -297,7 +294,7 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
-            const question = getQuestionTypes(locale).find((qt) => qt.id === ques.type);
+            const question = getQuestionTypes(t).find((qt) => qt.id === ques.type);
             if (!question) return null;
             return (
               <>

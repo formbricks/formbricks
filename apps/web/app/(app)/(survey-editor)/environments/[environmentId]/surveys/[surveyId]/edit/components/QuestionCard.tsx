@@ -225,7 +225,7 @@ export const QuestionCard = ({
                           selectedLanguageCode
                         ] ?? ""
                       )
-                    : getTSurveyQuestionTypeEnumName(question.type, locale)}
+                    : getTSurveyQuestionTypeEnumName(question.type, t)}
                 </p>
                 {!open && (
                   <p className="mt-1 truncate text-xs text-slate-500">
@@ -251,7 +251,6 @@ export const QuestionCard = ({
                 addCard={addQuestion}
                 cardType="question"
                 isCxMode={isCxMode}
-                locale={locale}
               />
             </div>
           </div>

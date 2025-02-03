@@ -231,7 +231,6 @@ export const EditEndingCard = ({
                 updateCard={() => {}}
                 addCard={addEndingCard}
                 cardType="ending"
-                locale={locale}
               />
             </div>
           </div>

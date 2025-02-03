@@ -6,7 +6,7 @@ import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { after } from "next/server";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { deleteInvite, getInvite } from "@formbricks/lib/invite/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -48,12 +48,7 @@ const Page = async (props) => {
         await createTeamMembership(invite, user.id);
       }
       await deleteInvite(inviteId);
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        user?.name ?? "",
-        invite.creator.email,
-        user?.locale ?? DEFAULT_LOCALE
-      );
+      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,

@@ -9,10 +9,9 @@ import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_BRAND_COLOR, DEFAULT_LOCALE } from "@formbricks/lib/constants";
+import { DEFAULT_BRAND_COLOR } from "@formbricks/lib/constants";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUserProjects } from "@formbricks/lib/project/service";
-import { getUserLocale } from "@formbricks/lib/user/service";
 import { TProjectConfigChannel, TProjectConfigIndustry, TProjectMode } from "@formbricks/types/project";
 
 interface ProjectSettingsPageProps {
@@ -39,7 +38,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const channel = searchParams.channel || null;
   const industry = searchParams.industry || null;
   const mode = searchParams.mode || "surveys";
-  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const projects = await getUserProjects(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
@@ -70,7 +68,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
         defaultBrandColor={DEFAULT_BRAND_COLOR}
         organizationTeams={organizationTeams}
         canDoRoleManagement={canDoRoleManagement}
-        locale={locale ?? DEFAULT_LOCALE}
         userProjectsCount={projects.length}
       />
       {projects.length >= 1 && (

@@ -85,12 +85,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
       },
     });
 
-    await sendInviteAcceptedEmail(
-      invite.creator.name ?? "",
-      user.name,
-      invite.creator.email,
-      invite.creator.locale
-    );
+    await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
     await deleteInvite(invite.id);
   }
   // Handle organization assignment

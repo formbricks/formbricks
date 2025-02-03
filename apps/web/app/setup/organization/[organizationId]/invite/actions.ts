@@ -51,8 +51,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       ctx.user.name,
       "",
       false, // is onboarding invite
-      undefined,
-      ctx.user.locale
+      undefined
     );
 
     return invite;

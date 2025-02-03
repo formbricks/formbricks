@@ -9,7 +9,6 @@ import {
   TSurveyQuestionSummaryConsent,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -23,10 +22,9 @@ interface ConsentSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const ConsentSummary = ({ questionSummary, survey, setFilter, locale }: ConsentSummaryProps) => {
+export const ConsentSummary = ({ questionSummary, survey, setFilter }: ConsentSummaryProps) => {
   const { t } = useTranslate();
   const summaryItems = [
     {
@@ -42,7 +40,7 @@ export const ConsentSummary = ({ questionSummary, survey, setFilter, locale }: C
   ];
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {summaryItems.map((summaryItem) => {
           return (

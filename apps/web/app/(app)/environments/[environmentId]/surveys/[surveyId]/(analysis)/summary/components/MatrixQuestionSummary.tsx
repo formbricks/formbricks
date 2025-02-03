@@ -9,7 +9,6 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
@@ -22,15 +21,9 @@ interface MatrixQuestionSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const MatrixQuestionSummary = ({
-  questionSummary,
-  survey,
-  setFilter,
-  locale,
-}: MatrixQuestionSummaryProps) => {
+export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: MatrixQuestionSummaryProps) => {
   const { t } = useTranslate();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
@@ -53,7 +46,7 @@ export const MatrixQuestionSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">

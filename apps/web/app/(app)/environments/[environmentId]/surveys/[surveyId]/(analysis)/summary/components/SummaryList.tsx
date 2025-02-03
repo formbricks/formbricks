@@ -152,7 +152,6 @@ export const SummaryList = ({
                 surveyType={survey.type}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -163,7 +162,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -173,7 +171,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -184,7 +181,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -195,7 +191,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -206,7 +201,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -239,7 +233,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -250,7 +243,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -272,7 +264,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 surveyType={survey.type}
                 survey={survey}
-                locale={locale}
               />
             );
           }

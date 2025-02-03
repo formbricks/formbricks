@@ -63,7 +63,6 @@ export const OpenTextSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">

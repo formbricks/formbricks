@@ -4,10 +4,27 @@
   "patterns": ["./apps/web/**/*.ts?(x)"],
   "projectId": 10304,
   "pull": {
-    "path": "./packages/lib/messages"
+    "path": "./apps/web/public/i18n"
   },
   "push": {
-    "forceMode": "OVERRIDE",
-    "path": "./packages/lib/messages"
+    "files": [
+      {
+        "language": "en-US",
+        "path": "./packages/lib/messages/en-US.json"
+      },
+      {
+        "language": "de-DE",
+        "path": "./packages/lib/messages/de-DE.json"
+      },
+      {
+        "language": "fr-FR",
+        "path": "./packages/lib/messages/fr-FR.json"
+      },
+      {
+        "language": "pt-BR",
+        "path": "./packages/lib/messages/pt-BR.json"
+      }
+    ],
+    "forceMode": "OVERRIDE"
   }
 }

@@ -3,7 +3,6 @@ import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { translate } from "@formbricks/lib/templates";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
@@ -21,7 +20,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { TLogicRuleOption, getLogicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes
@@ -43,13 +41,14 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const questionIconMapping = getQuestionTypes("en-US").reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: curr.icon,
-  }),
-  {}
-);
+const getQuestionIconMapping = (t: (key: string) => string) =>
+  getQuestionTypes(t).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: curr.icon,
+    }),
+    {}
+  );
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
@@ -65,7 +64,7 @@ export const getConditionValueOptions = (
     .filter((_, idx) => idx <= currQuestionIdx)
     .map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -257,7 +256,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -460,7 +459,7 @@ export const getMatchValueProps = (
 
       const questionOptions = openTextQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -541,7 +540,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -615,7 +614,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -695,7 +694,7 @@ export const getMatchValueProps = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -779,7 +778,7 @@ export const getActionTargetOptions = (
 
   const questionOptions = questions.map((question) => {
     return {
-      icon: questionIconMapping[question.type],
+      icon: getQuestionIconMapping(t)[question.type],
       label: getLocalizedValue(question.headline, "default"),
       value: question.id,
     };
@@ -897,7 +896,7 @@ export const getActionValueOptions = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -955,7 +954,7 @@ export const getActionValueOptions = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -1157,8 +1156,8 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (locale: TUserLocale) => {
-  return translate("follow_ups_modal_action_body", locale) as string;
+export const getSurveyFollowUpActionDefaultBody = (t: (s: string) => string) => {
+  return t("templates.follow_ups_modal_action_body") as string;
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

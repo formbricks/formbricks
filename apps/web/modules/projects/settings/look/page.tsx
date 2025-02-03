@@ -15,12 +15,11 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { cn } from "@formbricks/lib/cn";
-import { DEFAULT_LOCALE, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getUserLocale } from "@formbricks/lib/user/service";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 
@@ -42,7 +41,6 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const locale = session?.user.id ? await getUserLocale(session.user.id) : undefined;
   const canRemoveBranding = await getWhiteLabelPermission(organization);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -75,7 +73,6 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
           project={project}
           colors={SURVEY_BG_COLORS}
           isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}
-          locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={isReadOnly}
         />
       </SettingsCard>

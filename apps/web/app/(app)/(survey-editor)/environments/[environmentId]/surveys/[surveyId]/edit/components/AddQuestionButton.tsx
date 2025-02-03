@@ -19,14 +19,13 @@ interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
   project: TProject;
   isCxMode: boolean;
-  locale: string;
 }
 
-export const AddQuestionButton = ({ addQuestion, project, isCxMode, locale }: AddQuestionButtonProps) => {
+export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestionButtonProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [hoveredQuestionId, setHoveredQuestionId] = useState<string | null>(null);
-  const availableQuestionTypes = isCxMode ? getCXQuestionTypes(locale) : getQuestionTypes(locale);
+  const availableQuestionTypes = isCxMode ? getCXQuestionTypes(t) : getQuestionTypes(t);
   const [parent] = useAutoAnimate();
 
   return (
@@ -60,7 +59,7 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode, locale }: Ad
             onClick={() => {
               addQuestion({
                 ...universalQuestionPresets,
-                ...getQuestionDefaults(questionType.id, project, locale),
+                ...getQuestionDefaults(questionType.id, project, t),
                 id: createId(),
                 type: questionType.id,
               });

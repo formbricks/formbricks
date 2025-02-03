@@ -44,7 +44,6 @@ interface EditorCardMenuProps {
   cardType: "question" | "ending";
   project?: TProject;
   isCxMode?: boolean;
-  locale: string;
 }
 
 export const EditorCardMenu = ({
@@ -60,7 +59,6 @@ export const EditorCardMenu = ({
   addCard,
   cardType,
   isCxMode = false,
-  locale,
 }: EditorCardMenuProps) => {
   const { t } = useTranslate();
   const [logicWarningModal, setLogicWarningModal] = useState(false);
@@ -76,7 +74,7 @@ export const EditorCardMenu = ({
       ? survey.questions.length === 1
       : survey.type === "link" && survey.endings.length === 1;
 
-  const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(locale) : getQuestionNameMap(locale);
+  const availableQuestionTypes = isCxMode ? getCXQuestionNameMap(t) : getQuestionNameMap(t);
 
   const changeQuestionType = (type?: TSurveyQuestionTypeEnum) => {
     if (!type) return;
@@ -84,7 +82,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as TSurveyQuestion;
 
-    const questionDefaults = getQuestionDefaults(type, project, locale);
+    const questionDefaults = getQuestionDefaults(type, project, t);
 
     if (
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
@@ -123,7 +121,7 @@ export const EditorCardMenu = ({
   };
 
   const addQuestionCardBelow = (type: TSurveyQuestionTypeEnum) => {
-    const questionDefaults = getQuestionDefaults(type, project, locale);
+    const questionDefaults = getQuestionDefaults(type, project, t);
 
     addCard(
       {

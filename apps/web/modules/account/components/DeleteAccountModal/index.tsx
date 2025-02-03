@@ -6,6 +6,7 @@ import { useTranslate } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+import { RichText } from "@formbricks/lib/utils/rich-text";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { deleteUserAction } from "./actions";
@@ -72,9 +73,7 @@ export const DeleteAccountModal = ({
           </li>
           {organizationsWithSingleOwner.length > 0 && (
             <li>
-              {t.rich("environments.settings.profile.organizations_delete_message", {
-                b: (chunks) => <b>{chunks}</b>,
-              })}
+              <RichText text={t("environments.settings.profile.organizations_delete_message")} />
             </li>
           )}
           {organizationsWithSingleOwner.length > 0 && (

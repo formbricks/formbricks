@@ -16,7 +16,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -32,7 +31,6 @@ interface MultipleChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
 export const MultipleChoiceSummary = ({
@@ -41,7 +39,6 @@ export const MultipleChoiceSummary = ({
   surveyType,
   survey,
   setFilter,
-  locale,
 }: MultipleChoiceSummaryProps) => {
   const { t } = useTranslate();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
@@ -72,7 +69,6 @@ export const MultipleChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           questionSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

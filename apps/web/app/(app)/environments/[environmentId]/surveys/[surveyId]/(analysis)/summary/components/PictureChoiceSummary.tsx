@@ -11,7 +11,6 @@ import {
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -25,15 +24,9 @@ interface PictureChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const PictureChoiceSummary = ({
-  questionSummary,
-  survey,
-  setFilter,
-  locale,
-}: PictureChoiceSummaryProps) => {
+export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
   const { t } = useTranslate();
   return (
@@ -41,7 +34,6 @@ export const PictureChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           questionSummary.question.allowMulti ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

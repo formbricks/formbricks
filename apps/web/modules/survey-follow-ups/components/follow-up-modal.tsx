@@ -130,7 +130,7 @@ export const FollowUpModal = ({
       emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
       replyTo: defaultValues?.replyTo ?? [userEmail],
       subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
-      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
+      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
@@ -314,7 +314,7 @@ export const FollowUpModal = ({
         emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
         replyTo: defaultValues?.replyTo ?? [userEmail],
         subject: defaultValues?.subject ?? "Thanks for your answers!",
-        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
+        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       });
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);

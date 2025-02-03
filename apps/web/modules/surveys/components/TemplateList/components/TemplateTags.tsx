@@ -85,7 +85,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
       ? t("environments.surveys.templates.multiple_industries")
-      : t(industryMapping.find((industry) => industry.value === industries[0])?.label);
+      : t(industryMapping.find((industry) => industry.value === industries[0])?.label ?? "");
   };
 
   const industryTag = useMemo(
@@ -95,7 +95,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag)}</div>
+      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag ?? "")}</div>
       {industryTag && (
         <div
           className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>

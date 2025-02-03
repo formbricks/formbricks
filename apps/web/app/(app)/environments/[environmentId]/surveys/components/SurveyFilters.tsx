@@ -181,7 +181,8 @@ export const SurveyFilters = ({
             <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
-                  {t("common.sort_by")}: {t(sortOptions.find((option) => option.value === sortBy)?.label)}
+                  {t("common.sort_by")}:{" "}
+                  {t(sortOptions.find((option) => option.value === sortBy)?.label ?? "")}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
               </div>

@@ -2,6 +2,7 @@ import { Button } from "@/modules/ui/components/button";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import Link from "next/link";
+import { RichText } from "@formbricks/lib/utils/rich-text";
 
 export const metadata: Metadata = {
   title: "Intro",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 const renderRichText = async (text: string) => {
   const t = await getTranslate();
-  return <p>{t.rich(text, { b: (chunks) => <b>{chunks}</b> })}</p>;
+  return <RichText text={t(text)} />;
 };
 
 const Page = async () => {

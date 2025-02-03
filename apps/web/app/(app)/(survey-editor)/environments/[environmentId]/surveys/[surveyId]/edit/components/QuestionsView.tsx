@@ -3,6 +3,7 @@
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
+import { DefaultEndingCard } from "@/app/lib/templates";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import {
   DndContext,
@@ -21,7 +22,6 @@ import toast from "react-hot-toast";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
@@ -338,7 +338,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
+    const newEndingCard = DefaultEndingCard(localSurvey.languages);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
     setActiveQuestionId(newEndingCard.id);
@@ -461,7 +461,7 @@ export const QuestionsView = ({
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} locale={locale} />
+      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext
