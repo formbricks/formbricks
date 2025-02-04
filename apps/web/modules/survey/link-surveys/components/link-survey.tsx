@@ -203,8 +203,10 @@ export const LinkSurvey = ({
   return (
     <LinkSurveyWrapper
       project={project}
-      survey={survey}
+      surveyId={survey.id}
+      isWelcomeCardEnabled={survey.welcomeCard.enabled}
       isPreview={isPreview}
+      surveyType={survey.type}
       handleResetSurvey={handleResetSurvey}
       determineStyling={determineStyling}
       isEmbed={isEmbed}

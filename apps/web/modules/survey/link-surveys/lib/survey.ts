@@ -3,36 +3,164 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { selectSurvey } from "@formbricks/lib/survey/service";
 import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
+export const getSurveyMetadata = reactCache(async (surveyId: string) =>
+  cache(
+    async () => {
+      try {
+        const survey = await prisma.survey.findUnique({
+          where: {
+            id: surveyId,
+          },
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            environmentId: true,
+            name: true,
+            styling: true,
+          },
+        });
+
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", surveyId);
+        }
+
+        return survey;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          console.error(error);
+          throw new DatabaseError(error.message);
+        }
+        throw error;
+      }
+    },
+
+    [`link-survey-getSurveyMetadata-${surveyId}`],
+    {
+      tags: [surveyCache.tag.byId(surveyId)],
+    }
+  )()
+);
+
+export const getSurveyPin = reactCache(async (surveyId: string) =>
+  cache(
+    async () => {
+      const survey = await prisma.survey.findUnique({
+        where: {
+          id: surveyId,
+        },
+        select: {
+          pin: true,
+        },
+      });
+
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+
+      return survey.pin;
+    },
+    [`link-survey-getSurveyPin-${surveyId}`],
+    {
+      tags: [surveyCache.tag.byId(surveyId)],
+    }
+  )()
+);
+
 export const getSurvey = reactCache(
-  async (surveyId: string): Promise<TSurvey | null> =>
+  async (surveyId: string): Promise<TSurvey> =>
     cache(
       async () => {
-        let surveyPrisma;
-        try {
-          surveyPrisma = await prisma.survey.findUnique({
-            where: {
-              id: surveyId,
+        const survey = await prisma.survey.findUnique({
+          where: { id: surveyId },
+          select: {
+            id: true,
+            createdAt: true,
+            updatedAt: true,
+            name: true,
+            type: true,
+            environmentId: true,
+            createdBy: true,
+            status: true,
+            welcomeCard: true,
+            questions: true,
+            endings: true,
+            hiddenFields: true,
+            variables: true,
+            displayOption: true,
+            recontactDays: true,
+            displayLimit: true,
+            autoClose: true,
+            runOnDate: true,
+            closeOnDate: true,
+            delay: true,
+            displayPercentage: true,
+            autoComplete: true,
+            isVerifyEmailEnabled: true,
+            isSingleResponsePerEmailEnabled: true,
+            redirectUrl: true,
+            projectOverwrites: true,
+            styling: true,
+            surveyClosedMessage: true,
+            singleUse: true,
+            pin: true,
+            resultShareKey: true,
+            showLanguageSwitch: true,
+            languages: {
+              select: {
+                default: true,
+                enabled: true,
+                language: {
+                  select: {
+                    id: true,
+                    code: true,
+                    alias: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    projectId: true,
+                  },
+                },
+              },
             },
-            select: selectSurvey,
-          });
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
-            throw new DatabaseError(error.message);
-          }
-          throw error;
+            triggers: {
+              select: {
+                actionClass: {
+                  select: {
+                    id: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    environmentId: true,
+                    name: true,
+                    description: true,
+                    type: true,
+                    key: true,
+                    noCodeConfig: true,
+                  },
+                },
+              },
+            },
+            segment: {
+              include: {
+                surveys: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+            followUps: true,
+          },
+        });
+
+        if (!survey) {
+          throw new ResourceNotFoundError("Survey", surveyId);
         }
 
-        if (!surveyPrisma) {
-          return null;
-        }
-
-        return transformPrismaSurvey<TSurvey>(surveyPrisma);
+        return transformPrismaSurvey<TSurvey>(survey);
       },
       [`link-survey-getSurvey-${surveyId}`],
       {

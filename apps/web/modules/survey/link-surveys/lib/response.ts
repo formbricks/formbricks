@@ -30,7 +30,7 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
           throw error;
         }
       },
-      [`getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
+      [`link-surveys-getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }

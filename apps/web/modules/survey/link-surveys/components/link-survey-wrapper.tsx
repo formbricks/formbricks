@@ -3,15 +3,18 @@ import { SurveyLoadingAnimation } from "@/modules/survey/link-surveys/components
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
+import { SurveyType } from "@prisma/client";
 import { type JSX, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProject, TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;
   project: TProject;
-  survey: TSurvey;
+  isWelcomeCardEnabled: boolean;
+  surveyId: string;
+  surveyType: SurveyType;
   isPreview: boolean;
   isEmbed: boolean;
   determineStyling: () => TSurveyStyling | TProjectStyling;
@@ -26,7 +29,9 @@ interface LinkSurveyWrapperProps {
 export const LinkSurveyWrapper = ({
   children,
   project,
-  survey,
+  isWelcomeCardEnabled,
+  surveyType,
+  surveyId,
   isPreview,
   isEmbed,
   determineStyling,
@@ -54,7 +59,10 @@ export const LinkSurveyWrapper = ({
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
-        <SurveyLoadingAnimation survey={survey} isBrandingEnabled={isBrandingEnabled} />
+        <SurveyLoadingAnimation
+          isWelcomeCardEnabled={isWelcomeCardEnabled}
+          isBrandingEnabled={isBrandingEnabled}
+        />
         {children}
       </div>
     );
@@ -62,11 +70,14 @@ export const LinkSurveyWrapper = ({
     return (
       <div>
         <SurveyLoadingAnimation
-          survey={survey}
+          isWelcomeCardEnabled={isWelcomeCardEnabled}
           isBackgroundLoaded={isBackgroundLoaded}
           isBrandingEnabled={isBrandingEnabled}
         />
-        <MediaBackground survey={survey} project={project} onBackgroundLoaded={handleBackgroundLoaded}>
+        <MediaBackground
+          surveyType={surveyType}
+          styling={styling}
+          onBackgroundLoaded={handleBackgroundLoaded}>
           <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
             {!styling.isLogoHidden && project.logo?.url && <ClientLogo project={project} />}
             <div className="h-full w-full max-w-lg space-y-6 px-1.5">
@@ -85,7 +96,7 @@ export const LinkSurveyWrapper = ({
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={webAppUrl + "/s/" + survey.id}
+          surveyUrl={webAppUrl + "/s/" + surveyId}
         />
       </div>
     );

@@ -4,18 +4,17 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAIKeys } from "@/modules/survey/survey-templates/lib/organization";
+import { createSurvey } from "@/modules/survey/survey-templates/lib/survey";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { llmModel } from "@formbricks/lib/aiModels";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { createSurvey } from "@formbricks/lib/survey/service";
-import { ZId, ZString } from "@formbricks/types/common";
 import { ZSurveyQuestion } from "@formbricks/types/surveys/types";
 
 const ZCreateAISurveyAction = z.object({
-  environmentId: ZId,
-  prompt: ZString,
+  environmentId: z.string().cuid2(),
+  prompt: z.string(),
 });
 
 export const createAISurveyAction = authenticatedActionClient
@@ -39,7 +38,7 @@ export const createAISurveyAction = authenticatedActionClient
       ],
     });
 
-    const organization = await getOrganization(organizationId);
+    const organization = await getOrganizationAIKeys(organizationId);
 
     if (!organization) {
       throw new Error("Organization not found");

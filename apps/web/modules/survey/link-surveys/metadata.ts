@@ -1,12 +1,12 @@
+import { getSurveyMetadata } from "@/modules/survey/link-surveys/lib/survey";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { getSurvey } from "@formbricks/lib/survey/service";
 
 export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metadata> => {
-  const survey = await getSurvey(surveyId);
+  const survey = await getSurveyMetadata(surveyId);
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();

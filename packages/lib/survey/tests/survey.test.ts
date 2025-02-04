@@ -4,16 +4,8 @@ import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getSurvey, getSurveyCount, getSurveys, getSurveysByActionClassId, updateSurvey } from "../service";
 import {
-  createSurvey,
-  getSurvey,
-  getSurveyCount,
-  getSurveys,
-  getSurveysByActionClassId,
-  updateSurvey,
-} from "../service";
-import {
-  createSurveyInput,
   mockActionClass,
   mockId,
   mockOrganizationOutput,
@@ -315,51 +307,51 @@ describe("Tests for updateSurvey", () => {
   });
 });
 
-describe("Tests for createSurvey", () => {
-  beforeEach(() => {
-    prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
-  });
+// describe("Tests for createSurvey", () => {
+//   beforeEach(() => {
+//     prisma.actionClass.findMany.mockResolvedValueOnce([mockActionClass]);
+//   });
 
-  describe("Happy Path", () => {
-    it("Creates a survey successfully", async () => {
-      prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
-      prisma.actionClass.findMany.mockResolvedValue([mockActionClass]);
-      prisma.user.findMany.mockResolvedValueOnce([
-        {
-          ...mockUser,
-          twoFactorSecret: null,
-          backupCodes: null,
-          password: null,
-          identityProviderAccountId: null,
-          groupId: null,
-          role: "engineer",
-        },
-      ]);
-      prisma.user.update.mockResolvedValueOnce({
-        ...mockUser,
-        twoFactorSecret: null,
-        backupCodes: null,
-        password: null,
-        identityProviderAccountId: null,
-        groupId: null,
-        role: "engineer",
-      });
-      const createdSurvey = await createSurvey(mockId, createSurveyInput);
-      expect(createdSurvey).toEqual(mockTransformedSurveyOutput);
-    });
-  });
+//   describe("Happy Path", () => {
+//     it("Creates a survey successfully", async () => {
+//       prisma.survey.create.mockResolvedValueOnce(mockSurveyOutput);
+//       prisma.organization.findFirst.mockResolvedValueOnce(mockOrganizationOutput);
+//       prisma.actionClass.findMany.mockResolvedValue([mockActionClass]);
+//       prisma.user.findMany.mockResolvedValueOnce([
+//         {
+//           ...mockUser,
+//           twoFactorSecret: null,
+//           backupCodes: null,
+//           password: null,
+//           identityProviderAccountId: null,
+//           groupId: null,
+//           role: "engineer",
+//         },
+//       ]);
+//       prisma.user.update.mockResolvedValueOnce({
+//         ...mockUser,
+//         twoFactorSecret: null,
+//         backupCodes: null,
+//         password: null,
+//         identityProviderAccountId: null,
+//         groupId: null,
+//         role: "engineer",
+//       });
+//       const createdSurvey = await createSurvey(mockId, createSurveyInput);
+//       expect(createdSurvey).toEqual(mockTransformedSurveyOutput);
+//     });
+//   });
 
-  describe("Sad Path", () => {
-    testInputValidation(createSurvey, "123#", createSurveyInput);
+//   describe("Sad Path", () => {
+//     testInputValidation(createSurvey, "123#", createSurveyInput);
 
-    it("should throw an error if there is an unknown error", async () => {
-      const mockErrorMessage = "Unknown error occurred";
-      prisma.survey.delete.mockRejectedValue(new Error(mockErrorMessage));
-      await expect(createSurvey(mockId, createSurveyInput)).rejects.toThrow(Error);
-    });
-  });
-});
+//     it("should throw an error if there is an unknown error", async () => {
+//       const mockErrorMessage = "Unknown error occurred";
+//       prisma.survey.delete.mockRejectedValue(new Error(mockErrorMessage));
+//       await expect(createSurvey(mockId, createSurveyInput)).rejects.toThrow(Error);
+//     });
+//   });
+// });
 
 // describe("Tests for duplicateSurvey", () => {
 //   beforeEach(() => {

@@ -3,16 +3,15 @@ import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyLoadingAnimationProps {
-  survey: TSurvey;
+  isWelcomeCardEnabled: boolean;
   isBackgroundLoaded?: boolean;
   isBrandingEnabled: boolean;
 }
 
 export const SurveyLoadingAnimation = ({
-  survey,
+  isWelcomeCardEnabled,
   isBackgroundLoaded = true,
   isBrandingEnabled,
 }: SurveyLoadingAnimationProps) => {
@@ -21,7 +20,7 @@ export const SurveyLoadingAnimation = ({
   const [isMediaLoaded, setIsMediaLoaded] = useState(false); // Tracks if all media are fully loaded
   const [isSurveyPackageLoaded, setIsSurveyPackageLoaded] = useState(false); // Tracks if the survey package has been loaded into the DOM
   const isReadyToTransition = isMediaLoaded && minTimePassed && isBackgroundLoaded;
-  const cardId = survey.welcomeCard.enabled ? `questionCard--1` : `questionCard-0`;
+  const cardId = isWelcomeCardEnabled ? `questionCard--1` : `questionCard-0`;
 
   // Function to check if all media elements (images and iframes) within the survey card are loaded
   const checkMediaLoaded = useCallback(() => {
