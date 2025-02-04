@@ -228,11 +228,9 @@ describe("authOptions", () => {
         const account = { provider: "credentials" } as any;
         // EMAIL_VERIFICATION_DISABLED is imported from constants.
         if (!EMAIL_VERIFICATION_DISABLED && authOptions.callbacks?.signIn) {
-          if (!true && authOptions.callbacks?.signIn) {
-            await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
-              "Email Verification is Pending"
-            );
-          }
+          await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
+            "Email Verification is Pending"
+          );
         }
       });
     });
