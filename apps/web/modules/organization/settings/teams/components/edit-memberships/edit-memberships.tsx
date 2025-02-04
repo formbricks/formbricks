@@ -1,8 +1,8 @@
 import { MembersInfo } from "@/modules/organization/settings/teams/components/edit-memberships/members-info";
+import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getInvitesByOrganizationId } from "@formbricks/lib/invite/service";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 

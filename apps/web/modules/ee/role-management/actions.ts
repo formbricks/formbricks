@@ -3,14 +3,14 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
+import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { z } from "zod";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { updateInvite } from "@formbricks/lib/invite/service";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
-import { ZInviteUpdateInput } from "@formbricks/types/invites";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 
 export const checkRoleManagementPermission = async (organizationId: string) => {

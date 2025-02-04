@@ -8,11 +8,17 @@ import { TProject } from "@formbricks/types/project";
 
 interface DeleteProjectProps {
   environmentId: string;
-  project: TProject;
+  currentProject: TProject;
+  organizationProjects: TProject[];
   isOwnerOrManager: boolean;
 }
 
-export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }: DeleteProjectProps) => {
+export const DeleteProject = async ({
+  environmentId,
+  currentProject,
+  organizationProjects,
+  isOwnerOrManager,
+}: DeleteProjectProps) => {
   const t = await getTranslations();
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -31,7 +37,8 @@ export const DeleteProject = async ({ environmentId, project, isOwnerOrManager }
     <DeleteProjectRender
       isDeleteDisabled={isDeleteDisabled}
       isOwnerOrManager={isOwnerOrManager}
-      project={project}
+      currentProject={currentProject}
+      organizationProjects={organizationProjects}
     />
   );
 };
