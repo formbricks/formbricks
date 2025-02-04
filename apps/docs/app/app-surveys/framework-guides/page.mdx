@@ -357,17 +357,11 @@ Now, update your App.js/App.tsx file to initialize Formbricks:
 // other imports
 import Formbricks from "@formbricks/react-native";
 
-const config = {
-  environmentId: "<environment-id>",
-  apiHost: "<api-host>",
-  userId: "<user-id>", // optional
-};
-
 export default function App() {
   return (
     <>
       {/* Your app content */}
-      <Formbricks initConfig={config} />
+      <Formbricks appUrl="https://app.formbricks.com" environmentId="your-environment-id" />
     </>
   );
 }
@@ -381,7 +375,7 @@ export default function App() {
   <Property name="environment-id" type="string">
     Formbricks Environment ID.
   </Property>
-  <Property name="api-host" type="string">
+  <Property name="app-url" type="string">
     URL of the hosted Formbricks instance.
   </Property>
 </Properties>
