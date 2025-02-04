@@ -80,6 +80,7 @@
     "testimonial_title": "Transformez les insights clients en expériences irrésistibles.",
     "verification-requested": {
       "invalid_email_address": "Adresse e-mail invalide",
+      "invalid_token": "Jeton non valide ☹️",
       "no_email_provided": "Aucun e-mail fourni",
       "please_click_the_link_in_the_email_to_activate_your_account": "Veuillez cliquer sur le lien dans l'e-mail pour activer votre compte.",
       "please_confirm_your_email_address": "Veuillez confirmer votre adresse e-mail.",
