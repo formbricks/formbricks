@@ -36,9 +36,7 @@ export const GET = async (
 
     try {
       const environmentState = await getEnvironmentState(params.environmentId);
-
-      const { state, revalidateEnvironment } = environmentState;
-      const { data } = state;
+      const { data, revalidateEnvironment } = environmentState;
 
       if (revalidateEnvironment) {
         environmentCache.revalidate({
@@ -48,7 +46,10 @@ export const GET = async (
       }
 
       return responses.successResponse(
-        state,
+        {
+          data,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+        },
         true,
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );
