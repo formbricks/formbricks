@@ -2,7 +2,7 @@ import { randomBytes } from "crypto";
 import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-// import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED } from "@formbricks/lib/constants";
 import { createToken } from "@formbricks/lib/jwt";
 import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
@@ -227,11 +227,12 @@ describe("authOptions", () => {
         const user = { ...mockUser, emailVerified: null };
         const account = { provider: "credentials" } as any;
         // EMAIL_VERIFICATION_DISABLED is imported from constants.
-        // if (!EMAIL_VERIFICATION_DISABLED && authOptions.callbacks?.signIn) {
-        if (!true && authOptions.callbacks?.signIn) {
-          await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
-            "Email Verification is Pending"
-          );
+        if (!EMAIL_VERIFICATION_DISABLED && authOptions.callbacks?.signIn) {
+          if (!true && authOptions.callbacks?.signIn) {
+            await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow(
+              "Email Verification is Pending"
+            );
+          }
         }
       });
     });
