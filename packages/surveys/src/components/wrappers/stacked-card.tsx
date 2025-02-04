@@ -32,7 +32,7 @@ export const StackedCard = ({
   cardArrangement,
 }: StackedCardProps) => {
   const isHidden = offset < 0;
-  const [delayedOffset, setDelayedOffset] = useState<number>(0);
+  const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
   const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
 

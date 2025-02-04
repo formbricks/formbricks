@@ -90,7 +90,14 @@ export const EditorCardMenu = ({
       (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
         card.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
       (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
-        card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceMulti &&
+        card.type === TSurveyQuestionTypeEnum.Ranking) ||
+      (type === TSurveyQuestionTypeEnum.Ranking &&
+        card.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) ||
+      (type === TSurveyQuestionTypeEnum.MultipleChoiceSingle &&
+        card.type === TSurveyQuestionTypeEnum.Ranking) ||
+      (type === TSurveyQuestionTypeEnum.Ranking && card.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle)
     ) {
       updateCard(cardIdx, {
         choices: card.choices,

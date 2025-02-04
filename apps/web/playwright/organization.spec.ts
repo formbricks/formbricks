@@ -138,6 +138,7 @@ test.describe("Create, update and delete team", async () => {
     await page.getByRole("link", { name: "Organization" }).click();
     await page.waitForURL(/\/environments\/[^/]+\/settings\/general/);
 
+    await page.waitForTimeout(2000);
     await page.waitForLoadState("networkidle");
     await expect(page.getByText("Teams")).toBeVisible();
     await page.getByText("Teams").click();

@@ -16,7 +16,6 @@ import {
 import { useParams, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -29,7 +28,6 @@ interface ResponsePageProps {
   surveyId: string;
   webAppUrl: string;
   user?: TUser;
-  contactAttributeKeys: TContactAttributeKey[];
   environmentTags: TTag[];
   responsesPerPage: number;
   locale: TUserLocale;
@@ -42,7 +40,6 @@ export const ResponsePage = ({
   surveyId,
   webAppUrl,
   user,
-  contactAttributeKeys,
   environmentTags,
   responsesPerPage,
   locale,
@@ -112,8 +109,8 @@ export const ResponsePage = ({
   };
 
   const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
-  }, [contactAttributeKeys, survey]);
+    return replaceHeadlineRecall(survey, "default");
+  }, [survey]);
 
   useEffect(() => {
     if (!searchParams?.get("referer")) {

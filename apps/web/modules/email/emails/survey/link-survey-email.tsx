@@ -19,7 +19,7 @@ export function LinkSurveyEmail({
   logoUrl,
 }: LinkSurveyEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl}>
+    <EmailTemplate logoUrl={logoUrl} locale={locale}>
       <Container>
         <Heading>{translateEmailText("verification_email_hey", locale)}</Heading>
         <Text>{translateEmailText("verification_email_thanks", locale)}</Text>
@@ -28,7 +28,7 @@ export function LinkSurveyEmail({
         <Text className="text-xs text-slate-400">
           {translateEmailText("verification_email_survey_name", locale)}: {surveyName}
         </Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );
