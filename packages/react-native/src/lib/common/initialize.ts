@@ -27,59 +27,11 @@ export const setIsInitialize = (state: boolean): void => {
   isInitialized = state;
 };
 
-const migrateAsyncStorage = async (): Promise<{ changed: boolean; newState?: TConfig }> => {
-  const olderConfig = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
-
-  if (olderConfig) {
-    await AsyncStorage.removeItem(RN_ASYNC_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(olderConfig) as TConfig & {
-      personState: TUserState;
-      environmentState: TEnvironmentState;
-      attributes: Record<string, string>;
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- parsedConfig could be falsy
-    if (parsedOldConfig.user || parsedOldConfig.environment) {
-      // already migrated
-      return { changed: false };
-    }
-
-    const { personState, environmentState, attributes, ...rest } = parsedOldConfig;
-
-    const newState: TConfig = {
-      ...rest,
-      user: {
-        ...personState,
-        data: {
-          ...personState.data,
-          ...(attributes.language ? { language: attributes.language } : {}),
-        },
-      },
-      environment: environmentState,
-    };
-
-    return { changed: true, newState };
-  }
-
-  return { changed: false };
-};
-
 export const init = async (
   configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  let appConfig = RNConfig.getInstance();
+  const appConfig = RNConfig.getInstance();
   const logger = Logger.getInstance();
-
-  const { changed, newState } = await migrateAsyncStorage();
-
-  if (changed) {
-    await appConfig.resetConfig();
-    appConfig = RNConfig.getInstance();
-
-    if (newState) {
-      appConfig.update(newState);
-    }
-  }
 
   if (isInitialized) {
     logger.debug("Already initialized, skipping initialization.");

@@ -73,9 +73,6 @@ importers:
       '@formbricks/react-native':
         specifier: workspace:*
         version: link:../../packages/react-native
-      '@react-native-async-storage/async-storage':
-        specifier: 2.1.0
-        version: 2.1.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))
       expo:
         specifier: 52.0.28
         version: 52.0.28(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(encoding@0.1.13)(react-native-webview@13.12.5(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1))(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))(react@18.3.1)
@@ -996,7 +993,7 @@ importers:
   packages/react-native:
     dependencies:
       '@react-native-async-storage/async-storage':
-        specifier: '>=2.1.0'
+        specifier: 2.1.0
         version: 2.1.0(react-native@0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1))
       react-native-webview:
         specifier: '>=13.0.0'
@@ -18228,11 +18225,6 @@ snapshots:
     dependencies:
       merge-options: 3.0.4
       react-native: 0.74.5(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@types/react@18.3.11)(encoding@0.1.13)(react@18.3.1)
-
-  '@react-native-async-storage/async-storage@2.1.0(react-native@0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1))':
-    dependencies:
-      merge-options: 3.0.4
-      react-native: 0.76.6(@babel/core@7.26.0)(@babel/preset-env@7.26.7(@babel/core@7.26.0))(@react-native-community/cli-server-api@13.6.9(encoding@0.1.13))(@types/react@18.3.18)(encoding@0.1.13)(react@18.3.1)
 
   '@react-native-community/cli-clean@13.6.9(encoding@0.1.13)':
     dependencies:
