@@ -56,7 +56,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       setIsDeleting(false);
       router.refresh();
     } catch (err) {
-      console.log({ err });
       setIsDeleting(false);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }

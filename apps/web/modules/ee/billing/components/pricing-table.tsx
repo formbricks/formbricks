@@ -102,7 +102,6 @@ export const PricingTable = ({
         throw new Error(t("common.something_went_wrong_please_try_again"));
       }
     } catch (err) {
-      console.log({ err });
       toast.error(t("environments.settings.billing.unable_to_upgrade_plan"));
     }
   };

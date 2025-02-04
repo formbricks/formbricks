@@ -92,17 +92,18 @@ export const ZJsPersonState = z.object({
     ),
     responses: z.array(ZId), // responded survey ids
     lastDisplayAt: z.date().nullable(),
+    language: z.string().optional(),
   }),
 });
 
 export type TJsPersonState = z.infer<typeof ZJsPersonState>;
 
-export const ZJsPersonIdentifyInput = z.object({
+export const ZJsUserIdentifyInput = z.object({
   environmentId: z.string().cuid(),
   userId: z.string(),
 });
 
-export type TJsPersonIdentifyInput = z.infer<typeof ZJsPersonIdentifyInput>;
+export type TJsPersonIdentifyInput = z.infer<typeof ZJsUserIdentifyInput>;
 
 export const ZJsConfig = z.object({
   environmentId: z.string().cuid(),
@@ -147,6 +148,11 @@ export const ZJsPeopleUserIdInput = z.object({
 
 export const ZJsContactsUpdateAttributeInput = z.object({
   attributes: ZAttributes,
+});
+
+export const ZJsUserUpdateInput = z.object({
+  userId: z.string().trim().min(1),
+  attributes: ZAttributes.optional(),
 });
 
 export type TJsPeopleUpdateAttributeInput = z.infer<typeof ZJsContactsUpdateAttributeInput>;
