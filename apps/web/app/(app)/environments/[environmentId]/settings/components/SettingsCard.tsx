@@ -39,6 +39,7 @@ export const SettingsCard = ({
             )}
           </div>
         </div>
+        <h1 className="text-3xl font-bold capitalize text-orange-800">{t("common.project_configuration")}</h1>
         <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>

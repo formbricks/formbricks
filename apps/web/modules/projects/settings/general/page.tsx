@@ -58,7 +58,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        {/* </PageHeader><PageHeader pageTitle={t("common.configuration")}> */}
         <ProjectConfigNavigation
           environmentId={params.environmentId}
           activeId="general"
