@@ -148,13 +148,13 @@ importers:
         version: 2.2.1
       '@tailwindcss/typography':
         specifier: 0.5.15
-        version: 0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)))
+        version: 0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))
       acorn:
         specifier: 8.14.0
         version: 8.14.0
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.49)
+        version: 10.4.20(postcss@8.5.1)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -247,7 +247,7 @@ importers:
         version: 1.2.1
       tailwindcss:
         specifier: 3.4.16
-        version: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+        version: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
       unist-util-filter:
         specifier: 5.0.1
         version: 5.0.1
@@ -492,13 +492,16 @@ importers:
         version: 0.5.9(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)))
       '@tailwindcss/typography':
         specifier: 0.5.15
-        version: 0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)))
+        version: 0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))
       '@tanstack/react-table':
         specifier: 8.20.6
         version: 8.20.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@tolgee/cli':
         specifier: 2.8.1
         version: 2.8.1(jiti@2.4.1)(typescript@5.7.2)
+      '@tolgee/format-icu':
+        specifier: 6.0.1
+        version: 6.0.1
       '@tolgee/react':
         specifier: 6.0.1
         version: 6.0.1(react@19.0.0)
@@ -519,7 +522,7 @@ importers:
         version: 4.0.18(react@19.0.0)(zod@3.24.1)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.5.1)
+        version: 10.4.20(postcss@8.4.49)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
@@ -657,7 +660,7 @@ importers:
         version: 2.5.5
       tailwindcss:
         specifier: 3.4.16
-        version: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+        version: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
       ua-parser-js:
         specifier: 2.0.0
         version: 2.0.0
@@ -1086,7 +1089,7 @@ importers:
         version: 14.2.4
       tailwindcss:
         specifier: 3.4.16
-        version: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+        version: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
       terser:
         specifier: 5.37.0
         version: 5.37.0
@@ -5782,6 +5785,9 @@ packages:
 
   '@tolgee/core@6.0.1':
     resolution: {integrity: sha512-CUMCHAhqWy/eQGDS5yDINt/5Me0Cb8oVz9DDQCMast2ILitoqckliC4/M+FjF3MreF/emEb3LpVmXfB2X1PTJA==}
+
+  '@tolgee/format-icu@6.0.1':
+    resolution: {integrity: sha512-G+RsjxzzLzTq0GrtgBnfRVyCOf9gdfO0kOZxWXLJe5EbfVZJ9ldziuBWWCb0mT3HwMbLyZco+FG5WyJXMc01Tw==}
 
   '@tolgee/react@6.0.1':
     resolution: {integrity: sha512-pg34K9Lrd4q1gU3hv4/Llmvb96ulUw8HqPKEGI+zqmlU6a1bniWcwTGi9LSgojuvgeIJN6Lw11HSbVy/jnBJNw==}
@@ -16704,7 +16710,7 @@ snapshots:
 
   '@headlessui/tailwindcss@0.2.1(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))':
     dependencies:
-      tailwindcss: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+      tailwindcss: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
 
   '@hookform/resolvers@3.9.1(react-hook-form@7.54.1(react@19.0.0))':
     dependencies:
@@ -20029,15 +20035,15 @@ snapshots:
   '@tailwindcss/forms@0.5.9(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)))':
     dependencies:
       mini-svg-data-uri: 1.4.4
-      tailwindcss: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+      tailwindcss: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
 
-  '@tailwindcss/typography@0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)))':
+  '@tailwindcss/typography@0.5.15(tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)))':
     dependencies:
       lodash.castarray: 4.4.0
       lodash.isplainobject: 4.0.6
       lodash.merge: 4.6.2
       postcss-selector-parser: 6.0.10
-      tailwindcss: 3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+      tailwindcss: 3.4.16(ts-node@10.9.2(typescript@5.7.2))
 
   '@tanstack/react-table@8.20.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
@@ -20100,6 +20106,8 @@ snapshots:
       - typescript
 
   '@tolgee/core@6.0.1': {}
+
+  '@tolgee/format-icu@6.0.1': {}
 
   '@tolgee/react@6.0.1(react@19.0.0)':
     dependencies:
@@ -25495,8 +25503,8 @@ snapshots:
     dependencies:
       '@babel/core': 7.26.0
       '@babel/generator': 7.26.5
-      '@babel/parser': 7.26.5
-      '@babel/types': 7.26.5
+      '@babel/parser': 7.26.7
+      '@babel/types': 7.26.7
       flow-enums-runtime: 0.0.6
       metro: 0.80.12
       metro-babel-transformer: 0.80.12
@@ -26829,7 +26837,7 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.4.49
 
-  postcss-load-config@4.0.2(postcss@8.4.49)(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)):
+  postcss-load-config@4.0.2(postcss@8.4.49)(ts-node@10.9.2(typescript@5.7.2)):
     dependencies:
       lilconfig: 3.1.3
       yaml: 2.7.0
@@ -28691,7 +28699,7 @@ snapshots:
 
   tailwind-merge@2.5.5: {}
 
-  tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2)):
+  tailwindcss@3.4.16(ts-node@10.9.2(typescript@5.7.2)):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -28710,7 +28718,7 @@ snapshots:
       postcss: 8.4.49
       postcss-import: 15.1.0(postcss@8.4.49)
       postcss-js: 4.0.1(postcss@8.4.49)
-      postcss-load-config: 4.0.2(postcss@8.4.49)(ts-node@10.9.2(@types/node@22.12.0)(typescript@5.7.2))
+      postcss-load-config: 4.0.2(postcss@8.4.49)(ts-node@10.9.2(typescript@5.7.2))
       postcss-nested: 6.2.0(postcss@8.4.49)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.10

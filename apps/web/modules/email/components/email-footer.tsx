@@ -1,5 +1,6 @@
 import { getTranslate } from "@/tolgee/server";
 import { Text } from "@react-email/components";
+import React from "react";
 
 export async function EmailFooter(): Promise<React.JSX.Element> {
   const t = await getTranslate();
