@@ -7,14 +7,14 @@ import {
   addEventListeners,
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
+import { Logger } from "@/lib/common/logger";
 import {
   checkInitialized,
   deinitalize,
   handleErrorOnFirstInit,
-  init,
   setIsInitialize,
-} from "@/lib/common/initialize";
-import { Logger } from "@/lib/common/logger";
+  setup,
+} from "@/lib/common/setup";
 import { filterSurveys, isNowExpired } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
@@ -99,17 +99,17 @@ describe("initialize.ts", () => {
     vi.restoreAllMocks();
   });
 
-  describe("init()", () => {
+  describe("setup()", () => {
     test("returns ok if already initialized", async () => {
       getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
       setIsInitialize(true);
-      const result = await init({ environmentId: "env_id", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_id", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Already initialized, skipping initialization.");
     });
 
     test("fails if no environmentId is provided", async () => {
-      const result = await init({ environmentId: "", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "", appUrl: "https://my.url" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("missing_field");
@@ -117,14 +117,14 @@ describe("initialize.ts", () => {
     });
 
     test("fails if no appUrl is provided", async () => {
-      const result = await init({ environmentId: "env_123", appUrl: "" });
+      const result = await setup({ environmentId: "env_123", appUrl: "" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("missing_field");
       }
     });
 
-    test("skips init if existing config is in error state and not expired", async () => {
+    test("skips setup if existing config is in error state and not expired", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: "env_123",
@@ -139,7 +139,7 @@ describe("initialize.ts", () => {
 
       (isNowExpired as unknown as Mock).mockReturnValue(true);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Formbricks was set to an error state.");
       expect(mockLogger.debug).toHaveBeenCalledWith("Error state is not expired, skipping initialization");
@@ -158,7 +158,7 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Formbricks was set to an error state.");
       expect(mockLogger.debug).toHaveBeenCalledWith("Error state is expired. Continue with initialization.");
@@ -202,7 +202,7 @@ describe("initialize.ts", () => {
 
       (filterSurveys as unknown as Mock).mockReturnValueOnce([{ name: "S1" }, { name: "S2" }]);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
 
       // environmentState was fetched
@@ -246,7 +246,7 @@ describe("initialize.ts", () => {
 
       (filterSurveys as unknown as Mock).mockReturnValueOnce([{ name: "SurveyA" }]);
 
-      const result = await init({ environmentId: "envX", appUrl: "https://urlX" });
+      const result = await setup({ environmentId: "envX", appUrl: "https://urlX" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("No existing configuration found.");
       expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -283,7 +283,7 @@ describe("initialize.ts", () => {
         error: { code: "forbidden", responseMessage: "No access" },
       });
 
-      await expect(init({ environmentId: "envX", appUrl: "https://urlX" })).rejects.toThrow(
+      await expect(setup({ environmentId: "envX", appUrl: "https://urlX" })).rejects.toThrow(
         "Could not initialize formbricks"
       );
     });
@@ -302,7 +302,7 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValueOnce(mockConfig as unknown as RNConfig);
 
-      const result = await init({ environmentId: "env_abc", appUrl: "https://test.app" });
+      const result = await setup({ environmentId: "env_abc", appUrl: "https://test.app" });
       expect(result.ok).toBe(true);
       expect(addEventListeners).toHaveBeenCalled();
       expect(addCleanupEventListeners).toHaveBeenCalled();

@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CommandQueue } from "@/lib/common/command-queue";
-import { checkInitialized } from "@/lib/common/initialize";
+import { checkInitialized } from "@/lib/common/setup";
 import { type Result } from "@/types/error";
 
 // Mock the initialize module so we can control checkInitialized()
-vi.mock("@/lib/common/initialize", () => ({
+vi.mock("@/lib/common/setup", () => ({
   checkInitialized: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
-import { deinitalize, init } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
+import { deinitalize, setup } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { logout, logoutUser, setUserId } from "@/lib/user/user";
 
@@ -32,9 +32,9 @@ vi.mock("@/lib/user/update-queue", () => ({
   },
 }));
 
-vi.mock("@/lib/common/initialize", () => ({
+vi.mock("@/lib/common/setup", () => ({
   deinitalize: vi.fn(),
-  init: vi.fn(),
+  setup: vi.fn(),
 }));
 
 describe("user.ts", () => {
@@ -134,12 +134,12 @@ describe("user.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
-      (init as Mock).mockResolvedValue(undefined);
+      (setup as Mock).mockResolvedValue(undefined);
 
       const result = await logout();
 
       expect(deinitalize).toHaveBeenCalled();
-      expect(init).toHaveBeenCalledWith({
+      expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,
       });
@@ -158,12 +158,12 @@ describe("user.ts", () => {
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
       const mockError = { code: "network_error", message: "Failed to connect" };
-      (init as Mock).mockRejectedValue(mockError);
+      (setup as Mock).mockRejectedValue(mockError);
 
       const result = await logout();
 
       expect(deinitalize).toHaveBeenCalled();
-      expect(init).toHaveBeenCalledWith({
+      expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,
       });

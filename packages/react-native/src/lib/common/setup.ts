@@ -27,7 +27,7 @@ export const setIsInitialize = (state: boolean): void => {
   isInitialized = state;
 };
 
-export const init = async (
+export const setup = async (
   configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   const appConfig = RNConfig.getInstance();

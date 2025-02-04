@@ -1,6 +1,6 @@
 import { RNConfig } from "@/lib/common/config";
-import { deinitalize, init } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
+import { deinitalize, setup } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "@/types/error";
 
@@ -55,7 +55,7 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
   void logoutUser();
 
   try {
-    await init(initParams);
+    await setup(initParams);
     return okVoid();
   } catch (e) {
     return err(e as NetworkError);

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useSyncExternalStore } from "react";
 import { SurveyWebView } from "@/components/survey-web-view";
-import { init } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
+import { setup } from "@/lib/common/setup";
 import { SurveyStore } from "@/lib/survey/store";
 
 interface FormbricksProps {
@@ -15,9 +15,9 @@ const logger = Logger.getInstance();
 export function Formbricks({ appUrl, environmentId }: FormbricksProps): React.JSX.Element | null {
   // initializes sdk
   useEffect(() => {
-    const initialize = async (): Promise<void> => {
+    const setupFormbricks = async (): Promise<void> => {
       try {
-        await init({
+        await setup({
           environmentId,
           appUrl,
         });
@@ -26,7 +26,7 @@ export function Formbricks({ appUrl, environmentId }: FormbricksProps): React.JS
       }
     };
 
-    initialize().catch(() => {
+    setupFormbricks().catch(() => {
       logger.debug("Initialization error");
     });
   }, [environmentId, appUrl]);
