@@ -98,6 +98,7 @@ export default function App(): JSX.Element {
       </View>
 
       <StatusBar style="auto" />
+
       <Formbricks
         appUrl={process.env.EXPO_PUBLIC_APP_URL as string}
         environmentId={process.env.EXPO_PUBLIC_FORMBRICKS_ENVIRONMENT_ID as string}
