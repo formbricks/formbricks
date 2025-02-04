@@ -87,9 +87,9 @@ export default function App(): JSX.Element {
         />
 
         <Button
-          title="Set Language (hi)"
+          title="Set Language (de)"
           onPress={() => {
-            setLanguage("hi").catch((error: unknown) => {
+            setLanguage("de").catch((error: unknown) => {
               // eslint-disable-next-line no-console -- logging is allowed in demo apps
               console.error("Error setting language:", error);
             });
