@@ -7,8 +7,9 @@ import { ZUserEmail } from "@formbricks/types/user";
 
 export const VerificationRequestedPage = async ({ searchParams }) => {
   const t = await getTranslate();
+  const { token } = await searchParams;
   try {
-    const email = getEmailFromEmailToken(searchParams.token);
+    const email = getEmailFromEmailToken(token);
     const parsedEmail = ZUserEmail.safeParse(email);
     if (parsedEmail.success) {
       return (

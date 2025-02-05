@@ -4,10 +4,12 @@ import { getTranslate } from "@/tolgee/server";
 
 export const VerifyPage = async ({ searchParams }) => {
   const t = await getTranslate();
-  return searchParams && searchParams.token ? (
+  const { token } = await searchParams;
+
+  return token ? (
     <FormWrapper>
       <p className="text-center">{t("auth.verify.verifying")}</p>
-      <SignIn token={searchParams.token} />
+      <SignIn token={token} />
     </FormWrapper>
   ) : (
     <p className="text-center">{t("auth.verify.no_token_provided")}</p>
