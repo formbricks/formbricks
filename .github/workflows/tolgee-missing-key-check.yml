@@ -4,9 +4,8 @@ permissions:
   contents: read
 
 on:
-  push:
-    branches:
-      - tolgee
+  workflow_dispatch:
+
 jobs:
   check-missing-translations:
     runs-on: ubuntu-latest
