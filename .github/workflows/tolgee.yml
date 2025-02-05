@@ -1,7 +1,6 @@
 name: Tolgee Tagging on PR Merge
 permissions:
   contents: read
-  pull-requests: write
 
 on:
   push:

@@ -1,16 +1,15 @@
 name: Check Missing Translations
 
-on:
-  - pull_request_target
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+permissions:
+  contents: read
 
+on:
+  push:
+    branches:
+      - tolgee
 jobs:
   check-missing-translations:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
