@@ -317,9 +317,11 @@ export const getQuestionSummary = async (
     switch (question.type) {
       case TSurveyQuestionTypeEnum.OpenText: {
         let values: TSurveyQuestionSummaryOpenText["samples"] = [];
+        const insightResponsesIds: string[] = [];
         responses.forEach((response) => {
           const answer = response.data[question.id];
           if (answer && typeof answer === "string") {
+            insightResponsesIds.push(response.id);
             values.push({
               id: response.id,
               updatedAt: response.updatedAt,
@@ -329,7 +331,12 @@ export const getQuestionSummary = async (
             });
           }
         });
-        const insights = await getInsightsBySurveyIdQuestionId(survey.id, question.id, 50);
+        const insights = await getInsightsBySurveyIdQuestionId(
+          survey.id,
+          question.id,
+          insightResponsesIds,
+          50
+        );
 
         summary.push({
           type: question.type,
