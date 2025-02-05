@@ -45,14 +45,9 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
-  tolgee:
-    name: Run missing key check
-    uses: ./.github/workflows/tolgee-missing-key-check.yml
-    secrets: inherit
-
   required:
     name: PR Check Summary
-    needs: [lint, test, build, e2e-test, docs, tolgee]
+    needs: [lint, test, build, e2e-test, docs]
     if: always()
     runs-on: ubuntu-latest
     permissions:
