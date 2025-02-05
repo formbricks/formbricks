@@ -9,7 +9,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface DisplayOption {
@@ -30,28 +30,37 @@ export const RecontactOptionsCard = ({
   environmentId,
 }: RecontactOptionsCardProps) => {
   const { t } = useTranslate();
-  const displayOptions: DisplayOption[] = [
-    {
-      id: "displayOnce",
-      name: t("environments.surveys.edit.show_only_once"),
-      description: t("environments.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"),
-    },
-    {
-      id: "displaySome",
-      name: t("environments.surveys.edit.show_multiple_times"),
-      description: t("environments.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"),
-    },
-    {
-      id: "displayMultiple",
-      name: t("environments.surveys.edit.until_they_submit_a_response"),
-      description: t("environments.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
-    },
-    {
-      id: "respondMultiple",
-      name: t("environments.surveys.edit.keep_showing_while_conditions_match"),
-      description: t("environments.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
-    },
-  ];
+
+  const displayOptions: DisplayOption[] = useMemo(
+    () => [
+      {
+        id: "displayOnce",
+        name: t("environments.surveys.edit.show_only_once"),
+        description: t(
+          "environments.surveys.edit.the_survey_will_be_shown_once_even_if_person_doesnt_respond"
+        ),
+      },
+      {
+        id: "displaySome",
+        name: t("environments.surveys.edit.show_multiple_times"),
+        description: t(
+          "environments.surveys.edit.the_survey_will_be_shown_multiple_times_until_they_respond"
+        ),
+      },
+      {
+        id: "displayMultiple",
+        name: t("environments.surveys.edit.until_they_submit_a_response"),
+        description: t("environments.surveys.edit.if_you_really_want_that_answer_ask_until_you_get_it"),
+      },
+      {
+        id: "respondMultiple",
+        name: t("environments.surveys.edit.keep_showing_while_conditions_match"),
+        description: t("environments.surveys.edit.even_after_they_submitted_a_response_e_g_feedback_box"),
+      },
+    ],
+    [t]
+  );
+
   const [open, setOpen] = useState(false);
   const ignoreWaiting = localSurvey.recontactDays !== null;
   const [inputDays, setInputDays] = useState(

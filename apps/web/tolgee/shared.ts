@@ -1,5 +1,4 @@
-import { FormatIcu } from "@tolgee/format-icu";
-import { DevTools, Tolgee } from "@tolgee/web";
+import { DevTools, FormatSimple, Tolgee } from "@tolgee/web";
 
 const apiKey = process.env.NEXT_PUBLIC_TOLGEE_API_KEY;
 const apiUrl = process.env.NEXT_PUBLIC_TOLGEE_API_URL;
@@ -10,7 +9,7 @@ export const DEFAULT_LANGUAGE = "en-US";
 
 export function TolgeeBase() {
   return Tolgee()
-    .use(FormatIcu())
+    .use(FormatSimple())
     .use(DevTools())
     .updateDefaults({
       apiKey,

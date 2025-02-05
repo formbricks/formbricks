@@ -1,3 +1,5 @@
+"use client";
+
 import { SlackIcon } from "@/modules/ui/components/icons";
 import { useTranslate } from "@tolgee/react";
 
