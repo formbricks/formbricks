@@ -1,9 +1,9 @@
 import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
-import { deinitalize, setup } from "@/lib/common/setup";
+import { setup, tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { logout, logoutUser, setUserId } from "@/lib/user/user";
+import { logout, setUserId } from "@/lib/user/user";
 
 // Mock dependencies
 vi.mock("@/lib/common/config", () => ({
@@ -33,7 +33,7 @@ vi.mock("@/lib/user/update-queue", () => ({
 }));
 
 vi.mock("@/lib/common/setup", () => ({
-  deinitalize: vi.fn(),
+  tearDown: vi.fn(),
   setup: vi.fn(),
 }));
 
@@ -115,15 +115,8 @@ describe("user.ts", () => {
     });
   });
 
-  describe("logoutUser", () => {
-    test("calls deinitalize", async () => {
-      await logoutUser();
-      expect(deinitalize).toHaveBeenCalled();
-    });
-  });
-
   describe("logout", () => {
-    test("successfully reinitializes after logout", async () => {
+    test("successfully sets up formbricks after logout", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
@@ -138,7 +131,7 @@ describe("user.ts", () => {
 
       const result = await logout();
 
-      expect(deinitalize).toHaveBeenCalled();
+      expect(tearDown).toHaveBeenCalled();
       expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,
@@ -146,7 +139,7 @@ describe("user.ts", () => {
       expect(result.ok).toBe(true);
     });
 
-    test("returns error if initialization fails", async () => {
+    test("returns error if setup fails", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
@@ -162,7 +155,7 @@ describe("user.ts", () => {
 
       const result = await logout();
 
-      expect(deinitalize).toHaveBeenCalled();
+      expect(tearDown).toHaveBeenCalled();
       expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,

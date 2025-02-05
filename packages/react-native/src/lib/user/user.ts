@@ -1,6 +1,6 @@
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
-import { deinitalize, setup } from "@/lib/common/setup";
+import { setup, tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type ApiErrorResponse, type NetworkError, type Result, err, okVoid } from "@/types/error";
 
@@ -31,10 +31,6 @@ export const setUserId = async (userId: string): Promise<Result<void, ApiErrorRe
   return okVoid();
 };
 
-export const logoutUser = async (): Promise<void> => {
-  await deinitalize();
-};
-
 export const logout = async (): Promise<Result<void, NetworkError>> => {
   const logger = Logger.getInstance();
   const appConfig = RNConfig.getInstance();
@@ -52,7 +48,8 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
     appUrl: appConfig.get().appUrl,
   };
 
-  void logoutUser();
+  // logout the user, remove user state and setup formbricks again
+  await tearDown();
 
   try {
     await setup(initParams);

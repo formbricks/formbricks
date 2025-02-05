@@ -54,8 +54,8 @@ export interface NetworkError {
   url: URL;
   responseMessage: string;
 }
-export interface NotInitializedError {
-  code: "not_initialized";
+export interface NotSetupError {
+  code: "not_setup";
   message: string;
 }
 
