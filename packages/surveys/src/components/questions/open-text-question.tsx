@@ -111,10 +111,16 @@ export function OpenTextQuestion({
                   handleInputChange(e.currentTarget.value);
                 }}
                 className="fb-border-border placeholder:fb-text-placeholder fb-text-subheading focus:fb-border-brand fb-bg-input-bg fb-rounded-custom fb-block fb-w-full fb-border fb-p-2 fb-shadow-sm focus:fb-outline-none focus:fb-ring-0 sm:fb-text-sm"
-                pattern={question.inputType === "phone" ? "[0-9+ ]+" : ".*"}
+                pattern={question.inputType === "phone" ? "^[0-9+][0-9+\\- ]*[0-9]$" : ".*"}
                 title={question.inputType === "phone" ? "Enter a valid phone number" : undefined}
                 minlength={question.inputType === "text" ? question.charLimit?.min : undefined}
-                maxlength={question.inputType === "text" ? question.charLimit?.max : undefined}
+                maxlength={
+                  question.inputType === "text"
+                    ? question.charLimit?.max
+                    : question.inputType === "phone"
+                      ? 30
+                      : undefined
+                }
               />
             ) : (
               <textarea
