@@ -7,8 +7,8 @@ import { AccessView } from "@/modules/ee/teams/project-teams/components/access-v
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -16,7 +16,7 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getTeamsByProjectId } from "./lib/team";
 
 export const ProjectTeams = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const params = await props.params;
   const [project, session, organization] = await Promise.all([
     getProjectByEnvironmentId(params.environmentId),

@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { Unplug } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -9,7 +11,7 @@ interface TEmptyAppSurveysProps {
 }
 
 export const EmptyAppSurveys = ({ environment }: TEmptyAppSurveysProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="flex w-full items-center justify-center gap-8 bg-slate-100 py-12">
       <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-white">

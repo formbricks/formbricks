@@ -3,10 +3,10 @@
 // Error components must be Client components
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 const Error = ({ error, reset }: { error: Error; reset: () => void }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   if (process.env.NODE_ENV === "development") {
     console.error(error.message);
   }

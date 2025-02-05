@@ -5,8 +5,8 @@ import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { FilterIcon, PlusIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -28,7 +28,7 @@ export function CreateSegmentModal({
   contactAttributeKeys,
   segments,
 }: TCreateSegmentModalProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const initialSegmentState = {
     title: "",

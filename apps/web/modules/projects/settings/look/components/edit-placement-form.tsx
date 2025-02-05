@@ -9,7 +9,7 @@ import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -39,7 +39,7 @@ const ZProjectPlacementInput = z.object({
 type EditPlacementFormValues = z.infer<typeof ZProjectPlacementInput>;
 
 export const EditPlacementForm = ({ project, isReadOnly }: EditPlacementProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<EditPlacementFormValues>({
     defaultValues: {
       placement: project.placement,

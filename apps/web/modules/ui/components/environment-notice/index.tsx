@@ -1,5 +1,5 @@
+import { getTranslate } from "@/tolgee/server";
 import { LightbulbIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 
@@ -9,7 +9,7 @@ interface EnvironmentNoticeProps {
 }
 
 export const EnvironmentNotice = async ({ environmentId, subPageUrl }: EnvironmentNoticeProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const environment = await getEnvironment(environmentId);
   if (!environment) {
     throw new Error("Environment not found");

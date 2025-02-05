@@ -1,6 +1,8 @@
+"use client";
+
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { PipelineTriggers } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 
 interface TriggerCheckboxGroupProps {
@@ -32,7 +34,7 @@ export const TriggerCheckboxGroup: React.FC<TriggerCheckboxGroupProps> = ({
   onCheckboxChange,
   allowChanges,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mt-1 rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">

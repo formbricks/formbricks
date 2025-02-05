@@ -9,7 +9,6 @@ interface NoLiveSurveyNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  locale: string;
 }
 
 export function NoLiveSurveyNotificationEmail({
@@ -18,7 +17,6 @@ export function NoLiveSurveyNotificationEmail({
   endDate,
   startYear,
   endYear,
-  locale,
 }: NoLiveSurveyNotificationEmailProps): React.JSX.Element {
   return (
     <div>
@@ -28,9 +26,8 @@ export function NoLiveSurveyNotificationEmail({
         projectName={notificationData.projectName}
         startDate={startDate}
         startYear={startYear}
-        locale={locale}
       />
-      <CreateReminderNotificationBody notificationData={notificationData} locale={locale} />
+      <CreateReminderNotificationBody notificationData={notificationData} />
     </div>
   );
 }

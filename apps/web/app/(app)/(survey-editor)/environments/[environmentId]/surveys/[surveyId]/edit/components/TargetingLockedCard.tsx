@@ -1,7 +1,9 @@
+"use client";
+
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { LockIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 interface TargetingLockedCardProps {
@@ -10,7 +12,7 @@ interface TargetingLockedCardProps {
 }
 
 export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: TargetingLockedCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
   return (

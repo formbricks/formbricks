@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect } from "react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
@@ -14,7 +14,7 @@ interface OpenIdButtonProps {
 }
 
 export const OpenIdButton = ({ inviteUrl, lastUsed, directRedirect = false, text }: OpenIdButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "OpenID");

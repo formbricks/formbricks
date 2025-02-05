@@ -6,8 +6,8 @@ import { Label } from "@/modules/ui/components/label";
 import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
@@ -37,7 +37,7 @@ export const MatrixQuestionForm = ({
   locale,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
-  const t = useTranslations();
+  const { t } = useTranslate();
   // Function to add a new Label input field
   const handleAddLabel = (type: "row" | "column") => {
     if (type === "row") {

@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFnType } from "@tolgee/react";
 import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
@@ -37,7 +38,6 @@ import {
   TSurveyRankingQuestion,
   TSurveyRatingQuestion,
 } from "@formbricks/types/surveys/types";
-import { translate } from "../templates";
 import { replaceQuestionPresetPlaceholders } from "./templates";
 
 export type TQuestion = {
@@ -48,25 +48,25 @@ export type TQuestion = {
   preset: any;
 };
 
-export const getQuestionTypes = (locale: string): TQuestion[] => [
+export const getQuestionTypes = (t: TFnType): TQuestion[] => [
   {
     id: QuestionId.OpenText,
-    label: translate("free_text", locale),
-    description: translate("free_text_description", locale),
+    label: t("templates.free_text"),
+    description: t("templates.free_text_description"),
     icon: MessageSquareTextIcon,
     preset: {
       headline: { default: "" },
-      placeholder: { default: translate("free_text_placeholder", locale) },
+      placeholder: { default: t("templates.free_text_placeholder") },
       longAnswer: true,
       inputType: "text",
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyOpenTextQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceSingle,
-    label: translate("single_select", locale),
-    description: translate("single_select_description", locale),
+    label: t("templates.single_select"),
+    description: t("templates.single_select_description"),
     icon: Rows3Icon,
     preset: {
       headline: { default: "" },
@@ -81,14 +81,14 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
         },
       ],
       shuffleOption: "none",
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.MultipleChoiceMulti,
-    label: translate("multi_select", locale),
-    description: translate("multi_select_description", locale),
+    label: t("templates.multi_select"),
+    description: t("templates.multi_select_description"),
     icon: ListIcon,
     preset: {
       headline: { default: "" },
@@ -107,55 +107,55 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
         },
       ],
       shuffleOption: "none",
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyMultipleChoiceQuestion>,
   },
   {
     id: QuestionId.PictureSelection,
-    label: translate("picture_selection", locale),
-    description: translate("picture_selection_description", locale),
+    label: t("templates.picture_selection"),
+    description: t("templates.picture_selection_description"),
     icon: ImageIcon,
     preset: {
       headline: { default: "" },
       allowMulti: true,
       choices: [],
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyPictureSelectionQuestion>,
   },
   {
     id: QuestionId.Rating,
-    label: translate("rating", locale),
-    description: translate("rating_description", locale),
+    label: t("templates.rating"),
+    description: t("templates.rating_description"),
     icon: StarIcon,
     preset: {
       headline: { default: "" },
       scale: "star",
       range: 5,
-      lowerLabel: { default: translate("rating_lower_label", locale) },
-      upperLabel: { default: translate("rating_upper_label", locale) },
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      lowerLabel: { default: t("templates.rating_lower_label") },
+      upperLabel: { default: t("templates.rating_upper_label") },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyRatingQuestion>,
   },
   {
     id: QuestionId.NPS,
-    label: translate("nps", locale),
-    description: translate("nps_description", locale),
+    label: t("templates.nps"),
+    description: t("templates.nps_description"),
     icon: PresentationIcon,
     preset: {
       headline: { default: "" },
-      lowerLabel: { default: translate("nps_lower_label", locale) },
-      upperLabel: { default: translate("nps_upper_label", locale) },
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      lowerLabel: { default: t("templates.nps_lower_label") },
+      upperLabel: { default: t("templates.nps_upper_label") },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyNPSQuestion>,
   },
   {
     id: QuestionId.Ranking,
-    label: translate("ranking", locale),
-    description: translate("ranking_description", locale),
+    label: t("templates.ranking"),
+    description: t("templates.ranking_description"),
     icon: ListOrderedIcon,
     preset: {
       headline: {
@@ -171,14 +171,14 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
           label: { default: "" },
         },
       ],
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyRankingQuestion>,
   },
   {
     id: QuestionId.Matrix,
-    label: translate("matrix", locale),
-    description: translate("matrix_description", locale),
+    label: t("templates.matrix"),
+    description: t("templates.matrix_description"),
     icon: Grid3X3Icon,
     preset: {
       headline: {
@@ -186,79 +186,79 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       },
       rows: [{ default: "" }, { default: "" }],
       columns: [{ default: "" }, { default: "" }],
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyMatrixQuestion>,
   },
   {
     id: QuestionId.CTA,
-    label: translate("statement_call_to_action", locale),
-    description: translate("cta_description", locale),
+    label: t("templates.statement_call_to_action"),
+    description: t("templates.cta_description"),
     icon: MousePointerClickIcon,
     preset: {
       headline: { default: "" },
       html: {
         default: "",
       },
-      buttonLabel: { default: translate("book_interview", locale) },
+      buttonLabel: { default: t("templates.book_interview") },
       buttonExternal: false,
-      dismissButtonLabel: { default: translate("skip", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      dismissButtonLabel: { default: t("templates.skip") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyCTAQuestion>,
   },
   {
     id: QuestionId.Consent,
-    label: translate("consent", locale),
-    description: translate("consent_description", locale),
+    label: t("templates.consent"),
+    description: t("templates.consent_description"),
     icon: CheckIcon,
     preset: {
       headline: { default: "" },
       html: { default: "" },
       label: { default: "" },
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyConsentQuestion>,
   },
   {
     id: QuestionId.FileUpload,
-    label: translate("file_upload", locale),
-    description: translate("file_upload_description", locale),
+    label: t("templates.file_upload"),
+    description: t("templates.file_upload_description"),
     icon: ArrowUpFromLineIcon,
     preset: {
       headline: { default: "" },
       allowMultipleFiles: false,
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyFileUploadQuestion>,
   },
   {
     id: QuestionId.Date,
-    label: translate("date", locale),
-    description: translate("date_description", locale),
+    label: t("templates.date"),
+    description: t("templates.date_description"),
     icon: CalendarDaysIcon,
     preset: {
       headline: { default: "" },
       format: "M-d-y",
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyDateQuestion>,
   },
   {
     id: QuestionId.Cal,
-    label: translate("schedule_a_meeting", locale),
-    description: translate("schedule_a_meeting_description", locale),
+    label: t("templates.schedule_a_meeting"),
+    description: t("templates.schedule_a_meeting_description"),
     icon: PhoneIcon,
     preset: {
       headline: { default: "" },
       calUserName: "rick/get-rick-rolled",
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyCalQuestion>,
   },
   {
     id: QuestionId.Address,
-    label: translate("address", locale),
-    description: translate("address_description", locale),
+    label: t("templates.address"),
+    description: t("templates.address_description"),
     icon: HomeIcon,
     preset: {
       headline: { default: "" },
@@ -268,14 +268,14 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       state: { show: true, required: true, placeholder: { default: "State" } },
       zip: { show: true, required: true, placeholder: { default: "Zip" } },
       country: { show: true, required: true, placeholder: { default: "Country" } },
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyAddressQuestion>,
   },
   {
     id: QuestionId.ContactInfo,
-    label: translate("contact_info", locale),
-    description: translate("contact_info_description", locale),
+    label: t("templates.contact_info"),
+    description: t("templates.contact_info_description"),
     icon: ContactIcon,
     preset: {
       headline: { default: "" },
@@ -284,14 +284,14 @@ export const getQuestionTypes = (locale: string): TQuestion[] => [
       email: { show: true, required: true, placeholder: { default: "Email" } },
       phone: { show: true, required: true, placeholder: { default: "Phone" } },
       company: { show: true, required: true, placeholder: { default: "Company" } },
-      buttonLabel: { default: translate("next", locale) },
-      backButtonLabel: { default: translate("back", locale) },
+      buttonLabel: { default: t("templates.next") },
+      backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
 
-export const getCXQuestionTypes = (locale: string) =>
-  getQuestionTypes(locale).filter((questionType) => {
+export const getCXQuestionTypes = (t: TFnType) =>
+  getQuestionTypes(t).filter((questionType) => {
     return [
       TSurveyQuestionTypeEnum.OpenText,
       TSurveyQuestionTypeEnum.MultipleChoiceSingle,
@@ -303,18 +303,17 @@ export const getCXQuestionTypes = (locale: string) =>
     ].includes(questionType.id as TSurveyQuestionTypeEnum);
   });
 
-export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = getQuestionTypes(
-  "en-US"
-).reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: <curr.icon className="h-4 w-4" />,
-  }),
-  {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
-);
+export const getQuestionIconMap = (t: TFnType): Record<TSurveyQuestionTypeEnum, JSX.Element> =>
+  getQuestionTypes(t).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: <curr.icon className="h-4 w-4" />,
+    }),
+    {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
+  );
 
-export const getQuestionNameMap = (locale: string) =>
-  getQuestionTypes(locale).reduce(
+export const getQuestionNameMap = (t: TFnType) =>
+  getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
       [curr.id]: curr.label,
@@ -322,8 +321,8 @@ export const getQuestionNameMap = (locale: string) =>
     {}
   ) as Record<TSurveyQuestionTypeEnum, string>;
 
-export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
-  return getQuestionTypes("en-US").find((questionType) => questionType.id === type)?.icon;
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum, t: TFnType) => {
+  return getQuestionTypes(t).find((questionType) => questionType.id === type)?.icon;
 };
 
 export const VARIABLES_ICON_MAP = {
@@ -331,8 +330,8 @@ export const VARIABLES_ICON_MAP = {
   number: <FileDigitIcon className="h-4 w-4" />,
 };
 
-export const getCXQuestionNameMap = (locale: string) =>
-  getCXQuestionTypes(locale).reduce(
+export const getCXQuestionNameMap = (t: TFnType) =>
+  getCXQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
       [curr.id]: curr.label,
@@ -344,12 +343,12 @@ export const universalQuestionPresets = {
   required: true,
 };
 
-export const getQuestionDefaults = (id: string, project: any, locale: string) => {
-  const questionType = getQuestionTypes(locale).find((questionType) => questionType.id === id);
+export const getQuestionDefaults = (id: string, project: any, t: TFnType) => {
+  const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return replaceQuestionPresetPlaceholders(questionType?.preset, project);
 };
 
-export const getTSurveyQuestionTypeEnumName = (id: string, locale: string) => {
-  const questionType = getQuestionTypes(locale).find((questionType) => questionType.id === id);
+export const getTSurveyQuestionTypeEnumName = (id: string, t: TFnType) => {
+  const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return questionType?.label;
 };

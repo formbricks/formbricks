@@ -1,13 +1,15 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { Repeat2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 interface ResetProgressButtonProps {
   onClick: () => void;
 }
 
 export const ResetProgressButton = ({ onClick }: ResetProgressButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Button
       type="button"

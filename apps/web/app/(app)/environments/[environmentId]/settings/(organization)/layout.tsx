@@ -1,6 +1,6 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
@@ -9,7 +9,7 @@ const Layout = async (props) => {
 
   const { children } = props;
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [organization, project, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
     getProjectByEnvironmentId(params.environmentId),

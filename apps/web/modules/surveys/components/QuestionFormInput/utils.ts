@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { isLabelValidForAllLanguages } from "@formbricks/lib/i18n/utils";
 import {
@@ -74,7 +75,7 @@ export const determineImageUploaderVisibility = (questionIdx: number, localSurve
   }
 };
 
-export const getPlaceHolderById = (id: string, t: (key: string) => string) => {
+export const getPlaceHolderById = (id: string, t: TFnType) => {
   switch (id) {
     case "headline":
       return t("environments.surveys.edit.your_question_here_recall_information_with");

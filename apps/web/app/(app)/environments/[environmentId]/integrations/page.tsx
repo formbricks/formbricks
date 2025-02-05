@@ -14,8 +14,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -28,7 +28,7 @@ import { TIntegrationType } from "@formbricks/types/integration";
 const Page = async (props) => {
   const params = await props.params;
   const environmentId = params.environmentId;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [
     environment,
     integrations,

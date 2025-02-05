@@ -1,3 +1,5 @@
+"use client";
+
 import { getSurveyFollowUpActionDefaultBody } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
 import FollowUpActionMultiEmailInput from "@/modules/survey-follow-ups/components/follow-up-action-multi-email-input";
 import { Button } from "@/modules/ui/components/button";
@@ -24,15 +26,15 @@ import {
 import { cn } from "@/modules/ui/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import DOMpurify from "isomorphic-dompurify";
 import { ArrowDownIcon, EyeOffIcon, HandshakeIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -72,7 +74,8 @@ export const FollowUpModal = ({
   setLocalSurvey,
   locale,
 }: AddFollowUpModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 
@@ -128,7 +131,7 @@ export const FollowUpModal = ({
       emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
       replyTo: defaultValues?.replyTo ?? [userEmail],
       subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
-      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
+      body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
     },
     resolver: zodResolver(ZCreateSurveyFollowUpFormSchema),
     mode: "onChange",
@@ -312,7 +315,7 @@ export const FollowUpModal = ({
         emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
         replyTo: defaultValues?.replyTo ?? [userEmail],
         subject: defaultValues?.subject ?? "Thanks for your answers!",
-        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(locale),
+        body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       });
     }
   }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);

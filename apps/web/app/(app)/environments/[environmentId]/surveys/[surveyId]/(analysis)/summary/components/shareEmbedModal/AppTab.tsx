@@ -1,12 +1,12 @@
 "use client";
 
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
 
 export const AppTab = ({ environmentId }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [selectedTab, setSelectedTab] = useState("webapp");
 
   return (
@@ -28,7 +28,7 @@ export const AppTab = ({ environmentId }) => {
 };
 
 const MobileAppTab = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <p className="text-lg font-semibold text-slate-800">
@@ -54,7 +54,7 @@ const MobileAppTab = () => {
 };
 
 const WebAppTab = ({ environmentId }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <p className="text-lg font-semibold text-slate-800">

@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -23,7 +23,7 @@ export const ConnectWithFormbricks = ({
   widgetSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const handleFinishOnboarding = async () => {
     router.push(`/environments/${environment.id}/surveys`);

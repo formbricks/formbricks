@@ -224,8 +224,7 @@ export const inviteUserAction = authenticatedActionClient
         ctx.user.name ?? "",
         parsedInput.name ?? "",
         false,
-        undefined,
-        ctx.user.locale
+        undefined
       );
     }
 

@@ -1,6 +1,7 @@
+import { TFnType } from "@tolgee/react";
 import { TIntegrationType } from "@formbricks/types/integration";
 
-export const getIntegrationDetails = (integrationType: TIntegrationType, t: (key: string) => string) => {
+export const getIntegrationDetails = (integrationType: TIntegrationType, t: TFnType) => {
   switch (integrationType) {
     case "googleSheets":
       return {

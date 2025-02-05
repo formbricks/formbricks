@@ -1,6 +1,8 @@
+"use client";
+
 import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -18,7 +20,7 @@ export const SavedActionsTab = ({
   setLocalSurvey,
   setOpen,
 }: SavedActionsTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );

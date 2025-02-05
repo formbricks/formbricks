@@ -5,8 +5,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -22,7 +22,7 @@ const Page = async (props) => {
   const params = await props.params;
   const isEnabled = !!(SLACK_CLIENT_ID && SLACK_CLIENT_SECRET);
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [session, surveys, slackIntegration, environment] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),

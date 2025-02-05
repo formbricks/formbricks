@@ -1,23 +1,23 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TSurvey, TSurveyQuestionSummaryCal } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CalSummaryProps {
   questionSummary: TSurveyQuestionSummaryCal;
   environmentId: string;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
-export const CalSummary = ({ questionSummary, survey, locale }: CalSummaryProps) => {
-  const t = useTranslations();
+export const CalSummary = ({ questionSummary, survey }: CalSummaryProps) => {
+  const { t } = useTranslate();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">

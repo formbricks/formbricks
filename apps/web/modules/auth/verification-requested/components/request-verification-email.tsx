@@ -2,7 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { resendVerificationEmailAction } from "../actions";
@@ -12,7 +12,7 @@ interface RequestVerificationEmailProps {
 }
 
 export const RequestVerificationEmail = ({ email }: RequestVerificationEmailProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {

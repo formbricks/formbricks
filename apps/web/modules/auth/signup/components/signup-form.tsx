@@ -10,7 +10,7 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
@@ -77,7 +77,7 @@ export const SignupForm = ({
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const inviteToken = searchParams?.get("inviteToken");
   const router = useRouter();
   const [turnstileToken, setTurnstileToken] = useState<string>();

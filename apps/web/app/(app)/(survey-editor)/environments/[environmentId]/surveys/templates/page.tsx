@@ -1,8 +1,8 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -27,7 +27,7 @@ interface SurveyTemplateProps {
 const Page = async (props: SurveyTemplateProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 

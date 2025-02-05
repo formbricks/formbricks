@@ -6,7 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { FormProvider } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -40,7 +40,7 @@ export const ConfirmPasswordForm = ({
     resolver: zodResolver(ZConfirmPasswordFormState),
   });
   const { handleSubmit } = form;
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const onSubmit: SubmitHandler<TConfirmPasswordFormState> = async (data) => {
     const setupTwoFactorAuthResponse = await setupTwoFactorAuthAction({ password: data.password });

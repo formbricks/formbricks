@@ -6,7 +6,7 @@ import { ExperiencePageStats } from "@/modules/ee/insights/experience/components
 import { getDateFromTimeRange } from "@/modules/ee/insights/experience/lib/utils";
 import { TStatsPeriod } from "@/modules/ee/insights/experience/types/stats";
 import { Tabs, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
@@ -29,7 +29,7 @@ export const Dashboard = ({
   documentsPerPage,
   locale,
 }: DashboardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [statsPeriod, setStatsPeriod] = useState<TStatsPeriod>("week");
   const statsFrom = getDateFromTimeRange(statsPeriod);
   return (

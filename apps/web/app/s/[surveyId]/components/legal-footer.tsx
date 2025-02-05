@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 
 interface LegalFooterProps {
@@ -14,7 +16,7 @@ export const LegalFooter = ({
   IS_FORMBRICKS_CLOUD,
   surveyUrl,
 }: LegalFooterProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
 
   return (

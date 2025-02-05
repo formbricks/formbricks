@@ -14,9 +14,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
@@ -50,7 +50,7 @@ export const QuestionFilterComboBox = ({
   const commandRef = React.useRef(null);
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
-  const t = useTranslations();
+  const { t } = useTranslate();
   // multiple when question type is multi selection
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||

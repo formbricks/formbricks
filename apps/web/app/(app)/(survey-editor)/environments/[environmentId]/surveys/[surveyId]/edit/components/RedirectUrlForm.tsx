@@ -1,7 +1,9 @@
+"use client";
+
 import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/components/RecallWrapper";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRef } from "react";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -14,7 +16,7 @@ interface RedirectUrlFormProps {
 
 export const RedirectUrlForm = ({ localSurvey, endingCard, updateSurvey }: RedirectUrlFormProps) => {
   const selectedLanguageCode = "default";
-  const t = useTranslations();
+  const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (

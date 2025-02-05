@@ -1,7 +1,9 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 import { TTemplateFilter } from "@formbricks/types/templates";
-import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
+import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateFiltersProps {
   selectedFilter: TTemplateFilter[];
@@ -16,7 +18,7 @@ export const TemplateFilters = ({
   templateSearch,
   prefilledFilters,
 }: TemplateFiltersProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
     // If the filter value at a particular index is null, it indicates that no filter has been chosen, therefore all results are displayed
     const newFilter = [...selectedFilter];
@@ -24,7 +26,7 @@ export const TemplateFilters = ({
     setSelectedFilter(newFilter);
   };
 
-  const allFilters = [channelMapping, industryMapping, roleMapping];
+  const allFilters = [getChannelMapping(t), getIndustryMapping(t), getRoleMapping(t)];
 
   return (
     <div className="mb-6 gap-3">

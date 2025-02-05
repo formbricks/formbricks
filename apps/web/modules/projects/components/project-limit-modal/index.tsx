@@ -2,7 +2,7 @@
 
 import { Dialog, DialogContent, DialogTitle } from "@/modules/ui/components/dialog";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface ProjectLimitModalProps {
   open: boolean;
@@ -12,7 +12,7 @@ interface ProjectLimitModalProps {
 }
 
 export const ProjectLimitModal = ({ open, setOpen, projectLimit, buttons }: ProjectLimitModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

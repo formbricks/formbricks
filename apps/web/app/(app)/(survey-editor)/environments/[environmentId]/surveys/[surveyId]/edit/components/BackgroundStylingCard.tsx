@@ -5,8 +5,8 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/
 import { Slider } from "@/modules/ui/components/slider";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { TProjectStyling } from "@formbricks/types/project";
@@ -34,7 +34,7 @@ export const BackgroundStylingCard = ({
   isUnsplashConfigured,
   form,
 }: BackgroundStylingCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
   return (

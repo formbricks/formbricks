@@ -6,7 +6,7 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -34,7 +34,7 @@ export const CTAQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: CTAQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const options = [
     {
       value: "internal",

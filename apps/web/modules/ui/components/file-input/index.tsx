@@ -2,8 +2,8 @@
 
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { useTranslate } from "@tolgee/react";
 import { FileIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -51,7 +51,7 @@ export const FileInput = ({
   isVideoAllowed = false,
   disabled = false,
 }: FileInputProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const options = [
     { value: "image", label: t("common.image") },
     { value: "video", label: t("common.video") },

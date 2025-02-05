@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageSelect } from "./language-select";
@@ -15,7 +17,7 @@ interface LanguageRowProps {
 }
 
 export function LanguageRow({ language, isEditing, onLanguageChange, onDelete, locale }: LanguageRowProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="my-3 grid grid-cols-4 gap-4">
       <LanguageSelect

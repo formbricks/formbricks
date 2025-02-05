@@ -1,7 +1,7 @@
 "use client";
 
 import { Confetti } from "@/modules/ui/components/confetti";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -14,7 +14,7 @@ interface SummaryMetadataProps {
 }
 
 export const SuccessMessage = ({ environment, survey }: SummaryMetadataProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const searchParams = useSearchParams();
   const [confetti, setConfetti] = useState(false);
 

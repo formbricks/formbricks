@@ -1,6 +1,8 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { EyeOffIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyHiddenFields } from "@formbricks/types/surveys/types";
 
@@ -10,7 +12,7 @@ interface HiddenFieldsProps {
 }
 
 export const HiddenFields = ({ hiddenFields, responseData }: HiddenFieldsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const fieldIds = hiddenFields.fieldIds ?? [];
   return (
     <div className="mt-6 flex flex-col gap-6">

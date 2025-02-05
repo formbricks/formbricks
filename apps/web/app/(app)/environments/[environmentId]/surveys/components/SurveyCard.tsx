@@ -5,7 +5,7 @@ import { SurveyTypeIndicator } from "@/app/(app)/environments/[environmentId]/su
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -35,7 +35,7 @@ export const SurveyCard = ({
   duplicateSurvey,
   locale,
 }: SurveyCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyStatusLabel =
     survey.status === "inProgress"
       ? t("common.in_progress")

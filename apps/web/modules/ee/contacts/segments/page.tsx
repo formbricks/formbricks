@@ -9,8 +9,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -25,7 +25,7 @@ export const SegmentsPage = async ({
   params: Promise<{ environmentId: string }>;
 }) => {
   const params = await paramsProps;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [session, environment, product, segments, contactAttributeKeys, organization] = await Promise.all([
     getServerSession(authOptions),
     getEnvironment(params.environmentId),

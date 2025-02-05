@@ -1,11 +1,11 @@
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { UsersIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 
 const Loading = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <>
       <PageContentWrapper>

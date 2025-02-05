@@ -5,8 +5,8 @@ import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
@@ -30,7 +30,7 @@ export const FormStylingSettings = ({
   setOpen,
   form,
 }: FormStylingSettingsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const brandColor = form.watch("brandColor.light") || COLOR_DEFAULTS.brandColor;
   const background = form.watch("background");
   const highlightBorderColor = form.watch("highlightBorderColor");

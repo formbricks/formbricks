@@ -1,5 +1,7 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon, CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -8,7 +10,7 @@ interface WidgetStatusIndicatorProps {
 }
 
 export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,

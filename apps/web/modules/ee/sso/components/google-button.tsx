@@ -2,8 +2,8 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { GoogleIcon } from "@/modules/ui/components/icons";
+import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface GoogleButtonProps {
@@ -12,7 +12,7 @@ interface GoogleButtonProps {
 }
 
 export const GoogleButton = ({ inviteUrl, lastUsed }: GoogleButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Google");

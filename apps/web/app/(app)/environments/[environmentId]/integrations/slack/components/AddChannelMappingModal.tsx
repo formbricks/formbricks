@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
@@ -6,8 +8,8 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { CircleHelpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -43,7 +45,7 @@ export const AddChannelMappingModal = ({
   selectedIntegration,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -102,7 +104,7 @@ export const AddChannelMappingModal = ({
       }
 
       if (selectedQuestions.length === 0) {
-        throw new Error(t("environments.integrations.integrations.select_at_least_one_question_error"));
+        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
       const integrationData: TIntegrationSlackConfigData = {

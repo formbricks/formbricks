@@ -1,6 +1,8 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import {
   TI18nString,
@@ -9,7 +11,6 @@ import {
   TSurveyQuestionSummaryPictureSelection,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -23,23 +24,16 @@ interface PictureChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const PictureChoiceSummary = ({
-  questionSummary,
-  survey,
-  setFilter,
-  locale,
-}: PictureChoiceSummaryProps) => {
+export const PictureChoiceSummary = ({ questionSummary, survey, setFilter }: PictureChoiceSummaryProps) => {
   const results = questionSummary.choices;
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           questionSummary.question.allowMulti ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

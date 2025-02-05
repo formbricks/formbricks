@@ -1,7 +1,9 @@
+"use client";
+
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon, Link, MessageSquareTextIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -17,7 +19,7 @@ interface HiddenFieldsSummaryProps {
 
 export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: HiddenFieldsSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>

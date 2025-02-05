@@ -11,8 +11,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/modules/ui/components/sheet";
+import { useTranslate } from "@tolgee/react";
 import { ThumbsDownIcon, ThumbsUpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useDeferredValue, useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import { timeSince } from "@formbricks/lib/time";
@@ -45,7 +45,7 @@ export const InsightSheet = ({
   documentsPerPage = 10,
   locale,
 }: InsightSheetProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [documents, setDocuments] = useState<TDocument[]>([]);
   const [page, setPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false); // New state for loading

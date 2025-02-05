@@ -5,8 +5,9 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { useTranslate } from "@tolgee/react";
+import { T } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
@@ -39,7 +40,7 @@ export const ManageIntegration = ({
   handleSlackAuthorization,
   locale,
 }: ManageIntegrationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [isDeleting, setisDeleting] = useState(false);
   const integrationArray = slackIntegration
@@ -77,9 +78,10 @@ export const ManageIntegration = ({
       {showReconnectButton && (
         <div className="mb-4 flex w-full items-center justify-between space-x-4">
           <p className="text-amber-700">
-            {t.rich("environments.integrations.slack.slack_reconnect_button_description", {
-              b: (chunks) => <b>{chunks}</b>,
-            })}
+            <T
+              keyName="environments.integrations.slack.slack_reconnect_button_description"
+              params={{ b: <b /> }}
+            />
           </p>
           <Button onClick={handleSlackAuthorization} variant="secondary">
             {t("environments.integrations.slack.slack_reconnect_button")}

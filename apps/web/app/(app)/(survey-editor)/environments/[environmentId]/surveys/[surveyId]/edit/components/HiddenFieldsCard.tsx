@@ -8,8 +8,8 @@ import { Switch } from "@/modules/ui/components/switch";
 import { Tag } from "@/modules/ui/components/tag";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { EyeOff } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -32,7 +32,7 @@ export const HiddenFieldsCard = ({
 }: HiddenFieldsCardProps) => {
   const open = activeQuestionId == "hidden";
   const [hiddenField, setHiddenField] = useState<string>("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const setOpen = (open: boolean) => {
     if (open) {
       setActiveQuestionId("hidden");

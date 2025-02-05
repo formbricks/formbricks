@@ -1,6 +1,6 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
-import { translateEmailText } from "../../lib/utils";
 
 interface NotificationHeaderProps {
   projectName: string;
@@ -8,17 +8,16 @@ interface NotificationHeaderProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  locale: string;
 }
 
-export function NotificationHeader({
+export async function NotificationHeader({
   projectName,
   startDate,
   endDate,
   startYear,
   endYear,
-  locale,
-}: NotificationHeaderProps): React.JSX.Element {
+}: NotificationHeaderProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   const getNotificationHeaderimePeriod = (): React.JSX.Element => {
     if (startYear === endYear) {
       return (
@@ -38,11 +37,11 @@ export function NotificationHeader({
     <Container>
       <div className="block px-0 py-4">
         <div className="float-left mt-2">
-          <Heading className="m-0">{translateEmailText("notification_header_hey", locale)}</Heading>
+          <Heading className="m-0">{t("emails.notification_header_hey")}</Heading>
         </div>
         <div className="float-right">
           <Text className="m-0 text-right font-semibold">
-            {translateEmailText("notification_header_weekly_report_for", locale)} {projectName}
+            {t("emails.notification_header_weekly_report_for")} {projectName}
           </Text>
           {getNotificationHeaderimePeriod()}
         </div>

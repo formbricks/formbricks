@@ -1,7 +1,9 @@
+"use client";
+
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Table } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
 import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { SelectedRowSettings } from "./selected-row-settings";
@@ -27,7 +29,7 @@ export const DataTableToolbar = <T,>({
   deleteAction,
   refreshContacts,
 }: DataTableToolbarProps<T>) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="sticky top-12 z-30 my-2 flex w-full items-center justify-between bg-slate-50 py-2">

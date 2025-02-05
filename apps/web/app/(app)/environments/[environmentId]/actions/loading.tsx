@@ -1,9 +1,11 @@
+"use client";
+
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       <PageContentWrapper>

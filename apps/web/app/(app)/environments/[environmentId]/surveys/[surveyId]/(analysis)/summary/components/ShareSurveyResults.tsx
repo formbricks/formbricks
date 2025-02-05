@@ -1,8 +1,10 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 
@@ -22,7 +24,7 @@ export const ShareSurveyResults = ({
   showPublishModal,
   surveyUrl,
 }: ShareEmbedSurveyProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} size="lg">
       {showPublishModal && surveyUrl ? (

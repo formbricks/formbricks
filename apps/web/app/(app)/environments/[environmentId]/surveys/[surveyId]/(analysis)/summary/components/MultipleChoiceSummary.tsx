@@ -1,8 +1,10 @@
+"use client";
+
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -14,7 +16,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyType,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
@@ -30,7 +31,6 @@ interface MultipleChoiceSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
 export const MultipleChoiceSummary = ({
@@ -39,9 +39,8 @@ export const MultipleChoiceSummary = ({
   surveyType,
   survey,
   setFilter,
-  locale,
 }: MultipleChoiceSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [visibleOtherResponses, setVisibleOtherResponses] = useState(10);
   const otherValue = questionSummary.question.choices.find((choice) => choice.id === "other")?.label.default;
   // sort by count and transform to array
@@ -70,7 +69,6 @@ export const MultipleChoiceSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           questionSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

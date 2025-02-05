@@ -8,8 +8,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -23,7 +23,7 @@ export const ContactsPage = async ({
 }: {
   params: Promise<{ environmentId: string }>;
 }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const params = await paramsProps;
   const session = await getServerSession(authOptions);
   if (!session) {

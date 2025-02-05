@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -10,8 +12,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Control,
@@ -33,7 +35,7 @@ interface PageUrlSelectorProps {
 export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
   const [testUrl, setTestUrl] = useState("");
   const [isMatch, setIsMatch] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const filterType = form.watch("noCodeConfig.urlFilters")?.length ? "specific" : "all";
 
   const setFilterType = (value: string) => {
@@ -164,7 +166,7 @@ const UrlInput = ({
   removeUrlRule: UseFieldArrayRemove;
   disabled: boolean;
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (

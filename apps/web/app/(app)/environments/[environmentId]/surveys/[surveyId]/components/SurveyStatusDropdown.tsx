@@ -1,3 +1,5 @@
+"use client";
+
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   Select,
@@ -8,7 +10,7 @@ import {
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -25,7 +27,7 @@ export const SurveyStatusDropdown = ({
   updateLocalSurveyStatus,
   survey,
 }: SurveyStatusDropdownProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled =

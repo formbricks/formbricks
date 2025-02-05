@@ -5,8 +5,8 @@ import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { Badge } from "@/modules/ui/components/badge";
 import { IconBar } from "@/modules/ui/components/iconbar";
+import { useTranslate } from "@tolgee/react";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -36,7 +36,7 @@ export const SurveyAnalysisCTA = ({
   webAppUrl,
   user,
 }: SurveyAnalysisCTAProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();

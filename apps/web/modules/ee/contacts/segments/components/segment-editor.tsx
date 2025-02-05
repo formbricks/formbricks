@@ -1,3 +1,5 @@
+"use client";
+
 import {
   addFilterBelow,
   addFilterInGroup,
@@ -14,8 +16,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, MoreVertical, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -43,7 +45,7 @@ export function SegmentEditor({
   segments,
   viewOnly = false,
 }: TSegmentEditorProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [addFilterModalOpenedFromBelow, setAddFilterModalOpenedFromBelow] = useState(false);
 

@@ -1,7 +1,9 @@
+"use client";
+
 import { UploadContactsAttributeCombobox } from "@/modules/ee/contacts/components/upload-contacts-attribute-combobox";
 import { Badge } from "@/modules/ui/components/badge";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
@@ -18,7 +20,7 @@ export const UploadContactsAttributes = ({
   setAttributeMap,
   csvColumn,
 }: UploadContactsAttributesProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = useState(false);
   const [isNewTag, setIsNewTag] = useState(false);

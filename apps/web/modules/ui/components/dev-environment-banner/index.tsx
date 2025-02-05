@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { TEnvironment } from "@formbricks/types/environment";
 
 interface DevEnvironmentBannerProps {
@@ -6,7 +8,7 @@ interface DevEnvironmentBannerProps {
 }
 
 export const DevEnvironmentBanner = ({ environment }: DevEnvironmentBannerProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       {environment.type === "development" && (

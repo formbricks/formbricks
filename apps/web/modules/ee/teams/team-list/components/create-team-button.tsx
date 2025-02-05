@@ -2,7 +2,7 @@
 
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 
 interface CreateTeamButtonProps {
@@ -10,7 +10,7 @@ interface CreateTeamButtonProps {
 }
 
 export const CreateTeamButton = ({ organizationId }: CreateTeamButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [openCreateTeamModal, setOpenCreateTeamModal] = useState<boolean>(false);
   return (
     <>

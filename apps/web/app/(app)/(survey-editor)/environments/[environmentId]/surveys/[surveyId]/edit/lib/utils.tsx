@@ -1,9 +1,9 @@
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { translate } from "@formbricks/lib/templates";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
@@ -21,7 +21,6 @@ import {
   TSurveyQuestionTypeEnum,
   TSurveyVariable,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { TLogicRuleOption, getLogicRules } from "./logicRuleEngine";
 
 // formats the text to highlight specific parts of the text with slashes
@@ -43,18 +42,19 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const questionIconMapping = getQuestionTypes("en-US").reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: curr.icon,
-  }),
-  {}
-);
+const getQuestionIconMapping = (t: TFnType) =>
+  getQuestionTypes(t).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: curr.icon,
+    }),
+    {}
+  );
 
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
@@ -65,7 +65,7 @@ export const getConditionValueOptions = (
     .filter((_, idx) => idx <= currQuestionIdx)
     .map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -133,7 +133,7 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: (key: string) => string): TComboboxOption[] => [
+export const getActionObjectiveOptions = (t: TFnType): TComboboxOption[] => [
   { label: t("environments.surveys.edit.calculate"), value: "calculate" },
   { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToQuestion" },
@@ -143,10 +143,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (
-  question: TSurveyQuestion,
-  t: (key: string) => string
-): TComboboxOption[] => {
+const getQuestionOperatorOptions = (question: TSurveyQuestion, t: TFnType): TComboboxOption[] => {
   let options: TLogicRuleOption;
 
   if (question.type === "openText") {
@@ -165,7 +162,7 @@ const getQuestionOperatorOptions = (
 
 export const getDefaultOperatorForQuestion = (
   question: TSurveyQuestion,
-  t: (key: string) => string
+  t: TFnType
 ): TSurveyLogicConditionsOperator => {
   const options = getQuestionOperatorOptions(question, t);
 
@@ -175,7 +172,7 @@ export const getDefaultOperatorForQuestion = (
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables ?? [];
@@ -199,7 +196,7 @@ export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -257,7 +254,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -460,7 +457,7 @@ export const getMatchValueProps = (
 
       const questionOptions = openTextQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -541,7 +538,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -615,7 +612,7 @@ export const getMatchValueProps = (
 
       const questionOptions = allowedQuestions.map((question) => {
         return {
-          icon: questionIconMapping[question.type],
+          icon: getQuestionIconMapping(t)[question.type],
           label: getLocalizedValue(question.headline, "default"),
           value: question.id,
           meta: {
@@ -695,7 +692,7 @@ export const getMatchValueProps = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -769,7 +766,7 @@ export const getActionTargetOptions = (
   action: TSurveyLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxOption[] => {
   let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
@@ -779,7 +776,7 @@ export const getActionTargetOptions = (
 
   const questionOptions = questions.map((question) => {
     return {
-      icon: questionIconMapping[question.type],
+      icon: getQuestionIconMapping(t)[question.type],
       label: getLocalizedValue(question.headline, "default"),
       value: question.id,
     };
@@ -816,7 +813,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 };
 
 export const getActionOperatorOptions = (
-  t: (key: string) => string,
+  t: TFnType,
   variableType?: TSurveyVariable["type"]
 ): TComboboxOption[] => {
   if (variableType === "number") {
@@ -861,7 +858,7 @@ export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
@@ -897,7 +894,7 @@ export const getActionValueOptions = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -955,7 +952,7 @@ export const getActionValueOptions = (
 
     const questionOptions = allowedQuestions.map((question) => {
       return {
-        icon: questionIconMapping[question.type],
+        icon: getQuestionIconMapping(t)[question.type],
         label: getLocalizedValue(question.headline, "default"),
         value: question.id,
         meta: {
@@ -1157,8 +1154,8 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (locale: TUserLocale) => {
-  return translate("follow_ups_modal_action_body", locale) as string;
+export const getSurveyFollowUpActionDefaultBody = (t: TFnType) => {
+  return t("templates.follow_ups_modal_action_body") as string;
 };
 
 export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string): number => {

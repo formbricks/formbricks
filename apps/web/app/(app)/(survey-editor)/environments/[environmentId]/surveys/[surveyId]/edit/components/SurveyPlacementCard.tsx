@@ -4,8 +4,8 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { TPlacement } from "@formbricks/types/common";
@@ -23,7 +23,7 @@ export const SurveyPlacementCard = ({
   setLocalSurvey,
   environmentId,
 }: SurveyPlacementCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
   const { projectOverwrites } = localSurvey ?? {};

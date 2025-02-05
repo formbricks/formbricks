@@ -1,7 +1,7 @@
 "use client";
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -24,7 +24,7 @@ export const OrganizationSettingsNavbar = ({
   const pathname = usePathname();
   const { isMember } = getAccessFlags(membershipRole);
   const isPricingDisabled = isMember;
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const navigation = [
     {

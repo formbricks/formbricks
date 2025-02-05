@@ -1,8 +1,10 @@
+"use client";
+
 import { generateSingleUseIdAction } from "@/app/(app)/environments/[environmentId]/surveys/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -25,7 +27,7 @@ export const ShareSurveyLink = ({
   setSurveyUrl,
   locale,
 }: ShareSurveyLinkProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {

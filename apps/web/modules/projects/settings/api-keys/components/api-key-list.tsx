@@ -1,5 +1,5 @@
 import { getApiKeys } from "@/modules/projects/settings/api-keys/lib/api-key";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TUserLocale } from "@formbricks/types/user";
@@ -13,7 +13,7 @@ interface ApiKeyListProps {
 }
 
 export const ApiKeyList = async ({ environmentId, environmentType, locale, isReadOnly }: ApiKeyListProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const findEnvironmentByType = (environments, targetType) => {
     for (const environment of environments) {
       if (environment.type === targetType) {

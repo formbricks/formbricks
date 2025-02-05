@@ -1,0 +1,39 @@
+name: Check Missing Translations
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-missing-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Tolgee CLI
+        run: npm install -g @tolgee/cli
+
+      - name: Compare Tolgee Keys
+        id: compare
+        run: |
+          tolgee compare --api-key ${{ secrets.TOLGEE_API_KEY }} > compare_output.txt
+          cat compare_output.txt
+
+      - name: Check for Missing Translations
+        run: |
+          if grep -q "new key found" compare_output.txt; then
+            echo "New keys found that may require translations:"
+            exit 1
+          else
+            echo "No new keys found."
+          fi

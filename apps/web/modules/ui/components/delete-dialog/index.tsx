@@ -2,7 +2,7 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface DeleteDialogProps {
   open: boolean;
@@ -31,7 +31,7 @@ export const DeleteDialog = ({
   children,
   disabled,
 }: DeleteDialogProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} title={`${t("common.delete")} ${deleteWhat}`}>
       <p>{text || t("common.are_you_sure_this_action_cannot_be_undone")}</p>

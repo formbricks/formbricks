@@ -11,7 +11,7 @@ import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Small } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -43,7 +43,7 @@ export const IndividualInviteTab = ({
   });
 
   type TFormData = z.infer<typeof ZFormSchema>;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {

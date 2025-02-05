@@ -1,8 +1,8 @@
 "use client";
 
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { TUserLocale } from "@formbricks/types/user";
 import { AppTab } from "./AppTab";
@@ -39,7 +39,7 @@ export const EmbedView = ({
   webAppUrl,
   locale,
 }: EmbedViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="h-full overflow-hidden">
       {!disableBack && (

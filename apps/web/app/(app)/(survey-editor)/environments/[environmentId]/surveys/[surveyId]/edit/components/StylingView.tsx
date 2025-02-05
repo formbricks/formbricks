@@ -1,3 +1,5 @@
+"use client";
+
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -9,8 +11,8 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
+import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
@@ -50,7 +52,7 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const form = useForm<TSurveyStyling>({
     defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },

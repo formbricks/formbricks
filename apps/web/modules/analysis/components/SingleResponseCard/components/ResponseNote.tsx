@@ -2,10 +2,10 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { CheckIcon, PencilIcon, PlusIcon } from "lucide-react";
 import { Maximize2Icon, Minimize2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -33,7 +33,7 @@ export const ResponseNotes = ({
   updateFetchedResponses,
   locale,
 }: ResponseNotesProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [noteText, setNoteText] = useState("");
   const [isCreatingNote, setIsCreatingNote] = useState(false);
   const [isUpdatingNote, setIsUpdatingNote] = useState(false);

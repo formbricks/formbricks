@@ -1,7 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Prism from "prismjs";
 import "prismjs/themes/prism.css";
 import React, { useEffect } from "react";
@@ -24,7 +24,7 @@ export const CodeBlock = ({
   customCodeClass = "",
   showCopyToClipboard = true,
 }: CodeBlockProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     Prism.highlightAll();
   }, [children]);

@@ -23,7 +23,7 @@ import { constructToastMessage } from "@/app/(app)/environments/[environmentId]/
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { SkeletonLoader } from "@/modules/ui/components/skeleton-loader";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { toast } from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -55,7 +55,7 @@ export const SummaryList = ({
   locale,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const setFilter = (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -152,7 +152,6 @@ export const SummaryList = ({
                 surveyType={survey.type}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -163,7 +162,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -173,7 +171,6 @@ export const SummaryList = ({
                 key={questionSummary.question.id}
                 questionSummary={questionSummary}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -184,7 +181,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -195,7 +191,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -206,7 +201,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -239,7 +233,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -250,7 +243,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 survey={survey}
                 setFilter={setFilter}
-                locale={locale}
               />
             );
           }
@@ -272,7 +264,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 surveyType={survey.type}
                 survey={survey}
-                locale={locale}
               />
             );
           }

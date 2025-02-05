@@ -7,8 +7,8 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight, CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -26,7 +26,7 @@ export const ResponseOptionsCard = ({
   setLocalSurvey,
   responseCount,
 }: ResponseOptionsCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);

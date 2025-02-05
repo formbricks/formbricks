@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpFromLineIcon,
   CopyIcon,
@@ -24,7 +25,6 @@ import {
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -56,7 +56,7 @@ export const SurveyDropDownMenu = ({
   deleteSurvey,
   duplicateSurvey,
 }: SurveyDropDownMenuProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);

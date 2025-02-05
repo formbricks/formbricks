@@ -3,8 +3,8 @@
 import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
 
@@ -15,7 +15,7 @@ interface AddActionModalProps {
 }
 
 export const AddActionModal = ({ environmentId, actionClasses, isReadOnly }: AddActionModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
   const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);

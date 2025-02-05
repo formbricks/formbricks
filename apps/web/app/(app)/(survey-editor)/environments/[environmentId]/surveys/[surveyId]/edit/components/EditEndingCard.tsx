@@ -14,8 +14,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { createId } from "@paralleldrive/cuid2";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { GripIcon, Handshake, Undo2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -59,7 +59,7 @@ export const EditEndingCard = ({
   locale,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isRedirectToUrlDisabled = isFormbricksCloud
     ? plan === "free" && endingCard.type !== "redirectToUrl"
     : false;
@@ -231,7 +231,6 @@ export const EditEndingCard = ({
                 updateCard={() => {}}
                 addCard={addEndingCard}
                 cardType="ending"
-                locale={locale}
               />
             </div>
           </div>

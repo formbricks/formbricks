@@ -25,7 +25,7 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -63,7 +63,7 @@ export const ContactsTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const [parent] = useAutoAnimate();
 

@@ -1,9 +1,4 @@
 // response-queue.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
-import { type FormbricksAPI } from "@formbricks/api";
-import { ResponseQueue } from "@/lib/common/response-queue";
-import type { SurveyState } from "@/lib/survey/state";
-import type { TResponseUpdate } from "@/types/response";
 import {
   mockAppUrl,
   mockDisplayId,
@@ -13,6 +8,11 @@ import {
   mockSurveyId,
   mockUserId,
 } from "./__mocks__/response-queue.mock";
+import { ResponseQueue } from "@/lib/common/response-queue";
+import type { SurveyState } from "@/lib/survey/state";
+import type { TResponseUpdate } from "@/types/response";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type FormbricksAPI } from "@formbricks/api";
 
 describe("ResponseQueue", () => {
   let responseQueue: ResponseQueue;

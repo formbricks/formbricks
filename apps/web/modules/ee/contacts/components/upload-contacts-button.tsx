@@ -8,9 +8,9 @@ import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
 import { StylingTabs } from "@/modules/ui/components/styling-tabs";
+import { useTranslate } from "@tolgee/react";
 import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, CircleAlertIcon, FileUpIcon, PlusIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -25,7 +25,7 @@ export const UploadContactsCSVButton = ({
   environmentId,
   contactAttributeKeys,
 }: UploadContactsCSVButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const errorContainerRef = useRef<HTMLDivElement | null>(null);

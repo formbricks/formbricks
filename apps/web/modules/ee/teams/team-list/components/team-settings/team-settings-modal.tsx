@@ -28,8 +28,8 @@ import {
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { H4, Muted } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { FormProvider, SubmitHandler, useForm, useWatch } from "react-hook-form";
@@ -59,7 +59,7 @@ export const TeamSettingsModal = ({
   membershipRole,
   currentUserId,
 }: TeamSettingsModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const { isOwner, isManager, isMember } = getAccessFlags(membershipRole);
 

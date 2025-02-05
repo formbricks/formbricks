@@ -3,7 +3,7 @@
 import { FormField, FormItem } from "@/modules/ui/components/form";
 import { FormControl } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 
@@ -21,7 +21,7 @@ interface TwoFactorBackupProps {
 }
 
 export const TwoFactorBackup = ({ form }: TwoFactorBackupProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <>

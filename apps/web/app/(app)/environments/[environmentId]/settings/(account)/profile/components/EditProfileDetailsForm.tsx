@@ -18,8 +18,8 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -38,7 +38,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
   });
 
   const { isSubmitting, isDirty } = form.formState;
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const onSubmit: SubmitHandler<TEditProfileNameForm> = async (data) => {
     try {

@@ -13,8 +13,8 @@ import { Uploader } from "@/modules/ui/components/file-input/components/uploader
 import { uploadFile } from "@/modules/ui/components/file-input/lib/utils";
 import { Muted, P, Small } from "@/modules/ui/components/typography";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { useTranslate } from "@tolgee/react";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
@@ -45,7 +45,7 @@ export const EmailCustomizationSettings = ({
   isFormbricksCloud,
   user,
 }: EmailCustomizationSettingsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || DEFAULT_LOGO_URL);

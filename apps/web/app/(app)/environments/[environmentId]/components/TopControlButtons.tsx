@@ -5,8 +5,8 @@ import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { CircleUserIcon, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import formbricks from "@formbricks/js";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -28,7 +28,7 @@ export const TopControlButtons = ({
   membershipRole,
   projectPermission,
 }: TopControlButtonsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);

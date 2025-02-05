@@ -4,8 +4,8 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import type { Session } from "next-auth";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
@@ -25,7 +25,7 @@ export const DeleteAccount = ({
 }) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
-  const t = useTranslations();
+  const { t } = useTranslate();
   if (!session) {
     return null;
   }

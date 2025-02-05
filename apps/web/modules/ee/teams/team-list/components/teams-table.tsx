@@ -15,7 +15,7 @@ import {
 } from "@/modules/ee/teams/team-list/types/team";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -38,7 +38,7 @@ export const TeamsTable = ({
   membershipRole,
   currentUserId,
 }: TeamsTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TTeamDetails>();
   const [userTeamRole, setUserTeamRole] = useState<TTeamRole | undefined>();

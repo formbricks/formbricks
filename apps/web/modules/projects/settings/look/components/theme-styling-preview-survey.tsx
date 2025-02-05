@@ -5,8 +5,8 @@ import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
-import { useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
 import type { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -55,7 +55,7 @@ export const ThemeStylingPreviewSurvey = ({
   const [previewPosition] = useState("relative");
   const ContentRef = useRef<HTMLDivElement | null>(null);
   const [shrink] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { projectOverwrites } = survey || {};
 
   const previewScreenVariants: Variants = {

@@ -4,7 +4,7 @@ import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProject } from "@formbricks/types/project";
@@ -48,7 +48,7 @@ export const PinScreen = (props: PinScreenProps) => {
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
 

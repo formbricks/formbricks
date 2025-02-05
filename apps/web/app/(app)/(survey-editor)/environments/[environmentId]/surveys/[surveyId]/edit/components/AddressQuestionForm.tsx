@@ -4,8 +4,8 @@ import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInpu
 import { Button } from "@/modules/ui/components/button";
 import { QuestionToggleTable } from "@/modules/ui/components/question-toggle-table";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyAddressQuestion } from "@formbricks/types/surveys/types";
@@ -34,7 +34,7 @@ export const AddressQuestionForm = ({
   locale,
 }: AddressQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const fields = [
     {
       id: "addressLine1",

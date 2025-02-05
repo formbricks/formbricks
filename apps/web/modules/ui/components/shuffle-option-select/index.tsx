@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Select,
   SelectContent,
@@ -5,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import {
   TShuffleOption,
   TSurveyMatrixQuestion,
@@ -41,7 +43,7 @@ export const ShuffleOptionSelect: React.FC<ShuffleOptionSelectProps> = ({
   updateQuestion,
   shuffleOptionsTypes,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Select
       defaultValue={shuffleOption}

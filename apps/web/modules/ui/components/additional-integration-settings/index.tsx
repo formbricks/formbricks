@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { Checkbox } from "../checkbox";
 import { Label } from "../label";
 
@@ -23,7 +25,7 @@ export const AdditionalIntegrationSettings = ({
   setIncludeMetadata,
   setIncludeCreatedAt,
 }: AdditionalIntegrationSettingsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const checkboxes = [
     {

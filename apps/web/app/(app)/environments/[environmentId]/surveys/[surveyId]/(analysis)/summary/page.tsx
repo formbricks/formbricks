@@ -9,8 +9,8 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import {
   DEFAULT_LOCALE,
@@ -29,7 +29,7 @@ import { getUser } from "@formbricks/lib/user/service";
 
 const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));

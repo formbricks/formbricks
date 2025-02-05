@@ -1,7 +1,7 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 
 export const WebhookTableHeading = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <>
       <div className="grid h-12 grid-cols-12 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">

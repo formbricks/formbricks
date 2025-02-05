@@ -12,8 +12,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -25,7 +25,7 @@ interface ResultsShareButtonProps {
 }
 
 export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -72,7 +72,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       navigator.clipboard
         .writeText(currentUrl)
         .then(() => {
-          toast.success(t("common.link_copied_to_clipboard"));
+          toast.success(t("common.copied_to_clipboard"));
         })
         .catch(() => {
           toast.error(t("environments.surveys.failed_to_copy_link_to_results"));

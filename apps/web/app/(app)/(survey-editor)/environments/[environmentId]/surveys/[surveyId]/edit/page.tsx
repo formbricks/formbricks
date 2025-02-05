@@ -7,8 +7,8 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   DEFAULT_LOCALE,
@@ -38,7 +38,7 @@ export const generateMetadata = async (props) => {
 const Page = async (props) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [
     survey,
     project,

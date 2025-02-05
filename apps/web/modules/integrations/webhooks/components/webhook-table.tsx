@@ -3,7 +3,7 @@
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { Webhook } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { type JSX, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -24,7 +24,7 @@ export const WebhookTable = ({
   isReadOnly,
 }: WebhookTableProps) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeWebhook, setActiveWebhook] = useState<Webhook>({
     environmentId: environment.id,
     id: "",

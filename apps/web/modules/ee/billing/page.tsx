@@ -2,8 +2,8 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { PROJECT_FEATURE_KEYS, STRIPE_PRICE_LOOKUP_KEYS } from "@formbricks/lib/constants";
@@ -19,7 +19,7 @@ import { PricingTable } from "./components/pricing-table";
 
 export const PricingPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!IS_FORMBRICKS_CLOUD) {

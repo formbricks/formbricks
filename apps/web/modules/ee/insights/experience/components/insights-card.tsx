@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TUserLocale } from "@formbricks/types/user";
 import { InsightView } from "./insight-view";
 
@@ -22,7 +22,7 @@ export const InsightsCard = ({
   documentsPerPage,
   locale,
 }: InsightsCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Card>
       <CardHeader>

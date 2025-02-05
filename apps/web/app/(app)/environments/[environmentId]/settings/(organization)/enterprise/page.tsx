@@ -4,9 +4,9 @@ import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { CheckIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -16,7 +16,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 
 const Page = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (IS_FORMBRICKS_CLOUD) {
     notFound();
   }

@@ -6,8 +6,8 @@ import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -35,7 +35,7 @@ export const EditWelcomeCard = ({
   setSelectedLanguageCode,
   locale,
 }: EditWelcomeCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];

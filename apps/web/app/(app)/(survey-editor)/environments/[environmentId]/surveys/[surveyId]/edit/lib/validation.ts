@@ -1,4 +1,5 @@
 // extend this object in order to add more validation rules
+import { TFnType } from "@tolgee/react";
 import { toast } from "react-hot-toast";
 import { z } from "zod";
 import { extractLanguageCodes, getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -227,7 +228,7 @@ export const isEndingCardValid = (
   }
 };
 
-export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: (key: string) => string) => {
+export const isSurveyValid = (survey: TSurvey, selectedLanguageCode: string, t: TFnType) => {
   const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
   if (questionWithEmptyFallback) {
     toast.error(t("environments.surveys.edit.fallback_missing"));

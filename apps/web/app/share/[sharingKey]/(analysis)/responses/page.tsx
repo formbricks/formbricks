@@ -2,7 +2,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentI
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
 import { RESPONSES_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -21,7 +21,7 @@ interface ResponsesPageProps {
 }
 
 const Page = async (props: ResponsesPageProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 

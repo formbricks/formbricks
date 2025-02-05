@@ -1,3 +1,5 @@
+"use client";
+
 import { LogicEditor } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/LogicEditor";
 import {
   getDefaultOperatorForQuestion,
@@ -13,6 +15,7 @@ import {
 import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -22,7 +25,6 @@ import {
   SplitIcon,
   TrashIcon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { duplicateLogicItem } from "@formbricks/lib/surveyLogic/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
@@ -41,7 +43,7 @@ export function ConditionalLogic({
   questionIdx,
   updateQuestion,
 }: ConditionalLogicProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const transformedSurvey = useMemo(() => {
     let modifiedSurvey = replaceHeadlineRecall(localSurvey, "default");
     modifiedSurvey = replaceEndingCardHeadlineRecall(modifiedSurvey, "default");

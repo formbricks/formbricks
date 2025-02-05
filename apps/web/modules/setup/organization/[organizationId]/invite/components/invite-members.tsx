@@ -11,8 +11,8 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -24,7 +24,7 @@ interface InviteMembersProps {
 }
 
 export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMembersProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [membersCount, setMembersCount] = useState(1);
   const router = useRouter();
 

@@ -9,8 +9,8 @@ import { DndContext } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { type JSX, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
@@ -46,7 +46,7 @@ export const MultipleChoiceQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
   const [isNew, setIsNew] = useState(true);
   const [isInvalidValue, setisInvalidValue] = useState<string | null>(null);

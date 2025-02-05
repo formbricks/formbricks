@@ -10,8 +10,8 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { Input } from "@/modules/ui/components/input";
 import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeft, MailIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
@@ -43,7 +43,7 @@ export const VerifyEmail = ({
   styling,
   locale,
 }: VerifyEmailProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",

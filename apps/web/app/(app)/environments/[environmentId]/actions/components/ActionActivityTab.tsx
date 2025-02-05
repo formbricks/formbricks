@@ -6,8 +6,8 @@ import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { useTranslate } from "@tolgee/react";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
@@ -33,7 +33,7 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);

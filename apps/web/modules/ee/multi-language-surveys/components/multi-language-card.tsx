@@ -8,8 +8,8 @@ import { Switch } from "@/modules/ui/components/switch";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight, Languages } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
@@ -53,7 +53,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
   setSelectedLanguageCode,
   locale,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const environmentId = localSurvey.environmentId;
   const open = activeQuestionId === "multiLanguage";
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 1);

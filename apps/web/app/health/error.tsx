@@ -1,10 +1,10 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { XCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 const Error = ({ error }: { error: Error & { digest?: string } }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center">
       <XCircleIcon height={40} color="red" />

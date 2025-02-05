@@ -1,5 +1,7 @@
+"use client";
+
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -13,7 +15,7 @@ interface LinkTabProps {
 }
 
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const docsLinks = [
     {
       title: t("environments.surveys.summary.identify_users"),

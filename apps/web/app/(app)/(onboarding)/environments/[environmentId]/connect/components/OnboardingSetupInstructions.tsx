@@ -4,7 +4,7 @@ import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
@@ -29,7 +29,7 @@ export const OnboardingSetupInstructions = ({
   channel,
   widgetSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">

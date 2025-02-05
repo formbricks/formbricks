@@ -15,8 +15,8 @@ import { SaveAsNewSegmentModal } from "@/modules/ui/components/save-as-new-segme
 import { SegmentTitle } from "@/modules/ui/components/segment-title";
 import { TargetingIndicator } from "@/modules/ui/components/targeting-indicator";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircle, CheckIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
@@ -51,7 +51,7 @@ export function TargetingCard({
   segments,
   initialSegment,
 }: TargetingCardProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);

@@ -5,7 +5,7 @@ import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
 import { OrganizationActions } from "@/modules/organization/settings/teams/components/edit-memberships/organization-actions";
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -37,7 +37,7 @@ export const MembersView = async ({
   environmentId,
   canDoRoleManagement,
 }: MembersViewProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isManager || isOwner;

@@ -10,8 +10,8 @@ import { ProjectConfigNavigation } from "@/modules/projects/settings/components/
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -22,7 +22,7 @@ import { ApiKeyList } from "./components/api-key-list";
 
 export const APIKeysPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [session, environment, organization, project] = await Promise.all([
     getServerSession(authOptions),
     getEnvironment(params.environmentId),

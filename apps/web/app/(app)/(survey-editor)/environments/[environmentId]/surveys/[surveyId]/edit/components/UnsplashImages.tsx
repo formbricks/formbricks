@@ -3,9 +3,9 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { SearchIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import UnsplashImage from "next/image";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -121,7 +121,7 @@ const defaultImages = [
 ];
 
 export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashSurveyBgProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const inputFocus = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [query, setQuery] = useState("");

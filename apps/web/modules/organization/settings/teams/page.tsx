@@ -5,15 +5,15 @@ import { TeamsView } from "@/modules/ee/teams/team-list/components/teams-view";
 import { MembersView } from "@/modules/organization/settings/teams/components/members-view";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 export const TeamsPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));

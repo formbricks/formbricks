@@ -5,7 +5,7 @@ import { deleteProjectAction } from "@/modules/projects/settings/general/actions
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -26,7 +26,7 @@ export const DeleteProjectRender = ({
   currentProject,
   organizationProjects,
 }: DeleteProjectRenderProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

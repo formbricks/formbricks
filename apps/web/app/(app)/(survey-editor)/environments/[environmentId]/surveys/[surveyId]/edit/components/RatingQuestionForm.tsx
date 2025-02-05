@@ -1,10 +1,12 @@
+"use client";
+
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -32,7 +34,7 @@ export const RatingQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: RatingQuestionFormProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [parent] = useAutoAnimate();
   return (

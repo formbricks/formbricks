@@ -1,35 +1,32 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Text } from "@react-email/components";
 import React from "react";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface InviteEmailProps {
   inviteeName: string;
   inviterName: string;
   verifyLink: string;
-  locale: string;
 }
 
-export function InviteEmail({
+export async function InviteEmail({
   inviteeName,
   inviterName,
   verifyLink,
-  locale,
-}: InviteEmailProps): React.JSX.Element {
+}: InviteEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate locale={locale}>
+    <EmailTemplate t={t}>
       <Container>
+        <Text>{t("emails.invite_email_heading", { inviteeName })}</Text>
         <Text>
-          {translateEmailText("invite_email_heading", locale)} {inviteeName},
+          {t("emails.invite_email_text_par1", { inviterName })} {inviterName}{" "}
+          {t("emails.invite_email_text_par2")}
         </Text>
-        <Text>
-          {translateEmailText("invite_email_text_par1", locale)} {inviterName}{" "}
-          {translateEmailText("invite_email_text_par2", locale)}
-        </Text>
-        <EmailButton href={verifyLink} label={translateEmailText("invite_email_button_label", locale)} />
-        <EmailFooter locale={locale} />
+        <EmailButton href={verifyLink} label={t("emails.invite_email_button_label")} />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

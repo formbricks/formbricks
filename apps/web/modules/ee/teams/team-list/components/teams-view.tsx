@@ -4,7 +4,7 @@ import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/pr
 import { getTeams } from "@/modules/ee/teams/team-list/lib/team";
 import { getMembersByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
@@ -23,7 +23,7 @@ export const TeamsView = async ({
   canDoRoleManagement,
   environmentId,
 }: TeamsViewProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const [teams, orgMembers, orgProjects] = await Promise.all([
     getTeams(currentUserId, organizationId),

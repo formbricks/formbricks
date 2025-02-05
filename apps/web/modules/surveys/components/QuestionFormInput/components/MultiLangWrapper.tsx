@@ -1,5 +1,7 @@
+"use client";
+
 import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React, { ReactNode, useMemo } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
@@ -33,7 +35,7 @@ export const MultiLangWrapper = ({
   render,
   onChange,
 }: MultiLangWrapperProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";

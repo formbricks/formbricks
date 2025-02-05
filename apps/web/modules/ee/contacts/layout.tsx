@@ -1,6 +1,6 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -14,7 +14,7 @@ const ConfigLayout = async (props) => {
 
   const { children } = props;
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [organization, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
     getServerSession(authOptions),

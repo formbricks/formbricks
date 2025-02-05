@@ -1,8 +1,10 @@
+"use client";
+
 import { FollowUpItem } from "@/modules/survey-follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey-follow-ups/components/follow-up-modal";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { LockIcon, MailIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -27,7 +29,7 @@ export const FollowUpsView = ({
   userEmail,
   locale,
 }: FollowUpsViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
 
   const surveyFollowUps: TSurveyFollowUp[] = localSurvey.followUps.filter((f) => !f.deleted);

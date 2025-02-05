@@ -7,8 +7,8 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { cn } from "@/modules/ui/lib/utils";
+import { useTranslate } from "@tolgee/react";
 import { ActivityIcon, GaugeIcon, InboxIcon, MessageCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -18,7 +18,7 @@ interface ExperiencePageStatsProps {
 }
 
 export const ExperiencePageStats = ({ statsFrom, environmentId }: ExperiencePageStatsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [stats, setStats] = useState<TStats>({
     activeSurveys: 0,
     newResponses: 0,

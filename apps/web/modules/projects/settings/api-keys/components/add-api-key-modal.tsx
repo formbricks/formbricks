@@ -4,8 +4,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useForm } from "react-hook-form";
 
 interface MemberModalProps {
@@ -15,7 +15,7 @@ interface MemberModalProps {
 }
 
 export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { register, getValues, handleSubmit, reset } = useForm<{ label: string; environment: string }>();
 
   const submitAPIKey = async () => {

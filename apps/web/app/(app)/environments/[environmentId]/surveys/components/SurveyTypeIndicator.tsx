@@ -1,12 +1,14 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { Code, HelpCircle, Link2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 interface SurveyTypeIndicatorProps {
   type: string;
 }
 
 export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyTypeMapping = {
     app: { icon: Code, label: t("common.app") },
     link: { icon: Link2Icon, label: t("common.link") },

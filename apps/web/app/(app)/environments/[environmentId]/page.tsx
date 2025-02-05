@@ -1,6 +1,6 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -9,7 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 const EnvironmentPage = async (props) => {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  const t = await getTranslations();
+  const t = await getTranslate();
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
 
   if (!session) {

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -59,7 +59,7 @@ export type IntegrationModalInputs = {
 };
 
 const NoBaseFoundError = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Alert>
       <AlertTitle>{t("environments.integrations.airtable.no_bases_found")}</AlertTitle>
@@ -78,7 +78,7 @@ export const AddIntegrationModal = ({
   isEditMode,
   defaultData,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
   const [isLoading, setIsLoading] = useState(false);

@@ -1,3 +1,5 @@
+"use client";
+
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
@@ -7,9 +9,9 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
 import { PipelineTriggers } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { Webhook } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -33,7 +35,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     register,
     formState: { isSubmitting },
   } = useForm();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [testEndpointInput, setTestEndpointInput] = useState("");
   const [hittingEndpoint, setHittingEndpoint] = useState<boolean>(false);
   const [endpointAccessible, setEndpointAccessible] = useState<boolean>();

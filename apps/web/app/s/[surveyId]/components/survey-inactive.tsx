@@ -1,6 +1,6 @@
 import { Button } from "@/modules/ui/components/button";
+import { getTranslate } from "@/tolgee/server";
 import { CheckCircle2Icon, HelpCircleIcon, PauseCircleIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import Link from "next/link";
 import { TSurveyClosedMessage } from "@formbricks/types/surveys/types";
@@ -13,7 +13,7 @@ export const SurveyInactive = async ({
   status: "paused" | "completed" | "link invalid" | "scheduled";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const icons = {
     paused: <PauseCircleIcon className="h-20 w-20" />,
     completed: <CheckCircle2Icon className="h-20 w-20" />,
