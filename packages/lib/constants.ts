@@ -157,6 +157,11 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
 };
+export const MANAGEMENT_API_RATE_LIMIT = {
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
+};
+
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
   allowedPerInterval: 100,

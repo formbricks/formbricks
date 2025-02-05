@@ -1,6 +1,6 @@
-import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
+import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { headers } from "next/headers";
 
 export const GET = async (_: Request, props: { params: Promise<{ webhookId: string }> }) => {

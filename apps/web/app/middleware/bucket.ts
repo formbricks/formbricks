@@ -3,6 +3,7 @@ import {
   CLIENT_SIDE_API_RATE_LIMIT,
   FORGET_PASSWORD_RATE_LIMIT,
   LOGIN_RATE_LIMIT,
+  MANAGEMENT_API_RATE_LIMIT,
   SHARE_RATE_LIMIT,
   SIGNUP_RATE_LIMIT,
   SYNC_USER_IDENTIFICATION_RATE_LIMIT,
@@ -28,6 +29,10 @@ export const forgotPasswordLimiter = rateLimit({
 export const clientSideApiEndpointsLimiter = rateLimit({
   interval: CLIENT_SIDE_API_RATE_LIMIT.interval,
   allowedPerInterval: CLIENT_SIDE_API_RATE_LIMIT.allowedPerInterval,
+});
+export const managementApiEndpointsLimiter = rateLimit({
+  interval: MANAGEMENT_API_RATE_LIMIT.interval,
+  allowedPerInterval: MANAGEMENT_API_RATE_LIMIT.allowedPerInterval,
 });
 
 export const shareUrlLimiter = rateLimit({

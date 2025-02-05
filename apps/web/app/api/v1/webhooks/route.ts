@@ -1,8 +1,8 @@
-import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { headers } from "next/headers";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 

@@ -2,6 +2,7 @@ import {
   clientSideApiEndpointsLimiter,
   forgotPasswordLimiter,
   loginLimiter,
+  managementApiEndpointsLimiter,
   shareUrlLimiter,
   signupLimiter,
   syncUserIdentificationLimiter,
@@ -12,11 +13,13 @@ import {
   isClientSideApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
+  isManagementApiRoute,
   isShareUrlRoute,
   isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
+import { getHash } from "@/app/middleware/utils";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
@@ -25,6 +28,17 @@ import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 export const middleware = async (request: NextRequest) => {
+  // Enforce HTTPS for management endpoints
+  if (isManagementApiRoute(request.nextUrl.pathname)) {
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
+    if (forwardedProto !== "https") {
+      return NextResponse.json(
+        { error: "Only HTTPS connections are allowed on the management endpoint." },
+        { status: 403 }
+      );
+    }
+  }
+
   // issue with next auth types; let's review when new fixes are available
   const token = await getToken({ req: request as any });
 
@@ -48,6 +62,8 @@ export const middleware = async (request: NextRequest) => {
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     ipAddress(request);
+
+  const apiKey = request.headers.get("x-api-key");
 
   if (ip) {
     try {
@@ -76,6 +92,20 @@ export const middleware = async (request: NextRequest) => {
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   }
+
+  if (apiKey) {
+    const hashedApiKey = getHash(apiKey);
+
+    try {
+      if (isManagementApiRoute(request.nextUrl.pathname)) {
+        await managementApiEndpointsLimiter(`management-api-${hashedApiKey}`);
+      }
+    } catch (e) {
+      console.log(`Rate Limiting API Key: ${hashedApiKey}`);
+      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
+    }
+  }
+
   return NextResponse.next();
 };
 
@@ -94,5 +124,6 @@ export const config = {
     "/api/packages/:path*",
     "/auth/verification-requested",
     "/auth/forgot-password",
+    "/api/v1/management/:path*",
   ],
 };
