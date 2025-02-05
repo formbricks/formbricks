@@ -36,7 +36,6 @@ export const AddQuestionButton = ({ addQuestion, project, isCxMode }: AddQuestio
         open ? "shadow-lg" : "shadow-md",
         "group w-full space-y-2 rounded-lg border border-slate-300 bg-white duration-200 hover:cursor-pointer hover:bg-slate-50"
       )}>
-      {t("this_is_a_new_key")}
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
           <div className="bg-brand-dark flex w-10 items-center justify-center rounded-l-lg group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
