@@ -12,6 +12,7 @@ interface WeeklySummaryNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
+  t: (s: string) => string;
 }
 
 export function WeeklySummaryNotificationEmail({
@@ -20,9 +21,10 @@ export function WeeklySummaryNotificationEmail({
   endDate,
   startYear,
   endYear,
+  t,
 }: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <NotificationHeader
         endDate={endDate}
         endYear={endYear}

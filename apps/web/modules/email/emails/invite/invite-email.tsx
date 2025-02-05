@@ -18,7 +18,7 @@ export async function InviteEmail({
 }: InviteEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
         <Text>{t("emails.invite_email_heading", { inviteeName })}</Text>
         <Text>
@@ -26,7 +26,7 @@ export async function InviteEmail({
           {t("emails.invite_email_text_par2")}
         </Text>
         <EmailButton href={verifyLink} label={t("emails.invite_email_button_label")} />
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

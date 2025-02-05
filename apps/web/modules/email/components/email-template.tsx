@@ -1,4 +1,3 @@
-import { getTranslate } from "@/tolgee/server";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
@@ -9,11 +8,15 @@ const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=emai
 interface EmailTemplateProps {
   children: React.ReactNode;
   logoUrl?: string;
+  t: (s: string) => string;
 }
 
-export async function EmailTemplate({ children, logoUrl }: EmailTemplateProps): Promise<React.JSX.Element> {
+export async function EmailTemplate({
+  children,
+  logoUrl,
+  t,
+}: EmailTemplateProps): Promise<React.JSX.Element> {
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
-  const t = await getTranslate();
 
   return (
     <Html>

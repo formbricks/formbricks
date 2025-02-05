@@ -303,6 +303,7 @@ export const sendWeeklySummaryNotificationEmail = async (
       endDate,
       startYear,
       endYear,
+      t,
     })
   );
   await sendEmail({

@@ -1,5 +1,4 @@
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
-import { getTranslate } from "@/tolgee/server";
 import {
   Column,
   Container,
@@ -26,16 +25,18 @@ interface PreviewEmailTemplateProps {
   surveyUrl: string;
   styling: TSurveyStyling;
   locale: string;
+  t: (s: string) => string;
 }
 
 export const getPreviewEmailTemplateHtml = async (
   survey: TSurvey,
   surveyUrl: string,
   styling: TSurveyStyling,
-  locale: string
+  locale: string,
+  t: (s: string) => string
 ): Promise<string> => {
   return render(
-    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} />,
+    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,
     {
       pretty: true,
     }
@@ -46,8 +47,8 @@ export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
   styling,
+  t,
 }: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
-  const t = await getTranslate();
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";

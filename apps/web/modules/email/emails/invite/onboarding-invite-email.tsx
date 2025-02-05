@@ -19,7 +19,7 @@ export async function OnboardingInviteEmail({
 }: OnboardingInviteEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.onboarding_invite_email_heading", { inviteeName })}</Heading>
         <Text>{inviteMessage}</Text>
@@ -33,7 +33,7 @@ export async function OnboardingInviteEmail({
           href={verifyLink}
           label={t("emails.onboarding_invite_email_button_label", { inviterName })}
         />
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

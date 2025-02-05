@@ -15,14 +15,14 @@ export async function InviteAcceptedEmail({
 }: InviteAcceptedEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
         <Text>{t("emails.invite_accepted_email_heading", { inviterName })}</Text>
         <Text>
           {t("emails.invite_accepted_email_text_par1", { inviteeName })} {inviteeName}{" "}
           {t("emails.invite_accepted_email_text_par2")}
         </Text>
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

@@ -14,14 +14,14 @@ export async function ForgotPasswordEmail({
 }: ForgotPasswordEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
         <Heading>{t("emails.forgot_password_email_heading")}</Heading>
         <Text>{t("emails.forgot_password_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.forgot_password_email_change_password")} />
         <Text className="font-bold">{t("emails.forgot_password_email_link_valid_for_24_hours")}</Text>
         <Text className="mb-0">{t("emails.forgot_password_email_did_not_request")}</Text>
-        <EmailFooter />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );
