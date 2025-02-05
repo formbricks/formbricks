@@ -120,6 +120,7 @@ export const navigation: NavGroup[] = [
           { title: "Airtable", href: "/developer-docs/integrations/airtable" },
           { title: "Google Sheets", href: "/developer-docs/integrations/google-sheets" },
           { title: "Make", href: "/developer-docs/integrations/make" },
+          { title: "Activepieces", href: "/developer-docs/integrations/activepieces" },
           { title: "n8n", href: "/developer-docs/integrations/n8n" },
           { title: "Notion", href: "/developer-docs/integrations/notion" },
           { title: "Slack", href: "/developer-docs/integrations/slack" },

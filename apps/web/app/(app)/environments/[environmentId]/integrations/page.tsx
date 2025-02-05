@@ -1,4 +1,5 @@
 import { getWebhookCountBySource } from "@/app/(app)/environments/[environmentId]/integrations/lib/webhook";
+import ActivePiecesLogo from "@/images/activepieces.webp";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
@@ -38,6 +39,7 @@ const Page = async (props) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
+    activePiecesWebhookCount,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -47,6 +49,7 @@ const Page = async (props) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
+    getWebhookCountBySource(environmentId, "activepieces"),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
@@ -214,6 +217,25 @@ const Page = async (props) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
+    },
+    {
+      docsHref: "https://formbricks.com/docs/integrations/activepieces",
+      docsText: t("common.docs"),
+      docsNewTab: true,
+      connectHref: "https://www.activepieces.com/pieces/formbricks",
+      connectText: t("common.connect"),
+      connectNewTab: true,
+      label: "Activepieces",
+      description: t("environments.integrations.activepieces_integration_description"),
+      icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
+      connected: activePiecesWebhookCount > 0,
+      statusText:
+        makeWebhookCount === 1
+          ? `1 ${t("common.integration")}`
+          : makeWebhookCount === 0
+            ? t("common.not_connected")
+            : `${makeWebhookCount} ${t("common.integrations")}`,
       disabled: isReadOnly,
     },
   ];
