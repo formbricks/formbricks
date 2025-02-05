@@ -1,4 +1,3 @@
-// initialize.test.ts
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig, RN_ASYNC_STORAGE_KEY } from "@/lib/common/config";
@@ -7,14 +6,8 @@ import {
   addEventListeners,
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
-import {
-  checkInitialized,
-  deinitalize,
-  handleErrorOnFirstInit,
-  init,
-  setIsInitialize,
-} from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
+import { checkSetup, handleErrorOnFirstSetup, setIsSetup, setup, tearDown } from "@/lib/common/setup";
 import { filterSurveys, isNowExpired } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
@@ -77,7 +70,7 @@ vi.mock("@/lib/user/update", () => ({
   sendUpdatesToBackend: vi.fn(),
 }));
 
-describe("initialize.ts", () => {
+describe("setup.ts", () => {
   let getInstanceConfigMock: MockInstance<() => RNConfig>;
   let getInstanceLoggerMock: MockInstance<() => Logger>;
 
@@ -88,8 +81,8 @@ describe("initialize.ts", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // By default, set isInitialize to false so we can test init logic from scratch
-    setIsInitialize(false);
+    // By default, set isSetup to false so we can test setup logic from scratch
+    setIsSetup(false);
 
     getInstanceConfigMock = vi.spyOn(RNConfig, "getInstance");
     getInstanceLoggerMock = vi.spyOn(Logger, "getInstance").mockReturnValue(mockLogger as unknown as Logger);
@@ -99,17 +92,17 @@ describe("initialize.ts", () => {
     vi.restoreAllMocks();
   });
 
-  describe("init()", () => {
-    test("returns ok if already initialized", async () => {
+  describe("setup()", () => {
+    test("returns ok if already setup", async () => {
       getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
-      setIsInitialize(true);
-      const result = await init({ environmentId: "env_id", appUrl: "https://my.url" });
+      setIsSetup(true);
+      const result = await setup({ environmentId: "env_id", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
-      expect(mockLogger.debug).toHaveBeenCalledWith("Already initialized, skipping initialization.");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Already set up, skipping setup.");
     });
 
     test("fails if no environmentId is provided", async () => {
-      const result = await init({ environmentId: "", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "", appUrl: "https://my.url" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("missing_field");
@@ -117,14 +110,14 @@ describe("initialize.ts", () => {
     });
 
     test("fails if no appUrl is provided", async () => {
-      const result = await init({ environmentId: "env_123", appUrl: "" });
+      const result = await setup({ environmentId: "env_123", appUrl: "" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("missing_field");
       }
     });
 
-    test("skips init if existing config is in error state and not expired", async () => {
+    test("skips setup if existing config is in error state and not expired", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: "env_123",
@@ -139,10 +132,10 @@ describe("initialize.ts", () => {
 
       (isNowExpired as unknown as Mock).mockReturnValue(true);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Formbricks was set to an error state.");
-      expect(mockLogger.debug).toHaveBeenCalledWith("Error state is not expired, skipping initialization");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Error state is not expired, skipping setup");
     });
 
     test("proceeds if error state is expired", async () => {
@@ -158,10 +151,10 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("Formbricks was set to an error state.");
-      expect(mockLogger.debug).toHaveBeenCalledWith("Error state is expired. Continue with initialization.");
+      expect(mockLogger.debug).toHaveBeenCalledWith("Error state is expired. Continue with setup.");
     });
 
     test("uses existing config if environmentId/appUrl match, checks for expiration sync", async () => {
@@ -202,7 +195,7 @@ describe("initialize.ts", () => {
 
       (filterSurveys as unknown as Mock).mockReturnValueOnce([{ name: "S1" }, { name: "S2" }]);
 
-      const result = await init({ environmentId: "env_123", appUrl: "https://my.url" });
+      const result = await setup({ environmentId: "env_123", appUrl: "https://my.url" });
       expect(result.ok).toBe(true);
 
       // environmentState was fetched
@@ -246,7 +239,7 @@ describe("initialize.ts", () => {
 
       (filterSurveys as unknown as Mock).mockReturnValueOnce([{ name: "SurveyA" }]);
 
-      const result = await init({ environmentId: "envX", appUrl: "https://urlX" });
+      const result = await setup({ environmentId: "envX", appUrl: "https://urlX" });
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith("No existing configuration found.");
       expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -269,7 +262,7 @@ describe("initialize.ts", () => {
       });
     });
 
-    test("calls handleErrorOnFirstInit if environment fetch fails initially", async () => {
+    test("calls handleErrorOnFirstSetup if environment fetch fails initially", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue(undefined),
         update: vi.fn(),
@@ -283,12 +276,12 @@ describe("initialize.ts", () => {
         error: { code: "forbidden", responseMessage: "No access" },
       });
 
-      await expect(init({ environmentId: "envX", appUrl: "https://urlX" })).rejects.toThrow(
-        "Could not initialize formbricks"
+      await expect(setup({ environmentId: "envX", appUrl: "https://urlX" })).rejects.toThrow(
+        "Could not set up formbricks"
       );
     });
 
-    test("adds event listeners and sets isInitialized", async () => {
+    test("adds event listeners and sets isSetup", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: "env_abc",
@@ -302,30 +295,30 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValueOnce(mockConfig as unknown as RNConfig);
 
-      const result = await init({ environmentId: "env_abc", appUrl: "https://test.app" });
+      const result = await setup({ environmentId: "env_abc", appUrl: "https://test.app" });
       expect(result.ok).toBe(true);
       expect(addEventListeners).toHaveBeenCalled();
       expect(addCleanupEventListeners).toHaveBeenCalled();
     });
   });
 
-  describe("checkInitialized()", () => {
-    test("returns err if not initialized", () => {
-      const res = checkInitialized();
+  describe("checkSetup()", () => {
+    test("returns err if not setup", () => {
+      const res = checkSetup();
       expect(res.ok).toBe(false);
       if (!res.ok) {
-        expect(res.error.code).toBe("not_initialized");
+        expect(res.error.code).toBe("not_setup");
       }
     });
 
-    test("returns ok if initialized", () => {
-      setIsInitialize(true);
-      const res = checkInitialized();
+    test("returns ok if setup", () => {
+      setIsSetup(true);
+      const res = checkSetup();
       expect(res.ok).toBe(true);
     });
   });
 
-  describe("deinitalize()", () => {
+  describe("tearDown()", () => {
     test("resets user state to default and removes event listeners", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
@@ -336,7 +329,7 @@ describe("initialize.ts", () => {
 
       getInstanceConfigMock.mockReturnValueOnce(mockConfig as unknown as RNConfig);
 
-      await deinitalize();
+      await tearDown();
 
       expect(mockConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -347,14 +340,14 @@ describe("initialize.ts", () => {
     });
   });
 
-  describe("handleErrorOnFirstInit()", () => {
+  describe("handleErrorOnFirstSetup()", () => {
     test("stores error state in AsyncStorage, throws error", async () => {
       // We import the function directly
       const errorObj = { code: "forbidden", responseMessage: "No access" };
 
       await expect(async () => {
-        await handleErrorOnFirstInit(errorObj);
-      }).rejects.toThrow("Could not initialize formbricks");
+        await handleErrorOnFirstSetup(errorObj);
+      }).rejects.toThrow("Could not set up formbricks");
 
       // AsyncStorage setItem should be called with the error config
       expect(AsyncStorage.setItem).toHaveBeenCalledWith(

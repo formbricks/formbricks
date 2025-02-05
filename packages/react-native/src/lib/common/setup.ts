@@ -15,26 +15,26 @@ import {
   type MissingFieldError,
   type MissingPersonError,
   type NetworkError,
-  type NotInitializedError,
+  type NotSetupError,
   type Result,
   err,
   okVoid,
 } from "@/types/error";
 
-let isInitialized = false;
+let isSetup = false;
 
-export const setIsInitialize = (state: boolean): void => {
-  isInitialized = state;
+export const setIsSetup = (state: boolean): void => {
+  isSetup = state;
 };
 
-export const init = async (
+export const setup = async (
   configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   const appConfig = RNConfig.getInstance();
   const logger = Logger.getInstance();
 
-  if (isInitialized) {
-    logger.debug("Already initialized, skipping initialization.");
+  if (isSetup) {
+    logger.debug("Already set up, skipping setup.");
     return okVoid();
   }
 
@@ -46,20 +46,20 @@ export const init = async (
     logger.debug("No existing configuration found.");
   }
 
-  // formbricks is in error state, skip initialization
+  // formbricks is in error state, skip setup
   if (existingConfig?.status.value === "error") {
     logger.debug("Formbricks was set to an error state.");
 
     const expiresAt = existingConfig.status.expiresAt;
 
     if (expiresAt && isNowExpired(expiresAt)) {
-      logger.debug("Error state is not expired, skipping initialization");
+      logger.debug("Error state is not expired, skipping setup");
       return okVoid();
     }
-    logger.debug("Error state is expired. Continue with initialization.");
+    logger.debug("Error state is expired. Continue with setup.");
   }
 
-  logger.debug("Start initialize");
+  logger.debug("Start setup");
 
   if (!configInput.environmentId) {
     logger.debug("No environmentId provided");
@@ -83,7 +83,7 @@ export const init = async (
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.appUrl === configInput.appUrl
   ) {
-    logger.debug("Configuration fits init parameters.");
+    logger.debug("Configuration fits setup parameters.");
     let isEnvironmentStateExpired = false;
     let isUserStateExpired = false;
 
@@ -179,7 +179,7 @@ export const init = async (
     void appConfig.resetConfig();
     logger.debug("Syncing.");
 
-    // During init, if we don't have a valid config, we need to fetch the environment state
+    // During setup, if we don't have a valid config, we need to fetch the environment state
     // but not the person state, we can set it to the default value.
     // The person state will be fetched when the `setUserId` method is called.
 
@@ -207,7 +207,7 @@ export const init = async (
         filteredSurveys,
       });
     } catch (e) {
-      await handleErrorOnFirstInit(e as { code: string; responseMessage: string });
+      await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }
   }
 
@@ -215,21 +215,21 @@ export const init = async (
   addEventListeners();
   addCleanupEventListeners();
 
-  setIsInitialize(true);
-  logger.debug("Initialized");
+  setIsSetup(true);
+  logger.debug("Set up complete");
 
-  // check page url if initialized after page load
+  // check page url if set up after page load
   return okVoid();
 };
 
-export const checkInitialized = (): Result<void, NotInitializedError> => {
+export const checkSetup = (): Result<void, NotSetupError> => {
   const logger = Logger.getInstance();
-  logger.debug("Check if initialized");
+  logger.debug("Check if set up");
 
-  if (!isInitialized) {
+  if (!isSetup) {
     return err({
-      code: "not_initialized",
-      message: "Formbricks not initialized. Call initialize() first.",
+      code: "not_setup",
+      message: "Formbricks is not set up. Call setup() first.",
     });
   }
 
@@ -237,21 +237,22 @@ export const checkInitialized = (): Result<void, NotInitializedError> => {
 };
 
 // eslint-disable-next-line @typescript-eslint/require-await -- disabled for now
-export const deinitalize = async (): Promise<void> => {
+export const tearDown = async (): Promise<void> => {
   const logger = Logger.getInstance();
   const appConfig = RNConfig.getInstance();
 
-  logger.debug("Setting person state to default");
+  logger.debug("Setting user state to default");
   // clear the user state and set it to the default value
   appConfig.update({
     ...appConfig.get(),
     user: DEFAULT_USER_STATE_NO_USER_ID,
   });
-  setIsInitialize(false);
+
+  setIsSetup(false);
   removeAllEventListeners();
 };
 
-export const handleErrorOnFirstInit = async (e: {
+export const handleErrorOnFirstSetup = async (e: {
   code: string;
   responseMessage: string;
 }): Promise<never> => {
@@ -260,9 +261,7 @@ export const handleErrorOnFirstInit = async (e: {
   if (e.code === "forbidden") {
     logger.error(`Authorization error: ${e.responseMessage}`);
   } else {
-    logger.error(
-      `Error during first initialization: ${e.code} - ${e.responseMessage}. Please try again later.`
-    );
+    logger.error(`Error during first setup: ${e.code} - ${e.responseMessage}. Please try again later.`);
   }
 
   // put formbricks in error state (by creating a new config) and throw error
@@ -277,5 +276,5 @@ export const handleErrorOnFirstInit = async (e: {
     await AsyncStorage.setItem(RN_ASYNC_STORAGE_KEY, JSON.stringify(initialErrorConfig));
   })();
 
-  throw new Error("Could not initialize formbricks");
+  throw new Error("Could not set up formbricks");
 };

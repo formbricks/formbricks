@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CommandQueue } from "@/lib/common/command-queue";
-import { checkInitialized } from "@/lib/common/initialize";
+import { checkSetup } from "@/lib/common/setup";
 import { type Result } from "@/types/error";
 
-// Mock the initialize module so we can control checkInitialized()
-vi.mock("@/lib/common/initialize", () => ({
-  checkInitialized: vi.fn(),
+// Mock the setup module so we can control checkSetup()
+vi.mock("@/lib/common/setup", () => ({
+  checkSetup: vi.fn(),
 }));
 
 describe("CommandQueue", () => {
@@ -47,8 +47,8 @@ describe("CommandQueue", () => {
       });
     });
 
-    // We'll assume checkInitialized always ok for this test
-    vi.mocked(checkInitialized).mockReturnValue({ ok: true, data: undefined });
+    // We'll assume checkSetup always ok for this test
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Enqueue commands
     queue.add(cmdA, true);
@@ -61,7 +61,7 @@ describe("CommandQueue", () => {
     expect(executionOrder).toEqual(["A", "B", "C"]);
   });
 
-  test("skips execution if checkInitialized() fails", async () => {
+  test("skips execution if checkSetup() fails", async () => {
     const cmd = vi.fn(async (): Promise<void> => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -70,12 +70,12 @@ describe("CommandQueue", () => {
       });
     });
 
-    // Force checkInitialized to fail
-    vi.mocked(checkInitialized).mockReturnValue({
+    // Force checkSetup to fail
+    vi.mocked(checkSetup).mockReturnValue({
       ok: false,
       error: {
-        code: "not_initialized",
-        message: "Not initialized",
+        code: "not_setup",
+        message: "Not setup",
       },
     });
 
@@ -86,7 +86,7 @@ describe("CommandQueue", () => {
     expect(cmd).not.toHaveBeenCalled();
   });
 
-  test("executes command if checkInitialized is false (no check)", async () => {
+  test("executes command if checkSetup is false (no check)", async () => {
     const cmd = vi.fn(async (): Promise<Result<void, unknown>> => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -95,8 +95,8 @@ describe("CommandQueue", () => {
       });
     });
 
-    // checkInitialized is irrelevant in this scenario, but let's mock it anyway
-    vi.mocked(checkInitialized).mockReturnValue({ ok: true, data: undefined });
+    // checkSetup is irrelevant in this scenario, but let's mock it anyway
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Here we pass 'false' for the second argument, so no check is performed
     queue.add(cmd, false);
@@ -114,8 +114,8 @@ describe("CommandQueue", () => {
       };
     });
 
-    // Force checkInitialized to succeed
-    vi.mocked(checkInitialized).mockReturnValue({ ok: true, data: undefined });
+    // Force checkSetup to succeed
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     // Mock command that fails
     const failingCmd = vi.fn(async () => {
@@ -151,7 +151,7 @@ describe("CommandQueue", () => {
       });
     });
 
-    vi.mocked(checkInitialized).mockReturnValue({ ok: true, data: undefined });
+    vi.mocked(checkSetup).mockReturnValue({ ok: true, data: undefined });
 
     queue.add(cmd1, true);
     queue.add(cmd2, true);

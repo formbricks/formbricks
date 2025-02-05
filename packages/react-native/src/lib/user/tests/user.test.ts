@@ -1,9 +1,9 @@
 import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
-import { deinitalize, init } from "@/lib/common/initialize";
 import { Logger } from "@/lib/common/logger";
+import { setup, tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { logout, logoutUser, setUserId } from "@/lib/user/user";
+import { logout, setUserId } from "@/lib/user/user";
 
 // Mock dependencies
 vi.mock("@/lib/common/config", () => ({
@@ -32,9 +32,9 @@ vi.mock("@/lib/user/update-queue", () => ({
   },
 }));
 
-vi.mock("@/lib/common/initialize", () => ({
-  deinitalize: vi.fn(),
-  init: vi.fn(),
+vi.mock("@/lib/common/setup", () => ({
+  tearDown: vi.fn(),
+  setup: vi.fn(),
 }));
 
 describe("user.ts", () => {
@@ -115,15 +115,8 @@ describe("user.ts", () => {
     });
   });
 
-  describe("logoutUser", () => {
-    test("calls deinitalize", async () => {
-      await logoutUser();
-      expect(deinitalize).toHaveBeenCalled();
-    });
-  });
-
   describe("logout", () => {
-    test("successfully reinitializes after logout", async () => {
+    test("successfully sets up formbricks after logout", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
@@ -134,19 +127,19 @@ describe("user.ts", () => {
 
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
-      (init as Mock).mockResolvedValue(undefined);
+      (setup as Mock).mockResolvedValue(undefined);
 
       const result = await logout();
 
-      expect(deinitalize).toHaveBeenCalled();
-      expect(init).toHaveBeenCalledWith({
+      expect(tearDown).toHaveBeenCalled();
+      expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,
       });
       expect(result.ok).toBe(true);
     });
 
-    test("returns error if initialization fails", async () => {
+    test("returns error if setup fails", async () => {
       const mockConfig = {
         get: vi.fn().mockReturnValue({
           environmentId: mockEnvironmentId,
@@ -158,12 +151,12 @@ describe("user.ts", () => {
       getInstanceConfigMock.mockReturnValue(mockConfig as unknown as RNConfig);
 
       const mockError = { code: "network_error", message: "Failed to connect" };
-      (init as Mock).mockRejectedValue(mockError);
+      (setup as Mock).mockRejectedValue(mockError);
 
       const result = await logout();
 
-      expect(deinitalize).toHaveBeenCalled();
-      expect(init).toHaveBeenCalledWith({
+      expect(tearDown).toHaveBeenCalled();
+      expect(setup).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
         appUrl: mockAppUrl,
       });
