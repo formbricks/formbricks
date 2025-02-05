@@ -25,7 +25,7 @@ jobs:
       - name: Compare Tolgee Keys
         id: compare
         run: |
-          tolgee compare > compare_output.txt
+          tolgee compare --api-key ${{ secrets.TOLGEE_API_KEY }} > compare_output.txt
           cat compare_output.txt
 
       - name: Check for Missing Translations
