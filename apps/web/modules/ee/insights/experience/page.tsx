@@ -50,7 +50,10 @@ export const ExperiencePage = async (props) => {
     notFound();
   }
 
-  const isAIEnabled = await getIsAIEnabled(organization);
+  const isAIEnabled = await getIsAIEnabled({
+    isAIEnabled: organization.isAIEnabled,
+    billing: organization.billing,
+  });
 
   if (!isAIEnabled) {
     notFound();

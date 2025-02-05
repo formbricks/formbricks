@@ -32,7 +32,7 @@ export const checkMultiLanguagePermission = async (organizationId: string) => {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
 
   if (!isMultiLanguageAllowed) {
     throw new OperationNotAllowedError("Multi language is not allowed for this organization");

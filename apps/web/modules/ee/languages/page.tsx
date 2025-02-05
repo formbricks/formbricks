@@ -34,12 +34,12 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
   if (!isMultiLanguageAllowed) {
     notFound();
   }
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const session = await getServerSession(authOptions);
 

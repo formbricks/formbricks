@@ -51,8 +51,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   const isReadOnly = isMember && !hasManageAccess;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const isOwnerOrManager = isOwner || isManager;
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { TemplateList } from "@/modules/surveys/components/TemplateList";
+import { TemplateList } from "@/modules/surveys/components/template-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import { useTranslations } from "next-intl";
 import { TEnvironment } from "@formbricks/types/environment";

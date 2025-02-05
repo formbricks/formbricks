@@ -71,7 +71,10 @@ const Page = async (props) => {
 
   const isReadOnly = isMember && hasReadAccess;
 
-  const isAIEnabled = await getIsAIEnabled(organization);
+  const isAIEnabled = await getIsAIEnabled({
+    isAIEnabled: organization.isAIEnabled,
+    billing: organization.billing,
+  });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
   const locale = await findMatchingLocale();
 

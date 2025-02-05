@@ -37,8 +37,8 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const teams = await getTeamsByProjectId(project.id);
 

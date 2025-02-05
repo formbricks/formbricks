@@ -204,7 +204,10 @@ export const POST = async (request: Request) => {
     if (hasSurveyOpenTextQuestions) {
       const isAICofigured = IS_AI_CONFIGURED;
       if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const isAIEnabled = await getIsAIEnabled(organization);
+        const isAIEnabled = await getIsAIEnabled({
+          isAIEnabled: organization.isAIEnabled,
+          billing: organization.billing,
+        });
 
         if (isAIEnabled) {
           for (const question of survey.questions) {

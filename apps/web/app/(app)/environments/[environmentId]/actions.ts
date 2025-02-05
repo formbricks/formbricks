@@ -46,7 +46,7 @@ export const createProjectAction = authenticatedActionClient
       throw new Error("Organization not found");
     }
 
-    const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+    const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
     const organizationProjectsCount = await getOrganizationProjectsCount(organization.id);
 
     if (organizationProjectsCount >= organizationProjectsLimit) {
@@ -54,7 +54,7 @@ export const createProjectAction = authenticatedActionClient
     }
 
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
-      const canDoRoleManagement = await getRoleManagementPermission(organization);
+      const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
       if (!canDoRoleManagement) {
         throw new OperationNotAllowedError("You do not have permission to manage roles");

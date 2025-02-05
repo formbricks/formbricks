@@ -663,37 +663,3 @@ export const getResponseCountBySurveyId = reactCache(
       }
     )()
 );
-
-export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
-  async (surveyId: string, email: string): Promise<boolean> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId], [email, ZString]);
-
-        try {
-          const response = await prisma.response.findFirst({
-            where: {
-              surveyId,
-              data: {
-                path: ["verifiedEmail"],
-                equals: email,
-              },
-            },
-            select: { id: true },
-          });
-
-          return !!response;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
-      {
-        tags: [responseCache.tag.bySurveyId(surveyId)],
-      }
-    )()
-);

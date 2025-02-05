@@ -4,7 +4,7 @@ import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/environments
 import { getXMTemplates } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/surveys/components/TemplateList/actions";
+import { createSurveyAction } from "@/modules/surveys/components/template-list/actions";
 import { ActivityIcon, ShoppingCartIcon, SmileIcon, StarIcon, ThumbsUpIcon, UsersIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
