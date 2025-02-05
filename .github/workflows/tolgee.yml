@@ -41,3 +41,44 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag production \
             --tag deprecated --untag production
+
+name: Check Missing Translations
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-missing-translations:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Tolgee CLI
+        run: npm install -g @tolgee/cli
+
+      - name: Compare Tolgee Keys
+        id: compare
+        run: |
+          tolgee compare > compare_output.txt
+          cat compare_output.txt
+
+      - name: Check for Missing Translations
+        run: |
+          if grep -q "new key found" compare_output.txt; then
+            echo "New keys found that may require translations:"
+            grep -A 100 "new key found" compare_output.txt | grep "^+" | sed 's/^+ //'
+            exit 1
+          else
+            echo "No new keys found."
+          fi

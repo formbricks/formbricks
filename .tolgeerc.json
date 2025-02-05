@@ -26,5 +26,6 @@
       }
     ],
     "forceMode": "OVERRIDE"
-  }
+  },
+  "strictNamespace": false
 }
