@@ -6,7 +6,8 @@
     "lib": ["dom", "dom.iterable", "ES2022"],
     "noEmit": true,
     "resolveJsonModule": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "esModuleInterop": true
   },
   "display": "React Native Library",
   "extends": "./base.json"

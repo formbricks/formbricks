@@ -18,7 +18,7 @@ export const updateAttribute = async (
     {
       changed: boolean;
       message: string;
-      details?: Record<string, string>;
+      messages?: string[];
     },
     ApiErrorResponse
   >
@@ -65,10 +65,12 @@ export const updateAttribute = async (
     });
   }
 
-  if (res.data.details) {
-    Object.entries(res.data.details).forEach(([detailsKey, detailsValue]) => {
-      logger.error(`${detailsKey}: ${detailsValue}`);
-    });
+  const responseMessages = res.data.messages;
+
+  if (responseMessages && responseMessages.length > 0) {
+    for (const message of responseMessages) {
+      logger.debug(message);
+    }
   }
 
   if (res.data.changed) {
@@ -79,9 +81,7 @@ export const updateAttribute = async (
       value: {
         changed: true,
         message: "Attribute updated in Formbricks",
-        ...(res.data.details && {
-          details: res.data.details,
-        }),
+        messages: responseMessages,
       },
     };
   }
@@ -91,9 +91,7 @@ export const updateAttribute = async (
     value: {
       changed: false,
       message: "Attribute not updated in Formbricks",
-      ...(res.data.details && {
-        details: res.data.details,
-      }),
+      messages: responseMessages,
     },
   };
 };
@@ -123,10 +121,10 @@ export const updateAttributes = async (
   const res = await api.client.attribute.update({ userId, attributes: updatedAttributes });
 
   if (res.ok) {
-    if (res.data.details) {
-      Object.entries(res.data.details).forEach(([key, value]) => {
-        logger.debug(`${key}: ${value}`);
-      });
+    if (res.data.messages) {
+      for (const message of res.data.messages) {
+        logger.debug(message);
+      }
     }
 
     return ok(updatedAttributes);

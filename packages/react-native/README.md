@@ -24,20 +24,10 @@ npm install @formbricks/react-native
 import Formbricks, { track } from "@formbricks/react-native";
 
 export default function App() {
-  const config = {
-    environmentId: "your-environment-id",
-    apiHost: "https://app.formbricks.com",
-    userId: "hello-user", // optional
-    attributes: {
-      // optional
-      plan: "free",
-    },
-  };
-
   return (
     <View>
       {/* Your app code */}
-      <Formbricks initConfig={config} />
+      <Formbricks appUrl="https://app.formbricks.com" environmentId="your-environment-id" />
     </View>
   );
 }
