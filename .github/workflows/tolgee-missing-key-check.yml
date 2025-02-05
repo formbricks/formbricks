@@ -1,11 +1,12 @@
 name: Check Missing Translations
-
 on:
   workflow_call:
 
 jobs:
   check-missing-translations:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
