@@ -3,7 +3,7 @@
 import { AddEndingCardButton } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/AddEndingCardButton";
 import { SurveyVariablesCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/SurveyVariablesCard";
 import { findQuestionUsedInLogic } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/utils";
-import { DefaultEndingCard } from "@/app/lib/templates";
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import {
   DndContext,
@@ -338,7 +338,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const newEndingCard = DefaultEndingCard(localSurvey.languages);
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages, t);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
     setActiveQuestionId(newEndingCard.id);

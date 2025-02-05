@@ -2,7 +2,7 @@
 
 import { Label } from "@/modules/ui/components/label";
 import { Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { convertDateTimeStringShort } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -23,7 +23,7 @@ const getSurveyNamesForWebhook = (webhook: Webhook, allSurveys: TSurvey[]): stri
   }
 };
 
-const convertTriggerIdToName = (triggerId: string, t: (key: string) => string): string => {
+const convertTriggerIdToName = (triggerId: string, t: TFnType): string => {
   switch (triggerId) {
     case "responseCreated":
       return t("environments.integrations.webhooks.response_created");

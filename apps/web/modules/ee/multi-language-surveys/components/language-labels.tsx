@@ -2,7 +2,7 @@
 
 import { Label } from "@/modules/ui/components/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { InfoIcon } from "lucide-react";
 
 export function LanguageLabels() {
@@ -18,7 +18,7 @@ export function LanguageLabels() {
   );
 }
 
-function AliasTooltip({ t }: { t: (key: string) => string }) {
+function AliasTooltip({ t }: { t: TFnType }) {
   return (
     <TooltipProvider delayDuration={80}>
       <Tooltip>

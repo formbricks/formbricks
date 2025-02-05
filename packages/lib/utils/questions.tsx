@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TFnType } from "@tolgee/react";
 import {
   ArrowUpFromLineIcon,
   CalendarDaysIcon,
@@ -47,7 +48,7 @@ export type TQuestion = {
   preset: any;
 };
 
-export const getQuestionTypes = (t: (s: string) => string): TQuestion[] => [
+export const getQuestionTypes = (t: TFnType): TQuestion[] => [
   {
     id: QuestionId.OpenText,
     label: t("templates.free_text"),
@@ -289,7 +290,7 @@ export const getQuestionTypes = (t: (s: string) => string): TQuestion[] => [
   },
 ];
 
-export const getCXQuestionTypes = (t: (s: string) => string) =>
+export const getCXQuestionTypes = (t: TFnType) =>
   getQuestionTypes(t).filter((questionType) => {
     return [
       TSurveyQuestionTypeEnum.OpenText,
@@ -302,17 +303,16 @@ export const getCXQuestionTypes = (t: (s: string) => string) =>
     ].includes(questionType.id as TSurveyQuestionTypeEnum);
   });
 
-export const QUESTIONS_ICON_MAP: Record<TSurveyQuestionTypeEnum, JSX.Element> = getQuestionTypes(
-  (s: string) => s
-).reduce(
-  (prev, curr) => ({
-    ...prev,
-    [curr.id]: <curr.icon className="h-4 w-4" />,
-  }),
-  {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
-);
+export const getQuestionIconMap = (t: TFnType): Record<TSurveyQuestionTypeEnum, JSX.Element> =>
+  getQuestionTypes(t).reduce(
+    (prev, curr) => ({
+      ...prev,
+      [curr.id]: <curr.icon className="h-4 w-4" />,
+    }),
+    {} as Record<TSurveyQuestionTypeEnum, JSX.Element>
+  );
 
-export const getQuestionNameMap = (t: (s: string) => string) =>
+export const getQuestionNameMap = (t: TFnType) =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -321,8 +321,8 @@ export const getQuestionNameMap = (t: (s: string) => string) =>
     {}
   ) as Record<TSurveyQuestionTypeEnum, string>;
 
-export const getQuestionIcon = (type: TSurveyQuestionTypeEnum) => {
-  return getQuestionTypes((s: string) => s).find((questionType) => questionType.id === type)?.icon;
+export const getQuestionIcon = (type: TSurveyQuestionTypeEnum, t: TFnType) => {
+  return getQuestionTypes(t).find((questionType) => questionType.id === type)?.icon;
 };
 
 export const VARIABLES_ICON_MAP = {
@@ -330,7 +330,7 @@ export const VARIABLES_ICON_MAP = {
   number: <FileDigitIcon className="h-4 w-4" />,
 };
 
-export const getCXQuestionNameMap = (t: (s: string) => string) =>
+export const getCXQuestionNameMap = (t: TFnType) =>
   getCXQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -343,12 +343,12 @@ export const universalQuestionPresets = {
   required: true,
 };
 
-export const getQuestionDefaults = (id: string, project: any, t: (s: string) => string) => {
+export const getQuestionDefaults = (id: string, project: any, t: TFnType) => {
   const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return replaceQuestionPresetPlaceholders(questionType?.preset, project);
 };
 
-export const getTSurveyQuestionTypeEnumName = (id: string, t: (s: string) => string) => {
+export const getTSurveyQuestionTypeEnumName = (id: string, t: TFnType) => {
   const questionType = getQuestionTypes(t).find((questionType) => questionType.id === id);
   return questionType?.label;
 };

@@ -47,13 +47,13 @@ export async function EmailTemplate({
             <Text className="m-0 font-normal text-slate-500 opacity-50">
               {IMPRINT_URL && (
                 <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {t("common.imprint")}
+                  {t("emails.imprint")}
                 </Link>
               )}
               {IMPRINT_URL && PRIVACY_URL && "•"}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {t("common.privacy_policy")}
+                  {t("emails.privacy_policy")}
                 </Link>
               )}
             </Text>

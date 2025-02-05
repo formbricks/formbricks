@@ -34,22 +34,22 @@ export const SurveyEditorTabs = ({
     const tabs: Tab[] = [
       {
         id: "questions",
-        label: "common.questions",
+        label: t("common.questions"),
         icon: <Rows3Icon className="h-5 w-5" />,
       },
       {
         id: "styling",
-        label: "common.styling",
+        label: t("common.styling"),
         icon: <PaintbrushIcon className="h-5 w-5" />,
       },
       {
         id: "settings",
-        label: "common.settings",
+        label: t("common.settings"),
         icon: <SettingsIcon className="h-5 w-5" />,
       },
       {
         id: "followUps",
-        label: "environments.surveys.edit.follow_ups",
+        label: t("environments.surveys.edit.follow_ups"),
         icon: <MailIcon className="h-5 w-5" />,
         isPro: !isSurveyFollowUpsAllowed,
       },
@@ -80,7 +80,7 @@ export const SurveyEditorTabs = ({
             )}
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
-            {t(tab.label)}
+            {tab.label}
             {tab.isPro && <ProBadge />}
           </button>
         ))}

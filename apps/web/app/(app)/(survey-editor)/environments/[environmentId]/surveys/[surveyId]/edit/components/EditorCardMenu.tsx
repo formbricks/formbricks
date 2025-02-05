@@ -17,9 +17,9 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import {
-  QUESTIONS_ICON_MAP,
   getCXQuestionNameMap,
   getQuestionDefaults,
+  getQuestionIconMap,
   getQuestionNameMap,
 } from "@formbricks/lib/utils/questions";
 import { TProject } from "@formbricks/types/project";
@@ -61,6 +61,7 @@ export const EditorCardMenu = ({
   isCxMode = false,
 }: EditorCardMenuProps) => {
   const { t } = useTranslate();
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const [changeToType, setChangeToType] = useState(() => {
     if (card.type !== "endScreen" && card.type !== "redirectToUrl") {

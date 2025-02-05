@@ -1,4 +1,5 @@
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
+import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -41,7 +42,7 @@ export const formatTextWithSlashes = (text: string) => {
   });
 };
 
-const getQuestionIconMapping = (t: (key: string) => string) =>
+const getQuestionIconMapping = (t: TFnType) =>
   getQuestionTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
@@ -53,7 +54,7 @@ const getQuestionIconMapping = (t: (key: string) => string) =>
 export const getConditionValueOptions = (
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   const variables = localSurvey.variables ?? [];
@@ -132,7 +133,7 @@ export const replaceEndingCardHeadlineRecall = (survey: TSurvey, language: strin
   return modifiedSurvey;
 };
 
-export const getActionObjectiveOptions = (t: (key: string) => string): TComboboxOption[] => [
+export const getActionObjectiveOptions = (t: TFnType): TComboboxOption[] => [
   { label: t("environments.surveys.edit.calculate"), value: "calculate" },
   { label: t("environments.surveys.edit.require_answer"), value: "requireAnswer" },
   { label: t("environments.surveys.edit.jump_to_question"), value: "jumpToQuestion" },
@@ -142,10 +143,7 @@ export const hasJumpToQuestionAction = (actions: TSurveyLogicActions): boolean =
   return actions.some((action) => action.objective === "jumpToQuestion");
 };
 
-const getQuestionOperatorOptions = (
-  question: TSurveyQuestion,
-  t: (key: string) => string
-): TComboboxOption[] => {
+const getQuestionOperatorOptions = (question: TSurveyQuestion, t: TFnType): TComboboxOption[] => {
   let options: TLogicRuleOption;
 
   if (question.type === "openText") {
@@ -164,7 +162,7 @@ const getQuestionOperatorOptions = (
 
 export const getDefaultOperatorForQuestion = (
   question: TSurveyQuestion,
-  t: (key: string) => string
+  t: TFnType
 ): TSurveyLogicConditionsOperator => {
   const options = getQuestionOperatorOptions(question, t);
 
@@ -174,7 +172,7 @@ export const getDefaultOperatorForQuestion = (
 export const getConditionOperatorOptions = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     const variables = localSurvey.variables ?? [];
@@ -198,7 +196,7 @@ export const getMatchValueProps = (
   condition: TSingleCondition,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): {
   show?: boolean;
   showInput?: boolean;
@@ -768,7 +766,7 @@ export const getActionTargetOptions = (
   action: TSurveyLogicAction,
   localSurvey: TSurvey,
   currQuestionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxOption[] => {
   let questions = localSurvey.questions.filter((_, idx) => idx > currQuestionIdx);
 
@@ -815,7 +813,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 };
 
 export const getActionOperatorOptions = (
-  t: (key: string) => string,
+  t: TFnType,
   variableType?: TSurveyVariable["type"]
 ): TComboboxOption[] => {
   if (variableType === "number") {
@@ -860,7 +858,7 @@ export const getActionValueOptions = (
   variableId: string,
   localSurvey: TSurvey,
   questionIdx: number,
-  t: (key: string) => string
+  t: TFnType
 ): TComboboxGroupedOption[] => {
   const hiddenFields = localSurvey.hiddenFields?.fieldIds ?? [];
   let variables = localSurvey.variables ?? [];
@@ -1156,7 +1154,7 @@ export const findHiddenFieldUsedInLogic = (survey: TSurvey, hiddenFieldId: strin
   return survey.questions.findIndex((question) => question.logic?.some(isUsedInLogicRule));
 };
 
-export const getSurveyFollowUpActionDefaultBody = (t: (s: string) => string) => {
+export const getSurveyFollowUpActionDefaultBody = (t: TFnType) => {
   return t("templates.follow_ups_modal_action_body") as string;
 };
 

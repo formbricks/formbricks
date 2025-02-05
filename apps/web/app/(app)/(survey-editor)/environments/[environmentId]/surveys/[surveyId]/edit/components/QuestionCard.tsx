@@ -14,7 +14,7 @@ import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
+import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TProject } from "@formbricks/types/project";
 import {
@@ -85,6 +85,7 @@ export const QuestionCard = ({
     id: question.id,
   });
   const { t } = useTranslate();
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const open = activeQuestionId === question.id;
   const [openAdvanced, setOpenAdvanced] = useState(question.logic && question.logic.length > 0);
   const [parent] = useAutoAnimate();

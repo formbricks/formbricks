@@ -2,7 +2,7 @@
 
 import { Badge } from "@/modules/ui/components/badge";
 import { Webhook } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -21,7 +21,7 @@ const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   }
 };
 
-const renderSelectedTriggersText = (webhook: Webhook, t: (key: string) => string) => {
+const renderSelectedTriggersText = (webhook: Webhook, t: TFnType) => {
   if (webhook.triggers.length === 0) {
     return <p className="text-slate-400">No Triggers</p>;
   } else {

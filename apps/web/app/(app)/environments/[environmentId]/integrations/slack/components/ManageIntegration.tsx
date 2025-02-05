@@ -6,11 +6,11 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
 import { useTranslate } from "@tolgee/react";
+import { T } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { RichText } from "@formbricks/lib/utils/rich-text";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TUserLocale } from "@formbricks/types/user";
@@ -78,7 +78,10 @@ export const ManageIntegration = ({
       {showReconnectButton && (
         <div className="mb-4 flex w-full items-center justify-between space-x-4">
           <p className="text-amber-700">
-            <RichText text={t("environments.integrations.slack.slack_reconnect_button_description")} />
+            <T
+              keyName="environments.integrations.slack.slack_reconnect_button_description"
+              params={{ b: <b /> }}
+            />
           </p>
           <Button onClick={handleSlackAuthorization} variant="secondary">
             {t("environments.integrations.slack.slack_reconnect_button")}

@@ -5,6 +5,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useTranslate } from "@tolgee/react";
+import { TFnType } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -30,7 +31,7 @@ const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
 };
 
-const validateLanguages = (languages: TLanguage[], t: (key: string) => string) => {
+const validateLanguages = (languages: TLanguage[], t: TFnType) => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
   const languageAliases = languages
     .filter((language) => language.alias)
@@ -236,7 +237,7 @@ const EditSaveButtons: React.FC<{
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-  t: (key: string) => string;
+  t: TFnType;
 }> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
   isEditing ? (
     <div className="flex gap-4">

@@ -1,7 +1,7 @@
 "use client";
 
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
-import { PreviewSurvey } from "@/app/lib/templates";
+import { previewSurvey } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
@@ -231,7 +231,7 @@ export const ProjectSettings = ({
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
-            survey={PreviewSurvey(projectName || "my Product")}
+            survey={previewSurvey(projectName || "my Product", t)}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}
             languageCode="default"

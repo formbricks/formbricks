@@ -3,7 +3,7 @@
 import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
-import { PreviewSurvey } from "@/app/lib/templates";
+import { previewSurvey } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { ThemeStylingPreviewSurvey } from "@/modules/projects/settings/look/components/theme-styling-preview-survey";
@@ -189,7 +189,7 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                survey={PreviewSurvey(project.name) as TSurvey}
+                survey={previewSurvey(project.name, t) as TSurvey}
                 project={{
                   ...project,
                   styling: form.watch(),

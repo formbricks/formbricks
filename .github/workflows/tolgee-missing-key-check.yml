@@ -32,7 +32,6 @@ jobs:
         run: |
           if grep -q "new key found" compare_output.txt; then
             echo "New keys found that may require translations:"
-            grep -A 100 "new key found" compare_output.txt | grep "^+" | sed 's/^+ //'
             exit 1
           else
             echo "No new keys found."

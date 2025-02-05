@@ -1,6 +1,6 @@
 "use client";
 
-import { CustomSurveyTemplate } from "@/app/lib/templates";
+import { customSurveyTemplate } from "@/app/lib/templates";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
@@ -29,7 +29,7 @@ export const StartFromScratchTemplate = ({
   noPreview,
 }: StartFromScratchTemplateProps) => {
   const { t } = useTranslate();
-  const customSurvey = CustomSurveyTemplate();
+  const customSurvey = customSurveyTemplate(t);
   return (
     <div
       onClick={() => {

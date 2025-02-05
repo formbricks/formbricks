@@ -1,26 +1,18 @@
-import { DefaultEndingCard } from "@/app/lib/templates";
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
+import { TFnType } from "@tolgee/react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
-
-function validateLocale(locale: string): boolean {
-  // Add logic to validate the locale, e.g., check against a list of supported locales
-  return typeof locale === "string" && locale.length > 0;
-}
 
 function logError(error: Error, context: string) {
   console.error(`Error in ${context}:`, error);
 }
 
-export const getXMSurveyDefault = (locale: string): TXMTemplate => {
+export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
   try {
-    if (!validateLocale(locale)) {
-      throw new Error("Invalid locale");
-    }
     return {
       name: "",
-      endings: [DefaultEndingCard([])],
+      endings: [getDefaultEndingCard([], t)],
       questions: [],
       styling: {
         overwriteThemeStyling: true,
@@ -32,10 +24,9 @@ export const getXMSurveyDefault = (locale: string): TXMTemplate => {
   }
 };
 
-const NPSSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const npsSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...getXMSurveyDefault(locale),
+    ...getXMSurveyDefault(t),
     name: t("templates.nps_survey_name"),
     questions: [
       {
@@ -71,10 +62,9 @@ const NPSSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-const StarRatingSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const starRatingSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const defaultSurvey = getXMSurveyDefault(locale);
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
@@ -174,10 +164,9 @@ const StarRatingSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-const CSATSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const csatSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const defaultSurvey = getXMSurveyDefault(locale);
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
@@ -276,10 +265,9 @@ const CSATSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-const CESSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const cessSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...getXMSurveyDefault(locale),
+    ...getXMSurveyDefault(t),
     name: t("templates.cess_survey_name"),
     questions: [
       {
@@ -308,10 +296,9 @@ const CESSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-const SmileysRatingSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const defaultSurvey = getXMSurveyDefault(locale);
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
     ...defaultSurvey,
@@ -411,10 +398,9 @@ const SmileysRatingSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-const ENPSSurvey = (locale: string): TXMTemplate => {
-  const { t } = useTranslate();
+const enpsSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...getXMSurveyDefault(locale),
+    ...getXMSurveyDefault(t),
     name: t("templates.enps_survey_name"),
     questions: [
       {
@@ -452,18 +438,15 @@ const ENPSSurvey = (locale: string): TXMTemplate => {
   };
 };
 
-export const getXMTemplates = (locale: string): TXMTemplate[] => {
+export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
   try {
-    if (!validateLocale(locale)) {
-      throw new Error("Invalid locale");
-    }
     return [
-      NPSSurvey(locale),
-      StarRatingSurvey(locale),
-      CSATSurvey(locale),
-      CESSurvey(locale),
-      SmileysRatingSurvey(locale),
-      ENPSSurvey(locale),
+      npsSurvey(t),
+      starRatingSurvey(t),
+      csatSurvey(t),
+      cessSurvey(t),
+      smileysRatingSurvey(t),
+      enpsSurvey(t),
     ];
   } catch (error) {
     logError(error, "getXMTemplates");

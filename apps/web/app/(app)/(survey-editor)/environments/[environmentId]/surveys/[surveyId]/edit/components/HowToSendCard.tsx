@@ -1,6 +1,6 @@
 "use client";
 
-import { DefaultEndingCard } from "@/app/lib/templates";
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { Badge } from "@/modules/ui/components/badge";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
@@ -34,7 +34,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
-      endingsTemp.push(DefaultEndingCard(localSurvey.languages));
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages, t));
     }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,

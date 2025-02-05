@@ -1,7 +1,7 @@
 "use client";
 
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
-import { useTranslate } from "@tolgee/react";
+import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
@@ -76,7 +76,7 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
 const mapResponsesToTableData = (
   responses: TResponse[],
   survey: TSurvey,
-  t: (key: string) => string
+  t: TFnType
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),

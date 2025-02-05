@@ -34,7 +34,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -75,6 +75,7 @@ export const FollowUpModal = ({
   locale,
 }: AddFollowUpModalProps) => {
   const { t } = useTranslate();
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const containerRef = useRef<HTMLDivElement>(null);
   const [firstRender, setFirstRender] = useState(true);
 

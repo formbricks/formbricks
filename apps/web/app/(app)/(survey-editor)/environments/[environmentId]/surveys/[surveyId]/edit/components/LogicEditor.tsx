@@ -13,7 +13,7 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { QUESTIONS_ICON_MAP } from "@formbricks/lib/utils/questions";
+import { getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {
@@ -36,7 +36,7 @@ export function LogicEditor({
   isLast,
 }: LogicEditorProps) {
   const { t } = useTranslate();
-
+  const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
   const fallbackOptions = useMemo(() => {
     let options: {
       icon?: ReactElement;

@@ -2,12 +2,13 @@
 
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
+import { TFnType } from "@tolgee/react";
 import { SplitIcon } from "lucide-react";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter, TTemplateRole } from "@formbricks/types/templates";
-import { channelMapping, industryMapping, roleMapping } from "../lib/utils";
+import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/utils";
 
 interface TemplateTagsProps {
   template: TTemplate;
@@ -33,13 +34,10 @@ const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   }
 };
 
-const getChannelTag = (
-  channels: NonNullabeChannel[] | undefined,
-  t: (key: string) => string
-): string | undefined => {
+const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFnType): string | undefined => {
   if (!channels) return undefined;
   const getLabel = (channelValue: NonNullabeChannel) =>
-    channelMapping.find((channel) => channel.value === channelValue)?.label;
+    getChannelMapping(t).find((channel) => channel.value === channelValue)?.label;
   const labels = channels
     .map((channel) => {
       const label = getLabel(channel);
@@ -71,7 +69,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
   const roleBasedStyling = useMemo(() => getRoleBasedStyling(template.role), [template.role]);
 
   const roleTag = useMemo(
-    () => roleMapping.find((roleMap) => roleMap.value === template.role)?.label,
+    () => getRoleMapping(t).find((roleMap) => roleMap.value === template.role)?.label,
     [template.role]
   );
 
@@ -79,13 +77,13 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
   const getIndustryTag = (industries: TProjectConfigIndustry[] | undefined): string | undefined => {
     // if user selects an industry e.g. eCommerce than the tag should not say "Multiple industries" anymore but "E-Commerce".
     if (selectedFilter[1] !== null) {
-      const industry = industryMapping.find((industry) => industry.value === selectedFilter[1]);
+      const industry = getIndustryMapping(t).find((industry) => industry.value === selectedFilter[1]);
       if (industry) return t(industry.label);
     }
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
       ? t("environments.surveys.templates.multiple_industries")
-      : t(industryMapping.find((industry) => industry.value === industries[0])?.label ?? "");
+      : t(getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label ?? "");
   };
 
   const industryTag = useMemo(

@@ -1,5 +1,6 @@
 import { getTranslate } from "@/tolgee/server";
 import { Container, Hr, Link, Tailwind, Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import React, { type JSX } from "react";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
@@ -10,10 +11,7 @@ import type {
 import { EmailButton } from "../../components/email-button";
 import { renderEmailResponseValue } from "../survey/response-finished-email";
 
-const getButtonLabel = (
-  count: number,
-  t: (key: string, options?: { [key: string]: string }) => string
-): string => {
+const getButtonLabel = (count: number, t: TFnType): string => {
   if (count === 1) {
     return t("emails.live_survey_notification_view_response");
   }
@@ -22,7 +20,7 @@ const getButtonLabel = (
   });
 };
 
-const convertSurveyStatus = (status: TSurveyStatus, t: (key: string) => string): string => {
+const convertSurveyStatus = (status: TSurveyStatus, t: TFnType): string => {
   const statusMap = {
     inProgress: t("emails.live_survey_notification_in_progress"),
     paused: t("emails.live_survey_notification_paused"),

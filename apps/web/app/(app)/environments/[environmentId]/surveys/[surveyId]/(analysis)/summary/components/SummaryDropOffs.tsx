@@ -15,7 +15,7 @@ interface SummaryDropOffsProps {
 export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslate();
   const getIcon = (questionType: TSurveyQuestionType) => {
-    const Icon = getQuestionIcon(questionType);
+    const Icon = getQuestionIcon(questionType, t);
     return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
   };
 

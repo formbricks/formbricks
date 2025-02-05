@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { useTranslate } from "@tolgee/react";
+import { TFnType } from "@tolgee/react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
   TSurvey,
@@ -12,8 +12,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TTemplate } from "@formbricks/types/templates";
 
-export const DefaultEndingCard = (languages: TSurveyLanguage[]): TSurveyEndScreenCard => {
-  const { t } = useTranslate();
+export const getDefaultEndingCard = (languages: TSurveyLanguage[], t: TFnType): TSurveyEndScreenCard => {
   const languageCodes = extractLanguageCodes(languages);
   return {
     id: createId(),
@@ -30,8 +29,7 @@ const hiddenFieldsDefault: TSurveyHiddenFields = {
   fieldIds: [],
 };
 
-export const DefaultWelcomeCard = (): TSurveyWelcomeCard => {
-  const { t } = useTranslate();
+export const getDefaultWelcomeCard = (t: TFnType): TSurveyWelcomeCard => {
   return {
     enabled: false,
     headline: { default: t("templates.default_welcome_card_headline") },
@@ -42,20 +40,19 @@ export const DefaultWelcomeCard = (): TSurveyWelcomeCard => {
   };
 };
 
-export const DefaultSurveyPreset = (): TTemplate["preset"] => {
+export const getDefaultSurveyPreset = (t: TFnType): TTemplate["preset"] => {
   return {
     name: "New Survey",
-    welcomeCard: DefaultWelcomeCard(),
-    endings: [DefaultEndingCard([])],
+    welcomeCard: getDefaultWelcomeCard(t),
+    endings: [getDefaultEndingCard([], t)],
     hiddenFields: hiddenFieldsDefault,
     questions: [],
   };
 };
 
-const CartAbandonmentSurvey = (): TTemplate => {
-  const { t } = useTranslate();
+const cartAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.card_abandonment_survey"),
     role: "productManager",
@@ -272,10 +269,9 @@ const CartAbandonmentSurvey = (): TTemplate => {
   };
 };
 
-const SiteAbandonmentSurvey = (): TTemplate => {
-  const { t } = useTranslate();
+const siteAbandonmentSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.site_abandonment_survey"),
     role: "productManager",
@@ -493,10 +489,9 @@ const SiteAbandonmentSurvey = (): TTemplate => {
   };
 };
 
-const ProductMarketFitSuperhuman = (): TTemplate => {
-  const { t } = useTranslate();
+const productMarketFitSuperhuman = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.product_market_fit_superhuman"),
     role: "productManager",
@@ -648,8 +643,8 @@ const ProductMarketFitSuperhuman = (): TTemplate => {
   };
 };
 
-const OnboardingSegmentation = (): TTemplate => {
-  const { t } = useTranslate();
+const onboardingSegmentation = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.onboarding_segmentation"),
     role: "productManager",
@@ -657,7 +652,7 @@ const OnboardingSegmentation = (): TTemplate => {
     channels: ["app", "link"],
     description: t("templates.onboarding_segmentation_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.onboarding_segmentation"),
       questions: [
         {
@@ -761,11 +756,10 @@ const OnboardingSegmentation = (): TTemplate => {
   };
 };
 
-const ChurnSurvey = (): TTemplate => {
-  const { t } = useTranslate();
+const churnSurvey = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.churn_survey"),
     role: "sales",
@@ -1109,11 +1103,10 @@ const ChurnSurvey = (): TTemplate => {
   };
 };
 
-const EarnedAdvocacyScore = (): TTemplate => {
-  const { t } = useTranslate();
+const earnedAdvocacyScore = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.earned_advocacy_score_name"),
     role: "customerSuccess",
@@ -1292,8 +1285,7 @@ const EarnedAdvocacyScore = (): TTemplate => {
   };
 };
 
-const ImproveTrialConversion = (): TTemplate => {
-  const { t } = useTranslate();
+const improveTrialConversion = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [
     createId(),
@@ -1304,7 +1296,7 @@ const ImproveTrialConversion = (): TTemplate => {
     createId(),
     createId(),
   ];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.improve_trial_conversion_name"),
     role: "sales",
@@ -1714,9 +1706,8 @@ const ImproveTrialConversion = (): TTemplate => {
   };
 };
 
-const ReviewPrompt = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const reviewPrompt = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
@@ -1828,8 +1819,8 @@ const ReviewPrompt = (): TTemplate => {
   };
 };
 
-const InterviewPrompt = (): TTemplate => {
-  const { t } = useTranslate();
+const interviewPrompt = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.interview_prompt_name"),
     role: "productManager",
@@ -1837,7 +1828,7 @@ const InterviewPrompt = (): TTemplate => {
     channels: ["app"],
     description: t("templates.interview_prompt_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.interview_prompt_name"),
       questions: [
         {
@@ -1856,11 +1847,10 @@ const InterviewPrompt = (): TTemplate => {
   };
 };
 
-const ImproveActivationRate = (): TTemplate => {
-  const { t } = useTranslate();
+const improveActivationRate = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.improve_activation_rate_name"),
     role: "productManager",
@@ -2194,8 +2184,8 @@ const ImproveActivationRate = (): TTemplate => {
   };
 };
 
-const EmployeeSatisfaction = (): TTemplate => {
-  const { t } = useTranslate();
+const employeeSatisfaction = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.employee_satisfaction_name"),
     role: "peopleManager",
@@ -2203,7 +2193,7 @@ const EmployeeSatisfaction = (): TTemplate => {
     channels: ["app", "link"],
     description: t("templates.employee_satisfaction_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.employee_satisfaction_name"),
       questions: [
         {
@@ -2325,9 +2315,8 @@ const EmployeeSatisfaction = (): TTemplate => {
   };
 };
 
-const UncoverStrengthsAndWeaknesses = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const uncoverStrengthsAndWeaknesses = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.uncover_strengths_and_weaknesses_name"),
     role: "productManager",
@@ -2415,8 +2404,8 @@ const UncoverStrengthsAndWeaknesses = (): TTemplate => {
   };
 };
 
-const ProductMarketFitShort = (): TTemplate => {
-  const { t } = useTranslate();
+const productMarketFitShort = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.product_market_fit_short_name"),
     role: "productManager",
@@ -2424,7 +2413,7 @@ const ProductMarketFitShort = (): TTemplate => {
     channels: ["app", "link"],
     description: t("templates.product_market_fit_short_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.product_market_fit_short_name"),
       questions: [
         {
@@ -2469,8 +2458,8 @@ const ProductMarketFitShort = (): TTemplate => {
   };
 };
 
-const MarketAttribution = (): TTemplate => {
-  const { t } = useTranslate();
+const marketAttribution = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.market_attribution_name"),
     role: "marketing",
@@ -2478,7 +2467,7 @@ const MarketAttribution = (): TTemplate => {
     channels: ["website", "app", "link"],
     description: t("templates.market_attribution_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.market_attribution_name"),
       questions: [
         {
@@ -2518,8 +2507,8 @@ const MarketAttribution = (): TTemplate => {
   };
 };
 
-const ChangingSubscriptionExperience = (): TTemplate => {
-  const { t } = useTranslate();
+const changingSubscriptionExperience = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.changing_subscription_experience_name"),
     role: "productManager",
@@ -2527,7 +2516,7 @@ const ChangingSubscriptionExperience = (): TTemplate => {
     channels: ["app"],
     description: t("templates.changing_subscription_experience_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.changing_subscription_experience_name"),
       questions: [
         {
@@ -2589,8 +2578,8 @@ const ChangingSubscriptionExperience = (): TTemplate => {
   };
 };
 
-const IdentifyCustomerGoals = (): TTemplate => {
-  const { t } = useTranslate();
+const identifyCustomerGoals = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.identify_customer_goals_name"),
     role: "productManager",
@@ -2598,7 +2587,7 @@ const IdentifyCustomerGoals = (): TTemplate => {
     channels: ["app", "website"],
     description: t("templates.identify_customer_goals_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.identify_customer_goals_name"),
       questions: [
         {
@@ -2633,8 +2622,8 @@ const IdentifyCustomerGoals = (): TTemplate => {
   };
 };
 
-const FeatureChaser = (): TTemplate => {
-  const { t } = useTranslate();
+const featureChaser = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.feature_chaser_name"),
     role: "productManager",
@@ -2642,7 +2631,7 @@ const FeatureChaser = (): TTemplate => {
     channels: ["app"],
     description: t("templates.feature_chaser_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.feature_chaser_name"),
       questions: [
         {
@@ -2678,8 +2667,8 @@ const FeatureChaser = (): TTemplate => {
   };
 };
 
-const FakeDoorFollowUp = (): TTemplate => {
-  const { t } = useTranslate();
+const fakeDoorFollowUp = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.fake_door_follow_up_name"),
     role: "productManager",
@@ -2687,7 +2676,7 @@ const FakeDoorFollowUp = (): TTemplate => {
     channels: ["app", "website"],
     description: t("templates.fake_door_follow_up_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.fake_door_follow_up_name"),
       questions: [
         {
@@ -2735,11 +2724,10 @@ const FakeDoorFollowUp = (): TTemplate => {
   };
 };
 
-const FeedbackBox = (): TTemplate => {
-  const { t } = useTranslate();
+const feedbackBox = (t: TFnType): TTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.feedback_box_name"),
     role: "productManager",
@@ -2950,8 +2938,8 @@ const FeedbackBox = (): TTemplate => {
   };
 };
 
-const IntegrationSetupSurvey = (): TTemplate => {
-  const { t } = useTranslate();
+const integrationSetupSurvey = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
 
   return {
@@ -2961,7 +2949,7 @@ const IntegrationSetupSurvey = (): TTemplate => {
     channels: ["app"],
     description: t("templates.integration_setup_survey_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.integration_setup_survey_name"),
       questions: [
         {
@@ -3038,8 +3026,8 @@ const IntegrationSetupSurvey = (): TTemplate => {
   };
 };
 
-const NewIntegrationSurvey = (): TTemplate => {
-  const { t } = useTranslate();
+const newIntegrationSurvey = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.new_integration_survey_name"),
     role: "productManager",
@@ -3047,7 +3035,7 @@ const NewIntegrationSurvey = (): TTemplate => {
     channels: ["app"],
     description: t("templates.new_integration_survey_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.new_integration_survey_name"),
       questions: [
         {
@@ -3086,8 +3074,8 @@ const NewIntegrationSurvey = (): TTemplate => {
   };
 };
 
-const DocsFeedback = (): TTemplate => {
-  const { t } = useTranslate();
+const docsFeedback = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.docs_feedback_name"),
     role: "productManager",
@@ -3095,7 +3083,7 @@ const DocsFeedback = (): TTemplate => {
     channels: ["app", "website", "link"],
     description: t("templates.docs_feedback_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.docs_feedback_name"),
       questions: [
         {
@@ -3146,8 +3134,8 @@ const DocsFeedback = (): TTemplate => {
   };
 };
 
-const NPS = (): TTemplate => {
-  const { t } = useTranslate();
+const nps = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.nps_name"),
     role: "customerSuccess",
@@ -3155,7 +3143,7 @@ const NPS = (): TTemplate => {
     channels: ["app", "link", "website"],
     description: t("templates.nps_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.nps_name"),
       questions: [
         {
@@ -3186,9 +3174,8 @@ const NPS = (): TTemplate => {
   };
 };
 
-const CustomerSatisfactionScore = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const customerSatisfactionScore = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3381,8 +3368,8 @@ const CustomerSatisfactionScore = (): TTemplate => {
   };
 };
 
-const CollectFeedback = (): TTemplate => {
-  const { t } = useTranslate();
+const collectFeedback = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -3399,7 +3386,7 @@ const CollectFeedback = (): TTemplate => {
     channels: ["website", "link"],
     description: t("templates.collect_feedback_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.collect_feedback_name"),
       questions: [
         {
@@ -3437,10 +3424,11 @@ const CollectFeedback = (): TTemplate => {
           ],
           range: 5,
           scale: "star",
-          headline: { default: t("templates.csat_question_1_headline") },
+          headline: { default: t("templates.collect_feedback_question_1_headline") },
+          subheader: { default: t("templates.collect_feedback_question_1_subheader") },
           required: true,
-          lowerLabel: { default: t("templates.csat_question_1_lower_label") },
-          upperLabel: { default: t("templates.csat_question_1_upper_label") },
+          lowerLabel: { default: t("templates.collect_feedback_question_1_lower_label") },
+          upperLabel: { default: t("templates.collect_feedback_question_1_upper_label") },
           isColorCodingEnabled: false,
           buttonLabel: { default: t("templates.next") },
           backButtonLabel: { default: t("templates.back") },
@@ -3561,8 +3549,8 @@ const CollectFeedback = (): TTemplate => {
   };
 };
 
-const IdentifyUpsellOpportunities = (): TTemplate => {
-  const { t } = useTranslate();
+const identifyUpsellOpportunities = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.identify_upsell_opportunities_name"),
     role: "sales",
@@ -3570,7 +3558,7 @@ const IdentifyUpsellOpportunities = (): TTemplate => {
     channels: ["app", "link"],
     description: t("templates.identify_upsell_opportunities_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.identify_upsell_opportunities_name"),
       questions: [
         {
@@ -3605,8 +3593,8 @@ const IdentifyUpsellOpportunities = (): TTemplate => {
   };
 };
 
-const PrioritizeFeatures = (): TTemplate => {
-  const { t } = useTranslate();
+const prioritizeFeatures = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.prioritize_features_name"),
     role: "productManager",
@@ -3614,7 +3602,7 @@ const PrioritizeFeatures = (): TTemplate => {
     channels: ["app"],
     description: t("templates.prioritize_features_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.prioritize_features_name"),
       questions: [
         {
@@ -3684,8 +3672,8 @@ const PrioritizeFeatures = (): TTemplate => {
   };
 };
 
-const GaugeFeatureSatisfaction = (): TTemplate => {
-  const { t } = useTranslate();
+const gaugeFeatureSatisfaction = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.gauge_feature_satisfaction_name"),
     role: "productManager",
@@ -3693,7 +3681,7 @@ const GaugeFeatureSatisfaction = (): TTemplate => {
     channels: ["app"],
     description: t("templates.gauge_feature_satisfaction_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.gauge_feature_satisfaction_name"),
       questions: [
         {
@@ -3722,14 +3710,14 @@ const GaugeFeatureSatisfaction = (): TTemplate => {
           backButtonLabel: { default: t("templates.back") },
         },
       ],
-      endings: [DefaultEndingCard([])],
+      endings: [getDefaultEndingCard([], t)],
       hiddenFields: hiddenFieldsDefault,
     },
   };
 };
 
-const MarketSiteClarity = (): TTemplate => {
-  const { t } = useTranslate();
+const marketSiteClarity = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.market_site_clarity_name"),
     role: "marketing",
@@ -3737,7 +3725,7 @@ const MarketSiteClarity = (): TTemplate => {
     channels: ["website"],
     description: t("templates.market_site_clarity_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.market_site_clarity_name"),
       questions: [
         {
@@ -3790,8 +3778,8 @@ const MarketSiteClarity = (): TTemplate => {
   };
 };
 
-const CustomerEffortScore = (): TTemplate => {
-  const { t } = useTranslate();
+const customerEffortScore = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.customer_effort_score_name"),
     role: "productManager",
@@ -3799,7 +3787,7 @@ const CustomerEffortScore = (): TTemplate => {
     channels: ["app"],
     description: t("templates.customer_effort_score_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.customer_effort_score_name"),
       questions: [
         {
@@ -3833,9 +3821,8 @@ const CustomerEffortScore = (): TTemplate => {
   };
 };
 
-const CareerDevelopmentSurvey = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const careerDevelopmentSurvey = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.career_development_survey_name"),
     role: "productManager",
@@ -3971,9 +3958,8 @@ const CareerDevelopmentSurvey = (): TTemplate => {
   };
 };
 
-const ProfessionalDevelopmentSurvey = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const professionalDevelopmentSurvey = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.professional_development_survey_name"),
     role: "productManager",
@@ -4126,10 +4112,9 @@ const ProfessionalDevelopmentSurvey = (): TTemplate => {
   };
 };
 
-const RateCheckoutExperience = (): TTemplate => {
-  const { t } = useTranslate();
+const rateCheckoutExperience = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.rate_checkout_experience_name"),
     role: "productManager",
@@ -4240,10 +4225,9 @@ const RateCheckoutExperience = (): TTemplate => {
   };
 };
 
-const MeasureSearchExperience = (): TTemplate => {
-  const { t } = useTranslate();
+const measureSearchExperience = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.measure_search_experience_name"),
     role: "productManager",
@@ -4354,10 +4338,9 @@ const MeasureSearchExperience = (): TTemplate => {
   };
 };
 
-const EvaluateContentQuality = (): TTemplate => {
-  const { t } = useTranslate();
+const evaluateContentQuality = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.evaluate_content_quality_name"),
     role: "marketing",
@@ -4468,11 +4451,10 @@ const EvaluateContentQuality = (): TTemplate => {
   };
 };
 
-const MeasureTaskAccomplishment = (): TTemplate => {
-  const { t } = useTranslate();
+const measureTaskAccomplishment = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId()];
   const reusableOptionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.measure_task_accomplishment_name"),
     role: "productManager",
@@ -4746,8 +4728,8 @@ const MeasureTaskAccomplishment = (): TTemplate => {
   };
 };
 
-const IdentifySignUpBarriers = (): TTemplate => {
-  const { t } = useTranslate();
+const identifySignUpBarriers = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -4759,7 +4741,6 @@ const IdentifySignUpBarriers = (): TTemplate => {
     createId(),
     createId(),
   ];
-  const localSurvey = DefaultSurveyPreset();
   const reusableOptionIds = [createId(), createId(), createId(), createId(), createId()];
 
   return {
@@ -5219,8 +5200,8 @@ const IdentifySignUpBarriers = (): TTemplate => {
   };
 };
 
-const BuildProductRoadmap = (): TTemplate => {
-  const { t } = useTranslate();
+const buildProductRoadmap = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.build_product_roadmap_name"),
     role: "productManager",
@@ -5228,7 +5209,7 @@ const BuildProductRoadmap = (): TTemplate => {
     channels: ["app", "link"],
     description: t("templates.build_product_roadmap_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.build_product_roadmap_name_with_project_name"),
       questions: [
         {
@@ -5266,10 +5247,9 @@ const BuildProductRoadmap = (): TTemplate => {
   };
 };
 
-const UnderstandPurchaseIntention = (): TTemplate => {
-  const { t } = useTranslate();
+const understandPurchaseIntention = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.understand_purchase_intention_name"),
     role: "sales",
@@ -5472,10 +5452,9 @@ const UnderstandPurchaseIntention = (): TTemplate => {
   };
 };
 
-const ImproveNewsletterContent = (): TTemplate => {
-  const { t } = useTranslate();
+const improveNewsletterContent = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.improve_newsletter_content_name"),
     role: "marketing",
@@ -5625,8 +5604,8 @@ const ImproveNewsletterContent = (): TTemplate => {
   };
 };
 
-const EvaluateAProductIdea = (): TTemplate => {
-  const { t } = useTranslate();
+const evaluateAProductIdea = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [
     createId(),
     createId(),
@@ -5644,7 +5623,7 @@ const EvaluateAProductIdea = (): TTemplate => {
     channels: ["link", "app"],
     description: t("templates.evaluate_a_product_idea_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...localSurvey,
       name: t("templates.evaluate_a_product_idea_name"),
       questions: [
         {
@@ -5905,12 +5884,11 @@ const EvaluateAProductIdea = (): TTemplate => {
   };
 };
 
-const UnderstandLowEngagement = (): TTemplate => {
-  const { t } = useTranslate();
+const understandLowEngagement = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   const reusableQuestionIds = [createId(), createId(), createId(), createId(), createId(), createId()];
 
   const reusableOptionIds = [createId(), createId(), createId(), createId()];
-  const localSurvey = DefaultSurveyPreset();
   return {
     name: t("templates.understand_low_engagement_name"),
     role: "productManager",
@@ -6269,9 +6247,8 @@ const UnderstandLowEngagement = (): TTemplate => {
   };
 };
 
-const EmployeeWellBeing = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const employeeWellBeing = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.employee_well_being_name"),
     role: "peopleManager",
@@ -6353,9 +6330,8 @@ const EmployeeWellBeing = (): TTemplate => {
   };
 };
 
-const LongTermRetentionCheckIn = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const longTermRetentionCheckIn = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.long_term_retention_check_in_name"),
     role: "peopleManager",
@@ -6539,9 +6515,8 @@ const LongTermRetentionCheckIn = (): TTemplate => {
   };
 };
 
-const ProfessionalDevelopmentGrowth = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const professionalDevelopmentGrowth = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.professional_development_growth_survey_name"),
     role: "peopleManager",
@@ -6631,9 +6606,8 @@ const ProfessionalDevelopmentGrowth = (): TTemplate => {
   };
 };
 
-const RecognitionAndReward = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const recognitionAndReward = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.recognition_and_reward_survey_name"),
     role: "peopleManager",
@@ -6723,9 +6697,8 @@ const RecognitionAndReward = (): TTemplate => {
   };
 };
 
-const AlignmentAndEngagement = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const alignmentAndEngagement = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.alignment_and_engagement_survey_name"),
     role: "peopleManager",
@@ -6815,9 +6788,8 @@ const AlignmentAndEngagement = (): TTemplate => {
   };
 };
 
-const SupportiveWorkCulture = (): TTemplate => {
-  const { t } = useTranslate();
-  const localSurvey = DefaultSurveyPreset();
+const supportiveWorkCulture = (t: TFnType): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
   return {
     name: t("templates.supportive_work_culture_survey_name"),
     role: "peopleManager",
@@ -6907,64 +6879,63 @@ const SupportiveWorkCulture = (): TTemplate => {
   };
 };
 
-export const templates = (): TTemplate[] => [
-  CartAbandonmentSurvey(),
-  SiteAbandonmentSurvey(),
-  ProductMarketFitSuperhuman(),
-  OnboardingSegmentation(),
-  ChurnSurvey(),
-  EarnedAdvocacyScore(),
-  ImproveTrialConversion(),
-  ReviewPrompt(),
-  InterviewPrompt(),
-  ImproveActivationRate(),
-  UncoverStrengthsAndWeaknesses(),
-  ProductMarketFitShort(),
-  MarketAttribution(),
-  ChangingSubscriptionExperience(),
-  IdentifyCustomerGoals(),
-  FeatureChaser(),
-  FakeDoorFollowUp(),
-  FeedbackBox(),
-  IntegrationSetupSurvey(),
-  NewIntegrationSurvey(),
-  DocsFeedback(),
-  NPS(),
-  CustomerSatisfactionScore(),
-  CollectFeedback(),
-  IdentifyUpsellOpportunities(),
-  PrioritizeFeatures(),
-  GaugeFeatureSatisfaction(),
-  MarketSiteClarity(),
-  CustomerEffortScore(),
-  RateCheckoutExperience(),
-  MeasureSearchExperience(),
-  EvaluateContentQuality(),
-  MeasureTaskAccomplishment(),
-  IdentifySignUpBarriers(),
-  BuildProductRoadmap(),
-  UnderstandPurchaseIntention(),
-  ImproveNewsletterContent(),
-  EvaluateAProductIdea(),
-  UnderstandLowEngagement(),
-  EmployeeSatisfaction(),
-  EmployeeWellBeing(),
-  LongTermRetentionCheckIn(),
-  SupportiveWorkCulture(),
-  AlignmentAndEngagement(),
-  RecognitionAndReward(),
-  ProfessionalDevelopmentGrowth(),
-  ProfessionalDevelopmentSurvey(),
-  CareerDevelopmentSurvey(),
+export const templates = (t: TFnType): TTemplate[] => [
+  cartAbandonmentSurvey(t),
+  siteAbandonmentSurvey(t),
+  productMarketFitSuperhuman(t),
+  onboardingSegmentation(t),
+  churnSurvey(t),
+  earnedAdvocacyScore(t),
+  improveTrialConversion(t),
+  reviewPrompt(t),
+  interviewPrompt(t),
+  improveActivationRate(t),
+  uncoverStrengthsAndWeaknesses(t),
+  productMarketFitShort(t),
+  marketAttribution(t),
+  changingSubscriptionExperience(t),
+  identifyCustomerGoals(t),
+  featureChaser(t),
+  fakeDoorFollowUp(t),
+  feedbackBox(t),
+  integrationSetupSurvey(t),
+  newIntegrationSurvey(t),
+  docsFeedback(t),
+  nps(t),
+  customerSatisfactionScore(t),
+  collectFeedback(t),
+  identifyUpsellOpportunities(t),
+  prioritizeFeatures(t),
+  gaugeFeatureSatisfaction(t),
+  marketSiteClarity(t),
+  customerEffortScore(t),
+  rateCheckoutExperience(t),
+  measureSearchExperience(t),
+  evaluateContentQuality(t),
+  measureTaskAccomplishment(t),
+  identifySignUpBarriers(t),
+  buildProductRoadmap(t),
+  understandPurchaseIntention(t),
+  improveNewsletterContent(t),
+  evaluateAProductIdea(t),
+  understandLowEngagement(t),
+  employeeSatisfaction(t),
+  employeeWellBeing(t),
+  longTermRetentionCheckIn(t),
+  supportiveWorkCulture(t),
+  alignmentAndEngagement(t),
+  recognitionAndReward(t),
+  professionalDevelopmentGrowth(t),
+  professionalDevelopmentSurvey(t),
+  careerDevelopmentSurvey(t),
 ];
 
-export const CustomSurveyTemplate = (): TTemplate => {
-  const { t } = useTranslate();
+export const customSurveyTemplate = (t: TFnType): TTemplate => {
   return {
     name: t("templates.custom_survey_name"),
     description: t("templates.custom_survey_description"),
     preset: {
-      ...DefaultSurveyPreset(),
+      ...getDefaultSurveyPreset(t),
       name: t("templates.custom_survey_name"),
       questions: [
         {
@@ -6984,8 +6955,7 @@ export const CustomSurveyTemplate = (): TTemplate => {
   };
 };
 
-export const PreviewSurvey = (projectName: string) => {
-  const { t } = useTranslate();
+export const previewSurvey = (projectName: string, t: TFnType) => {
   return {
     id: "cltxxaa6x0000g8hacxdxejeu",
     createdAt: new Date(),

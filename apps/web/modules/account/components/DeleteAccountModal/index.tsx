@@ -3,10 +3,10 @@
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
+import { T } from "@tolgee/react";
 import { signOut } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
-import { RichText } from "@formbricks/lib/utils/rich-text";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { deleteUserAction } from "./actions";
@@ -73,7 +73,7 @@ export const DeleteAccountModal = ({
           </li>
           {organizationsWithSingleOwner.length > 0 && (
             <li>
-              <RichText text={t("environments.settings.profile.organizations_delete_message")} />
+              <T keyName="environments.settings.profile.organizations_delete_message" params={{ b: <b /> }} />
             </li>
           )}
           {organizationsWithSingleOwner.length > 0 && (

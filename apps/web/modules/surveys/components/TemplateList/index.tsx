@@ -2,6 +2,7 @@
 
 import { templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -36,6 +37,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
+  const { t } = useTranslate();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,7 +75,7 @@ export const TemplateList = ({
   };
 
   const filteredTemplates = () => {
-    return templates().filter((template) => {
+    return templates(t).filter((template) => {
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
