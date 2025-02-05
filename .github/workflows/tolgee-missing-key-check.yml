@@ -1,12 +1,7 @@
 name: Check Missing Translations
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_call:
 
 jobs:
   check-missing-translations:
