@@ -125,6 +125,7 @@ export const getAllowedFiles = async (
         }
         continue;
       } catch (error) {
+        toast.error("Error converting file");
         unsupportedExtensionFiles.push(file.name);
         continue;
       }
