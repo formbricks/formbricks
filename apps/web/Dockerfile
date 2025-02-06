@@ -18,7 +18,8 @@ FROM node:22-alpine3.20 AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install -g pnpm@9.15.0
+RUN npm install -g corepack@latest
+RUN corepack enable
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
@@ -61,8 +62,9 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
-# RUN corepack enable
-RUN npm install -g pnpm@9.15.0
+
+RUN npm install -g corepack@latest
+RUN corepack enable
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \
