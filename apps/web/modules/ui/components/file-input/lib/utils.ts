@@ -16,8 +16,6 @@ export const uploadFile = async (
 
     const fileBuffer = await file.arrayBuffer();
 
-    // check the file size
-
     const bufferBytes = fileBuffer.byteLength;
     const bufferKB = bufferBytes / 1024;
 
@@ -75,7 +73,6 @@ export const uploadFile = async (
       });
     }
 
-    // Add the actual file to be uploaded
     formData.append("file", file);
 
     const uploadResponse = await fetch(signedUrl, {
@@ -130,7 +127,8 @@ export const getAllowedFiles = async (
         }
         continue;
       } catch (error) {
-        toast.error("Error converting file");
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        toast.error(`Failed to convert ${file.name}: ${errorMessage}`);
         unsupportedExtensionFiles.push(file.name);
         continue;
       }
@@ -147,7 +145,6 @@ export const getAllowedFiles = async (
     convertedFiles.push(file);
   }
 
-  // Constructing toast messages based on the issues found
   let toastMessage = "";
   if (sizeExceedFiles.length > 0) {
     toastMessage += `Files exceeding size limit (${maxSizeInMB} MB): ${sizeExceedFiles.join(", ")}. `;
