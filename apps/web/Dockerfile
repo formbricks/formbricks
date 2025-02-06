@@ -61,7 +61,8 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
-RUN corepack enable
+# RUN corepack enable
+RUN npm install -g pnpm@9.15.0
 
 RUN apk add --no-cache curl \
     && apk add --no-cache supercronic \

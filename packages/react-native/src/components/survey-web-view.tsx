@@ -332,6 +332,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 }
 
 const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): string => {
+  // console.log("options: ", JSON.stringify(options, null, 2));
+
   return `
   <!doctype html>
   <html>
