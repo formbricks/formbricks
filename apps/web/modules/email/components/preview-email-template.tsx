@@ -11,6 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
+import { TFnType } from "@tolgee/react";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -25,7 +26,7 @@ interface PreviewEmailTemplateProps {
   surveyUrl: string;
   styling: TSurveyStyling;
   locale: string;
-  t: (s: string) => string;
+  t: TFnType;
 }
 
 export const getPreviewEmailTemplateHtml = async (
@@ -33,7 +34,7 @@ export const getPreviewEmailTemplateHtml = async (
   surveyUrl: string,
   styling: TSurveyStyling,
   locale: string,
-  t: (s: string) => string
+  t: TFnType
 ): Promise<string> => {
   return render(
     <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,

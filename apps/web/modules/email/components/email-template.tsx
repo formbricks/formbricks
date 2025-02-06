@@ -1,4 +1,5 @@
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 const fbLogoUrl =
@@ -8,7 +9,7 @@ const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=emai
 interface EmailTemplateProps {
   children: React.ReactNode;
   logoUrl?: string;
-  t: (s: string) => string;
+  t: TFnType;
 }
 
 export async function EmailTemplate({

@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import React from "react";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { EmailTemplate } from "../../components/email-template";
@@ -12,7 +13,7 @@ interface WeeklySummaryNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  t: (s: string) => string;
+  t: TFnType;
 }
 
 export function WeeklySummaryNotificationEmail({

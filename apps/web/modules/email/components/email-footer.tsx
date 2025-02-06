@@ -1,7 +1,8 @@
 import { Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import React from "react";
 
-export function EmailFooter({ t }: { t: (s: string) => string }): React.JSX.Element {
+export function EmailFooter({ t }: { t: TFnType }): React.JSX.Element {
   return (
     <Text>
       {t("emails.email_footer_text_1")}
