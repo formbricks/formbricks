@@ -42,7 +42,7 @@ export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string): Pro
         throw error;
       }
     },
-    [`getEnvironmentIdFromApiKey-${apiKey}`],
+    [`management-api-getEnvironmentIdFromApiKey-${apiKey}`],
     {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
     }

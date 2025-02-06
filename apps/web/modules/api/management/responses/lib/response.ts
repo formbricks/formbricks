@@ -1,23 +1,22 @@
 import "server-only";
+import {
+  getMonthlyOrganizationResponseCount,
+  getOrganizationBilling,
+  getOrganizationIdFromEnvironmentId,
+} from "@/modules/api/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils";
-import { TResponseNew } from "@/modules/api/management/responses/types/responses";
+import { TResponseInput, TResponseNew } from "@/modules/api/management/responses/types/responses";
 import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import {
-  getMonthlyOrganizationResponseCount,
-  getOrganizationByEnvironmentId,
-} from "@formbricks/lib/organization/service";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContactByUserId } from "./contact";
 
@@ -52,14 +51,13 @@ const responseSelectionInclude = {
 } satisfies Prisma.ResponseInclude;
 
 export const createResponse = async (responseInput: TResponseInput): Promise<TResponseNew> => {
-  validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
   const {
     environmentId,
     language,
-    userId,
     surveyId,
+    userId,
     displayId,
     finished,
     data,
@@ -73,10 +71,10 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
   try {
     let contact: { id: string; attributes: TContactAttributes } | null = null;
-
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organization = await getOrganizationBilling(organizationId);
     if (!organization) {
-      throw new ResourceNotFoundError("Organization", environmentId);
+      throw new ResourceNotFoundError("Organization", organizationId);
     }
 
     if (userId) {
@@ -138,7 +136,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     });
 
     if (IS_FORMBRICKS_CLOUD) {
-      const responsesCount = await getMonthlyOrganizationResponseCount(organization.id);
+      const responsesCount = await getMonthlyOrganizationResponseCount(organizationId);
       const responsesLimit = organization.billing.limits.monthly.responses;
 
       if (responsesLimit && responsesCount >= responsesLimit) {
