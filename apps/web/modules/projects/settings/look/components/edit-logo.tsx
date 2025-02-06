@@ -138,7 +138,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
         ) : (
           <FileInput
             id="logo-input"
-            allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
+            allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
             environmentId={environmentId}
             onFileUpload={(files: string[]) => {
               setLogoUrl(files[0]);

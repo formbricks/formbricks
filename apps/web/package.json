@@ -80,6 +80,7 @@
     "file-loader": "6.2.0",
     "framer-motion": "11.15.0",
     "googleapis": "144.0.0",
+    "heic-convert": "2.1.0",
     "https-proxy-agent": "7.0.6",
     "jiti": "2.4.1",
     "jsonwebtoken": "9.0.2",

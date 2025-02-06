@@ -2,6 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
+import { convertHeicToJpeg } from "./action";
 
 export const uploadFile = async (
   file: File | Blob,
@@ -96,32 +97,53 @@ export const uploadFile = async (
   }
 };
 
-export const getAllowedFiles = (
+export const getAllowedFiles = async (
   files: File[],
   allowedFileExtensions: string[],
   maxSizeInMB?: number
-): File[] => {
+): Promise<File[]> => {
   const sizeExceedFiles: string[] = [];
   const unsupportedExtensionFiles: string[] = [];
+  const convertedFiles: File[] = [];
 
-  const allowedFiles = files.filter((file) => {
+  for (const file of files) {
     if (!file || !file.type) {
-      return false;
+      continue;
     }
 
-    const extension = file.name.split(".").pop();
-    const fileSizeInMB = file.size / 1000000; // Kb -> Mb
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const fileSizeInMB = file.size / 1000000;
+    console.log("going inside");
+    if (extension === "heic") {
+      try {
+        console.log("converting heic file", file.name);
+        const convertedFile = await convertHeicToJpeg(file);
+        if (convertedFile) {
+          console.log("converted file", convertedFile);
+          convertedFiles.push(
+            new File([convertedFile], file.name.replace(/\.heic$/i, ".jpg"), {
+              type: "image/jpeg",
+            })
+          );
+        }
+        continue;
+      } catch (error) {
+        console.error("Error converting HEIC file:", error);
+        unsupportedExtensionFiles.push(file.name);
+        continue;
+      }
+    }
 
     if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
       unsupportedExtensionFiles.push(file.name);
-      return false; // Exclude file if extension not allowed
+      continue;
     } else if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
       sizeExceedFiles.push(file.name);
-      return false; // Exclude files larger than the maximum size
+      continue;
     }
 
-    return true;
-  });
+    convertedFiles.push(file);
+  }
 
   // Constructing toast messages based on the issues found
   let toastMessage = "";
@@ -134,7 +156,7 @@ export const getAllowedFiles = (
   if (toastMessage) {
     toast.error(toastMessage);
   }
-  return allowedFiles;
+  return convertedFiles;
 };
 
 export const checkForYoutubePrivacyMode = (url: string): boolean => {
