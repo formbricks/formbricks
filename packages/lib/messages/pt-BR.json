@@ -643,6 +643,7 @@
     },
     "formbricks_logo": "Logo da Formbricks",
     "integrations": {
+      "activepieces_integration_description": "Conecte o Formbricks com aplicativos populares para automatizar tarefas sem codificar.",
       "additional_settings": "Configurações Adicionais",
       "airtable": {
         "airtable_base": "base do Airtable",
