@@ -1828,7 +1828,8 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      }
+      },
+      "this_is_a_new_key": "Das ist ein neuer Schlüssel "
     },
     "xm-templates": {
       "ces": "CES",

@@ -1828,7 +1828,8 @@
         "multiple_industries": "Plusieurs secteurs",
         "use_this_template": "Utilisez ce modèle",
         "uses_branching_logic": "Cette enquête utilise une logique de branchement."
-      }
+      },
+      "this_is_a_new_key": "Ceci est une clé mise à jour"
     },
     "xm-templates": {
       "ces": "CES",

@@ -1828,7 +1828,8 @@
         "multiple_industries": "Multiple industries",
         "use_this_template": "Use this template",
         "uses_branching_logic": "This survey uses branching logic."
-      }
+      },
+      "this_is_a_new_key": "This is a updated key"
     },
     "xm-templates": {
       "ces": "CES",

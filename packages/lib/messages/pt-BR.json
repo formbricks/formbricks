@@ -1828,7 +1828,8 @@
         "multiple_industries": "várias indústrias",
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
-      }
+      },
+      "this_is_a_new_key": "Esta é uma chave atualizada"
     },
     "xm-templates": {
       "ces": "CES",
