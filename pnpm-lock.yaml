@@ -496,6 +496,9 @@ importers:
       '@tanstack/react-table':
         specifier: 8.20.6
         version: 8.20.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@unkey/ratelimit':
+        specifier: 0.5.5
+        version: 0.5.5
       '@vercel/functions':
         specifier: 1.5.2
         version: 1.5.2(@aws-sdk/credential-provider-web-identity@3.709.0(@aws-sdk/client-sts@3.712.0(aws-crt@1.24.0)))
@@ -6040,6 +6043,18 @@ packages:
 
   '@ungap/structured-clone@1.2.1':
     resolution: {integrity: sha512-fEzPV3hSkSMltkw152tJKNARhOupqbH96MZWyRjNaYZOMIzbrTeQDG+MTc6Mr2pgzFQzFxAfmhGDNP5QK++2ZA==}
+
+  '@unkey/api@0.33.1':
+    resolution: {integrity: sha512-HXFQOGjO3S0+N6GMBOz9lkn2Fp41rdgNrafBkjRg8IjOsNv6SNdWrXZSELONinZYycr7Wxc/t7Vhx7xUdb0cdA==}
+
+  '@unkey/error@0.2.0':
+    resolution: {integrity: sha512-DFGb4A7SrusZPP0FYuRIF0CO+Gi4etLUAEJ6EKc+TKYmscL0nEJ2Pr38FyX9MvjI4Wx5l35Wc9KsBjMm9Ybh7w==}
+
+  '@unkey/ratelimit@0.5.5':
+    resolution: {integrity: sha512-79Xv7lZFHqScGzBQpO3hh2SZBhujXDDkyH/izWzeXcJ5sFYO+PsC+VaAFagEinbHbrx116RkIRIqbDrfZfRpxA==}
+
+  '@unkey/rbac@0.3.1':
+    resolution: {integrity: sha512-Hj+52XRIlBBl3/qOUq9K71Fwy3PWExBQOpOClVYHdrcmbgqNL6L4EdW/BzliLhqPCdwZTPVSJTnZ3Hw4ZYixsQ==}
 
   '@urql/core@5.1.0':
     resolution: {integrity: sha512-yC3sw8yqjbX45GbXxfiBY8GLYCiyW/hLBbQF9l3TJrv4ro00Y0ChkKaD9I2KntRxAVm9IYBqh0awX8fwWAe/Yw==}
@@ -20395,6 +20410,23 @@ snapshots:
       eslint-visitor-keys: 4.2.0
 
   '@ungap/structured-clone@1.2.1': {}
+
+  '@unkey/api@0.33.1':
+    dependencies:
+      '@unkey/rbac': 0.3.1
+
+  '@unkey/error@0.2.0':
+    dependencies:
+      zod: 3.24.1
+
+  '@unkey/ratelimit@0.5.5':
+    dependencies:
+      '@unkey/api': 0.33.1
+
+  '@unkey/rbac@0.3.1':
+    dependencies:
+      '@unkey/error': 0.2.0
+      zod: 3.24.1
 
   '@urql/core@5.1.0':
     dependencies:

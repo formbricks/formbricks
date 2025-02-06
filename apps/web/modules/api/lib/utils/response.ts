@@ -1,29 +1,7 @@
-import { NextApiResponse } from "next";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { ApiSuccessResponse } from "@/modules/api/types/api-success";
 
 export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
-
-interface ApiSuccessResponse<T = { [key: string]: unknown }> {
-  data: T;
-}
-
-interface ApiErrorResponse {
-  code:
-  | "not_found"
-  | "gone"
-  | "bad_request"
-  | "internal_server_error"
-  | "unauthorized"
-  | "method_not_allowed"
-  | "not_authenticated"
-  | "forbidden"
-  | "too_many_requests";
-  message: string;
-  details: {
-    [key: string]: string | string[] | number | number[] | boolean | boolean[];
-  };
-}
-
-export type CustomNextApiResponse = NextApiResponse<ApiResponse>;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -74,32 +52,6 @@ const badRequestResponse = (
     } as ApiErrorResponse,
     {
       status: 400,
-      headers,
-    }
-  );
-};
-
-const methodNotAllowedResponse = (
-  res: CustomNextApiResponse,
-  allowedMethods: string[],
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      code: "method_not_allowed",
-      message: `The HTTP ${res.req?.method} method is not supported by this route.`,
-      details: {
-        allowed_methods: allowedMethods,
-      },
-    } as ApiErrorResponse,
-    {
-      status: 405,
       headers,
     }
   );
@@ -263,7 +215,6 @@ export const responses = {
   goneResponse,
   badRequestResponse,
   internalServerErrorResponse,
-  methodNotAllowedResponse,
   notAuthenticatedResponse,
   unauthorizedResponse,
   notFoundResponse,

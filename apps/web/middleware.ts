@@ -2,7 +2,6 @@ import {
   clientSideApiEndpointsLimiter,
   forgotPasswordLimiter,
   loginLimiter,
-  managementApiEndpointsLimiter,
   shareUrlLimiter,
   signupLimiter,
   syncUserIdentificationLimiter,
@@ -19,7 +18,6 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { getHash } from "@/app/middleware/utils";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import type { NextRequest } from "next/server";
@@ -31,12 +29,13 @@ export const middleware = async (request: NextRequest) => {
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
     const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
-    if (forwardedProto !== "https") {
-      return NextResponse.json(
-        { error: "Only HTTPS connections are allowed on the management endpoint." },
-        { status: 403 }
-      );
-    }
+    // TODO: @gupta-piyush19 remove this once we have a proper way to handle the management endpoint
+    // if (forwardedProto !== "https") {
+    //   return NextResponse.json(
+    //     { error: "Only HTTPS connections are allowed on the management endpoint." },
+    //     { status: 403 }
+    //   );
+    // }
   }
 
   // issue with next auth types; let's review when new fixes are available
@@ -63,8 +62,6 @@ export const middleware = async (request: NextRequest) => {
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     ipAddress(request);
 
-  const apiKey = request.headers.get("x-api-key");
-
   if (ip) {
     try {
       if (isLoginRoute(request.nextUrl.pathname)) {
@@ -89,19 +86,6 @@ export const middleware = async (request: NextRequest) => {
       return NextResponse.next();
     } catch (e) {
       console.log(`Rate Limiting IP: ${ip}`);
-      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
-    }
-  }
-
-  if (apiKey) {
-    const hashedApiKey = getHash(apiKey);
-
-    try {
-      if (isManagementApiRoute(request.nextUrl.pathname)) {
-        await managementApiEndpointsLimiter(`management-api-${hashedApiKey}`);
-      }
-    } catch (e) {
-      console.log(`Rate Limiting API Key: ${hashedApiKey}`);
       return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
     }
   }
