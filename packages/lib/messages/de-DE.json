@@ -691,6 +691,7 @@
     },
     "formbricks_logo": "Formbricks-Logo",
     "integrations": {
+      "activepieces_integration_description": "Stelle deine Umfragen sofort mit Activepieces in Verbindung",
       "additional_settings": "Weitere Einstellungen",
       "airtable": {
         "airtable_base": "Airtable Basis",
