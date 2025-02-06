@@ -117,6 +117,11 @@ export const getAllowedFiles = async (
       try {
         const convertedFile = await convertHeicToJpeg(file);
         if (convertedFile) {
+          const convertedFileSizeInMB = convertedFile.size / 1000000;
+          if (maxSizeInMB && convertedFileSizeInMB > maxSizeInMB) {
+            sizeExceedFiles.push(file.name);
+            continue;
+          }
           convertedFiles.push(
             new File([convertedFile], file.name.replace(/\.heic$/i, ".jpg"), {
               type: "image/jpeg",
