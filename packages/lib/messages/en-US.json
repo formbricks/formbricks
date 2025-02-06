@@ -1375,7 +1375,7 @@
         "does_not_include_one_of": "Does not include one of",
         "does_not_start_with": "Does not start with",
         "edit_recall": "Edit Recall",
-        "edit_translations": "Edit {language} translations",
+        "edit_translations": "Edit {lang} translations",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Enable encryption of Single Use Id (suId) in survey URL.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Enable participants to switch the survey language at any point during the survey.",
         "end_screen_card": "End screen card",

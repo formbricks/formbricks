@@ -14,9 +14,8 @@ type Props = {
 let branchName: string;
 
 try {
-  branchName = require("../../../branch.json").branchName;
+  branchName = process.env.NODE_ENV === "development" ? require("../../../branch.json").branchName : "main";
 } catch (error) {
-  console.warn("branch.json not found, using default branch name.");
   branchName = "main"; // Fallback value
 }
 

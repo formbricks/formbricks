@@ -1375,7 +1375,7 @@
         "does_not_include_one_of": "Enthält nicht eines von",
         "does_not_start_with": "Fängt nicht an mit",
         "edit_recall": "Erinnerung bearbeiten",
-        "edit_translations": "{language}-Übersetzungen bearbeiten",
+        "edit_translations": "{lang} -Übersetzungen bearbeiten",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Single Use Id (suId) in der Umfrage-URL verschlüsseln.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Teilnehmer können die Umfragesprache jederzeit während der Umfrage ändern.",
         "end_screen_card": "Abschluss-Karte",

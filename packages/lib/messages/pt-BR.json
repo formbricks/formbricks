@@ -1375,7 +1375,7 @@
         "does_not_include_one_of": "Não inclui um de",
         "does_not_start_with": "Não começa com",
         "edit_recall": "Editar Lembrete",
-        "edit_translations": "Editar traduções de {language}",
+        "edit_translations": "Editar traduções de {lang}",
         "enable_encryption_of_single_use_id_suid_in_survey_url": "Habilitar criptografia do Id de Uso Único (suId) na URL da pesquisa.",
         "enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey": "Permitir que os participantes mudem o idioma da pesquisa a qualquer momento durante a pesquisa.",
         "end_screen_card": "cartão de tela final",

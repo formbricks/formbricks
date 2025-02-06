@@ -34,7 +34,7 @@ export function LanguageToggle({ language, isChecked, onToggle, onEdit, locale }
         {isChecked ? (
           <p className="cursor-pointer text-xs text-slate-600 underline" onClick={onEdit}>
             {t("environments.surveys.edit.edit_translations", {
-              language: getLanguageLabel(language.code, locale),
+              lang: getLanguageLabel(language.code, locale),
             })}
           </p>
         ) : null}
