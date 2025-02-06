@@ -1,6 +1,7 @@
-import { responses } from "@/app/lib/api/response";
-import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { checkRateLimitAndThrowError } from "@/modules/api/lib/utils/rate-limit";
+import { responses } from "@/modules/api/lib/utils/response";
+import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
+import { hashApiKey } from "@/modules/api/management/lib/utils";
 import { ZodObject, ZodRawShape, z } from "zod";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ValidationError } from "@formbricks/types/errors";
@@ -9,10 +10,12 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
     const environmentId = await getEnvironmentIdFromApiKey(apiKey);
+    const hashedApiKey = hashApiKey(apiKey);
     if (environmentId) {
       const authentication: TAuthenticationApiKey = {
         type: "apiKey",
         environmentId,
+        hashedApiKey,
       };
       return authentication;
     }
@@ -69,9 +72,11 @@ export const authenticatedAPIClient = async <T extends ZodObject<ZodRawShape>>({
     }
 
     if (rateLimit) {
+      console.log("rateLimit", authentication.hashedApiKey);
       const rateLimitResponse = await checkRateLimitAndThrowError({
-        identifier: "api",
+        identifier: authentication.hashedApiKey,
       });
+      console.log("rateLimitResponse", rateLimitResponse);
       if (!rateLimitResponse.ok) {
         if (rateLimitResponse.error.code === "too_many_requests") {
           return responses.tooManyRequestsResponse(rateLimitResponse.error.message);

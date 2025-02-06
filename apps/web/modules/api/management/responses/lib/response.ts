@@ -1,4 +1,7 @@
 import "server-only";
+import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils";
+import { TResponseNew } from "@/modules/api/management/responses/types/responses";
+import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -14,43 +17,15 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContactByUserId } from "./contact";
 
-export const responseSelection = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  surveyId: true,
-  finished: true,
-  data: true,
-  meta: true,
-  ttc: true,
-  variables: true,
-  contactAttributes: true,
-  singleUseId: true,
-  language: true,
-  displayId: true,
+const responseSelectionInclude = {
   contact: {
     select: {
       id: true,
-      attributes: {
-        select: { attributeKey: true, value: true },
-      },
-    },
-  },
-  tags: {
-    select: {
-      tag: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          name: true,
-          environmentId: true,
-        },
-      },
+      userId: true,
     },
   },
   notes: {
@@ -69,9 +44,14 @@ export const responseSelection = {
       isEdited: true,
     },
   },
-} satisfies Prisma.ResponseSelect;
+  tags: {
+    include: {
+      tag: true,
+    },
+  },
+} satisfies Prisma.ResponseInclude;
 
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponse> => {
+export const createResponse = async (responseInput: TResponseInput): Promise<TResponseNew> => {
   validateInputs([responseInput, ZResponseInput]);
   captureTelemetry("response created");
 
@@ -133,17 +113,14 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     const responsePrisma = await prisma.response.create({
       data: prismaData,
-      select: responseSelection,
+      include: responseSelectionInclude,
     });
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: contact
-        ? {
-            id: contact.id,
-            userId: contact.attributes.userId,
-          }
-        : null,
+    const { contact: responseContact, ...rest } = responsePrisma;
+
+    const response: TResponseNew = {
+      ...rest,
+      ...(responseContact ? responseContact : {}),
       tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     };
 
@@ -191,4 +168,26 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 
     throw error;
   }
+};
+
+export const getResponses = async (
+  environmentId: string,
+  params: TGetResponsesFilter
+): Promise<TResponseNew[]> => {
+  const responses = await prisma.response.findMany({
+    ...getResponsesQuery(environmentId, params),
+    include: responseSelectionInclude,
+  });
+
+  const res = responses.map((response) => {
+    const { contact, ...rest } = response;
+
+    return {
+      ...rest,
+      ...(contact ? contact : {}),
+      tags: response.tags.map((tag) => tag.tag),
+    };
+  });
+
+  return res;
 };

@@ -100,6 +100,7 @@ export const env = createEnv({
     LANGFUSE_SECRET_KEY: z.string().optional(),
     LANGFUSE_PUBLIC_KEY: z.string().optional(),
     LANGFUSE_BASEURL: z.string().optional(),
+    UNKEY_ROOT_KEY: z.string().optional(),
   },
 
   /*
@@ -217,5 +218,6 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
+    UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
   },
 });

@@ -1,7 +1,7 @@
 import { deleteDisplay } from "@/modules/api/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/management/responses/[responseId]/lib/utils";
-import { TResponseNew } from "@/modules/api/management/responses/[responseId]/types/responses";
+import { TResponseNew } from "@/modules/api/management/responses/types/responses";
 import { Prisma, Response, Tag } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -18,13 +18,19 @@ const responseSelectionInclude = {
     },
   },
   notes: {
-    include: {
+    select: {
+      id: true,
+      createdAt: true,
+      updatedAt: true,
+      text: true,
       user: {
         select: {
           id: true,
           name: true,
         },
       },
+      isResolved: true,
+      isEdited: true,
     },
   },
   tags: {

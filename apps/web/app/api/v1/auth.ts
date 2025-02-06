@@ -1,3 +1,4 @@
+import { hashApiKey } from "@/app/lib/api/apiHelper";
 import { responses } from "@/app/lib/api/response";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -8,9 +9,11 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
   if (apiKey) {
     const environmentId = await getEnvironmentIdFromApiKey(apiKey);
     if (environmentId) {
+      const hashedApiKey = hashApiKey(apiKey);
       const authentication: TAuthenticationApiKey = {
         type: "apiKey",
         environmentId,
+        hashedApiKey,
       };
       return authentication;
     }

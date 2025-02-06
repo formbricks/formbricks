@@ -1,8 +1,7 @@
 import { type LimitOptions, Ratelimit, type RatelimitResponse } from "@unkey/ratelimit";
-import { MANAGEMENT_API_RATE_LIMIT } from "@formbricks/lib/constants";
+import { MANAGEMENT_API_RATE_LIMIT, RATE_LIMITING_DISABLED, UNKEY_ROOT_KEY } from "@formbricks/lib/constants";
 import { Result, err, okVoid } from "@formbricks/types/error-handlers";
 import { ApiErrorResponse } from "@formbricks/types/errors";
-
 
 export type RateLimitHelper = {
   identifier: string;
@@ -24,7 +23,10 @@ function logOnce(message: string) {
 }
 
 export function rateLimiter() {
-  // const { UNKEY_ROOT_KEY } = process.env;
+  if (RATE_LIMITING_DISABLED) {
+    logOnce("Rate limiting disabled");
+    return () => ({ success: true, limit: 10, remaining: 999, reset: 0 }) as RatelimitResponse;
+  }
 
   if (!UNKEY_ROOT_KEY) {
     logOnce("Disabled due to not finding UNKEY_ROOT_KEY env variable");

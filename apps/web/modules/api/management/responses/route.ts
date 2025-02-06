@@ -1,37 +1,30 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
-import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { responses } from "@/modules/api/lib/utils/response";
+import { authenticatedAPIClient } from "@/modules/api/management/auth";
+import { TResponseNew, ZGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
 import { NextRequest } from "next/server";
-import { getResponses, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
-import { TResponse, ZResponseInput } from "@formbricks/types/responses";
-import { createResponse } from "./lib/response";
+import { ZResponseInput } from "@formbricks/types/responses";
+import { createResponse, getResponses } from "./lib/response";
 
-export const GET = async (request: NextRequest) => {
-  const searchParams = request.nextUrl.searchParams;
-  const surveyId = searchParams.get("surveyId");
-  const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
-  const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
+export const GET = async (request: NextRequest) =>
+  authenticatedAPIClient({
+    request,
+    handler: async ({ authentication }) => {
+      const searchParams = request.nextUrl.searchParams;
+      const params = Object.fromEntries(searchParams.entries());
+      const [validatedParams] = validateInputs([params, ZGetResponsesFilter]);
 
-  try {
-    const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
-    let environmentResponses: TResponse[] = [];
+      const environmentId = authentication.environmentId;
 
-    if (surveyId) {
-      environmentResponses = await getResponses(surveyId, limit, offset);
-    } else {
-      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId, limit, offset);
-    }
-    return responses.successResponse(environmentResponses);
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    throw error;
-  }
-};
+      const res = await getResponses(environmentId, validatedParams);
+
+      return responses.successResponse(res);
+    },
+  });
 
 export const POST = async (request: Request): Promise<Response> => {
   try {
@@ -85,7 +78,7 @@ export const POST = async (request: Request): Promise<Response> => {
       responseInput.updatedAt = responseInput.createdAt;
     }
 
-    let response: TResponse;
+    let response: TResponseNew;
     try {
       response = await createResponse(inputValidation.data);
     } catch (error) {
