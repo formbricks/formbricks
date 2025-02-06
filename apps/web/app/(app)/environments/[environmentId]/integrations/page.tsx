@@ -231,11 +231,11 @@ const Page = async (props) => {
       icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
       connected: activePiecesWebhookCount > 0,
       statusText:
-        makeWebhookCount === 1
+        activePiecesWebhookCount === 1
           ? `1 ${t("common.integration")}`
-          : makeWebhookCount === 0
+          : activePiecesWebhookCount === 0
             ? t("common.not_connected")
-            : `${makeWebhookCount} ${t("common.integrations")}`,
+            : `${activePiecesWebhookCount} ${t("common.integrations")}`,
       disabled: isReadOnly,
     },
   ];
