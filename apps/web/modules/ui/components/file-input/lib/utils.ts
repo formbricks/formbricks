@@ -113,13 +113,10 @@ export const getAllowedFiles = async (
 
     const extension = file.name.split(".").pop()?.toLowerCase();
     const fileSizeInMB = file.size / 1000000;
-    console.log("going inside");
     if (extension === "heic") {
       try {
-        console.log("converting heic file", file.name);
         const convertedFile = await convertHeicToJpeg(file);
         if (convertedFile) {
-          console.log("converted file", convertedFile);
           convertedFiles.push(
             new File([convertedFile], file.name.replace(/\.heic$/i, ".jpg"), {
               type: "image/jpeg",
@@ -128,7 +125,6 @@ export const getAllowedFiles = async (
         }
         continue;
       } catch (error) {
-        console.error("Error converting HEIC file:", error);
         unsupportedExtensionFiles.push(file.name);
         continue;
       }

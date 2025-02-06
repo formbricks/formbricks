@@ -151,7 +151,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
         <Input
           ref={fileInputRef}
           type="file"
-          accept="image/jpeg, image/png, image/webp"
+          accept="image/jpeg, image/png, image/webp, image/heic"
           className="hidden"
           disabled={isReadOnly}
           onChange={handleFileChange}
