@@ -28,7 +28,7 @@ import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 export const middleware = async (request: NextRequest) => {
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
-    const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
+    // const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
     // TODO: @gupta-piyush19 remove this once we have a proper way to handle the management endpoint
     // if (forwardedProto !== "https") {
     //   return NextResponse.json(

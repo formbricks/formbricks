@@ -37,7 +37,7 @@ export const checkAuthorization = ({
   return null;
 };
 
-type HandlerFn<TInput = unknown, TOutput = unknown> = ({
+type HandlerFn<TInput = unknown, TOutput = Response> = ({
   authentication,
   parsedInput,
   request,
