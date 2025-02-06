@@ -3,17 +3,20 @@ import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils
 import { LinkSurvey } from "@/modules/survey/link-surveys/components/link-survey";
 import { PinScreen } from "@/modules/survey/link-surveys/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link-surveys/components/survey-inactive";
+import { getOrganizationBilling } from "@/modules/survey/link-surveys/lib/organization";
+import { getProjectByEnvironmentId } from "@/modules/survey/link-surveys/lib/project";
+import {
+  getResponseBySingleUseId,
+  getResponseCountBySurveyId,
+} from "@/modules/survey/link-surveys/lib/response";
+import { getSurvey } from "@/modules/survey/link-surveys/lib/survey";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link-surveys/metadata";
+import { Response } from "@prisma/client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@formbricks/lib/response/service";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
-import { TResponse } from "@formbricks/types/responses";
 import { getEmailVerificationDetails } from "./lib/utils";
 
 interface LinkSurveyPageProps {
@@ -58,11 +61,11 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     notFound();
   }
 
-  const organization = await getOrganizationByEnvironmentId(survey.environmentId);
-  if (!organization) {
+  const organizationBilling = await getOrganizationBilling(survey.environmentId);
+  if (!organizationBilling) {
     throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
@@ -92,7 +95,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     singleUseId = validatedSingleUseId ?? suId;
   }
 
-  let singleUseResponse: TResponse | undefined = undefined;
+  let singleUseResponse: Pick<Response, "id" | "finished"> | undefined = undefined;
   if (isSingleUseSurvey) {
     try {
       singleUseResponse = singleUseId

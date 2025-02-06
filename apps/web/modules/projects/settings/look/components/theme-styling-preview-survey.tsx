@@ -173,10 +173,14 @@ export const ThemeStylingPreviewSurvey = ({
               </Fragment>
             </Modal>
           ) : (
-            <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isEditorView>
+            <MediaBackground
+              surveyType={survey.type}
+              styling={project.styling}
+              ContentRef={ContentRef}
+              isEditorView>
               {!project.styling?.isLogoHidden && (
                 <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
-                  <ClientLogo project={project} previewSurvey />
+                  <ClientLogo projectLogo={project.logo} previewSurvey />
                 </div>
               )}
               <div

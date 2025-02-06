@@ -251,7 +251,11 @@ export const PreviewSurvey = ({
             <div className="absolute right-0 top-0 m-2">
               <ResetProgressButton onClick={resetQuestionProgress} />
             </div>
-            <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isMobilePreview>
+            <MediaBackground
+              surveyType={survey.type}
+              styling={project.styling}
+              ContentRef={ContentRef}
+              isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
                   isOpen={isModalOpen}
@@ -280,7 +284,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo environmentId={environment.id} project={project} previewSurvey />
+                      <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
@@ -379,10 +383,14 @@ export const PreviewSurvey = ({
                 />
               </Modal>
             ) : (
-              <MediaBackground survey={survey} project={project} ContentRef={ContentRef} isEditorView>
+              <MediaBackground
+                surveyType={survey.type}
+                styling={project.styling}
+                ContentRef={ContentRef}
+                isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo environmentId={environment.id} project={project} previewSurvey />
+                    <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-lg rounded-lg border-transparent">

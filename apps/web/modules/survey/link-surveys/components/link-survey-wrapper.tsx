@@ -3,15 +3,15 @@ import { SurveyLoadingAnimation } from "@/modules/survey/link-surveys/components
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
-import { SurveyType } from "@prisma/client";
+import { Project, SurveyType } from "@prisma/client";
 import { type JSX, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TProject, TProjectStyling } from "@formbricks/types/project";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface LinkSurveyWrapperProps {
   children: JSX.Element;
-  project: TProject;
+  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
   isWelcomeCardEnabled: boolean;
   surveyId: string;
   surveyType: SurveyType;
@@ -79,7 +79,7 @@ export const LinkSurveyWrapper = ({
           styling={styling}
           onBackgroundLoaded={handleBackgroundLoaded}>
           <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
-            {!styling.isLogoHidden && project.logo?.url && <ClientLogo project={project} />}
+            {!styling.isLogoHidden && project.logo?.url && <ClientLogo projectLogo={project.logo} />}
             <div className="h-full w-full max-w-lg space-y-6 px-1.5">
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">

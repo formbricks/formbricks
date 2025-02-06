@@ -2,7 +2,6 @@ import { getSurveyMetadata } from "@/modules/survey/link-surveys/lib/survey";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 
 export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metadata> => {
@@ -10,12 +9,6 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
 
   if (!survey || survey.type !== "link" || survey.status === "draft") {
     notFound();
-  }
-
-  const project = await getProjectByEnvironmentId(survey.environmentId);
-
-  if (!project) {
-    throw new Error("Project not found");
   }
 
   const brandColor = getBrandColorForURL(survey.styling?.brandColor?.light ?? COLOR_DEFAULTS.brandColor);

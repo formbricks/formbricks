@@ -5,6 +5,7 @@ import { SurveyLinkUsed } from "@/modules/survey/link-surveys/components/survey-
 import { VerifyEmail } from "@/modules/survey/link-surveys/components/verify-email";
 import { getPrefillValue } from "@/modules/survey/link-surveys/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { Project, Response } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -12,13 +13,7 @@ import { FormbricksAPI } from "@formbricks/api";
 import { ResponseQueue } from "@formbricks/lib/responseQueue";
 import { SurveyState } from "@formbricks/lib/surveyState";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TProject } from "@formbricks/types/project";
-import {
-  TResponse,
-  TResponseData,
-  TResponseHiddenFieldValue,
-  TResponseUpdate,
-} from "@formbricks/types/responses";
+import { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -29,10 +24,10 @@ let setResponseData = (_: TResponseData) => {};
 
 interface LinkSurveyProps {
   survey: TSurvey;
-  project: TProject;
+  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
   emailVerificationStatus?: string;
   singleUseId?: string;
-  singleUseResponse?: TResponse;
+  singleUseResponse?: Pick<Response, "id" | "finished">;
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;

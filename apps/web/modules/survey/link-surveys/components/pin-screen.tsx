@@ -4,19 +4,18 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link-surveys/actions";
 import { LinkSurvey } from "@/modules/survey/link-surveys/components/link-survey";
 import { OTPInput } from "@/modules/ui/components/otp-input";
+import { Project, Response } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TProject } from "@formbricks/types/project";
-import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface PinScreenProps {
   surveyId: string;
-  project: TProject;
+  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
   emailVerificationStatus?: string;
   singleUseId?: string;
-  singleUseResponse?: TResponse;
+  singleUseResponse?: Pick<Response, "id" | "finished">;
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
