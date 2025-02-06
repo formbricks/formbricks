@@ -475,6 +475,7 @@
     "password_changed_email_heading": "Senha alterada",
     "password_changed_email_text": "Sua senha foi alterada com sucesso.",
     "password_reset_notify_email_subject": "Sua senha Formbricks foi alterada",
+    "powered_by_formbricks": "Desenvolvido por Formbricks",
     "privacy_policy": "Política de Privacidade",
     "reject": "Rejeitar",
     "response_finished_email_subject": "Uma resposta para {surveyName} foi concluída ✅",

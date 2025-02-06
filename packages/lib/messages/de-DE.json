@@ -475,6 +475,7 @@
     "password_changed_email_heading": "Passwort geändert",
     "password_changed_email_text": "Dein Passwort wurde erfolgreich geändert.",
     "password_reset_notify_email_subject": "Dein Formbricks-Passwort wurde geändert",
+    "powered_by_formbricks": "Unterstützt von Formbricks",
     "privacy_policy": "Datenschutzerklärung",
     "reject": "Ablehnen",
     "response_finished_email_subject": "Eine Antwort für {surveyName} wurde abgeschlossen ✅",

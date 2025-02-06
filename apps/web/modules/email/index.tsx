@@ -356,7 +356,7 @@ export const sendFollowUpEmail = async (
   logoUrl?: string
 ): Promise<void> => {
   const emailHtmlBody = await render(
-    FollowUpEmail({
+    await FollowUpEmail({
       html,
       logoUrl,
     })
