@@ -10,6 +10,7 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
+import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getServerSession } from "next-auth";
@@ -19,7 +20,6 @@ import { DEFAULT_LOCALE, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbric
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";

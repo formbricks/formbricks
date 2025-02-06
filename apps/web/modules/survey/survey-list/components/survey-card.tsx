@@ -11,14 +11,12 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurvey;
   environmentId: string;
-  otherEnvironment: TEnvironment;
   isReadOnly: boolean;
   WEBAPP_URL: string;
   duplicateSurvey: (survey: TSurvey) => void;
@@ -28,7 +26,6 @@ interface SurveyCardProps {
 export const SurveyCard = ({
   survey,
   environmentId,
-  otherEnvironment,
   isReadOnly,
   WEBAPP_URL,
   deleteSurvey,
@@ -124,7 +121,6 @@ export const SurveyCard = ({
           survey={survey}
           key={`surveys-${survey.id}`}
           environmentId={environmentId}
-          otherEnvironment={otherEnvironment!}
           webAppUrl={WEBAPP_URL}
           disabled={isDraftAndReadOnly}
           singleUseId={singleUseId}

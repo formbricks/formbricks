@@ -4,6 +4,7 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { SurveysList } from "@/modules/survey/survey-list/components/survey-list";
 import { getEnvironment } from "@/modules/survey/survey-list/lib/environment";
+import { getOrganizationIdByEnvironmentId } from "@/modules/survey/survey-list/lib/organization";
 import { getProjectByEnvironmentId } from "@/modules/survey/survey-list/lib/project";
 import { getSurveyCount } from "@/modules/survey/survey-list/lib/survey";
 import { getUserLocale } from "@/modules/survey/survey-list/lib/user";
@@ -17,10 +18,8 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TTemplateRole } from "@formbricks/types/templates";
 
@@ -46,7 +45,7 @@ export const SurveysPage = async ({
 
   const session = await getServerSession(authOptions);
   const project = await getProjectByEnvironmentId(params.environmentId);
-  const organization = await getOrganizationByEnvironmentId(params.environmentId);
+  const organizationId = await getOrganizationIdByEnvironmentId(params.environmentId);
   const t = await getTranslations();
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -61,13 +60,13 @@ export const SurveysPage = async ({
     throw new Error(t("common.project_not_found"));
   }
 
-  if (!organization) {
+  if (!organizationId) {
     throw new Error(t("common.organization_not_found"));
   }
 
   const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
   const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
@@ -85,9 +84,6 @@ export const SurveysPage = async ({
   }
 
   const surveyCount = await getSurveyCount(params.environmentId);
-
-  const environments = await getEnvironments(project.id);
-  const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   const currentProjectChannel = project.config.channel ?? null;
   const locale = await findMatchingLocale();
@@ -109,7 +105,6 @@ export const SurveysPage = async ({
           <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
           <SurveysList
             environmentId={environment.id}
-            otherEnvironment={otherEnvironment}
             isReadOnly={isReadOnly}
             WEBAPP_URL={WEBAPP_URL}
             userId={session.user.id}

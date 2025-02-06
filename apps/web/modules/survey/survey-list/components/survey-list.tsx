@@ -8,7 +8,6 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
-import { TEnvironment } from "@formbricks/types/environment";
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
@@ -19,7 +18,6 @@ import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
   environmentId: string;
-  otherEnvironment: TEnvironment;
   isReadOnly: boolean;
   WEBAPP_URL: string;
   userId: string;
@@ -38,7 +36,6 @@ export const initialFilters: TSurveyFilters = {
 
 export const SurveysList = ({
   environmentId,
-  otherEnvironment,
   isReadOnly,
   WEBAPP_URL,
   userId,
@@ -158,7 +155,6 @@ export const SurveysList = ({
                   key={survey.id}
                   survey={survey}
                   environmentId={environmentId}
-                  otherEnvironment={otherEnvironment}
                   isReadOnly={isReadOnly}
                   WEBAPP_URL={WEBAPP_URL}
                   duplicateSurvey={handleDuplicateSurvey}

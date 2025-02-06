@@ -1,4 +1,3 @@
-import { verifyTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
@@ -151,30 +150,5 @@ const transformAnswer = (
 
     default:
       return "";
-  }
-};
-
-interface emailVerificationDetails {
-  status: "not-verified" | "verified" | "fishy";
-  email?: string;
-}
-
-export const getEmailVerificationDetails = async (
-  surveyId: string,
-  token: string
-): Promise<emailVerificationDetails> => {
-  if (!token) {
-    return { status: "not-verified" };
-  } else {
-    try {
-      const verifiedEmail = verifyTokenForLinkSurvey(token, surveyId);
-      if (verifiedEmail) {
-        return { status: "verified", email: verifiedEmail };
-      } else {
-        return { status: "fishy" };
-      }
-    } catch (error) {
-      return { status: "not-verified" };
-    }
   }
 };

@@ -96,7 +96,7 @@ export const PUT = async (
     }
 
     if (surveyUpdate.followUps && surveyUpdate.followUps.length) {
-      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization);
+      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
       if (!isSurveyFollowUpsEnabled) {
         return responses.forbiddenResponse("Survey follow ups are not enabled for this organization");
       }

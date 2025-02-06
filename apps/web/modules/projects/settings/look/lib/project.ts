@@ -1,18 +1,17 @@
-import "server-only";
 import { Prisma, Project } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getProjectByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<Pick<Project, "styling" | "logo" | "linkSurveyBranding"> | null> =>
+  async (environmentId: string): Promise<Project | null> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId]);
+        validateInputs([environmentId, z.string().cuid2()]);
 
         let projectPrisma;
 
@@ -25,11 +24,6 @@ export const getProjectByEnvironmentId = reactCache(
                 },
               },
             },
-            select: {
-              styling: true,
-              logo: true,
-              linkSurveyBranding: true,
-            },
           });
 
           return projectPrisma;
@@ -41,7 +35,7 @@ export const getProjectByEnvironmentId = reactCache(
           throw error;
         }
       },
-      [`survey-link-surveys-getProjectByEnvironmentId-${environmentId}`],
+      [`project-settings-look-getProjectByEnvironmentId-${environmentId}`],
       {
         tags: [projectCache.tag.byEnvironmentId(environmentId)],
       }

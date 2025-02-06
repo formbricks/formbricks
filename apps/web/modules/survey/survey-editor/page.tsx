@@ -9,6 +9,7 @@ import { getActionClasses } from "@/modules/survey/survey-editor/lib/action-clas
 import { getEnvironment } from "@/modules/survey/survey-editor/lib/environment";
 import { getOrganizationBilling } from "@/modules/survey/survey-editor/lib/organization";
 import { getProjectByEnvironmentId, getProjectLanguages } from "@/modules/survey/survey-editor/lib/project";
+import { getSurvey } from "@/modules/survey/survey-editor/lib/survey";
 import { getUserEmail } from "@/modules/survey/survey-editor/lib/user";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
@@ -22,7 +23,6 @@ import {
 } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getSurvey } from "@formbricks/lib/survey/service";
 import { SurveyEditor } from "./components/survey-editor";
 import { getResponseCountBySurveyId } from "./lib/response";
 import { getUserLocale } from "./lib/user";

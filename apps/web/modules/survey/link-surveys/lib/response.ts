@@ -1,3 +1,4 @@
+import "server-only";
 import { Prisma, Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";

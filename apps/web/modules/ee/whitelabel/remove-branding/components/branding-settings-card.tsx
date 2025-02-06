@@ -2,13 +2,13 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
+import { Project } from "@prisma/client";
 import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { TProject } from "@formbricks/types/project";
 
 interface BrandingSettingsCardProps {
   canRemoveBranding: boolean;
-  project: TProject;
+  project: Project;
   environmentId: string;
   isReadOnly: boolean;
 }

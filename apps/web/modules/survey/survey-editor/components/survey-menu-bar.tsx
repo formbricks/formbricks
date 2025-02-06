@@ -14,7 +14,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,

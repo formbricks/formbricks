@@ -7,7 +7,7 @@ import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Language, Project } from "@prisma/client";
+import { Language } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ArrowUpRight, Languages } from "lucide-react";
 import { useTranslations } from "next-intl";

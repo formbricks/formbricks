@@ -59,7 +59,7 @@ export const POST = async (request: Request): Promise<Response> => {
     const surveyData = { ...inputValidation.data, environmentId: undefined };
 
     if (surveyData.followUps?.length) {
-      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization);
+      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
       if (!isSurveyFollowUpsEnabled) {
         return responses.forbiddenResponse("Survey follow ups are not enabled allowed for this organization");
       }

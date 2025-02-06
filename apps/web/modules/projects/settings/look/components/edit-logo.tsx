@@ -10,14 +10,15 @@ import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
+import { Project } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
+import { TProjectUpdateInput } from "@formbricks/types/project";
 
 interface EditLogoProps {
-  project: TProject;
+  project: Project;
   environmentId: string;
   isReadOnly: boolean;
 }

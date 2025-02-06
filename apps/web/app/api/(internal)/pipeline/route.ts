@@ -164,7 +164,7 @@ export const POST = async (request: Request) => {
     });
 
     // send follow up emails
-    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization);
+    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
 
     if (surveyFollowUpsPermission) {
       await sendSurveyFollowUps(survey, response, organization);

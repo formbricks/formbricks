@@ -5,15 +5,15 @@ import { MediaBackground } from "@/modules/ui/components/media-background";
 import { Modal } from "@/modules/ui/components/preview-survey/components/modal";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { Project } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Fragment, useRef, useState } from "react";
-import type { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 
 interface ThemeStylingPreviewSurveyProps {
   survey: TSurvey;
-  project: TProject;
+  project: Project;
   previewType: TSurveyType;
   setPreviewType: (type: TSurveyType) => void;
 }

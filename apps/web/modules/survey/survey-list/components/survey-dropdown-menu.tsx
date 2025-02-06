@@ -30,13 +30,11 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
-import type { TEnvironment } from "@formbricks/types/environment";
 import { CopySurveyModal } from "./copy-survey-modal";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  otherEnvironment: TEnvironment;
   webAppUrl: string;
   singleUseId?: string;
   disabled?: boolean;

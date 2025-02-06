@@ -19,7 +19,6 @@ import {
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
-import { TOrganization } from "@formbricks/types/organizations";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;

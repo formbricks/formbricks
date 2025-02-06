@@ -3,6 +3,7 @@ import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils
 import { LinkSurvey } from "@/modules/survey/link-surveys/components/link-survey";
 import { PinScreen } from "@/modules/survey/link-surveys/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link-surveys/components/survey-inactive";
+import { getEmailVerificationDetails } from "@/modules/survey/link-surveys/lib/helper";
 import { getOrganizationBilling } from "@/modules/survey/link-surveys/lib/organization";
 import { getProjectByEnvironmentId } from "@/modules/survey/link-surveys/lib/project";
 import {
@@ -17,7 +18,6 @@ import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
-import { getEmailVerificationDetails } from "./lib/utils";
 
 interface LinkSurveyPageProps {
   params: Promise<{
