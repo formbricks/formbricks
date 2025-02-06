@@ -5,11 +5,14 @@ import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/l
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getActionClasses } from "@/modules/survey/survey-editor/lib/action-class";
+import { getEnvironment } from "@/modules/survey/survey-editor/lib/environment";
+import { getOrganizationBilling } from "@/modules/survey/survey-editor/lib/organization";
+import { getProjectByEnvironmentId, getProjectLanguages } from "@/modules/survey/survey-editor/lib/project";
 import { getUserEmail } from "@/modules/survey/survey-editor/lib/user";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
@@ -17,15 +20,12 @@ import {
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
-import { getUserLocale } from "@formbricks/lib/user/service";
 import { SurveyEditor } from "./components/survey-editor";
+import { getResponseCountBySurveyId } from "./lib/response";
+import { getUserLocale } from "./lib/user";
 
 export const generateMetadata = async (props) => {
   const params = await props.params;
@@ -56,7 +56,7 @@ export const SurveyEditorPage = async (props) => {
     getActionClasses(params.environmentId),
     getContactAttributeKeys(params.environmentId),
     getResponseCountBySurveyId(params.surveyId),
-    getOrganizationByEnvironmentId(params.environmentId),
+    getOrganizationBilling(params.environmentId),
     getServerSession(authOptions),
     getSegments(params.environmentId),
   ]);
@@ -85,9 +85,11 @@ export const SurveyEditorPage = async (props) => {
 
   const isUserTargetingAllowed = await getIsContactsEnabled();
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization);
+  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organization.billing.plan);
 
   const userEmail = await getUserEmail(session.user.id);
+
+  const projectLanguages = await getProjectLanguages(project.id);
 
   if (
     !survey ||
@@ -117,6 +119,7 @@ export const SurveyEditorPage = async (props) => {
       segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       isMultiLanguageAllowed={isMultiLanguageAllowed}
+      projectLanguages={projectLanguages}
       plan={organization.billing.plan}
       isFormbricksCloud={IS_FORMBRICKS_CLOUD}
       isUnsplashConfigured={UNSPLASH_ACCESS_KEY ? true : false}

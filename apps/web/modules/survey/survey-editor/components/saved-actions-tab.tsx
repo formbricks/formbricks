@@ -1,12 +1,12 @@
 import { Input } from "@/modules/ui/components/input";
+import { ActionClass } from "@prisma/client";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SavedActionsTabProps {
-  actionClasses: TActionClass[];
+  actionClasses: ActionClass[];
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,13 +22,13 @@ export const SavedActionsTab = ({
   const availableActions = actionClasses.filter(
     (actionClass) => !localSurvey.triggers.some((trigger) => trigger.actionClass.id === actionClass.id)
   );
-  const [filteredActionClasses, setFilteredActionClasses] = useState<TActionClass[]>(availableActions);
+  const [filteredActionClasses, setFilteredActionClasses] = useState<ActionClass[]>(availableActions);
 
   const codeActions = filteredActionClasses.filter((actionClass) => actionClass.type === "code");
   const noCodeActions = filteredActionClasses.filter((actionClass) => actionClass.type === "noCode");
   const automaticActions = filteredActionClasses.filter((actionClass) => actionClass.type === "automatic");
 
-  const handleActionClick = (action: TActionClass) => {
+  const handleActionClick = (action: ActionClass) => {
     setLocalSurvey((prev) => ({
       ...prev,
       triggers: prev.triggers.concat({ actionClass: action }),

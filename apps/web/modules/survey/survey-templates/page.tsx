@@ -1,17 +1,17 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getProjectByEnvironmentId } from "@/modules/survey/survey-templates/lib/project";
+import { getUserLocale } from "@/modules/survey/survey-templates/lib/user";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/template-container";
+import { getEnvironment } from "./lib/environment";
 
 interface SurveyTemplateProps {
   params: Promise<{
@@ -35,13 +35,13 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
     throw new Error(t("common.session_not_found"));
   }
 
-  const [user, environment, project] = await Promise.all([
-    getUser(session.user.id),
+  const [userLocale, environment, project] = await Promise.all([
+    getUserLocale(session.user.id),
     getEnvironment(environmentId),
     getProjectByEnvironmentId(environmentId),
   ]);
 
-  if (!user) {
+  if (!userLocale) {
     throw new Error(t("common.user_not_found"));
   }
 
@@ -70,8 +70,8 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
 
   return (
     <TemplateContainerWithPreview
-      environmentId={environmentId}
-      user={user}
+      userLocale={userLocale}
+      userId={session.user.id}
       environment={environment}
       project={project}
       prefilledFilters={prefilledFilters}

@@ -1,11 +1,12 @@
+import { Language } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import type { TLanguage, TProject } from "@formbricks/types/project";
+import type { TLanguage } from "@formbricks/types/project";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
-  project: TProject;
+  projectLanguages: Language[];
   defaultLanguage: TLanguage;
   setSelectedLanguageCode: (languageCode: string) => void;
   setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
@@ -15,7 +16,7 @@ interface SecondaryLanguageSelectProps {
 }
 
 export function SecondaryLanguageSelect({
-  project,
+  projectLanguages,
   defaultLanguage,
   setSelectedLanguageCode,
   setActiveQuestionId,
@@ -35,7 +36,7 @@ export function SecondaryLanguageSelect({
       <p className="text-sm">
         {t("environments.surveys.edit.2_activate_translation_for_specific_languages")}:
       </p>
-      {project.languages
+      {projectLanguages
         .filter((lang) => lang.id !== defaultLanguage.id)
         .map((language) => (
           <LanguageToggle

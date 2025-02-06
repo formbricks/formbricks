@@ -6,18 +6,17 @@ import { ResponseOptionsCard } from "@/modules/survey/survey-editor/components/r
 import { SurveyPlacementCard } from "@/modules/survey/survey-editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/survey-editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/survey-editor/components/when-to-send-card";
-import { TActionClass } from "@formbricks/types/action-classes";
+import { ActionClass, Environment } from "@prisma/client";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SettingsViewProps {
-  environment: TEnvironment;
+  environment: Pick<Environment, "id" | "appSetupCompleted">;
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  actionClasses: TActionClass[];
+  actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
@@ -49,7 +48,10 @@ export const SettingsView = ({
       <HowToSendCard
         localSurvey={localSurvey}
         setLocalSurvey={setLocalSurvey}
-        environment={environment}
+        environment={{
+          id: environment.id,
+          appSetupCompleted: environment.appSetupCompleted,
+        }}
         locale={locale}
       />
 

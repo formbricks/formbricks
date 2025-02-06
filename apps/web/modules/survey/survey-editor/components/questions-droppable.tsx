@@ -1,13 +1,13 @@
 import { QuestionCard } from "@/modules/survey/survey-editor/components/question-card";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { TProject } from "@formbricks/types/project";
+import { Project } from "@prisma/client";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
-  project: TProject;
+  project: Project;
   moveQuestion: (questionIndex: number, up: boolean) => void;
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   deleteQuestion: (questionIdx: number) => void;

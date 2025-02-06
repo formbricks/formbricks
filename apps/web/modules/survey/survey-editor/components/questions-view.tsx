@@ -20,6 +20,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { Language, Project } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
@@ -29,7 +30,6 @@ import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import {
   TConditionGroup,
   TSingleCondition,
@@ -52,7 +52,8 @@ interface QuestionsViewProps {
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
-  project: TProject;
+  project: Project;
+  projectLanguages: Language[];
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -70,6 +71,7 @@ export const QuestionsView = ({
   localSurvey,
   setLocalSurvey,
   project,
+  projectLanguages,
   invalidQuestions,
   setInvalidQuestions,
   setSelectedLanguageCode,
@@ -517,7 +519,7 @@ export const QuestionsView = ({
 
             <MultiLanguageCard
               localSurvey={localSurvey}
-              project={project}
+              projectLanguages={projectLanguages}
               setLocalSurvey={setLocalSurvey}
               setActiveQuestionId={setActiveQuestionId}
               activeQuestionId={activeQuestionId}

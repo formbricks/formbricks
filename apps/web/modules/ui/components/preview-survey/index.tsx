@@ -4,13 +4,13 @@ import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { Project } from "@prisma/client";
+import { Environment } from "@prisma/client";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
-import type { TProject } from "@formbricks/types/project";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -23,8 +23,8 @@ interface PreviewSurveyProps {
   survey: TSurvey;
   questionId?: string | null;
   previewType?: TPreviewType;
-  project: TProject;
-  environment: TEnvironment;
+  project: Project;
+  environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
 }

@@ -6,6 +6,7 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { Project } from "@prisma/client";
 import { isEqual } from "lodash";
 import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,7 +15,6 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -31,11 +31,11 @@ interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  environment: TEnvironment;
+  environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidQuestions: React.Dispatch<React.SetStateAction<string[]>>;
-  project: TProject;
+  project: Project;
   responseCount: number;
   selectedLanguageCode: string;
   setSelectedLanguageCode: (selectedLanguage: string) => void;
@@ -46,7 +46,7 @@ interface SurveyMenuBarProps {
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
-  environment,
+  environmentId,
   setLocalSurvey,
   activeId,
   setActiveId,
@@ -295,7 +295,7 @@ export const SurveyMenuBar = ({
         segment,
       });
       setIsSurveyPublishing(false);
-      router.push(`/environments/${environment.id}/surveys/${localSurvey.id}/summary?success=true`);
+      router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       console.error(error);
       toast.error(t("environments.surveys.edit.error_publishing_survey"));

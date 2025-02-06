@@ -12,14 +12,14 @@ import {
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
 import { createActionClass } from "@/modules/survey/survey-editor/lib/action-class";
+import { getOrganizationBilling } from "@/modules/survey/survey-editor/lib/organization";
 import { z } from "zod";
 import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@formbricks/lib/constants";
-import { getOrganization } from "@formbricks/lib/organization/service";
-import { getProject } from "@formbricks/lib/project/service";
 import { updateSurvey } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurvey } from "@formbricks/types/surveys/types";
+import { getProject } from "./lib/project";
 
 /**
  * Checks if survey follow-ups are enabled for the given organization.
@@ -30,12 +30,12 @@ import { ZSurvey } from "@formbricks/types/surveys/types";
  * @throws { OperationNotAllowedError }  If survey follow-ups are not enabled for the organization.
  */
 const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<void> => {
-  const organization = await getOrganization(organizationId);
+  const organization = await getOrganizationBilling(organizationId);
   if (!organization) {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization);
+  const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }

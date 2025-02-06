@@ -3,6 +3,10 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { SurveysList } from "@/modules/survey/survey-list/components/survey-list";
+import { getEnvironment } from "@/modules/survey/survey-list/lib/environment";
+import { getProjectByEnvironmentId } from "@/modules/survey/survey-list/lib/project";
+import { getSurveyCount } from "@/modules/survey/survey-list/lib/survey";
+import { getUserLocale } from "@/modules/survey/survey-list/lib/user";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -13,13 +17,10 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
+import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getSurveyCount } from "@formbricks/lib/survey/service";
-import { getUser } from "@formbricks/lib/user/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TTemplateRole } from "@formbricks/types/templates";
 
@@ -51,8 +52,8 @@ export const SurveysPage = async ({
     throw new Error(t("common.session_not_found"));
   }
 
-  const user = await getUser(session.user.id);
-  if (!user) {
+  const userLocale = await getUserLocale(session.user.id);
+  if (!userLocale) {
     throw new Error(t("common.user_not_found"));
   }
 
@@ -107,7 +108,7 @@ export const SurveysPage = async ({
         <>
           <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
           <SurveysList
-            environment={environment}
+            environmentId={environment.id}
             otherEnvironment={otherEnvironment}
             isReadOnly={isReadOnly}
             WEBAPP_URL={WEBAPP_URL}
@@ -133,9 +134,10 @@ export const SurveysPage = async ({
             {t("environments.surveys.all_set_time_to_create_first_survey")}
           </h1>
           <TemplateList
-            environment={environment}
+            environmentId={environment.id}
             project={project}
-            user={user}
+            userLocale={userLocale}
+            userId={session.user.id}
             prefilledFilters={prefilledFilters}
           />
         </>

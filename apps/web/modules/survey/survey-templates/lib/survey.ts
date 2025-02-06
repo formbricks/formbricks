@@ -4,7 +4,6 @@ import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { selectSurvey } from "@formbricks/lib/survey/service";
 import { getInsightsEnabled } from "@formbricks/lib/survey/utils";
 import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -47,7 +46,12 @@ export const createSurvey = async (
           },
         },
       },
-      select: selectSurvey,
+      select: {
+        id: true,
+        type: true,
+        environmentId: true,
+        resultShareKey: true,
+      },
     });
 
     // if the survey created is an "app" survey, we also create a private segment for it.

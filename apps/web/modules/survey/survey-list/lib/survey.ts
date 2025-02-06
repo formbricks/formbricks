@@ -1,10 +1,11 @@
 import "server-only";
 import { getEnvironmentIdIfExists } from "@/modules/survey/survey-list/lib/environment";
-import { getProjectByEnvironmentId } from "@/modules/survey/survey-list/lib/project";
+import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/survey-list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "@/modules/survey/survey-list/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { cache } from "@formbricks/lib/cache";
@@ -13,6 +14,7 @@ import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { buildOrderByClause, buildWhereClause } from "@formbricks/lib/survey/utils";
+import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
@@ -351,7 +353,7 @@ export const copySurveyToOtherEnvironment = async (
     // Fetch required resources
     const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
       getEnvironmentIdIfExists(environmentId),
-      getProjectByEnvironmentId(environmentId),
+      getProjectWithLanguagesByEnvironmentId(environmentId),
       getExistingSurvey(surveyId),
     ]);
 
@@ -368,7 +370,7 @@ export const copySurveyToOtherEnvironment = async (
     } else {
       [targetEnvironment, targetProject] = await Promise.all([
         getEnvironmentIdIfExists(targetEnvironmentId),
-        getProjectByEnvironmentId(targetEnvironmentId),
+        getProjectWithLanguagesByEnvironmentId(targetEnvironmentId),
       ]);
 
       if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
@@ -610,3 +612,32 @@ export const copySurveyToOtherEnvironment = async (
     throw error;
   }
 };
+
+export const getSurveyCount = reactCache(
+  async (environmentId: string): Promise<number> =>
+    cache(
+      async () => {
+        validateInputs([environmentId, z.string().cuid2()]);
+        try {
+          const surveyCount = await prisma.survey.count({
+            where: {
+              environmentId: environmentId,
+            },
+          });
+
+          return surveyCount;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            console.error(error);
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`getSurveyCount-${environmentId}`],
+      {
+        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);

@@ -18,7 +18,7 @@ import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
-  environment: TEnvironment;
+  environmentId: string;
   otherEnvironment: TEnvironment;
   isReadOnly: boolean;
   WEBAPP_URL: string;
@@ -37,7 +37,7 @@ export const initialFilters: TSurveyFilters = {
 };
 
 export const SurveysList = ({
-  environment,
+  environmentId,
   otherEnvironment,
   isReadOnly,
   WEBAPP_URL,
@@ -84,7 +84,7 @@ export const SurveysList = ({
       const fetchInitialSurveys = async () => {
         setIsFetching(true);
         const res = await getSurveysAction({
-          environmentId: environment.id,
+          environmentId,
           limit: surveysLimit,
           offset: undefined,
           filterCriteria: filters,
@@ -101,12 +101,12 @@ export const SurveysList = ({
       };
       fetchInitialSurveys();
     }
-  }, [environment.id, surveysLimit, filters, isFilterInitialized]);
+  }, [environmentId, surveysLimit, filters, isFilterInitialized]);
 
   const fetchNextPage = useCallback(async () => {
     setIsFetching(true);
     const res = await getSurveysAction({
-      environmentId: environment.id,
+      environmentId,
       limit: surveysLimit,
       offset: surveys.length,
       filterCriteria: filters,
@@ -121,7 +121,7 @@ export const SurveysList = ({
       setSurveys([...surveys, ...res.data]);
       setIsFetching(false);
     }
-  }, [environment.id, surveys, surveysLimit, filters]);
+  }, [environmentId, surveys, surveysLimit, filters]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     const newSurveys = surveys.filter((survey) => survey.id !== surveyId);
@@ -157,7 +157,7 @@ export const SurveysList = ({
                 <SurveyCard
                   key={survey.id}
                   survey={survey}
-                  environment={environment}
+                  environmentId={environmentId}
                   otherEnvironment={otherEnvironment}
                   isReadOnly={isReadOnly}
                   WEBAPP_URL={WEBAPP_URL}

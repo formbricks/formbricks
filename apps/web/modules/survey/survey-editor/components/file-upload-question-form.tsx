@@ -6,6 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
 import { PlusIcon, XCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -14,13 +15,12 @@ import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  project?: TProject;
+  project?: Project;
   question: TSurveyFileUploadQuestion;
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;

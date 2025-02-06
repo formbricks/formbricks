@@ -12,6 +12,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
+import { Project } from "@prisma/client";
 import { RotateCcwIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -19,13 +20,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { defaultStyling } from "@formbricks/lib/styling/constants";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TProject, TProjectStyling } from "@formbricks/types/project";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface StylingViewProps {
-  environment: TEnvironment;
-  project: TProject;
+  environmentId: string;
+  project: Project;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
@@ -39,7 +39,7 @@ interface StylingViewProps {
 
 export const StylingView = ({
   colors,
-  environment,
+  environmentId,
   project,
   localSurvey,
   setLocalSurvey,
@@ -202,7 +202,7 @@ export const StylingView = ({
             <BackgroundStylingCard
               open={stylingOpen}
               setOpen={setStylingOpen}
-              environmentId={environment.id}
+              environmentId={environmentId}
               colors={colors}
               disabled={!overwriteThemeStyling}
               isUnsplashConfigured={isUnsplashConfigured}
@@ -227,7 +227,7 @@ export const StylingView = ({
               <p className="text-sm text-slate-500">
                 {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link
-                  href={`/environments/${environment.id}/project/look`}
+                  href={`/environments/${environmentId}/project/look`}
                   target="_blank"
                   className="font-semibold underline">
                   {t("common.look_and_feel")}

@@ -17,7 +17,7 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurvey;
-  environment: TEnvironment;
+  environmentId: string;
   otherEnvironment: TEnvironment;
   isReadOnly: boolean;
   WEBAPP_URL: string;
@@ -27,7 +27,7 @@ interface SurveyCardProps {
 }
 export const SurveyCard = ({
   survey,
-  environment,
+  environmentId,
   otherEnvironment,
   isReadOnly,
   WEBAPP_URL,
@@ -76,9 +76,9 @@ export const SurveyCard = ({
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"
-      ? `/environments/${environment.id}/surveys/${survey.id}/edit`
-      : `/environments/${environment.id}/surveys/${survey.id}/summary`;
-  }, [survey.status, survey.id, environment.id]);
+      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
+      : `/environments/${environmentId}/surveys/${survey.id}/summary`;
+  }, [survey.status, survey.id, environmentId]);
 
   const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;
 
@@ -123,8 +123,7 @@ export const SurveyCard = ({
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
-          environmentId={environment.id}
-          environment={environment}
+          environmentId={environmentId}
           otherEnvironment={otherEnvironment!}
           webAppUrl={WEBAPP_URL}
           disabled={isDraftAndReadOnly}

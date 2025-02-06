@@ -21,6 +21,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -28,7 +29,6 @@ import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { QUESTIONS_ICON_MAP, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TProject } from "@formbricks/types/project";
 import {
   TI18nString,
   TSurvey,
@@ -40,7 +40,7 @@ import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
-  project: TProject;
+  project: Project;
   question: TSurveyQuestion;
   questionIdx: number;
   moveQuestion: (questionIndex: number, up: boolean) => void;

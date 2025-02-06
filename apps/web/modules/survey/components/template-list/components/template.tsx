@@ -1,7 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
+import { Project } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { TProject } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 import { TemplateTags } from "./template-tags";
@@ -11,7 +11,7 @@ interface TemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick?: (template: TTemplate) => void;
-  project: TProject;
+  project: Project;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];

@@ -36,7 +36,6 @@ import { CopySurveyModal } from "./copy-survey-modal";
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  environment: TEnvironment;
   otherEnvironment: TEnvironment;
   webAppUrl: string;
   singleUseId?: string;

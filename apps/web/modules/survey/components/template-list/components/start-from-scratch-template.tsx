@@ -1,9 +1,9 @@
 import { Button } from "@/modules/ui/components/button";
+import { Project } from "@prisma/client";
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
-import { TProject } from "@formbricks/types/project";
 import { TTemplate } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
 
@@ -11,7 +11,7 @@ interface StartFromScratchTemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick: (template: TTemplate) => void;
-  project: TProject;
+  project: Project;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;

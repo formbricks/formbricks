@@ -6,20 +6,21 @@ import { MenuBar } from "@/modules/survey/survey-templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Separator } from "@/modules/ui/components/separator";
+import { Project } from "@prisma/client";
+import { Environment } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
-import type { TEnvironment } from "@formbricks/types/environment";
-import type { TProject, TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
+import type { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
-import { TUser } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
-  environmentId: string;
-  project: TProject;
-  environment: TEnvironment;
-  user: TUser;
+  project: Project;
+  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  userLocale: TUserLocale;
+  userId: string;
   prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
   isAIEnabled: boolean;
 };
@@ -27,12 +28,13 @@ type TemplateContainerWithPreviewProps = {
 export const TemplateContainerWithPreview = ({
   project,
   environment,
-  user,
+  userLocale,
+  userId,
   prefilledFilters,
   isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
   const t = useTranslations();
-  const initialTemplate = getCustomSurveyTemplate(user.locale);
+  const initialTemplate = getCustomSurveyTemplate(userLocale);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
@@ -66,9 +68,10 @@ export const TemplateContainerWithPreview = ({
           )}
 
           <TemplateList
-            environment={environment}
+            environmentId={environment.id}
             project={project}
-            user={user}
+            userLocale={userLocale}
+            userId={userId}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
               setActiveQuestionId(template.preset.questions[0].id);
@@ -80,7 +83,7 @@ export const TemplateContainerWithPreview = ({
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
             <PreviewSurvey
-              survey={{ ...getMinimalSurvey(user.locale), ...activeTemplate.preset }}
+              survey={{ ...getMinimalSurvey(userLocale), ...activeTemplate.preset }}
               questionId={activeQuestionId}
               project={project}
               environment={environment}

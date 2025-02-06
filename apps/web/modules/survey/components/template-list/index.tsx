@@ -1,24 +1,25 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Project } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { templates } from "@formbricks/lib/templates";
-import type { TEnvironment } from "@formbricks/types/environment";
-import { type TProject, ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
+import { ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
-import { TUser } from "@formbricks/types/user";
+import { TUserLocale } from "@formbricks/types/user";
 import { createSurveyAction } from "./actions";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
-  user: TUser;
-  environment: TEnvironment;
-  project: TProject;
+  userLocale: TUserLocale;
+  userId: string;
+  environmentId: string;
+  project: Project;
   templateSearch?: string;
   showFilters?: boolean;
   prefilledFilters: TTemplateFilter[];
@@ -27,9 +28,10 @@ interface TemplateListProps {
 }
 
 export const TemplateList = ({
-  user,
+  userLocale,
+  userId,
   project,
-  environment,
+  environmentId,
   showFilters = true,
   templateSearch,
   prefilledFilters,
@@ -58,15 +60,15 @@ export const TemplateList = ({
     const augmentedTemplate: TSurveyCreateInput = {
       ...activeTemplate.preset,
       type: surveyType,
-      createdBy: user.id,
+      createdBy: userId,
     };
     const createSurveyResponse = await createSurveyAction({
-      environmentId: environment.id,
+      environmentId: environmentId,
       surveyBody: augmentedTemplate,
     });
 
     if (createSurveyResponse?.data) {
-      router.push(`/environments/${environment.id}/surveys/${createSurveyResponse.data.id}/edit`);
+      router.push(`/environments/${environmentId}/surveys/${createSurveyResponse.data.id}/edit`);
     } else {
       const errorMessage = getFormattedErrorMessage(createSurveyResponse);
       toast.error(errorMessage);
@@ -74,7 +76,7 @@ export const TemplateList = ({
   };
 
   const filteredTemplates = useMemo(() => {
-    return templates(user.locale).filter((template) => {
+    return templates(userLocale).filter((template) => {
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
@@ -123,7 +125,7 @@ export const TemplateList = ({
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
-          locale={user.locale}
+          locale={userLocale}
         />
         {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
           (template: TTemplate) => {

@@ -2,6 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,11 +14,10 @@ import {
   getQuestionTypes,
   universalQuestionPresets,
 } from "@formbricks/lib/utils/questions";
-import { TProject } from "@formbricks/types/project";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;
-  project: TProject;
+  project: Project;
   isCxMode: boolean;
   locale: string;
 }

@@ -7,13 +7,13 @@ import { Label } from "@/modules/ui/components/label";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ActionClass } from "@prisma/client";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import {
-  TActionClass,
   TActionClassInput,
   TActionClassInputCode,
   ZActionClassInput,
@@ -22,8 +22,8 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { createActionClassAction } from "../actions";
 
 interface CreateNewActionTabProps {
-  actionClasses: TActionClass[];
-  setActionClasses: React.Dispatch<React.SetStateAction<TActionClass[]>>;
+  actionClasses: ActionClass[];
+  setActionClasses: React.Dispatch<React.SetStateAction<ActionClass[]>>;
   isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -146,7 +146,7 @@ export const CreateNewActionTab = ({
 
       const newActionClass = createActionClassResposne.data;
       if (setActionClasses) {
-        setActionClasses((prevActionClasses: TActionClass[]) => [...prevActionClasses, newActionClass]);
+        setActionClasses((prevActionClasses: ActionClass[]) => [...prevActionClasses, newActionClass]);
       }
 
       if (setLocalSurvey) {

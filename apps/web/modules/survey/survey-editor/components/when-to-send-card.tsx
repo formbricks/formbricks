@@ -7,6 +7,7 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { ActionClass } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -19,7 +20,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -27,7 +27,7 @@ interface WhenToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
-  propActionClasses: TActionClass[];
+  propActionClasses: ActionClass[];
   membershipRole?: TOrganizationRole;
   projectPermission: TTeamPermission | null;
 }
@@ -43,7 +43,7 @@ export const WhenToSendCard = ({
   const t = useTranslations();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
-  const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);
+  const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isMember } = getAccessFlags(membershipRole);

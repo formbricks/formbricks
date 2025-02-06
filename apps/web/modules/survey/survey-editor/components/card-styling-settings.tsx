@@ -7,6 +7,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/
 import { Slider } from "@/modules/ui/components/slider";
 import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -14,7 +15,7 @@ import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { TProject, TProjectStyling } from "@formbricks/types/project";
+import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
 type CardStylingSettingsProps = {
@@ -23,7 +24,7 @@ type CardStylingSettingsProps = {
   isSettingsPage?: boolean;
   surveyType?: TSurveyType;
   disabled?: boolean;
-  project: TProject;
+  project: Project;
   form: UseFormReturn<TProjectStyling | TSurveyStyling>;
 };
 

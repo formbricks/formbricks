@@ -9,16 +9,14 @@ import { StylingView } from "@/modules/survey/survey-editor/components/styling-v
 import { SurveyEditorTabs } from "@/modules/survey/survey-editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/survey-editor/components/survey-menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
+import { ActionClass, Environment, Language, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { TProject } from "@formbricks/types/project";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -26,9 +24,9 @@ import { refetchProjectAction } from "../actions";
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  project: TProject;
-  environment: TEnvironment;
-  actionClasses: TActionClass[];
+  project: Project;
+  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
@@ -43,6 +41,7 @@ interface SurveyEditorProps {
   locale: TUserLocale;
   projectPermission: TTeamPermission | null;
   mailFrom: string;
+  projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
 }
@@ -50,6 +49,7 @@ interface SurveyEditorProps {
 export const SurveyEditor = ({
   survey,
   project,
+  projectLanguages,
   environment,
   actionClasses,
   contactAttributeKeys,
@@ -75,7 +75,7 @@ export const SurveyEditor = ({
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
-  const [localProject, setLocalProject] = useState<TProject>(project);
+  const [localProject, setLocalProject] = useState<Project>(project);
 
   const [styling, setStyling] = useState(localSurvey?.styling);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
@@ -148,7 +148,7 @@ export const SurveyEditor = ({
         setLocalSurvey={setLocalSurvey}
         localSurvey={localSurvey}
         survey={survey}
-        environment={environment}
+        environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidQuestions={setInvalidQuestions}
@@ -178,6 +178,7 @@ export const SurveyEditor = ({
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
               project={localProject}
+              projectLanguages={projectLanguages}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
               selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
@@ -193,7 +194,7 @@ export const SurveyEditor = ({
           {activeView === "styling" && project.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
-              environment={environment}
+              environmentId={environment.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               project={localProject}

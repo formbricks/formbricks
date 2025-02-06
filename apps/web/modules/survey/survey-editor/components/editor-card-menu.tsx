@@ -13,6 +13,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { createId } from "@paralleldrive/cuid2";
+import { Project } from "@prisma/client";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
@@ -22,7 +23,6 @@ import {
   getQuestionDefaults,
   getQuestionNameMap,
 } from "@formbricks/lib/utils/questions";
-import { TProject } from "@formbricks/types/project";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -42,7 +42,7 @@ interface EditorCardMenuProps {
   updateCard: (cardIdx: number, updatedAttributes: any) => void;
   addCard: (question: any, index?: number) => void;
   cardType: "question" | "ending";
-  project?: TProject;
+  project?: Project;
   isCxMode?: boolean;
   locale: string;
 }

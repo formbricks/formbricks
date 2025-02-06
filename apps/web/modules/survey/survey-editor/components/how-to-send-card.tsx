@@ -4,6 +4,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -11,14 +12,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { getDefaultEndingCard } from "@formbricks/lib/templates";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
-  environment: TEnvironment;
+  environment: Pick<Environment, "id" | "appSetupCompleted">;
   locale: string;
 }
 
