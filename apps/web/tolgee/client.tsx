@@ -3,6 +3,7 @@
 import { TolgeeProvider, TolgeeStaticData } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { branchName } from "../../../branch.json";
 import { TolgeeBase } from "./shared";
 
 type Props = {
@@ -10,14 +11,6 @@ type Props = {
   staticData: TolgeeStaticData;
   children: React.ReactNode;
 };
-
-let branchName: string;
-
-try {
-  branchName = process.env.NODE_ENV === "development" ? require("../../../branch.json").branchName : "main";
-} catch (error) {
-  branchName = "main"; // Fallback value
-}
 
 const tolgee = TolgeeBase().init({
   tagNewKeys: [`draft: ${branchName}`],
