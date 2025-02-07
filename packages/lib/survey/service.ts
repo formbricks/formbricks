@@ -1,8 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -123,7 +122,7 @@ export const selectSurvey = {
   followUps: true,
 } satisfies Prisma.SurveySelect;
 
-const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
+const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
   if (!triggers) return;
 
   // check if all the triggers are valid
@@ -144,7 +143,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
 const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
-  actionClasses: TActionClass[]
+  actionClasses: ActionClass[]
 ) => {
   if (!updatedTriggers) return {};
   checkTriggersValidity(updatedTriggers, actionClasses);

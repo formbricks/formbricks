@@ -45,3 +45,33 @@ export const getOrganizationBilling = reactCache(
       }
     )()
 );
+
+export const getOrganizationAIKeys = reactCache(
+  async (organizationId: string): Promise<Pick<Organization, "isAIEnabled" | "billing"> | null> =>
+    cache(
+      async () => {
+        try {
+          const organization = await prisma.organization.findUnique({
+            where: {
+              id: organizationId,
+            },
+            select: {
+              isAIEnabled: true,
+              billing: true,
+            },
+          });
+          return organization;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`survey-editor-getOrganizationAIKeys-${organizationId}`],
+      {
+        tags: [organizationCache.tag.byId(organizationId)],
+      }
+    )()
+);

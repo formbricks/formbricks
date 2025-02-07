@@ -6,9 +6,8 @@ import { ResponseOptionsCard } from "@/modules/survey/survey-editor/components/r
 import { SurveyPlacementCard } from "@/modules/survey/survey-editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/survey-editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/survey-editor/components/when-to-send-card";
-import { ActionClass, Environment } from "@prisma/client";
+import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -20,7 +19,7 @@ interface SettingsViewProps {
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TOrganizationRole;
+  membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
   locale: string;
   projectPermission: TTeamPermission | null;

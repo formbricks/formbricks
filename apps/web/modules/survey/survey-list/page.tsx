@@ -2,6 +2,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TemplateList } from "@/modules/survey/components/template-list";
+import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
 import { SurveysList } from "@/modules/survey/survey-list/components/survey-list";
 import { getEnvironment } from "@/modules/survey/survey-list/lib/environment";
 import { getOrganizationIdByEnvironmentId } from "@/modules/survey/survey-list/lib/organization";
@@ -18,7 +19,6 @@ import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TTemplateRole } from "@formbricks/types/templates";
@@ -66,8 +66,8 @@ export const SurveysPage = async ({
 
   const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);
-  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
+  const membershipRole = await getMembershipRoleByUserIdOrganizationId(session?.user.id, organizationId);
+  const { isMember, isBilling } = getAccessFlags(membershipRole);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);

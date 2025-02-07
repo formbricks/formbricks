@@ -6,8 +6,8 @@ import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } fro
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/components/template-list/lib/organization";
+import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { z } from "zod";
-import { createSurvey } from "@formbricks/lib/survey/service";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 

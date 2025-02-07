@@ -7,7 +7,7 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ActionClass } from "@prisma/client";
+import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import {
   CheckIcon,
@@ -20,7 +20,6 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface WhenToSendCardProps {
@@ -28,7 +27,7 @@ interface WhenToSendCardProps {
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   environmentId: string;
   propActionClasses: ActionClass[];
-  membershipRole?: TOrganizationRole;
+  membershipRole?: OrganizationRole;
   projectPermission: TTeamPermission | null;
 }
 

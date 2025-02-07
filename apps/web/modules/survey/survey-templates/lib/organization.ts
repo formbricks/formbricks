@@ -1,5 +1,4 @@
-import { TOrganizationAIKeys } from "@/modules/survey/survey-templates/types/organizations";
-import { Prisma } from "@prisma/client";
+import { Organization, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -7,7 +6,7 @@ import { organizationCache } from "@formbricks/lib/organization/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getOrganizationAIKeys = reactCache(
-  async (organizationId: string): Promise<TOrganizationAIKeys | null> =>
+  async (organizationId: string): Promise<Pick<Organization, "isAIEnabled" | "billing"> | null> =>
     cache(
       async () => {
         try {

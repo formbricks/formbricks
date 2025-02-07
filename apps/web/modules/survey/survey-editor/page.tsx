@@ -5,6 +5,7 @@ import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/l
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
 import { getActionClasses } from "@/modules/survey/survey-editor/lib/action-class";
 import { getEnvironment } from "@/modules/survey/survey-editor/lib/environment";
 import { getOrganizationBilling } from "@/modules/survey/survey-editor/lib/organization";
@@ -21,7 +22,6 @@ import {
   SURVEY_BG_COLORS,
   UNSPLASH_ACCESS_KEY,
 } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { SurveyEditor } from "./components/survey-editor";
 import { getResponseCountBySurveyId } from "./lib/response";
@@ -73,8 +73,8 @@ export const SurveyEditorPage = async (props) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.role);
+  const membershipRole = await getMembershipRoleByUserIdOrganizationId(session?.user.id, organization.id);
+  const { isMember } = getAccessFlags(membershipRole);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
@@ -113,7 +113,7 @@ export const SurveyEditorPage = async (props) => {
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
-      membershipRole={currentUserMembership?.role}
+      membershipRole={membershipRole}
       projectPermission={projectPermission}
       colors={SURVEY_BG_COLORS}
       segments={segments}

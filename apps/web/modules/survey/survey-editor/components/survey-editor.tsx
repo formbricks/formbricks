@@ -9,13 +9,12 @@ import { StylingView } from "@/modules/survey/survey-editor/components/styling-v
 import { SurveyEditorTabs } from "@/modules/survey/survey-editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/survey-editor/components/survey-menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { ActionClass, Environment, Language, Project } from "@prisma/client";
+import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -30,7 +29,7 @@ interface SurveyEditorProps {
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
-  membershipRole?: TOrganizationRole;
+  membershipRole?: OrganizationRole;
   colors: string[];
   isUserTargetingAllowed?: boolean;
   isMultiLanguageAllowed?: boolean;

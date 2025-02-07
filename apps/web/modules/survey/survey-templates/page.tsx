@@ -1,12 +1,12 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
 import { getProjectByEnvironmentId } from "@/modules/survey/survey-templates/lib/project";
 import { getUserLocale } from "@/modules/survey/survey-templates/lib/user";
 import { getServerSession } from "next-auth";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplateRole } from "@formbricks/types/templates";
@@ -52,11 +52,11 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   if (!environment) {
     throw new Error(t("common.environment_not_found"));
   }
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(
+  const membershipRole = await getMembershipRoleByUserIdOrganizationId(
     session?.user.id,
     project.organizationId
   );
-  const { isMember } = getAccessFlags(currentUserMembership?.role);
+  const { isMember } = getAccessFlags(membershipRole);
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);

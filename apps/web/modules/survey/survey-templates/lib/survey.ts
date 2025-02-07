@@ -1,5 +1,4 @@
-import { TAISurveyCreateInput } from "@/modules/survey/survey-templates/types/surveys";
-import { Prisma } from "@prisma/client";
+import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
@@ -10,7 +9,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 
 export const createSurvey = async (
   environmentId: string,
-  surveyBody: TAISurveyCreateInput
+  surveyBody: Pick<Survey, "name" | "questions">
 ): Promise<{ id: string }> => {
   try {
     if (doesSurveyHasOpenTextQuestion(surveyBody.questions ?? [])) {
