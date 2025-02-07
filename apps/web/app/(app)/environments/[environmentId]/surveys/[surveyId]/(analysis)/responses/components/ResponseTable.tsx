@@ -1,3 +1,5 @@
+"use client";
+
 import { ResponseCardModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
@@ -24,7 +26,7 @@ import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useMemo, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
@@ -64,7 +66,7 @@ export const ResponseTable = ({
   isFetchingFirstPage,
   locale,
 }: ResponseTableProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
   const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);

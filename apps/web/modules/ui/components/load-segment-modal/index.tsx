@@ -1,8 +1,8 @@
 "use client";
 
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { Loader2, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
@@ -140,7 +140,7 @@ export const LoadSegmentModal = ({
   const handleResetState = () => {
     setOpen(false);
   };
-  const t = useTranslations();
+  const { t } = useTranslate();
   const segmentsArray = segments?.filter((segment) => !segment.isPrivate);
 
   return (

@@ -4,7 +4,7 @@ import { contactCache } from "@/lib/cache/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ZJsPersonIdentifyInput } from "@formbricks/types/js";
+import { ZJsUserIdentifyInput } from "@formbricks/types/js";
 import { getPersonState } from "./lib/personState";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -21,7 +21,7 @@ export const GET = async (
     const { environmentId, userId } = params;
 
     // Validate input
-    const syncInputValidation = ZJsPersonIdentifyInput.safeParse({
+    const syncInputValidation = ZJsUserIdentifyInput.safeParse({
       environmentId,
       userId,
     });

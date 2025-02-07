@@ -4,8 +4,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TApiKey } from "@/modules/projects/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
@@ -30,7 +30,7 @@ export const EditAPIKeys = ({
   locale,
   isReadOnly,
 }: EditAPIKeysProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);

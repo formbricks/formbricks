@@ -2,8 +2,8 @@
 
 import { TSurvey } from "@/app/(app)/environments/[environmentId]/surveys/types/surveys";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { MousePointerClickIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import SurveyCopyOptions from "./SurveyCopyOptions";
 
 interface CopySurveyModalProps {
@@ -13,7 +13,7 @@ interface CopySurveyModalProps {
 }
 
 export const CopySurveyModal = ({ open, setOpen, survey }: CopySurveyModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} noPadding restrictOverflow>
       <div className="flex h-full flex-col rounded-lg">

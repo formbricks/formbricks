@@ -49,6 +49,9 @@
     "@formbricks/react-native#lint": {
       "dependsOn": ["@formbricks/api#build"]
     },
+    "@formbricks/react-native#test": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
     "@formbricks/surveys#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]

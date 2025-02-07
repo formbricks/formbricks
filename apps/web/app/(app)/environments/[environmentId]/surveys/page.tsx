@@ -6,10 +6,10 @@ import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { PlusIcon } from "lucide-react";
 import { Metadata, NextPage } from "next";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -43,7 +43,7 @@ const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProp
   const session = await getServerSession(authOptions);
   const project = await getProjectByEnvironmentId(params.environmentId);
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }

@@ -4,8 +4,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { useTranslate } from "@tolgee/react";
 import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -19,7 +19,7 @@ interface EmailTabProps {
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [showEmbed, setShowEmbed] = useState(false);
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";
     return emailHtmlPreview

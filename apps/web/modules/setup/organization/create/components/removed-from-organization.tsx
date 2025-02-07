@@ -4,7 +4,7 @@ import { formbricksLogout } from "@/app/lib/formbricks";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React, { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 
@@ -14,7 +14,7 @@ interface RemovedFromOrganizationProps {
 }
 
 export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <div className="space-y-4">

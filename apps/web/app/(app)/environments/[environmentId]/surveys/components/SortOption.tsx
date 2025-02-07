@@ -1,7 +1,7 @@
 "use client";
 
 import { DropdownMenuItem } from "@/modules/ui/components/dropdown-menu";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
 
 interface SortOptionProps {
@@ -11,7 +11,7 @@ interface SortOptionProps {
 }
 
 export const SortOption = ({ option, sortBy, handleSortChange }: SortOptionProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <DropdownMenuItem
       key={option.label}

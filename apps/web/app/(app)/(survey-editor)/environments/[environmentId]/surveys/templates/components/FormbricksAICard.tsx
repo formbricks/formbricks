@@ -12,8 +12,8 @@ import {
   CardTitle,
 } from "@/modules/ui/components/card";
 import { Textarea } from "@/modules/ui/components/textarea";
+import { useTranslate } from "@tolgee/react";
 import { Sparkles } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -23,7 +23,7 @@ interface FormbricksAICardProps {
 }
 
 export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [aiPrompt, setAiPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -52,14 +52,14 @@ export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
     <Card className="mx-auto w-full bg-gradient-to-tr from-slate-100 to-slate-200">
       <CardHeader>
         <CardTitle className="text-2xl font-bold">Formbricks AI</CardTitle>
-        <CardDescription>{t("environments.surveys.templates.formbricks_ai_description")}</CardDescription>
+        <CardDescription>{t("environments.surveys.edit.formbricks_ai_description")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <Textarea
             className="bg-slate-50"
             id="ai-prompt"
-            placeholder={t("environments.surveys.templates.formbricks_ai_prompt_placeholder")}
+            placeholder={t("environments.surveys.edit.formbricks_ai_prompt_placeholder")}
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             required
@@ -75,7 +75,7 @@ export const FormbricksAICard = ({ environmentId }: FormbricksAICardProps) => {
           variant="secondary"
           loading={isLoading}>
           <Sparkles className="mr-2 h-4 w-4" />
-          {t("environments.surveys.templates.formbricks_ai_generate")}
+          {t("environments.surveys.edit.formbricks_ai_generate")}
         </Button>
       </CardFooter>
     </Card>

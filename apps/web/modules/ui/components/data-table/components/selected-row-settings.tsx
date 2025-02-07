@@ -1,7 +1,9 @@
+"use client";
+
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Table } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
@@ -21,7 +23,7 @@ export const SelectedRowSettings = <T,>({
 }: SelectedRowSettingsProps<T>) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const selectedRowCount = table.getFilteredSelectedRowModel().rows.length;
 
   // Toggle all rows selection

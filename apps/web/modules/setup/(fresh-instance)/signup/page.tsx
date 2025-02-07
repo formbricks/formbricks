@@ -1,7 +1,7 @@
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
 import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import {
   AZURE_OAUTH_ENABLED,
   DEFAULT_ORGANIZATION_ID,
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
   const isSSOEnabled = await getIsSSOEnabled();
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">{t("setup.signup.create_administrator")}</h2>

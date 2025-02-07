@@ -1,3 +1,5 @@
+"use client";
+
 import {
   getConditionOperatorOptions,
   getConditionValueOptions,
@@ -13,8 +15,8 @@ import {
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import {
   addConditionBelow,
@@ -54,7 +56,7 @@ export function LogicEditorConditions({
   updateQuestion,
   depth = 0,
 }: LogicEditorConditionsProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [parent] = useAutoAnimate();
 
   const handleAddConditionBelow = (resourceId: string) => {

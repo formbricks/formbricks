@@ -3,6 +3,7 @@
 import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
 import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
 import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
+import { previewSurvey } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
 import { ThemeStylingPreviewSurvey } from "@/modules/projects/settings/look/components/theme-styling-preview-survey";
@@ -19,13 +20,12 @@ import {
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { getPreviewSurvey } from "@formbricks/lib/styling/constants";
 import { defaultStyling } from "@formbricks/lib/styling/constants";
 import { TProject, TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
@@ -35,7 +35,6 @@ interface ThemeStylingProps {
   environmentId: string;
   colors: string[];
   isUnsplashConfigured: boolean;
-  locale: string;
   isReadOnly: boolean;
 }
 
@@ -44,10 +43,9 @@ export const ThemeStyling = ({
   environmentId,
   colors,
   isUnsplashConfigured,
-  locale,
   isReadOnly,
 }: ThemeStylingProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
 
   const form = useForm<TProjectStyling>({
@@ -191,7 +189,7 @@ export const ThemeStyling = ({
           <div className="relative w-1/2 rounded-lg bg-slate-100 pt-4">
             <div className="sticky top-4 mb-4 h-[600px]">
               <ThemeStylingPreviewSurvey
-                survey={getPreviewSurvey(locale, project.name) as TSurvey}
+                survey={previewSurvey(project.name, t) as TSurvey}
                 project={{
                   ...project,
                   styling: form.watch(),

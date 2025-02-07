@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import { TSurvey, TSurveyQuestionId, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const convertFloatToNDecimal = (num: number, N: number = 2) => {
@@ -13,14 +14,14 @@ export const constructToastMessage = (
   filterValue: string,
   survey: TSurvey,
   questionId: TSurveyQuestionId,
-  t: (key: string, options?: Record<string, any>) => string,
+  t: TFnType,
   filterComboBoxValue?: string | string[]
 ) => {
   const questionIdx = survey.questions.findIndex((question) => question.id === questionId);
   if (questionType === "matrix") {
     return t("environments.surveys.summary.added_filter_for_responses_where_answer_to_question", {
       questionIdx: questionIdx + 1,
-      filterComboBoxValue,
+      filterComboBoxValue: filterComboBoxValue?.toString() ?? "",
       filterValue,
     });
   } else if (filterComboBoxValue === undefined) {

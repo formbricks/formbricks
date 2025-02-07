@@ -4,15 +4,15 @@ import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-to
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
 export const WebsiteTab = ({ surveyUrl, environmentId }) => {
   const [selectedTab, setSelectedTab] = useState("static");
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="flex h-full grow flex-col">
@@ -38,7 +38,7 @@ export const WebsiteTab = ({ surveyUrl, environmentId }) => {
 
 const StaticTab = ({ surveyUrl }) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;"> 
   <iframe 
     src="${surveyUrl}${embedModeEnabled ? "?embed=true" : ""}" 
@@ -84,7 +84,7 @@ const StaticTab = ({ surveyUrl }) => {
 };
 
 const PopupTab = ({ environmentId }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <p className="text-lg font-semibold text-slate-800">

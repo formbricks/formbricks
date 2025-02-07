@@ -1,5 +1,7 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 interface PasswordChecksProps {
@@ -11,12 +13,6 @@ const PASSWORD_REGEX = {
   NUMBER: /\d/,
 };
 
-const DEFAULT_VALIDATIONS = [
-  { label: "auth.signup.password_validation_uppercase_and_lowercase", state: false },
-  { label: "auth.signup.password_validation_minimum_8_and_maximum_128_characters", state: false },
-  { label: "auth.signup.password_validation_contain_at_least_1_number", state: false },
-];
-
 const ValidationIcon = ({ state }: { state: boolean }) =>
   state ? (
     <CheckIcon className="h-5 w-5" />
@@ -27,22 +23,28 @@ const ValidationIcon = ({ state }: { state: boolean }) =>
   );
 
 export const PasswordChecks = ({ password }: PasswordChecksProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
+
+  const DEFAULT_VALIDATIONS = [
+    { label: t("auth.signup.password_validation_uppercase_and_lowercase"), state: false },
+    { label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"), state: false },
+    { label: t("auth.signup.password_validation_contain_at_least_1_number"), state: false },
+  ];
 
   const validations = useMemo(() => {
     if (password === null) return DEFAULT_VALIDATIONS;
 
     return [
       {
-        label: "auth.signup.password_validation_uppercase_and_lowercase",
+        label: t("auth.signup.password_validation_uppercase_and_lowercase"),
         state: PASSWORD_REGEX.UPPER_AND_LOWER.test(password),
       },
       {
-        label: "auth.signup.password_validation_minimum_8_and_maximum_128_characters",
+        label: t("auth.signup.password_validation_minimum_8_and_maximum_128_characters"),
         state: password.length >= 8 && password.length <= 128,
       },
       {
-        label: "auth.signup.password_validation_contain_at_least_1_number",
+        label: t("auth.signup.password_validation_contain_at_least_1_number"),
         state: PASSWORD_REGEX.NUMBER.test(password),
       },
     ];
@@ -54,7 +56,7 @@ export const PasswordChecks = ({ password }: PasswordChecksProps) => {
         {validations.map((validation) => (
           <li key={validation.label} className="flex items-center">
             <ValidationIcon state={validation.state} />
-            {t(validation.label)}
+            {validation.label}
           </li>
         ))}
       </ul>
