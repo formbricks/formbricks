@@ -1,3 +1,4 @@
+import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
@@ -121,7 +122,11 @@ export const OpenTextSummary = ({
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{response.value}</TableCell>
+                    <TableCell className="font-medium">
+                      {typeof response.value === "string"
+                        ? renderHyperlinkedContent(response.value)
+                        : response.value}
+                    </TableCell>
                     <TableCell width={120}>
                       {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                     </TableCell>
