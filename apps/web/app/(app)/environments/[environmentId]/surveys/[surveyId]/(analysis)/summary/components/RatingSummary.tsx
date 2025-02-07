@@ -1,8 +1,10 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import {
   TI18nString,
@@ -11,7 +13,6 @@ import {
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
@@ -24,11 +25,10 @@ interface RatingSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const RatingSummary = ({ questionSummary, survey, setFilter, locale }: RatingSummaryProps) => {
-  const t = useTranslations();
+export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
+  const { t } = useTranslate();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
@@ -41,7 +41,6 @@ export const RatingSummary = ({ questionSummary, survey, setFilter, locale }: Ra
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}

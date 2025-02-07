@@ -5,8 +5,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -25,7 +25,7 @@ import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-s
 
 const Page = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),

@@ -3,8 +3,8 @@
 import ProlificLogo from "@/images/prolific-logo.webp";
 import ProlificUI from "@/images/prolific-screenshot.webp";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeftIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -14,7 +14,7 @@ interface PanelInfoViewProps {
 }
 
 export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInfoViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="h-full overflow-hidden text-slate-900">
       {!disableBack && (

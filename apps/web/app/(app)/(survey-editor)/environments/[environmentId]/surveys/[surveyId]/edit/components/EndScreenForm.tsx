@@ -5,7 +5,7 @@ import { RecallWrapper } from "@/modules/surveys/components/QuestionFormInput/co
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { useRef } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
@@ -34,7 +34,7 @@ export const EndScreenForm = ({
   endingCard,
   locale,
 }: EndScreenFormProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [showEndingCardCTA, setshowEndingCardCTA] = useState<boolean>(
     endingCard.type === "endScreen" &&

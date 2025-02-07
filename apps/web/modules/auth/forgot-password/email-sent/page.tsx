@@ -1,9 +1,9 @@
 import { BackToLoginButton } from "@/modules/auth/components/back-to-login-button";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 
 export const EmailSentPage = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <FormWrapper>
       <div>

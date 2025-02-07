@@ -27,7 +27,7 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
   cssId,
 }) => {
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full">
       <div
         id={cssId}
         className={`flex cursor-pointer flex-col items-center justify-center border border-slate-200 bg-white transition-transform duration-200 hover:scale-[1.03] hover:border-slate-300 ${sizeClasses[size]}`}

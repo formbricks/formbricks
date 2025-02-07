@@ -12,8 +12,8 @@ import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/module
 import { Input } from "@/modules/ui/components/input";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -38,7 +38,7 @@ export const ActionSettingsTab = ({
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
 

@@ -1,7 +1,7 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
@@ -24,7 +24,7 @@ export const ResponseSection = async ({ environment, contactId, environmentTags 
   const surveys: TSurvey[] = surveyIds.length === 0 ? [] : ((await getSurveys(environment.id)) ?? []);
   const session = await getServerSession(authOptions);
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }

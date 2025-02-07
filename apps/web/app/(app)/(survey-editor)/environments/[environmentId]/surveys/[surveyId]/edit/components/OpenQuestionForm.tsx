@@ -7,8 +7,8 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import {
@@ -40,7 +40,7 @@ export const OpenQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: OpenQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const questionTypes = [
     { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
     { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },

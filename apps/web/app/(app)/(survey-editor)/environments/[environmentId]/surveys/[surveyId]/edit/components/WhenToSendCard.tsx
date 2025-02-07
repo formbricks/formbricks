@@ -7,6 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import {
   CheckIcon,
   Code2Icon,
@@ -15,7 +16,6 @@ import {
   SparklesIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -40,7 +40,7 @@ export const WhenToSendCard = ({
   membershipRole,
   projectPermission,
 }: WhenToSendCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [actionClasses, setActionClasses] = useState<TActionClass[]>(propActionClasses);

@@ -17,9 +17,9 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import { ArrowUpRightIcon, ChevronRightIcon, LogOutIcon, PlusIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -44,7 +44,7 @@ export const LandingSidebar = ({
 }: LandingSidebarProps) => {
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState<boolean>(false);
 
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const router = useRouter();
 
