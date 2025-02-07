@@ -30,7 +30,7 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
           <Image src={ProlificUI} alt="Prolific panel selection UI" className="rounded-lg shadow-lg" />
           <div>
             <p className="text-md font-semibold">{t("environments.surveys.summary.what_is_a_panel")}</p>
-            <p className="text-slate-600">{t("environments.surveys.summary.what_is_a_pannel_answer")}</p>
+            <p className="text-slate-600">{t("environments.surveys.summary.what_is_a_panel_answer")}</p>
           </div>
           <div>
             <p className="text-md font-semibold">{t("environments.surveys.summary.when_do_i_need_it")}</p>

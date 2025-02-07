@@ -18,6 +18,7 @@
     },
     "jsEngine": "hermes",
     "name": "react-native-demo",
+    "newArchEnabled": true,
     "orientation": "portrait",
     "slug": "react-native-demo",
     "splash": {
