@@ -4,4 +4,4 @@ echo "{\"branchName\": \"main\"}" > ../branch.json
 git add packages/lib/messages/*.json
 
 # Add branch.json to the staging area
-git add ./branch.json
+git add branch.json
