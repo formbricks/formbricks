@@ -5,7 +5,7 @@ import { getFormattedFilters } from "@/modules/survey/survey-list/lib/utils";
 import { TSurvey } from "@/modules/survey/survey-list/types/surveys";
 import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage";
 import { wrapThrows } from "@formbricks/types/error-handlers";
@@ -46,7 +46,7 @@ export const SurveysList = ({
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
 

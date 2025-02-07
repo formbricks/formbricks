@@ -9,8 +9,8 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { cn } from "@formbricks/lib/cn";
@@ -37,7 +37,7 @@ export const CardStylingSettings = ({
   setOpen,
   form,
 }: CardStylingSettingsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
   const isLogoVisible = !!project.logo?.url;

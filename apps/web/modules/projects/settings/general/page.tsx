@@ -11,8 +11,8 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -24,7 +24,7 @@ import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
 
 export const GeneralSettingsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [project, session, organization] = await Promise.all([
     getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -58,7 +58,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        {/* </PageHeader><PageHeader pageTitle={t("common.configuration")}> */}
         <ProjectConfigNavigation
           environmentId={params.environmentId}
           activeId="general"

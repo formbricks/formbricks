@@ -1,5 +1,6 @@
 "use client";
 
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddEndingCardButton } from "@/modules/survey/survey-editor/components/add-ending-card-button";
 import { AddQuestionButton } from "@/modules/survey/survey-editor/components/add-question-button";
@@ -21,13 +22,12 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Language, Project } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
@@ -82,7 +82,7 @@ export const QuestionsView = ({
   isCxMode,
   locale,
 }: QuestionsViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
     return localSurvey.questions.reduce((acc, question) => {
       acc[question.id] = createId();
@@ -340,7 +340,7 @@ export const QuestionsView = ({
 
   const addEndingCard = (index: number) => {
     const updatedSurvey = structuredClone(localSurvey);
-    const newEndingCard = getDefaultEndingCard(localSurvey.languages, locale);
+    const newEndingCard = getDefaultEndingCard(localSurvey.languages, t);
 
     updatedSurvey.endings.splice(index, 0, newEndingCard);
     setActiveQuestionId(newEndingCard.id);
@@ -463,7 +463,7 @@ export const QuestionsView = ({
         />
       </DndContext>
 
-      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} locale={locale} />
+      <AddQuestionButton addQuestion={addQuestion} project={project} isCxMode={isCxMode} />
       <div className="mt-5 flex flex-col gap-5" ref={parent}>
         <hr className="border-t border-dashed" />
         <DndContext

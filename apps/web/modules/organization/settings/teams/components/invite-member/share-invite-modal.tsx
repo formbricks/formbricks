@@ -2,8 +2,8 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 
@@ -15,7 +15,7 @@ interface ShareInviteModalProps {
 
 export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModalProps) => {
   const linkTextRef = useRef(null);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleTextSelection = () => {
     if (linkTextRef.current) {
       const range = document.createRange();

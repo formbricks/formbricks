@@ -3,8 +3,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
@@ -48,7 +48,7 @@ export const DateQuestionForm = ({
   locale,
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [parent] = useAutoAnimate();
   return (
     <form>

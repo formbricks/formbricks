@@ -3,6 +3,7 @@
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Badge } from "@/modules/ui/components/badge";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
+import { useTranslate } from "@tolgee/react";
 import {
   BellRing,
   BlocksIcon,
@@ -12,7 +13,6 @@ import {
   SmartphoneIcon,
   UsersRound,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -42,7 +42,7 @@ export const ShareEmbedSurvey = ({
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
   const { email } = user;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs = useMemo(
     () =>
       [

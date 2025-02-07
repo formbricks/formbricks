@@ -1,3 +1,5 @@
+"use client";
+
 import { BackgroundStylingCard } from "@/modules/survey/survey-editor/components/background-styling-card";
 import { CardStylingSettings } from "@/modules/survey/survey-editor/components/card-styling-settings";
 import { FormStylingSettings } from "@/modules/survey/survey-editor/components/form-styling-settings";
@@ -13,8 +15,8 @@ import {
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
 import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
@@ -50,7 +52,7 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
 }: StylingViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const form = useForm<TSurveyStyling>({
     defaultValues: { ...defaultStyling, ...project.styling, ...localSurvey.styling },

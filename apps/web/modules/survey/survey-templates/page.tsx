@@ -3,9 +3,8 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
 import { getProjectByEnvironmentId } from "@/modules/survey/survey-templates/lib/project";
-import { getUserLocale } from "@/modules/survey/survey-templates/lib/user";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
@@ -27,7 +26,7 @@ interface SurveyTemplateProps {
 export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   const environmentId = params.environmentId;
 
@@ -35,15 +34,10 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
     throw new Error(t("common.session_not_found"));
   }
 
-  const [userLocale, environment, project] = await Promise.all([
-    getUserLocale(session.user.id),
+  const [environment, project] = await Promise.all([
     getEnvironment(environmentId),
     getProjectByEnvironmentId(environmentId),
   ]);
-
-  if (!userLocale) {
-    throw new Error(t("common.user_not_found"));
-  }
 
   if (!project) {
     throw new Error(t("common.project_not_found"));
@@ -70,7 +64,6 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
 
   return (
     <TemplateContainerWithPreview
-      userLocale={userLocale}
       userId={session.user.id}
       environment={environment}
       project={project}

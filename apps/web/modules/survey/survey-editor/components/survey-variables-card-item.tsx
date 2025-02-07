@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -34,7 +34,7 @@ export const SurveyVariablesCardItem = ({
   setLocalSurvey,
   mode,
 }: SurveyVariablesCardItemProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TSurveyVariable>({
     defaultValues: variable ?? {
       id: createId(),

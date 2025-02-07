@@ -6,7 +6,7 @@ import { VerifyEmail } from "@/modules/survey/link-surveys/components/verify-ema
 import { getPrefillValue } from "@/modules/survey/link-surveys/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Project, Response } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
@@ -57,7 +57,7 @@ export const LinkSurvey = ({
   locale,
   isPreview,
 }: LinkSurveyProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";

@@ -3,8 +3,8 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { prisma } from "@formbricks/database";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
@@ -144,7 +144,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
 const Page = async (props) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));

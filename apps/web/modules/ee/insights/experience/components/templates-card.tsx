@@ -3,7 +3,7 @@
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
 import { Project } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TTemplateFilter } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
@@ -16,7 +16,7 @@ interface TemplatesCardProps {
 }
 
 export const TemplatesCard = ({ environment, project, user, prefilledFilters }: TemplatesCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Card>
       <CardHeader>
@@ -28,7 +28,6 @@ export const TemplatesCard = ({ environment, project, user, prefilledFilters }: 
           environmentId={environment.id}
           project={project}
           showFilters={false}
-          userLocale={user.locale}
           userId={user.id}
           prefilledFilters={prefilledFilters}
           noPreview={true}

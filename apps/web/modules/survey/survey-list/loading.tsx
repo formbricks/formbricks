@@ -1,10 +1,11 @@
 import { SurveyLoading } from "@/modules/survey/survey-list/components/survey-loading";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 export const SurveyListLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.surveys")} />

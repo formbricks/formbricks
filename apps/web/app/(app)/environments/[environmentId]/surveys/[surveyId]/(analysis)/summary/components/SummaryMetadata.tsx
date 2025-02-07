@@ -1,6 +1,8 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryMetadataProps {
@@ -68,7 +70,7 @@ export const SummaryMetadata = ({
     totalResponses,
     ttcAverage,
   } = surveySummary;
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 md:gap-x-2 lg:col-span-4">

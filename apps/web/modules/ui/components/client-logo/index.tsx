@@ -1,8 +1,8 @@
 "use client";
 
 import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
@@ -14,7 +14,7 @@ interface ClientLogoProps {
 }
 
 export const ClientLogo = ({ environmentId, projectLogo, previewSurvey = false }: ClientLogoProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div
       className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}

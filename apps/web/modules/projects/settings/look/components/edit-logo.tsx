@@ -11,7 +11,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,7 +24,7 @@ interface EditLogoProps {
 }
 
 export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(project.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!project.logo?.bgColor);

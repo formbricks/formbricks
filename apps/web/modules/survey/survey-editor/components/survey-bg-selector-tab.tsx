@@ -1,10 +1,12 @@
+"use client";
+
 import { AnimatedSurveyBg } from "@/modules/survey/survey-editor/components/animated-survey-bg";
 import { ColorSurveyBg } from "@/modules/survey/survey-editor/components/color-survey-bg";
 import { UploadImageSurveyBg } from "@/modules/survey/survey-editor/components/image-survey-bg";
 import { ImageFromUnsplashSurveyBg } from "@/modules/survey/survey-editor/components/unsplash-images";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
 
 interface SurveyBgSelectorTabProps {
@@ -25,7 +27,7 @@ export const SurveyBgSelectorTab = ({
   isUnsplashConfigured,
 }: SurveyBgSelectorTabProps) => {
   const [activeTab, setActiveTab] = useState(bgType || "color");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [parent] = useAutoAnimate();
   const [colorBackground, setColorBackground] = useState(bg);
   const [animationBackground, setAnimationBackground] = useState(bg);

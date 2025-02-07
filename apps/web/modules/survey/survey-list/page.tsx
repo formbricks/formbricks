@@ -8,14 +8,13 @@ import { getEnvironment } from "@/modules/survey/survey-list/lib/environment";
 import { getOrganizationIdByEnvironmentId } from "@/modules/survey/survey-list/lib/organization";
 import { getProjectByEnvironmentId } from "@/modules/survey/survey-list/lib/project";
 import { getSurveyCount } from "@/modules/survey/survey-list/lib/survey";
-import { getUserLocale } from "@/modules/survey/survey-list/lib/user";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -46,14 +45,9 @@ export const SurveysPage = async ({
   const session = await getServerSession(authOptions);
   const project = await getProjectByEnvironmentId(params.environmentId);
   const organizationId = await getOrganizationIdByEnvironmentId(params.environmentId);
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (!session) {
     throw new Error(t("common.session_not_found"));
-  }
-
-  const userLocale = await getUserLocale(session.user.id);
-  if (!userLocale) {
-    throw new Error(t("common.user_not_found"));
   }
 
   if (!project) {
@@ -131,7 +125,6 @@ export const SurveysPage = async ({
           <TemplateList
             environmentId={environment.id}
             project={project}
-            userLocale={userLocale}
             userId={session.user.id}
             prefilledFilters={prefilledFilters}
           />

@@ -1,8 +1,8 @@
 import { FallbackInput } from "@/modules/survey/components/question-form-input/components/fallback-input";
 import { RecallItemSelect } from "@/modules/survey/components/question-form-input/components/recall-item-select";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { PencilIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
@@ -47,7 +47,7 @@ export const RecallWrapper = ({
   isRecallAllowed,
   onAddFallback,
 }: RecallWrapperProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>(

@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { Project } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
@@ -29,7 +31,7 @@ export const Template = ({
   selectedFilter,
   noPreview,
 }: TemplateProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div
       onClick={() => {

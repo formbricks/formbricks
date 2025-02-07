@@ -1,9 +1,11 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mt-6 p-6">
       <GoBackButton />

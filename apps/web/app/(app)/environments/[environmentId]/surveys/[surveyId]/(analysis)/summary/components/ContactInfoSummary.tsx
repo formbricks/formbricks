@@ -1,6 +1,8 @@
+"use client";
+
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
@@ -21,10 +23,10 @@ export const ContactInfoSummary = ({
   survey,
   locale,
 }: ContactInfoSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">{t("common.user")}</div>

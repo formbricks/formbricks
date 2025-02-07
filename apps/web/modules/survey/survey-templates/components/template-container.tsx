@@ -1,5 +1,6 @@
 "use client";
 
+import { customSurveyTemplate } from "@/app/lib/templates";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { FormbricksAICard } from "@/modules/survey/survey-templates/components/formbricks-ai-card";
 import { MenuBar } from "@/modules/survey/survey-templates/components/menu-bar";
@@ -8,9 +9,8 @@ import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Separator } from "@/modules/ui/components/separator";
 import { Project } from "@prisma/client";
 import { Environment } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
-import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import type { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
 import { TUserLocale } from "@formbricks/types/user";
@@ -19,7 +19,6 @@ import { getMinimalSurvey } from "../lib/minimal-survey";
 type TemplateContainerWithPreviewProps = {
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
-  userLocale: TUserLocale;
   userId: string;
   prefilledFilters: (TProjectConfigChannel | TProjectConfigIndustry | TTemplateRole | null)[];
   isAIEnabled: boolean;
@@ -28,13 +27,12 @@ type TemplateContainerWithPreviewProps = {
 export const TemplateContainerWithPreview = ({
   project,
   environment,
-  userLocale,
   userId,
   prefilledFilters,
   isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
-  const t = useTranslations();
-  const initialTemplate = getCustomSurveyTemplate(userLocale);
+  const { t } = useTranslate();
+  const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
@@ -70,7 +68,6 @@ export const TemplateContainerWithPreview = ({
           <TemplateList
             environmentId={environment.id}
             project={project}
-            userLocale={userLocale}
             userId={userId}
             templateSearch={templateSearch ?? ""}
             onTemplateClick={(template) => {
@@ -83,7 +80,7 @@ export const TemplateContainerWithPreview = ({
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
             <PreviewSurvey
-              survey={{ ...getMinimalSurvey(userLocale), ...activeTemplate.preset }}
+              survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
               questionId={activeQuestionId}
               project={project}
               environment={environment}

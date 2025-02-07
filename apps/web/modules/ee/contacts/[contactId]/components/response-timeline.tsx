@@ -1,8 +1,8 @@
 "use client";
 
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { useTranslate } from "@tolgee/react";
 import { ArrowDownUpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
@@ -30,7 +30,7 @@ export const ResponseTimeline = ({
   locale,
   projectPermission,
 }: ResponseTimelineProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [sortedResponses, setSortedResponses] = useState(responses);
   const toggleSortResponses = () => {
     setSortedResponses([...sortedResponses].reverse());

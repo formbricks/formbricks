@@ -13,8 +13,8 @@ import { getProjectByEnvironmentId, getProjectLanguages } from "@/modules/survey
 import { getSurvey } from "@/modules/survey/survey-editor/lib/survey";
 import { getUserEmail } from "@/modules/survey/survey-editor/lib/user";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import {
   DEFAULT_LOCALE,
   IS_FORMBRICKS_CLOUD,
@@ -38,7 +38,7 @@ export const generateMetadata = async (props) => {
 export const SurveyEditorPage = async (props) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [
     survey,
     project,

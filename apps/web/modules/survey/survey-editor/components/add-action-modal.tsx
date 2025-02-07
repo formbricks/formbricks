@@ -4,7 +4,7 @@ import { CreateNewActionTab } from "@/modules/survey/survey-editor/components/cr
 import { SavedActionsTab } from "@/modules/survey/survey-editor/components/saved-actions-tab";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
 import { ActionClass } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface AddActionModalProps {
@@ -28,7 +28,7 @@ export const AddActionModal = ({
   isReadOnly,
   environmentId,
 }: AddActionModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs = [
     {
       title: t("environments.surveys.edit.select_saved_action"),

@@ -21,7 +21,6 @@ interface SettingsViewProps {
   responseCount: number;
   membershipRole?: OrganizationRole;
   isUserTargetingAllowed?: boolean;
-  locale: string;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
 }
@@ -36,7 +35,6 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
-  locale,
   projectPermission,
   isFormbricksCloud,
 }: SettingsViewProps) => {
@@ -51,7 +49,6 @@ export const SettingsView = ({
           id: environment.id,
           appSetupCompleted: environment.appSetupCompleted,
         }}
-        locale={locale}
       />
 
       {localSurvey.type === "app" ? (

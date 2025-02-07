@@ -1,3 +1,5 @@
+"use client";
+
 import {
   getActionObjectiveOptions,
   getActionOperatorOptions,
@@ -14,8 +16,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon, CornerDownRightIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { getUpdatedActionBody } from "@formbricks/lib/surveyLogic/utils";
 import {
   TActionNumberVariableCalculateOperator,
@@ -46,7 +48,7 @@ export function LogicEditorActions({
   questionIdx,
 }: LogicEditorActions) {
   const actions = logicItem.actions;
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
     actionIdx: number,
