@@ -1,7 +1,8 @@
-import { getDefaultEndingCard, getDefaultWelcomeCard } from "@formbricks/lib/templates";
+import { getDefaultEndingCard, getDefaultWelcomeCard } from "@/app/lib/templates";
+import { TFnType } from "@tolgee/react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-export const getMinimalSurvey = (locale: string): TSurvey => ({
+export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   id: "someUniqueId1",
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -15,9 +16,9 @@ export const getMinimalSurvey = (locale: string): TSurvey => ({
   triggers: [],
   recontactDays: null,
   displayLimit: null,
-  welcomeCard: getDefaultWelcomeCard(locale),
+  welcomeCard: getDefaultWelcomeCard(t),
   questions: [],
-  endings: [getDefaultEndingCard([], locale)],
+  endings: [getDefaultEndingCard([], t)],
   hiddenFields: {
     enabled: false,
   },

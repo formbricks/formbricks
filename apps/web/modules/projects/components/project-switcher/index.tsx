@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
+import { useTranslate } from "@tolgee/react";
 import { BlendIcon, ChevronRightIcon, GlobeIcon, GlobeLockIcon, LinkIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -49,7 +49,7 @@ export const ProjectSwitcher = ({
 
   const router = useRouter();
 
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const handleEnvironmentChangeByProject = (projectId: string) => {
     router.push(`/projects/${projectId}/`);

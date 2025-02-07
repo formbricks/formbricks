@@ -11,7 +11,7 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useFieldArray, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TProject } from "@formbricks/types/project";
@@ -27,7 +27,7 @@ export const CopySurveyForm = ({
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TSurveyCopyFormData>({
     resolver: zodResolver(ZSurveyCopyFormValidation),
     defaultValues: {

@@ -1,8 +1,8 @@
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
+import { getTranslate } from "@/tolgee/server";
 import { XIcon } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -16,7 +16,7 @@ interface ConnectPageProps {
 
 const Page = async (props: ConnectPageProps) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {

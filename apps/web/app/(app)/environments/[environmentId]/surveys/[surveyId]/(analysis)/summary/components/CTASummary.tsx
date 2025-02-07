@@ -1,19 +1,19 @@
+"use client";
+
 import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TSurvey, TSurveyQuestionSummaryCta } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface CTASummaryProps {
   questionSummary: TSurveyQuestionSummaryCta;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
-export const CTASummary = ({ questionSummary, survey, locale }: CTASummaryProps) => {
-  const t = useTranslations();
+export const CTASummary = ({ questionSummary, survey }: CTASummaryProps) => {
+  const { t } = useTranslate();
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -21,7 +21,6 @@ export const CTASummary = ({ questionSummary, survey, locale }: CTASummaryProps)
         survey={survey}
         questionSummary={questionSummary}
         showResponses={false}
-        locale={locale}
         additionalInfo={
           <>
             <div className="flex items-center rounded-lg bg-slate-100 p-2">

@@ -1,7 +1,7 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -17,7 +17,7 @@ export const ProjectSettingsLayout = async (props) => {
 
   const { children } = props;
 
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const [organization, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),

@@ -2,7 +2,7 @@
 
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 
@@ -20,7 +20,7 @@ interface TwoFactorProps {
 }
 
 export const TwoFactor = ({ form }: TwoFactorProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <>

@@ -4,10 +4,10 @@ import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 export const AppConnectionLoading = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const cards = [
     {
       title: t("environments.project.app-connection.app_connection"),

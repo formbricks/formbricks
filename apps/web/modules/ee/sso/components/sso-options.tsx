@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { AzureButton } from "./azure-button";
 import { GithubButton } from "./github-button";
 import { GoogleButton } from "./google-button";
@@ -23,7 +23,7 @@ export const SSOOptions = ({
   oidcDisplayName,
   callbackUrl,
 }: SSOOptionsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="space-y-2">

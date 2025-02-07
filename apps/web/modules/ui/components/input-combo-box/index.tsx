@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Command,
   CommandEmpty,
@@ -9,8 +11,8 @@ import {
 } from "@/modules/ui/components/command";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useTranslate } from "@tolgee/react";
 import { CheckIcon, ChevronDownIcon, LucideProps, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { ForwardRefExoticComponent, RefAttributes, useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -62,7 +64,7 @@ export const InputCombobox = ({
   comboboxClasses,
   emptyDropdownText = "environments.surveys.edit.no_option_found",
 }: InputComboboxProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
   const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
   const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);

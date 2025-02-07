@@ -4,8 +4,8 @@ import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
 import { FilterIcon, Trash2 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -35,7 +35,7 @@ export function SegmentSettings({
   isReadOnly,
 }: TSegmentSettingsTabProps) {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment>(initialSegment);
 
