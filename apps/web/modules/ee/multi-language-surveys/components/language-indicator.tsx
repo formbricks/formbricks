@@ -44,11 +44,11 @@ export function LanguageIndicator({
   });
 
   return (
-    <div className="absolute right-2 top-2 z-10">
+    <div className="absolute right-2 top-2">
       <button
         aria-expanded={showLanguageDropdown}
         aria-haspopup="true"
-        className="flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
+        className="relative z-20 flex items-center justify-center rounded-md bg-slate-900 p-1 px-2 text-xs text-white hover:bg-slate-700"
         onClick={toggleDropdown}
         tabIndex={-1}
         type="button">
