@@ -12,9 +12,9 @@ import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -32,7 +32,7 @@ interface ResponseFilterProps {
 }
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const params = useParams();
   const [parent] = useAutoAnimate();
   const sharingKey = params.sharingKey as string;

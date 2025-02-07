@@ -1,0 +1,42 @@
+name: Tolgee Tagging on PR Merge
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-production-keys:
+    name: Tag Production Keys
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18 # Ensure compatibility with your project
+
+      - name: Install Tolgee CLI
+        run: npm install -g @tolgee/cli
+
+      - name: Tag Production Keys
+        run: |
+          BRANCH_NAME=${GITHUB_REF##*/}
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-extracted \
+            --filter-tag "draft: ${BRANCH_NAME}" \
+            --tag production \
+            --untag "draft: ${BRANCH_NAME}"
+
+      - name: Tag Deprecated Keys
+        run: |
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-not-extracted --filter-tag production \
+            --tag deprecated --untag production

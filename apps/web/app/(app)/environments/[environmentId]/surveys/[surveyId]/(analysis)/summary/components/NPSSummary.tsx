@@ -1,5 +1,7 @@
+"use client";
+
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -7,14 +9,12 @@ import {
   TSurveyQuestionSummaryNps,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface NPSSummaryProps {
   questionSummary: TSurveyQuestionSummaryNps;
   survey: TSurvey;
-  locale: TUserLocale;
   setFilter: (
     questionId: TSurveyQuestionId,
     label: TI18nString,
@@ -24,8 +24,8 @@ interface NPSSummaryProps {
   ) => void;
 }
 
-export const NPSSummary = ({ questionSummary, survey, setFilter, locale }: NPSSummaryProps) => {
-  const t = useTranslations();
+export const NPSSummary = ({ questionSummary, survey, setFilter }: NPSSummaryProps) => {
+  const { t } = useTranslate();
   const applyFilter = (group: string) => {
     const filters = {
       promoters: {
@@ -61,7 +61,7 @@ export const NPSSummary = ({ questionSummary, survey, setFilter, locale }: NPSSu
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         {["promoters", "passives", "detractors", "dismissed"].map((group) => (
           <div className="cursor-pointer hover:opacity-80" key={group} onClick={() => applyFilter(group)}>

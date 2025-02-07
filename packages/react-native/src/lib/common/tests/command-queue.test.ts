@@ -1,7 +1,7 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { CommandQueue } from "@/lib/common/command-queue";
 import { checkSetup } from "@/lib/common/setup";
 import { type Result } from "@/types/error";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the setup module so we can control checkSetup()
 vi.mock("@/lib/common/setup", () => ({

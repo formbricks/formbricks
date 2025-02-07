@@ -1,3 +1,5 @@
+"use client";
+
 import { isValidCssSelector } from "@/app/lib/actionClass/actionClass";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";
@@ -7,7 +9,7 @@ import { Label } from "@/modules/ui/components/label";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -38,7 +40,7 @@ export const CreateNewActionTab = ({
   setLocalSurvey,
   environmentId,
 }: CreateNewActionTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const actionClassNames = useMemo(
     () => actionClasses.map((actionClass) => actionClass.name),
     [actionClasses]

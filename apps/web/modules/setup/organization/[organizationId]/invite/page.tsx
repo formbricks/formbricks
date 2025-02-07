@@ -1,8 +1,8 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { InviteMembers } from "@/modules/setup/organization/[organizationId]/invite/components/invite-members";
+import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { SMTP_HOST, SMTP_PASSWORD, SMTP_PORT, SMTP_USER } from "@formbricks/lib/constants";
 import { verifyUserRoleAccess } from "@formbricks/lib/organization/auth";
@@ -19,7 +19,7 @@ interface InvitePageProps {
 
 export const InvitePage = async (props: InvitePageProps) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASSWORD);
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError(t("common.session_not_found"));

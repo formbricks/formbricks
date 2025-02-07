@@ -5,8 +5,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -21,7 +21,7 @@ export const EnableInsightsBanner = ({
   surveyResponseCount,
   maxResponseCount,
 }: EnableInsightsBannerProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
 
   const handleInsightGeneration = async () => {

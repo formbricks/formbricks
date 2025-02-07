@@ -1,6 +1,6 @@
+import { getTranslate } from "@/tolgee/server";
 import { BadgeCheckIcon } from "lucide-react";
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import { prisma } from "@formbricks/database";
 
 export const dynamic = "force-dynamic"; // no caching
@@ -38,7 +38,7 @@ const checkDatabaseConnection = async () => {
 }; */
 
 const Page = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   await checkDatabaseConnection();
   // Skipping S3 check for now until it's fixed
   // await checkS3Connection();
