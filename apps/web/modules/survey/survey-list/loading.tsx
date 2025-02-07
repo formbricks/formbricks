@@ -1,3 +1,5 @@
+"use client";
+
 import { SurveyLoading } from "@/modules/survey/survey-list/components/survey-loading";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";

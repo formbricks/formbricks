@@ -48,6 +48,38 @@ export const getOrganizationBilling = reactCache(
     )()
 );
 
+export const getOrganizationIdFromEnvironmentId = reactCache(
+  async (environmentId: string): Promise<string> =>
+    cache(
+      async () => {
+        const organization = await prisma.organization.findFirst({
+          where: {
+            projects: {
+              some: {
+                environments: {
+                  some: { id: environmentId },
+                },
+              },
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (!organization) {
+          throw new ResourceNotFoundError("Organization", null);
+        }
+
+        return organization.id;
+      },
+      [`survey-template-list-getOrganizationIdFromEnvironmentId-${environmentId}`],
+      {
+        tags: [organizationCache.tag.byEnvironmentId(environmentId)],
+      }
+    )()
+);
+
 export const getOrganizationAIKeys = reactCache(
   async (organizationId: string): Promise<Pick<Organization, "isAIEnabled" | "billing"> | null> =>
     cache(

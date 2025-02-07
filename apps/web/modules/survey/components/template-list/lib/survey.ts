@@ -1,6 +1,9 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getActionClasses } from "@/modules/survey/components/template-list/components/action-class";
-import { getOrganizationAIKeys } from "@/modules/survey/components/template-list/lib/organization";
+import {
+  getOrganizationAIKeys,
+  getOrganizationIdFromEnvironmentId,
+} from "@/modules/survey/components/template-list/lib/organization";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { handleTriggerUpdates } from "@/modules/survey/components/template-list/lib/utils";
 import { Prisma } from "@prisma/client";
@@ -123,7 +126,8 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationAIKeys(environmentId);
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
