@@ -48,7 +48,6 @@ export const ZResponseInput = ZResponse.pick({
   .extend({
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
-    userId: z.string().nullish(),
     environmentId: z.string().cuid2(),
   });
 

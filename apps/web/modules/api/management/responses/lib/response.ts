@@ -15,10 +15,8 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TTag } from "@formbricks/types/tags";
-import { getContactByUserId } from "./contact";
 
 const responseSelectionInclude = {
   contact: {
@@ -57,7 +55,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     environmentId,
     language,
     surveyId,
-    userId,
     displayId,
     finished,
     data,
@@ -70,17 +67,6 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
   } = responseInput;
 
   try {
-    let contact: { id: string; attributes: TContactAttributes } | null = null;
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-    const organization = await getOrganizationBilling(organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", organizationId);
-    }
-
-    if (userId) {
-      contact = await getContactByUserId(environmentId, userId);
-    }
-
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     const prismaData: Prisma.ResponseCreateInput = {
@@ -93,17 +79,9 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       finished: finished,
       data: data,
       language: language,
-      ...(contact?.id && {
-        contact: {
-          connect: {
-            id: contact.id,
-          },
-        },
-        contactAttributes: contact.attributes,
-      }),
-      ...(meta && ({ meta } as Prisma.JsonObject)),
+      meta: meta,
       singleUseId,
-      ...(variables && { variables }),
+      variables: variables,
       ttc: ttc,
       createdAt,
       updatedAt,
@@ -113,6 +91,12 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       data: prismaData,
       include: responseSelectionInclude,
     });
+
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organization = await getOrganizationBilling(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", organizationId);
+    }
 
     const { contact: responseContact, ...rest } = responsePrisma;
 
@@ -125,9 +109,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
     responseCache.revalidate({
       environmentId,
       id: response.id,
-      contactId: contact?.id,
       ...(singleUseId && { singleUseId }),
-      userId: userId ?? undefined,
       surveyId,
     });
 
