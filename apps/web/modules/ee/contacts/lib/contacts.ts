@@ -148,9 +148,12 @@ export const deleteContact = async (contactId: string): Promise<TContact | null>
       select: selectContact,
     });
 
+    const contactUserId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
+
     contactCache.revalidate({
       id: contact.id,
       environmentId: contact.environmentId,
+      userId: contactUserId,
     });
 
     return contact;

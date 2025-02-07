@@ -1,5 +1,4 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
-import { getContactAttributeKeys } from "@/app/(app)/environments/[environmentId]/integrations/lib/contact-attribute-key";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -25,12 +24,11 @@ const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslations();
   const isEnabled = !!AIRTABLE_CLIENT_ID;
-  const [session, surveys, integrations, environment, contactAttributeKeys] = await Promise.all([
+  const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -85,7 +83,6 @@ const Page = async (props) => {
           surveys={surveys}
           environment={environment}
           webAppUrl={WEBAPP_URL}
-          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
       </div>

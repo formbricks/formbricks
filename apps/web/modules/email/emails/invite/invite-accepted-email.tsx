@@ -16,7 +16,7 @@ export function InviteAcceptedEmail({
   locale,
 }: InviteAcceptedEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate locale={locale}>
       <Container>
         <Text>
           {translateEmailText("invite_accepted_email_heading", locale)} {inviterName},
@@ -25,7 +25,7 @@ export function InviteAcceptedEmail({
           {translateEmailText("invite_accepted_email_text_par1", locale)} {inviteeName}{" "}
           {translateEmailText("invite_accepted_email_text_par2", locale)}
         </Text>
-        <EmailFooter />
+        <EmailFooter locale={locale} />
       </Container>
     </EmailTemplate>
   );

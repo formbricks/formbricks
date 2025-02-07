@@ -7,7 +7,6 @@ import { useState } from "react";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
@@ -16,7 +15,6 @@ interface FileUploadSummaryProps {
   questionSummary: TSurveyQuestionSummaryFileUpload;
   environmentId: string;
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -24,7 +22,6 @@ export const FileUploadSummary = ({
   questionSummary,
   environmentId,
   survey,
-  contactAttributeKeys,
   locale,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
@@ -38,12 +35,7 @@ export const FileUploadSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        contactAttributeKeys={contactAttributeKeys}
-        locale={locale}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">{t("common.user")}</div>
@@ -85,12 +77,7 @@ export const FileUploadSummary = ({
 
                       return (
                         <div className="relative m-2 rounded-lg bg-slate-200" key={fileUrl}>
-                          <a
-                            href={fileUrl as string}
-                            key={index}
-                            download={fileName}
-                            target="_blank"
-                            rel="noopener noreferrer">
+                          <a href={fileUrl} key={index} target="_blank" rel="noopener noreferrer">
                             <div className="absolute right-0 top-0 m-2">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 hover:bg-white">
                                 <DownloadIcon className="h-6 text-slate-500" />
