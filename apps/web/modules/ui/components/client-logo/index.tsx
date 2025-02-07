@@ -9,7 +9,7 @@ import { cn } from "@formbricks/lib/cn";
 
 interface ClientLogoProps {
   environmentId?: string;
-  projectLogo: Project["logo"];
+  projectLogo: Project["logo"] | null;
   previewSurvey?: boolean;
 }
 
@@ -18,7 +18,7 @@ export const ClientLogo = ({ environmentId, projectLogo, previewSurvey = false }
   return (
     <div
       className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
-      style={{ backgroundColor: projectLogo.logo?.bgColor }}>
+      style={{ backgroundColor: projectLogo?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link
           href={`/environments/${environmentId}/project/look`}
@@ -30,9 +30,9 @@ export const ClientLogo = ({ environmentId, projectLogo, previewSurvey = false }
           />
         </Link>
       )}
-      {projectLogo.logo?.url ? (
+      {projectLogo?.url ? (
         <Image
-          src={projectLogo.logo?.url}
+          src={projectLogo?.url}
           className={cn(
             previewSurvey ? "max-h-12" : "max-h-16 md:max-h-20",
             "w-auto max-w-40 rounded-lg object-contain p-1 md:max-w-56"
