@@ -13,7 +13,6 @@ import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import type { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
-import { TUserLocale } from "@formbricks/types/user";
 import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
