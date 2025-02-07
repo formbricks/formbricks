@@ -28,12 +28,6 @@ cd formbricks/helm-chart
   --set replicaCount=2
 ```
 
-Verify the deployment:
-```sh
-kubectl get pods -n formbricks
-kubectl get svc -n formbricks
-```
-
 
 ## 🎯 **Step 2: Verify and Access Formbricks**
 ### **Check the Running Services**
@@ -137,116 +131,6 @@ helm upgrade my-formbricks formbricks/formbricks \
 
 This command disables the built-in PostgreSQL and configures Formbricks to use an external PostgreSQL database. Make sure your external database is set up and accessible before making this change.
 
-
-### Usage Examples
-
-Here are various examples of how to install and configure the Formbricks Helm chart:
-
-1. **Default Installation with Traefik enabled and Custom Hostname**:
-
-   <details>
-
-   <summary>Option 1: Installation without SSL (Not recommended for production)</summary>
-
-   ```bash
-   helm install my-formbricks formbricks/formbricks \
-     --namespace formbricks \
-     --create-namespace \
-     --set traefik.enabled=true \
-     --set hostname=forms.example.com
-   ```
-
-   This command enables Traefik and sets a custom hostname. Replace `forms.example.com` with your actual domain name.
-
-   </details>
-
-   <details>
-   <summary>Option 2: Installation with SSL (Recommended for production)</summary>
-
-   1. First, download the values file:
-
-   ```bash
-   helm show values formbricks/formbricks > values.yaml
-   ```
-
-   2. Open the `values.yaml` file in a text editor and make the following changes:
-
-   ```yaml
-   traefik:
-     enabled: true
-     additionalArguments:
-       - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
-   ```
-
-   Replace `your-email@example.com` with a valid email address where you want to receive Let's Encrypt notifications.
-
-   3. Install Formbricks with the updated values file:
-
-   ```bash
-   helm install my-formbricks formbricks/formbricks \
-     -f values.yaml \
-     --namespace formbricks \
-     --create-namespace \
-     --set hostname=forms.example.com
-   ```
-
-   This command enables Traefik, sets a custom hostname, and uses the configured email address for Let's Encrypt. Remember to replace `forms.example.com` with your actual domain name.
-
-   </details>
-
-These installation options provide flexibility in setting up Formbricks with Traefik. The SSL option is recommended for production environments to ensure secure communications.
-
-2.  **Community Advanced:**
-    Provision a whole community setup with Formbricks, Postgres, Custom Domain with SSL
-
-          ```bash
-          helm install formbricks formbricks/formbricks \
-            --namespace formbricks \
-            --create-namespace \
-             --set postgres.enabled=true \
-            --set traefik.enabled=true \
-            --set hostname=forms.example.com \
-            --set email=your-mail@example.com
-          ```
-
-3.  **Cluster Advanced:**
-    Provision a ready to use cluster for enterprise customers with Formbricks (3 pods), Postgres, Redis and Custom Domain with SSL
-
-          ```bash
-          helm install formbricks formbricks/formbricks \
-            --namespace formbricks \
-            --create-namespace \
-            --set replicaCount=3
-            --set redis.enabled=true \
-            --set traefik.enabled=true \
-            --set hostname=forms.example.com \
-            --set email=your-mail@example.com
-          ```
-
-4.  **Installation with Redis and PostgreSQL Disabled, Using External Services**:
-
-    ```bash
-    helm install my-formbricks formbricks/formbricks \
-      --namespace formbricks \
-      --create-namespace \
-      --set postgresql.enabled=false \
-      --set postgresql.externalUrl=postgresql://user:password@your-postgres-url:5432/dbname \
-      --set redis.enabled=false \
-      --set redis.externalUrl=redis://your-redis-url:6379
-    ```
-
-5.  **High Availability Setup**:
-    ```bash
-    helm install my-formbricks formbricks/formbricks \
-    --namespace formbricks \
-    --create-namespace \
-    --set replicaCount=3
-    ```
-
-This command:
-
-1. Deploys the Formbricks application with 3 replicas.
-2. Enables PostgreSQL and Redis with default settings.
 
 
 ## Full Values Documentation
