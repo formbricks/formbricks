@@ -18,25 +18,27 @@ const jost = Jost({ subsets: ["latin"] });
 
 async function RootLayout({ children }: { children: React.ReactNode }) {
   const pages = await glob("**/*.mdx", { cwd: "src/app" });
-  const allSectionsEntries: [string, Section[]][] = (await Promise.all(
+  const allSectionsEntries: [string, Section[]][] = await Promise.all(
     pages.map(async (filename) => [
       `/${filename.replace(/(?:^|\/)page\.mdx$/, "")}`,
-      (await import(`./${filename}`) as { sections: Section[] }).sections,
+      ((await import(`./${filename}`)) as { sections: Section[] }).sections,
     ])
-  ));
+  );
   const allSections = Object.fromEntries(allSectionsEntries);
 
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       <head>
-        {process.env.NEXT_PUBLIC_LAYER_API_KEY ? <Script
-          strategy="afterInteractive"
-          src="https://storage.googleapis.com/generic-assets/buildwithlayer-widget-4.js"
-          primary-color="#00C4B8"
-          api-key={process.env.NEXT_PUBLIC_LAYER_API_KEY}
-          walkthrough-enabled="false"
-          design-style="copilot"
-        /> : null}
+        {process.env.NEXT_PUBLIC_LAYER_API_KEY ? (
+          <Script
+            strategy="afterInteractive"
+            src="https://storage.googleapis.com/generic-assets/buildwithlayer-widget-4.js"
+            primary-color="#00C4B8"
+            api-key={process.env.NEXT_PUBLIC_LAYER_API_KEY}
+            walkthrough-enabled="false"
+            design-style="copilot"
+          />
+        ) : null}
       </head>
       <body className={`flex min-h-full bg-white antialiased dark:bg-zinc-900 ${jost.className}`}>
         <Providers>

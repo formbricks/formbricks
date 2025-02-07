@@ -1,16 +1,16 @@
 "use client";
 
+import { Logo } from "@/components/logo";
+import { Navigation } from "@/components/navigation";
+import { Search } from "@/components/search";
+import { useIsInsideMobileNavigation, useMobileNavigationStore } from "@/hooks/use-mobile-navigation";
 import clsx from "clsx";
 import { type MotionStyle, motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { forwardRef } from "react";
-import { Search } from "@/components/search";
-import { Logo } from "@/components/logo";
 import { Button } from "./button";
 import { MobileNavigation } from "./mobile-navigation";
 import { ThemeToggle } from "./theme-toggle";
-import { Navigation } from "@/components/navigation";
-import { useIsInsideMobileNavigation, useMobileNavigationStore } from "@/hooks/use-mobile-navigation";
 
 function TopLevelNavItem({ href, children }: { href: string; children: React.ReactNode }): React.JSX.Element {
   return (

@@ -1,8 +1,8 @@
 "use client";
 
+import { navigation } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navigation } from "@/lib/navigation";
 import { Button } from "./button";
 import { DiscordIcon } from "./icons/discord-icon";
 import { GithubIcon } from "./icons/github-icon";

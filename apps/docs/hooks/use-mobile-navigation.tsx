@@ -14,7 +14,13 @@ export const useMobileNavigationStore = create<{
   toggle: () => void;
 }>()((set) => ({
   isOpen: false,
-  open: () => { set({ isOpen: true }); },
-  close: () => { set({ isOpen: false }); },
-  toggle: () => { set((state) => ({ isOpen: !state.isOpen })); },
+  open: () => {
+    set({ isOpen: true });
+  },
+  close: () => {
+    set({ isOpen: false });
+  },
+  toggle: () => {
+    set((state) => ({ isOpen: !state.isOpen }));
+  },
 }));
