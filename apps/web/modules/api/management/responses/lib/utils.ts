@@ -2,7 +2,7 @@ import { TGetResponsesFilter } from "@/modules/api/management/responses/types/re
 import { Prisma } from "@prisma/client";
 
 export const getResponsesQuery = (environmentId: string, params: TGetResponsesFilter) => {
-  const { surveyId, limit, skip, sortBy, order, startDate, endDate } = params;
+  const { surveyId, limit, skip, sortBy, order, startDate, endDate, contactId } = params;
 
   let query: Prisma.ResponseFindManyArgs = {
     where: {
@@ -66,6 +66,16 @@ export const getResponsesQuery = (environmentId: string, params: TGetResponsesFi
     query = {
       ...query,
       skip: skip,
+    };
+  }
+
+  if (contactId) {
+    query = {
+      ...query,
+      where: {
+        ...query.where,
+        contactId,
+      },
     };
   }
 

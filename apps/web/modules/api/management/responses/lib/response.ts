@@ -5,9 +5,9 @@ import {
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils";
-import { TResponseInput, TResponseNew } from "@/modules/api/management/responses/types/responses";
+import { TResponseInput } from "@/modules/api/management/responses/types/responses";
 import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
-import { Prisma } from "@prisma/client";
+import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
@@ -16,54 +16,26 @@ import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TTag } from "@formbricks/types/tags";
 
-const responseSelectionInclude = {
-  contact: {
-    select: {
-      id: true,
-      userId: true,
-    },
-  },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
-    },
-  },
-  tags: {
-    include: {
-      tag: true,
-    },
-  },
-} satisfies Prisma.ResponseInclude;
-
-export const createResponse = async (responseInput: TResponseInput): Promise<TResponseNew> => {
+export const createResponse = async (
+  environmentId: string,
+  responseInput: TResponseInput
+): Promise<Response> => {
   captureTelemetry("response created");
 
   const {
-    environmentId,
-    language,
     surveyId,
     displayId,
     finished,
     data,
+    language,
     meta,
     singleUseId,
     variables,
     ttc: initialTtc,
     createdAt,
     updatedAt,
+    endingId,
   } = responseInput;
 
   try {
@@ -76,20 +48,20 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
         },
       },
       display: displayId ? { connect: { id: displayId } } : undefined,
-      finished: finished,
-      data: data,
-      language: language,
-      meta: meta,
+      finished,
+      data,
+      language,
+      meta,
       singleUseId,
-      variables: variables,
-      ttc: ttc,
+      variables,
+      ttc,
       createdAt,
       updatedAt,
+      endingId,
     };
 
     const responsePrisma = await prisma.response.create({
       data: prismaData,
-      include: responseSelectionInclude,
     });
 
     const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
@@ -98,13 +70,7 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const { contact: responseContact, ...rest } = responsePrisma;
-
-    const response: TResponseNew = {
-      ...rest,
-      ...(responseContact ? responseContact : {}),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
+    const response = responsePrisma;
 
     responseCache.revalidate({
       environmentId,
@@ -153,21 +119,10 @@ export const createResponse = async (responseInput: TResponseInput): Promise<TRe
 export const getResponses = async (
   environmentId: string,
   params: TGetResponsesFilter
-): Promise<TResponseNew[]> => {
+): Promise<Response[]> => {
   const responses = await prisma.response.findMany({
     ...getResponsesQuery(environmentId, params),
-    include: responseSelectionInclude,
   });
 
-  const res = responses.map((response) => {
-    const { contact, ...rest } = response;
-
-    return {
-      ...rest,
-      ...(contact ? contact : {}),
-      tags: response.tags.map((tag) => tag.tag),
-    };
-  });
-
-  return res;
+  return responses;
 };

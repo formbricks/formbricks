@@ -1,5 +1,5 @@
-import { checkRateLimitAndThrowError } from "@/modules/api/lib/utils/rate-limit";
-import { responses } from "@/modules/api/lib/utils/response";
+import { checkRateLimitAndThrowError } from "@/modules/api/lib/rate-limit";
+import { responses } from "@/modules/api/lib/response";
 import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { hashApiKey } from "@/modules/api/management/lib/utils";
 import { ZodObject, ZodRawShape, z } from "zod";
@@ -47,7 +47,7 @@ type HandlerFn<TInput = unknown, TOutput = Response> = ({
   request: Request;
 }) => Promise<TOutput>;
 
-export const authenticatedAPIClient = async <T extends ZodObject<ZodRawShape>>({
+export const authenticatedApiClient = async <T extends ZodObject<ZodRawShape>>({
   request,
   schema,
   rateLimit = true,

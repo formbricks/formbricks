@@ -1,22 +1,18 @@
-import { responses } from "@/modules/api/lib/utils/response";
-import { authenticatedAPIClient, checkAuthorization } from "@/modules/api/management/auth";
+import { responses } from "@/modules/api/lib/response";
+import { authenticatedApiClient, checkAuthorization } from "@/modules/api/management/auth";
 import { getEnvironmentIdFromSurveyId } from "@/modules/api/management/lib/helper";
-import {
-  TResponseNew,
-  ZGetResponsesFilter,
-  ZResponseInput,
-} from "@/modules/api/management/responses/types/responses";
+import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/management/responses/types/responses";
+import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { createResponse, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
-  authenticatedAPIClient({
+  authenticatedApiClient({
     request,
     handler: async ({ authentication }) => {
-      const searchParams = request.nextUrl.searchParams;
-      const params = Object.fromEntries(searchParams.entries());
+      const params = Object.fromEntries(request.nextUrl.searchParams.entries());
       const [validatedParams] = validateInputs([params, ZGetResponsesFilter]);
 
       const environmentId = authentication.environmentId;
@@ -28,7 +24,7 @@ export const GET = async (request: NextRequest) =>
   });
 
 export const POST = async (request: Request) =>
-  authenticatedAPIClient({
+  authenticatedApiClient({
     request,
     schema: ZResponseInput,
     handler: async ({ authentication, parsedInput }) => {
@@ -36,9 +32,11 @@ export const POST = async (request: Request) =>
         return responses.badRequestResponse("Invalid request body", {});
       }
 
+      const environmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+
       await checkAuthorization({
         authentication,
-        environmentId: await getEnvironmentIdFromSurveyId(parsedInput.surveyId),
+        environmentId,
       });
 
       // if there is a createdAt but no updatedAt, set updatedAt to createdAt
@@ -46,9 +44,9 @@ export const POST = async (request: Request) =>
         parsedInput.updatedAt = parsedInput.createdAt;
       }
 
-      let response: TResponseNew;
+      let response: Response;
       try {
-        response = await createResponse(parsedInput);
+        response = await createResponse(environmentId, parsedInput);
       } catch (error) {
         if (error instanceof InvalidInputError) {
           return responses.badRequestResponse(error.message);

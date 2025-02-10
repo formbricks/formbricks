@@ -1,5 +1,5 @@
-import { responses } from "@/modules/api/lib/utils/response";
-import { authenticatedAPIClient, checkAuthorization } from "@/modules/api/management/auth";
+import { responses } from "@/modules/api/lib/response";
+import { authenticatedApiClient, checkAuthorization } from "@/modules/api/management/auth";
 import { getEnvironmentIdFromResponseId } from "@/modules/api/management/lib/helper";
 import {
   deleteResponse,
@@ -11,7 +11,7 @@ import { ZResponse } from "@formbricks/database/zod/responses";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
-  authenticatedAPIClient({
+  authenticatedApiClient({
     request,
     handler: async ({ authentication }) => {
       const params = await props.params;
@@ -32,7 +32,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
   });
 
 export const DELETE = (request: Request, props: { params: Promise<{ responseId: string }> }) =>
-  authenticatedAPIClient({
+  authenticatedApiClient({
     request,
     handler: async ({ authentication }) => {
       const params = await props.params;
@@ -51,7 +51,7 @@ export const DELETE = (request: Request, props: { params: Promise<{ responseId: 
   });
 
 export const PUT = (request: Request, props: { params: Promise<{ responseId: string }> }) =>
-  authenticatedAPIClient({
+  authenticatedApiClient({
     request,
     schema: ZResponse,
     handler: async ({ authentication, parsedInput }) => {
