@@ -1245,7 +1245,7 @@
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. Choose the default language for this survey:",
         "2_activate_translation_for_specific_languages": "2. Activate translation for specific languages:",
-        "add": "Add +",
+        "add": "{count, plural, other {Add +}}",
         "add_a_delay_or_auto_close_the_survey": "Add a delay or auto-close the survey",
         "add_a_four_digit_pin": "Add a four digit PIN",
         "add_a_new_question_to_your_survey": "Add a new question to your survey",
