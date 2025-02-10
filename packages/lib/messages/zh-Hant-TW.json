@@ -1245,7 +1245,7 @@
       "edit": {
         "1_choose_the_default_language_for_this_survey": "1. 選擇此問卷的預設語言：",
         "2_activate_translation_for_specific_languages": "2. 啟用特定語言的翻譯：",
-        "add": "{count, plural, other {新增「其他」}}",
+        "add": "新增 +",
         "add_a_delay_or_auto_close_the_survey": "新增延遲或自動關閉問卷",
         "add_a_four_digit_pin": "新增四位數 PIN 碼",
         "add_a_new_question_to_your_survey": "在您的問卷中新增一個新問題",
