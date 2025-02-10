@@ -1,15 +1,15 @@
 "use client";
 
+import { useIsInsideMobileNavigation } from "@/hooks/use-mobile-navigation";
+import { navigation } from "@/lib/navigation";
+import { remToPx } from "@/lib/rem-to-px";
 import clsx from "clsx";
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { remToPx } from "@/lib/rem-to-px";
-import { navigation } from "@/lib/navigation";
 import { Button } from "./button";
-import { useIsInsideMobileNavigation } from "@/hooks/use-mobile-navigation";
 import { useSectionStore } from "./section-provider";
 
 export interface BaseLink {
@@ -79,7 +79,6 @@ function NavLink({
       <span className="flex w-full truncate">{children}</span>
     </div>
   );
-
 }
 
 function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathname: string }) {
@@ -97,7 +96,7 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
   const activePageIndex = group.links.findIndex(
     (link) =>
       (link.href && pathname.startsWith(link.href)) ??
-      (link.children?.some((child) => pathname.startsWith(child.href)))
+      link.children?.some((child) => pathname.startsWith(child.href))
   );
 
   const height = isPresent ? Math.max(1, visibleSections.length) * itemHeight : itemHeight;
@@ -116,13 +115,19 @@ function VisibleSectionHighlight({ group, pathname }: { group: NavGroup; pathnam
   );
 }
 
-function ActivePageMarker({ group, pathname }: { group: NavGroup; pathname: string }): React.JSX.Element | null {
+function ActivePageMarker({
+  group,
+  pathname,
+}: {
+  group: NavGroup;
+  pathname: string;
+}): React.JSX.Element | null {
   const itemHeight = remToPx(2);
   const offset = remToPx(0.25);
   const activePageIndex = group.links.findIndex(
     (link) =>
       (link.href && pathname.startsWith(link.href)) ??
-      (link.children?.some((child) => pathname.startsWith(child.href)))
+      link.children?.some((child) => pathname.startsWith(child.href))
   );
   if (activePageIndex === -1) return null;
   const top = offset + activePageIndex * itemHeight;
@@ -228,21 +233,25 @@ function NavigationGroup({
               key={link.title}
               layout="position"
               className="relative"
-              onClick={() => { setIsActiveGroup(true); }}>
+              onClick={() => {
+                setIsActiveGroup(true);
+              }}>
               {link.href ? (
-                <NavLink
-                  href={link.href}
-                  active={Boolean(pathname.startsWith(link.href))}>
+                <NavLink href={link.href} active={Boolean(pathname.startsWith(link.href))}>
                   {link.title}
                 </NavLink>
               ) : (
-                <button onClick={() => { toggleParentTitle(`${group.title}-${link.title}`); }} className="w-full">
+                <button
+                  onClick={() => {
+                    toggleParentTitle(`${group.title}-${link.title}`);
+                  }}
+                  className="w-full">
                   <NavLink
-                    href={!isMobile ? link.children?.[0]?.href ?? "" : undefined}
-                    active={
-                      Boolean(isParentOpen(`${group.title}-${link.title}`) &&
-                        link.children?.some((child) => pathname.startsWith(child.href)))
-                    }>
+                    href={!isMobile ? (link.children?.[0]?.href ?? "") : undefined}
+                    active={Boolean(
+                      isParentOpen(`${group.title}-${link.title}`) &&
+                        link.children?.some((child) => pathname.startsWith(child.href))
+                    )}>
                     <span className="flex w-full justify-between">
                       {link.title}
                       {isParentOpen(`${group.title}-${link.title}`) ? (
@@ -255,19 +264,24 @@ function NavigationGroup({
                 </button>
               )}
               <AnimatePresence mode="popLayout" initial={false}>
-                {isActiveGroup && link.children && isParentOpen(`${group.title}-${link.title}`) ? <motion.ul
-                  role="list"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { delay: 0.1 } }}
-                  exit={{ opacity: 0, transition: { duration: 0.15 } }}>
-                  {link.children.map((child) => (
-                    <li key={child.href}>
-                      <NavLink href={child.href} isAnchorLink active={Boolean(pathname.startsWith(child.href))}>
-                        {child.title}
-                      </NavLink>
-                    </li>
-                  ))}
-                </motion.ul> : null}
+                {isActiveGroup && link.children && isParentOpen(`${group.title}-${link.title}`) ? (
+                  <motion.ul
+                    role="list"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { delay: 0.1 } }}
+                    exit={{ opacity: 0, transition: { duration: 0.15 } }}>
+                    {link.children.map((child) => (
+                      <li key={child.href}>
+                        <NavLink
+                          href={child.href}
+                          isAnchorLink
+                          active={Boolean(pathname.startsWith(child.href))}>
+                          {child.title}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </motion.ul>
+                ) : null}
               </AnimatePresence>
             </motion.li>
           ))}
@@ -306,7 +320,7 @@ export function Navigation({ isMobile, ...props }: NavigationProps) {
 
   return (
     <nav {...props}>
-      <ul >
+      <ul>
         {navigation.map((group, groupIndex) => (
           <NavigationGroup
             key={group.title}
