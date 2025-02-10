@@ -1,11 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { Navigation } from "@/components/navigation";
 import { SideNavigation } from "@/components/side-navigation";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Footer } from "./footer";
 import { Header } from "./header";
 import { type Section, SectionProvider } from "./section-provider";

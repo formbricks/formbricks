@@ -85,11 +85,11 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
           case TSurveyQuestionTypeEnum.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.PictureSelection:
-            return <ImageIcon width={18} className="text-white" />;
+            return <ImageIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Matrix:
-            return <GridIcon width={18} className="text-white" />;
+            return <GridIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Ranking:
-            return <ListOrderedIcon width={18} className="text-white" />;
+            return <ListOrderedIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <User width={18} height={18} className="text-white" />;
@@ -115,7 +115,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <LanguagesIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.TAGS:
-        return <HashIcon width={18} className="text-white" />;
+        return <HashIcon width={18} height={18} className="text-white" />;
     }
   };
 
@@ -133,7 +133,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">
+      <p className="ml-3 truncate text-sm text-slate-600">
         {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>

@@ -1,11 +1,11 @@
 "use client";
 
-import { useInView } from "framer-motion";
-import Link from "next/link";
-import { useEffect, useRef } from "react";
 import { useSectionStore } from "@/components/section-provider";
 import { Tag } from "@/components/tag";
 import { remToPx } from "@/lib/rem-to-px";
+import { useInView } from "framer-motion";
+import Link from "next/link";
+import { useEffect, useRef } from "react";
 
 function AnchorIcon(props: React.ComponentPropsWithoutRef<"svg">): React.JSX.Element {
   return (
@@ -29,14 +29,24 @@ function Eyebrow({ tag, label }: { tag?: string; label?: string }): React.JSX.El
   );
 }
 
-function Anchor({ id, inView, children }: { id: string; inView: boolean; children: React.ReactNode }): React.JSX.Element {
+function Anchor({
+  id,
+  inView,
+  children,
+}: {
+  id: string;
+  inView: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <Link href={`#${id}`} className="group text-inherit no-underline hover:text-inherit">
-      {inView ? <div className="absolute ml-[calc(-1*var(--width))] mt-1 hidden w-[var(--width)] opacity-0 transition [--width:calc(1.35rem+0.85px+38%-min(38%,calc(theme(maxWidth.lg)+theme(spacing.2))))] group-hover:opacity-100 group-focus:opacity-100 md:block lg:z-50 2xl:[--width:theme(spacing.10)]">
-        <div className="group/anchor block h-5 w-5 rounded-lg bg-zinc-50 ring-1 ring-inset ring-zinc-300 transition hover:ring-zinc-500 dark:bg-zinc-800 dark:ring-zinc-700 dark:hover:bg-zinc-700 dark:hover:ring-zinc-600">
-          <AnchorIcon className="h-5 w-5 stroke-zinc-500 transition dark:stroke-zinc-400 dark:group-hover/anchor:stroke-white" />
+      {inView ? (
+        <div className="absolute ml-[calc(-1*var(--width))] mt-1 hidden w-[var(--width)] opacity-0 transition [--width:calc(1.35rem+0.85px+38%-min(38%,calc(theme(maxWidth.lg)+theme(spacing.2))))] group-hover:opacity-100 group-focus:opacity-100 md:block lg:z-50 2xl:[--width:theme(spacing.10)]">
+          <div className="group/anchor block h-5 w-5 rounded-lg bg-zinc-50 ring-1 ring-inset ring-zinc-300 transition hover:ring-zinc-500 dark:bg-zinc-800 dark:ring-zinc-700 dark:hover:bg-zinc-700 dark:hover:ring-zinc-600">
+            <AnchorIcon className="h-5 w-5 stroke-zinc-500 transition dark:stroke-zinc-400 dark:group-hover/anchor:stroke-white" />
+          </div>
         </div>
-      </div> : null}
+      ) : null}
       {children}
     </Link>
   );
@@ -67,7 +77,7 @@ export function Heading<Level extends 2 | 3 | 4>({
   const ref = useRef<HTMLHeadingElement>(null);
   const registerHeading = useSectionStore((s) => s.registerHeading);
 
-  const topMargin = remToPx(-3.5)
+  const topMargin = remToPx(-3.5);
   const inView = useInView(ref, {
     margin: `${topMargin}px 0px 0px 0px`,
     amount: "all",
@@ -75,18 +85,18 @@ export function Heading<Level extends 2 | 3 | 4>({
 
   useEffect(() => {
     if (headingLevel === 2) {
-      registerHeading({ id: props.id, ref, offsetRem: tag ?? label ? 8 : 6 });
+      registerHeading({ id: props.id, ref, offsetRem: (tag ?? label) ? 8 : 6 });
     } else if (headingLevel === 3) {
-      registerHeading({ id: props.id, ref, offsetRem: tag ?? label ? 7 : 5 });
+      registerHeading({ id: props.id, ref, offsetRem: (tag ?? label) ? 7 : 5 });
     } else if (headingLevel === 4) {
-      registerHeading({ id: props.id, ref, offsetRem: tag ?? label ? 6 : 4 });
+      registerHeading({ id: props.id, ref, offsetRem: (tag ?? label) ? 6 : 4 });
     }
   }, [label, headingLevel, props.id, registerHeading, tag]);
 
   return (
     <>
       <Eyebrow tag={tag} label={label} />
-      <Component ref={ref} className={tag ?? label ? "mt-2 scroll-mt-32" : "scroll-mt-24"} {...props}>
+      <Component ref={ref} className={(tag ?? label) ? "mt-2 scroll-mt-32" : "scroll-mt-24"} {...props}>
         {anchor ? (
           <Anchor id={props.id} inView={inView}>
             {children}
