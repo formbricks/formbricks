@@ -1,10 +1,10 @@
 "use client";
 
+import { Button } from "@/components/button";
+import { LoadingSpinner } from "@/components/icons/loading-spinner";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { RedocStandalone } from "redoc";
-import { LoadingSpinner } from "@/components/icons/loading-spinner";
-import { Button } from "@/components/button";
 import "./style.css";
 
 export function ApiDocs() {
@@ -61,7 +61,13 @@ export function ApiDocs() {
       <Button href="/developer-docs/rest-api" arrow="left" className="mb-4 mt-8">
         Back to docs
       </Button>
-      <RedocStandalone specUrl="/docs/openapi.yaml" onLoaded={() => { setLoading(false); }} options={redocTheme} />
+      <RedocStandalone
+        specUrl="/docs/openapi.yaml"
+        onLoaded={() => {
+          setLoading(false);
+        }}
+        options={redocTheme}
+      />
       {loading ? <LoadingSpinner /> : null}
     </div>
   );

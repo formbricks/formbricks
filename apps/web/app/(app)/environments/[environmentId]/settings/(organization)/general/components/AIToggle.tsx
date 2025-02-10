@@ -60,8 +60,7 @@ export const AIToggle = ({ organization, isOwnerOrManager }: AIToggleProps) => {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Label htmlFor="formbricks-ai-toggle" className="cursor-pointer">
-            {isAIEnabled ? t("common.disable") : t("common.enable")}{" "}
-            {t("environments.settings.general.formbricks_ai")}
+            {t("environments.settings.general.enable_formbricks_ai")}
           </Label>
           <Switch
             id="formbricks-ai-toggle"
