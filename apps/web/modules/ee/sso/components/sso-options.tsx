@@ -5,6 +5,7 @@ import { AzureButton } from "./azure-button";
 import { GithubButton } from "./github-button";
 import { GoogleButton } from "./google-button";
 import { OpenIdButton } from "./open-id-button";
+import { SamlButton } from "./saml-button";
 
 interface SSOOptionsProps {
   googleOAuthEnabled: boolean;
@@ -33,6 +34,7 @@ export const SSOOptions = ({
       {oidcOAuthEnabled && (
         <OpenIdButton inviteUrl={callbackUrl} text={t("auth.continue_with_oidc", { oidcDisplayName })} />
       )}
+      <SamlButton inviteUrl={callbackUrl} />
     </div>
   );
 };

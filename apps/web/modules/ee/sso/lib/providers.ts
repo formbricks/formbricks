@@ -1,5 +1,6 @@
 import type { IdentityProvider } from "@prisma/client";
 import AzureAD from "next-auth/providers/azure-ad";
+import BoxyHQSAMLProvider from "next-auth/providers/boxyhq-saml";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import {
@@ -15,6 +16,7 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
+  WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
 export const getSSOProviders = () => [
@@ -54,6 +56,27 @@ export const getSSOProviders = () => [
       };
     },
   },
+  BoxyHQSAMLProvider({
+    authorization: {
+      url: `${WEBAPP_URL}/api/auth/saml/authorize`,
+      params: {
+        scope: "",
+        response_type: "code",
+        provider: "saml",
+      },
+    },
+    token: {
+      url: `${WEBAPP_URL}/api/auth/saml/token`,
+      params: { grant_type: "authorization_code" },
+    },
+    userinfo: `${WEBAPP_URL}/api/auth/saml/userinfo`,
+    issuer: `${process.env.NEXTAUTH_URL}`,
+    clientId: "dummy",
+    clientSecret: "dummy",
+    httpOptions: {
+      timeout: 30000,
+    },
+  }),
 ];
 
 export type { IdentityProvider };
