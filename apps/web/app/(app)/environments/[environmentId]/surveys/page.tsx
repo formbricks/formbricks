@@ -12,15 +12,14 @@ import { Metadata, NextPage } from "next";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveyCount } from "@formbricks/lib/survey/service";
-import { getUser } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { getUser, getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {
@@ -86,7 +85,7 @@ const SurveysPage = async ({ params: paramsProps, searchParams: searchParamsProp
   const otherEnvironment = environments.find((e) => e.type !== environment.type)!;
 
   const currentProjectChannel = project.config.channel ?? null;
-  const locale = await findMatchingLocale();
+  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" asChild>
