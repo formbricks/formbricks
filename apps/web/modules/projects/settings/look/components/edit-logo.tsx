@@ -15,7 +15,6 @@ import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { TProjectUpdateInput } from "@formbricks/types/project";
 
 interface EditLogoProps {
   project: Project;
@@ -63,7 +62,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
 
     setIsLoading(true);
     try {
-      const updatedProject: TProjectUpdateInput = {
+      const updatedProject: Project["logo"] = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       const updateProjectResponse = await updateProjectAction({
@@ -93,7 +92,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
 
     setIsLoading(true);
     try {
-      const updatedProject: TProjectUpdateInput = {
+      const updatedProject: Project["logo"] = {
         logo: { url: undefined, bgColor: undefined },
       };
       const updateProjectResponse = await updateProjectAction({

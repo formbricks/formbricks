@@ -1,6 +1,6 @@
 "use client";
 
-import { CreateNewActionTab } from "@/modules/survey/survey-editor/components/create-new-action-tab";
+import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";

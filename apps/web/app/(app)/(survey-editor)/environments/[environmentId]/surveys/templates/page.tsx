@@ -1,3 +1,3 @@
-import { SurveyTemplatesPage } from "@/modules/survey/survey-templates/page";
+import { SurveyTemplatesPage } from "@/modules/survey/templates/page";
 
 export default SurveyTemplatesPage;

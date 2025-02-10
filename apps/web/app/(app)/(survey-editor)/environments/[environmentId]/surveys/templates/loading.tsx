@@ -1,3 +1,3 @@
-import { SurveyTemplatesLoading } from "@/modules/survey/survey-templates/loading";
+import { SurveyTemplatesLoading } from "@/modules/survey/templates/loading";
 
 export default SurveyTemplatesLoading;

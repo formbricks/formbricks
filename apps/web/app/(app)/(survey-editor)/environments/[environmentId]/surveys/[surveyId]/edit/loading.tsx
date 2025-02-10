@@ -1,3 +1,3 @@
-import { SurveyEditorLoading } from "@/modules/survey/survey-editor/loading";
+import { SurveyEditorLoading } from "@/modules/survey/editor/loading";
 
 export default SurveyEditorLoading;

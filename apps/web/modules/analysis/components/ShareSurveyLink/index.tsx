@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { generateSingleUseIdAction } from "@/modules/survey/survey-list/actions";
+import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";

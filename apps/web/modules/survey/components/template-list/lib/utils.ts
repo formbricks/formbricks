@@ -1,4 +1,4 @@
-import { TriggerUpdate } from "@/modules/survey/survey-editor/types/survey-trigger";
+import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { ActionClass } from "@prisma/client";
 import { TFnType } from "@tolgee/react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";

@@ -11,11 +11,10 @@ import {
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import type { TLanguage } from "@formbricks/types/project";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {
-  defaultLanguage?: TLanguage;
+  defaultLanguage?: Language;
   handleDefaultLanguageChange: (languageCode: string) => void;
   projectLanguages: Language[];
   setConfirmationModalInfo: (confirmationModal: ConfirmationModalProps) => void;

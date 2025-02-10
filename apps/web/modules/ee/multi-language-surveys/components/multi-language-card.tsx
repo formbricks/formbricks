@@ -16,7 +16,6 @@ import type { FC } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import type { TLanguage } from "@formbricks/types/project";
 import type { TSurvey, TSurveyLanguage, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { DefaultLanguageSelect } from "./default-language-select";
@@ -92,7 +91,7 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
     setLocalSurvey(updatedSurvey as TSurvey);
   };
 
-  const updateSurveyLanguages = (language: TLanguage) => {
+  const updateSurveyLanguages = (language: Language) => {
     let updatedLanguages = localSurvey.languages;
     const languageIndex = localSurvey.languages.findIndex(
       (surveyLanguage) => surveyLanguage.language.code === language.code

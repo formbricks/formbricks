@@ -1,98 +1,19 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getActionClasses } from "@/modules/survey/components/template-list/components/action-class";
-import {
-  getOrganizationAIKeys,
-  getOrganizationIdFromEnvironmentId,
-} from "@/modules/survey/components/template-list/lib/organization";
+import { getOrganizationAIKeys } from "@/modules/survey/components/template-list/lib/organization";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { handleTriggerUpdates } from "@/modules/survey/components/template-list/lib/utils";
+import { getOrganizationIdFromEnvironmentId, selectSurvey } from "@/modules/survey/lib/survey";
+import { getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@formbricks/lib/survey/utils";
+import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
-
-const selectSurvey = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  name: true,
-  type: true,
-  environmentId: true,
-  createdBy: true,
-  status: true,
-  welcomeCard: true,
-  questions: true,
-  endings: true,
-  hiddenFields: true,
-  variables: true,
-  displayOption: true,
-  recontactDays: true,
-  displayLimit: true,
-  autoClose: true,
-  runOnDate: true,
-  closeOnDate: true,
-  delay: true,
-  displayPercentage: true,
-  autoComplete: true,
-  isVerifyEmailEnabled: true,
-  isSingleResponsePerEmailEnabled: true,
-  redirectUrl: true,
-  projectOverwrites: true,
-  styling: true,
-  surveyClosedMessage: true,
-  singleUse: true,
-  pin: true,
-  resultShareKey: true,
-  showLanguageSwitch: true,
-  languages: {
-    select: {
-      default: true,
-      enabled: true,
-      language: {
-        select: {
-          id: true,
-          code: true,
-          alias: true,
-          createdAt: true,
-          updatedAt: true,
-          projectId: true,
-        },
-      },
-    },
-  },
-  triggers: {
-    select: {
-      actionClass: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          environmentId: true,
-          name: true,
-          description: true,
-          type: true,
-          key: true,
-          noCodeConfig: true,
-        },
-      },
-    },
-  },
-  segment: {
-    include: {
-      surveys: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  },
-  followUps: true,
-} satisfies Prisma.SurveySelect;
 
 export const createSurvey = async (
   environmentId: string,

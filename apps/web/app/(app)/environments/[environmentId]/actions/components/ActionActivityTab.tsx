@@ -1,7 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createActionClassAction } from "@/modules/survey/survey-editor/actions";
+import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";

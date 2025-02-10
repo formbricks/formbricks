@@ -1,3 +1,3 @@
-import { LinkSurveyNotFound } from "@/modules/survey/link-surveys/not-found";
+import { LinkSurveyNotFound } from "@/modules/survey/link/not-found";
 
 export default LinkSurveyNotFound;

@@ -2,18 +2,17 @@
 
 import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import type { TLanguage } from "@formbricks/types/project";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageToggle } from "./language-toggle";
 
 interface SecondaryLanguageSelectProps {
   projectLanguages: Language[];
-  defaultLanguage: TLanguage;
+  defaultLanguage: Language;
   setSelectedLanguageCode: (languageCode: string) => void;
   setActiveQuestionId: (questionId: TSurveyQuestionId) => void;
   localSurvey: TSurvey;
-  updateSurveyLanguages: (language: TLanguage) => void;
+  updateSurveyLanguages: (language: Language) => void;
   locale: TUserLocale;
 }
 
@@ -27,7 +26,7 @@ export function SecondaryLanguageSelect({
   locale,
 }: SecondaryLanguageSelectProps) {
   const { t } = useTranslate();
-  const isLanguageToggled = (language: TLanguage) => {
+  const isLanguageToggled = (language: Language) => {
     return localSurvey.languages.some(
       (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled
     );

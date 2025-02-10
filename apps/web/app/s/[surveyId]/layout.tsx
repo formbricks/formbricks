@@ -1,4 +1,4 @@
-import { LinkSurveyLayout, viewport } from "@/modules/survey/link-surveys/layout";
+import { LinkSurveyLayout, viewport } from "@/modules/survey/link/layout";
 
 export { viewport };
 
