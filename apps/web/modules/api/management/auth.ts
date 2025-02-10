@@ -1,3 +1,4 @@
+import { handleErrorResponse } from "@/app/api/v1/auth";
 import { checkRateLimitAndThrowError } from "@/modules/api/lib/rate-limit";
 import { responses } from "@/modules/api/lib/response";
 import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
@@ -91,8 +92,8 @@ export const authenticatedApiClient = async <T extends ZodObject<ZodRawShape>>({
     });
   } catch (err) {
     if (err instanceof ValidationError) {
-      // return responses.badRequestResponse(err);
+      return responses.badRequestResponse(err.message);
     }
-    // return handleErrorResponse(err);
+    return handleErrorResponse(err);
   }
 };

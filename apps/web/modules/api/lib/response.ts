@@ -22,7 +22,7 @@ const goneResponse = (
 
   return Response.json(
     {
-      code: "gone",
+      type: "gone",
       message,
       details: details || {},
     } as ApiErrorResponse,
@@ -46,7 +46,7 @@ const badRequestResponse = (
 
   return Response.json(
     {
-      code: "bad_request",
+      type: "bad_request",
       message,
       details: details || {},
     } as ApiErrorResponse,
@@ -70,7 +70,7 @@ const notFoundResponse = (
 
   return Response.json(
     {
-      code: "not_found",
+      type: "not_found",
       message: `${resourceType} not found`,
       details: {
         resource_id: resourceId,
@@ -92,7 +92,7 @@ const notAuthenticatedResponse = (cors: boolean = false, cache: string = "privat
 
   return Response.json(
     {
-      code: "not_authenticated",
+      type: "not_authenticated",
       message: "Not authenticated",
       details: {
         "x-Api-Key": "Header not provided or API Key invalid",
@@ -113,7 +113,7 @@ const unauthorizedResponse = (cors: boolean = false, cache: string = "private, n
 
   return Response.json(
     {
-      code: "unauthorized",
+      type: "unauthorized",
       message: "You are not authorized to access this resource",
       details: {},
     } as ApiErrorResponse,
@@ -137,7 +137,7 @@ const forbiddenResponse = (
 
   return Response.json(
     {
-      code: "forbidden",
+      type: "forbidden",
       message,
       details,
     } as ApiErrorResponse,
@@ -177,7 +177,7 @@ const internalServerErrorResponse = (
 
   return Response.json(
     {
-      code: "internal_server_error",
+      type: "internal_server_error",
       message,
       details: {},
     } as ApiErrorResponse,
@@ -200,7 +200,7 @@ const tooManyRequestsResponse = (
 
   return Response.json(
     {
-      code: "internal_server_error",
+      type: "internal_server_error",
       message,
       details: {},
     } as ApiErrorResponse,
