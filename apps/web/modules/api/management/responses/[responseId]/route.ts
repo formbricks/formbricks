@@ -6,9 +6,8 @@ import {
   getResponse,
   updateResponse,
 } from "@/modules/api/management/responses/[responseId]/lib/response";
-import { z } from "zod";
-import { ZResponse } from "@formbricks/database/zod/responses";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { responseIdSchema, responseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
   authenticatedApiClient({
@@ -16,7 +15,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
     handler: async ({ authentication }) => {
       const params = await props.params;
 
-      const [parsedResponseId] = validateInputs([params.responseId, z.string().cuid2()]);
+      const [parsedResponseId] = validateInputs([params.responseId, responseIdSchema]);
 
       checkAuthorization({
         authentication,
@@ -37,7 +36,7 @@ export const DELETE = (request: Request, props: { params: Promise<{ responseId: 
     handler: async ({ authentication }) => {
       const params = await props.params;
 
-      const [parsedResponseId] = validateInputs([params.responseId, z.string().cuid2()]);
+      const [parsedResponseId] = validateInputs([params.responseId, responseIdSchema]);
 
       checkAuthorization({
         authentication,
@@ -53,11 +52,11 @@ export const DELETE = (request: Request, props: { params: Promise<{ responseId: 
 export const PUT = (request: Request, props: { params: Promise<{ responseId: string }> }) =>
   authenticatedApiClient({
     request,
-    schema: ZResponse,
+    schema: responseUpdateSchema,
     handler: async ({ authentication, parsedInput }) => {
       const params = await props.params;
 
-      const [parsedResponseId] = validateInputs([params.responseId, z.string().cuid2()]);
+      const [parsedResponseId] = validateInputs([params.responseId, responseIdSchema]);
 
       checkAuthorization({
         authentication,

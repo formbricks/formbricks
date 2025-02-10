@@ -40,6 +40,10 @@ export const ZResponseInput = ZResponse.pick({
   .extend({
     createdAt: z.coerce.date().optional(),
     updatedAt: z.coerce.date().optional(),
+  })
+  .openapi({
+    ref: "responseCreate",
+    description: "A response to create",
   });
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;
