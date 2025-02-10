@@ -33,6 +33,9 @@ ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runt
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
+# Increase Node.js memory limit
+ENV NODE_OPTIONS="--max_old_space_size=4096"
+
 # Set the working directory
 WORKDIR /app
 
@@ -49,11 +52,17 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
+RUN npm install -g rimraf
+
+RUN pnpm clean
+
 RUN pnpm install
 
 # Build the project
-# RUN pnpm post-install --filter=@formbricks/web...
 RUN pnpm build --filter=@formbricks/web...
+
+# log all contents of .next:
+RUN ls -la /app/apps/web/.next
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
@@ -76,6 +85,7 @@ WORKDIR /home/nextjs
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
 # Leverage output traces to reduce image size
+
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
