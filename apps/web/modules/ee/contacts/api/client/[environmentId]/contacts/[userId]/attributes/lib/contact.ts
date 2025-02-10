@@ -35,7 +35,7 @@ export const getContactByUserIdWithAttributes = reactCache(
 
         return contact;
       },
-      [`getContactByUserId-${environmentId}-${userId}-${JSON.stringify(updatedAttributes)}`],
+      [`getContactByUserIdWithAttributes-${environmentId}-${userId}-${JSON.stringify(updatedAttributes)}`],
       {
         tags: [
           contactCache.tag.byEnvironmentIdAndUserId(environmentId, userId),

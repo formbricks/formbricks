@@ -1,3 +1,5 @@
+"use client";
+
 import { Label } from "@/modules/ui/components/label";
 import {
   Select,
@@ -9,7 +11,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
 import { OrganizationRole } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import type { Control } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -25,7 +27,7 @@ export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud 
     ? Object.values(OrganizationRole)
     : Object.keys(OrganizationRole).filter((role) => role !== "billing");
 
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const rolesDescription = {
     owner: t("environments.settings.teams.owner_role_description"),

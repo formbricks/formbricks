@@ -14,7 +14,7 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -30,7 +30,7 @@ const ZProjectNameInput = ZProject.pick({ name: true });
 type TEditProjectName = z.infer<typeof ZProjectNameInput>;
 
 export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, isReadOnly }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TEditProjectName>({
     defaultValues: {
       name: project.name,

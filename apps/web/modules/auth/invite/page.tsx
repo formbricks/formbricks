@@ -3,11 +3,11 @@ import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { after } from "next/server";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
@@ -19,7 +19,7 @@ interface InvitePageProps {
 
 export const InvitePage = async (props: InvitePageProps) => {
   const searchParams = await props.searchParams;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   const user = session?.user.id ? await getUser(session.user.id) : null;
 
@@ -101,12 +101,7 @@ export const InvitePage = async (props: InvitePageProps) => {
         );
       }
       await deleteInvite(inviteId);
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        user?.name ?? "",
-        invite.creator.email,
-        user?.locale ?? DEFAULT_LOCALE
-      );
+      await sendInviteAcceptedEmail(invite.creator.name ?? "", user?.name ?? "", invite.creator.email);
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,

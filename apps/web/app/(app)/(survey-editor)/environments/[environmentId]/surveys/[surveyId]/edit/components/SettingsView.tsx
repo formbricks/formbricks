@@ -23,7 +23,6 @@ interface SettingsViewProps {
   responseCount: number;
   membershipRole?: TOrganizationRole;
   isUserTargetingAllowed?: boolean;
-  locale: string;
   projectPermission: TTeamPermission | null;
   isFormbricksCloud: boolean;
 }
@@ -38,7 +37,6 @@ export const SettingsView = ({
   responseCount,
   membershipRole,
   isUserTargetingAllowed = false,
-  locale,
   projectPermission,
   isFormbricksCloud,
 }: SettingsViewProps) => {
@@ -46,12 +44,7 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard
-        localSurvey={localSurvey}
-        setLocalSurvey={setLocalSurvey}
-        environment={environment}
-        locale={locale}
-      />
+      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
       {localSurvey.type === "app" ? (
         <div>

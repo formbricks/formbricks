@@ -1,5 +1,5 @@
-import { translateEmailText } from "@/modules/email/lib/utils";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 const fbLogoUrl =
@@ -9,10 +9,14 @@ const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=emai
 interface EmailTemplateProps {
   children: React.ReactNode;
   logoUrl?: string;
-  locale: string;
+  t: TFnType;
 }
 
-export function EmailTemplate({ children, logoUrl, locale }: EmailTemplateProps): React.JSX.Element {
+export async function EmailTemplate({
+  children,
+  logoUrl,
+  t,
+}: EmailTemplateProps): Promise<React.JSX.Element> {
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
   return (
@@ -37,22 +41,20 @@ export function EmailTemplate({ children, logoUrl, locale }: EmailTemplateProps)
           </Container>
 
           <Section className="mt-4 text-center text-sm">
-            <Text className="m-0 font-normal text-slate-500">
-              {translateEmailText("email_template_text_1", locale)}
-            </Text>
+            <Text className="m-0 font-normal text-slate-500">{t("emails.email_template_text_1")}</Text>
             {IMPRINT_ADDRESS && (
               <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
             )}
             <Text className="m-0 font-normal text-slate-500 opacity-50">
               {IMPRINT_URL && (
                 <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {translateEmailText("imprint", locale)}
+                  {t("emails.imprint")}
                 </Link>
               )}
               {IMPRINT_URL && PRIVACY_URL && "•"}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {translateEmailText("privacy_policy", locale)}
+                  {t("emails.privacy_policy")}
                 </Link>
               )}
             </Text>

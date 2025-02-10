@@ -5,7 +5,7 @@ import { updateOrganizationAIEnabledAction } from "@/modules/ee/insights/actions
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -18,7 +18,7 @@ interface AIToggleProps {
 }
 
 export const AIToggle = ({ organization, isOwnerOrManager }: AIToggleProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isAIEnabled, setIsAIEnabled] = useState(organization.isAIEnabled);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -60,8 +60,7 @@ export const AIToggle = ({ organization, isOwnerOrManager }: AIToggleProps) => {
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <Label htmlFor="formbricks-ai-toggle" className="cursor-pointer">
-            {isAIEnabled ? t("common.disable") : t("common.enable")}{" "}
-            {t("environments.settings.general.formbricks_ai")}
+            {t("environments.settings.general.enable_formbricks_ai")}
           </Label>
           <Switch
             id="formbricks-ai-toggle"

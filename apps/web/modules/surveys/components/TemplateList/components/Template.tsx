@@ -1,5 +1,7 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 import { TProject } from "@formbricks/types/project";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
@@ -29,7 +31,7 @@ export const Template = ({
   selectedFilter,
   noPreview,
 }: TemplateProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div
       onClick={() => {

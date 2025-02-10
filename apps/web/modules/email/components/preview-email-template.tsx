@@ -11,6 +11,7 @@ import {
   Text,
 } from "@react-email/components";
 import { render } from "@react-email/render";
+import { TFnType } from "@tolgee/react";
 import { CalendarDaysIcon, UploadIcon } from "lucide-react";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
@@ -18,35 +19,37 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
-import { getNPSOptionColor, getRatingNumberOptionColor, translateEmailText } from "../lib/utils";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
   styling: TSurveyStyling;
   locale: string;
+  t: TFnType;
 }
 
 export const getPreviewEmailTemplateHtml = async (
   survey: TSurvey,
   surveyUrl: string,
   styling: TSurveyStyling,
-  locale: string
+  locale: string,
+  t: TFnType
 ): Promise<string> => {
   return render(
-    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} />,
+    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,
     {
       pretty: true,
     }
   );
 };
 
-export function PreviewEmailTemplate({
+export async function PreviewEmailTemplate({
   survey,
   surveyUrl,
   styling,
-  locale,
-}: PreviewEmailTemplateProps): React.JSX.Element {
+  t,
+}: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
   const url = `${surveyUrl}?preview=true`;
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
@@ -93,7 +96,7 @@ export function PreviewEmailTemplate({
               <EmailButton
                 className="rounded-custom inline-flex cursor-pointer appearance-none px-6 py-3 text-sm font-medium text-black"
                 href={`${urlWithPrefilling}${firstQuestion.id}=dismissed`}>
-                {translateEmailText("reject", locale)}
+                {t("emails.reject")}
               </EmailButton>
             )}
             <EmailButton
@@ -102,7 +105,7 @@ export function PreviewEmailTemplate({
                 isLight(brandColor) ? "text-black" : "text-white"
               )}
               href={`${urlWithPrefilling}${firstQuestion.id}=accepted`}>
-              {translateEmailText("accept", locale)}
+              {t("emails.accept")}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -381,7 +384,7 @@ export function PreviewEmailTemplate({
                 "bg-brand-color rounded-custom mx-auto block w-max cursor-pointer appearance-none px-6 py-3 text-sm font-medium",
                 isLight(brandColor) ? "text-black" : "text-white"
               )}>
-              {translateEmailText("schedule_your_meeting", defaultLanguageCode)}
+              {t("emails.schedule_your_meeting")}
             </EmailButton>
           </Container>
           <EmailFooter />
@@ -399,7 +402,7 @@ export function PreviewEmailTemplate({
           <Section className="border-input-border-color bg-input-color rounded-custom mt-4 flex h-12 w-full items-center justify-center border border-solid">
             <CalendarDaysIcon className="text-question-color inline h-4 w-4" />
             <Text className="text-question-color inline text-sm font-medium">
-              {translateEmailText("select_a_date", defaultLanguageCode)}
+              {t("emails.select_a_date")}
             </Text>
           </Section>
           <EmailFooter />
@@ -486,9 +489,7 @@ export function PreviewEmailTemplate({
           <Section className="border-input-border-color rounded-custom mt-4 flex h-24 w-full items-center justify-center border border-dashed bg-slate-50">
             <Container className="mx-auto flex items-center text-center">
               <UploadIcon className="mt-6 inline h-5 w-5 text-slate-400" />
-              <Text className="text-slate-400">
-                {translateEmailText("click_or_drag_to_upload_files", defaultLanguageCode)}
-              </Text>
+              <Text className="text-slate-400">{t("emails.click_or_drag_to_upload_files")}</Text>
             </Container>
           </Section>
           <EmailFooter />

@@ -2,9 +2,9 @@ import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizatio
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
+import { getTranslate } from "@/tolgee/server";
 import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUserProjects } from "@formbricks/lib/project/service";
@@ -22,7 +22,7 @@ const Page = async (props: ModePageProps) => {
     return redirect(`/auth/login`);
   }
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const channelOptions = [
     {
       title: t("organizations.projects.new.mode.formbricks_surveys"),

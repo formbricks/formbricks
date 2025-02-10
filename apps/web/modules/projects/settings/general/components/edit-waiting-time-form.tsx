@@ -13,7 +13,7 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -30,7 +30,7 @@ const ZProjectRecontactDaysInput = ZProject.pick({ recontactDays: true });
 type TEditWaitingTimeFormValues = z.infer<typeof ZProjectRecontactDaysInput>;
 
 export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ project, isReadOnly }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TEditWaitingTimeFormValues>({
     defaultValues: {
       recontactDays: project.recontactDays,

@@ -1,3 +1,5 @@
+"use client";
+
 import { DefaultTag } from "@/modules/ui/components/default-tag";
 import {
   Select,
@@ -6,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { ConfirmationModalProps } from "./multi-language-card";
@@ -26,7 +28,7 @@ export function DefaultLanguageSelect({
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="space-y-4">
       <p className="text-sm">
@@ -40,15 +42,14 @@ export function DefaultLanguageSelect({
             onValueChange={(languageCode) => {
               setConfirmationModalInfo({
                 open: true,
-                title: t("environments.surveys.edit.set_language_as_default_language", {
-                  language: getLanguageLabel(languageCode, locale),
-                }),
+                title:
+                  t("environments.surveys.edit.confirm_default_language") +
+                  ": " +
+                  getLanguageLabel(languageCode, locale),
                 text: t(
                   "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
                 ),
-                buttonText: t("environments.surveys.edit.set_language_as_default_language", {
-                  language: getLanguageLabel(languageCode, locale),
-                }),
+                buttonText: t("common.confirm"),
                 onConfirm: () => {
                   handleDefaultLanguageChange(languageCode);
                 },

@@ -1,5 +1,7 @@
+"use client";
+
 import { Checkbox } from "@/modules/ui/components/checkbox";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -20,7 +22,7 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
   onSelectedSurveyChange,
   allowChanges,
 }) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">

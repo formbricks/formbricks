@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 
 type ConfirmationModalProps = {
@@ -30,7 +32,7 @@ export const ConfirmationModal = ({
   closeOnOutsideClick = true,
   hideCloseButton,
 }: ConfirmationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleButtonAction = async () => {
     if (isButtonDisabled) return;
     await onConfirm();
