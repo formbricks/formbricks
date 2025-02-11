@@ -1,5 +1,5 @@
 pnpm lint-staged
-pnpm tolgee-pull || true
+pnpm tolgee-pull || true 
 echo "{\"branchName\": \"main\"}" > ../branch.json
 git add branch.json packages/lib/messages/*.json
 
