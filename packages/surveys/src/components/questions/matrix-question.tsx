@@ -185,6 +185,7 @@ export function MatrixQuestion({
                                   getLocalizedValue(column, languageCode)
                                 : false
                             }
+                            aria-label={`${getLocalizedValue(question.headline, languageCode)}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(column, languageCode)}`}
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           />
                         </div>
