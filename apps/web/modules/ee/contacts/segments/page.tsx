@@ -1,6 +1,6 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ContactsSecondaryNavigation } from "@/modules/ee/contacts/components/contacts-secondary-navigation";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";

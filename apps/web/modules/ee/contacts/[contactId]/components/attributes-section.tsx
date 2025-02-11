@@ -1,7 +1,8 @@
+import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getTranslate } from "@/tolgee/server";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
-import { getContact, getContactAttributes } from "../../lib/contacts";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();

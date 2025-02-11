@@ -1,41 +1,20 @@
-import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 
-export const hasEmailAttribute = reactCache(
-  async (email: string, environmentId: string, contactId: string): Promise<boolean> =>
+export const getContactAttributeKeys = reactCache(
+  (environmentId: string): Promise<TContactAttributeKey[]> =>
     cache(
       async () => {
-        const contactAttribute = await prisma.contactAttribute.findFirst({
-          where: {
-            AND: [
-              {
-                attributeKey: {
-                  key: "email",
-                  environmentId,
-                },
-                value: email,
-              },
-              {
-                NOT: {
-                  contactId,
-                },
-              },
-            ],
-          },
-          select: { id: true },
+        return await prisma.contactAttributeKey.findMany({
+          where: { environmentId },
         });
-
-        return !!contactAttribute;
       },
-      [`hasEmailAttribute-${email}-${environmentId}-${contactId}`],
+      [`getContactAttributeKeys-${environmentId}`],
       {
-        tags: [
-          contactAttributeKeyCache.tag.byEnvironmentIdAndKey(environmentId, "email"),
-          contactAttributeCache.tag.byEnvironmentId(environmentId),
-        ],
+        tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
       }
     )()
 );

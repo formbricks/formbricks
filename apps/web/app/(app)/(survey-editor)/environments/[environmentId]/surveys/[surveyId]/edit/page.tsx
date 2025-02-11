@@ -1,6 +1,6 @@
 import { getUserEmail } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/lib/user";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";

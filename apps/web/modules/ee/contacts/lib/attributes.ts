@@ -1,7 +1,7 @@
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { prisma } from "@formbricks/database";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
