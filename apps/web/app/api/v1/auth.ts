@@ -1,8 +1,8 @@
+import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { hashApiKey } from "@/app/lib/api/apiHelper";
 import { responses } from "@/app/lib/api/response";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getEnvironmentIdFromApiKey } from "../../../modules/api/management/lib/api-key";
 
 export const authenticateRequest = async (request: Request): Promise<TAuthenticationApiKey | null> => {
   const apiKey = request.headers.get("x-api-key");

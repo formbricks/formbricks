@@ -1,19 +1,24 @@
 import { getResponse, getSurvey } from "@/modules/api/management/lib/services";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getEnvironmentIdFromSurveyId = async (surveyId: string) => {
+export const getEnvironmentIdFromSurveyId = async (
+  surveyId: string
+): Promise<Result<string, ApiErrorResponse>> => {
   const survey = await getSurvey(surveyId);
   if (!survey) {
-    throw new ResourceNotFoundError("survey", surveyId);
+    return err({ type: "not_found", details: [{ field: "survey", issue: "not found" }] });
   }
 
-  return survey.environmentId;
+  return ok(survey.environmentId);
 };
 
-export const getEnvironmentIdFromResponseId = async (responseId: string) => {
+export const getEnvironmentIdFromResponseId = async (
+  responseId: string
+): Promise<Result<string, ApiErrorResponse>> => {
   const response = await getResponse(responseId);
   if (!response) {
-    throw new ResourceNotFoundError("response", responseId);
+    return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
   }
 
   return await getEnvironmentIdFromSurveyId(response.surveyId);

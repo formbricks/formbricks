@@ -1,7 +1,7 @@
-import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { ApiErrorDetails, ApiErrorResponse } from "@/modules/api/types/api-error";
 import { ApiSuccessResponse } from "@/modules/api/types/api-success";
 
-export type ApiResponse = ApiSuccessResponse | ApiErrorResponse;
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,16 +10,14 @@ const corsHeaders = {
 };
 
 const badRequestResponse = ({
-  message,
-  details = {},
+  details = [],
   cors = false,
   cache = "private, no-store",
 }: {
-  message: string;
-  details?: ApiErrorResponse["details"];
+  details?: ApiErrorDetails;
   cors?: boolean;
   cache?: string;
-}) => {
+} = {}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -27,71 +25,14 @@ const badRequestResponse = ({
 
   return Response.json(
     {
-      type: "bad_request",
-      message,
-      details: details || {},
-    } as ApiErrorResponse,
+      error: {
+        code: 400,
+        message: "Bad Request",
+        details,
+      },
+    },
     {
       status: 400,
-      headers,
-    }
-  );
-};
-
-const notFoundResponse = ({
-  resourceType,
-  resourceId,
-  cors = false,
-  cache = "private, no-store",
-}: {
-  resourceType: string;
-  resourceId: string | null;
-  cors?: boolean;
-  cache?: string;
-}) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      type: "not_found",
-      message: `${resourceType} not found`,
-      details: {
-        resource_id: resourceId,
-        resource_type: resourceType,
-      },
-    } as ApiErrorResponse,
-    {
-      status: 404,
-      headers,
-    }
-  );
-};
-
-const notAuthenticatedResponse = ({
-  cors = false,
-  cache = "private, no-store",
-}: {
-  cors?: boolean;
-  cache?: string;
-}) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      type: "not_authenticated",
-      message: "Not authenticated",
-      details: {
-        "x-Api-Key": "Header not provided or API Key invalid",
-      },
-    } as ApiErrorResponse,
-    {
-      status: 401,
       headers,
     }
   );
@@ -103,7 +44,7 @@ const unauthorizedResponse = ({
 }: {
   cors?: boolean;
   cache?: string;
-}) => {
+} = {}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -111,10 +52,11 @@ const unauthorizedResponse = ({
 
   return Response.json(
     {
-      type: "unauthorized",
-      message: "You are not authorized to access this resource",
-      details: {},
-    } as ApiErrorResponse,
+      error: {
+        code: 401,
+        message: "Unauthorized",
+      },
+    },
     {
       status: 401,
       headers,
@@ -123,14 +65,38 @@ const unauthorizedResponse = ({
 };
 
 const forbiddenResponse = ({
-  message,
   cors = false,
-  details = {},
   cache = "private, no-store",
 }: {
-  message: string;
   cors?: boolean;
-  details?: ApiErrorResponse["details"];
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 403,
+        message: "Forbidden",
+      },
+    },
+    {
+      status: 403,
+      headers,
+    }
+  );
+};
+
+const notFoundResponse = ({
+  details = [],
+  cors = false,
+  cache = "private, no-store",
+}: {
+  details?: ApiErrorDetails;
+  cors?: boolean;
   cache?: string;
 }) => {
   const headers = {
@@ -140,12 +106,124 @@ const forbiddenResponse = ({
 
   return Response.json(
     {
-      type: "forbidden",
-      message,
-      details,
-    } as ApiErrorResponse,
+      error: {
+        code: 404,
+        message: "Not Found",
+        details,
+      },
+    },
     {
-      status: 403,
+      status: 404,
+      headers,
+    }
+  );
+};
+
+const conflictResponse = ({
+  cors = false,
+  cache = "private, no-store",
+}: {
+  cors?: boolean;
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 409,
+        message: "Conflict",
+      },
+    },
+    {
+      status: 409,
+      headers,
+    }
+  );
+};
+
+const unprocessableEntityResponse = ({
+  details = [],
+  cors = false,
+  cache = "private, no-store",
+}: {
+  details: ApiErrorDetails;
+  cors?: boolean;
+  cache?: string;
+}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 422,
+        message: "Unprocessable Entity",
+        details,
+      },
+    },
+    {
+      status: 422,
+      headers,
+    }
+  );
+};
+
+const tooManyRequestsResponse = ({
+  cors = false,
+  cache = "private, no-store",
+}: {
+  cors?: boolean;
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 429,
+        message: "Too Many Requests",
+      },
+    },
+    {
+      status: 429,
+      headers,
+    }
+  );
+};
+
+const internalServerErrorResponse = ({
+  details = [],
+  cors = false,
+  cache = "private, no-store",
+}: {
+  details?: ApiErrorDetails;
+  cors?: boolean;
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 500,
+        message: "Internal Server Error",
+        details,
+      },
+    },
+    {
+      status: 500,
       headers,
     }
   );
@@ -153,12 +231,12 @@ const forbiddenResponse = ({
 
 const successResponse = ({
   data,
-  metadata,
+  meta,
   cors = false,
   cache = "private, no-store",
 }: {
   data: Object;
-  metadata?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
 }) => {
@@ -170,7 +248,7 @@ const successResponse = ({
   return Response.json(
     {
       data,
-      metadata,
+      meta,
     } as ApiSuccessResponse,
     {
       status: 200,
@@ -179,67 +257,14 @@ const successResponse = ({
   );
 };
 
-const internalServerErrorResponse = ({
-  message,
-  cors = false,
-  cache = "private, no-store",
-}: {
-  message: string;
-  cors?: boolean;
-  cache?: string;
-}) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      type: "internal_server_error",
-      message,
-      details: {},
-    } as ApiErrorResponse,
-    {
-      status: 500,
-      headers,
-    }
-  );
-};
-
-const tooManyRequestsResponse = ({
-  message,
-  cors = false,
-  cache = "private, no-store",
-}: {
-  message: string;
-  cors?: boolean;
-  cache?: string;
-}) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      type: "internal_server_error",
-      message,
-      details: {},
-    } as ApiErrorResponse,
-    {
-      status: 429,
-      headers,
-    }
-  );
-};
-
 export const responses = {
   badRequestResponse,
-  internalServerErrorResponse,
-  notAuthenticatedResponse,
   unauthorizedResponse,
-  notFoundResponse,
-  successResponse,
-  tooManyRequestsResponse,
   forbiddenResponse,
+  notFoundResponse,
+  conflictResponse,
+  unprocessableEntityResponse,
+  tooManyRequestsResponse,
+  internalServerErrorResponse,
+  successResponse,
 };

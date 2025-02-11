@@ -7,6 +7,8 @@ import {
 import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils";
 import { TResponseInput } from "@/modules/api/management/responses/types/responses";
 import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { ApiSuccessResponse } from "@/modules/api/types/api-success";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -15,12 +17,12 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const createResponse = async (
   environmentId: string,
   responseInput: TResponseInput
-): Promise<Response> => {
+): Promise<Result<Response, ApiErrorResponse>> => {
   captureTelemetry("response created");
 
   const {
@@ -64,11 +66,17 @@ export const createResponse = async (
       data: prismaData,
     });
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-    const organization = await getOrganizationBilling(organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", organizationId);
+    const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
+    if (!organizationIdResult.ok) {
+      return err(organizationIdResult.error);
     }
+
+    const organizationResult = await getOrganizationBilling(organizationIdResult.data);
+    if (!organizationResult.ok) {
+      return err(organizationResult.error);
+    }
+
+    const organization = organizationResult.data;
 
     const response = responsePrisma;
 
@@ -84,7 +92,12 @@ export const createResponse = async (
     });
 
     if (IS_FORMBRICKS_CLOUD) {
-      const responsesCount = await getMonthlyOrganizationResponseCount(organizationId);
+      const responsesCountResult = await getMonthlyOrganizationResponseCount(organizationIdResult.data);
+      if (!responsesCountResult.ok) {
+        return err(responsesCountResult.error);
+      }
+
+      const responsesCount = responsesCountResult.data;
       const responsesLimit = organization.billing.limits.monthly.responses;
 
       if (responsesLimit && responsesCount >= responsesLimit) {
@@ -106,23 +119,35 @@ export const createResponse = async (
       }
     }
 
-    return response;
+    return ok(response);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
   }
 };
 
 export const getResponses = async (
   environmentId: string,
-  params?: TGetResponsesFilter
-): Promise<Response[]> => {
-  const responses = await prisma.response.findMany({
-    ...getResponsesQuery(environmentId, params),
-  });
+  params: TGetResponsesFilter
+): Promise<Result<ApiSuccessResponse<Response[]>, ApiErrorResponse>> => {
+  const [responses, count] = await prisma.$transaction([
+    prisma.response.findMany({
+      ...getResponsesQuery(environmentId, params),
+    }),
+    prisma.response.count({
+      where: getResponsesQuery(environmentId, params).where,
+    }),
+  ]);
 
-  return responses;
+  if (!responses) {
+    return err({ type: "not_found", details: [{ field: "responses", issue: "not found" }] });
+  }
+
+  return ok({
+    data: responses,
+    meta: {
+      total: count,
+      limit: params.limit,
+      offset: params.skip,
+    },
+  });
 };

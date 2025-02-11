@@ -1,18 +1,18 @@
 import { apiKeyCache } from "@/lib/cache/api-key";
-import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { getHash } from "@formbricks/lib/crypto";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
-import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string) => {
+export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string): Promise<string | null> => {
   const hashedKey = getHash(apiKey);
   return cache(
-    async (): Promise<Result<string, ApiErrorResponse>> => {
+    async () => {
       validateInputs([apiKey, ZString]);
 
       if (!apiKey) {
@@ -30,12 +30,16 @@ export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string) => {
         });
 
         if (!apiKeyData) {
-          return err({ type: "not_found", details: [{ field: "apiKey", issue: "not found" }] });
+          throw new ResourceNotFoundError("apiKey", apiKey);
         }
 
-        return ok(apiKeyData.environmentId);
+        return apiKeyData.environmentId;
       } catch (error) {
-        return err({ type: "internal_server_error", details: [{ field: "apiKey", issue: error.message }] });
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
       }
     },
     [`management-api-getEnvironmentIdFromApiKey-${apiKey}`],

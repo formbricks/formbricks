@@ -1,61 +1,75 @@
 import { responses } from "@/modules/api/lib/response";
+import { handleApiError } from "@/modules/api/lib/utils";
 import { authenticatedApiClient, checkAuthorization } from "@/modules/api/management/auth";
 import { getEnvironmentIdFromSurveyId } from "@/modules/api/management/lib/helper";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/management/responses/types/responses";
-import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { InvalidInputError } from "@formbricks/types/errors";
 import { createResponse, getResponses } from "./lib/response";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
-    handler: async ({ authentication }) => {
-      const params = Object.fromEntries(request.nextUrl.searchParams.entries());
-      const [validatedParams] = validateInputs([params, ZGetResponsesFilter]);
+    schemas: {
+      query: ZGetResponsesFilter,
+    },
+    handler: async ({ authentication, parsedInput }) => {
+      const { query } = parsedInput;
+
+      if (!query) {
+        return responses.badRequestResponse();
+      }
 
       const environmentId = authentication.environmentId;
 
-      const res = await getResponses(environmentId, validatedParams);
+      const res = await getResponses(environmentId, query);
 
-      return responses.successResponse({ data: res });
+      if (res.ok) {
+        return responses.successResponse(res.data);
+      }
+
+      return handleApiError(res.error);
     },
   });
 
 export const POST = async (request: Request) =>
   authenticatedApiClient({
     request,
-    schema: ZResponseInput,
+    schemas: {
+      body: ZResponseInput,
+    },
     handler: async ({ authentication, parsedInput }) => {
-      if (!parsedInput) {
-        return responses.badRequestResponse({ message: "Invalid request body" });
+      const { body } = parsedInput;
+
+      if (!body) {
+        return responses.badRequestResponse();
       }
 
-      const environmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
+      const environmentIdResult = await getEnvironmentIdFromSurveyId(body.surveyId);
+      if (!environmentIdResult.ok) {
+        return handleApiError(environmentIdResult.error);
+      }
 
-      await checkAuthorization({
+      const environmentId = environmentIdResult.data;
+
+      const checkAuthorizationResult = await checkAuthorization({
         authentication,
         environmentId,
       });
 
+      if (!checkAuthorizationResult.ok) {
+        return handleApiError(checkAuthorizationResult.error);
+      }
+
       // if there is a createdAt but no updatedAt, set updatedAt to createdAt
-      if (parsedInput.createdAt && !parsedInput.updatedAt) {
-        parsedInput.updatedAt = parsedInput.createdAt;
+      if (body.createdAt && !body.updatedAt) {
+        body.updatedAt = body.createdAt;
       }
 
-      let response: Response;
-      try {
-        response = await createResponse(environmentId, parsedInput);
-      } catch (error) {
-        if (error instanceof InvalidInputError) {
-          return responses.badRequestResponse({ message: error.message });
-        } else {
-          console.error(error);
-          return responses.internalServerErrorResponse(error.message);
-        }
+      const createResponseResult = await createResponse(environmentId, body);
+      if (!createResponseResult.ok) {
+        return handleApiError(createResponseResult.error);
       }
 
-      return responses.successResponse({ data: response, cors: true });
+      return responses.successResponse({ data: createResponseResult.data, cors: true });
     },
   });

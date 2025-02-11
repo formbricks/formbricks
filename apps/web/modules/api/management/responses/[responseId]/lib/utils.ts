@@ -1,12 +1,14 @@
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { Survey } from "@prisma/client";
 import { Response } from "@prisma/client";
 import { deleteFile } from "@formbricks/lib/storage/service";
+import { Result, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 export const findAndDeleteUploadedFilesInResponse = async (
   responseData: Response["data"],
   questions: Survey["questions"]
-): Promise<void> => {
+): Promise<Result<void, ApiErrorResponse>> => {
   const fileUploadQuestions = new Set(
     questions.filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload).map((q) => q.id)
   );
@@ -31,4 +33,6 @@ export const findAndDeleteUploadedFilesInResponse = async (
   });
 
   await Promise.all(deletionPromises);
+
+  return okVoid();
 };

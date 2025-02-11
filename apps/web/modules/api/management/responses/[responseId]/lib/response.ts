@@ -1,50 +1,49 @@
 import { deleteDisplay } from "@/modules/api/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/management/responses/[responseId]/lib/utils";
-import { Prisma, Response } from "@prisma/client";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { Response } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getResponse = reactCache(
-  async (responseId: string): Promise<Response | null> =>
-    cache(
-      async () => {
-        try {
-          const responsePrisma = await prisma.response.findUnique({
-            where: {
-              id: responseId,
-            },
-          });
+export const getResponse = reactCache(async (responseId: string) =>
+  cache(
+    async (): Promise<Result<Response, ApiErrorResponse>> => {
+      try {
+        const responsePrisma = await prisma.response.findUnique({
+          where: {
+            id: responseId,
+          },
+        });
 
-          if (!responsePrisma) {
-            throw new ResourceNotFoundError("Response", responseId);
-          }
-
-          return responsePrisma;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
+        if (!responsePrisma) {
+          return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
         }
-      },
-      [`management-getResponse-${responseId}`],
-      {
-        tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+
+        return ok(responsePrisma);
+      } catch (error) {
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "response", issue: error.message }],
+        });
       }
-    )()
+    },
+    [`management-getResponse-${responseId}`],
+    {
+      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+    }
+  )()
 );
 
-export const deleteResponse = async (responseId: string): Promise<Response> => {
+export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponse>> => {
   try {
     const response = await getResponse(responseId);
-    if (!response) {
-      throw new ResourceNotFoundError("Response", responseId);
+    if (!response.ok) {
+      return response;
     }
 
     await prisma.response.delete({
@@ -53,52 +52,50 @@ export const deleteResponse = async (responseId: string): Promise<Response> => {
       },
     });
 
-    if (response.displayId) {
-      deleteDisplay(response.displayId);
+    if (response.data.displayId) {
+      const deleteDisplayResult = await deleteDisplay(response.data.displayId);
+      if (!deleteDisplayResult.ok) {
+        return deleteDisplayResult;
+      }
     }
-    const survey = await getSurveyQuestions(response.surveyId);
+    const surveyQuestionsResult = await getSurveyQuestions(response.data.surveyId);
 
-    if (survey) {
-      await findAndDeleteUploadedFilesInResponse(response.data, survey.questions);
+    if (!surveyQuestionsResult.ok) {
+      return surveyQuestionsResult;
     }
+
+    await findAndDeleteUploadedFilesInResponse(response.data.data, surveyQuestionsResult.data.questions);
 
     responseCache.revalidate({
-      environmentId: survey?.environmentId,
-      id: response.id,
-      surveyId: response.surveyId,
+      environmentId: surveyQuestionsResult.data.environmentId,
+      id: response.data.id,
+      surveyId: response.data.surveyId,
     });
 
     responseNoteCache.revalidate({
-      responseId: response.id,
+      responseId: response.data.id,
     });
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "response", issue: error.message }],
+    });
   }
 };
 
 export const updateResponse = async (
   responseId: string,
   responseInput: Omit<Response, "id">
-): Promise<Response> => {
+): Promise<Result<Response, ApiErrorResponse>> => {
   try {
-    await prisma.response.update({
+    const updatedResponse = await prisma.response.update({
       where: {
         id: responseId,
       },
       data: responseInput,
     });
-
-    const updatedResponse = await getResponse(responseId);
-
-    if (!updatedResponse) {
-      throw new ResourceNotFoundError("Response", responseId);
-    }
 
     responseCache.revalidate({
       id: updatedResponse.id,
@@ -109,12 +106,11 @@ export const updateResponse = async (
       responseId: updatedResponse.id,
     });
 
-    return updatedResponse;
+    return ok(updatedResponse);
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "response", issue: error.message }],
+    });
   }
 };

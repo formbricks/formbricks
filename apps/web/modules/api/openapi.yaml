@@ -27,12 +27,12 @@ paths:
           name: limit
           schema:
             type: number
-            default: 10
+          required: true
         - in: query
           name: skip
           schema:
             type: number
-            default: 0
+          required: true
         - in: query
           name: sortBy
           schema:
@@ -40,7 +40,7 @@ paths:
             enum:
               - createdAt
               - updatedAt
-            default: createdAt
+          required: true
         - in: query
           name: order
           schema:
@@ -48,7 +48,7 @@ paths:
             enum:
               - asc
               - desc
-            default: asc
+          required: true
         - in: query
           name: startDate
           schema:

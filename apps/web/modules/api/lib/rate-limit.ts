@@ -1,7 +1,7 @@
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { type LimitOptions, Ratelimit, type RatelimitResponse } from "@unkey/ratelimit";
 import { MANAGEMENT_API_RATE_LIMIT, RATE_LIMITING_DISABLED, UNKEY_ROOT_KEY } from "@formbricks/lib/constants";
 import { Result, err, okVoid } from "@formbricks/types/error-handlers";
-import { ApiErrorResponse } from "@formbricks/types/errors";
 
 export type RateLimitHelper = {
   identifier: string;
@@ -56,23 +56,14 @@ export function rateLimiter() {
 
 export const checkRateLimitAndThrowError = async ({
   identifier,
-  onRateLimiterResponse,
   opts,
 }: RateLimitHelper): Promise<Result<void, ApiErrorResponse>> => {
   const response = await rateLimiter()({ identifier, opts });
-  const { success, reset } = response;
-
-  if (onRateLimiterResponse) onRateLimiterResponse(response);
-
-  const convertToSeconds = (ms: number) => Math.floor(ms / 1000);
+  const { success } = response;
 
   if (!success) {
-    const secondsToWait = convertToSeconds(reset - Date.now());
-
     return err({
-      code: "too_many_requests",
-      message: `Rate limit exceeded. Try again in ${secondsToWait} seconds.`,
-      status: 429,
+      type: "too_many_requests",
     });
   }
   return okVoid();

@@ -1,16 +1,23 @@
-import { handleErrorResponse } from "@/app/api/v1/auth";
 import { checkRateLimitAndThrowError } from "@/modules/api/lib/rate-limit";
 import { responses } from "@/modules/api/lib/response";
+import { formatZodError, handleApiError } from "@/modules/api/lib/utils";
 import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { hashApiKey } from "@/modules/api/management/lib/utils";
-import { ZodObject, ZodRawShape, z } from "zod";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { ZodRawShape, z } from "zod";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { ValidationError } from "@formbricks/types/errors";
+import { Result, err, ok, okVoid } from "@formbricks/types/error-handlers";
 
-export const authenticateRequest = async (request: Request): Promise<TAuthenticationApiKey | null> => {
+export const authenticateRequest = async (
+  request: Request
+): Promise<Result<TAuthenticationApiKey, ApiErrorResponse>> => {
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
-    const environmentId = await getEnvironmentIdFromApiKey(apiKey);
+    const environmentIdResult = await getEnvironmentIdFromApiKey(apiKey);
+    if (!environmentIdResult.ok) {
+      return err(environmentIdResult.error);
+    }
+    const environmentId = environmentIdResult.data;
     const hashedApiKey = hashApiKey(apiKey);
     if (environmentId) {
       const authentication: TAuthenticationApiKey = {
@@ -18,11 +25,15 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
         environmentId,
         hashedApiKey,
       };
-      return authentication;
+      return ok(authentication);
     }
-    return null;
+    return err({
+      type: "forbidden",
+    });
   }
-  return null;
+  return err({
+    type: "unauthorized",
+  });
 };
 
 export const checkAuthorization = ({
@@ -31,69 +42,106 @@ export const checkAuthorization = ({
 }: {
   authentication: TAuthenticationApiKey;
   environmentId: string;
-}) => {
+}): Result<void, ApiErrorResponse> => {
   if (authentication.type === "apiKey" && authentication.environmentId !== environmentId) {
-    return responses.unauthorizedResponse();
+    return err({
+      type: "unauthorized",
+    });
   }
-  return null;
+  return okVoid();
 };
 
-type HandlerFn<TInput = unknown, TOutput = Response> = ({
+export type HandlerFn<TInput = {}> = ({
   authentication,
   parsedInput,
   request,
 }: {
   authentication: TAuthenticationApiKey;
-  parsedInput?: TInput;
+  parsedInput: TInput;
   request: Request;
-}) => Promise<TOutput>;
+}) => Promise<Response>;
 
-export const authenticatedApiClient = async <T extends ZodObject<ZodRawShape>>({
+export type ExtendedSchemas = {
+  body?: z.ZodObject<ZodRawShape>;
+  query?: z.ZodObject<ZodRawShape>;
+  params?: z.ZodObject<ZodRawShape>;
+};
+
+// Define a type that returns separate keys for each input type.
+export type ParsedSchemas<S extends ExtendedSchemas | undefined> = {
+  body?: S extends { body: z.ZodObject<any> } ? z.infer<S["body"]> : undefined;
+  query?: S extends { query: z.ZodObject<any> } ? z.infer<S["query"]> : undefined;
+  params?: S extends { params: z.ZodObject<any> } ? z.infer<S["params"]> : undefined;
+};
+
+export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   request,
-  schema,
+  schemas,
+  externalParams,
   rateLimit = true,
   handler,
 }: {
   request: Request;
-  schema?: T;
+  schemas?: S;
+  externalParams?: Promise<Record<string, any>>;
   rateLimit?: boolean;
-  handler: HandlerFn<z.infer<T>>;
-}) => {
+  handler: HandlerFn<ParsedSchemas<S>>;
+}): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication) return responses.notAuthenticatedResponse();
+    if (!authentication.ok) return responses.unauthorizedResponse();
 
-    let parsedInput: z.infer<T> = {};
-    if (schema) {
-      parsedInput = schema.strict().safeParse(await request.json());
+    let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
-      if (!parsedInput.success) {
-        return responses.badRequestResponse(parsedInput.error);
+    if (schemas?.body) {
+      const bodyData = await request.json();
+      const bodyResult = schemas.body.safeParse(bodyData);
+      if (!bodyResult.success) {
+        return responses.unprocessableEntityResponse({
+          details: formatZodError(bodyResult.error),
+        });
       }
+      parsedInput.body = bodyResult.data as ParsedSchemas<S>["body"];
+    }
+
+    if (schemas?.query) {
+      const url = new URL(request.url);
+      const queryObject = Object.fromEntries(url.searchParams.entries());
+      const queryResult = schemas.query.safeParse(queryObject);
+      if (!queryResult.success) {
+        return responses.unprocessableEntityResponse({
+          details: formatZodError(queryResult.error),
+        });
+      }
+      parsedInput.query = queryResult.data as ParsedSchemas<S>["query"];
+    }
+
+    if (schemas?.params) {
+      const paramsObject = (await externalParams) || {};
+      const paramsResult = schemas.params.safeParse(paramsObject);
+      if (!paramsResult.success) {
+        return responses.unprocessableEntityResponse({
+          details: formatZodError(paramsResult.error),
+        });
+      }
+      parsedInput.params = paramsResult.data as ParsedSchemas<S>["params"];
     }
 
     if (rateLimit) {
-      console.log("rateLimit", authentication.hashedApiKey);
       const rateLimitResponse = await checkRateLimitAndThrowError({
-        identifier: authentication.hashedApiKey,
+        identifier: authentication.data.hashedApiKey,
       });
-      console.log("rateLimitResponse", rateLimitResponse);
       if (!rateLimitResponse.ok) {
-        if (rateLimitResponse.error.code === "too_many_requests") {
-          return responses.tooManyRequestsResponse(rateLimitResponse.error.message);
-        }
+        return responses.tooManyRequestsResponse();
       }
     }
 
     return handler({
-      authentication,
-      ...(schema ? { parsedInput } : {}),
+      authentication: authentication.data,
+      parsedInput,
       request,
     });
   } catch (err) {
-    if (err instanceof ValidationError) {
-      return responses.badRequestResponse(err.message);
-    }
-    return handleErrorResponse(err);
+    return handleApiError(err);
   }
 };
