@@ -2,7 +2,6 @@
 import { type TAttributes } from "@formbricks/types/attributes";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
-import { trackNoCodeAction } from "./actions";
 import { updateAttributes } from "./attributes";
 import { Config } from "./config";
 import {
@@ -359,9 +358,6 @@ export const initialize = async (
     } catch (e) {
       handleErrorOnFirstInit(e);
     }
-
-    // and track the new session event
-    await trackNoCodeAction("New Session");
   }
 
   logger.debug("Adding event listeners");
