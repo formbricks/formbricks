@@ -3,7 +3,8 @@ import { getActionClasses } from "@/modules/survey/components/template-list/comp
 import { getOrganizationAIKeys } from "@/modules/survey/components/template-list/lib/organization";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { handleTriggerUpdates } from "@/modules/survey/components/template-list/lib/utils";
-import { getOrganizationIdFromEnvironmentId, selectSurvey } from "@/modules/survey/lib/survey";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { selectSurvey } from "@/modules/survey/lib/survey";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";

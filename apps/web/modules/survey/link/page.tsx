@@ -1,7 +1,7 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/survey";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";

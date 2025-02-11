@@ -1,6 +1,7 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getActionClasses } from "@/modules/survey/editor/lib/action-class";
 import { handleTriggerUpdates } from "@/modules/survey/editor/lib/utils";
+import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { getOrganizationAIKeys } from "@/modules/survey/templates/lib/organization";
@@ -247,7 +248,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       return rest;
     });
 
-    const organization = await getOrganizationAIKeys(environmentId);
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
