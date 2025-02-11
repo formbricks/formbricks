@@ -1,14 +1,14 @@
 export interface ApiErrorResponse {
   type:
-    | "not_found"
-    | "gone"
     | "bad_request"
-    | "internal_server_error"
     | "unauthorized"
-    | "method_not_allowed"
-    | "not_authenticated"
     | "forbidden"
-    | "too_many_requests";
+    | "not_found"
+    | "conflict"
+    | "unprocessable_entity"
+    | "too_many_requests"
+    | "internal_server_error"
+    | "not_authenticated";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];

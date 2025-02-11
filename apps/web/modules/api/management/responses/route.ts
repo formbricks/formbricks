@@ -19,7 +19,7 @@ export const GET = async (request: NextRequest) =>
 
       const res = await getResponses(environmentId, validatedParams);
 
-      return responses.successResponse(res);
+      return responses.successResponse({ data: res });
     },
   });
 
@@ -29,7 +29,7 @@ export const POST = async (request: Request) =>
     schema: ZResponseInput,
     handler: async ({ authentication, parsedInput }) => {
       if (!parsedInput) {
-        return responses.badRequestResponse("Invalid request body", {});
+        return responses.badRequestResponse({ message: "Invalid request body" });
       }
 
       const environmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
@@ -49,13 +49,13 @@ export const POST = async (request: Request) =>
         response = await createResponse(environmentId, parsedInput);
       } catch (error) {
         if (error instanceof InvalidInputError) {
-          return responses.badRequestResponse(error.message);
+          return responses.badRequestResponse({ message: error.message });
         } else {
           console.error(error);
           return responses.internalServerErrorResponse(error.message);
         }
       }
 
-      return responses.successResponse(response, true);
+      return responses.successResponse({ data: response, cors: true });
     },
   });

@@ -1,16 +1,23 @@
 import { z } from "zod";
 import { ZResponse } from "@formbricks/database/zod/responses";
 
-export const ZGetResponsesFilter = z.object({
-  surveyId: z.string().cuid2().optional(),
-  limit: z.coerce.number().optional().default(10),
-  skip: z.coerce.number().optional().default(0),
-  sortBy: z.enum(["createdAt", "updatedAt"]).optional().default("createdAt"),
-  order: z.enum(["asc", "desc"]).optional().default("asc"),
-  startDate: z.coerce.date().optional(),
-  endDate: z.coerce.date().optional(),
-  contactId: z.string().optional(),
-});
+export const ZGetResponsesFilter = z
+  .object({
+    surveyId: z.string().cuid2().optional(),
+    limit: z.coerce.number().optional(),
+    skip: z.coerce.number().optional(),
+    sortBy: z.enum(["createdAt", "updatedAt"]).optional(),
+    order: z.enum(["asc", "desc"]).optional(),
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
+    contactId: z.string().optional(),
+  })
+  .default({
+    limit: 10,
+    skip: 0,
+    sortBy: "createdAt",
+    order: "asc",
+  });
 
 export type TGetResponsesFilter = z.infer<typeof ZGetResponsesFilter>;
 

@@ -118,7 +118,7 @@ export const createResponse = async (
 
 export const getResponses = async (
   environmentId: string,
-  params: TGetResponsesFilter
+  params?: TGetResponsesFilter
 ): Promise<Response[]> => {
   const responses = await prisma.response.findMany({
     ...getResponsesQuery(environmentId, params),

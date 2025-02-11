@@ -9,36 +9,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
 };
 
-const goneResponse = (
-  message: string,
-  details?: { [key: string]: string },
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
-  const headers = {
-    ...(cors && corsHeaders),
-    "Cache-Control": cache,
-  };
-
-  return Response.json(
-    {
-      type: "gone",
-      message,
-      details: details || {},
-    } as ApiErrorResponse,
-    {
-      status: 410,
-      headers,
-    }
-  );
-};
-
-const badRequestResponse = (
-  message: string,
-  details?: { [key: string]: string },
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
+const badRequestResponse = ({
+  message,
+  details = {},
+  cors = false,
+  cache = "private, no-store",
+}: {
+  message: string;
+  details?: ApiErrorResponse["details"];
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -57,12 +38,17 @@ const badRequestResponse = (
   );
 };
 
-const notFoundResponse = (
-  resourceType: string,
-  resourceId: string | null,
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
+const notFoundResponse = ({
+  resourceType,
+  resourceId,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  resourceType: string;
+  resourceId: string | null;
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -84,7 +70,13 @@ const notFoundResponse = (
   );
 };
 
-const notAuthenticatedResponse = (cors: boolean = false, cache: string = "private, no-store") => {
+const notAuthenticatedResponse = ({
+  cors = false,
+  cache = "private, no-store",
+}: {
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -105,7 +97,13 @@ const notAuthenticatedResponse = (cors: boolean = false, cache: string = "privat
   );
 };
 
-const unauthorizedResponse = (cors: boolean = false, cache: string = "private, no-store") => {
+const unauthorizedResponse = ({
+  cors = false,
+  cache = "private, no-store",
+}: {
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -124,12 +122,17 @@ const unauthorizedResponse = (cors: boolean = false, cache: string = "private, n
   );
 };
 
-const forbiddenResponse = (
-  message: string,
-  cors: boolean = false,
-  details: ApiErrorResponse["details"] = {},
-  cache: string = "private, no-store"
-) => {
+const forbiddenResponse = ({
+  message,
+  cors = false,
+  details = {},
+  cache = "private, no-store",
+}: {
+  message: string;
+  cors?: boolean;
+  details?: ApiErrorResponse["details"];
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -148,7 +151,17 @@ const forbiddenResponse = (
   );
 };
 
-const successResponse = (data: Object, cors: boolean = false, cache: string = "private, no-store") => {
+const successResponse = ({
+  data,
+  metadata,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  data: Object;
+  metadata?: Record<string, unknown>;
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -157,7 +170,8 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
   return Response.json(
     {
       data,
-    } as ApiSuccessResponse<typeof data>,
+      metadata,
+    } as ApiSuccessResponse,
     {
       status: 200,
       headers,
@@ -165,11 +179,15 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
   );
 };
 
-const internalServerErrorResponse = (
-  message: string,
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
+const internalServerErrorResponse = ({
+  message,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  message: string;
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -188,11 +206,15 @@ const internalServerErrorResponse = (
   );
 };
 
-const tooManyRequestsResponse = (
-  message: string,
-  cors: boolean = false,
-  cache: string = "private, no-store"
-) => {
+const tooManyRequestsResponse = ({
+  message,
+  cors = false,
+  cache = "private, no-store",
+}: {
+  message: string;
+  cors?: boolean;
+  cache?: string;
+}) => {
   const headers = {
     ...(cors && corsHeaders),
     "Cache-Control": cache,
@@ -212,7 +234,6 @@ const tooManyRequestsResponse = (
 };
 
 export const responses = {
-  goneResponse,
   badRequestResponse,
   internalServerErrorResponse,
   notAuthenticatedResponse,
