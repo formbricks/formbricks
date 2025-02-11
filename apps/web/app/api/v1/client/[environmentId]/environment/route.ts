@@ -6,6 +6,8 @@ import { environmentCache } from "@formbricks/lib/environment/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsSyncInput } from "@formbricks/types/js";
 
+export const fetchCache = "force-no-store";
+
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse({}, true);
 };
