@@ -1,3 +1,5 @@
+"use client";
+
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { AddressQuestionForm } from "@/modules/survey/editor/components/address-question-form";
 import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-settings";

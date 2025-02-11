@@ -1,3 +1,4 @@
+"use client";
 export const LinkSurveyLoading = () => {
   return (
     <div className="flex h-full w-full items-center justify-center">

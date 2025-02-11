@@ -1,3 +1,5 @@
+"use client";
+
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";

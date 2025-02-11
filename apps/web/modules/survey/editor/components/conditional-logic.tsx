@@ -1,3 +1,5 @@
+"use client";
+
 import { LogicEditor } from "@/modules/survey/editor/components/logic-editor";
 import {
   getDefaultOperatorForQuestion,

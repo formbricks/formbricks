@@ -1,3 +1,5 @@
+"use client";
+
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
 import {
