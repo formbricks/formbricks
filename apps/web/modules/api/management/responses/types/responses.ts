@@ -36,10 +36,8 @@ export const ZResponseInput = ZResponse.pick({
     variables: true,
     ttc: true,
     meta: true,
-  })
-  .extend({
-    createdAt: z.coerce.date().optional(),
-    updatedAt: z.coerce.date().optional(),
+    createdAt: true,
+    updatedAt: true,
   })
   .openapi({
     ref: "responseCreate",

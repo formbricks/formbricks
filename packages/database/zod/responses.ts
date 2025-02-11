@@ -8,11 +8,11 @@ export const ZResponse = z.object({
   id: z.string().cuid2().openapi({
     description: "The ID of the response",
   }),
-  createdAt: z.date().openapi({
+  createdAt: z.coerce.date().openapi({
     description: "The date and time the response was created",
     example: "2021-01-01T00:00:00.000Z",
   }),
-  updatedAt: z.date().openapi({
+  updatedAt: z.coerce.date().openapi({
     description: "The date and time the response was last updated",
     example: "2021-01-01T00:00:00.000Z",
   }),
