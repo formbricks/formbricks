@@ -1,10 +1,10 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
-import { updateAttributes } from "./lib/attributes";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
 
 export const OPTIONS = async () => {
@@ -74,36 +74,15 @@ export const PUT = async (
       );
     }
 
-    const { details: updateAttrDetails } = await updateAttributes(
-      contact.id,
-      userId,
-      environmentId,
-      updatedAttributes
-    );
-
-    // if userIdAttr or idAttr was in the payload, we need to inform the user that it was ignored
-    const details: Record<string, string> = {};
-    if (userIdAttr) {
-      details.userId = "updating userId is ignored as it is a reserved field and cannot be updated.";
-    }
-
-    if (idAttr) {
-      details.id = "updating id is ignored as it is a reserved field and cannot be updated.";
-    }
-
-    if (updateAttrDetails && Object.keys(updateAttrDetails).length > 0) {
-      Object.entries(updateAttrDetails).forEach(([key, value]) => {
-        details[key] = value;
-      });
-    }
+    const { messages } = await updateAttributes(contact.id, userId, environmentId, updatedAttributes);
 
     return responses.successResponse(
       {
         changed: true,
         message: "The person was successfully updated.",
-        ...(Object.keys(details).length > 0
+        ...(messages && messages.length > 0
           ? {
-              details,
+              messages,
             }
           : {}),
       },

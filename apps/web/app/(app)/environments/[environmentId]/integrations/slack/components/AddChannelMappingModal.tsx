@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
@@ -6,8 +8,8 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { CircleHelpIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -15,7 +17,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
   TIntegrationSlack,
@@ -32,7 +33,6 @@ interface AddChannelMappingModalProps {
   slackIntegration: TIntegrationSlack;
   channels: TIntegrationItem[];
   selectedIntegration?: (TIntegrationSlackConfigData & { index: number }) | null;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddChannelMappingModal = ({
@@ -43,10 +43,9 @@ export const AddChannelMappingModal = ({
   channels,
   slackIntegration,
   selectedIntegration,
-  contactAttributeKeys,
 }: AddChannelMappingModalProps) => {
   const { handleSubmit } = useForm();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [isLinkingChannel, setIsLinkingChannel] = useState(false);
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -105,7 +104,7 @@ export const AddChannelMappingModal = ({
       }
 
       if (selectedQuestions.length === 0) {
-        throw new Error(t("environments.integrations.integrations.select_at_least_one_question_error"));
+        throw new Error(t("environments.integrations.select_at_least_one_question_error"));
       }
       setIsLinkingChannel(true);
       const integrationData: TIntegrationSlackConfigData = {
@@ -257,11 +256,7 @@ export const AddChannelMappingModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(
-                          selectedSurvey,
-                          "default",
-                          contactAttributeKeys
-                        )?.questions?.map((question) => (
+                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions?.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox

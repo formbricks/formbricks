@@ -90,9 +90,7 @@ export const sendTestEmailAction = authenticatedActionClient
 
     await sendEmailCustomizationPreviewEmail(
       ctx.user.email,
-      "Formbricks Email Customization Preview",
       ctx.user.name,
-      ctx.user.locale,
       organization?.whitelabel?.logoUrl || ""
     );
 

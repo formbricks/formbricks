@@ -1,3 +1,4 @@
+import { TFnType } from "@tolgee/react";
 import React from "react";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { EmailTemplate } from "../../components/email-template";
@@ -12,7 +13,7 @@ interface WeeklySummaryNotificationEmailProps {
   endDate: string;
   startYear: number;
   endYear: number;
-  locale: string;
+  t: TFnType;
 }
 
 export function WeeklySummaryNotificationEmail({
@@ -21,25 +22,23 @@ export function WeeklySummaryNotificationEmail({
   endDate,
   startYear,
   endYear,
-  locale,
+  t,
 }: WeeklySummaryNotificationEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <NotificationHeader
         endDate={endDate}
         endYear={endYear}
         projectName={notificationData.projectName}
         startDate={startDate}
         startYear={startYear}
-        locale={locale}
       />
-      <NotificationInsight insights={notificationData.insights} locale={locale} />
+      <NotificationInsight insights={notificationData.insights} />
       <LiveSurveyNotification
         environmentId={notificationData.environmentId}
         surveys={notificationData.surveys}
-        locale={locale}
       />
-      <NotificationFooter environmentId={notificationData.environmentId} locale={locale} />
+      <NotificationFooter environmentId={notificationData.environmentId} />
     </EmailTemplate>
   );
 }

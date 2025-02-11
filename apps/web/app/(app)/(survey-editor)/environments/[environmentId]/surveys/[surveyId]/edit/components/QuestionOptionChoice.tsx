@@ -1,13 +1,14 @@
+"use client";
+
 import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { useTranslate } from "@tolgee/react";
 import { GripVerticalIcon, PlusIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -37,7 +38,6 @@ interface ChoiceProps {
     updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
   ) => void;
   surveyLanguageCodes: string[];
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -56,10 +56,9 @@ export const QuestionOptionChoice = ({
   question,
   surveyLanguageCodes,
   updateQuestion,
-  contactAttributeKeys,
   locale,
 }: ChoiceProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({
     id: choice.id,
@@ -98,7 +97,6 @@ export const QuestionOptionChoice = ({
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
-          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
         {choice.id === "other" && (
@@ -120,7 +118,6 @@ export const QuestionOptionChoice = ({
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         )}

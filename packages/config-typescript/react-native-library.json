@@ -2,6 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "allowJs": true,
+    "esModuleInterop": true,
     "jsx": "react-native",
     "lib": ["dom", "dom.iterable", "ES2022"],
     "noEmit": true,

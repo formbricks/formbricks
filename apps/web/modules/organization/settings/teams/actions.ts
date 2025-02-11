@@ -14,13 +14,13 @@ import {
 import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { deleteInvite, getInvite, inviteUser, resendInvite } from "@formbricks/lib/invite/service";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { ZOrganizationRole } from "@formbricks/types/memberships";
+import { deleteInvite, getInvite, inviteUser, resendInvite } from "./lib/invite";
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
@@ -206,7 +206,7 @@ export const inviteUserAction = authenticatedActionClient
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    const invite = await inviteUser({
+    const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
         email: parsedInput.email,
@@ -217,19 +217,18 @@ export const inviteUserAction = authenticatedActionClient
       currentUserId: ctx.user.id,
     });
 
-    if (invite) {
+    if (inviteId) {
       await sendInviteMemberEmail(
-        invite.id,
+        inviteId,
         parsedInput.email,
         ctx.user.name ?? "",
         parsedInput.name ?? "",
         false,
-        undefined,
-        ctx.user.locale
+        undefined
       );
     }
 
-    return invite;
+    return inviteId;
   });
 
 const ZLeaveOrganizationAction = z.object({

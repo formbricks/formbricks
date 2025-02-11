@@ -57,8 +57,8 @@ export function SurveyModal({
             onFinished?.();
             setTimeout(
               () => {
-                const firstEnabledEnding = survey.endings[0];
-                if (firstEnabledEnding.type !== "redirectToUrl") {
+                const firstEnabledEnding = survey.endings?.[0];
+                if (firstEnabledEnding?.type !== "redirectToUrl") {
                   close();
                 }
               },

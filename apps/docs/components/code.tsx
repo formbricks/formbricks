@@ -1,10 +1,10 @@
 "use client";
 
+import { Tag } from "@/components/tag";
 import { Tab } from "@headlessui/react";
 import clsx from "clsx";
 import { Children, createContext, isValidElement, useContext, useEffect, useRef, useState } from "react";
 import { create } from "zustand";
-import { Tag } from "@/components/tag";
 
 const languageNames: Record<string, string> = {
   js: "JavaScript",
@@ -49,7 +49,9 @@ function CopyButton({ code }: { code: string }) {
 
   useEffect(() => {
     if (copyCount > 0) {
-      const timeout = setTimeout(() => { setCopyCount(0); }, 1000);
+      const timeout = setTimeout(() => {
+        setCopyCount(0);
+      }, 1000);
       return () => {
         clearTimeout(timeout);
       };
@@ -98,9 +100,11 @@ function CodePanelHeader({ tag, label }: { tag?: string; label?: string }): Reac
 
   return (
     <div className="border-b-white/7.5 bg-white/2.5 dark:bg-white/1 flex h-9 items-center gap-2 border-y border-t-transparent bg-slate-900 px-4 dark:border-b-white/5">
-      {tag ? <div className="dark flex">
-        <Tag variant="small">{tag}</Tag>
-      </div> : null}
+      {tag ? (
+        <div className="dark flex">
+          <Tag variant="small">{tag}</Tag>
+        </div>
+      ) : null}
       {tag && label ? <span className="h-0.5 w-0.5 rounded-full bg-slate-500" /> : null}
       {label ? <span className="font-mono text-xs text-slate-400">{label}</span> : null}
     </div>
@@ -162,30 +166,34 @@ function CodeGroupHeader({
   return (
     <div className="flex min-h-[calc(theme(spacing.12)+1px)] flex-wrap items-start gap-x-4 border-b border-slate-700 bg-slate-800 px-4 dark:border-slate-800 dark:bg-transparent">
       {title ? <h3 className="mr-auto pt-3 text-xs font-semibold text-white">{title}</h3> : null}
-      {hasTabs ? <Tab.List className="-mb-px flex gap-4 text-xs font-medium">
-        {Children.map(children, (child, childIndex) => {
-          if (isValidElement(child)) {
-            return (
-              <Tab
-                className={clsx(
-                  "ui-not-focus-visible:outline-none border-b py-3 transition",
-                  childIndex === selectedIndex
-                    ? "border-teal-500 text-teal-400"
-                    : "border-transparent text-slate-400 hover:text-slate-300"
-                )}
-              >
-                {getPanelTitle(child.props as { title?: string; language?: string })}
-              </Tab>
-            );
-          }
-          return null;
-        })}
-      </Tab.List> : null}
+      {hasTabs ? (
+        <Tab.List className="-mb-px flex gap-4 text-xs font-medium">
+          {Children.map(children, (child, childIndex) => {
+            if (isValidElement(child)) {
+              return (
+                <Tab
+                  className={clsx(
+                    "ui-not-focus-visible:outline-none border-b py-3 transition",
+                    childIndex === selectedIndex
+                      ? "border-teal-500 text-teal-400"
+                      : "border-transparent text-slate-400 hover:text-slate-300"
+                  )}>
+                  {getPanelTitle(child.props as { title?: string; language?: string })}
+                </Tab>
+              );
+            }
+            return null;
+          })}
+        </Tab.List>
+      ) : null}
     </div>
   );
 }
 
-function CodeGroupPanels({ children, ...props }: React.ComponentPropsWithoutRef<typeof CodePanel>): React.JSX.Element {
+function CodeGroupPanels({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof CodePanel>): React.JSX.Element {
   const hasTabs = Children.count(children) >= 1;
 
   if (hasTabs) {
@@ -264,7 +272,9 @@ const useTabGroupProps = (availableLanguages: string[]) => {
   const { positionRef, preventLayoutShift } = usePreventLayoutShift();
 
   const onChange = (index: number) => {
-    preventLayoutShift(() => { addPreferredLanguage(availableLanguages[index] ?? ""); });
+    preventLayoutShift(() => {
+      addPreferredLanguage(availableLanguages[index] ?? "");
+    });
   };
 
   return {
@@ -331,7 +341,10 @@ export function Code({ children, ...props }: React.ComponentPropsWithoutRef<"cod
   return <code {...props}>{children}</code>;
 }
 
-export function Pre({ children, ...props }: React.ComponentPropsWithoutRef<typeof CodeGroup>): React.ReactNode {
+export function Pre({
+  children,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof CodeGroup>): React.ReactNode {
   const isGrouped = useContext(CodeGroupContext);
 
   if (isGrouped) {

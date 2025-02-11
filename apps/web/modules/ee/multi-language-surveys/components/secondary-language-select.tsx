@@ -1,4 +1,6 @@
-import { useTranslations } from "next-intl";
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -23,7 +25,7 @@ export function SecondaryLanguageSelect({
   updateSurveyLanguages,
   locale,
 }: SecondaryLanguageSelectProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isLanguageToggled = (language: TLanguage) => {
     return localSurvey.languages.some(
       (surveyLanguage) => surveyLanguage.language.code === language.code && surveyLanguage.enabled

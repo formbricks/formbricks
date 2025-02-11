@@ -8,14 +8,13 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { debounce } from "lodash";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { RefObject, useCallback, useMemo, useRef, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { useSyncScroll } from "@formbricks/lib/utils/hooks/useSyncScroll";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TI18nString,
   TSurvey,
@@ -54,7 +53,6 @@ interface QuestionFormInputProps {
   ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -75,10 +73,9 @@ export const QuestionFormInput = ({
   placeholder,
   onBlur,
   className,
-  contactAttributeKeys,
   locale,
 }: QuestionFormInputProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const defaultLanguageCode =
     localSurvey.languages.filter((lang) => lang.default)[0]?.language.code ?? "default";
   const usedLanguageCode = selectedLanguageCode === defaultLanguageCode ? "default" : selectedLanguageCode;
@@ -283,11 +280,9 @@ export const QuestionFormInput = ({
           setText(updatedText);
           debouncedHandleUpdate(updatedText[usedLanguageCode]);
         }}
-        contactAttributeKeys={contactAttributeKeys}
         render={({ value, onChange, children: languageIndicator }) => {
           return (
             <RecallWrapper
-              contactAttributeKeys={contactAttributeKeys}
               localSurvey={localSurvey}
               questionId={questionId}
               value={value[usedLanguageCode]}
@@ -357,8 +352,7 @@ export const QuestionFormInput = ({
                               },
                               localSurvey,
                               false,
-                              usedLanguageCode,
-                              contactAttributeKeys
+                              usedLanguageCode
                             )[usedLanguageCode]
                           }
                           dir="auto"

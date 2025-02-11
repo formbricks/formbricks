@@ -1,21 +1,21 @@
+"use client";
+
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { TimerIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { getQuestionIcon } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 
 interface SummaryDropOffsProps {
   dropOff: TSurveySummary["dropOff"];
   survey: TSurvey;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
-export const SummaryDropOffs = ({ dropOff, survey, contactAttributeKeys }: SummaryDropOffsProps) => {
-  const t = useTranslations();
+export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
+  const { t } = useTranslate();
   const getIcon = (questionType: TSurveyQuestionType) => {
-    const Icon = getQuestionIcon(questionType);
+    const Icon = getQuestionIcon(questionType, t);
     return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
   };
 
@@ -71,8 +71,7 @@ export const SummaryDropOffs = ({ dropOff, survey, contactAttributeKeys }: Summa
                     },
                     survey,
                     true,
-                    "default",
-                    contactAttributeKeys
+                    "default"
                   )["default"]
                 )}
               </p>

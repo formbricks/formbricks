@@ -4,14 +4,13 @@ import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/s
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contacts";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import {
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   RESPONSES_PER_PAGE,
@@ -30,15 +29,14 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 const Page = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));
   }
-  const [survey, environment, contactAttributeKeys] = await Promise.all([
+  const [survey, environment] = await Promise.all([
     getSurvey(params.surveyId),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!environment) {
@@ -112,7 +110,6 @@ const Page = async (props) => {
         webAppUrl={WEBAPP_URL}
         environmentTags={tags}
         user={user}
-        contactAttributeKeys={contactAttributeKeys}
         responsesPerPage={RESPONSES_PER_PAGE}
         locale={locale}
         isReadOnly={isReadOnly}

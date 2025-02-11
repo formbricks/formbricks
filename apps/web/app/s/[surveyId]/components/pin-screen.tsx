@@ -4,10 +4,9 @@ import { validateSurveyPinAction } from "@/app/s/[surveyId]/actions";
 import { LinkSurvey } from "@/app/s/[surveyId]/components/link-survey";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -24,7 +23,6 @@ interface PinScreenProps {
   IS_FORMBRICKS_CLOUD: boolean;
   verifiedEmail?: string;
   languageCode: string;
-  contactAttributeKeys: TContactAttributeKey[];
   isEmbed: boolean;
   locale: string;
   isPreview: boolean;
@@ -43,7 +41,6 @@ export const PinScreen = (props: PinScreenProps) => {
     IS_FORMBRICKS_CLOUD,
     verifiedEmail,
     languageCode,
-    contactAttributeKeys,
     isEmbed,
     locale,
     isPreview,
@@ -51,7 +48,7 @@ export const PinScreen = (props: PinScreenProps) => {
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
 
@@ -123,7 +120,6 @@ export const PinScreen = (props: PinScreenProps) => {
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
-      contactAttributeKeys={contactAttributeKeys}
       isEmbed={isEmbed}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

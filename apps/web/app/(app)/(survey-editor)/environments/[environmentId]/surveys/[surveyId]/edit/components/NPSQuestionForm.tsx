@@ -4,11 +4,10 @@ import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInpu
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -21,7 +20,6 @@ interface NPSQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -34,10 +32,9 @@ export const NPSQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: NPSQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   // Auto animate
   const [parent] = useAutoAnimate();
@@ -54,7 +51,6 @@ export const NPSQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
 
@@ -72,7 +68,6 @@ export const NPSQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -108,7 +103,6 @@ export const NPSQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -123,7 +117,6 @@ export const NPSQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>
@@ -143,7 +136,6 @@ export const NPSQuestionForm = ({
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
             setSelectedLanguageCode={setSelectedLanguageCode}
-            contactAttributeKeys={contactAttributeKeys}
             locale={locale}
           />
         </div>

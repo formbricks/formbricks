@@ -1,5 +1,5 @@
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { TProject } from "@formbricks/types/project";
 
@@ -15,7 +15,7 @@ export const ContactsSecondaryNavigation = async ({
   loading,
 }: PersonSecondaryNavigationProps) => {
   let project: TProject | null = null;
-  const t = await getTranslations();
+  const t = await getTranslate();
   if (!loading && environmentId) {
     project = await getProjectByEnvironmentId(environmentId);
 

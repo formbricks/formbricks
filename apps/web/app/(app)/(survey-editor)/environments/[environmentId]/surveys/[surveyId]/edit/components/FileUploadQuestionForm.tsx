@@ -6,15 +6,14 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProject } from "@formbricks/types/project";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -29,7 +28,6 @@ interface FileUploadFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   isFormbricksCloud: boolean;
   locale: TUserLocale;
 }
@@ -43,12 +41,11 @@ export const FileUploadQuestionForm = ({
   project,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   isFormbricksCloud,
   locale,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isMaxSizeError, setMaxSizeError] = useState(false);
   const {
     billingInfo,
@@ -141,7 +138,6 @@ export const FileUploadQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
       <div ref={parent}>
@@ -158,7 +154,6 @@ export const FileUploadQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 locale={locale}
               />
             </div>
@@ -232,7 +227,7 @@ export const FileUploadQuestionForm = ({
                   className="underline"
                   target="_blank"
                   href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                  {t("environments.surveys.edit.upgrade_your_plan")}
+                  {t("common.please_upgrade_your_plan")}
                 </Link>
               </p>
             )}

@@ -9,12 +9,11 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
@@ -28,7 +27,6 @@ interface ManageIntegrationProps {
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -40,16 +38,8 @@ const tableHeaders = [
 ];
 
 export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const {
-    airtableIntegration,
-    environment,
-    environmentId,
-    setIsConnected,
-    surveys,
-    airtableArray,
-    contactAttributeKeys,
-  } = props;
-  const t = useTranslations();
+  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
+  const { t } = useTranslate();
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -175,7 +165,6 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           environmentId={environmentId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
-          contactAttributeKeys={contactAttributeKeys}
           {...data}
         />
       )}

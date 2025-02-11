@@ -1,13 +1,12 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
-import { getContactAttributeKeys } from "@/app/(app)/environments/[environmentId]/integrations/lib/contact-attribute-key";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
@@ -23,14 +22,13 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
 const Page = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const isEnabled = !!AIRTABLE_CLIENT_ID;
-  const [session, surveys, integrations, environment, contactAttributeKeys] = await Promise.all([
+  const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -85,7 +83,6 @@ const Page = async (props) => {
           surveys={surveys}
           environment={environment}
           webAppUrl={WEBAPP_URL}
-          contactAttributeKeys={contactAttributeKeys}
           locale={locale}
         />
       </div>

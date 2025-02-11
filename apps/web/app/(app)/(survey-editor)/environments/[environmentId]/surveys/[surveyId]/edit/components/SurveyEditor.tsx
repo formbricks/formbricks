@@ -184,7 +184,6 @@ export const SurveyEditor = ({
               setSelectedLanguageCode={setSelectedLanguageCode}
               isMultiLanguageAllowed={isMultiLanguageAllowed}
               isFormbricksCloud={isFormbricksCloud}
-              contactAttributeKeys={contactAttributeKeys}
               plan={plan}
               isCxMode={isCxMode}
               locale={locale}
@@ -218,7 +217,6 @@ export const SurveyEditor = ({
               responseCount={responseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
-              locale={locale}
               projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
             />

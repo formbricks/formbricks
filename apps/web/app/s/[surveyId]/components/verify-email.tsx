@@ -10,15 +10,14 @@ import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/compon
 import { Input } from "@/modules/ui/components/input";
 import { StackedCardsContainer } from "@/modules/ui/components/stacked-cards-container";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { ArrowLeft, MailIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
 import { z } from "zod";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -27,7 +26,6 @@ interface VerifyEmailProps {
   isErrorComponent?: boolean;
   singleUseId?: string;
   languageCode: string;
-  contactAttributeKeys: TContactAttributeKey[];
   styling: TProjectStyling;
   locale: string;
 }
@@ -43,10 +41,9 @@ export const VerifyEmail = ({
   singleUseId,
   languageCode,
   styling,
-  contactAttributeKeys,
   locale,
 }: VerifyEmailProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const form = useForm<TVerifyEmailInput>({
     defaultValues: {
       email: "",
@@ -54,8 +51,8 @@ export const VerifyEmail = ({
     resolver: zodResolver(ZVerifyEmailInput),
   });
   const localSurvey = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default", contactAttributeKeys);
-  }, [survey, contactAttributeKeys]);
+    return replaceHeadlineRecall(survey, "default");
+  }, [survey]);
 
   const { isSubmitting } = form.formState;
   const [showPreviewQuestions, setShowPreviewQuestions] = useState(false);

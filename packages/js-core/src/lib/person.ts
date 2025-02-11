@@ -9,9 +9,10 @@ const config = Config.getInstance();
 const logger = Logger.getInstance();
 
 // eslint-disable-next-line @typescript-eslint/require-await -- There are no promises but our proxy makes the functions async
-export const logoutPerson = async (): Promise<void> => {
+export const logoutPerson = async (): Promise<Result<void, NetworkError>> => {
   deinitalize();
   config.resetConfig();
+  return okVoid();
 };
 
 export const resetPerson = async (): Promise<Result<void, NetworkError>> => {

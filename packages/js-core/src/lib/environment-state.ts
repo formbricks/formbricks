@@ -48,13 +48,10 @@ export const fetchEnvironmentState = async (
     throw error.error;
   }
 
-  const data = (await response.json()) as { data: TJsEnvironmentState["data"] };
+  const data = (await response.json()) as { data: TJsEnvironmentState };
   const { data: state } = data;
 
-  return {
-    data: { ...state },
-    expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
-  };
+  return state;
 };
 
 /**

@@ -45,12 +45,12 @@ export const getContactsAction = authenticatedActionClient
     return getContacts(parsedInput.environmentId, parsedInput.offset, parsedInput.searchValue);
   });
 
-const ZPersonDeleteAction = z.object({
+const ZContactDeleteAction = z.object({
   contactId: ZId,
 });
 
 export const deleteContactAction = authenticatedActionClient
-  .schema(ZPersonDeleteAction)
+  .schema(ZContactDeleteAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
     const projectId = await getProjectIdFromContactId(parsedInput.contactId);

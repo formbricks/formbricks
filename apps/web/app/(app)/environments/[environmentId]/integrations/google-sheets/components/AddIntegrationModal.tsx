@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import { getSpreadsheetNameByIdAction } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/actions";
 import {
@@ -13,14 +15,13 @@ import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
@@ -35,7 +36,6 @@ interface AddIntegrationModalProps {
   setOpen: (v: boolean) => void;
   googleSheetIntegration: TIntegrationGoogleSheets;
   selectedIntegration?: (TIntegrationGoogleSheetsConfigData & { index: number }) | null;
-  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddIntegrationModal = ({
@@ -45,9 +45,8 @@ export const AddIntegrationModal = ({
   setOpen,
   googleSheetIntegration,
   selectedIntegration,
-  contactAttributeKeys,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const integrationData: TIntegrationGoogleSheetsConfigData = {
     spreadsheetId: "",
     spreadsheetName: "",
@@ -250,11 +249,7 @@ export const AddIntegrationModal = ({
                     <Label htmlFor="Surveys">{t("common.questions")}</Label>
                     <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
-                        {replaceHeadlineRecall(
-                          selectedSurvey,
-                          "default",
-                          contactAttributeKeys
-                        )?.questions.map((question) => (
+                        {replaceHeadlineRecall(selectedSurvey, "default")?.questions.map((question) => (
                           <div key={question.id} className="my-1 flex items-center space-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox

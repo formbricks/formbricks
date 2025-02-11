@@ -7,9 +7,9 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 const Page = async (props) => {
   const params = await props.params;
   const session = await getServerSession(authOptions);
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [actionClasses, organization, project] = await Promise.all([
     getActionClasses(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),

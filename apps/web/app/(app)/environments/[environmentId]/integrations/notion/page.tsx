@@ -5,8 +5,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import {
   NOTION_AUTH_URL,
@@ -24,23 +24,21 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import { getContactAttributeKeys } from "../lib/contact-attribute-key";
 
 const Page = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const enabled = !!(
     NOTION_OAUTH_CLIENT_ID &&
     NOTION_OAUTH_CLIENT_SECRET &&
     NOTION_AUTH_URL &&
     NOTION_REDIRECT_URI
   );
-  const [session, surveys, notionIntegration, environment, contactAttributeKeys] = await Promise.all([
+  const [session, surveys, notionIntegration, environment] = await Promise.all([
     getServerSession(authOptions),
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "notion"),
     getEnvironment(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
   ]);
 
   if (!session) {
@@ -89,7 +87,6 @@ const Page = async (props) => {
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
-        contactAttributeKeys={contactAttributeKeys}
         locale={locale}
       />
     </PageContentWrapper>

@@ -7,11 +7,10 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { HashIcon, LinkIcon, MailIcon, MessageSquareTextIcon, PhoneIcon, PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   TSurvey,
   TSurveyOpenTextQuestion,
@@ -28,7 +27,6 @@ interface OpenQuestionFormProps {
   selectedLanguageCode: string;
   setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  contactAttributeKeys: TContactAttributeKey[];
   locale: TUserLocale;
 }
 
@@ -40,10 +38,9 @@ export const OpenQuestionForm = ({
   localSurvey,
   selectedLanguageCode,
   setSelectedLanguageCode,
-  contactAttributeKeys,
   locale,
 }: OpenQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const questionTypes = [
     { value: "text", label: t("common.text"), icon: <MessageSquareTextIcon className="h-4 w-4" /> },
     { value: "email", label: t("common.email"), icon: <MailIcon className="h-4 w-4" /> },
@@ -93,7 +90,6 @@ export const OpenQuestionForm = ({
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
-        contactAttributeKeys={contactAttributeKeys}
         label={t("environments.surveys.edit.question") + "*"}
         locale={locale}
       />
@@ -111,7 +107,6 @@ export const OpenQuestionForm = ({
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
                 setSelectedLanguageCode={setSelectedLanguageCode}
-                contactAttributeKeys={contactAttributeKeys}
                 label={t("common.description")}
                 locale={locale}
               />
@@ -148,7 +143,6 @@ export const OpenQuestionForm = ({
           updateQuestion={updateQuestion}
           selectedLanguageCode={selectedLanguageCode}
           setSelectedLanguageCode={setSelectedLanguageCode}
-          contactAttributeKeys={contactAttributeKeys}
           label={t("common.placeholder")}
           locale={locale}
         />
