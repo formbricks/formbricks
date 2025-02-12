@@ -1,22 +1,20 @@
 import { apiKeyCache } from "@/lib/cache/api-key";
+import { hashApiKey } from "@/modules/api/management/lib/utils";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { getHash } from "@formbricks/lib/crypto";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { InvalidInputError } from "@formbricks/types/errors";
 
 export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string) => {
-  const hashedKey = getHash(apiKey);
+  const hashedKey = hashApiKey(apiKey);
   return cache(
     async (): Promise<Result<string, ApiErrorResponse>> => {
-      validateInputs([apiKey, ZString]);
-
       if (!apiKey) {
-        throw new InvalidInputError("API key cannot be null or undefined.");
+        return err({
+          type: "bad_request",
+          details: [{ field: "apiKey", issue: "API key cannot be null or undefined." }],
+        });
       }
 
       try {

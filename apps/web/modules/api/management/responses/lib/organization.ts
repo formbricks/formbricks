@@ -10,28 +10,35 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) =>
   cache(
     async (): Promise<Result<string, ApiErrorResponse>> => {
-      const organization = await prisma.organization.findFirst({
-        where: {
-          projects: {
-            some: {
-              environments: {
-                some: {
-                  id: environmentId,
+      try {
+        const organization = await prisma.organization.findFirst({
+          where: {
+            projects: {
+              some: {
+                environments: {
+                  some: {
+                    id: environmentId,
+                  },
                 },
               },
             },
           },
-        },
-        select: {
-          id: true,
-        },
-      });
+          select: {
+            id: true,
+          },
+        });
 
-      if (!organization) {
-        return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
+        if (!organization) {
+          return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
+        }
+
+        return ok(organization.id);
+      } catch (error) {
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: error.message }],
+        });
       }
-
-      return ok(organization.id);
     },
     [`management-getOrganizationIdFromEnvironmentId-${environmentId}`],
     {
@@ -59,14 +66,10 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
 
         return ok(organization);
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          return err({
-            type: "internal_server_error",
-            details: [{ field: "organization", issue: error.message }],
-          });
-        }
-
-        throw error;
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: error.message }],
+        });
       }
     },
     [`management-getOrganizationBilling-${organizationId}`],
@@ -124,14 +127,10 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
         // The result is an aggregation of the total count
         return ok(responseAggregations._count.id);
       } catch (error) {
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          return err({
-            type: "internal_server_error",
-            details: [{ field: "organization", issue: error.message }],
-          });
-        }
-
-        throw error;
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: error.message }],
+        });
       }
     },
     [`management-getMonthlyOrganizationResponseCount-${organizationId}`],

@@ -26,8 +26,7 @@ export const getSurveyQuestions = reactCache(async (surveyId: string) =>
 
         return ok(survey);
       } catch (error) {
-        console.log(error);
-        return err({ type: "internal_server_error" });
+        return err({ type: "internal_server_error", details: [{ field: "survey", issue: error.message }] });
       }
     },
     [`management-getSurveyQuestions-${surveyId}`],

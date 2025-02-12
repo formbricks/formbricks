@@ -41,42 +41,41 @@ export const getResponse = reactCache(async (responseId: string) =>
 
 export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponse>> => {
   try {
-    const response = await getResponse(responseId);
-    if (!response.ok) {
-      return response;
-    }
-
-    await prisma.response.delete({
+    const deletedResponse = await prisma.response.delete({
       where: {
         id: responseId,
       },
     });
 
-    if (response.data.displayId) {
-      const deleteDisplayResult = await deleteDisplay(response.data.displayId);
+    if (!deletedResponse) {
+      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
+    }
+
+    if (deletedResponse.displayId) {
+      const deleteDisplayResult = await deleteDisplay(deletedResponse.displayId);
       if (!deleteDisplayResult.ok) {
         return deleteDisplayResult;
       }
     }
-    const surveyQuestionsResult = await getSurveyQuestions(response.data.surveyId);
+    const surveyQuestionsResult = await getSurveyQuestions(deletedResponse.surveyId);
 
     if (!surveyQuestionsResult.ok) {
       return surveyQuestionsResult;
     }
 
-    await findAndDeleteUploadedFilesInResponse(response.data.data, surveyQuestionsResult.data.questions);
+    await findAndDeleteUploadedFilesInResponse(deletedResponse.data, surveyQuestionsResult.data.questions);
 
     responseCache.revalidate({
       environmentId: surveyQuestionsResult.data.environmentId,
-      id: response.data.id,
-      surveyId: response.data.surveyId,
+      id: deletedResponse.id,
+      surveyId: deletedResponse.surveyId,
     });
 
     responseNoteCache.revalidate({
-      responseId: response.data.id,
+      responseId: deletedResponse.id,
     });
 
-    return response;
+    return ok(deletedResponse);
   } catch (error) {
     return err({
       type: "internal_server_error",

@@ -1,72 +1,66 @@
 "use server";
 
-import { Prisma } from "@prisma/client";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getSurvey = reactCache(
-  async (surveyId: string): Promise<{ environmentId: string } | null> =>
-    cache(
-      async () => {
-        validateInputs([surveyId, ZId]);
-        try {
-          const survey = await prisma.survey.findUnique({
-            where: {
-              id: surveyId,
-            },
-            select: {
-              environmentId: true,
-            },
-          });
+export const getSurvey = reactCache(async (surveyId: string) =>
+  cache(
+    async (): Promise<Result<{ environmentId: string }, ApiErrorResponse>> => {
+      try {
+        const survey = await prisma.survey.findUnique({
+          where: {
+            id: surveyId,
+          },
+          select: {
+            environmentId: true,
+          },
+        });
 
-          return survey;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-          throw error;
+        if (!survey) {
+          return err({ type: "not_found", details: [{ field: "survey", issue: "not found" }] });
         }
-      },
-      [`utils-getSurvey-${surveyId}`],
-      {
-        tags: [surveyCache.tag.byId(surveyId)],
+
+        return ok(survey);
+      } catch (error) {
+        return err({ type: "internal_server_error", details: [{ field: "survey", issue: "not found" }] });
       }
-    )()
+    },
+    [`utils-getSurvey-${surveyId}`],
+    {
+      tags: [surveyCache.tag.byId(surveyId)],
+    }
+  )()
 );
 
-export const getResponse = reactCache(
-  async (responseId: string): Promise<{ surveyId: string } | null> =>
-    cache(
-      async () => {
-        validateInputs([responseId, ZId]);
+export const getResponse = reactCache(async (responseId: string) =>
+  cache(
+    async (): Promise<Result<{ surveyId: string }, ApiErrorResponse>> => {
+      try {
+        const response = await prisma.response.findUnique({
+          where: {
+            id: responseId,
+          },
+          select: { surveyId: true },
+        });
 
-        try {
-          const response = await prisma.response.findUnique({
-            where: {
-              id: responseId,
-            },
-            select: { surveyId: true },
-          });
-
-          return response;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
+        if (!response) {
+          return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
         }
-      },
-      [`utils-getResponse-${responseId}`],
-      {
-        tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+
+        return ok(response);
+      } catch (error) {
+        return err({ type: "internal_server_error", details: [{ field: "response", issue: "not found" }] });
       }
-    )()
+    },
+    [`utils-getResponse-${responseId}`],
+    {
+      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+    }
+  )()
 );

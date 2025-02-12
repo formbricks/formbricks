@@ -28,6 +28,7 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
       where: {
         ...query.where,
         createdAt: {
+          ...query.where?.createdAt,
           gte: startDate,
         },
       },
@@ -40,6 +41,7 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
       where: {
         ...query.where,
         createdAt: {
+          ...query.where?.createdAt,
           lte: endDate,
         },
       },

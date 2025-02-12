@@ -113,7 +113,7 @@ export const createResponse = async (
             },
           });
         } catch (err) {
-          // Log error but do not throw
+          // Log error but do not throw it
           console.error(`Error sending plan limits reached event to Posthog: ${err}`);
         }
       }
