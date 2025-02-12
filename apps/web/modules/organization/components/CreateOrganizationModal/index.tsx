@@ -6,8 +6,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,7 @@ type FormValues = {
 };
 
 export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [organizationName, setOrganizationName] = useState("");

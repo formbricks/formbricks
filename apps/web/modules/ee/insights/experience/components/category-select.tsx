@@ -1,6 +1,8 @@
+"use client";
+
 import { BadgeSelect, TBadgeSelectOption } from "@/modules/ui/components/badge-select";
 import { InsightCategory } from "@prisma/client";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { updateInsightAction } from "../actions";
@@ -40,7 +42,7 @@ const getCategoryIndex = (category: InsightCategory) => {
 
 const CategoryBadge = ({ category, insightId, onCategoryChange }: CategoryBadgeProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleUpdateCategory = async (newCategory: InsightCategory) => {
     setIsUpdating(true);
     try {

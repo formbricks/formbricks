@@ -1,17 +1,17 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface HeadProps {
   questionSummary: TSurveyQuestionSummary;
   showResponses?: boolean;
   additionalInfo?: JSX.Element;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
 export const QuestionSummaryHeader = ({
@@ -19,10 +19,9 @@ export const QuestionSummaryHeader = ({
   additionalInfo,
   showResponses = true,
   survey,
-  locale,
 }: HeadProps) => {
-  const questionType = getQuestionTypes(locale).find((type) => type.id === questionSummary.question.type);
-  const t = useTranslations();
+  const { t } = useTranslate();
+  const questionType = getQuestionTypes(t).find((type) => type.id === questionSummary.question.type);
   // formats the text to highlight specific parts of the text with slashes
   const formatTextWithSlashes = (text: string): (string | JSX.Element)[] => {
     const regex = /\/(.*?)\\/g;

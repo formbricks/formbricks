@@ -4,8 +4,8 @@ import { Input } from "@/modules/ui/components/input";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabBar } from "@/modules/ui/components/tab-bar";
 import { createId } from "@paralleldrive/cuid2";
+import { useTranslate } from "@tolgee/react";
 import { FingerprintIcon, MonitorSmartphoneIcon, TagIcon, Users2Icon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import React, { type JSX, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -139,7 +139,7 @@ interface AttributeTabContentProps {
 }
 
 function AttributeTabContent({ contactAttributeKeys, onAddFilter, setOpen }: AttributeTabContentProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   return (
     <div className="flex flex-col gap-2">
@@ -212,7 +212,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs: {
     id: string;
     label: string;

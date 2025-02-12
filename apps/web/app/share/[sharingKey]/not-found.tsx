@@ -1,9 +1,9 @@
 import { Button } from "@/modules/ui/components/button";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import Link from "next/link";
 
 const NotFound = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <>
       <div className="mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center">

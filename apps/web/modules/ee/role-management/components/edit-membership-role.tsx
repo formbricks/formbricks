@@ -10,8 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { OrganizationRole } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -43,7 +43,7 @@ export function EditMembershipRole({
   doesOrgHaveMoreThanOneOwner,
   isFormbricksCloud,
 }: Role) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 

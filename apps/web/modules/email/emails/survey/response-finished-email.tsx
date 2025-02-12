@@ -1,3 +1,4 @@
+import { getTranslate } from "@/tolgee/server";
 import { Column, Container, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
 import { FileDigitIcon, FileType2Icon } from "lucide-react";
 import { getQuestionResponseMapping } from "@formbricks/lib/responses";
@@ -11,12 +12,11 @@ import {
 } from "@formbricks/types/surveys/types";
 import { EmailButton } from "../../components/email-button";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
-export const renderEmailResponseValue = (
+export const renderEmailResponseValue = async (
   response: string | string[],
   questionType: TSurveyQuestionType
-): React.JSX.Element => {
+): Promise<React.JSX.Element> => {
   switch (questionType) {
     case TSurveyQuestionTypeEnum.FileUpload:
       return (
@@ -78,30 +78,27 @@ interface ResponseFinishedEmailProps {
   WEBAPP_URL: string;
   environmentId: string;
   organization: TOrganization;
-  locale: string;
 }
 
-export function ResponseFinishedEmail({
+export async function ResponseFinishedEmail({
   survey,
   responseCount,
   response,
   WEBAPP_URL,
   environmentId,
   organization,
-  locale,
-}: ResponseFinishedEmailProps): React.JSX.Element {
+}: ResponseFinishedEmailProps): Promise<React.JSX.Element> {
   const questions = getQuestionResponseMapping(survey, response);
+  const t = await getTranslate();
 
   return (
-    <EmailTemplate locale={locale}>
+    <EmailTemplate t={t}>
       <Container>
         <Row>
           <Column>
-            <Text className="mb-4 text-3xl font-bold">
-              {translateEmailText("survey_response_finished_email_hey", locale)}
-            </Text>
+            <Text className="mb-4 text-3xl font-bold"> {t("emails.survey_response_finished_email_hey")}</Text>
             <Text className="mb-4">
-              {translateEmailText("survey_response_finished_email_congrats", locale, {
+              {t("emails.survey_response_finished_email_congrats", {
                 surveyName: survey.name,
               })}
             </Text>
@@ -162,33 +159,30 @@ export function ResponseFinishedEmail({
               href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
-                  ? translateEmailText("survey_response_finished_email_view_more_responses", locale, {
+                  ? t("emails.survey_response_finished_email_view_more_responses", {
                       responseCount: String(responseCount - 1),
                     })
-                  : translateEmailText("survey_response_finished_email_view_survey_summary", locale)
+                  : t("emails.survey_response_finished_email_view_survey_summary")
               }
             />
             <Hr />
             <Section className="mt-4 text-center text-sm">
               <Text className="font-bold">
-                {translateEmailText("survey_response_finished_email_dont_want_notifications", locale)}
+                {t("emails.survey_response_finished_email_dont_want_notifications")}
               </Text>
               <Text className="mb-0">
-                {translateEmailText("survey_response_finished_email_turn_off_notifications", locale)}
+                {t("emails.survey_response_finished_email_turn_off_notifications")}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
-                  {translateEmailText("survey_response_finished_email_this_form", locale)}
+                  {t("emails.survey_response_finished_email_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
-                  {translateEmailText(
-                    "survey_response_finished_email_turn_off_notifications_for_all_new_forms",
-                    locale
-                  )}
+                  {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
               </Text>
             </Section>

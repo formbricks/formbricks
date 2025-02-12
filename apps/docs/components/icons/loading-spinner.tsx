@@ -7,4 +7,3 @@ export function LoadingSpinner(props: React.ComponentPropsWithoutRef<"div">): Re
     </div>
   );
 }
-

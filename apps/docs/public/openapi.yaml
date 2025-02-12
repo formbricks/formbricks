@@ -35,33 +35,41 @@ tags:
       sessions, and responses within the Formbricks platform. This API is ideal
       for client-side interactions, as it doesn't expose sensitive information.
 
-
-      - [Actions
-      API](https://go.postman.co/workspace/90ba379a-0de2-47d2-a94c-8eb541e47082/documentation/11026000-927c954f-85a9-4f8f-b0ec-14191b903737?entity=folder-b8f3a10e-1642-4d82-a629-fef0a8c6c86c)
-      - Create actions for a person
-
-      - [Displays API](https://formbricks.com/docs/api/client/displays) - Mark
+      - Displays API - Mark
       Survey as Displayed or Responded for a Person
 
-      - [People API](https://formbricks.com/docs/api/client/people) - Create &
-      update people (e.g. attributes)
+      - Responses API - Create & update responses for a survey
 
-      - [Responses API](https://formbricks.com/docs/api/client/responses) -
-      Create & update responses for a survey
+      - Environment API - Get the environment state to be used in Formbricks SDKs
+
+      - Contacts API - Identify & update contacts (e.g. attributes)
+
+      - User API - Identify & track users based on their attributes, device type, etc.
+
   - name: Client API > Display
     description: >-
       Displays are metrics used to measure the number of times a survey was
       viewed both by unidentified or identified users.
-  - name: Client API > People
-    description: >-
-      Persons are the identified users on Formbricks app that get initated when
-      you pass a userId and have user activation enabled. This now allows you to
-      track & show them targeted surveys based on their actions, attributes,
-      etc.
   - name: Client API > Response
     description: >-
       Responses are captured whenever a user fills in your survey either
       partially or completely.
+  - name: Client API > Environment
+    description: >-
+      Get the environment state to be used in Formbricks SDKs
+  - name: Client API > Contacts
+    description: >-
+      Contacts are the identified users on Formbricks app that get initated when
+      you pass a userId and have user activation enabled. This now allows you to
+      track & show them targeted surveys based on their attributes, device type,
+      etc.
+  - name: Client API > User
+    description: >-
+      Users are the identified users on Formbricks app that get initated when
+      you pass a userId and have user activation enabled. This now allows you to
+      track & show them targeted surveys based on their attributes, device type,
+      etc. Currently, this api is only being used in the react-native sdk.
+
   - name: Management API
     description: "The Management API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the Management API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.\n\n> **For Auth:**\_we use the `x-api-key` header \n  \n\nAPI requests made to the Management API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at formbricks.com. It's essential to keep your API key secure and not share it with others.\n\nTo generate, store, or delete an API key, follow the instructions provided on the following page\_[API Key](https://formbricks.com/docs/api/management/api-key-setup)."
   - name: Management API > Action Class
@@ -436,139 +444,424 @@ paths:
                 code: internal_server_error
                 message: Person with ID 2 not found
                 details: {}
-  /api/v1/client/{environmentId}/people:
-    post:
+  /api/v1/client/{environmentId}/environment:
+    get:
       tags:
-        - Client API > People
-      summary: Create Person
-      description: Creates a person in Formbricks with the given userId, it must be unique.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              example:
-                userId: "{{userId}}"
+        - Client API > Environment
+      summary: Get Environment State
+      description: >-
+        Retrieves the environment state to be used in Formbricks SDKs
       parameters:
         - name: environmentId
           in: path
+          required: true
           schema:
             type: string
+          description: The ID of the environment
+      responses:
+        "200":
+          description: "HTTP Status 200"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      surveys:
+                        type: array
+                        description: List of surveys in the environment
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "cm6orr901000g19wjwwa690eo"
+                            welcomeCard:
+                              type: object
+                              properties:
+                                html:
+                                  type: string
+                                  example: "Thanks for providing your feedback - let's go!"
+                                enabled:
+                                  type: boolean
+                                  example: false
+                                headline:
+                                  type: string
+                                  example: "Welcome!"
+                                buttonLabel:
+                                  type: string
+                                  example: "Next"
+                                timeToFinish:
+                                  type: boolean
+                                  example: false
+                                showResponseCount:
+                                  type: boolean
+                                  example: false
+                            name:
+                              type: string
+                              example: "Start from scratch"
+                            questions:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    example: "dd5c8w2a4ttkbnjb9nwhtb17"
+                                  type:
+                                    type: string
+                                    example: "openText"
+                                  headline:
+                                    type: string
+                                    example: "What would you like to know?"
+                                  required:
+                                    type: boolean
+                                    example: true
+                                  charLimit:
+                                    type: boolean
+                                    example: false
+                                  inputType:
+                                    type: string
+                                    example: "text"
+                                  buttonLabel:
+                                    type: string
+                                    example: "Next"
+                                  placeholder:
+                                    type: string
+                                    example: "Type your answer here..."
+                            variables:
+                              type: array
+                              items:
+                                type: string
+                            type:
+                              type: string
+                              example: "app"
+                            showLanguageSwitch:
+                              type: boolean
+                              example: null
+                            languages:
+                              type: array
+                              items:
+                                type: string
+                            endings:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    example: "o729tod5klhix62njmk262dk"
+                                  type:
+                                    type: string
+                                    example: "endScreen"
+                                  headline:
+                                    type: string
+                                    example: "Thank you!"
+                                  subheader:
+                                    type: string
+                                    example: "We appreciate your feedback."
+                                  buttonLink:
+                                    type: string
+                                    example: "https://formbricks.com"
+                                  buttonLabel:
+                                    type: string
+                                    example: "Create your own Survey"
+                            autoClose:
+                              type: boolean
+                              example: null
+                            styling:
+                              type: object
+                              example: null
+                            status:
+                              type: string
+                              example: "inProgress"
+                            segment:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  example: "cm6orr90h000h19wj1lnwoxwg"
+                                createdAt:
+                                  type: string
+                                  example: "2025-02-03T08:08:33.377Z"
+                                updatedAt:
+                                  type: string
+                                  example: "2025-02-03T08:08:33.377Z"
+                                title:
+                                  type: string
+                                  example: "cm6orr901000g19wjwwa690eo"
+                                description:
+                                  type: string
+                                  example: null
+                                isPrivate:
+                                  type: boolean
+                                  example: true
+                                filters:
+                                  type: array
+                                  items:
+                                    type: string
+                            recontactDays:
+                              type: integer
+                              example: 0
+                            displayLimit:
+                              type: integer
+                              example: 5
+                            displayOption:
+                              type: string
+                              example: "respondMultiple"
+                            hiddenFields:
+                              type: object
+                              properties:
+                                enabled:
+                                  type: boolean
+                                  example: true
+                                fieldIds:
+                                  type: array
+                                  items:
+                                    type: string
+                            triggers:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  actionClass:
+                                    type: string
+                                    example: "code action"
+                            displayPercentage:
+                              type: integer
+                              example: null
+                            delay:
+                              type: integer
+                              example: 0
+                      actionClasses:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              example: "cm6orqtdd000b19wjec82bpp2"
+                            type:
+                              type: string
+                              example: "automatic"
+                            name:
+                              type: string
+                              example: "New Session"
+                            key:
+                              type: string
+                              nullable: true
+                              example: null
+                            noCodeConfig:
+                              type: object
+                              nullable: true
+                              example: null
+                        example:
+                          - id: "cm6orqtdd000b19wjec82bpp2"
+                            type: "automatic"
+                            name: "New Session"
+                            key: null
+                            noCodeConfig: null
+                          - id: "cm6oryki3000i19wj860utcnn"
+                            type: "code"
+                            name: "code action"
+                            key: "code"
+                            noCodeConfig: null
+                      project:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            example: "cm6orqtcl000319wj9wb7dltl"
+                          recontactDays:
+                            type: integer
+                            example: 7
+                          clickOutsideClose:
+                            type: boolean
+                            example: true
+                          darkOverlay:
+                            type: boolean
+                            example: false
+                          placement:
+                            type: string
+                            example: "bottomRight"
+                          inAppSurveyBranding:
+                            type: boolean
+                            example: true
+                          styling:
+                            type: object
+                            properties:
+                              brandColor:
+                                type: object
+                                properties:
+                                  light:
+                                    type: string
+                                    example: "#64748b"
+                              allowStyleOverwrite:
+                                type: boolean
+                                example: true
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "not_found"
+                  message:
+                    type: string
+                    example: "Environment not found"
+                  details:
+                    type: object
+                    properties:
+                      resource_id:
+                        type: string
+                        example: "tpywklouw2p7tebdu4zv01an"
+                      resource_type:
+                        type: string
+                        example: "environment"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "internal_server_error"
+                  message:
+                    type: string
+                    example: "Unable to complete request: Expected property name or '}' in JSON at position 29"
+                  details:
+                    type: object
+  /api/v1/client/{environmentId}/identify/contacts/{userId}:
+    get:
+      tags:
+        - Client API > Contacts
+      summary: Get Contact State
+      description: >-
+        Retrieves a contact's state including their segments, displays, responses
+        and other tracking information. If the contact doesn't exist, it will be created.
+      parameters:
+        - name: environmentId
+          in: path
           required: true
+          schema:
+            type: string
+          description: The ID of the environment
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The user ID to identify the contact
       responses:
         "200":
           description: OK
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            cache-control:
-              schema:
-                type: string
-                example: private, no-store
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:35:47 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
           content:
             application/json:
               schema:
                 type: object
-              example:
-                data:
-                  userId: Shubham
-        "400":
-          description: Bad Request
-          headers:
-            Access-Control-Allow-Credentials:
-              schema:
-                type: boolean
-                example: "true"
-            Access-Control-Allow-Origin:
-              schema:
-                type: string
-                example: "*"
-            access-control-allow-methods:
-              schema:
-                type: string
-                example: GET, POST, PUT, DELETE, OPTIONS
-            access-control-allow-headers:
-              schema:
-                type: string
-                example: Content-Type, Authorization
-            vary:
-              schema:
-                type: string
-                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
-            content-type:
-              schema:
-                type: string
-                example: application/json
-            Date:
-              schema:
-                type: string
-                example: Tue, 23 Apr 2024 07:36:43 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                        description: The user ID of the contact
+                      segments:
+                        type: array
+                        description: List of segment IDs the contact belongs to
+                        items:
+                          type: string
+                      displays:
+                        type: array
+                        description: List of survey displays for this contact
+                        items:
+                          type: object
+                          properties:
+                            surveyId:
+                              type: string
+                            createdAt:
+                              type: string
+                              format: date-time
+                      responses:
+                        type: array
+                        description: List of survey IDs the contact has responded to
+                        items:
+                          type: string
+                      lastDisplayAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        description: Timestamp of the last survey display
+                example:
+                  userId: "user-123"
+                  segments: ["fi8f9oekza95wwszrptidivq", "zgwrv8eg7vfavdhzv1s0po1w"]
+                  displays: [{ surveyId: "pjogp5a1wyxon6umplmf49b8", createdAt: "2024-04-23T08:59:37.550Z" }]
+                  responses: ["pjogp5a1wyxon6umplmf49b8"]
+                  lastDisplayAt: "2024-04-23T08:59:37.550Z"
+        "403":
+          description: Forbidden
           content:
             application/json:
               schema:
                 type: object
-              example:
-                code: bad_request
-                message: userId is required
-                details:
-                  environmentId: clurwouax000azffxt7n5unn3
-  /api/v1/client/{environmentId}/people/{userId}/attributes:
+                properties:
+                  code:
+                    type: string
+                    example: "forbidden"
+                  message:
+                    type: string
+                    example: "User identification is only available for enterprise users."
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "not_found"
+                  message:
+                    type: string
+                    example: "Environment not found"
+                  details:
+                    type: object
+                    properties:
+                      resource_id:
+                        type: string
+                        example: "tpywklouw2p7tebdu4zv01an"
+                      resource_type:
+                        type: string
+                        example: "environment"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: "internal_server_error"
+                  message:
+                    type: string
+                    example: "Unable to complete request: Expected property name or '}' in JSON at position 29"
+                  details:
+                    type: object
+  /api/v1/client/{environmentId}/contacts/{userId}/attributes:
     put:
       tags:
-        - Client API > People
-      summary: Update Person
+        - Client API > Contacts
+      summary: Update Contact (Attributes)
       description: >-
-        Update a person's attributes in Formbricks to keep them in sync with
+        Update a contact's attributes in Formbricks to keep them in sync with
         your app or when you want to set a custom attribute in Formbricks.
       requestBody:
         content:
@@ -712,6 +1005,280 @@ paths:
                 message: >-
                   Unable to complete request: Expected property name or '}' in
                   JSON at position 29
+                details: {}
+  /api/v1/client/{environmentId}/user:
+    post:
+      tags:
+        - Client API > User
+      summary: Create or Identify User
+      description: >
+        Endpoint for creating or identifying a user within the specified environment.
+        If the user already exists, this will identify them and potentially
+        update user attributes. If they don't exist, it will create a new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+            example:
+              userId: "hello-user"
+              attributes:
+                plan: "free"
+      parameters:
+        - name: environmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:36:43 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      state:
+                        type: object
+                        properties:
+                          data:
+                            type: object
+                            properties:
+                              userId:
+                                type: string
+                                example: "hello-user"
+                              segments:
+                                type: array
+                                items:
+                                  type: string
+                                  example: "cm6onrezn000hw2ahcokiz41v"
+                              displays:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    surveyId:
+                                      type: string
+                                      example: "cm6orqtdd000a19wjhnbces5s"
+                                    createdAt:
+                                      type: string
+                                      example: "2025-02-03T11:23:13.050Z"
+                              responses:
+                                type: array
+                                items:
+                                  type: string
+                                  example: "cm6orqtdd000a19wjhnbces5s"
+                              lastDisplayAt:
+                                type: string
+                                example: "2025-02-03T11:23:13.050Z"
+                          expiresAt:
+                            type: string
+                            example: "2025-02-03T11:23:13.050Z"
+        "400":
+          description: Bad Request
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:36:43 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: bad_request
+                message: userId is required
+        "404":
+          description: Not Found
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            cache-control:
+              schema:
+                type: string
+                example: private, no-store
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:56:29 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: not_found
+                message: Environment not found
+                details:
+                  resource_id: f16ttdvtkx85k5m4s561ruqj
+                  resource_type: Environment
+        "500":
+          description: Internal Server Error
+          headers:
+            Access-Control-Allow-Credentials:
+              schema:
+                type: boolean
+                example: "true"
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            access-control-allow-methods:
+              schema:
+                type: string
+                example: GET, POST, PUT, DELETE, OPTIONS
+            access-control-allow-headers:
+              schema:
+                type: string
+                example: Content-Type, Authorization
+            vary:
+              schema:
+                type: string
+                example: RSC, Next-Router-State-Tree, Next-Router-Prefetch
+            cache-control:
+              schema:
+                type: string
+                example: private, no-store
+            content-type:
+              schema:
+                type: string
+                example: application/json
+            Date:
+              schema:
+                type: string
+                example: Tue, 23 Apr 2024 07:56:29 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                code: internal_server_error
+                message: An unexpected error occurred
                 details: {}
   /api/v1/client/{environmentId}/responses:
     post:

@@ -1,10 +1,11 @@
 "use client";
 
+import { templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { templates } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { type TProject, ZProjectConfigChannel, ZProjectConfigIndustry } from "@formbricks/types/project";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
@@ -36,11 +37,11 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
 }: TemplateListProps) => {
+  const { t } = useTranslate();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>(prefilledFilters);
-
   const surveyType: TSurveyType = useMemo(() => {
     if (project.config.channel) {
       if (project.config.channel === "website") {
@@ -73,8 +74,8 @@ export const TemplateList = ({
     }
   };
 
-  const filteredTemplates = useMemo(() => {
-    return templates(user.locale).filter((template) => {
+  const filteredTemplates = () => {
+    return templates(t).filter((template) => {
       if (templateSearch) {
         return template.name.toLowerCase().includes(templateSearch.toLowerCase());
       }
@@ -102,7 +103,7 @@ export const TemplateList = ({
 
       return channelMatch && industryMatch && roleMatch;
     });
-  }, [selectedFilter, templateSearch]);
+  };
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-2 focus:outline-none">
@@ -123,9 +124,8 @@ export const TemplateList = ({
           createSurvey={createSurvey}
           loading={loading}
           noPreview={noPreview}
-          locale={user.locale}
         />
-        {(process.env.NODE_ENV === "development" ? [...filteredTemplates] : filteredTemplates).map(
+        {(process.env.NODE_ENV === "development" ? [...filteredTemplates()] : filteredTemplates()).map(
           (template: TTemplate) => {
             return (
               <Template

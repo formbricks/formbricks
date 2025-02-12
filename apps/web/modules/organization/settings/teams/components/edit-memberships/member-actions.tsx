@@ -12,8 +12,8 @@ import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -29,7 +29,7 @@ interface MemberActionsProps {
 
 export const MemberActions = ({ organization, member, invite, showDeleteButton }: MemberActionsProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isDeleteMemberModalOpen, setDeleteMemberModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showShareInviteModal, setShowShareInviteModal] = useState(false);
@@ -56,7 +56,6 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       setIsDeleting(false);
       router.refresh();
     } catch (err) {
-      console.log({ err });
       setIsDeleting(false);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }

@@ -48,7 +48,7 @@ export function SideNavigation({ pathname }: { pathname: string }): React.JSX.El
           return (
             <li
               key={heading.text}
-              className={clsx(`mb-4 text-slate-900 dark:text-white ml-4`, {
+              className={clsx(`mb-4 ml-4 text-slate-900 dark:text-white`, {
                 "ml-0": heading.level === 2,
                 "ml-4": heading.level === 3,
                 "ml-6": heading.level === 4,

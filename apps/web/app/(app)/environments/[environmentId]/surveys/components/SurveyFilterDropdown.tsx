@@ -7,8 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TFilterOption } from "@formbricks/types/surveys/types";
 
 interface SurveyFilterDropdownProps {
@@ -30,7 +30,7 @@ export const SurveyFilterDropdown = ({
   isOpen,
   toggleDropdown,
 }: SurveyFilterDropdownProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const triggerClasses = `surveyFilterDropdown min-w-auto h-8 rounded-md border border-slate-700 sm:px-2 cursor-pointer outline-none 
     ${selectedOptions.length > 0 ? "bg-slate-900 text-white" : "hover:bg-slate-900"}`;
 
