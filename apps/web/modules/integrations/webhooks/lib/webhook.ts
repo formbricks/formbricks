@@ -157,25 +157,11 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
       );
     }
 
-    const payload = isDiscordWebhook
-      ? {
-          content: "🔔 Test notification from Formbricks",
-          embeds: [
-            {
-              title: "Webhook Test",
-              description: "Ping! This is a test notification from Formbricks.",
-              color: 0x00ff00,
-            },
-          ],
-        }
-      : {
-          event: "testEndpoint",
-          message: "Ping! This is a test notification from Formbricks.",
-        };
-
     const response = await fetch(url, {
       method: "POST",
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        event: "testEndpoint",
+      }),
       headers: {
         "Content-Type": "application/json",
       },

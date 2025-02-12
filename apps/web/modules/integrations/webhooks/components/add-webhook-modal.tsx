@@ -114,9 +114,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
         }
 
         const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
-
         const webhookUrl = new URL(testEndpointInput);
-
         const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
 
         if (isDiscordWebhook) {
