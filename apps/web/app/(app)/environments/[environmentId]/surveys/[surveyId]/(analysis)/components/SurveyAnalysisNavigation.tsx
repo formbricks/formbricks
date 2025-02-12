@@ -8,8 +8,8 @@ import {
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getResponseCountBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { useTranslate } from "@tolgee/react";
 import { InboxIcon, PresentationIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalWhenFocused";
@@ -29,7 +29,7 @@ export const SurveyAnalysisNavigation = ({
   activeId,
 }: SurveyAnalysisNavigationProps) => {
   const pathname = usePathname();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const params = useParams();
   const [filteredResponseCount, setFilteredResponseCount] = useState<number | null>(null);
   const [totalResponseCount, setTotalResponseCount] = useState<number | null>(initialTotalResponseCount);

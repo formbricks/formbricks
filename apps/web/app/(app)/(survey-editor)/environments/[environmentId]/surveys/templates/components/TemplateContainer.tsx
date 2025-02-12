@@ -2,13 +2,13 @@
 
 import { FormbricksAICard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/FormbricksAICard";
 import { MenuBar } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/templates/components/MenuBar";
+import { customSurveyTemplate } from "@/app/lib/templates";
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { Separator } from "@/modules/ui/components/separator";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
-import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import type { TEnvironment } from "@formbricks/types/environment";
 import type { TProject, TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import type { TTemplate, TTemplateRole } from "@formbricks/types/templates";
@@ -31,8 +31,8 @@ export const TemplateContainerWithPreview = ({
   prefilledFilters,
   isAIEnabled,
 }: TemplateContainerWithPreviewProps) => {
-  const t = useTranslations();
-  const initialTemplate = getCustomSurveyTemplate(user.locale);
+  const { t } = useTranslate();
+  const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
   const [activeQuestionId, setActiveQuestionId] = useState<string>(initialTemplate.preset.questions[0].id);
   const [templateSearch, setTemplateSearch] = useState<string | null>(null);
@@ -80,7 +80,7 @@ export const TemplateContainerWithPreview = ({
         <aside className="group hidden flex-1 flex-shrink-0 items-center justify-center overflow-hidden border-l border-slate-100 bg-slate-50 md:flex md:flex-col">
           {activeTemplate && (
             <PreviewSurvey
-              survey={{ ...getMinimalSurvey(user.locale), ...activeTemplate.preset }}
+              survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
               questionId={activeQuestionId}
               project={project}
               environment={environment}

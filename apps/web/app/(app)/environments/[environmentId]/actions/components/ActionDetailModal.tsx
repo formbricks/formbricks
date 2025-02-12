@@ -1,6 +1,8 @@
+"use client";
+
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
+import { useTranslate } from "@tolgee/react";
 import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { ActionActivityTab } from "./ActionActivityTab";
@@ -29,7 +31,7 @@ export const ActionDetailModal = ({
   otherEnvActionClasses,
   otherEnvironment,
 }: ActionDetailModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const tabs = [
     {
       title: t("common.activity"),

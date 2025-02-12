@@ -2,7 +2,7 @@ import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TProject } from "@formbricks/types/project";
 
@@ -19,7 +19,7 @@ export const BrandingSettingsCard = async ({
   environmentId,
   isReadOnly,
 }: BrandingSettingsCardProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
 
   const buttons: [ModalButton, ModalButton] = [
     {
@@ -58,7 +58,7 @@ export const BrandingSettingsCard = async ({
       ) : (
         <UpgradePrompt
           title={t("environments.project.look.remove_branding_with_a_higher_plan")}
-          description={t("environments.project.look.eliminate_branding_with_whitelabel")}
+          description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
           buttons={buttons}
         />
       )}

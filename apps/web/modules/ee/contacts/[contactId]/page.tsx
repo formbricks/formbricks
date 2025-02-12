@@ -7,8 +7,8 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -21,7 +21,7 @@ export const SingleContactPage = async (props: {
   params: Promise<{ environmentId: string; contactId: string }>;
 }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [environment, environmentTags, project, session, organization, contact, contactAttributes] =
     await Promise.all([
       getEnvironment(params.environmentId),
@@ -50,7 +50,7 @@ export const SingleContactPage = async (props: {
   }
 
   if (!contact) {
-    throw new Error(t("common.contact_not_found"));
+    throw new Error(t("environments.contacts.contact_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);

@@ -1,8 +1,10 @@
+"use client";
+
+import { customSurveyTemplate } from "@/app/lib/templates";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { PlusCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { cn } from "@formbricks/lib/cn";
-import { getCustomSurveyTemplate } from "@formbricks/lib/templates";
 import { TProject } from "@formbricks/types/project";
 import { TTemplate } from "@formbricks/types/templates";
 import { replacePresetPlaceholders } from "../lib/utils";
@@ -15,7 +17,6 @@ interface StartFromScratchTemplateProps {
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;
-  locale: string;
 }
 
 export const StartFromScratchTemplate = ({
@@ -26,10 +27,9 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
   noPreview,
-  locale,
 }: StartFromScratchTemplateProps) => {
-  const t = useTranslations();
-  const customSurvey = getCustomSurveyTemplate(locale);
+  const { t } = useTranslate();
+  const customSurvey = customSurveyTemplate(t);
   return (
     <div
       onClick={() => {

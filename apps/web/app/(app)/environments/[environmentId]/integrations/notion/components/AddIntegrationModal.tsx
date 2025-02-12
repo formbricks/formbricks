@@ -1,3 +1,5 @@
+"use client";
+
 import { createOrUpdateIntegrationAction } from "@/app/(app)/environments/[environmentId]/integrations/actions";
 import {
   ERRORS,
@@ -9,8 +11,8 @@ import { Button } from "@/modules/ui/components/button";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -26,7 +28,6 @@ import {
   TIntegrationNotionDatabase,
 } from "@formbricks/types/integration/notion";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AddIntegrationModalProps {
   environmentId: string;
@@ -36,7 +37,6 @@ interface AddIntegrationModalProps {
   notionIntegration: TIntegrationNotion;
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
-  locale: TUserLocale;
 }
 
 export const AddIntegrationModal = ({
@@ -47,9 +47,8 @@ export const AddIntegrationModal = ({
   notionIntegration,
   databases,
   selectedIntegration,
-  locale,
 }: AddIntegrationModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { handleSubmit } = useForm();
   const [selectedDatabase, setSelectedDatabase] = useState<TIntegrationNotionDatabase | null>();
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
@@ -295,7 +294,7 @@ export const AddIntegrationModal = ({
               </>
             );
           case ERRORS.MAPPING:
-            const question = getQuestionTypes(locale).find((qt) => qt.id === ques.type);
+            const question = getQuestionTypes(t).find((qt) => qt.id === ques.type);
             if (!question) return null;
             return (
               <>

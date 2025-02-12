@@ -1,8 +1,10 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { XCircleIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 export const ErrorComponent: React.FC = () => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div className="rounded-lg bg-red-50 p-4">
       <div className="flex">

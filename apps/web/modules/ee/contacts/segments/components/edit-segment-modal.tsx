@@ -2,8 +2,8 @@
 
 import { SegmentSettings } from "@/modules/ee/contacts/segments/components/segment-settings";
 import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
+import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyNames } from "@formbricks/types/segment";
 import { SegmentActivityTab } from "./segment-activity-tab";
@@ -29,7 +29,7 @@ export const EditSegmentModal = ({
   isContactsEnabled,
   isReadOnly,
 }: EditSegmentModalProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const SettingsTab = () => {
     if (isContactsEnabled) {
       return (

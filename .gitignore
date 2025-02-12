@@ -58,4 +58,5 @@ packages/lib/uploads
 # js compiled assets
 apps/web/public/js
 
+
 packages/database/migrations

@@ -9,8 +9,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -22,7 +22,7 @@ import { EditTagsWrapper } from "./components/edit-tags-wrapper";
 
 export const TagsPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const environment = await getEnvironment(params.environmentId);
   if (!environment) {
     throw new Error(t("common.environment_not_found"));

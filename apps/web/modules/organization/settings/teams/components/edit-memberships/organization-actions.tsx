@@ -4,15 +4,15 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
+import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { CustomDialog } from "@/modules/ui/components/custom-dialog";
+import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
-import { TInvitee } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -42,7 +42,7 @@ export const OrganizationActions = ({
   isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
   const router = useRouter();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -86,7 +86,7 @@ export const OrganizationActions = ({
             email: email.toLowerCase(),
             name,
             role,
-            teamIds: teamIds,
+            teamIds,
           });
           return {
             email,
