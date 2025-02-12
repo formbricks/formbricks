@@ -37,6 +37,7 @@ module.exports = {
         "submit-button-border": "var(--fb-submit-btn-border)",
         "close-button": "var(--fb-close-btn-color)",
         "close-button-focus": "var(--fb-close-btn-hover-color)",
+        "calendar-tile": "var(--fb-calendar-tile-color)",
       },
       borderRadius: {
         custom: "var(--fb-border-radius)",
