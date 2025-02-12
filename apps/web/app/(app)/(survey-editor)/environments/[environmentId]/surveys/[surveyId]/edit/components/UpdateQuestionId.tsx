@@ -3,7 +3,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
@@ -22,7 +22,7 @@ export const UpdateQuestionId = ({
   questionIdx,
   updateQuestion,
 }: UpdateQuestionIdProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [currentValue, setCurrentValue] = useState(question.id);
   const [prevValue, setPrevValue] = useState(question.id);
   const [isInputInvalid, setIsInputInvalid] = useState(

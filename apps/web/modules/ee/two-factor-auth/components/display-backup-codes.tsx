@@ -1,5 +1,7 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { toast } from "react-hot-toast";
 
 interface DisplayBackupCodesProps {
@@ -8,7 +10,7 @@ interface DisplayBackupCodesProps {
 }
 
 export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const formatBackupCode = (code: string) => `${code.slice(0, 5)}-${code.slice(5, 10)}`;
 
   const handleDownloadBackupCode = () => {

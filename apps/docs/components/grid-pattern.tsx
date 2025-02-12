@@ -24,18 +24,20 @@ export function GridPattern({
         </pattern>
       </defs>
       <rect width="100%" height="100%" strokeWidth={0} fill={`url(#${patternId})`} />
-      {squares.length > 0 ? <svg x={x} y={y} className="overflow-visible">
-        {squares.map(([sqX, sqY]) => (
-          <rect
-            strokeWidth="0"
-            key={`${sqX.toString()}-${sqY.toString()}`}
-            width={width + 1}
-            height={height + 1}
-            x={sqX * width}
-            y={sqY * height}
-          />
-        ))}
-      </svg> : null}
+      {squares.length > 0 ? (
+        <svg x={x} y={y} className="overflow-visible">
+          {squares.map(([sqX, sqY]) => (
+            <rect
+              strokeWidth="0"
+              key={`${sqX.toString()}-${sqY.toString()}`}
+              width={width + 1}
+              height={height + 1}
+              x={sqX * width}
+              y={sqY * height}
+            />
+          ))}
+        </svg>
+      ) : null}
     </svg>
   );
 }

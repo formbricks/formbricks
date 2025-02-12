@@ -1,3 +1,4 @@
+import { getTranslate } from "@/tolgee/server";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
@@ -7,7 +8,8 @@ interface FollowUpEmailProps {
   logoUrl?: string;
 }
 
-export function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): React.JSX.Element {
+export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
     <Html>
       <Tailwind>
@@ -35,7 +37,7 @@ export function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): React.JSX.
           </Container>
 
           <Section className="mt-4 text-center text-sm">
-            <Text className="m-0 font-normal text-slate-500">powered by Formbricks</Text>
+            <Text className="m-0 font-normal text-slate-500">{t("emails.powered_by_formbricks")}</Text>
 
             {IMPRINT_ADDRESS && (
               <Text className="m-0 font-normal text-slate-500 opacity-50">{IMPRINT_ADDRESS}</Text>
@@ -43,14 +45,13 @@ export function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): React.JSX.
             <Text className="m-0 font-normal text-slate-500 opacity-50">
               {IMPRINT_URL && (
                 <Link href={IMPRINT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  Imprint{" "}
+                  {t("emails.imprint")}
                 </Link>
               )}
               {IMPRINT_URL && PRIVACY_URL && "•"}
               {PRIVACY_URL && (
                 <Link href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500">
-                  {" "}
-                  Privacy Policy
+                  {t("emails.privacy_policy")}
                 </Link>
               )}
             </Text>

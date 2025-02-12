@@ -1,7 +1,9 @@
+"use client";
+
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { DownloadIcon, FileIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
@@ -25,7 +27,7 @@ export const FileUploadSummary = ({
   locale,
 }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const handleLoadMore = () => {
     // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
@@ -35,7 +37,7 @@ export const FileUploadSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="">
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
           <div className="pl-4 md:pl-6">{t("common.user")}</div>

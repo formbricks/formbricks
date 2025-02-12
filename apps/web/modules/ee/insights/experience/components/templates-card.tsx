@@ -2,7 +2,7 @@
 
 import { TemplateList } from "@/modules/surveys/components/TemplateList";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TProject } from "@formbricks/types/project";
 import { TTemplateFilter } from "@formbricks/types/templates";
@@ -16,7 +16,7 @@ interface TemplatesCardProps {
 }
 
 export const TemplatesCard = ({ environment, project, user, prefilledFilters }: TemplatesCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Card>
       <CardHeader>

@@ -57,7 +57,7 @@ function MobileNavigationDialog({
     if (
       link &&
       link.pathname + link.search + link.hash ===
-      window.location.pathname + window.location.search + window.location.hash
+        window.location.pathname + window.location.search + window.location.hash
     ) {
       close();
     }

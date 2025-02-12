@@ -1,9 +1,12 @@
+"use client";
+
+import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { InsightView } from "@/modules/ee/insights/components/insights-view";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { useState } from "react";
 import { timeSince } from "@formbricks/lib/time";
@@ -29,7 +32,7 @@ export const OpenTextSummary = ({
   documentsPerPage,
   locale,
 }: OpenTextSummaryProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const isInsightsEnabled = isAIEnabled && questionSummary.insightsEnabled;
   const [visibleResponses, setVisibleResponses] = useState(10);
   const [activeTab, setActiveTab] = useState<"insights" | "responses">(
@@ -61,7 +64,6 @@ export const OpenTextSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        locale={locale}
         additionalInfo={
           isAIEnabled && questionSummary.insightsEnabled === false ? (
             <div className="flex items-center space-x-2">
@@ -121,7 +123,11 @@ export const OpenTextSummary = ({
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">{response.value}</TableCell>
+                    <TableCell className="font-medium">
+                      {typeof response.value === "string"
+                        ? renderHyperlinkedContent(response.value)
+                        : response.value}
+                    </TableCell>
                     <TableCell width={120}>
                       {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                     </TableCell>

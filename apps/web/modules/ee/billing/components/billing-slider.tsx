@@ -1,5 +1,7 @@
+"use client";
+
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
@@ -13,7 +15,7 @@ interface SliderProps {
 
 export const BillingSlider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
   ({ className, value, max, freeTierLimit, metric, ...props }, ref) => {
-    const t = useTranslations();
+    const { t } = useTranslate();
     return (
       <SliderPrimitive.Root
         ref={ref}

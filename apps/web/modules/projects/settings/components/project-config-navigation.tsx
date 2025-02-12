@@ -1,8 +1,8 @@
 "use client";
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { useTranslate } from "@tolgee/react";
 import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 
 interface ProjectConfigNavigationProps {
@@ -20,7 +20,7 @@ export const ProjectConfigNavigation = ({
   loading,
   canDoRoleManagement,
 }: ProjectConfigNavigationProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const pathname = usePathname();
 
   let navigation = [

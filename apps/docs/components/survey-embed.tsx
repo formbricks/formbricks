@@ -22,4 +22,3 @@ export default function SurveyEmbed({ surveyUrl }: SurveyEmbedProps): React.JSX.
     </div>
   );
 }
-

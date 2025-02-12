@@ -5,7 +5,7 @@ import { SurveyLinkUsed } from "@/app/s/[surveyId]/components/survey-link-used";
 import { VerifyEmail } from "@/app/s/[surveyId]/components/verify-email";
 import { getPrefillValue } from "@/app/s/[surveyId]/lib/prefilling";
 import { SurveyInline } from "@/modules/ui/components/survey";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { FormbricksAPI } from "@formbricks/api";
@@ -62,7 +62,7 @@ export const LinkSurvey = ({
   locale,
   isPreview,
 }: LinkSurveyProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";

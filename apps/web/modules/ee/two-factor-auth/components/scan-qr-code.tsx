@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { CopyIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
@@ -13,7 +15,7 @@ interface ScanQRCodeProps {
 }
 
 export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRCodeProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <div>
       <div className="p-6">

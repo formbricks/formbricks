@@ -1,6 +1,7 @@
+import { TFnType } from "@tolgee/react";
 import { TSurveyQuestionTypeEnum, ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/types";
 
-export const getLogicRules = (t: (key: string) => string) => {
+export const getLogicRules = (t: TFnType) => {
   return {
     question: {
       [`${TSurveyQuestionTypeEnum.OpenText}.text`]: {

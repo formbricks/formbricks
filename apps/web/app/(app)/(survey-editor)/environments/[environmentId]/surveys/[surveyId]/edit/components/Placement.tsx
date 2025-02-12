@@ -3,17 +3,9 @@
 import { Label } from "@/modules/ui/components/label";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
 import { TPlacement } from "@formbricks/types/common";
-
-const placements = [
-  { name: "common.bottom_right", value: "bottomRight", disabled: false },
-  { name: "common.top_right", value: "topRight", disabled: false },
-  { name: "common.top_left", value: "topLeft", disabled: false },
-  { name: "common.bottom_left", value: "bottomLeft", disabled: false },
-  { name: "common.centered_modal", value: "center", disabled: false },
-];
 
 interface TPlacementProps {
   currentPlacement: TPlacement;
@@ -32,7 +24,14 @@ export const Placement = ({
   setClickOutsideClose,
   clickOutsideClose,
 }: TPlacementProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
+  const placements = [
+    { name: t("common.bottom_right"), value: "bottomRight", disabled: false },
+    { name: t("common.top_right"), value: "topRight", disabled: false },
+    { name: t("common.top_left"), value: "topLeft", disabled: false },
+    { name: t("common.bottom_left"), value: "bottomLeft", disabled: false },
+    { name: t("common.centered_modal"), value: "center", disabled: false },
+  ];
   const overlayStyle =
     currentPlacement === "center" && overlay === "dark" ? "bg-slate-700/80" : "bg-slate-200";
   return (

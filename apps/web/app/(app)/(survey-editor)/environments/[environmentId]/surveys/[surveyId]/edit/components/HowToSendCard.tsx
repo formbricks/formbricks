@@ -1,16 +1,16 @@
 "use client";
 
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { Badge } from "@/modules/ui/components/badge";
 import { Label } from "@/modules/ui/components/label";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { getDefaultEndingCard } from "@formbricks/lib/templates";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -19,13 +19,12 @@ interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
   environment: TEnvironment;
-  locale: string;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
   const [open, setOpen] = useState(false);
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   useEffect(() => {
     if (environment) {
       setAppSetupCompleted(environment.appSetupCompleted);
@@ -35,7 +34,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment, locale
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
-      endingsTemp.push(getDefaultEndingCard(localSurvey.languages, locale));
+      endingsTemp.push(getDefaultEndingCard(localSurvey.languages, t));
     }
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,

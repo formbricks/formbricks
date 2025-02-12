@@ -1,8 +1,8 @@
 "use client";
 
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -47,7 +47,7 @@ export const SingleResponseCard = ({
   setSelectedResponseId,
   locale,
 }: SingleResponseCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const environmentId = survey.environmentId;
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

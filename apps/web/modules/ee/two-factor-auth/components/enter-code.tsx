@@ -1,8 +1,10 @@
+"use client";
+
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { enableTwoFactorAuthAction } from "@/modules/ee/two-factor-auth/actions";
 import { Button } from "@/modules/ui/components/button";
 import { OTPInput } from "@/modules/ui/components/otp-input";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -21,7 +23,7 @@ const ZEnterCodeFormState = z.object({
 type TEnterCodeFormState = z.infer<typeof ZEnterCodeFormState>;
 
 export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodeProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const { control, handleSubmit, formState } = useForm<TEnterCodeFormState>({
     defaultValues: {
       code: "",

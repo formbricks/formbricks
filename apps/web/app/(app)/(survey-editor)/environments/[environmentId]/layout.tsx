@@ -4,8 +4,8 @@ import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -18,7 +18,7 @@ const SurveyEditorEnvironmentLayout = async (props) => {
 
   const { children } = props;
 
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
