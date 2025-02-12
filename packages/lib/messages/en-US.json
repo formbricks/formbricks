@@ -748,6 +748,7 @@
         "add_webhook_description": "Send survey response data to a custom endpoint",
         "all_current_and_new_surveys": "All current and new surveys",
         "created_by_third_party": "Created by a Third Party",
+        "discord_webhook_not_supported": "Discord webhooks are currently not supported. Please use a different webhook service.",
         "empty_webhook_message": "Your webhooks will appear here as soon as you add them. ⏲️",
         "endpoint_pinged": "Yay! We are able to ping the webhook!",
         "endpoint_pinged_error": "Unable to ping the webhook!",

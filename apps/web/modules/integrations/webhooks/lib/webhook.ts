@@ -70,6 +70,15 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 
 export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
   try {
+    const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
+    const webhookUrl = new URL(webhookInput.url);
+    const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
+
+    if (isDiscordWebhook) {
+      throw new UnknownError(
+        "Discord webhooks are currently not supported. Please use a different webhook service."
+      );
+    }
     const createdWebhook = await prisma.webhook.create({
       data: {
         ...webhookInput,
@@ -141,6 +150,12 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     const webhookUrl = new URL(url);
 
     const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
+
+    if (isDiscordWebhook) {
+      throw new UnknownError(
+        "Discord webhooks are currently not supported. Please use a different webhook service."
+      );
+    }
 
     const payload = isDiscordWebhook
       ? {

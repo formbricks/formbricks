@@ -113,6 +113,16 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           throw new Error(t("common.please_select_at_least_one_survey"));
         }
 
+        const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
+
+        const webhookUrl = new URL(testEndpointInput);
+
+        const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
+
+        if (isDiscordWebhook) {
+          throw new Error(t("environments.integrations.webhooks.discord_webhook_not_supported"));
+        }
+
         const endpointHitSuccessfully = await handleTestEndpoint(false);
         if (!endpointHitSuccessfully) return;
 
