@@ -1,4 +1,5 @@
 import { webhookCache } from "@/lib/cache/webhook";
+import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -70,14 +71,8 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 
 export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
   try {
-    const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
-    const webhookUrl = new URL(webhookInput.url);
-    const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
-
-    if (isDiscordWebhook) {
-      throw new UnknownError(
-        "Discord webhooks are currently not supported. Please use a different webhook service."
-      );
+    if (isDiscordWebhook(webhookInput.url)) {
+      throw new UnknownError("Discord webhooks are currently not supported.");
     }
     const createdWebhook = await prisma.webhook.create({
       data: {
@@ -145,16 +140,8 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
-
-    const webhookUrl = new URL(url);
-
-    const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
-
-    if (isDiscordWebhook) {
-      throw new UnknownError(
-        "Discord webhooks are currently not supported. Please use a different webhook service."
-      );
+    if (isDiscordWebhook(url)) {
+      throw new UnknownError("Discord webhooks are currently not supported.");
     }
 
     const response = await fetch(url, {
@@ -182,6 +169,10 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     if (error.name === "AbortError") {
       throw new UnknownError("Request timed out after 5 seconds");
     }
+    if (error instanceof UnknownError) {
+      throw error;
+    }
+
     throw new UnknownError(`Error while fetching the URL: ${error.message}`);
   }
 };

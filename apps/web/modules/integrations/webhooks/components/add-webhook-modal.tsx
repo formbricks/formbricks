@@ -3,7 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
-import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -53,6 +53,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       }
       setHittingEndpoint(true);
       const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
+      console.log("testEndpointActionResult", testEndpointActionResult);
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
@@ -113,11 +114,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
           throw new Error(t("common.please_select_at_least_one_survey"));
         }
 
-        const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
-        const webhookUrl = new URL(testEndpointInput);
-        const isDiscordWebhook = DISCORD_WEBHOOK_URL_PATTERN.test(webhookUrl.toString());
-
-        if (isDiscordWebhook) {
+        if (isDiscordWebhook(testEndpointInput)) {
           throw new Error(t("environments.integrations.webhooks.discord_webhook_not_supported"));
         }
 
