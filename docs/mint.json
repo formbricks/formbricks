@@ -1,0 +1,279 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "colors": {
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    },
+    "dark": "#00C4B8",
+    "light": "#00C4B8",
+    "primary": "#00C4B8"
+  },
+  "favicon": "/images/favicon.svg",
+  "footerSocials": {
+    "github": "https://github.com/formbricks/formbricks",
+    "linkedin": "https://linkedin.com/company/formbricks",
+    "x": "https://x.com/formbricks"
+  },
+  "logo": {
+    "dark": "/images/logo-dark.svg",
+    "light": "/images/logo-light.svg"
+  },
+  "name": "Documentation - Formbricks",
+  "navigation": [
+    {
+      "group": "",
+      "pages": ["overview/introduction", "overview/what-is-formbricks", "overview/open-source"]
+    },
+    {
+      "group": "",
+      "pages": ["xm-and-surveys/overview"]
+    },
+    {
+      "group": "Surveys",
+      "pages": [
+        {
+          "group": "General Features",
+          "icon": "wrench",
+          "pages": [
+            "xm-and-surveys/surveys/general-features/add-image-or-video-question",
+            "xm-and-surveys/surveys/general-features/conditional-logic",
+            "xm-and-surveys/surveys/general-features/overwrite-styling",
+            "xm-and-surveys/surveys/general-features/hidden-fields",
+            "xm-and-surveys/surveys/general-features/limit-submissions",
+            "xm-and-surveys/surveys/general-features/multi-language-surveys",
+            "xm-and-surveys/surveys/general-features/partial-submissions",
+            "xm-and-surveys/surveys/general-features/recall",
+            "xm-and-surveys/surveys/general-features/shareable-dashboards",
+            "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
+            "xm-and-surveys/surveys/general-features/metadata",
+            "xm-and-surveys/surveys/general-features/variables",
+            "xm-and-surveys/surveys/general-features/show-survey-to-percent-of-users"
+          ]
+        },
+        {
+          "group": "Link Surveys",
+          "icon": "link",
+          "pages": [
+            "xm-and-surveys/surveys/link-surveys/quickstart",
+            {
+              "group": "Features",
+              "icon": "wrench",
+              "pages": [
+                "xm-and-surveys/surveys/link-surveys/data-prefilling",
+                "xm-and-surveys/surveys/link-surveys/embed-surveys",
+                "xm-and-surveys/surveys/link-surveys/market-research-panel",
+                "xm-and-surveys/surveys/link-surveys/pin-protected-surveys",
+                "xm-and-surveys/surveys/link-surveys/single-use-links",
+                "xm-and-surveys/surveys/link-surveys/source-tracking",
+                "xm-and-surveys/surveys/link-surveys/start-at-question",
+                "xm-and-surveys/surveys/link-surveys/verify-email-before-survey"
+              ]
+            }
+          ]
+        },
+        {
+          "group": "Website & App Surveys",
+          "icon": "mobile",
+          "pages": [
+            "xm-and-surveys/surveys/website-app-surveys/quickstart",
+            "xm-and-surveys/surveys/website-app-surveys/framework-guides",
+            {
+              "group": "Features",
+              "icon": "wrench",
+              "pages": [
+                "xm-and-surveys/surveys/website-app-surveys/actions",
+                "xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
+                "xm-and-surveys/surveys/website-app-surveys/user-identification",
+                "xm-and-surveys/surveys/website-app-surveys/recontact"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "group": "Core Features",
+      "pages": [
+        {
+          "group": "Question Types",
+          "icon": "question",
+          "pages": [
+            "xm-and-surveys/core-features/question-type/address",
+            "xm-and-surveys/core-features/question-type/consent",
+            "xm-and-surveys/core-features/question-type/contact-info",
+            "xm-and-surveys/core-features/question-type/date",
+            "xm-and-surveys/core-features/question-type/file-upload",
+            "xm-and-surveys/core-features/question-type/free-text",
+            "xm-and-surveys/core-features/question-type/matrix",
+            "xm-and-surveys/core-features/question-type/net-promoter-score",
+            "xm-and-surveys/core-features/question-type/ranking",
+            "xm-and-surveys/core-features/question-type/rating",
+            "xm-and-surveys/core-features/question-type/schedule-a-meeting",
+            "xm-and-surveys/core-features/question-type/select-multiple",
+            "xm-and-surveys/core-features/question-type/select-picture",
+            "xm-and-surveys/core-features/question-type/select-single",
+            "xm-and-surveys/core-features/question-type/statement-cta"
+          ]
+        },
+        {
+          "group": "Integrations",
+          "icon": "bridge",
+          "pages": [
+            "xm-and-surveys/core-features/integrations/overview",
+            "xm-and-surveys/core-features/integrations/activepieces",
+            "xm-and-surveys/core-features/integrations/airtable",
+            "xm-and-surveys/core-features/integrations/google-sheets",
+            "xm-and-surveys/core-features/integrations/make",
+            "xm-and-surveys/core-features/integrations/n8n",
+            "xm-and-surveys/core-features/integrations/notion",
+            "xm-and-surveys/core-features/integrations/slack",
+            "xm-and-surveys/core-features/integrations/wordpress",
+            "xm-and-surveys/core-features/integrations/zapier",
+            "xm-and-surveys/core-features/integrations/webhooks"
+          ]
+        },
+        "xm-and-surveys/core-features/user-management",
+        "xm-and-surveys/core-features/styling-theme",
+        "xm-and-surveys/core-features/email-customization"
+      ]
+    },
+    {
+      "group": "XM",
+      "pages": [
+        {
+          "group": "Best Practices",
+          "icon": "lightbulb",
+          "pages": [
+            "xm-and-surveys/xm/best-practices/contact-form",
+            "xm-and-surveys/xm/best-practices/docs-feedback",
+            "xm-and-surveys/xm/best-practices/feature-chaser",
+            "xm-and-surveys/xm/best-practices/feedback-box",
+            "xm-and-surveys/xm/best-practices/improve-email-content",
+            "xm-and-surveys/xm/best-practices/interview-prompt",
+            "xm-and-surveys/xm/best-practices/cancel-subscription",
+            "xm-and-surveys/xm/best-practices/pmf-survey",
+            "xm-and-surveys/xm/best-practices/quiz-time",
+            "xm-and-surveys/xm/best-practices/improve-trial-cr"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "",
+      "pages": ["development/overview"]
+    },
+    {
+      "group": "Local Setup",
+      "pages": [
+        "development/local-setup/linux",
+        "development/local-setup/mac",
+        "development/local-setup/windows",
+        "development/local-setup/gitpod",
+        "development/local-setup/github-codespaces"
+      ]
+    },
+    {
+      "group": "Contribution",
+      "pages": ["development/contribution/contribution"]
+    },
+    {
+      "group": "Support",
+      "pages": ["development/support/troubleshooting"]
+    },
+    {
+      "group": "",
+      "pages": ["self-hosting/overview"]
+    },
+    {
+      "group": "Setup",
+      "pages": [
+        "self-hosting/setup/one-click",
+        "self-hosting/setup/docker",
+        "self-hosting/setup/cluster-setup"
+      ]
+    },
+    {
+      "group": "Configuration",
+      "pages": [
+        "self-hosting/configuration/custom-ssl",
+        "self-hosting/configuration/environment-variables",
+        "self-hosting/configuration/oauth",
+        {
+          "group": "Integrations",
+          "icon": "bridge",
+          "pages": [
+            "self-hosting/configuration/airtable",
+            "self-hosting/configuration/google-sheets",
+            "self-hosting/configuration/n8n",
+            "self-hosting/configuration/notion",
+            "self-hosting/configuration/slack",
+            "self-hosting/configuration/zapier"
+          ]
+        }
+      ]
+    },
+    {
+      "group": "Advanced",
+      "pages": [
+        "self-hosting/advanced/migration",
+        "self-hosting/advanced/license",
+        "self-hosting/advanced/rate-limiting"
+      ]
+    },
+    {
+      "group": "API Documentation",
+      "pages": ["api-reference/introduction", "api-reference/rest-api"]
+    }
+  ],
+  "redirects": [
+    {
+      "destination": "/docs/overview/what-is-formbricks",
+      "permanent": true,
+      "source": "/docs/introduction/what-is-formbricks"
+    },
+    {
+      "destination": "/docs/overview/open-source",
+      "permanent": true,
+      "source": "/docs/introduction/why-open-source"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/overview",
+      "source": "/docs/introduction/how-it-works"
+    }
+  ],
+  "tabs": [
+    {
+      "name": "Overview",
+      "url": "overview"
+    },
+    {
+      "name": "XM & Surveys",
+      "url": "xm-and-surveys"
+    },
+    {
+      "name": "Self Hosting",
+      "url": "self-hosting"
+    },
+    {
+      "name": "API Reference",
+      "openapi": "/api-reference/openapi.json",
+      "url": "api-reference"
+    },
+    {
+      "name": "Development",
+      "url": "development"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Go to app",
+    "url": "https://app.formbricks.com"
+  },
+  "topbarLinks": [
+    {
+      "name": "Support",
+      "url": "https://github.com/formbricks/formbricks/discussions"
+    }
+  ]
+}
