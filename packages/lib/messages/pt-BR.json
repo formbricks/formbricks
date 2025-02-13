@@ -748,6 +748,7 @@
         "add_webhook_description": "Enviar dados das respostas da pesquisa para um endpoint personalizado",
         "all_current_and_new_surveys": "Todas as pesquisas atuais e novas",
         "created_by_third_party": "Criado por um Terceiro",
+        "discord_webhook_not_supported": "Webhooks do Discord não são suportados no momento.",
         "empty_webhook_message": "Seus webhooks vão aparecer aqui assim que você adicioná-los. ⏲️",
         "endpoint_pinged": "Uhul! Conseguimos pingar o webhook!",
         "endpoint_pinged_error": "Não consegui pingar o webhook!",

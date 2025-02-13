@@ -748,6 +748,7 @@
         "add_webhook_description": "Sende Umfragedaten an einen benutzerdefinierten Endpunkt",
         "all_current_and_new_surveys": "Alle aktuellen und neuen Umfragen",
         "created_by_third_party": "Erstellt von einer dritten Partei",
+        "discord_webhook_not_supported": "Discord-Webhooks werden derzeit nicht unterstützt.",
         "empty_webhook_message": "Deine Webhooks werden hier angezeigt, sobald Du sie hinzufügst ⏲️",
         "endpoint_pinged": "Juhu! Wir können den Webhook anpingen!",
         "endpoint_pinged_error": "Kann den Webhook nicht anpingen!",

@@ -748,6 +748,7 @@
         "add_webhook_description": "將問卷回應資料傳送至自訂端點",
         "all_current_and_new_surveys": "所有目前和新的問卷",
         "created_by_third_party": "由第三方建立",
+        "discord_webhook_not_supported": "目前不支援 Discord webhooks。",
         "empty_webhook_message": "您的 Webhook 將在您新增後立即顯示在此處。⏲️",
         "endpoint_pinged": "耶！我們能夠 ping Webhook！",
         "endpoint_pinged_error": "無法 ping Webhook！",
