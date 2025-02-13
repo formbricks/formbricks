@@ -232,6 +232,15 @@
       "destination": "/docs/overview/what-is-formbricks",
       "permanent": true,
       "source": "/docs/introduction/what-is-formbricks"
+    },
+    {
+      "destination": "/docs/overview/open-source",
+      "permanent": true,
+      "source": "/docs/introduction/why-open-source"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/overview",
+      "source": "/docs/introduction/how-it-works"
     }
   ],
   "tabs": [
