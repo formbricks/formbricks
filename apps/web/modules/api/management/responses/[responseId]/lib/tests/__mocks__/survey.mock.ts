@@ -1,9 +1,8 @@
 import { Survey } from "@prisma/client";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
-export const mockSurvey: Pick<Survey, "id" | "questions"> = {
+export const survey: Pick<Survey, "id" | "questions"> = {
   id: "rp2di001zicbm3mk8je1ue9u",
-
   questions: [
     {
       id: "i0e9y9ya4pl9iyrurlrak3yq",

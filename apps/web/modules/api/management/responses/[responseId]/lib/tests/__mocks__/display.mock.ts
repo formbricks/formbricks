@@ -9,3 +9,5 @@ export const mockDisplay: Display = {
   responseId: "ka4lox8ehrcafhd1753g8szv",
   status: "responded",
 };
+
+export const displayId = "jcvb2vzt7ok3ftjsds4gt1gm";

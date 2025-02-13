@@ -1,19 +1,22 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { organizationId, projectEnvironments } from "./__mocks__/project.mock";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { getAllEnvironmentsFromOrganizationId } from "../project";
+
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    project: {
+      findMany: vi.fn(),
+    },
+  },
+}));
 
 describe("Project Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("should return all environment ids from organization projects", async () => {
-    const organizationId = "org_1";
-    const projectEnvironments = [
-      { environments: [{ id: "env1" }, { id: "env2" }] },
-      { environments: [{ id: "env3" }] },
-    ];
-
+  test("return all environment ids from organization projects", async () => {
     vi.mocked(prisma.project.findMany).mockResolvedValue(projectEnvironments);
     const result = await getAllEnvironmentsFromOrganizationId(organizationId);
     expect(prisma.project.findMany).toHaveBeenCalledWith({
@@ -26,7 +29,21 @@ describe("Project Lib", () => {
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data).toEqual(["env1", "env2", "env3"]);
+      expect(result.data).toEqual(
+        projectEnvironments.flatMap((project) => project.environments.map((environment) => environment.id))
+      );
+    }
+  });
+
+  test("return an internal_server_error error if projects are not found", async () => {
+    vi.mocked(prisma.project.findMany).mockRejectedValue(new Error("Internal server error"));
+    const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toEqual({
+        type: "internal_server_error",
+        details: [{ field: "project", issue: "Internal server error" }],
+      });
     }
   });
 });

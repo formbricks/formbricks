@@ -129,25 +129,29 @@ export const getResponses = async (
   environmentId: string,
   params: TGetResponsesFilter
 ): Promise<Result<ApiSuccessResponse<Response[]>, ApiErrorResponse>> => {
-  const [responses, count] = await prisma.$transaction([
-    prisma.response.findMany({
-      ...getResponsesQuery(environmentId, params),
-    }),
-    prisma.response.count({
-      where: getResponsesQuery(environmentId, params).where,
-    }),
-  ]);
+  try {
+    const [responses, count] = await prisma.$transaction([
+      prisma.response.findMany({
+        ...getResponsesQuery(environmentId, params),
+      }),
+      prisma.response.count({
+        where: getResponsesQuery(environmentId, params).where,
+      }),
+    ]);
 
-  if (!responses) {
-    return err({ type: "not_found", details: [{ field: "responses", issue: "not found" }] });
+    if (!responses) {
+      return err({ type: "not_found", details: [{ field: "responses", issue: "not found" }] });
+    }
+
+    return ok({
+      data: responses,
+      meta: {
+        total: count,
+        limit: params.limit,
+        offset: params.skip,
+      },
+    });
+  } catch (error) {
+    return err({ type: "internal_server_error", details: [{ field: "responses", issue: error.message }] });
   }
-
-  return ok({
-    data: responses,
-    meta: {
-      total: count,
-      limit: params.limit,
-      offset: params.skip,
-    },
-  });
 };

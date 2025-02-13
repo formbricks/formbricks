@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { responses } from "../response";
 
 describe("API Responses", () => {
   describe("badRequestResponse", () => {
-    it("should return a 400 response with error details", async () => {
+    test("return a 400 response with error details", async () => {
       const details = [{ field: "param", issue: "invalid" }];
       const res = responses.badRequestResponse({ details });
       expect(res.status).toBe(400);
@@ -18,14 +18,14 @@ describe("API Responses", () => {
       });
     });
 
-    it("should include CORS headers when cors is true", () => {
+    test("include CORS headers when cors is true", () => {
       const res = responses.badRequestResponse({ cors: true });
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 
   describe("unauthorizedResponse", () => {
-    it("should return a 401 response with the proper error message", async () => {
+    test("return a 401 response with the proper error message", async () => {
       const res = responses.unauthorizedResponse();
       expect(res.status).toBe(401);
       const body = await res.json();
@@ -39,7 +39,7 @@ describe("API Responses", () => {
   });
 
   describe("forbiddenResponse", () => {
-    it("should return a 403 response", async () => {
+    test("return a 403 response", async () => {
       const res = responses.forbiddenResponse();
       expect(res.status).toBe(403);
       const body = await res.json();
@@ -53,7 +53,7 @@ describe("API Responses", () => {
   });
 
   describe("notFoundResponse", () => {
-    it("should return a 404 response with error details", async () => {
+    test("return a 404 response with error details", async () => {
       const details = [{ field: "resource", issue: "not found" }];
       const res = responses.notFoundResponse({ details });
       expect(res.status).toBe(404);
@@ -69,7 +69,7 @@ describe("API Responses", () => {
   });
 
   describe("conflictResponse", () => {
-    it("should return a 409 response", async () => {
+    test("return a 409 response", async () => {
       const res = responses.conflictResponse();
       expect(res.status).toBe(409);
       const body = await res.json();
@@ -83,7 +83,7 @@ describe("API Responses", () => {
   });
 
   describe("unprocessableEntityResponse", () => {
-    it("should return a 422 response with error details", async () => {
+    test("return a 422 response with error details", async () => {
       const details = [{ field: "data", issue: "malformed" }];
       const res = responses.unprocessableEntityResponse({ details });
       expect(res.status).toBe(422);
@@ -99,7 +99,7 @@ describe("API Responses", () => {
   });
 
   describe("tooManyRequestsResponse", () => {
-    it("should return a 429 response", async () => {
+    test("return a 429 response", async () => {
       const res = responses.tooManyRequestsResponse();
       expect(res.status).toBe(429);
       const body = await res.json();
@@ -113,7 +113,7 @@ describe("API Responses", () => {
   });
 
   describe("internalServerErrorResponse", () => {
-    it("should return a 500 response with error details", async () => {
+    test("return a 500 response with error details", async () => {
       const details = [{ field: "server", issue: "crashed" }];
       const res = responses.internalServerErrorResponse({ details });
       expect(res.status).toBe(500);
@@ -129,7 +129,7 @@ describe("API Responses", () => {
   });
 
   describe("successResponse", () => {
-    it("should return a success response with the provided data", async () => {
+    test("return a success response with the provided data", async () => {
       const data = { foo: "bar" };
       const meta = { page: 1 };
       const res = responses.successResponse({ data, meta });
@@ -139,7 +139,7 @@ describe("API Responses", () => {
       expect(body.meta).toEqual(meta);
     });
 
-    it("should include CORS headers when cors is true", () => {
+    test("include CORS headers when cors is true", () => {
       const data = { foo: "bar" };
       const res = responses.successResponse({ data, cors: true });
       expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");

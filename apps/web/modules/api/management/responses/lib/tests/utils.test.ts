@@ -1,5 +1,5 @@
 import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { getResponsesQuery } from "../utils";
 
 describe("getResponsesQuery", () => {
@@ -11,7 +11,7 @@ describe("getResponsesQuery", () => {
     order: "asc",
   };
 
-  it("should return the base query when no params are provided", () => {
+  test("return the base query when no params are provided", () => {
     const query = getResponsesQuery(environmentId);
     expect(query).toEqual({
       where: {
@@ -20,7 +20,7 @@ describe("getResponsesQuery", () => {
     });
   });
 
-  it("should add surveyId to the query when provided", () => {
+  test("add surveyId to the query when provided", () => {
     const query = getResponsesQuery(environmentId, { ...filters, surveyId: "survey_1" });
     expect(query.where).toEqual({
       survey: { environmentId },
@@ -28,7 +28,7 @@ describe("getResponsesQuery", () => {
     });
   });
 
-  it("should add startDate filter to the query", () => {
+  test("add startDate filter to the query", () => {
     const startDate = new Date("2023-01-01");
     const query = getResponsesQuery(environmentId, { ...filters, startDate });
     expect(query.where).toEqual({
@@ -37,7 +37,7 @@ describe("getResponsesQuery", () => {
     });
   });
 
-  it("should add endDate filter to the query", () => {
+  test("add endDate filter to the query", () => {
     const endDate = new Date("2023-01-31");
     const query = getResponsesQuery(environmentId, { ...filters, endDate });
     expect(query.where).toEqual({
@@ -46,24 +46,24 @@ describe("getResponsesQuery", () => {
     });
   });
 
-  it("should add sortBy and order to the query", () => {
+  test("add sortBy and order to the query", () => {
     const query = getResponsesQuery(environmentId, { ...filters, sortBy: "createdAt", order: "desc" });
     expect(query.orderBy).toEqual({
       createdAt: "desc",
     });
   });
 
-  it("should add limit (take) to the query", () => {
+  test("add limit (take) to the query", () => {
     const query = getResponsesQuery(environmentId, { ...filters, limit: 10 });
     expect(query.take).toBe(10);
   });
 
-  it("should add skip to the query", () => {
+  test("add skip to the query", () => {
     const query = getResponsesQuery(environmentId, { ...filters, skip: 5 });
     expect(query.skip).toBe(5);
   });
 
-  it("should add contactId to the query", () => {
+  test("add contactId to the query", () => {
     const query = getResponsesQuery(environmentId, { ...filters, contactId: "contact_1" });
     expect(query.where).toEqual({
       survey: { environmentId },
@@ -71,7 +71,7 @@ describe("getResponsesQuery", () => {
     });
   });
 
-  it("should combine multiple filters correctly", () => {
+  test("combine multiple filters correctly", () => {
     const params = {
       ...filters,
       surveyId: "survey_1",

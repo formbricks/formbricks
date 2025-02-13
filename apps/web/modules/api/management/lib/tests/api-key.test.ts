@@ -1,3 +1,4 @@
+import { apiKey, environmentId } from "./__mocks__/api-key.mock";
 import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { hashApiKey } from "@/modules/api/management/lib/utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -32,13 +33,12 @@ describe("getEnvironmentIdFromApiKey", () => {
   });
 
   test("returns a not_found error when no apiKey record is found in the database", async () => {
-    const apiKey = "test-api-key";
     vi.mocked(hashApiKey).mockImplementation((input: string) => `hashed-${input}`);
     vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
 
     const result = await getEnvironmentIdFromApiKey(apiKey);
     expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
-      where: { hashedKey: "hashed-test-api-key" },
+      where: { hashedKey: `hashed-${apiKey}` },
       select: { environmentId: true },
     });
     expect(result.ok).toBe(false);
@@ -49,29 +49,27 @@ describe("getEnvironmentIdFromApiKey", () => {
   });
 
   test("returns ok with environmentId when a valid apiKey record is found", async () => {
-    const apiKey = "valid-api-key";
     vi.mocked(hashApiKey).mockImplementation((input: string) => `hashed-${input}`);
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue({ environmentId: "env_123" });
+    vi.mocked(prisma.apiKey.findUnique).mockResolvedValue({ environmentId });
 
     const result = await getEnvironmentIdFromApiKey(apiKey);
     expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
-      where: { hashedKey: "hashed-valid-api-key" },
+      where: { hashedKey: `hashed-${apiKey}` },
       select: { environmentId: true },
     });
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data).toBe("env_123");
+      expect(result.data).toBe(environmentId);
     }
   });
 
   test("returns internal_server_error when an exception occurs during the database lookup", async () => {
-    const apiKey = "error-api-key";
     vi.mocked(hashApiKey).mockImplementation((input: string) => `hashed-${input}`);
     vi.mocked(prisma.apiKey.findUnique).mockRejectedValue(new Error("Database failure"));
 
     const result = await getEnvironmentIdFromApiKey(apiKey);
     expect(prisma.apiKey.findUnique).toHaveBeenCalledWith({
-      where: { hashedKey: "hashed-error-api-key" },
+      where: { hashedKey: `hashed-${apiKey}` },
       select: { environmentId: true },
     });
     expect(result.ok).toBe(false);

@@ -25,7 +25,6 @@ export const findAndDeleteUploadedFilesInResponse = async (
       if (!environmentId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);
       }
-
       return deleteFile(environmentId, accessType as "private" | "public", fileName);
     } catch (error) {
       console.error(`Failed to delete file ${fileUrl}:`, error);

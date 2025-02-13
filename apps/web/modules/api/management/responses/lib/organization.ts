@@ -1,6 +1,6 @@
 import { getAllEnvironmentsFromOrganizationId } from "@/modules/api/management/responses/lib/project";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
-import { Organization, Prisma } from "@prisma/client";
+import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -63,7 +63,6 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
         if (!organization) {
           return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
         }
-
         return ok(organization);
       } catch (error) {
         return err({

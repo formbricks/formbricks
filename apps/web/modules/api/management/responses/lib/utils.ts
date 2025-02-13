@@ -28,7 +28,7 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
       where: {
         ...query.where,
         createdAt: {
-          ...query.where?.createdAt,
+          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Response">),
           gte: startDate,
         },
       },
@@ -41,7 +41,7 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
       where: {
         ...query.where,
         createdAt: {
-          ...query.where?.createdAt,
+          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Response">),
           lte: endDate,
         },
       },

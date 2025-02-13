@@ -1,6 +1,6 @@
-import { mockDisplay } from "./__mocks__/display.mock";
+import { displayId, mockDisplay } from "./__mocks__/display.mock";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { deleteDisplay } from "../display";
 
@@ -17,7 +17,7 @@ describe("Display Lib", () => {
     vi.clearAllMocks();
   });
 
-  it("should delete the display successfully ", async () => {
+  test("delete the display successfully ", async () => {
     vi.mocked(prisma.display.delete).mockResolvedValue(mockDisplay);
 
     const result = await deleteDisplay(mockDisplay.id);
@@ -36,7 +36,7 @@ describe("Display Lib", () => {
     }
   });
 
-  it("should return a not_found error when the display is not found", async () => {
+  test("return a not_found error when the display is not found", async () => {
     vi.mocked(prisma.display.delete).mockRejectedValue(
       new PrismaClientKnownRequestError("Display not found", {
         code: "P2025",
@@ -57,9 +57,8 @@ describe("Display Lib", () => {
     }
   });
 
-  it("should return an internal_server_error when prisma.display.delete throws", async () => {
-    const displayId = "disp_1";
-    (prisma.display.delete as any).mockRejectedValue(new Error("Delete error"));
+  test("return an internal_server_error when prisma.display.delete throws", async () => {
+    vi.mocked(prisma.display.delete).mockRejectedValue(new Error("Delete error"));
 
     const result = await deleteDisplay(displayId);
     expect(result.ok).toBe(false);

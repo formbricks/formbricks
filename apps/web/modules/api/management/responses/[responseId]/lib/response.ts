@@ -3,6 +3,7 @@ import { getSurveyQuestions } from "@/modules/api/management/responses/[response
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/management/responses/[responseId]/lib/utils";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { Response } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -107,6 +108,14 @@ export const updateResponse = async (
 
     return ok(updatedResponse);
   } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === "P2016" || error.code === "P2025") {
+        return err({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+    }
     return err({
       type: "internal_server_error",
       details: [{ field: "response", issue: error.message }],

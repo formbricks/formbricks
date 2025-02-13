@@ -1,11 +1,18 @@
 import {
+  environmentId,
+  organizationBilling,
+  organizationId,
+  response,
+  responseFilter,
+  responseInput,
+} from "./__mocks__/repsonse.mock";
+import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/management/responses/lib/organization";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { createResponse, getResponses } from "../response";
@@ -30,50 +37,33 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@formbricks/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: true,
+}));
+
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("createResponse", () => {
-    const environmentId = "env_1";
-    const responseInput = {
-      surveyId: "survey_1",
-      displayId: "display_1",
-      finished: true,
-      data: { key: "value" },
-      language: "en",
-      meta: { info: "meta" },
-      singleUseId: "sui_1",
-      variables: {},
-      ttc: { sample: 1 },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      endingId: "ending_1",
-    };
+    test("create a response successfully", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-    it("should create a response successfully", async () => {
-      const createdResponse = { id: "resp_1", ...responseInput };
-      vi.mocked(prisma.response.create).mockResolvedValue(createdResponse);
-
-      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok("org_1"));
-      vi.mocked(getOrganizationBilling).mockResolvedValue(
-        ok({ billing: { plan: "free", limits: { monthly: { responses: 100 } } } })
-      );
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
-
-      vi.stubGlobal("IS_FORMBRICKS_CLOUD", false);
 
       const result = await createResponse(environmentId, responseInput);
       expect(prisma.response.create).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual(createdResponse);
+        expect(result.data).toEqual(response);
       }
     });
 
-    it("should return error if getOrganizationIdFromEnvironmentId fails", async () => {
-      (getOrganizationIdFromEnvironmentId as any).mockResolvedValue(
+    test("return error if getOrganizationIdFromEnvironmentId fails", async () => {
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(
         err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] })
       );
       const result = await createResponse(environmentId, responseInput);
@@ -86,9 +76,9 @@ describe("Response Lib", () => {
       }
     });
 
-    it("should return error if getOrganizationBilling fails", async () => {
-      (getOrganizationIdFromEnvironmentId as any).mockResolvedValue(ok("org_1"));
-      (getOrganizationBilling as any).mockResolvedValue(
+    test("return error if getOrganizationBilling fails", async () => {
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(
         err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] })
       );
       const result = await createResponse(environmentId, responseInput);
@@ -101,61 +91,68 @@ describe("Response Lib", () => {
       }
     });
 
-    // it('should send plan limit event when in cloud and responses limit is reached', async () => {
-    //   // Set IS_FORMBRICKS_CLOUD to true for this test
-    //   vi.stubGlobal('IS_FORMBRICKS_CLOUD', true);
-    //   const createdResponse = { id: 'resp_2', ...responseInput };
-    //   vi.mocked(prisma.response.create).mockResolvedValue(createdResponse);
+    test("send plan limit event when in cloud and responses limit is reached", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
 
-    //   vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok('org_2'));
-    //   vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: { plan: 'free', limits: { monthly: { responses: 10 } } } }));
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
 
-    //   vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(10));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
 
-    //   const result = await createResponse(environmentId, responseInput);
-    //   vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockImplementation(() => Promise.resolve());
-    //   expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
-    //   expect(result.ok).toBe(true);
-    //   if (result.ok) {
-    //     expect(result.data).toEqual(createdResponse);
-    //   }
-    // });
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
+
+      const result = await createResponse(environmentId, responseInput);
+      vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockImplementation(() => Promise.resolve(""));
+
+      expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
   });
 
   describe("getResponses", () => {
-    it("should return responses with meta information", async () => {
-      const environmentId = "env_1";
-      const params = { limit: 10, skip: 5 };
-      const responses = [{ id: "resp_1" }, { id: "resp_2" }];
-      const count = 2;
-      prisma.$transaction = vi.fn().mockResolvedValue([responses, count]);
+    test("return responses with meta information", async () => {
+      const responses = [response];
+      prisma.$transaction = vi.fn().mockResolvedValue([responses, responses.length]);
 
-      const result = await getResponses(environmentId, params);
+      const result = await getResponses(environmentId, responseFilter);
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual({
-          data: responses,
+          data: [response],
           meta: {
-            total: count,
-            limit: params.limit,
-            offset: params.skip,
+            total: responses.length,
+            limit: responseFilter.limit,
+            offset: responseFilter.skip,
           },
         });
       }
     });
 
-    it("should return a not_found error if responses are not found", async () => {
-      const environmentId = "env_1";
-      const params = { limit: 10, skip: 5 };
+    test("return a not_found error if responses are not found", async () => {
       prisma.$transaction = vi.fn().mockResolvedValue([null, 0]);
 
-      const result = await getResponses(environmentId, params);
+      const result = await getResponses(environmentId, responseFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "not_found",
           details: [{ field: "responses", issue: "not found" }],
+        });
+      }
+    });
+
+    test("return an internal_server_error error if responses are not found", async () => {
+      prisma.$transaction = vi.fn().mockRejectedValue(new Error("Internal server error"));
+
+      const result = await getResponses(environmentId, responseFilter);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          details: [{ field: "responses", issue: "Internal server error" }],
         });
       }
     });

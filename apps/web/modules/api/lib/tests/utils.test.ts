@@ -1,11 +1,11 @@
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { ZodError } from "zod";
 import { formatZodError, handleApiError } from "../utils";
 
 describe("utils", () => {
   describe("handleApiError", () => {
-    it('should return bad request response for "bad_request" error', async () => {
+    test('return bad request response for "bad_request" error', async () => {
       const details = [{ field: "param", issue: "invalid" }];
       const error: ApiErrorResponse = { type: "bad_request", details };
 
@@ -17,7 +17,7 @@ describe("utils", () => {
       expect(body.error.details).toEqual(details);
     });
 
-    it('should return unauthorized response for "unauthorized" error', async () => {
+    test('return unauthorized response for "unauthorized" error', async () => {
       const error: ApiErrorResponse = { type: "unauthorized" };
       const response = handleApiError(error);
       expect(response.status).toBe(401);
@@ -26,7 +26,7 @@ describe("utils", () => {
       expect(body.error.message).toBe("Unauthorized");
     });
 
-    it('should return forbidden response for "forbidden" error', async () => {
+    test('return forbidden response for "forbidden" error', async () => {
       const error: ApiErrorResponse = { type: "forbidden" };
       const response = handleApiError(error);
       expect(response.status).toBe(403);
@@ -35,7 +35,7 @@ describe("utils", () => {
       expect(body.error.message).toBe("Forbidden");
     });
 
-    it('should return not found response for "not_found" error', async () => {
+    test('return not found response for "not_found" error', async () => {
       const details = [{ field: "resource", issue: "not found" }];
       const error: ApiErrorResponse = { type: "not_found", details };
 
@@ -47,7 +47,7 @@ describe("utils", () => {
       expect(body.error.details).toEqual(details);
     });
 
-    it('should return conflict response for "conflict" error', async () => {
+    test('return conflict response for "conflict" error', async () => {
       const error: ApiErrorResponse = { type: "conflict" };
       const response = handleApiError(error);
       expect(response.status).toBe(409);
@@ -56,7 +56,7 @@ describe("utils", () => {
       expect(body.error.message).toBe("Conflict");
     });
 
-    it('should return unprocessable entity response for "unprocessable_entity" error', async () => {
+    test('return unprocessable entity response for "unprocessable_entity" error', async () => {
       const details = [{ field: "data", issue: "malformed" }];
       const error: ApiErrorResponse = { type: "unprocessable_entity", details };
 
@@ -68,7 +68,7 @@ describe("utils", () => {
       expect(body.error.details).toEqual(details);
     });
 
-    it('should return too many requests response for "too_many_requests" error', async () => {
+    test('return too many requests response for "too_many_requests" error', async () => {
       const error: ApiErrorResponse = { type: "too_many_requests" };
       const response = handleApiError(error);
       expect(response.status).toBe(429);
@@ -77,7 +77,7 @@ describe("utils", () => {
       expect(body.error.message).toBe("Too Many Requests");
     });
 
-    it('should return internal server error response for "internal_server_error" error', async () => {
+    test('return internal server error response for "internal_server_error" error', async () => {
       const details = [{ field: "server", issue: "error occurred" }];
       const error: ApiErrorResponse = { type: "internal_server_error", details };
 
@@ -91,7 +91,7 @@ describe("utils", () => {
   });
 
   describe("formatZodError", () => {
-    it("should correctly format a Zod error", () => {
+    test("correctly format a Zod error", () => {
       const zodError = {
         issues: [
           {
@@ -112,7 +112,7 @@ describe("utils", () => {
       ]);
     });
 
-    it("should return an empty array if there are no issues", () => {
+    test("return an empty array if there are no issues", () => {
       const zodError = { issues: [] } as unknown as ZodError;
       const formatted = formatZodError(zodError);
       expect(formatted).toEqual([]);

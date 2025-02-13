@@ -1,3 +1,4 @@
+import { environmentId, responseId, surveyId } from "./__mocks__/helper.mock";
 import { getResponse, getSurvey } from "@/modules/api/management/lib/services";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { beforeEach, describe, expect, test, vi } from "vitest";
@@ -16,10 +17,6 @@ describe("API Management Helper", () => {
 
   describe("getEnvironmentIdFromSurveyId", () => {
     test("should return ok with environmentId when survey is found", async () => {
-      const surveyId = "survey_123";
-      const environmentId = "env_123";
-
-      // Simulate a successful survey lookup
       vi.mocked(getSurvey).mockResolvedValue(ok({ environmentId }));
 
       const result = await getEnvironmentIdFromSurveyId(surveyId);
@@ -32,7 +29,6 @@ describe("API Management Helper", () => {
     });
 
     test("should return error when survey is not found", async () => {
-      const surveyId = "survey_not_found";
       const errorResponse = {
         type: "not_found",
         details: [{ field: "survey", issue: "not found" }],
@@ -52,10 +48,6 @@ describe("API Management Helper", () => {
 
   describe("getEnvironmentIdFromResponseId", () => {
     test("should return ok with environmentId when both response and survey are found", async () => {
-      const responseId = "response_123";
-      const surveyId = "survey_123";
-      const environmentId = "env_123";
-
       vi.mocked(getResponse).mockResolvedValue(ok({ surveyId }));
       vi.mocked(getSurvey).mockResolvedValue(ok({ environmentId }));
 
@@ -70,7 +62,6 @@ describe("API Management Helper", () => {
     });
 
     test("should return error when response is not found", async () => {
-      const responseId = "response_not_found";
       const errorResponse = {
         type: "not_found",
         details: [{ field: "response", issue: "not found" }],
@@ -89,8 +80,6 @@ describe("API Management Helper", () => {
     });
 
     test("should return error when survey is not found even if response is found", async () => {
-      const responseId = "response_456";
-      const surveyId = "survey_missing";
       const errorResponse = {
         type: "not_found",
         details: [{ field: "survey", issue: "not found" }],
