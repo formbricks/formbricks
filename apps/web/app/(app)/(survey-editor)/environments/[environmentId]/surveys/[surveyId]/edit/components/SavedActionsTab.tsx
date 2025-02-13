@@ -37,6 +37,8 @@ export const SavedActionsTab = ({
     setOpen(false);
   };
 
+  const allActions = [...noCodeActions, ...codeActions];
+
   return (
     <div>
       <Input
@@ -53,6 +55,11 @@ export const SavedActionsTab = ({
         id="search-actions"
       />
       <div className="max-h-96 overflow-y-auto">
+        {!allActions.length && (
+          <div className="pt-4 text-center">
+            <span className="text-sm text-slate-500">No saved actions found</span>
+          </div>
+        )}
         {[noCodeActions, codeActions].map(
           (actions, i) =>
             actions.length > 0 && (

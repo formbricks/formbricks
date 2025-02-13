@@ -52,7 +52,9 @@ export const ActionClassesTable = ({
               </button>
             ))
           ) : (
-            <div className="py-8 text-center text-sm text-slate-500">No actions found</div>
+            <div className="py-8 text-center">
+              <span className="text-sm text-slate-500">No actions found</span>
+            </div>
           )}
         </div>
       </div>

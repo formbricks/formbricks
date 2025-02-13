@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const removedNewSessionEvent: MigrationScript = {
@@ -5,61 +6,61 @@ export const removedNewSessionEvent: MigrationScript = {
   id: "dnh52k9vepinuhwuur8fclqf",
   name: "20250211050118_removed_new_session_event",
   run: async ({ tx }) => {
-    // Find all "New Session" actions
-    const newSessionActionsResult = await tx.$queryRaw`
+    // Find all automatic actions - these are all the "New Session" actions
+    const automaticActionsResult = await tx.$queryRaw`
       SELECT id, name 
       FROM "ActionClass" 
-      WHERE name = 'New Session' AND type = 'automatic'
+      WHERE type = 'automatic'
     `;
 
-    const newSessionActions = newSessionActionsResult as { id: string; name: string }[];
+    const automaticActions = automaticActionsResult as { id: string; name: string }[];
 
-    console.log(`Found ${newSessionActions.length.toString()} new session actions`);
+    console.log(`Found ${automaticActions.length.toString()} new session actions`);
 
-    let updatedActions = 0;
-    let deletedActions = 0;
+    const actionsToUpdate = [];
+    const actionsToDelete = [];
 
-    for (const action of newSessionActions) {
+    for (const action of automaticActions) {
       // Check for survey triggers using this action
       const surveyTriggersResult = await tx.$queryRaw`
-        SELECT id 
-        FROM "SurveyTrigger" 
+        SELECT id
+        FROM "SurveyTrigger"
         WHERE "actionClassId" = ${action.id}
       `;
 
       const surveyTriggers = surveyTriggersResult as { id: string }[];
 
       if (surveyTriggers.length > 0) {
-        // Update action to noCode type
-        await tx.$executeRaw`
-          UPDATE "ActionClass"
-          SET type = 'noCode',
-              "noCodeConfig" = '{"type":"pageView","urlFilters":[]}'::jsonb
-          WHERE id = ${action.id}
-        `;
-        updatedActions++;
+        actionsToUpdate.push(action.id);
       } else {
-        // Delete unused action
-        await tx.$executeRaw`
-          DELETE FROM "ActionClass"
-          WHERE id = ${action.id}
-        `;
-        deletedActions++;
+        actionsToDelete.push(action.id);
       }
     }
 
-    console.log(
-      `Updated ${updatedActions.toString()} new session actions and deleted ${deletedActions.toString()} new session actions`
-    );
+    // batches:
+    const batchSize = 20000;
 
-    console.log("Updating the rest of the automatic actions to noCode type");
+    for (let i = 0; i < actionsToUpdate.length; i += batchSize) {
+      const batch = actionsToUpdate.slice(i, i + batchSize);
 
-    const updatedActionsResult = await tx.$executeRaw`
-      UPDATE "ActionClass"
-      SET type = 'noCode'
-      WHERE type = 'automatic'
-    `;
+      const updatedActions = await tx.$executeRaw`
+        UPDATE "ActionClass"
+        SET type = 'noCode',
+            "noCodeConfig" = '{"type":"pageView","urlFilters":[]}'::jsonb
+        WHERE id IN (${Prisma.join(batch)})
+      `;
 
-    console.log(`Updated ${updatedActionsResult.toString()} automatic actions`);
+      console.log(`Updated ${updatedActions.toString()} actions`);
+    }
+
+    for (let i = 0; i < actionsToDelete.length; i += batchSize) {
+      const batch = actionsToDelete.slice(i, i + batchSize);
+
+      const deletedActions = await tx.$executeRaw`
+        DELETE FROM "ActionClass" WHERE id IN (${Prisma.join(batch)})
+      `;
+
+      console.log(`Deleted ${deletedActions.toString()} actions`);
+    }
   },
 };
