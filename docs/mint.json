@@ -411,7 +411,7 @@
     {
       "destination": "/xm-and-surveys/surveys/website-app-surveys/actions",
       "permanent": true,
-      "source": "/docs/app-surveys/actions"
+      "source": "/app-surveys/actions"
     },
     {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/advanced-targeting",
