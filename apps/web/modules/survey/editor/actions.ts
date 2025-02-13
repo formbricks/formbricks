@@ -11,7 +11,6 @@ import {
 } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
-import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
@@ -20,6 +19,7 @@ import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurvey } from "@formbricks/types/surveys/types";
 import { getProject } from "./lib/project";
+import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 
 /**
  * Checks if survey follow-ups are enabled for the given organization.
