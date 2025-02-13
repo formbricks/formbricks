@@ -1,6 +1,6 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getActionClasses } from "@/modules/survey/editor/lib/action-class";
 import { handleTriggerUpdates } from "@/modules/survey/editor/lib/utils";
+import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";

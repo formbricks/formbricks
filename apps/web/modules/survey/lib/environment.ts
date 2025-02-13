@@ -34,7 +34,7 @@ export const getEnvironment = reactCache(
           throw error;
         }
       },
-      [`survey-editor-getEnvironment-${environmentId}`],
+      [`survey-lib-getEnvironment-${environmentId}`],
       {
         tags: [environmentCache.tag.byId(environmentId)],
       }

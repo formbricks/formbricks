@@ -1,8 +1,9 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getEnvironment } from "@/modules/survey/lib/environment";
 import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
-import { getProjectByEnvironmentId } from "@/modules/survey/templates/lib/project";
+import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
@@ -10,7 +11,6 @@ import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplateRole } from "@formbricks/types/templates";
 import { TemplateContainerWithPreview } from "./components/template-container";
-import { getEnvironment } from "./lib/environment";
 
 interface SurveyTemplateProps {
   params: Promise<{

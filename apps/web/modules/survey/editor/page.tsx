@@ -5,11 +5,13 @@ import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/l
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
-import { getActionClasses } from "@/modules/survey/editor/lib/action-class";
-import { getEnvironment } from "@/modules/survey/editor/lib/environment";
-import { getProjectByEnvironmentId, getProjectLanguages } from "@/modules/survey/editor/lib/project";
+import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
+import { getActionClasses } from "@/modules/survey/lib/action-class";
+import { getEnvironment } from "@/modules/survey/lib/environment";
 import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
+import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
+import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getTranslate } from "@/tolgee/server";
@@ -23,7 +25,6 @@ import {
 } from "@formbricks/lib/constants";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { SurveyEditor } from "./components/survey-editor";
-import { getResponseCountBySurveyId } from "./lib/response";
 import { getUserLocale } from "./lib/user";
 
 export const generateMetadata = async (props) => {

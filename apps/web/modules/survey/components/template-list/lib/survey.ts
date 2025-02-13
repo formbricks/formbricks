@@ -1,7 +1,7 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getActionClasses } from "@/modules/survey/components/template-list/components/action-class";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { handleTriggerUpdates } from "@/modules/survey/components/template-list/lib/utils";
+import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";

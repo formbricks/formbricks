@@ -26,7 +26,7 @@ export const getActionClasses = reactCache(
           throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
         }
       },
-      [`survey-template-list-getActionClasses-${environmentId}`],
+      [`survey-lib-getActionClasses-${environmentId}`],
       {
         tags: [actionClassCache.tag.byEnvironmentId(environmentId)],
       }

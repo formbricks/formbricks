@@ -33,7 +33,7 @@ export const getProjectByEnvironmentId = reactCache(
           throw error;
         }
       },
-      [`survey-templates-getProjectByEnvironmentId-${environmentId}`],
+      [`survey-lib-getProjectByEnvironmentId-${environmentId}`],
       {
         tags: [projectCache.tag.byEnvironmentId(environmentId)],
       }

@@ -1,6 +1,7 @@
 import { validateSurveySingleUseId } from "@/app/lib/singleUseSurveys";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { LinkSurvey } from "@/modules/survey/link/components/link-survey";
@@ -8,7 +9,7 @@ import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { getResponseBySingleUseId, getResponseCountBySurveyId } from "@/modules/survey/link/lib/response";
+import { getResponseBySingleUseId } from "@/modules/survey/link/lib/response";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import { Response } from "@prisma/client";
 import type { Metadata } from "next";
