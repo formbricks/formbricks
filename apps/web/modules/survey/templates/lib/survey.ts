@@ -1,10 +1,10 @@
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";
+import { doesSurveyHasOpenTextQuestion } from "@/modules/survey/lib/utils";
 import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const createSurvey = async (

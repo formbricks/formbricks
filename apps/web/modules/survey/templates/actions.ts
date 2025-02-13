@@ -4,7 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getOrganizationAIKeys } from "@/modules/survey/templates/lib/organization";
+import { getOrganizationAIKeys } from "@/modules/survey/lib/organization";
 import { createSurvey } from "@/modules/survey/templates/lib/survey";
 import { createId } from "@paralleldrive/cuid2";
 import { generateObject } from "ai";

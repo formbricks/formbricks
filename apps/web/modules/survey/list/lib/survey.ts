@@ -1,4 +1,5 @@
 import "server-only";
+import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { getEnvironmentIdIfExists } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
@@ -13,7 +14,6 @@ import { segmentCache } from "@formbricks/lib/cache/segment";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { buildOrderByClause, buildWhereClause } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";

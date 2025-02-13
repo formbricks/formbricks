@@ -1,15 +1,14 @@
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getActionClasses } from "@/modules/survey/editor/lib/action-class";
 import { handleTriggerUpdates } from "@/modules/survey/editor/lib/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 import { getInsightsEnabled } from "@/modules/survey/lib/utils";
-import { getOrganizationAIKeys } from "@/modules/survey/templates/lib/organization";
+import { doesSurveyHasOpenTextQuestion } from "@/modules/survey/lib/utils";
 import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
