@@ -409,7 +409,7 @@
       "source": "/docs/app-surveys/framework-guides"
     },
     {
-      "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/actions",
+      "destination": "/xm-and-surveys/surveys/website-app-surveys/actions",
       "permanent": true,
       "source": "/docs/app-surveys/actions"
     },
