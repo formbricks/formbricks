@@ -53,7 +53,6 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       }
       setHittingEndpoint(true);
       const testEndpointActionResult = await testEndpointAction({ url: testEndpointInput });
-      console.log("testEndpointActionResult", testEndpointActionResult);
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
