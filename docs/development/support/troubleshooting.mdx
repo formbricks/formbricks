@@ -1,0 +1,38 @@
+---
+title: "Troubleshooting"
+description: "Here, you'll find help with common issues."
+icon: "wrench"
+---
+
+## "The app doesn't work after Prisma migration"
+
+If the app doesn’t work after a Prisma migration, clear your browser’s storage and reload the page. This will force the app to fetch data from the server again. ![prisma](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738108186/image_dwm9hp.jpg)
+
+## "I ran 'pnpm i' but there seems to be an error with the packages"
+
+If you run `pnpm i` and get an error with the packages, try running `pnpm clean` followed by `pnpm i` again. This often solves the problem.
+
+## "I get a full-screen error with cryptic strings"
+
+This usually happens when the Formbricks Widget isn't correctly or completely built.
+
+```bash
+pnpm build --filter=@formbricks/js
+
+// Run the app again
+pnpm dev
+```
+
+## "My machine struggles with the repository"
+
+Since we're working with a monorepo structure, the repository can get quite big. If you're having trouble working with the repository, try the following:
+
+```bash helloWorld.js
+pnpm dev --filter=@formbricks/web...
+```
+
+It’s better to use a single terminal with `pnpm dev` rather than having multiple open (one with the Formbricks app and one with the demo).
+
+## Error: "Uncaught (in promise) SyntaxError: Unexpected token !DOCTYPE ... is not valid JSON"![Syntax Error](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738109837/image_wbxv8k.jpg)
+
+If you see this error, it happens when the person connected to the widget is deleted. To fix it, log out of the test person and reload the page.![Reset person](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738110212/image_nvkpku.jpg)

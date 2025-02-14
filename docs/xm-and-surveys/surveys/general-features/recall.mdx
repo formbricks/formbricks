@@ -1,0 +1,79 @@
+---
+title: "Recall Data"
+description: "Personalize your surveys by dynamically inserting data from URL parameters or previous answers into questions and descriptions. The Recall Data feature helps create engaging, adaptive survey experiences tailored to each respondent."
+icon: "rotate-right"
+---
+
+## Recall Sources
+
+You can recall data from the following sources:
+
+- From a previous question
+
+- From a [Hidden Field](/xm-and-surveys/surveys/general-features/hidden-fields)
+
+- From a [Variable](/xm-and-surveys/surveys/general-features/variables)
+
+## Recalling from a previous question
+
+<Note>
+  The recall functionality is disabled on the first question of the survey since
+  there’s no preceding question to recall data from.
+</Note>
+
+### **Pre-requisite**
+
+Ensure the answer you wish to recall precedes the question in which it will be recalled. Here’s an example of setting up the first question:
+
+![Survey setup example with link survey template](/images/xm-and-surveys/surveys/general-features/recall/step-three.webp)
+
+### **Step 1: Recall Data**
+
+Type **`@`** in the question or description field where you want to insert a recall. This triggers a dropdown menu listing all preceding questions. Select the question you want to recall data from.
+
+![Dropdown menu for recalling data in survey](/images/xm-and-surveys/surveys/general-features/recall/step-two.webp)
+
+### **Step 2: Set a Fallback**
+
+To ensure the survey remains coherent when a response is missing (or the question is optional), you should set a fallback option.
+
+![Setting fallback option in survey question](/images/xm-and-surveys/surveys/general-features/recall/step-one.webp)
+
+
+## Recalling from the URL
+
+1. Create a hidden field, [here is how →](/xm-and-surveys/surveys/general-features/hidden-fields)
+
+2. Use the `@` symbol in a question or description to recall the value of the hidden field
+
+3. Set a fallback in case the hidden field is not being filled by a URL parameter
+
+4. Use [Data Prefilling](/xm-and-surveys/surveys/link-surveys/data-prefilling) to set the hidden field value when the survey is accessed
+
+## Recalling from a Variable
+
+1. Create a variable, [here is how →](/xm-and-surveys/surveys/general-features/variables)
+
+2. Use the `@` symbol in a question or description to recall the value of the variable
+
+3. Set a fallback in case the variable is not being filled by a URL parameter
+
+## Live Demo
+
+<iframe
+  title="Survey Embed"
+  src="https://app.formbricks.com/s/cm393eiiq0001kxphzc6lbbku"
+  style={{
+    position: "relative",
+    height: "90vh",
+    maxHeight: "100vh",
+    width: "100%",
+    border: 0,
+    borderRadius: "12px",
+    overflow: "auto",
+  }}
+/>
+
+## **Conclusion**
+
+Recall Data in Formbricks surveys allows for a conversational and customized survey experience that enhances engagement and improves the quality of feedback. By integrating previous responses into new questions, you create a more interactive and relevant environment for respondents.
