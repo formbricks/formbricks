@@ -717,7 +717,9 @@
         "select_a_database": "Select Database",
         "select_a_field_to_map": "Select a field to map",
         "select_a_survey_question": "Select a survey question",
-        "sync_responses_with_a_notion_database": "Sync responses with a Notion Database"
+        "sync_responses_with_a_notion_database": "Sync responses with a Notion Database",
+        "update_connection": "Reconnect Notion",
+        "update_connection_tooltip": "Reconnect the integration to include newly added databases. Your existing integrations will remain intact."
       },
       "notion_integration_description": "Send data to your Notion database",
       "please_select_a_survey_error": "Please select a survey",
@@ -748,6 +750,7 @@
         "add_webhook_description": "Send survey response data to a custom endpoint",
         "all_current_and_new_surveys": "All current and new surveys",
         "created_by_third_party": "Created by a Third Party",
+        "discord_webhook_not_supported": "Discord webhooks are currently not supported.",
         "empty_webhook_message": "Your webhooks will appear here as soon as you add them. ⏲️",
         "endpoint_pinged": "Yay! We are able to ping the webhook!",
         "endpoint_pinged_error": "Unable to ping the webhook!",
