@@ -18,7 +18,7 @@ const document = createDocument({
   },
   servers: [
     {
-      url: "http://app.formbricks.com/api",
+      url: "https://app.formbricks.com/api",
       description: "The production server.",
     },
   ],
