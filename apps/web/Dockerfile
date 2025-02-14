@@ -44,11 +44,9 @@ WORKDIR /app
 # COPY --from=builder /app/out/json/ .
 # COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install the dependencies
-# RUN pnpm install
-
 # Prepare the build
 COPY . .
+
 # Create a .env file
 RUN touch apps/web/.env
 
@@ -60,9 +58,6 @@ RUN pnpm install
 
 # Build the project
 RUN pnpm build --filter=@formbricks/web...
-
-# log all contents of .next:
-RUN ls -la /app/apps/web/.next
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt

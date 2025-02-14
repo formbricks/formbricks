@@ -33,8 +33,8 @@
     "@paralleldrive/cuid2": "2.2.2",
     "prisma": "6.0.1",
     "prisma-dbml-generator": "0.12.0",
-    "prisma-json-types-generator": "3.1.1",
     "ts-node": "10.9.2",
-    "zod": "3.24.1"
+    "zod": "3.24.1",
+    "prisma-json-types-generator": "3.2.2"
   }
 }
