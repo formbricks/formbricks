@@ -963,7 +963,7 @@ export const createSurvey = async (
     });
 
     if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
     }
 
     await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
