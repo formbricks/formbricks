@@ -165,7 +165,11 @@ export function FileInput({
           return (
             <div
               key={index}
-              className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
+              className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border"
+              aria-label={`You've successfully uploaded the file ${fileName}`}
+              role="button"
+              tabIndex={0}
+            >
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
                 <div className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
@@ -217,16 +221,12 @@ export function FileInput({
 
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
-            <div
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
-              tabIndex={1}
-              onKeyDown={(e) => {
-                // Accessibility: if spacebar was pressed pass this down to the input
-                if (e.key === " ") {
-                  e.preventDefault();
-                  document.getElementById(uniqueHtmlFor)?.click();
-                  document.getElementById(uniqueHtmlFor)?.focus();
-                }
+            <button
+              type="button"
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              aria-label="Click or drag to upload files"
+              onClick={() => {
+                document.getElementById(uniqueHtmlFor)?.click();
               }}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -241,25 +241,27 @@ export function FileInput({
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <p className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
-                <span className="fb-font-medium">Click or drag to upload files.</span>
-              </p>
-              <input
-                type="file"
-                id={uniqueHtmlFor}
-                name={uniqueHtmlFor}
-                accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
-                className="fb-hidden"
-                onChange={async (e) => {
-                  const inputElement = e.target as HTMLInputElement;
-                  if (inputElement.files) {
-                    await handleFileSelection(inputElement.files);
-                  }
-                }}
-                multiple={allowMultipleFiles}
-              />
-            </div>
+              <label
+                htmlFor={uniqueHtmlFor}
+                className="fb-font-medium fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
+                Click or drag to upload files.
+              </label>
+            </button>
           ) : null}
+          <input
+            type="file"
+            id={uniqueHtmlFor}
+            name={uniqueHtmlFor}
+            accept={allowedFileExtensions?.map((ext) => `.${ext}`).join(",")}
+            className="fb-hidden"
+            onChange={async (e) => {
+              const inputElement = e.target as HTMLInputElement;
+              if (inputElement.files) {
+                await handleFileSelection(inputElement.files);
+              }
+            }}
+            multiple={allowMultipleFiles}
+          />
         </label>
       </div>
     </div>
