@@ -1,4 +1,5 @@
 import { webhookCache } from "@/lib/cache/webhook";
+import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -70,6 +71,9 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 
 export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<boolean> => {
   try {
+    if (isDiscordWebhook(webhookInput.url)) {
+      throw new UnknownError("Discord webhooks are currently not supported.");
+    }
     const createdWebhook = await prisma.webhook.create({
       data: {
         ...webhookInput,
@@ -136,6 +140,10 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
+    if (isDiscordWebhook(url)) {
+      throw new UnknownError("Discord webhooks are currently not supported.");
+    }
+
     const response = await fetch(url, {
       method: "POST",
       body: JSON.stringify({
@@ -161,6 +169,10 @@ export const testEndpoint = async (url: string): Promise<boolean> => {
     if (error.name === "AbortError") {
       throw new UnknownError("Request timed out after 5 seconds");
     }
+    if (error instanceof UnknownError) {
+      throw error;
+    }
+
     throw new UnknownError(`Error while fetching the URL: ${error.message}`);
   }
 };
