@@ -204,12 +204,12 @@
           "group": "Integrations",
           "icon": "bridge",
           "pages": [
-            "self-hosting/configuration/airtable",
-            "self-hosting/configuration/google-sheets",
-            "self-hosting/configuration/n8n",
-            "self-hosting/configuration/notion",
-            "self-hosting/configuration/slack",
-            "self-hosting/configuration/zapier"
+            "self-hosting/configuration/integrations/airtable",
+            "self-hosting/configuration/integrations/google-sheets",
+            "self-hosting/configuration/integrations/n8n",
+            "self-hosting/configuration/integrations/notion",
+            "self-hosting/configuration/integrations/slack",
+            "self-hosting/configuration/integrations/zapier"
           ]
         }
       ]
