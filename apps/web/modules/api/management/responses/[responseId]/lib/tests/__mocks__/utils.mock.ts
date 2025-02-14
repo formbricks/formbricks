@@ -16,7 +16,7 @@ export const openTextQuestion: Survey["questions"][number] = {
 };
 
 export const fileUploadQuestion: Survey["questions"][number] = {
-  id: "y3ydd3td2iq09wa599cxo1md",
+  id: "y3ydd3td2iq09wa599cxo1me",
   type: TSurveyQuestionTypeEnum.FileUpload,
   headline: { en: "File Upload Question" },
   required: true,

@@ -100,8 +100,9 @@ describe("Response Lib", () => {
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
 
-      const result = await createResponse(environmentId, responseInput);
       vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockImplementation(() => Promise.resolve(""));
+
+      const result = await createResponse(environmentId, responseInput);
 
       expect(sendPlanLimitsReachedEventToPosthogWeekly).toHaveBeenCalled();
       expect(result.ok).toBe(true);
@@ -144,7 +145,7 @@ describe("Response Lib", () => {
       }
     });
 
-    test("return an internal_server_error error if responses are not found", async () => {
+    test("return an internal_server_error error if prisma transaction fails", async () => {
       prisma.$transaction = vi.fn().mockRejectedValue(new Error("Internal server error"));
 
       const result = await getResponses(environmentId, responseFilter);

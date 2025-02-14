@@ -28,7 +28,7 @@ export const getSurvey = reactCache(async (surveyId: string) =>
 
         return ok(survey);
       } catch (error) {
-        return err({ type: "internal_server_error", details: [{ field: "survey", issue: "not found" }] });
+        return err({ type: "internal_server_error", details: [{ field: "survey", issue: error.message }] });
       }
     },
     [`utils-getSurvey-${surveyId}`],
@@ -55,7 +55,7 @@ export const getResponse = reactCache(async (responseId: string) =>
 
         return ok(response);
       } catch (error) {
-        return err({ type: "internal_server_error", details: [{ field: "response", issue: "not found" }] });
+        return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
       }
     },
     [`utils-getResponse-${responseId}`],

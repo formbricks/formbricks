@@ -51,7 +51,7 @@ export const checkAuthorization = ({
   return okVoid();
 };
 
-export type HandlerFn<TInput = {}> = ({
+export type HandlerFn<TInput = Record<string, unknown>> = ({
   authentication,
   parsedInput,
   request,
@@ -63,7 +63,7 @@ export type HandlerFn<TInput = {}> = ({
 
 export type ExtendedSchemas = {
   body?: z.ZodObject<ZodRawShape>;
-  query?: z.ZodObject<ZodRawShape>;
+  query?: z.ZodObject<ZodRawShape>
   params?: z.ZodObject<ZodRawShape>;
 };
 

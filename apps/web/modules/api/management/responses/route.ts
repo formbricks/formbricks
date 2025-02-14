@@ -10,7 +10,7 @@ export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      query: ZGetResponsesFilter,
+      query: ZGetResponsesFilter.sourceType(),
     },
     handler: async ({ authentication, parsedInput }) => {
       const { query } = parsedInput;

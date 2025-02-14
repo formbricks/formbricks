@@ -248,7 +248,7 @@ const tooManyRequestsResponse = (
 
   return Response.json(
     {
-      code: "internal_server_error",
+      code: "too_many_requests",
       message,
       details: {},
     } as ApiErrorResponse,

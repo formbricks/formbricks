@@ -62,7 +62,7 @@ describe("Services", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "internal_server_error",
-          details: [{ field: "survey", issue: "not found" }],
+          details: [{ field: "survey", issue: "db error" }],
         });
       }
     });
@@ -115,7 +115,7 @@ describe("Services", () => {
       if (!result.ok) {
         expect(result.error).toEqual({
           type: "internal_server_error",
-          details: [{ field: "response", issue: "not found" }],
+          details: [{ field: "response", issue: "db error" }],
         });
       }
     });

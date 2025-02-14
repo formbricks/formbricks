@@ -8,7 +8,7 @@ import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils"
 import { TResponseInput } from "@/modules/api/management/responses/types/responses";
 import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
-import { ApiSuccessResponse } from "@/modules/api/types/api-success";
+import { ApiResponseWithMeta } from "@/modules/api/types/api-success";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -62,10 +62,6 @@ export const createResponse = async (
       endingId,
     };
 
-    const responsePrisma = await prisma.response.create({
-      data: prismaData,
-    });
-
     const organizationIdResult = await getOrganizationIdFromEnvironmentId(environmentId);
     if (!organizationIdResult.ok) {
       return err(organizationIdResult.error);
@@ -75,10 +71,11 @@ export const createResponse = async (
     if (!organizationResult.ok) {
       return err(organizationResult.error);
     }
-
     const organization = organizationResult.data;
 
-    const response = responsePrisma;
+    const response = await prisma.response.create({
+      data: prismaData,
+    });
 
     responseCache.revalidate({
       environmentId,
@@ -128,7 +125,7 @@ export const createResponse = async (
 export const getResponses = async (
   environmentId: string,
   params: TGetResponsesFilter
-): Promise<Result<ApiSuccessResponse<Response[]>, ApiErrorResponse>> => {
+): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponse>> => {
   try {
     const [responses, count] = await prisma.$transaction([
       prisma.response.findMany({

@@ -36,7 +36,7 @@ export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string) => {
         return err({ type: "internal_server_error", details: [{ field: "apiKey", issue: error.message }] });
       }
     },
-    [`management-api-getEnvironmentIdFromApiKey-${apiKey}`],
+    [`management-api-getEnvironmentIdFromApiKey-${hashedKey}`],
     {
       tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
     }
