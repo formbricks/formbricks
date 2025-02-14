@@ -9,7 +9,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   summary: "Get responses",
   description: "Gets responses from the database.",
   requestParams: {
-    query: ZGetResponsesFilter.required(),
+    query: ZGetResponsesFilter.sourceType().required(),
   },
   tags: ["responses"],
   responses: {
