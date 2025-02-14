@@ -252,7 +252,7 @@ export const PreviewSurvey = ({
             </div>
             <MediaBackground
               surveyType={survey.type}
-              styling={project.styling}
+              styling={styling}
               ContentRef={ContentRef}
               isMobilePreview>
               {previewType === "modal" ? (
@@ -384,7 +384,7 @@ export const PreviewSurvey = ({
             ) : (
               <MediaBackground
                 surveyType={survey.type}
-                styling={project.styling}
+                styling={styling}
                 ContentRef={ContentRef}
                 isEditorView>
                 <div className="absolute left-5 top-5">
