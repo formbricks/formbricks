@@ -204,12 +204,12 @@
           "group": "Integrations",
           "icon": "bridge",
           "pages": [
-            "self-hosting/configuration/airtable",
-            "self-hosting/configuration/google-sheets",
-            "self-hosting/configuration/n8n",
-            "self-hosting/configuration/notion",
-            "self-hosting/configuration/slack",
-            "self-hosting/configuration/zapier"
+            "self-hosting/configuration/integrations/airtable",
+            "self-hosting/configuration/integrations/google-sheets",
+            "self-hosting/configuration/integrations/n8n",
+            "self-hosting/configuration/integrations/notion",
+            "self-hosting/configuration/integrations/slack",
+            "self-hosting/configuration/integrations/zapier"
           ]
         }
       ]
@@ -334,7 +334,7 @@
       "source": "/docs/link-surveys/global/limit-submissions"
     },
     {
-      "destination": "/docs/xm-and-surveys/surveys/general-features/multi-language-surveys",
+      "destination": "/docs/xm-and-surveys/surveys/general-features/market-research-panel",
       "permanent": true,
       "source": "/docs/link-surveys/market-research-panel"
     },
@@ -399,14 +399,164 @@
       "source": "/docs/link-surveys/verify-email-before-survey"
     },
     {
+      "source": "/docs/app-surveys/global/add-image-or-video-question",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/general-features/add-image-or-video-question"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/consent",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/consent"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/statement-cta",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/statement-cta"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/airtable",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/airtable"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/zapier",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/zapier"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/wordpress",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/wordpress"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/slack",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/slack"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/n8n",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/n8n"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/notion",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/notion"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/google-sheets",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/google-sheets"
+    },
+    {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/quickstart",
       "permanent": true,
       "source": "/docs/app-surveys/quickstart"
     },
     {
+      "destination": "/docs/xm-and-surveys/core-features/question-type/address",
+      "permanent": true,
+      "source": "/docs/core-features/global/question-type/address"
+    },
+    {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides",
       "permanent": true,
       "source": "/docs/app-surveys/framework-guides"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/core-features/integrations/activepieces",
+      "permanent": true,
+      "source": "/docs/developer-docs/integrations/activepieces"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/core-features/user-management",
+      "permanent": true,
+      "source": "/docs/core-features/global/access-roles"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/core-features/styling-theme",
+      "permanent": true,
+      "source": "/docs/core-features/global/styling-theme"
+    },
+    {
+      "destination": "/docs/xm-and-surveys/core-features/email-customization",
+      "permanent": true,
+      "source": "/docs/core-features/global/email-customization"
+    },
+    {
+      "destination": "/docs/self-hosting/setup/one-click",
+      "permanent": true,
+      "source": "/docs/self-hosting/one-click"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/custom-ssl",
+      "permanent": true,
+      "source": "/docs/self-hosting/custom-ssl"
+    },
+    {
+      "destination": "/docs/self-hosting/setup/docker",
+      "permanent": true,
+      "source": "/docs/self-hosting/docker"
+    },
+    {
+      "destination": "/docs/self-hosting/setup/cluster-setup",
+      "permanent": true,
+      "source": "/docs/self-hosting/cluster-setup"
+    },
+    {
+      "destination": "/docs/self-hosting/advanced/migration",
+      "permanent": true,
+      "source": "/docs/self-hosting/migration-guide"
+    },
+    {
+      "source": "/docs/self-hosting/integrations",
+      "permanent": true,
+      "destination": "/docs/self-hosting/configuration/integrations"
+    },
+    {
+      "source": "/docs/self-hosting/license",
+      "permanent": true,
+      "destination": "/docs/self-hosting/advanced/license"
+    },
+    {
+      "source": "/docs/self-hosting/rate-limiting",
+      "permanent": true,
+      "destination": "/docs/self-hosting/advanced/rate-limiting"
+    },
+    {
+      "source": "/docs/self-hosting/kubernetes",
+      "permanent": true,
+      "destination": "/docs/self-hosting/setup/cluster-setup"
+    },
+    {
+      "source": "/docs/developer-docs/overview",
+      "permanent": true,
+      "destination": "/docs/development/overview"
+    },
+    {
+      "source": "/docs/developer-docs/js-sdk",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
+    },
+    {
+      "source": "docs/developer-docs/react-native-in-app-surveys",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides#react-native"
+    },
+    {
+      "source": "/docs/developer-docs/rest-api",
+      "permanent": true,
+      "destination": "/docs/api-reference/rest-api"
+    },
+    {
+      "source": "/docs/developer-docs/webhooks",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/webhooks"
+    },
+    {
+      "source": "/docs/developer-docs/contributing/get-started",
+      "permanent": true,
+      "destination": "/docs/development/contribution/contribution"
     },
     {
       "destination": "/docs/xm-and-surveys/surveys/website-app-surveys/actions",
@@ -437,6 +587,96 @@
       "destination": "/docs/xm-and-surveys/surveys/general-features/metadata",
       "permanent": true,
       "source": "/docs/app-surveys/global/metadata"
+    },
+    {
+      "source": "/docs/api-docs",
+      "permanent": true,
+      "destination": "/docs/api-reference"
+    },
+    {
+      "source": "/docs/developer-docs/contributing/troubleshooting",
+      "permanent": true,
+      "destination": "/docs/development/troubleshooting"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/file-upload",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/file-upload"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/picture-selection",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/select-picture"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/rating",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/rating"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/date",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/date"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/schedule",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/schedule-a-meeting"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/free-text",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/free-text"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/single-select",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/select-single"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/multiple-select",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/select-multiple"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/matrix",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/matrix"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/make",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/make"
+    },
+    {
+      "source": "/docs/developer-docs/integrations/overview",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/integrations/overview"
+    },
+    {
+      "source": "/docs/app-surveys/global/hidden-fields",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/general-features/hidden-fields"
+    },
+    {
+      "source": "/docs/app-surveys/global/limit-submissions",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/general-features/limit-submissions"
+    },
+    {
+      "source": "/docs/core-features/global/question-type/net-promoter-score",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/core-features/question-type/net-promoter-score"
+    },
+    {
+      "source": "/docs/link-surveys/data-prefilling",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/link-surveys/data-prefilling"
+    },
+    {
+      "source": "/docs/app-surveys/global/multi-language-surveys",
+      "permanent": true,
+      "destination": "/docs/xm-and-surveys/surveys/general-features/multi-language-surveys"
     }
   ],
   "tabs": [
