@@ -70,6 +70,7 @@ export const NotionWrapper = ({
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}
+            handleNotionAuthorization={handleNotionAuthorization}
           />
         </>
       ) : (
