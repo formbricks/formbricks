@@ -1,7 +1,7 @@
 "use server";
 
 import "server-only";
-import { Prisma } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
@@ -139,7 +139,7 @@ export const deleteActionClass = async (actionClassId: string): Promise<TActionC
 export const createActionClass = async (
   environmentId: string,
   actionClass: TActionClassInput
-): Promise<TActionClass> => {
+): Promise<ActionClass> => {
   validateInputs([environmentId, ZId], [actionClass, ZActionClassInput]);
 
   const { environmentId: _, ...actionClassInput } = actionClass;

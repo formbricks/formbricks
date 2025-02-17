@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- logging required for error logging */
+import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
 import type { TConfigInput, TEnvironmentState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok } from "@/types/error";
-import { FormbricksAPI } from "@formbricks/api";
 
 let environmentStateSyncIntervalId: number | null = null;
 
