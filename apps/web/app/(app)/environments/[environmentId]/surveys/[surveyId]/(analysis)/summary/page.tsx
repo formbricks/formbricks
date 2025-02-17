@@ -79,7 +79,10 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
-  const isAIEnabled = await getIsAIEnabled(organization);
+  const isAIEnabled = await getIsAIEnabled({
+    isAIEnabled: organization.isAIEnabled,
+    billing: organization.billing,
+  });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
 
   return (

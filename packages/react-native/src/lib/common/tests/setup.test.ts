@@ -1,3 +1,5 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig, RN_ASYNC_STORAGE_KEY } from "@/lib/common/config";
 import {
   addCleanupEventListeners,
@@ -10,8 +12,6 @@ import { filterSurveys, isNowExpired } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // 1) Mock AsyncStorage
 vi.mock("@react-native-async-storage/async-storage", () => ({

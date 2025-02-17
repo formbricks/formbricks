@@ -4,7 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getResponseDownloadUrl, getResponseFilteringValues } from "@formbricks/lib/response/service";
@@ -95,7 +95,7 @@ const checkSurveyFollowUpsPermission = async (organizationId: string): Promise<v
     throw new ResourceNotFoundError("Organization not found", organizationId);
   }
 
-  const isSurveyFollowUpsEnabled = getSurveyFollowUpsPermission(organization);
+  const isSurveyFollowUpsEnabled = getSurveyFollowUpsPermission(organization.billing.plan);
   if (!isSurveyFollowUpsEnabled) {
     throw new OperationNotAllowedError("Survey follow ups are not enabled for this organization");
   }
