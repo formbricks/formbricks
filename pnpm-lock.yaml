@@ -157,7 +157,7 @@ importers:
         version: 8.14.0
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.4.49)
+        version: 10.4.20(postcss@8.5.2)
       clsx:
         specifier: 2.1.1
         version: 2.1.1
@@ -525,7 +525,7 @@ importers:
         version: 4.1.17(react@19.0.0)(zod@3.24.1)
       autoprefixer:
         specifier: 10.4.20
-        version: 10.4.20(postcss@8.5.2)
+        version: 10.4.20(postcss@8.4.49)
       bcryptjs:
         specifier: 2.4.3
         version: 2.4.3
@@ -1025,7 +1025,7 @@ importers:
         version: 18.3.11
       '@vitest/coverage-v8':
         specifier: 3.0.4
-        version: 3.0.4(vitest@2.1.9(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0))
+        version: 3.0.4(vitest@3.0.5(@types/debug@4.1.12)(@types/node@22.10.2)(jiti@2.4.1)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))
       react:
         specifier: 18.3.1
         version: 18.3.1
@@ -1042,8 +1042,8 @@ importers:
         specifier: 4.3.0
         version: 4.3.0(@types/node@22.10.2)(rollup@4.34.8)(typescript@5.7.2)(vite@6.0.9(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))
       vitest:
-        specifier: 2.1.9
-        version: 2.1.9(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)
+        specifier: 3.0.5
+        version: 3.0.5(@types/debug@4.1.12)(@types/node@22.10.2)(jiti@2.4.1)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
 
   packages/surveys:
     dependencies:
@@ -20742,7 +20742,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/coverage-v8@3.0.4(vitest@2.1.9(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0))':
+  '@vitest/coverage-v8@3.0.4(vitest@3.0.5(@types/debug@4.1.12)(@types/node@22.10.2)(jiti@2.4.1)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -20756,7 +20756,7 @@ snapshots:
       std-env: 3.8.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 2.1.9(@types/node@22.10.2)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)
+      vitest: 3.0.5(@types/debug@4.1.12)(@types/node@22.10.2)(jiti@2.4.1)(jsdom@25.0.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -20780,7 +20780,6 @@ snapshots:
       '@vitest/utils': 3.0.5
       chai: 5.2.0
       tinyrainbow: 2.0.0
-    optional: true
 
   '@vitest/mocker@2.1.9(vite@5.4.14(@types/node@22.10.2)(lightningcss@1.27.0)(terser@5.37.0))':
     dependencies:
@@ -20797,7 +20796,6 @@ snapshots:
       magic-string: 0.30.17
     optionalDependencies:
       vite: 6.0.9(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
-    optional: true
 
   '@vitest/pretty-format@2.0.5':
     dependencies:
@@ -20814,7 +20812,6 @@ snapshots:
   '@vitest/pretty-format@3.0.5':
     dependencies:
       tinyrainbow: 2.0.0
-    optional: true
 
   '@vitest/runner@2.1.9':
     dependencies:
@@ -20825,7 +20822,6 @@ snapshots:
     dependencies:
       '@vitest/utils': 3.0.5
       pathe: 2.0.3
-    optional: true
 
   '@vitest/snapshot@2.1.9':
     dependencies:
@@ -20838,7 +20834,6 @@ snapshots:
       '@vitest/pretty-format': 3.0.5
       magic-string: 0.30.17
       pathe: 2.0.3
-    optional: true
 
   '@vitest/spy@2.0.5':
     dependencies:
@@ -20851,7 +20846,6 @@ snapshots:
   '@vitest/spy@3.0.5':
     dependencies:
       tinyspy: 3.0.2
-    optional: true
 
   '@vitest/utils@2.0.5':
     dependencies:
@@ -20877,7 +20871,6 @@ snapshots:
       '@vitest/pretty-format': 3.0.5
       loupe: 3.1.3
       tinyrainbow: 2.0.0
-    optional: true
 
   '@volar/language-core@2.4.11':
     dependencies:
@@ -29527,7 +29520,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-    optional: true
 
   vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.34.8)(typescript@5.7.2)(vite@6.0.9(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)):
     dependencies:
@@ -29673,7 +29665,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-    optional: true
 
   vlq@1.0.1: {}
 
