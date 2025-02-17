@@ -1,13 +1,13 @@
 "use client";
 
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
 import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
