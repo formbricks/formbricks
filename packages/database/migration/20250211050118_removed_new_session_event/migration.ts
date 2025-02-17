@@ -22,15 +22,16 @@ export const removedNewSessionEvent: MigrationScript = {
 
     for (const action of automaticActions) {
       // Check for survey triggers using this action
-      const surveyTriggersResult = await tx.$queryRaw`
-        SELECT id
+      const surveyTriggersResult = await tx.$queryRaw<{ count: string }[]>`
+        SELECT COUNT(*)::integer as "count"
         FROM "SurveyTrigger"
         WHERE "actionClassId" = ${action.id}
       `;
 
-      const surveyTriggers = surveyTriggersResult as { id: string }[];
+      // Parse the count (PostgreSQL may return count as a string)
+      const triggerCount = parseInt(surveyTriggersResult[0].count, 10);
 
-      if (surveyTriggers.length > 0) {
+      if (triggerCount > 0) {
         actionsToUpdate.push(action.id);
       } else {
         actionsToDelete.push(action.id);
