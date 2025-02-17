@@ -1,4 +1,3 @@
-// import { Prisma } from "@prisma/client";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const removedNewSessionEvent: MigrationScript = {
