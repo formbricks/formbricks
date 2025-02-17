@@ -717,7 +717,9 @@
         "select_a_database": "Sélectionner la base de données",
         "select_a_field_to_map": "Sélectionnez un champ à mapper",
         "select_a_survey_question": "Sélectionnez une question d'enquête",
-        "sync_responses_with_a_notion_database": "Synchroniser les réponses avec une base de données Notion"
+        "sync_responses_with_a_notion_database": "Synchroniser les réponses avec une base de données Notion",
+        "update_connection": "Reconnecter Notion",
+        "update_connection_tooltip": "Reconnectez l'intégration pour inclure les nouvelles bases de données ajoutées. Vos intégrations existantes resteront intactes."
       },
       "notion_integration_description": "Envoyer des données à votre base de données Notion",
       "please_select_a_survey_error": "Veuillez sélectionner une enquête.",

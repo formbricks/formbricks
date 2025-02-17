@@ -1,0 +1,80 @@
+---
+title: "Product-Market Fit"
+description: "How to Set Up a Product-Market Fit Survey Using Formbricks - Step-by-Step Guide"
+icon: "chart-line-up"
+---
+
+## Purpose
+
+
+Measuring and understanding your PMF is crucial for building a successful business. It helps you identify what users like, what’s missing, and what to build next. This survey is ideal for measuring PMF, similar to [Superhuman](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit).
+
+## Formbricks Approach
+
+- Pre-segment users to only survey users who have experienced your products value.
+- Never ask twice, keep your data clean.
+- Run on autopilot: Set up once, keep surveying users continuously.
+
+## Overview
+
+To display the Product-Market Fit survey in your app you want to proceed as follows:
+
+1. Create new Product-Market Fit survey at [app.formbricks.com](https://app.formbricks.com/)
+2. Setup pre-segmentation to assure high data quality
+3. Setup the user action to display survey at good point in time
+
+<Note>
+  Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.
+</Note>
+
+### 1. Create new PMF survey
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on "Create Survey" and choose a PMF survey template. The first one is short, while the second builds on the ["Product-Market Fit Engine"](https://review.firstround.com/how-superhuman-built-an-engine-to-find-product-market-fit) developed by Superhuman.
+
+![Create survey by template](/images/xm-and-surveys/xm/best-practices/pmf-survey/create-survey.webp)
+/>
+
+### Optional: Update questions
+
+You can update the questions and answer options, but based on our experience, we recommend starting with the provided template. For a detailed guide on how to use the data you're collecting, check out this [guide](https://coda.io/@rahulvohra/superhuman-product-market-fit-engine).
+
+![Change text content](/images/xm-and-surveys/xm/best-practices/pmf-survey/change-text.webp)
+/>
+
+_Want to change the button color? You can do so in the project settings!_
+
+Save, and move over to where the magic happens: The “Audience” tab.
+
+### 3. Pre-segment your audience
+
+To run this survey effectively, pre-segment your user base. As mentioned earlier, asking all users can lead to misleading opinions. Focus on gathering feedback from users who have invested time in getting to know and use your product.
+
+**Filter by attribute**: You can keep the logic to decide if a user has (or has not) experienced value in your application. This makes most sense if you want to use historic usage data to decide if a user qualifies or not. Create your logic and if it applies, send an attribute to Formbricks by e.g. `formbricks.setAttribute("Loyalty", "Experienced Value");` Here is the full manual on how to [set attributes](/xm-and-surveys/surveys/website-app-surveys/user-identification).
+
+### 4. Set up a trigger for the Product-Market Fit survey:
+
+You need a trigger to display the survey but in this case, the filtering does all the work. It’s up to you to decide to display the survey after the user viewed a specific subpage (pageURL) or after clicking an element. Have a look at the [Actions manual](/xm-and-surveys/surveys/website-app-surveys/actions) if you are not sure how to set them up:
+
+![Add CSS action](/images/xm-and-surveys/xm/best-practices/pmf-survey/action-css.webp)
+
+![Add inner text action](/images/xm-and-surveys/xm/best-practices/pmf-survey/action-pageurl.webp)
+
+### 5. Select Action in the “When to ask” card
+
+![Select PMF trigger button action](/images/xm-and-surveys/xm/best-practices/pmf-survey/select-action.webp)
+
+### 6. Last step: Set Recontact Options correctly
+
+Lastly, scroll down to “Recontact Options”. Here you have to choose the correct settings to make sure your data remains of high quality. You want to make sure that this survey is only responded to once per user. It is up to you to decide if you want to display it several times until the user responds:
+
+![Set recontact options](/images/xm-and-surveys/xm/best-practices/pmf-survey/recontact-options.webp)
+
+### 7. Congrats! You’re ready to publish your survey 💃
+
+![Publish survey](/images/xm-and-surveys/xm/best-practices/pmf-survey/publish.webp)
+
+<Note>
+  Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.
+</Note>

@@ -56,7 +56,7 @@ const Page = async (props) => {
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
-    databasesArray = await getNotionDatabases(environment.id);
+    databasesArray = (await getNotionDatabases(environment.id)) ?? [];
   }
   const locale = await findMatchingLocale();
 

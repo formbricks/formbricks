@@ -1,8 +1,8 @@
 "use client";
 
-import { createActionClassAction } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/actions";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { createActionClassAction } from "@/modules/survey/editor/actions";
 import { Button } from "@/modules/ui/components/button";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
