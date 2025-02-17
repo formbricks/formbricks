@@ -1,6 +1,6 @@
 import "server-only";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
-import { getEnvironmentIdIfExists } from "@/modules/survey/list/lib/environment";
+import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
 import { TProjectWithLanguages, TSurvey } from "@/modules/survey/list/types/surveys";
 import { createId } from "@paralleldrive/cuid2";
@@ -113,16 +113,16 @@ export const getSurveysSortedByRelevance = reactCache(
             offset && offset > inProgressSurveyCount
               ? []
               : await prisma.survey.findMany({
-                  where: {
-                    environmentId,
-                    status: "inProgress",
-                    ...buildWhereClause(filterCriteria),
-                  },
-                  select: surveySelect,
-                  orderBy: buildOrderByClause("updatedAt"),
-                  take: limit,
-                  skip: offset,
-                });
+                where: {
+                  environmentId,
+                  status: "inProgress",
+                  ...buildWhereClause(filterCriteria),
+                },
+                select: surveySelect,
+                orderBy: buildOrderByClause("updatedAt"),
+                take: limit,
+                skip: offset,
+              });
 
           surveys = inProgressSurveys.map((survey) => {
             return {
@@ -352,7 +352,7 @@ export const copySurveyToOtherEnvironment = async (
 
     // Fetch required resources
     const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
-      getEnvironmentIdIfExists(environmentId),
+      doesEnvironmentExist(environmentId),
       getProjectWithLanguagesByEnvironmentId(environmentId),
       getExistingSurvey(surveyId),
     ]);
@@ -369,7 +369,7 @@ export const copySurveyToOtherEnvironment = async (
       targetProject = existingProject;
     } else {
       [targetEnvironment, targetProject] = await Promise.all([
-        getEnvironmentIdIfExists(targetEnvironmentId),
+        doesEnvironmentExist(targetEnvironmentId),
         getProjectWithLanguagesByEnvironmentId(targetEnvironmentId),
       ]);
 
@@ -394,23 +394,23 @@ export const copySurveyToOtherEnvironment = async (
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
-            create: existingSurvey.languages.map((surveyLanguage) => ({
-              language: {
-                connectOrCreate: {
-                  where: {
-                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
-                  },
-                  create: {
-                    code: surveyLanguage.language.code,
-                    alias: surveyLanguage.language.alias,
-                    projectId: targetProject.id,
-                  },
+          create: existingSurvey.languages.map((surveyLanguage) => ({
+            language: {
+              connectOrCreate: {
+                where: {
+                  projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
+                },
+                create: {
+                  code: surveyLanguage.language.code,
+                  alias: surveyLanguage.language.alias,
+                  projectId: targetProject.id,
                 },
               },
-              default: surveyLanguage.default,
-              enabled: surveyLanguage.enabled,
-            })),
-          }
+            },
+            default: surveyLanguage.default,
+            enabled: surveyLanguage.enabled,
+          })),
+        }
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {

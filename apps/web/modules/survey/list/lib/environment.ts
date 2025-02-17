@@ -8,7 +8,7 @@ import { environmentCache } from "@formbricks/lib/environment/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
-export const getEnvironmentIdIfExists = reactCache(
+export const doesEnvironmentExist = reactCache(
   async (environmentId: string): Promise<string | null> =>
     cache(
       async () => {
@@ -28,7 +28,7 @@ export const getEnvironmentIdIfExists = reactCache(
         return environment.id;
       },
 
-      [`survey-list-getEnvironmentIdIfExists-${environmentId}`],
+      [`survey-list-doesEnvironmentExist-${environmentId}`],
       {
         tags: [environmentCache.tag.byId(environmentId)],
       }
