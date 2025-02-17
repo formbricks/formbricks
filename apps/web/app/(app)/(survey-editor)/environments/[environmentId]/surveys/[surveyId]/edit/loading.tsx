@@ -1,7 +1,3 @@
-import { LoadingSkeleton } from "./components/LoadingSkeleton";
+import { SurveyEditorLoading } from "@/modules/survey/editor/loading";
 
-const Loading = () => {
-  return <LoadingSkeleton />;
-};
-
-export default Loading;
+export default SurveyEditorLoading;
