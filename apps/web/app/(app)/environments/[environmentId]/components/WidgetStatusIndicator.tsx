@@ -1,7 +1,9 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangleIcon, CheckIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, RotateCcwIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -11,6 +13,7 @@ interface WidgetStatusIndicatorProps {
 
 export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
   const { t } = useTranslate();
+  const router = useRouter();
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
@@ -51,6 +54,12 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
       </div>
       <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
       <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
+      {status === "notImplemented" && (
+        <Button variant="outline" size="sm" className="bg-white" onClick={() => router.refresh()}>
+          <RotateCcwIcon />
+          {t("environments.project.app-connection.recheck")}
+        </Button>
+      )}
     </div>
   );
 };

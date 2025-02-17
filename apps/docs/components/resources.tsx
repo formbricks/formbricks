@@ -1,13 +1,13 @@
 "use client";
 
-import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
-import Link from "next/link";
 import { GridPattern } from "@/components/grid-pattern";
 import { Heading } from "@/components/heading";
 import { ChatBubbleIcon } from "@/components/icons/chat-bubble-icon";
 import { EnvelopeIcon } from "@/components/icons/envelope-icon";
 import { UserIcon } from "@/components/icons/user-icon";
 import { UsersIcon } from "@/components/icons/users-icon";
+import { type MotionValue, motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import Link from "next/link";
 
 interface TResource {
   href: string;
