@@ -5,8 +5,9 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
-import { Trash2Icon } from "lucide-react";
+import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
@@ -23,6 +24,7 @@ interface ManageIntegrationProps {
     React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
   >;
   locale: TUserLocale;
+  handleNotionAuthorization: () => void;
 }
 
 export const ManageIntegration = ({
@@ -32,6 +34,7 @@ export const ManageIntegration = ({
   setIsConnected,
   setSelectedIntegration,
   locale,
+  handleNotionAuthorization,
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -68,7 +71,7 @@ export const ManageIntegration = ({
 
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end">
+      <div className="flex w-full justify-end space-x-2">
         <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
@@ -77,6 +80,17 @@ export const ManageIntegration = ({
             })}
           </span>
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={handleNotionAuthorization}>
+                <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                {t("environments.integrations.notion.update_connection")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("environments.integrations.notion.update_connection_tooltip")}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Button
           onClick={() => {
             setSelectedIntegration(null);
