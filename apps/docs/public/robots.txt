@@ -1,9 +1,0 @@
-# *
-User-agent: *
-Allow: /
-
-# Host
-Host: https://formbricks.com
-
-# Sitemaps
-Sitemap: https://formbricks.com/sitemap.xml

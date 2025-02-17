@@ -1,5 +1,6 @@
 "use client";
 
+import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
@@ -10,14 +11,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
-import {
-  CheckIcon,
-  Code2Icon,
-  MousePointerClickIcon,
-  PlusIcon,
-  SparklesIcon,
-  Trash2Icon,
-} from "lucide-react";
+import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -200,13 +194,7 @@ export const WhenToSendCard = ({
                       <div>
                         <div className="mt-1 flex items-center">
                           <div className="mr-1.5 h-4 w-4 text-slate-600">
-                            {trigger.actionClass.type === "code" ? (
-                              <Code2Icon className="h-4 w-4" />
-                            ) : trigger.actionClass.type === "noCode" ? (
-                              <MousePointerClickIcon className="h-4 w-4" />
-                            ) : trigger.actionClass.type === "automatic" ? (
-                              <SparklesIcon className="h-4 w-4" />
-                            ) : null}
+                            {ACTION_TYPE_ICON_LOOKUP[trigger.actionClass.type]}
                           </div>
 
                           <h4 className="text-sm font-semibold text-slate-600">{trigger.actionClass.name}</h4>

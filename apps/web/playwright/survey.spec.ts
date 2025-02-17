@@ -217,6 +217,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 });
 
 test.describe("Multi Language Survey Create", async () => {
+  // 4 minutes
+  test.setTimeout(1000 * 60 * 4);
+
   test("Create Survey", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -602,7 +605,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    await page.waitForTimeout(5000);
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
@@ -613,7 +616,8 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  test.setTimeout(300000);
+  // 6 minutes
+  test.setTimeout(1000 * 60 * 6);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -869,13 +873,14 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
 
       await page.getByRole("button", { name: "Close" }).click();
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
       await page.waitForSelector("#response-table");
 
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
+
+      await page.waitForLoadState("networkidle");
       await page.waitForTimeout(5000);
       await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
     });

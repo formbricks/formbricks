@@ -1,8 +1,8 @@
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { DatabaseError } from "@formbricks/types/errors";
 import { TActionClassInput } from "@formbricks/types/action-classes";
+import { DatabaseError } from "@formbricks/types/errors";
 
 export const createActionClass = async (
   environmentId: string,
