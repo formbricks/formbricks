@@ -1,6 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
+import { getTranslate } from "@/tolgee/server";
+import { T } from "@/tolgee/server";
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -8,20 +9,15 @@ export const metadata: Metadata = {
   description: "Open-source Experience Management. Free & open source.",
 };
 
-const renderRichText = async (text: string) => {
-  const t = await getTranslations();
-  return <p>{t.rich(text, { b: (chunks) => <b>{chunks}</b> })}</p>;
-};
-
 export const IntroPage = async () => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   return (
     <div className="flex flex-col items-center">
       <h2 className="mb-6 text-xl font-medium">{t("setup.intro.welcome_to_formbricks")}</h2>
       <div className="mx-auto max-w-sm space-y-4 text-sm leading-6 text-slate-600">
-        {renderRichText("setup.intro.paragraph_1")}
-        {renderRichText("setup.intro.paragraph_2")}
-        {renderRichText("setup.intro.paragraph_3")}
+        <T keyName="setup.intro.paragraph_1" params={{ b: <b /> }} />
+        <T keyName="setup.intro.paragraph_2" params={{ b: <b /> }} />
+        <T keyName="setup.intro.paragraph_3" params={{ b: <b /> }} />
       </div>
       <Button className="mt-6" asChild>
         <Link href="/setup/signup">{t("setup.intro.get_started")}</Link>

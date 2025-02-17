@@ -1,5 +1,7 @@
+"use client";
+
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
@@ -7,7 +9,6 @@ import {
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
@@ -20,16 +21,10 @@ interface MatrixQuestionSummaryProps {
     filterValue: string,
     filterComboBoxValue?: string | string[]
   ) => void;
-  locale: TUserLocale;
 }
 
-export const MatrixQuestionSummary = ({
-  questionSummary,
-  survey,
-  setFilter,
-  locale,
-}: MatrixQuestionSummaryProps) => {
-  const t = useTranslations();
+export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: MatrixQuestionSummaryProps) => {
+  const { t } = useTranslate();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -51,7 +46,7 @@ export const MatrixQuestionSummary = ({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} locale={locale} />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">

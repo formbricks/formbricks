@@ -24,12 +24,9 @@ export const useTableContentObserver = (setActiveId: (id: string) => void, pathn
   useEffect(() => {
     const callback = (headings: HeadingElement[]) => {
       // Create a map of heading elements, where the key is the heading's ID and the value is the heading element
-      headingElementsRef.current = headings.reduce(
-        (map, headingElement) => {
-          return { ...map, [headingElement.target.id]: headingElement };
-        },
-        {}
-      );
+      headingElementsRef.current = headings.reduce((map, headingElement) => {
+        return { ...map, [headingElement.target.id]: headingElement };
+      }, {});
 
       // Find the visible headings (i.e., headings that are currently intersecting with the viewport)
       const visibleHeadings: HeadingElement[] = [];

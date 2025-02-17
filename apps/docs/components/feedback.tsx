@@ -18,7 +18,9 @@ function CheckIcon(props: React.ComponentPropsWithoutRef<"svg">): React.JSX.Elem
   );
 }
 
-function FeedbackButton(props: Omit<React.ComponentPropsWithoutRef<"button">, "type" | "className">): React.JSX.Element {
+function FeedbackButton(
+  props: Omit<React.ComponentPropsWithoutRef<"button">, "type" | "className">
+): React.JSX.Element {
   return (
     <button
       type="submit"
@@ -49,16 +51,18 @@ const FeedbackForm = forwardRef<
 
 FeedbackForm.displayName = "FeedbackForm";
 
-const FeedbackThanks = forwardRef<React.ElementRef<"div">, React.ComponentPropsWithoutRef<"div">>((_props, ref): React.JSX.Element => {
-  return (
-    <div ref={ref} className="absolute inset-0 flex justify-center md:justify-start">
-      <div className="flex items-center gap-3 rounded-full bg-teal-50/50 py-1 pl-1.5 pr-3 text-sm text-teal-900 ring-1 ring-inset ring-teal-500/20 dark:bg-teal-500/5 dark:text-teal-200 dark:ring-teal-500/30">
-        <CheckIcon className="h-5 w-5 flex-none fill-teal-500 stroke-white dark:fill-teal-200/20 dark:stroke-teal-200" />
-        Thanks for your feedback!
+const FeedbackThanks = forwardRef<React.ElementRef<"div">, React.ComponentPropsWithoutRef<"div">>(
+  (_props, ref): React.JSX.Element => {
+    return (
+      <div ref={ref} className="absolute inset-0 flex justify-center md:justify-start">
+        <div className="flex items-center gap-3 rounded-full bg-teal-50/50 py-1 pl-1.5 pr-3 text-sm text-teal-900 ring-1 ring-inset ring-teal-500/20 dark:bg-teal-500/5 dark:text-teal-200 dark:ring-teal-500/30">
+          <CheckIcon className="h-5 w-5 flex-none fill-teal-500 stroke-white dark:fill-teal-200/20 dark:stroke-teal-200" />
+          Thanks for your feedback!
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 FeedbackThanks.displayName = "FeedbackThanks";
 

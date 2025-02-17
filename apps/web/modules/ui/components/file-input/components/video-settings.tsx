@@ -1,8 +1,10 @@
+"use client";
+
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
 import { AlertTriangle } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";
@@ -24,7 +26,7 @@ export const VideoSettings = ({
   videoUrl,
   setVideoUrlTemp,
 }: VideoSettingsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isYoutubeLink, setIsYoutubeLink] = useState(checkForYoutubeUrl(uploadedVideoUrl));
   const [isYoutubePrivacyModeEnabled, setIsYoutubePrivacyModeEnabled] = useState(
     checkForYoutubePrivacyMode(uploadedVideoUrl)

@@ -54,7 +54,11 @@ export function Search(): React.JSX.Element {
 
   useDocSearchKeyboardEvents({
     isOpen,
-    onOpen: isSearchDisabled ? () => { return void 0 } : onOpen,
+    onOpen: isSearchDisabled
+      ? () => {
+          return void 0;
+        }
+      : onOpen,
     onClose,
   });
 
@@ -110,7 +114,6 @@ export function Search(): React.JSX.Element {
       document.head.removeChild(style);
     };
   }, [isLightMode]);
-
 
   return (
     <>

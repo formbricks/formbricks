@@ -4,8 +4,8 @@ import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInpu
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
@@ -34,7 +34,7 @@ export const NPSQuestionForm = ({
   setSelectedLanguageCode,
   locale,
 }: NPSQuestionFormProps): JSX.Element => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   // Auto animate
   const [parent] = useAutoAnimate();

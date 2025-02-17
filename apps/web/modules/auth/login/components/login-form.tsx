@@ -9,8 +9,8 @@ import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import Link from "next/dist/client/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -58,7 +58,7 @@ export const LoginForm = ({
   const searchParams = useSearchParams();
   const emailRef = useRef<HTMLInputElement>(null);
   const callbackUrl = searchParams?.get("callbackUrl") || "";
-  const t = useTranslations();
+  const { t } = useTranslate();
 
   const form = useForm<TLoginForm>({
     defaultValues: {

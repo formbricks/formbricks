@@ -1,10 +1,10 @@
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { getResponsesByContactId } from "@formbricks/lib/response/service";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { getContact, getContactAttributes } from "../../lib/contacts";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [contact, attributes] = await Promise.all([getContact(contactId), getContactAttributes(contactId)]);
 
   if (!contact) {

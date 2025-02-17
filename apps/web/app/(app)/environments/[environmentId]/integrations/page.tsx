@@ -1,4 +1,5 @@
 import { getWebhookCountBySource } from "@/app/(app)/environments/[environmentId]/integrations/lib/webhook";
+import ActivePiecesLogo from "@/images/activepieces.webp";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
@@ -14,8 +15,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import { getEnvironment } from "@formbricks/lib/environment/service";
@@ -28,7 +29,7 @@ import { TIntegrationType } from "@formbricks/types/integration";
 const Page = async (props) => {
   const params = await props.params;
   const environmentId = params.environmentId;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [
     environment,
     integrations,
@@ -38,6 +39,7 @@ const Page = async (props) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
+    activePiecesWebhookCount,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -47,6 +49,7 @@ const Page = async (props) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
+    getWebhookCountBySource(environmentId, "activepieces"),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
@@ -214,6 +217,25 @@ const Page = async (props) => {
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
       statusText: isNotionIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
+    },
+    {
+      docsHref: "https://formbricks.com/docs/integrations/activepieces",
+      docsText: t("common.docs"),
+      docsNewTab: true,
+      connectHref: "https://www.activepieces.com/pieces/formbricks",
+      connectText: t("common.connect"),
+      connectNewTab: true,
+      label: "Activepieces",
+      description: t("environments.integrations.activepieces_integration_description"),
+      icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
+      connected: activePiecesWebhookCount > 0,
+      statusText:
+        activePiecesWebhookCount === 1
+          ? `1 ${t("common.integration")}`
+          : activePiecesWebhookCount === 0
+            ? t("common.not_connected")
+            : `${activePiecesWebhookCount} ${t("common.integrations")}`,
       disabled: isReadOnly,
     },
   ];

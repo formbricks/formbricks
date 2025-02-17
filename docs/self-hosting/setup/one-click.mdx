@@ -1,0 +1,346 @@
+---
+title: "One-Click Setup"
+description: "How to set up Formbricks instance with a one-click script"
+icon: "rocket"
+---
+
+<Note>
+  This only works with an Ubuntu machine, so ensure the underlying OS is verified beforehand!
+</Note>
+
+If you’re looking to quickly set up a production instance of Formbricks on an Ubuntu server, this guide is for you. Using a convenient shell script, you can install everything—including Docker, Postgres DB, and an SSL certificate—in just a few steps. The script takes care of all the dependencies and configuration for your server, making the process smooth and simple.
+
+<Note>
+  This setup uses **Traefik** as a **reverse proxy**, essential for directing incoming traffic to the correct container and enabling secure internet access to Formbricks. Traefik is chosen for its simplicity and automatic SSL management via Let’s Encrypt.
+</Note>
+
+For other operating systems or a more customized installation, please refer to the advanced installation guide with [Docker](/self-hosting/setup/docker).
+
+### Requirements
+
+* An Ubuntu Virtual Machine with SSH access.
+
+* A custom domain with an **A record** pointing to your server.
+
+* Ports **80** and **443** are open in your VM's Security Group, allowing Traefik to create an SSL certificate.
+
+### Deployment
+
+Run this command in your terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/main/docker/formbricks.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
+```
+
+### Script Prompts
+
+During installation, the script will prompt you to provide some details:
+
+* **Overwriting Docker GPG Keys**:
+  If Docker GPG keys already exist, the script will ask whether you want to overwrite them.
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N)
+```
+
+* **Domain Name**:
+  Enter the domain name where you’ll host Formbricks. The domain will be used to generate an SSL certificate. Do not include the protocol (http/https).
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+```
+
+* **HTTPS Certificate Setup**:
+  The script will ask if you’d like to create an HTTPS certificate for your domain. Enter `Y` to proceed (highly recommended for secure access).
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+```
+
+* **DNS Setup Prompt**: Ensure that your domain's DNS is correctly configured and ports 80 and 443 are open. Confirm this by entering `Y`. This step is crucial for proper SSL certificate issuance and secure server access.
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+Y
+🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
+```
+
+* **Email Address for SSL Certificate**:
+  Provide an email address to register the SSL certificate. Notifications regarding the certificate will be sent to this address.
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+Y
+🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
+Y
+💡 Please enter your email address for the SSL certificate:
+```
+
+* **Enforce HTTPS with HSTS**:
+  Enabling HTTP Strict Transport Security (HSTS) ensures all communication with your server is encrypted. It’s a recommended best practice. Enter `Y` to enforce HTTPS.
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+Y
+🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
+Y
+💡 Please enter your email address for the SSL certificate:
+docs@formbricks.com
+🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
+```
+
+* **Email Service Setup Prompt**: The script will ask if you want to set up the email service. Enter `Y` to proceed.(default is `N`). You can skip this step if you don't want to set up the email service. You will still be able to use Formbricks without setting up the email service.
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+Y
+🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
+Y
+💡 Please enter your email address for the SSL certificate:
+docs@formbricks.com
+🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
+Y
+🚗 Configuring Traefik...
+💡 Created traefik.yaml and traefik-dynamic.yaml file.
+💡 Created acme.json file with correct permissions.
+📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N]
+
+```
+
+**That's it**! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
+
+```
+🚀 Executing default step of installing Formbricks
+🧱 Welcome to the Formbricks Setup Script
+
+🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your Ubuntu 24.04 LTS server.
+
+🧹 Time to sweep away any old Docker installations.
+🔄 Updating your package list.
+📦 Installing the necessary dependencies.
+🔑 Adding Docker's official GPG key and setting up the stable repository.
+File '/etc/apt/keyrings/docker.gpg' exists. Overwrite? (y/N) y
+🔄 Updating your package list again.
+🐳 Installing Docker.
+🚀 Testing your Docker installation.
+🎉 Docker is installed!
+🐳 Adding your user to the Docker group to avoid using sudo with docker commands.
+🎉 Hooray! Docker is all set and ready to go. You're now ready to run your Formbricks instance!
+📁 Created Formbricks Quickstart directory at ./formbricks.
+🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):
+my.hosted.url.com
+🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]
+Y
+🔗 Please make sure that the domain points to the server's IP address and that ports 80 & 443 are open in your server's firewall. Is everything set up? [Y/n]
+Y
+💡 Please enter your email address for the SSL certificate:
+docs@formbricks.com
+🔗 Do you want to enforce HTTPS (HSTS)? [Y/n]
+Y
+🚗 Configuring Traefik...
+💡 Created traefik.yaml and traefik-dynamic.yaml file.
+💡 Created acme.json file with correct permissions.
+📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N] N
+📥 Downloading docker-compose.yml from Formbricks GitHub repository...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100  6632  100  6632    0     0  24280      0 --:--:-- --:--:-- --:--:-- 24382
+🚙 Updating docker-compose.yml with your custom inputs...
+🚗 NEXTAUTH_SECRET updated successfully!
+🚗 ENCRYPTION_KEY updated successfully!
+🚗 CRON_SECRET updated successfully!
+
+[+] Running 4/4
+ ✔ Network formbricks_default         Created                                                                                                                                                    0.2s
+ ✔ Container formbricks-postgres-1    Started                                                                                                                                                    1.0s
+ ✔ Container formbricks-formbricks-1  Started                                                                                                                                                    1.6s
+ ✔ Container traefik                  Started                                                                                                                                                    2.8s
+🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!
+🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance.
+
+🎉 All done! Please setup your Formbricks instance by visiting your domain at https://my.hosted.url.com. You can check the status of Formbricks & Traefik with 'cd formbricks && sudo docker compose ps.'
+```
+
+## Update
+
+To update Formbricks, simply run the following command:
+
+```
+./formbricks.sh update
+```
+
+The script will automatically pull the latest version of Formbricks from GitHub Container Registry and restart the containers.
+
+## Stop
+
+To stop Formbricks, simply run the following command:
+
+```
+./formbricks.sh stop
+```
+
+The script will automatically stop all the Formbricks related containers and brings the entire stack down.
+
+## Restart
+
+To restart Formbricks, simply run the following command:
+
+```
+./formbricks.sh restart
+```
+
+The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
+
+## Uninstall
+
+To uninstall Formbricks, simply run the following command, but keep in mind that this will delete all your data!
+
+```
+./formbricks.sh uninstall
+```
+
+The script will automatically stop all the Formbricks related containers, remove the Formbricks directory, and delete the Docker network.
+
+## Debug
+
+If you encounter any issues, you can check the logs of the containers with:
+
+```
+./formbricks.sh logs
+```
+
+## Troubleshooting
+
+If you encounter any issues, consider the following steps:
+
+* **Inbound Rules**: Make sure you have added inbound rules for Port 80 and 443 in your VM's Security Group.
+
+* **A Record**: Verify that you have set up an A record for your domain, pointing to your VM's IP address.
+
+* **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
+
+* **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
+
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
+](https://formbricks.com/docs/developer-docs/rest-api)

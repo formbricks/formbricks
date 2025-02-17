@@ -4,9 +4,9 @@ import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
+import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { TEnvironment } from "@formbricks/types/environment";
 import { TJsFileUploadParams } from "@formbricks/types/js";
@@ -71,7 +71,7 @@ export const PreviewSurvey = ({
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [appSetupCompleted, setAppSetupCompleted] = useState(false);
 
   const [previewMode, setPreviewMode] = useState("desktop");

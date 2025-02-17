@@ -1,8 +1,8 @@
 "use client";
 
+import { remToPx } from "@/lib/rem-to-px";
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from "react";
 import { type StoreApi, createStore, useStore } from "zustand";
-import { remToPx } from "@/lib/rem-to-px";
 
 export interface Section {
   id: string;
@@ -31,7 +31,9 @@ const createSectionStore = (sections: Section[]) => {
   return createStore<SectionState>()((set) => ({
     sections,
     visibleSections: [],
-    setVisibleSections: (visibleSections) => { set((state) => (state.visibleSections.join() === visibleSections.join() ? {} : { visibleSections })); },
+    setVisibleSections: (visibleSections) => {
+      set((state) => (state.visibleSections.join() === visibleSections.join() ? {} : { visibleSections }));
+    },
     registerHeading: ({ id, ref, offsetRem }) => {
       set((state) => {
         return {
@@ -92,7 +94,9 @@ const useVisibleSections = (sectionStore: StoreApi<SectionState>) => {
       setVisibleSections(newVisibleSections);
     };
 
-    const raf = window.requestAnimationFrame(() => { checkVisibleSections(); });
+    const raf = window.requestAnimationFrame(() => {
+      checkVisibleSections();
+    });
     window.addEventListener("scroll", checkVisibleSections, { passive: true });
     window.addEventListener("resize", checkVisibleSections);
 
@@ -108,13 +112,7 @@ const SectionStoreContext = createContext<StoreApi<SectionState> | null>(null);
 
 const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
-export function SectionProvider({
-  sections,
-  children,
-}: {
-  sections: Section[];
-  children: React.ReactNode;
-}) {
+export function SectionProvider({ sections, children }: { sections: Section[]; children: React.ReactNode }) {
   const [sectionStore] = useState(() => createSectionStore(sections));
 
   useVisibleSections(sectionStore);

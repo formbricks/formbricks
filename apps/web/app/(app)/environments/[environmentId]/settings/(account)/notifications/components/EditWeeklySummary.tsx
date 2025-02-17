@@ -1,5 +1,7 @@
+"use client";
+
+import { useTranslate } from "@tolgee/react";
 import { UsersIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { TUser } from "@formbricks/types/user";
 import { Membership } from "../types";
@@ -12,7 +14,7 @@ interface EditAlertsProps {
 }
 
 export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAlertsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <>
       {memberships.map((membership) => (

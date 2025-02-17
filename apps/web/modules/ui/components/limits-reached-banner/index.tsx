@@ -1,7 +1,7 @@
 "use client";
 
+import { useTranslate } from "@tolgee/react";
 import { TriangleAlertIcon, XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useState } from "react";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -19,7 +19,7 @@ export const LimitsReachedBanner = ({
   responseCount,
   environmentId,
 }: LimitsReachedBannerProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const orgBillingPeopleLimit = organization.billing?.limits?.monthly?.miu;
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
 

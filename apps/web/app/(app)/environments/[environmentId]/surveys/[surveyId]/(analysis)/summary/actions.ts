@@ -53,7 +53,6 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       ctx.user.email,
       emailHtml,
       survey.environmentId,
-      ctx.user.locale,
       organizationLogoUrl || ""
     );
   });

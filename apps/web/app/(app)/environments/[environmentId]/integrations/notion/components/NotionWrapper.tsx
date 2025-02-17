@@ -62,7 +62,6 @@ export const NotionWrapper = ({
             notionIntegration={notionIntegration}
             databases={databasesArray}
             selectedIntegration={selectedIntegration}
-            locale={locale}
           />
           <ManageIntegration
             environment={environment}
@@ -71,6 +70,7 @@ export const NotionWrapper = ({
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
             locale={locale}
+            handleNotionAuthorization={handleNotionAuthorization}
           />
         </>
       ) : (

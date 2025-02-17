@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { SearchBar } from "@/modules/ui/components/search-bar";
+import { TFnType, useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useDebounce } from "react-use";
 import { TProjectConfigChannel } from "@formbricks/types/project";
@@ -23,33 +23,33 @@ interface SurveyFilterProps {
   currentProjectChannel: TProjectConfigChannel;
 }
 
-const creatorOptions: TFilterOption[] = [
-  { label: "common.you", value: "you" },
-  { label: "common.others", value: "others" },
+const getCreatorOptions = (t: TFnType): TFilterOption[] => [
+  { label: t("common.you"), value: "you" },
+  { label: t("common.others"), value: "others" },
 ];
 
-const statusOptions: TFilterOption[] = [
-  { label: "common.scheduled", value: "scheduled" },
-  { label: "common.paused", value: "paused" },
-  { label: "common.completed", value: "completed" },
-  { label: "common.draft", value: "draft" },
+const getStatusOptions = (t: TFnType): TFilterOption[] => [
+  { label: t("common.scheduled"), value: "scheduled" },
+  { label: t("common.paused"), value: "paused" },
+  { label: t("common.completed"), value: "completed" },
+  { label: t("common.draft"), value: "draft" },
 ];
 
-const sortOptions: TSortOption[] = [
+const getSortOptions = (t: TFnType): TSortOption[] => [
   {
-    label: "common.updated_at",
+    label: t("common.updated_at"),
     value: "updatedAt",
   },
   {
-    label: "common.created_at",
+    label: t("common.created_at"),
     value: "createdAt",
   },
   {
-    label: "environments.surveys.alphabetical",
+    label: t("environments.surveys.alphabetical"),
     value: "name",
   },
   {
-    label: "environments.surveys.relevance",
+    label: t("environments.surveys.relevance"),
     value: "relevance",
   },
 ];
@@ -61,14 +61,14 @@ export const SurveyFilters = ({
 }: SurveyFilterProps) => {
   const { createdBy, sortBy, status, type } = surveyFilters;
   const [name, setName] = useState("");
-  const t = useTranslations();
+  const { t } = useTranslate();
   useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name: name })), 800, [name]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 
   const typeOptions: TFilterOption[] = [
-    { label: "common.link", value: "link" },
-    { label: "common.app", value: "app" },
+    { label: t("common.link"), value: "link" },
+    { label: t("common.app"), value: "app" },
   ];
 
   const toggleDropdown = (id: string) => {
@@ -128,7 +128,7 @@ export const SurveyFilters = ({
           <SurveyFilterDropdown
             title={t("common.created_by")}
             id="createdBy"
-            options={creatorOptions}
+            options={getCreatorOptions(t)}
             selectedOptions={createdBy}
             setSelectedOptions={handleCreatedByChange}
             isOpen={dropdownOpenStates.get("createdBy")}
@@ -139,7 +139,7 @@ export const SurveyFilters = ({
           <SurveyFilterDropdown
             title={t("common.status")}
             id="status"
-            options={statusOptions}
+            options={getStatusOptions(t)}
             selectedOptions={status}
             setSelectedOptions={handleStatusChange}
             isOpen={dropdownOpenStates.get("status")}
@@ -181,14 +181,17 @@ export const SurveyFilters = ({
             <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
-                  {t("common.sort_by")}: {t(sortOptions.find((option) => option.value === sortBy)?.label)}
+                  {t("common.sort_by")}:{" "}
+                  {getSortOptions(t).find((option) => option.value === sortBy)
+                    ? t(getSortOptions(t).find((option) => option.value === sortBy)?.label ?? "")
+                    : ""}
                 </span>
                 <ChevronDownIcon className="ml-2 h-4 w-4" />
               </div>
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="bg-slate-900">
-            {sortOptions.map((option) => (
+            {getSortOptions(t).map((option) => (
               <SortOption
                 option={option}
                 key={option.label}

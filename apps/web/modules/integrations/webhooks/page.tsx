@@ -9,8 +9,8 @@ import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -20,7 +20,7 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const WebhooksPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [session, organization, webhooks, surveys, environment] = await Promise.all([
     getServerSession(authOptions),
     getOrganizationByEnvironmentId(params.environmentId),

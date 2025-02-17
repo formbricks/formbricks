@@ -1,11 +1,11 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useTranslations } from "next-intl";
+import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
-const Loading = () => {
-  const t = useTranslations();
+const Loading = async () => {
+  const t = await getTranslate();
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>

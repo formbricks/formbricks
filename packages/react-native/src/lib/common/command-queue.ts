@@ -1,12 +1,12 @@
 /* eslint-disable no-console -- we need to log global errors */
-import { checkInitialized } from "@/lib/common/initialize";
+import { checkSetup } from "@/lib/common/setup";
 import { wrapThrowsAsync } from "@/lib/common/utils";
 import type { Result } from "@/types/error";
 
 export class CommandQueue {
   private queue: {
     command: (...args: any[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
-    checkInitialized: boolean;
+    checkSetup: boolean;
     commandArgs: any[];
   }[] = [];
   private running = false;
@@ -15,10 +15,10 @@ export class CommandQueue {
 
   public add<A>(
     command: (...args: A[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>,
-    shouldCheckInitialized = true,
+    shouldCheckSetup = true,
     ...args: A[]
   ): void {
-    this.queue.push({ command, checkInitialized: shouldCheckInitialized, commandArgs: args });
+    this.queue.push({ command, checkSetup: shouldCheckSetup, commandArgs: args });
 
     if (!this.running) {
       this.commandPromise = new Promise((resolve) => {
@@ -41,12 +41,12 @@ export class CommandQueue {
 
       if (!currentItem) continue;
 
-      // make sure formbricks is initialized
-      if (currentItem.checkInitialized) {
+      // make sure formbricks is setup
+      if (currentItem.checkSetup) {
         // call different function based on package type
-        const initResult = checkInitialized();
+        const setupResult = checkSetup();
 
-        if (!initResult.ok) {
+        if (!setupResult.ok) {
           continue;
         }
       }

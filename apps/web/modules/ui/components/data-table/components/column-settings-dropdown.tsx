@@ -1,3 +1,5 @@
+"use client";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -5,8 +7,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Column } from "@tanstack/react-table";
+import { useTranslate } from "@tolgee/react";
 import { EllipsisVerticalIcon, EyeOffIcon, SettingsIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 
 interface ColumnSettingsDropdownProps<T> {
   column: Column<T>;
@@ -17,7 +19,7 @@ export const ColumnSettingsDropdown = <T,>({
   column,
   setIsTableSettingsModalOpen,
 }: ColumnSettingsDropdownProps<T>) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
