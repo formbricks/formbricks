@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 /* eslint-disable no-console -- debugging*/
+import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
+import { Modal } from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { StorageAPI } from "@/lib/common/file-upload";
 import { Logger } from "@/lib/common/logger";
@@ -11,10 +15,6 @@ import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageDat
 import type { TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
 import type { SurveyInlineProps } from "@/types/survey";
-import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { FormbricksAPI } from "@formbricks/api";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -340,8 +340,41 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       <title>Formbricks WebView Survey</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body style="overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;">
-      <div id="formbricks-react-native" style="width: 100%;"></div>
+ <body style="overflow: hidden; height: 100vh; background: transparent;">
+      <style>
+        .survey-container {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        #formbricks-react-native {
+          width: 100%;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        /* For screens smaller than iPad (768px) */
+        @media (max-width: 767px) {
+          .survey-container {
+            justify-content: flex-end;
+          }
+        }
+
+        /* For iPad and larger screens */
+        @media (min-width: 768px) {
+          .survey-container {
+            justify-content: center;
+          }
+        }
+      </style>
+      <div class="survey-container">
+        <div id="formbricks-react-native">
+          <div style="width: 100%;"></div>
+        </div>
+      </div>
     </body>
 
 
@@ -435,6 +468,14 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
         console.error("Failed to load Formbricks Surveys library:", error);
       };
       document.head.appendChild(script);
+
+      // Add click handler to close survey when clicking outside
+      document.addEventListener('click', function(event) {
+        const surveyContainer = document.getElementById('formbricks-react-native');
+        if (surveyContainer && !surveyContainer.contains(event.target)) {
+          onClose();
+        }
+      });
     </script>
   </html>
   `;
