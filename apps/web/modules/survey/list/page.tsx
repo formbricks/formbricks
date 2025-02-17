@@ -19,8 +19,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DEFAULT_LOCALE, SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getUser, getUserLocale } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {
