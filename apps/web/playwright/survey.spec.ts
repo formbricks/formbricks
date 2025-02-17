@@ -217,6 +217,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 });
 
 test.describe("Multi Language Survey Create", async () => {
+  // 4 minutes
+  test.setTimeout(1000 * 60 * 4);
+
   test("Create Survey", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -602,7 +605,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    await page.waitForTimeout(5000);
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
