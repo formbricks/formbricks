@@ -876,6 +876,8 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForSelector("#response-table");
 
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
+
+      await page.waitForLoadState("networkidle");
       await page.waitForTimeout(5000);
       await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
     });
