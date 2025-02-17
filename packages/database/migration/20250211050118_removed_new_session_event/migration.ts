@@ -17,8 +17,8 @@ export const removedNewSessionEvent: MigrationScript = {
 
     console.log(`Found ${automaticActions.length.toString()} new session actions`);
 
-    const actionsToUpdate = [];
-    const actionsToDelete = [];
+    const actionsToUpdate: string[] = [];
+    const actionsToDelete: string[] = [];
 
     for (const action of automaticActions) {
       // Check for survey triggers using this action
@@ -38,8 +38,11 @@ export const removedNewSessionEvent: MigrationScript = {
       }
     }
 
+    console.log("Total actions to update", actionsToUpdate.length);
+    console.log("Total actions to delete", actionsToDelete.length);
+
     // batches:
-    const batchSize = 20000;
+    const batchSize = 5000;
 
     for (let i = 0; i < actionsToUpdate.length; i += batchSize) {
       const batch = actionsToUpdate.slice(i, i + batchSize);
