@@ -1,6 +1,6 @@
 "use client";
 
-import FollowUpActionMultiEmailInput from "@/modules/survey-follow-ups/components/follow-up-action-multi-email-input";
+import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
@@ -588,9 +588,9 @@ export const FollowUpModal = ({
                                                 <div className="h-4 w-4">
                                                   {
                                                     QUESTIONS_ICON_MAP[
-                                                      option.type === "openTextQuestion"
-                                                        ? "openText"
-                                                        : "contactInfo"
+                                                    option.type === "openTextQuestion"
+                                                      ? "openText"
+                                                      : "contactInfo"
                                                     ]
                                                   }
                                                 </div>

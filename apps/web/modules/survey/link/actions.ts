@@ -5,7 +5,7 @@ import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurvey } from "@/modules/survey/lib/survey";
-import { getIfResponseWithSurveyIdAndEmailExist } from "@/modules/survey/link/lib/response";
+import { isSurveyResponsePresent } from "@/modules/survey/link/lib/response";
 import { getSurveyPin } from "@/modules/survey/link/lib/survey";
 import { z } from "zod";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
@@ -46,13 +46,13 @@ export const validateSurveyPinAction = actionClient
     return { survey };
   });
 
-const ZGetIfResponseWithSurveyIdAndEmailExistAction = z.object({
+const ZIsSurveyResponsePresentAction = z.object({
   surveyId: z.string().cuid2(),
   email: z.string().email(),
 });
 
-export const getIfResponseWithSurveyIdAndEmailExistAction = actionClient
-  .schema(ZGetIfResponseWithSurveyIdAndEmailExistAction)
+export const isSurveyResponsePresentAction = actionClient
+  .schema(ZIsSurveyResponsePresentAction)
   .action(async ({ parsedInput }) => {
-    return await getIfResponseWithSurveyIdAndEmailExist(parsedInput.surveyId, parsedInput.email);
+    return await isSurveyResponsePresent(parsedInput.surveyId, parsedInput.email);
   });

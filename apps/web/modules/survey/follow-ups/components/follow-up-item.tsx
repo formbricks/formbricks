@@ -1,6 +1,6 @@
 "use client";
 
-import { FollowUpModal } from "@/modules/survey-follow-ups/components/follow-up-modal";
+import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";

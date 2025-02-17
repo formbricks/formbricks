@@ -6,7 +6,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { webhookCache } from "@/lib/cache/webhook";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";

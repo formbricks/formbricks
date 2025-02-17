@@ -4,7 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";

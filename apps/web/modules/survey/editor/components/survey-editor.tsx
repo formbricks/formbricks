@@ -1,7 +1,7 @@
 "use client";
 
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { FollowUpsView } from "@/modules/survey-follow-ups/components/follow-ups-view";
+import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";

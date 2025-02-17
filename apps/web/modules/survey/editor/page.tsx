@@ -4,7 +4,7 @@ import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getActionClasses } from "@/modules/survey/lib/action-class";

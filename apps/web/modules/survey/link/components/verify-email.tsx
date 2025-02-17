@@ -2,7 +2,7 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
-  getIfResponseWithSurveyIdAndEmailExistAction,
+  isSurveyResponsePresentAction,
   sendLinkSurveyEmailAction,
 } from "@/modules/survey/link/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -61,7 +61,7 @@ export const VerifyEmail = ({
   const submitEmail = async (emailInput: TVerifyEmailInput) => {
     const email = emailInput.email.toLowerCase();
     if (localSurvey.isSingleResponsePerEmailEnabled) {
-      const actionResult = await getIfResponseWithSurveyIdAndEmailExistAction({
+      const actionResult = await isSurveyResponsePresentAction({
         surveyId: localSurvey.id,
         email,
       });

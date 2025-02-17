@@ -1,7 +1,7 @@
 "use client";
 
-import { FollowUpItem } from "@/modules/survey-follow-ups/components/follow-up-item";
-import { FollowUpModal } from "@/modules/survey-follow-ups/components/follow-up-modal";
+import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
+import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { LockIcon, MailIcon } from "lucide-react";

@@ -6,7 +6,7 @@ import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
+export const isSurveyResponsePresent = reactCache(
   async (surveyId: string, email: string): Promise<boolean> =>
     cache(
       async () => {
@@ -31,7 +31,7 @@ export const getIfResponseWithSurveyIdAndEmailExist = reactCache(
           throw error;
         }
       },
-      [`link-surveys-getIfResponseWithSurveyIdAndEmailExist-${surveyId}-${email}`],
+      [`link-surveys-isSurveyResponsePresent-${surveyId}-${email}`],
       {
         tags: [responseCache.tag.bySurveyId(surveyId)],
       }

@@ -10,7 +10,7 @@ import {
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { z } from "zod";
