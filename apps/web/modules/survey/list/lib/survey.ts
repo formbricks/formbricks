@@ -113,16 +113,16 @@ export const getSurveysSortedByRelevance = reactCache(
             offset && offset > inProgressSurveyCount
               ? []
               : await prisma.survey.findMany({
-                where: {
-                  environmentId,
-                  status: "inProgress",
-                  ...buildWhereClause(filterCriteria),
-                },
-                select: surveySelect,
-                orderBy: buildOrderByClause("updatedAt"),
-                take: limit,
-                skip: offset,
-              });
+                  where: {
+                    environmentId,
+                    status: "inProgress",
+                    ...buildWhereClause(filterCriteria),
+                  },
+                  select: surveySelect,
+                  orderBy: buildOrderByClause("updatedAt"),
+                  take: limit,
+                  skip: offset,
+                });
 
           surveys = inProgressSurveys.map((survey) => {
             return {
@@ -394,23 +394,23 @@ export const copySurveyToOtherEnvironment = async (
       hiddenFields: structuredClone(existingSurvey.hiddenFields),
       languages: hasLanguages
         ? {
-          create: existingSurvey.languages.map((surveyLanguage) => ({
-            language: {
-              connectOrCreate: {
-                where: {
-                  projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
-                },
-                create: {
-                  code: surveyLanguage.language.code,
-                  alias: surveyLanguage.language.alias,
-                  projectId: targetProject.id,
+            create: existingSurvey.languages.map((surveyLanguage) => ({
+              language: {
+                connectOrCreate: {
+                  where: {
+                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
+                  },
+                  create: {
+                    code: surveyLanguage.language.code,
+                    alias: surveyLanguage.language.alias,
+                    projectId: targetProject.id,
+                  },
                 },
               },
-            },
-            default: surveyLanguage.default,
-            enabled: surveyLanguage.enabled,
-          })),
-        }
+              default: surveyLanguage.default,
+              enabled: surveyLanguage.enabled,
+            })),
+          }
         : undefined,
       triggers: {
         create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {

@@ -1,11 +1,11 @@
 "use client";
 
-import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
+import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";
@@ -588,9 +588,9 @@ export const FollowUpModal = ({
                                                 <div className="h-4 w-4">
                                                   {
                                                     QUESTIONS_ICON_MAP[
-                                                    option.type === "openTextQuestion"
-                                                      ? "openText"
-                                                      : "contactInfo"
+                                                      option.type === "openTextQuestion"
+                                                        ? "openText"
+                                                        : "contactInfo"
                                                     ]
                                                   }
                                                 </div>
