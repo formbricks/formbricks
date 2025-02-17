@@ -873,7 +873,6 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
 
       await page.getByRole("button", { name: "Close" }).click();
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
