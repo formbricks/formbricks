@@ -4,12 +4,14 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import { Language } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
+import { TFnType } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProject } from "@formbricks/types/project";
+import type { TProject } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import {
   createLanguageAction,
@@ -30,7 +32,7 @@ const checkIfDuplicateExists = (arr: string[]) => {
   return new Set(arr).size !== arr.length;
 };
 
-const validateLanguages = (languages: TLanguage[], t: (key: string) => string) => {
+const validateLanguages = (languages: Language[], t: TFnType) => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
   const languageAliases = languages
     .filter((language) => language.alias)
@@ -69,8 +71,8 @@ const validateLanguages = (languages: TLanguage[], t: (key: string) => string) =
 };
 
 export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps) {
-  const t = useTranslations();
-  const [languages, setLanguages] = useState<TLanguage[]>(project.languages);
+  const { t } = useTranslate();
+  const [languages, setLanguages] = useState<Language[]>(project.languages);
   const [isEditing, setIsEditing] = useState(false);
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
@@ -84,7 +86,14 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
   }, [project.languages]);
 
   const handleAddLanguage = () => {
-    const newLanguage = { id: "new", createdAt: new Date(), updatedAt: new Date(), code: "", alias: "" };
+    const newLanguage = {
+      id: "new",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      code: "",
+      alias: "",
+      projectId: project.id,
+    };
     setLanguages((prev) => [...prev, newLanguage]);
     setIsEditing(true);
   };
@@ -119,7 +128,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
         toast.error(errorMessage);
       }
     } catch (err) {
-      toast.error(t("common.something_went_wrong_please_try_again_later"));
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -131,7 +140,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
       // Close the modal after deletion
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     } catch (err) {
-      toast.error(t("common.something_went_wrong_please_try_again_later"));
+      toast.error(t("common.something_went_wrong_please_try_again"));
       setConfirmationModal((prev) => ({ ...prev, isOpen: false }));
     }
   };
@@ -183,7 +192,7 @@ export function EditLanguage({ project, locale, isReadOnly }: EditLanguageProps)
                 language={language}
                 locale={locale}
                 onDelete={() => handleDeleteLanguage(language.id)}
-                onLanguageChange={(newLanguage: TLanguage) => {
+                onLanguageChange={(newLanguage: Language) => {
                   const updatedLanguages = [...languages];
                   updatedLanguages[index] = newLanguage;
                   setLanguages(updatedLanguages);
@@ -236,7 +245,7 @@ const EditSaveButtons: React.FC<{
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
-  t: (key: string) => string;
+  t: TFnType;
 }> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
   isEditing ? (
     <div className="flex gap-4">

@@ -1,41 +1,39 @@
+import { getTranslate } from "@/tolgee/server";
 import { Container, Heading, Text } from "@react-email/components";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
 import { EmailTemplate } from "../../components/email-template";
-import { translateEmailText } from "../../lib/utils";
 
 interface OnboardingInviteEmailProps {
   inviteMessage: string;
   inviterName: string;
   verifyLink: string;
-  locale: string;
   inviteeName: string;
 }
 
-export function OnboardingInviteEmail({
+export async function OnboardingInviteEmail({
   inviteMessage,
   inviterName,
   verifyLink,
-  locale,
   inviteeName,
-}: OnboardingInviteEmailProps): React.JSX.Element {
+}: OnboardingInviteEmailProps): Promise<React.JSX.Element> {
+  const t = await getTranslate();
   return (
-    <EmailTemplate>
+    <EmailTemplate t={t}>
       <Container>
-        <Heading>
-          {translateEmailText("onboarding_invite_email_heading", locale)} {inviteeName} 👋
-        </Heading>
+        <Heading>{t("emails.onboarding_invite_email_heading", { inviteeName })}</Heading>
         <Text>{inviteMessage}</Text>
-        <Text className="font-medium">
-          {translateEmailText("onboarding_invite_email_get_started_in_minutes", locale)}
-        </Text>
+        <Text className="font-medium">{t("emails.onboarding_invite_email_get_started_in_minutes")}</Text>
         <ol>
-          <li>{translateEmailText("onboarding_invite_email_create_account", locale, { inviterName })}</li>
-          <li>{translateEmailText("onboarding_invite_email_connect_formbricks", locale)}</li>
-          <li>{translateEmailText("onboarding_invite_email_done", locale)} ✅</li>
+          <li>{t("emails.onboarding_invite_email_create_account", { inviterName })}</li>
+          <li>{t("emails.onboarding_invite_email_connect_formbricks")}</li>
+          <li>{t("emails.onboarding_invite_email_done")} ✅</li>
         </ol>
-        <EmailButton href={verifyLink} label={`Join ${inviterName}'s organization`} />
-        <EmailFooter />
+        <EmailButton
+          href={verifyLink}
+          label={t("emails.onboarding_invite_email_button_label", { inviterName })}
+        />
+        <EmailFooter t={t} />
       </Container>
     </EmailTemplate>
   );

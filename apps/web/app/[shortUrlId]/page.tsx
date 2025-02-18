@@ -1,4 +1,4 @@
-import { getMetadataForLinkSurvey } from "@/app/s/[surveyId]/metadata";
+import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";

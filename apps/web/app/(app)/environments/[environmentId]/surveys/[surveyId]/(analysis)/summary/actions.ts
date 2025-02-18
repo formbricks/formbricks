@@ -43,7 +43,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
       throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
     }
 
-    const rawEmailHtml = await getEmailTemplateHtml(parsedInput.surveyId);
+    const rawEmailHtml = await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
     const emailHtml = rawEmailHtml
       .replaceAll("?preview=true&amp;", "?")
       .replaceAll("?preview=true&;", "?")
@@ -51,10 +51,8 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
 
     return await sendEmbedSurveyPreviewEmail(
       ctx.user.email,
-      "Formbricks Email Survey Preview",
       emailHtml,
       survey.environmentId,
-      ctx.user.locale,
       organizationLogoUrl || ""
     );
   });
@@ -182,5 +180,5 @@ export const getEmailHtmlAction = authenticatedActionClient
       ],
     });
 
-    return await getEmailTemplateHtml(parsedInput.surveyId);
+    return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
   });

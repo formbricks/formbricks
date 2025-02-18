@@ -5,8 +5,8 @@ import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
+import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
@@ -27,7 +27,7 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
     getEnvironment(environmentId),
@@ -80,7 +80,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">

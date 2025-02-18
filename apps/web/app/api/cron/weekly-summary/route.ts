@@ -47,11 +47,7 @@ export const POST = async (): Promise<Response> => {
           for (const organizationMember of organizationMembersWithNotificationEnabled) {
             if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
               emailSendingPromises.push(
-                sendNoLiveSurveyNotificationEmail(
-                  organizationMember.user.email,
-                  notificationResponse,
-                  organizationMember.user.locale
-                )
+                sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
               );
             }
           }
@@ -61,11 +57,7 @@ export const POST = async (): Promise<Response> => {
         for (const organizationMember of organizationMembersWithNotificationEnabled) {
           if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
             emailSendingPromises.push(
-              sendWeeklySummaryNotificationEmail(
-                organizationMember.user.email,
-                notificationResponse,
-                organizationMember.user.locale
-              )
+              sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
             );
           }
         }

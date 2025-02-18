@@ -9,8 +9,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { InsightCategory } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { UserIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import formbricks from "@formbricks/js";
 import { TDocumentFilterCriteria } from "@formbricks/types/documents";
@@ -34,7 +34,7 @@ export const InsightView = ({
   documentsPerPage,
   locale,
 }: InsightViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [insights, setInsights] = useState<TInsightWithDocumentCount[]>([]);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isFetching, setIsFetching] = useState(false);

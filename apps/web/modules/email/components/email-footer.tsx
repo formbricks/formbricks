@@ -1,10 +1,13 @@
 import { Text } from "@react-email/components";
+import { TFnType } from "@tolgee/react";
+import React from "react";
 
-export function EmailFooter(): React.JSX.Element {
+export function EmailFooter({ t }: { t: TFnType }): React.JSX.Element {
   return (
     <Text>
-      Have a great day!
-      <br /> The Formbricks Team
+      {t("emails.email_footer_text_1")}
+      <br />
+      {t("emails.email_footer_text_2")}
     </Text>
   );
 }

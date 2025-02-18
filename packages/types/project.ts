@@ -31,6 +31,7 @@ export const ZLanguage = z.object({
   updatedAt: z.date(),
   code: z.string(),
   alias: z.string().nullable(),
+  projectId: z.string().cuid2(),
 });
 export type TLanguage = z.infer<typeof ZLanguage>;
 

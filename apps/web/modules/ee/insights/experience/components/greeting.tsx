@@ -1,14 +1,14 @@
 "use client";
 
 import { H1 } from "@/modules/ui/components/typography";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface GreetingProps {
   userName: string;
 }
 
 export const Greeting = ({ userName }: GreetingProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   function getGreeting() {
     const hour = new Date().getHours();
     if (hour < 12) return t("environments.experience.good_morning");

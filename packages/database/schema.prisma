@@ -31,6 +31,7 @@ enum WebhookSource {
   zapier
   make
   n8n
+  activepieces
 }
 
 model Webhook {
@@ -332,7 +333,6 @@ model SurveyFollowUp {
 enum ActionType {
   code
   noCode
-  automatic
 }
 
 model ActionClass {

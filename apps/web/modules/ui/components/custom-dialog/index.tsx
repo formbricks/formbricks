@@ -2,7 +2,7 @@
 
 import { Button } from "@/modules/ui/components/button";
 import { Modal } from "@/modules/ui/components/modal";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 
 interface CustomDialogProps {
   open: boolean;
@@ -31,7 +31,7 @@ export const CustomDialog = ({
   cancelBtnText,
   disabled,
 }: CustomDialogProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} title={title}>
       <p>{text}</p>

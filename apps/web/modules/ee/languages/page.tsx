@@ -10,8 +10,8 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -21,7 +21,7 @@ import { getUser } from "@formbricks/lib/user/service";
 
 export const LanguagesPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
@@ -34,12 +34,12 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
   if (!isMultiLanguageAllowed) {
     notFound();
   }
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const session = await getServerSession(authOptions);
 

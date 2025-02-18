@@ -1,15 +1,15 @@
 "use client";
 
+import { ZInvitees } from "@/modules/organization/settings/teams/types/invites";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
+import { useTranslate } from "@tolgee/react";
 import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { ZInvitees } from "@formbricks/types/invites";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface BulkInviteTabProps {
@@ -25,7 +25,7 @@ export const BulkInviteTab = ({
   canDoRoleManagement,
   isFormbricksCloud,
 }: BulkInviteTabProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [csvFile, setCSVFile] = useState<File>();
 
   const onFileInputChange = (files: File[]) => {

@@ -10,14 +10,14 @@ import { ProjectConfigNavigation } from "@/modules/projects/settings/components/
 import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getTranslations } from "next-intl/server";
+import { getTranslate } from "@/tolgee/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 export const AppConnectionPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [environment, organization] = await Promise.all([
     getEnvironment(params.environmentId),
     getOrganizationByEnvironmentId(params.environmentId),
@@ -31,8 +31,8 @@ export const AppConnectionPage = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   return (
     <PageContentWrapper>

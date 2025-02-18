@@ -10,8 +10,8 @@ import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-custom
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -23,7 +23,7 @@ import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm"
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -39,7 +39,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization);
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;

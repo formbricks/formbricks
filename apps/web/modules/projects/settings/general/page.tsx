@@ -11,20 +11,20 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { getTranslations } from "next-intl/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
+import { getProjectByEnvironmentId, getProjects } from "@formbricks/lib/project/service";
 import { DeleteProject } from "./components/delete-project";
 import { EditProjectNameForm } from "./components/edit-project-name-form";
 import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
 
 export const GeneralSettingsPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
-  const t = await getTranslations();
+  const t = await getTranslate();
   const [project, session, organization] = await Promise.all([
     getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
@@ -41,6 +41,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
     throw new Error(t("common.organization_not_found"));
   }
 
+  const organizationProjects = await getProjects(organization.id);
+
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
 
@@ -49,14 +51,15 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
 
   const isReadOnly = isMember && !hasManageAccess;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const isOwnerOrManager = isOwner || isManager;
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        {/* </PageHeader><PageHeader pageTitle={t("common.configuration")}> */}
         <ProjectConfigNavigation
           environmentId={params.environmentId}
           activeId="general"
@@ -79,7 +82,8 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
         description={t("environments.project.general.delete_project_settings_description")}>
         <DeleteProject
           environmentId={params.environmentId}
-          project={project}
+          currentProject={project}
+          organizationProjects={organizationProjects}
           isOwnerOrManager={isOwnerOrManager}
         />
       </SettingsCard>

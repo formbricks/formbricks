@@ -5,8 +5,8 @@ import { Button } from "@/modules/ui/components/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
 import { Insight, InsightCategory } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { UserIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
 import { cn } from "@formbricks/lib/cn";
@@ -34,7 +34,7 @@ export const InsightView = ({
   documentsPerPage,
   locale,
 }: InsightViewProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isInsightSheetOpen, setIsInsightSheetOpen] = useState(true);
   const [localInsights, setLocalInsights] = useState<TSurveyQuestionSummaryOpenText["insights"]>(insights);
   const [currentInsight, setCurrentInsight] = useState<

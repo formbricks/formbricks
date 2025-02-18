@@ -20,7 +20,7 @@ export const checkWhiteLabelPermission = async (organizationId: string) => {
     throw new ResourceNotFoundError("Organization", organizationId);
   }
 
-  const isWhiteLabelAllowed = await getWhiteLabelPermission(organization);
+  const isWhiteLabelAllowed = await getWhiteLabelPermission(organization.billing.plan);
 
   if (!isWhiteLabelAllowed) {
     throw new OperationNotAllowedError("White label is not allowed for this organization");
@@ -90,9 +90,7 @@ export const sendTestEmailAction = authenticatedActionClient
 
     await sendEmailCustomizationPreviewEmail(
       ctx.user.email,
-      "Formbricks Email Customization Preview",
       ctx.user.name,
-      ctx.user.locale,
       organization?.whitelabel?.logoUrl || ""
     );
 

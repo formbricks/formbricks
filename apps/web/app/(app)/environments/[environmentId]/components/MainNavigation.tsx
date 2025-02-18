@@ -21,6 +21,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
   BlocksIcon,
@@ -40,7 +41,6 @@ import {
   UsersIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -82,7 +82,7 @@ export const MainNavigation = ({
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [currentOrganizationName, setCurrentOrganizationName] = useState("");
   const [currentOrganizationId, setCurrentOrganizationId] = useState("");
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
@@ -392,7 +392,7 @@ export const MainNavigation = ({
                       router.push(route.url);
                       await formbricksLogout();
                     }}
-                    icon={<LogOutIcon className="h-4 w-4" strokeWidth={1.5} />}>
+                    icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
                     {t("common.logout")}
                   </DropdownMenuItem>
 

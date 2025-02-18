@@ -12,8 +12,8 @@ import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/module
 import { Input } from "@/modules/ui/components/input";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslate } from "@tolgee/react";
 import { TrashIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -38,7 +38,7 @@ export const ActionSettingsTab = ({
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isUpdatingAction, setIsUpdatingAction] = useState(false);
   const [isDeletingAction, setIsDeletingAction] = useState(false);
 
@@ -156,7 +156,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
-                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
 
@@ -183,7 +183,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.user_clicked_download_button")}
                           value={field.value ?? ""}
-                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                     </FormItem>
@@ -212,7 +212,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between border-t border-slate-200 py-6">
             <div>
-              {!isReadOnly && actionClass.type !== "automatic" && (
+              {!isReadOnly ? (
                 <Button
                   type="button"
                   variant="destructive"
@@ -222,7 +222,7 @@ export const ActionSettingsTab = ({
                   <TrashIcon />
                   {t("common.delete")}
                 </Button>
-              )}
+              ) : null}
 
               <Button variant="secondary" asChild>
                 <Link href="https://formbricks.com/docs/actions/no-code" target="_blank">
@@ -231,13 +231,13 @@ export const ActionSettingsTab = ({
               </Button>
             </div>
 
-            {!isReadOnly && actionClass.type !== "automatic" && (
+            {!isReadOnly ? (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}
                 </Button>
               </div>
-            )}
+            ) : null}
           </div>
         </form>
       </FormProvider>

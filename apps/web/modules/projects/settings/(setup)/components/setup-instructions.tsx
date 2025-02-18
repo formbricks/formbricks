@@ -3,7 +3,7 @@
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { useTranslations } from "next-intl";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
@@ -23,7 +23,7 @@ interface SetupInstructionsProps {
 }
 
 export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstructionsProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
 
   return (

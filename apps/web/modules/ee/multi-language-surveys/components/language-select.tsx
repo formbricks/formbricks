@@ -1,23 +1,25 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { Language } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { ChevronDown } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import type { TIso639Language } from "@formbricks/lib/i18n/utils";
 import { iso639Languages } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import type { TLanguage } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageSelectProps {
-  language: TLanguage;
-  onLanguageChange: (newLanguage: TLanguage) => void;
+  language: Language;
+  onLanguageChange: (newLanguage: Language) => void;
   disabled: boolean;
   locale: TUserLocale;
 }
 
 export function LanguageSelect({ language, onLanguageChange, disabled, locale }: LanguageSelectProps) {
-  const t = useTranslations();
+  const { t } = useTranslate();
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOption, setSelectedOption] = useState(

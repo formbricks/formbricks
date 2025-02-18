@@ -1,22 +1,22 @@
 "use client";
 
-import { TemplateList } from "@/modules/surveys/components/TemplateList";
+import { TemplateList } from "@/modules/survey/components/template-list";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/modules/ui/components/card";
-import { useTranslations } from "next-intl";
+import { Project } from "@prisma/client";
+import { useTranslate } from "@tolgee/react";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProject } from "@formbricks/types/project";
 import { TTemplateFilter } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 
 interface TemplatesCardProps {
   environment: TEnvironment;
-  project: TProject;
+  project: Project;
   user: TUser;
   prefilledFilters: TTemplateFilter[];
 }
 
 export const TemplatesCard = ({ environment, project, user, prefilledFilters }: TemplatesCardProps) => {
-  const t = useTranslations();
+  const { t } = useTranslate();
   return (
     <Card>
       <CardHeader>
@@ -25,10 +25,10 @@ export const TemplatesCard = ({ environment, project, user, prefilledFilters }: 
       </CardHeader>
       <CardContent>
         <TemplateList
-          environment={environment}
+          environmentId={environment.id}
           project={project}
           showFilters={false}
-          user={user}
+          userId={user.id}
           prefilledFilters={prefilledFilters}
           noPreview={true}
         />
