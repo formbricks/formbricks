@@ -176,7 +176,7 @@
     },
     {
       "group": "Technical Handbook",
-      "pages": ["development/technical-handbook/overview"]
+      "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
     },
     {
       "group": "Contribution",
