@@ -6,6 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { PencilIcon } from "lucide-react";
 import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { JSX } from "react";
 import { toast } from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
@@ -239,6 +240,7 @@ export const RecallWrapper = ({
     };
 
     setRenderedText(processInput());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [internalValue, recallItems]);
 
   return (
@@ -281,7 +283,7 @@ export const RecallWrapper = ({
                 filteredRecallItems={recallItems}
                 fallbacks={fallbacks}
                 setFallbacks={setFallbacks}
-                fallbackInputRef={fallbackInputRef}
+                fallbackInputRef={fallbackInputRef as React.RefObject<HTMLInputElement>}
                 addFallback={addFallback}
               />
             )}
