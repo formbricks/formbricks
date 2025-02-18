@@ -13,6 +13,7 @@ on:
     - cron: "17 17 * * 6"
   push:
     branches: ["main"]
+  workflow_dispatch:
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -63,7 +64,7 @@ jobs:
       - name: "Upload artifact"
         uses: actions/upload-artifact@97a0fba1372883ab732affbe8f94b823f91727db # v3.pre.node20
         with:
-          name: SARIF file
+          name: SARIF-file
           path: results.sarif
           retention-days: 5
 
