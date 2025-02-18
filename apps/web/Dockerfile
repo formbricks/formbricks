@@ -34,7 +34,7 @@ ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
 # Increase Node.js memory limit
-ENV NODE_OPTIONS="--max_old_space_size=4096"
+# ENV NODE_OPTIONS="--max_old_space_size=4096"
 
 # Set the working directory
 WORKDIR /app
@@ -50,10 +50,13 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
+# Install rimraf globally
 RUN npm install -g rimraf
 
+# Clean the project
 RUN pnpm clean
 
+# Install the dependencies
 RUN pnpm install
 
 # Build the project
