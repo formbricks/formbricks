@@ -108,7 +108,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

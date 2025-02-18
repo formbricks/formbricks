@@ -1,7 +1,3 @@
-import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { SurveyTemplatesLoading } from "@/modules/survey/templates/loading";
 
-const Loading = () => {
-  return <LoadingSpinner />;
-};
-
-export default Loading;
+export default SurveyTemplatesLoading;

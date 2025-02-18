@@ -15,13 +15,13 @@ export const replaceQuestionPresetPlaceholders = (
     newQuestion.headline[defaultLanguageCode] = getLocalizedValue(
       newQuestion.headline,
       defaultLanguageCode
-    ).replace("{{projectName}}", project.name);
+    ).replace("$[projectName]", project.name);
   }
   if (newQuestion.subheader) {
     newQuestion.subheader[defaultLanguageCode] = getLocalizedValue(
       newQuestion.subheader,
       defaultLanguageCode
-    )?.replace("{{projectName}}", project.name);
+    )?.replace("$[projectName]", project.name);
   }
   return newQuestion;
 };
@@ -29,7 +29,7 @@ export const replaceQuestionPresetPlaceholders = (
 // replace all occurences of projectName with the actual project name in the current template
 export const replacePresetPlaceholders = (template: TTemplate, project: any) => {
   const preset = structuredClone(template.preset);
-  preset.name = preset.name.replace("{{projectName}}", project.name);
+  preset.name = preset.name.replace("$[projectName]", project.name);
   preset.questions = preset.questions.map((question) => {
     return replaceQuestionPresetPlaceholders(question, project);
   });
