@@ -166,18 +166,41 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Matrix Question
       await expect(page.getByText(surveys.createAndSubmit.matrix.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.matrix.description)).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[0] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[1] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[2] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[0] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[1] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[2] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[3] })).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[3] })
+      ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("row", { name: "Roses" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Trees" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Ocean" }).getByRole("cell").nth(1).click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Roses – 0" })
+        .locator("div")
+        .click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Trees – 0" })
+        .locator("div")
+        .click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Ocean – 0" })
+        .locator("div")
+        .click();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
@@ -765,31 +788,31 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.question)).toBeVisible();
       await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.description)).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[0] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[0] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[1] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[1] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("row", { name: "Roses" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Trees" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Ocean" }).getByRole("cell").nth(1).click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
