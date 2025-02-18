@@ -52,7 +52,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
-  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
+  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
 
   return await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed);
 };

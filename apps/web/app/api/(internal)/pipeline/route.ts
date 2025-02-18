@@ -6,7 +6,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { webhookCache } from "@/lib/cache/webhook";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendResponseFinishedEmail } from "@/modules/email";
-import { getSurveyFollowUpsPermission } from "@/modules/survey-follow-ups/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
@@ -164,7 +164,7 @@ export const POST = async (request: Request) => {
     });
 
     // send follow up emails
-    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization);
+    const surveyFollowUpsPermission = await getSurveyFollowUpsPermission(organization.billing.plan);
 
     if (surveyFollowUpsPermission) {
       await sendSurveyFollowUps(survey, response, organization);
@@ -197,7 +197,10 @@ export const POST = async (request: Request) => {
     if (hasSurveyOpenTextQuestions) {
       const isAICofigured = IS_AI_CONFIGURED;
       if (hasSurveyOpenTextQuestions && isAICofigured) {
-        const isAIEnabled = await getIsAIEnabled(organization);
+        const isAIEnabled = await getIsAIEnabled({
+          isAIEnabled: organization.isAIEnabled,
+          billing: organization.billing,
+        });
 
         if (isAIEnabled) {
           for (const question of survey.questions) {

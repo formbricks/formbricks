@@ -1,6 +1,6 @@
 // logger.test.ts
-import { Logger } from "@/lib/common/logger";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Logger } from "@/lib/common/logger";
 
 // adjust import path as needed
 
