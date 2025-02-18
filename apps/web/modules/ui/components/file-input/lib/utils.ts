@@ -2,7 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
-import { convertHeicToJpegAction } from "./action";
+import { convertHeicToJpegAction } from "./actions";
 
 export const uploadFile = async (
   file: File | Blob,
