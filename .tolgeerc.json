@@ -23,6 +23,10 @@
       {
         "language": "pt-BR",
         "path": "./packages/lib/messages/pt-BR.json"
+      },
+      {
+        "language": "zh-Hant-TW",
+        "path": "./packages/lib/messages/zh-Hant-TW.json"
       }
     ],
     "forceMode": "OVERRIDE"
