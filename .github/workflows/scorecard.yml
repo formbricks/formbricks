@@ -10,9 +10,9 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
-    - cron: '17 17 * * 6'
+    - cron: "17 17 * * 6"
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -26,6 +26,8 @@ jobs:
       security-events: write
       # Needed to publish results and get a badge (see publish_results below).
       id-token: write
+      # Add this permission
+      actions: write # Required for artifact upload
       # Uncomment the permissions below if installing in a private repository.
       # contents: read
       # actions: read
