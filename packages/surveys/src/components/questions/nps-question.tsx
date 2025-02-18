@@ -144,7 +144,7 @@ export function NPSQuestion({
                   );
                 })}
               </div>
-              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
                 <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
                 <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
