@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const removedNewSessionEvent: MigrationScript = {
@@ -6,65 +5,30 @@ export const removedNewSessionEvent: MigrationScript = {
   id: "dnh52k9vepinuhwuur8fclqf",
   name: "20250211050118_removed_new_session_event",
   run: async ({ tx }) => {
-    // Find all automatic actions - these are all the "New Session" actions
-    const automaticActionsResult = await tx.$queryRaw`
-      SELECT id, name 
-      FROM "ActionClass" 
+    const updatedActions = await tx.$executeRaw`
+      UPDATE "ActionClass"
+      SET type = 'noCode',
+          "noCodeConfig" = '{"type":"pageView","urlFilters":[]}'::jsonb
       WHERE type = 'automatic'
+        AND EXISTS (
+          SELECT 1 
+          FROM "SurveyTrigger"
+          WHERE "actionClassId" = "ActionClass".id
+        )
     `;
 
-    const automaticActions = automaticActionsResult as { id: string; name: string }[];
+    console.log(`Updated ${updatedActions.toString()} automatic actions`);
 
-    console.log(`Found ${automaticActions.length.toString()} new session actions`);
-
-    const actionsToUpdate: string[] = [];
-    const actionsToDelete: string[] = [];
-
-    for (const action of automaticActions) {
-      // Check for survey triggers using this action
-      const surveyTriggersResult = await tx.$queryRaw<{ count: string }[]>`
-        SELECT COUNT(*)::integer as "count"
-        FROM "SurveyTrigger"
-        WHERE "actionClassId" = ${action.id}
-      `;
-
-      // Parse the count (PostgreSQL may return count as a string)
-      const triggerCount = parseInt(surveyTriggersResult[0].count, 10);
-
-      if (triggerCount > 0) {
-        actionsToUpdate.push(action.id);
-      } else {
-        actionsToDelete.push(action.id);
-      }
-    }
-
-    console.log("Total actions to update", actionsToUpdate.length);
-    console.log("Total actions to delete", actionsToDelete.length);
-
-    // batches:
-    const batchSize = 5000;
-
-    for (let i = 0; i < actionsToUpdate.length; i += batchSize) {
-      const batch = actionsToUpdate.slice(i, i + batchSize);
-
-      const updatedActions = await tx.$executeRaw`
-        UPDATE "ActionClass"
-        SET type = 'noCode',
-            "noCodeConfig" = '{"type":"pageView","urlFilters":[]}'::jsonb
-        WHERE id IN (${Prisma.join(batch)})
-      `;
-
-      console.log(`Updated ${updatedActions.toString()} actions`);
-    }
-
-    for (let i = 0; i < actionsToDelete.length; i += batchSize) {
-      const batch = actionsToDelete.slice(i, i + batchSize);
-
-      const deletedActions = await tx.$executeRaw`
-        DELETE FROM "ActionClass" WHERE id IN (${Prisma.join(batch)})
-      `;
-
-      console.log(`Deleted ${deletedActions.toString()} actions`);
-    }
+    // Delete actions that are not referenced in SurveyTrigger
+    const deletedActions = await tx.$executeRaw`
+      DELETE FROM "ActionClass"
+      WHERE type = 'automatic'
+        AND NOT EXISTS (
+          SELECT 1 
+          FROM "SurveyTrigger"
+          WHERE "actionClassId" = "ActionClass".id
+        )
+    `;
+    console.log(`Deleted ${deletedActions.toString()} automatic actions`);
   },
 };
