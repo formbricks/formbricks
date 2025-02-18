@@ -810,18 +810,9 @@ test.describe("Testing Survey with advanced logic", async () => {
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Roses – 0" })
-        .locator("div")
-        .click();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Trees – 0" })
-        .locator("div")
-        .click();
-      await page
-        .getByRole("cell", { name: "How much do you love these flowers?: Ocean – 0" })
-        .locator("div")
-        .click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
