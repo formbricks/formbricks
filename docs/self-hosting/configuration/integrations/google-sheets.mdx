@@ -1,0 +1,88 @@
+---
+title: Google Sheets (On Premise)
+description: Instantly populate your Google Sheet table with survey data
+---
+
+The Google Sheets integration allows you to automatically send responses to an Google Sheets of your choice.
+
+<Note>
+  If you are using Formbricks Cloud, you will need to configure this
+  integration differently. Please follow this guide
+  [here](/xm-and-surveys/core-features/integrations/google-sheets) to set it up.
+</Note>
+
+## Setup
+
+Integrating Google Sheets with a self-hosted Formbricks instance requires configuring Google Cloud and updating your environment variables.
+
+<Note>
+  If your Google Cloud Console project has a publishing status of "Testing" your refresh token will expire after 7 days. To avoid that, you need to change the publishing status to "Production". [Google OAuth 2.0 documentation](https://developers.google.com/identity/protocols/oauth2?hl=en#expiration)
+</Note>
+
+* Go to the [Google Cloud Console](https://console.cloud.google.com/) and **create a new project**.
+
+* Enable necessary APIs:
+
+  * Now select the project you just created and go to the **APIs & Services** section.
+
+  * Click on the **Enable APIs and Services** button and search for **Google Sheets API** and enable it.
+
+* Configure OAuth Consent Screen:
+
+  * Go to **OAuth Consent screen** and select the appropriate User Type (External or Internal). Select **Internal** if you want only the users of your Google Workspace to be able to use the integration.
+
+  * Fill the required details:
+
+    * App name: Name displayed during OAuth authentication.
+
+    * User support email and Developer contact information: Your contact details for support.
+
+  * Click on **Save and Continue**.
+
+* Add required Scopes:
+
+* Click on the **Add or Remove Scopes** button and add the scopes:
+
+  * [`https://www.googleapis.com/auth/userinfo.email`](https://www.googleapis.com/auth/userinfo.email)
+
+  * [`https://www.googleapis.com/auth/spreadsheets`](https://www.googleapis.com/auth/spreadsheets)
+
+* Click on the **Update** button. Verify the scopes and click on the **Save and Continue** button.
+
+* Skip the **Test Users** section and click on the **Save and Continue** button.
+
+* View the OAuth Consent Screen summary and click on the **Back to Dashboard** button.
+
+* Register OAuth Client:
+
+* Navigate to **Credentials** > **Create Credentials** > **OAuth Client ID**.
+
+* Select **Web Application** and set:
+
+  * Name: Name of the OAuth Client ID.
+
+  * Authorized JavaScript Origins: `https://<your-public-facing-url>`
+
+  * Authorized redirect URIs: `https://<your-public-facing-url>/api/google-sheet/callback`
+
+* Save and note the Client ID and Client Secret.
+
+* Copy the Client ID and Client Secret and set them as environment variables in your Formbricks instance:
+
+  * `GOOGLE_SHEETS_CLIENT_ID`
+
+  * `GOOGLE_SHEETS_CLIENT_SECRET`
+
+  * `GOOGLE_SHEETS_REDIRECT_URL`
+
+Now just copy **GOOGLE\_SHEETS\_CLIENT\_ID**, **GOOGLE\_SHEETS\_CLIENT\_SECRET** and **GOOGLE\_SHEETS\_REDIRECT\_URL** for your integration & add it to your **Formbricks environment variables** as in the docker compose file:
+
+* `GOOGLE_SHEETS_CLIENT_ID`
+
+* `GOOGLE_SHEETS_CLIENT_SECRET`
+
+* `GOOGLE_SHEETS_REDIRECT_URL`
+
+Voila! You have successfully enabled the Google Sheets integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in [Google Sheets Integration with Formbricks](/xm-and-surveys/core-features/integrations/google-sheets) section to link a Google Sheet with Formbricks.
+
+Still struggling or something not working as expected? [Join our Github Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

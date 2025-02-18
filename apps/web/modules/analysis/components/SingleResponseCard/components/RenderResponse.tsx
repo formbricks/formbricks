@@ -1,3 +1,4 @@
+import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { ArrayResponse } from "@/modules/ui/components/array-response";
 import { FileUploadResponse } from "@/modules/ui/components/file-upload-response";
 import { PictureSelectionResponse } from "@/modules/ui/components/picture-selection-response";
@@ -173,7 +174,11 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               "ph-no-capture my-1 truncate font-normal text-slate-700",
               isExpanded ? "whitespace-pre-line" : "whitespace-nowrap"
             )}>
-            {Array.isArray(responseData) ? handleArray(responseData) : responseData}
+            {typeof responseData === "string"
+              ? renderHyperlinkedContent(responseData)
+              : Array.isArray(responseData)
+                ? handleArray(responseData)
+                : responseData}
           </p>
         );
       }

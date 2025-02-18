@@ -24,7 +24,7 @@ export const TeamsPage = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
 
   return (

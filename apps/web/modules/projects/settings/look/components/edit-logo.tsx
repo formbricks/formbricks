@@ -10,14 +10,14 @@ import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Input } from "@/modules/ui/components/input";
+import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { TProject, TProjectUpdateInput } from "@formbricks/types/project";
 
 interface EditLogoProps {
-  project: TProject;
+  project: Project;
   environmentId: string;
   isReadOnly: boolean;
 }
@@ -62,7 +62,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
 
     setIsLoading(true);
     try {
-      const updatedProject: TProjectUpdateInput = {
+      const updatedProject: Project["logo"] = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       const updateProjectResponse = await updateProjectAction({
@@ -92,7 +92,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly }: EditLogoProps) 
 
     setIsLoading(true);
     try {
-      const updatedProject: TProjectUpdateInput = {
+      const updatedProject: Project["logo"] = {
         logo: { url: undefined, bgColor: undefined },
       };
       const updateProjectResponse = await updateProjectAction({
