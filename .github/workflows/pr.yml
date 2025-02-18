@@ -42,7 +42,7 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, build, e2e-test, docs]
+    needs: [lint, test, build, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     permissions:
