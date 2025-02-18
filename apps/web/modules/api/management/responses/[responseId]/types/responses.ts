@@ -1,5 +1,8 @@
 import { z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
+
+extendZodWithOpenApi(z);
 
 export const responseIdSchema = z
   .string()
