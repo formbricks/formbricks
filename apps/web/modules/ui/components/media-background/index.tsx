@@ -14,7 +14,7 @@ interface MediaBackgroundProps {
   surveyType: SurveyType;
   isEditorView?: boolean;
   isMobilePreview?: boolean;
-  ContentRef?: React.RefObject<HTMLDivElement>;
+  ContentRef?: React.RefObject<HTMLDivElement> | null;
   onBackgroundLoaded?: (isLoaded: boolean) => void;
 }
 
