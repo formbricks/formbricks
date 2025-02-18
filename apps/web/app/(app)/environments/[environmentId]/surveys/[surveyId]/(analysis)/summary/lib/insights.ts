@@ -80,7 +80,7 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
           throw error;
         }
       },
-      [`getInsightsBySurveyIdQuestionId-${surveyId}-${limit}-${offset}`],
+      [`getInsightsBySurveyIdQuestionId-${surveyId}-${questionId}-${limit}-${offset}`],
       {
         tags: [documentCache.tag.bySurveyId(surveyId)],
       }
