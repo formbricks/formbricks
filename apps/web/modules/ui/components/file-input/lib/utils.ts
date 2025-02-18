@@ -2,7 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
-import { convertHeicToJpeg } from "./action";
+import { convertHeicToJpegAction } from "./action";
 
 export const uploadFile = async (
   file: File | Blob,
@@ -94,6 +94,13 @@ export const uploadFile = async (
   }
 };
 
+const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {
+  if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
+    return true;
+  }
+  return false;
+};
+
 export const getAllowedFiles = async (
   files: File[],
   allowedFileExtensions: string[],
@@ -110,36 +117,35 @@ export const getAllowedFiles = async (
 
     const extension = file.name.split(".").pop()?.toLowerCase();
     const fileSizeInMB = file.size / 1000000;
-    if (extension === "heic") {
-      try {
-        const convertedFile = await convertHeicToJpeg(file);
-        if (convertedFile) {
-          const convertedFileSizeInMB = convertedFile.size / 1000000;
-          if (maxSizeInMB && convertedFileSizeInMB > maxSizeInMB) {
-            sizeExceedFiles.push(file.name);
-            continue;
-          }
-          convertedFiles.push(
-            new File([convertedFile], file.name.replace(/\.heic$/i, ".jpg"), {
-              type: "image/jpeg",
-            })
-          );
-        }
-        continue;
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        toast.error(`Failed to convert ${file.name}: ${errorMessage}`);
-        unsupportedExtensionFiles.push(file.name);
-        continue;
-      }
-    }
 
     if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
       unsupportedExtensionFiles.push(file.name);
       continue;
-    } else if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
+    }
+
+    if (isFileSizeExceed(fileSizeInMB, maxSizeInMB)) {
       sizeExceedFiles.push(file.name);
       continue;
+    }
+
+    if (extension === "heic") {
+      const convertedFileResponse = await convertHeicToJpegAction({ file });
+      if (!convertedFileResponse?.data) {
+        unsupportedExtensionFiles.push(file.name);
+        continue;
+      } else {
+        const convertedFileSizeInMB = convertedFileResponse.data.size / 1000000;
+        if (isFileSizeExceed(convertedFileSizeInMB, maxSizeInMB)) {
+          sizeExceedFiles.push(file.name);
+          continue;
+        }
+
+        const convertedFile = new File([convertedFileResponse.data], file.name.replace(/\.heic$/, ".jpg"), {
+          type: "image/jpeg",
+        });
+        convertedFiles.push(convertedFile);
+        continue;
+      }
     }
 
     convertedFiles.push(file);

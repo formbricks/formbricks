@@ -129,6 +129,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "@neshca/cache-handler": "1.9.0",
     "@types/bcryptjs": "2.4.6",
+    "@types/heic-convert": "2.1.0",
     "@types/lodash": "4.17.13",
     "@types/markdown-it": "14.1.2",
     "@types/nodemailer": "6.4.17",

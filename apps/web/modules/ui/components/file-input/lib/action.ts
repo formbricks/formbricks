@@ -1,26 +1,29 @@
 "use server";
-export const convertHeicToJpeg = async (file: File): Promise<File | null> => {
-  if (!file || !file.name.endsWith(".heic")) return file;
 
-  try {
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { z } from "zod";
+
+const ZConvertHeicToJpegInput = z.object({
+  file: z.instanceof(File),
+});
+
+export const convertHeicToJpegAction = authenticatedActionClient
+  .schema(ZConvertHeicToJpegInput)
+  .action(async ({ parsedInput }) => {
+    if (!parsedInput.file || !parsedInput.file.name.endsWith(".heic")) return parsedInput.file;
+
     const convert = (await import("heic-convert")).default;
 
-    // Convert File to Buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const arrayBuffer = await parsedInput.file.arrayBuffer();
+    const nodeBuffer = Buffer.from(arrayBuffer) as unknown as ArrayBufferLike;
 
     const convertedBuffer = await convert({
-      buffer,
+      buffer: nodeBuffer,
       format: "JPEG",
       quality: 0.9,
     });
 
-    // Convert back to File
-    return new File([convertedBuffer], file.name.replace(/\.heic$/, ".jpg"), {
+    return new File([convertedBuffer], parsedInput.file.name.replace(/\.heic$/, ".jpg"), {
       type: "image/jpeg",
     });
-  } catch (error) {
-    console.error("Error converting HEIC to JPEG:", error);
-    return null;
-  }
-};
+  });
