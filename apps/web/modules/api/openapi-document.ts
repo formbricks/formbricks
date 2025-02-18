@@ -1,4 +1,4 @@
-import { responsePaths } from "@/modules/api/management/responses/openapi";
+import { responsePaths } from "@/modules/api/management/responses/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
