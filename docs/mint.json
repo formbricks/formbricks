@@ -179,46 +179,43 @@
       "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
     },
     {
-      "group": "Coding Standards",
+      "group": "Standards",
       "pages": [
         {
-          "group": "Code Organization and Structure",
+          "group": "Code Organization",
           "icon": "code",
           "pages": [
-            "development/coding-standards/code-organization-and-structure/file-and-directory-organization",
-            "development/coding-standards/code-organization-and-structure/naming-conventions",
-            "development/coding-standards/code-organization-and-structure/module-component-structure"
+            "development/standards/organization/file-and-directory-organization",
+            "development/standards/organization/naming-conventions",
+            "development/standards/organization/module-component-structure"
           ]
         },
         {
           "group": "Development Practices",
           "icon": "laptop",
           "pages": [
-            "development/coding-standards/development-practices/code-formatting-rules",
-            "development/coding-standards/development-practices/documentation-requirements",
-            "development/coding-standards/development-practices/error-handling-standards"
+            "development/standards/practices/code-formatting",
+            "development/standards/practices/documentation",
+            "development/standards/practices/error-handling"
           ]
         },
         {
           "group": "Technical Standards",
           "icon": "gear",
           "pages": [
-            "development/coding-standards/technical-standards/language-specific-conventions",
-            "development/coding-standards/technical-standards/framework-usage-guidelines"
+            "development/standards/technical/language-specific-conventions",
+            "development/standards/technical/framework-usage"
           ]
         },
         {
           "group": "Quality Assurance",
           "icon": "shield",
-          "pages": [
-            "development/coding-standards/quality-assurance/code-review-process",
-            "development/coding-standards/quality-assurance/testing-methodology"
-          ]
+          "pages": ["development/standards/qa/code-reviews", "development/standards/qa/testing-methodology"]
         }
       ]
     },
     {
-      "group": "Contribution",
+      "group": "Contributions",
       "pages": ["development/contribution/contribution"]
     },
     {

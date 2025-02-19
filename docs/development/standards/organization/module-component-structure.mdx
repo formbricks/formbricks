@@ -1,22 +1,14 @@
 ---
-title: Module/Component Structure
+title: Modules & Components
 description: In this document we outline the best practices for organizing modules and components across the codebase. Clear separation of concerns between modules (which encompass business logic and domain-specific functionality) and components (reusable UI elements and building blocks) promotes clarity, scalability, and maintainability.
 icon: boxes-stacked
 ---
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Module Organization](#module-organization)
-- [Component Organization](#component-organization)
-- [Examples](#examples)
-- [Best Practices](#best-practices)
 
 ## Introduction
 
 Our codebase follows a modular architecture with two primary organizational units:
 
-1. **UI Components**: Reusable, presentational components in the `modules/ui/components` directory
+1. **UI Components**: Reusable components in the `modules/ui/components` directory
 2. **Feature Modules**: Domain-specific functionality organized by feature in the `modules` directory
 
 ## Module Organization
@@ -28,11 +20,11 @@ Modules are organized by feature and can be found in the `modules` directory. Ea
 ```
 modules/
 └── feature-name/
-├── components/ # Feature-specific components
-├── lib/ # Business logic and utilities
-├── types/ # TypeScript types
-├── actions.ts # Server actions
-└── route.ts # API routes (if needed)
+   ├── components/ # Feature-specific components
+   ├── lib/ # Business logic and utilities
+   ├── types/ # TypeScript types
+   ├── actions.ts # Server actions
+   └── route.ts # API routes (if needed)
 ```
 
 ### Enterprise Edition (EE) Modules
@@ -60,9 +52,9 @@ UI components are centralized in `modules/ui/components` and follow a consistent
 ```
 modules/ui/components/
 └── component-name/
-├── index.tsx # Main component implementation
-├── stories.tsx # Storybook stories
-└── components/ # Sub-components (if needed)
+   ├── index.tsx # Main component implementation
+   ├── stories.tsx # Storybook stories
+   └── components/ # Sub-components (if needed)
 ```
 
 ### Component Types
@@ -108,7 +100,3 @@ modules/survey/
    - Share common utilities through the ui/lib directory
    - Maintain clear boundaries between modules
    - Use proper imports with aliases (@/modules/...)
-
----
-
-_This document reflects the current structure of our codebase and is regularly updated as patterns evolve._

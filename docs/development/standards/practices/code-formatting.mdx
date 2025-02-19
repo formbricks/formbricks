@@ -1,14 +1,14 @@
 ---
-title: "Code Formatting Standards"
-description: "A comprehensive guide to code formatting rules and tools used in the Formbricks codebase"
+title: "Code Formatting"
+description: "Standards for consistent code formatting across the Formbricks project"
 icon: code
 ---
 
-## 1. Core Formatting Tools
 
-### Prettier Configuration
+## Core Configuration
+
+### Prettier Config
 Formbricks uses a standardized Prettier configuration defined in `@formbricks/config-prettier`:
-
 ```javascript
 module.exports = {
   bracketSpacing: true,
@@ -49,9 +49,7 @@ All imports follow a strict ordering:
 5. Local aliases (`~/*)
 6. Relative imports
 
-## 2. TypeScript Standards
-
-### Project Configuration
+### TypeScript Config
 - Strict TypeScript checking enabled
 - Consistent use of `tsconfig.json` extending from `@formbricks/config-typescript`
 - Example configuration:
@@ -69,65 +67,6 @@ All imports follow a strict ordering:
   "include": ["src", "package.json"]
 }
 ```
-
-## 3. Naming Conventions
-
-### Files and Directories
-- Kebab-case for general files and directories
-  - ✅ `user-profile.ts`
-  - ❌ `UserProfile.ts`
-- PascalCase for React components
-  - ✅ `SurveyCard.tsx`
-  - ❌ `survey-card.tsx`
-
-### Code Elements
-1. **Variables & Functions**
-   - camelCase
-   - Descriptive names
-   ```typescript
-   const userData = {};
-   function fetchUserData() {}
-   ```
-
-2. **Classes & Interfaces**
-   - PascalCase
-   - Prefix interfaces with 'T' for types
-   ```typescript
-   class UserProfile {}
-   interface TApiResponse {}
-   ```
-
-3. **Constants**
-   - UPPER_SNAKE_CASE for values
-   - PascalCase for constant objects
-   ```typescript
-   const API_TIMEOUT = 5000;
-   const ColorDefaults = {
-     brandColor: "#64748b"
-   };
-   ```
-
-## 4. Project Structure
-
-### Module Organization
-```
-modules/
-  └── feature-name/
-      ├── components/     # React components
-      ├── lib/           # Business logic
-      ├── types/         # TypeScript types
-      ├── actions.ts     # Server actions
-      └── route.ts       # API routes
-```
-
-### Package Structure
-- Each package has consistent configuration files:
-  - `.eslintrc.cjs` - ESLint configuration
-  - `tsconfig.json` - TypeScript configuration
-  - `package.json` - Package metadata and scripts
-  - `vite.config.ts` - Build configuration
-
-## 5. Documentation
 
 ### JSDoc Comments
 Required for public APIs and complex functions:
@@ -168,7 +107,7 @@ export class ErrorHandler {
 }
 ```
 
-## 6. Enforcement Tools
+## Enforcement Tools
 
 ### Pre-commit Hooks
 Using Husky and lint-staged for automated checks:
@@ -201,7 +140,7 @@ Each package extends from `@formbricks/eslint-config` with specific presets:
 - SonarCloud integration for code quality analysis
 - Coverage requirements for tests
 
-## 7. VS Code Integration
+## VS Code Integration
 
 ### Required Extensions
 - `esbenp.prettier-vscode` - Prettier formatting
@@ -220,7 +159,7 @@ Each package extends from `@formbricks/eslint-config` with specific presets:
 }
 ```
 
-## 8. Best Practices
+## Best Practices
 
 1. **Consistent Formatting**
    - Always run `pnpm format` before committing
