@@ -92,7 +92,6 @@
         }
       ]
     },
-
     {
       "group": "Core Features",
       "pages": [
@@ -140,6 +139,10 @@
       ]
     },
     {
+      "group": "Enterprise Features",
+      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
+    },
+    {
       "group": "XM",
       "pages": [
         {
@@ -183,6 +186,16 @@
       "pages": ["development/contribution/contribution"]
     },
     {
+      "group": "Guides",
+      "pages": [
+        {
+          "group": "Auth & Provision",
+          "icon": "user-shield",
+          "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
+        }
+      ]
+    },
+    {
       "group": "Support",
       "pages": ["development/support/troubleshooting"]
     },
@@ -203,7 +216,14 @@
       "pages": [
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
-        "self-hosting/configuration/oauth",
+        {
+          "group": "Auth & SSO",
+          "icon": "lock",
+          "pages": [
+            "self-hosting/configuration/auth-sso/oauth",
+            "self-hosting/configuration/auth-sso/saml-sso"
+          ]
+        },
         {
           "group": "Integrations",
           "icon": "bridge",
