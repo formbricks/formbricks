@@ -2,8 +2,8 @@ import { RefObject, useEffect } from "react";
 
 // Custom hook to synchronize the horizontal scroll position of two elements.
 export const useSyncScroll = (
-  highlightContainerRef: RefObject<HTMLElement>,
-  inputRef: RefObject<HTMLElement>
+  highlightContainerRef: RefObject<HTMLElement | HTMLInputElement | null>,
+  inputRef: RefObject<HTMLElement | HTMLInputElement | null>
 ): void => {
   useEffect(() => {
     const syncScrollPosition = () => {
