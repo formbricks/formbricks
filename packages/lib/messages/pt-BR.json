@@ -123,7 +123,6 @@
     "are_you_sure": "Certeza?",
     "are_you_sure_this_action_cannot_be_undone": "Tem certeza? Essa ação não pode ser desfeita.",
     "attributes": "atributos",
-    "automatic": "Automático",
     "avatar": "Avatar",
     "back": "Voltar",
     "billing": "Faturamento",
@@ -171,7 +170,7 @@
     "disallow": "Não permita",
     "discard": "Descartar",
     "dismissed": "Dispensado",
-    "docs": "documentos",
+    "docs": "Documentação",
     "documentation": "Documentação",
     "download": "baixar",
     "draft": "Rascunho",
@@ -180,7 +179,6 @@
     "edit": "Editar",
     "email": "Email",
     "embed": "incorporar",
-    "enable": "habilitar",
     "enterprise_license": "Licença Empresarial",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
@@ -1835,8 +1833,7 @@
         "multiple_industries": "várias indústrias",
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
-      },
-      "this_is_a_new_key": "Esta é uma chave atualizada"
+      }
     },
     "xm-templates": {
       "ces": "CES",

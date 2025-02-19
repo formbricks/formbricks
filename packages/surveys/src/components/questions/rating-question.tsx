@@ -246,7 +246,7 @@ export function RatingQuestion({
                   </span>
                 ))}
               </div>
-              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
                 <p className="fb-w-1/2 fb-text-left" dir="auto">
                   {getLocalizedValue(question.lowerLabel, languageCode)}
                 </p>

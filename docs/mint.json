@@ -175,6 +175,10 @@
       ]
     },
     {
+      "group": "Technical Handbook",
+      "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
+    },
+    {
       "group": "Contribution",
       "pages": ["development/contribution/contribution"]
     },
@@ -693,13 +697,13 @@
       "url": "self-hosting"
     },
     {
+      "name": "Development",
+      "url": "development"
+    },
+    {
       "name": "API Reference",
       "openapi": "/api-reference/openapi.json",
       "url": "api-reference"
-    },
-    {
-      "name": "Development",
-      "url": "development"
     }
   ],
   "topbarCtaButton": {

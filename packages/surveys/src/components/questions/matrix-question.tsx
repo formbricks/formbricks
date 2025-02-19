@@ -107,6 +107,7 @@ export function MatrixQuestion({
       question.columns.map((column, index) => (
         <th
           key={index}
+          scope="col"
           className="fb-text-heading fb-max-w-40 fb-break-words fb-px-4 fb-py-2 fb-font-normal"
           dir="auto">
           {getLocalizedValue(column, languageCode)}
@@ -141,13 +142,13 @@ export function MatrixQuestion({
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
-                  // Table rows
-                  <tr className={rowIndex % 2 === 0 ? "bg-input-bg" : ""} key={`row-${rowIndex.toString()}`}>
-                    <td
+                  <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "bg-input-bg" : ""}>
+                    <th
+                      scope="row"
                       className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
-                    </td>
+                    </th>
                     {question.columns.map((column, columnIndex) => (
                       <td
                         key={`column-${columnIndex.toString()}`}
@@ -170,7 +171,6 @@ export function MatrixQuestion({
                         }}
                         dir="auto">
                         <div className="fb-flex fb-items-center fb-justify-center fb-p-2">
-                          {/* radio input  */}
                           <input
                             dir="auto"
                             type="radio"
@@ -185,6 +185,13 @@ export function MatrixQuestion({
                                   getLocalizedValue(column, languageCode)
                                 : false
                             }
+                            aria-label={`${getLocalizedValue(
+                              question.headline,
+                              languageCode
+                            )}: ${getLocalizedValue(row, languageCode)} – ${getLocalizedValue(
+                              column,
+                              languageCode
+                            )}`}
                             className="fb-border-brand fb-text-brand fb-h-5 fb-w-5 fb-border focus:fb-ring-0 focus:fb-ring-offset-0"
                           />
                         </div>
