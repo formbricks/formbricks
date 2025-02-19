@@ -133,7 +133,6 @@
             "xm-and-surveys/core-features/integrations/webhooks"
           ]
         },
-        "xm-and-surveys/core-features/saml-sso",
         "xm-and-surveys/core-features/user-management",
         "xm-and-surveys/core-features/styling-theme",
         "xm-and-surveys/core-features/email-customization"
