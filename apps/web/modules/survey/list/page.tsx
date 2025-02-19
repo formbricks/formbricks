@@ -94,6 +94,7 @@ export const SurveysPage = async ({
 
   return (
     <PageContentWrapper>
+      {t("auth.tolgee_test")}
       {surveyCount > 0 ? (
         <>
           <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
