@@ -1,2 +1,2 @@
 pnpm lint-staged
-pnpm tolgee-pull 2>/dev/null || true
+(pnpm tolgee-pull 2>/dev/null || true) 2>/dev/null
