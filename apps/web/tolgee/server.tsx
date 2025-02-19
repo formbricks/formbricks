@@ -7,7 +7,7 @@ export const { getTolgee, getTranslate, T } = createServerInstance({
   getLocale: getLocale,
   createTolgee: async (language) => {
     return TolgeeBase().init({
-      tagNewKeys: [`draft: ${branchName}`],
+      tagNewKeys: [`draft:${branchName}`],
       observerOptions: {
         fullKeyEncode: true,
       },

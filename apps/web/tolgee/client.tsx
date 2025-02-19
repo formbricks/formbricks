@@ -13,7 +13,7 @@ type Props = {
 };
 
 const tolgee = TolgeeBase().init({
-  tagNewKeys: [`draft: ${branchName}`],
+  tagNewKeys: [`draft:${branchName}`],
 });
 
 export const TolgeeNextProvider = ({ language, staticData, children }: Props) => {

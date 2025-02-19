@@ -1,4 +1,7 @@
 pnpm lint-staged
-# pnpm tolgee-pull || true  
 
-
+if [ -z "$TOLGEE_API_KEY" ]; then
+echo "Skipping tolgee-pull."
+else
+pnpm run tolgee-pull
+fi
