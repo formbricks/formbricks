@@ -1,4 +1,3 @@
-import { getAllEnvironmentsFromOrganizationId } from "@/modules/api/management/responses/lib/project";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
@@ -72,6 +71,51 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
       }
     },
     [`management-getOrganizationBilling-${organizationId}`],
+    {
+      tags: [organizationCache.tag.byId(organizationId)],
+    }
+  )()
+);
+
+export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizationId: string) =>
+  cache(
+    async (): Promise<Result<string[], ApiErrorResponse>> => {
+      try {
+        const organization = await prisma.organization.findUnique({
+          where: {
+            id: organizationId,
+          },
+
+          select: {
+            projects: {
+              select: {
+                environments: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (!organization) {
+          return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
+        }
+
+        const environmentIds = organization.projects
+          .flatMap((project) => project.environments)
+          .map((environment) => environment.id);
+
+        return ok(environmentIds);
+      } catch (error) {
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: error.message }],
+        });
+      }
+    },
+    [`management-getAllEnvironmentsFromOrganizationId-${organizationId}`],
     {
       tags: [organizationCache.tag.byId(organizationId)],
     }

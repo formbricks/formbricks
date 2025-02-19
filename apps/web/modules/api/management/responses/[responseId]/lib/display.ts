@@ -33,6 +33,7 @@ export const deleteDisplay = async (displayId: string): Promise<Result<boolean, 
         });
       }
     }
+
     return err({
       type: "internal_server_error",
       details: [{ field: "display", issue: error.message }],

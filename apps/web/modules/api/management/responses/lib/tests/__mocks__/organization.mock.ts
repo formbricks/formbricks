@@ -13,4 +13,18 @@ export const organizationBilling: Organization["billing"] = {
   },
   periodStart: new Date(),
 };
-export const environmentIds = ["f6vr01g4dyv7rjbs1is0zl5w", "p8s7jicf7tb508nf58tdla7o"];
+
+export const organizationEnvironments = {
+  projects: [
+    {
+      environments: [{ id: "w6pljnz4l9ljgmyl51xv8ah8" }, { id: "v5sfypq4ib6vjelccho23lmn" }],
+    },
+    { environments: [{ id: "ffbv7bmhs52yd8beebu6be2l" }] },
+  ],
+};
+
+export const environmentIds = [
+  "w6pljnz4l9ljgmyl51xv8ah8",
+  "v5sfypq4ib6vjelccho23lmn",
+  "ffbv7bmhs52yd8beebu6be2l",
+];

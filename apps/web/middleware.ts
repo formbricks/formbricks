@@ -28,14 +28,13 @@ import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 export const middleware = async (request: NextRequest) => {
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
-    // const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
-    // TODO: @gupta-piyush19 remove this once we have a proper way to handle the management endpoint
-    // if (forwardedProto !== "https") {
-    //   return NextResponse.json(
-    //     { error: "Only HTTPS connections are allowed on the management endpoint." },
-    //     { status: 403 }
-    //   );
-    // }
+    const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
+    if (forwardedProto !== "https") {
+      return NextResponse.json(
+        { error: "Only HTTPS connections are allowed on the management endpoint." },
+        { status: 403 }
+      );
+    }
   }
 
   // issue with next auth types; let's review when new fixes are available

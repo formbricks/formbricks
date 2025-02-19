@@ -6,8 +6,7 @@ import { cache } from "@formbricks/lib/cache";
 import { getHash } from "@formbricks/lib/crypto";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZString } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string): Promise<string | null> => {
   const hashedKey = getHash(apiKey);

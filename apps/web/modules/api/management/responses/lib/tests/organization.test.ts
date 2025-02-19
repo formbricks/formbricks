@@ -2,26 +2,23 @@ import {
   environmentId,
   environmentIds,
   organizationBilling,
+  organizationEnvironments,
   organizationId,
 } from "./__mocks__/organization.mock";
 import {
+  getAllEnvironmentsFromOrganizationId,
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/management/responses/lib/organization";
-import { getAllEnvironmentsFromOrganizationId } from "@/modules/api/management/responses/lib/project";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ok } from "@formbricks/types/error-handlers";
-
-vi.mock("@/modules/api/management/responses/lib/project", () => ({
-  getAllEnvironmentsFromOrganizationId: vi.fn(),
-}));
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
     response: {
       aggregate: vi.fn(),
@@ -119,6 +116,52 @@ describe("Organization Lib", () => {
     });
   });
 
+  describe("getAllEnvironmentsFromOrganizationId", () => {
+    test("return all environments from organization", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(organizationEnvironments);
+      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      expect(prisma.organization.findUnique).toHaveBeenCalledWith({
+        where: { id: organizationId },
+        select: {
+          projects: {
+            select: {
+              environments: { select: { id: true } },
+            },
+          },
+        },
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(environmentIds);
+      }
+    });
+
+    test("return a not_found error when organization is not found", async () => {
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
+      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "organization", issue: "not found" }],
+        });
+      }
+    });
+
+    test("return an internal_server_error when an exception is thrown", async () => {
+      const error = new Error("DB error");
+      vi.mocked(prisma.organization.findUnique).mockRejectedValue(error);
+      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: "DB error" }],
+        });
+      }
+    });
+  });
+
   describe("getMonthlyOrganizationResponseCount", () => {
     test("return error if getOrganizationBilling returns error", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
@@ -150,7 +193,7 @@ describe("Organization Lib", () => {
     test("return response count", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: organizationBilling });
       vi.mocked(prisma.response.aggregate).mockResolvedValue({ _count: { id: 5 } });
-      vi.mocked(getAllEnvironmentsFromOrganizationId).mockResolvedValue(ok(environmentIds));
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(organizationEnvironments);
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
       expect(prisma.response.aggregate).toHaveBeenCalled();
@@ -164,7 +207,7 @@ describe("Organization Lib", () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: organizationBilling });
       const error = new Error("Aggregate error");
       vi.mocked(prisma.response.aggregate).mockRejectedValue(error);
-      vi.mocked(getAllEnvironmentsFromOrganizationId).mockResolvedValue(ok(environmentIds));
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(organizationEnvironments);
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
       expect(result.ok).toBe(false);

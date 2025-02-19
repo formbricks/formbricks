@@ -48,10 +48,6 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
       },
     });
 
-    if (!deletedResponse) {
-      return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
-    }
-
     if (deletedResponse.displayId) {
       const deleteDisplayResult = await deleteDisplay(deletedResponse.displayId);
       if (!deleteDisplayResult.ok) {
@@ -78,6 +74,15 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
     return ok(deletedResponse);
   } catch (error) {
+    if (error instanceof PrismaClientKnownRequestError) {
+      if (error.code === "P2016" || error.code === "P2025") {
+        return err({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+    }
+
     return err({
       type: "internal_server_error",
       details: [{ field: "response", issue: error.message }],
