@@ -1,61 +1,103 @@
 ---
-title: Language Specific Conventions
-icon: check
+title: Language-Specific Conventions
+description: This document outlines the language-specific conventions for the Formbricks codebase, providing guidelines for writing code in TypeScript/JavaScript.
+icon: code
 ---
+### Core Standards
 
-## Overview
+Our codebase follows the Vercel Engineering Style Guide conventions.
 
-Formbricks primarily uses TypeScript across its codebase. This document outlines the language-specific conventions and best practices intended to ensure consistency, readability, and maintainability. While the codebase includes other languages (e.g., JavaScript in some legacy modules and configuration files), TypeScript standards are prioritized.
+### ESLint Configuration
 
-## TypeScript Standards
+We maintain three primary ESLint configurations for different project types:
 
-### Project Configuration
+1. **Library Configuration** (for packages):
 
-- **tsconfig.json:** All TypeScript projects within Formbricks use a strict configuration. Ensure that options like `strict`, `noImplicitAny`, and `strictNullChecks` are enabled in your `tsconfig.json`.
-- **Compilation Targets:** Target modern JavaScript standards (ES6+) and ensure compatibility with Node.js and browser environments as needed.
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript"
+]
+```
 
-### Coding Style
 
-- **Consistent Formatting:** Use ESLint with our shared configuration (see packages/config-eslint) and Prettier (see packages/config-prettier) for automatic formatting. Run the linter before committing code.
-- **Type Annotations:** Always annotate function parameters, return types, and variables where possible. Rely on TypeScript inference, but explicit annotations improve readability and reduce errors.
-- **Interfaces and Types:** Use interfaces for public API definitions and type aliases for union or intersection types. Prefer multiple small interfaces over one large interface when grouping related properties.
+2. **React Configuration** (for React applications):
 
-### File and Naming Conventions
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript",
+"@vercel/style-guide/eslint/browser",
+"@vercel/style-guide/eslint/react",
+"@vercel/style-guide/eslint/next"
+]
+```
 
-- **File Names:** Use kebab-case for file names (e.g., `my-component.tsx`) and CamelCase for React components. Keep file names descriptive and succinct.
-- **Exports:** Prefer named exports over default exports to allow for easier refactoring and clearer import patterns. Group exports logically and document them where necessary.
-- **Directory Structure:** Organize files in logical modules. For example, components, utilities, types, and hooks should reside in dedicated directories within each app or package.
 
-### Code Organization and Patterns
+3. **Next.js Configuration** (for Next.js applications):
 
-- **Modularization:** Break code into small, reusable modules that encapsulate functionality. Follow the Single Responsibility Principle to reduce coupling between modules.
-- **Error Handling:** Use robust error handling with typed errors where applicable. Avoid swallowing errors and ensure meaningful error messages.
-- **Documentation Comments:** Use JSDoc or TypeScript comments to document public functions, classes, and methods. This practice helps both human readers and IDE tooling.
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript",
+"@vercel/style-guide/eslint/browser",
+"@vercel/style-guide/eslint/react",
+"@vercel/style-guide/eslint/next"
+]
+```
 
-### Dependency Management
 
-- **Third-Party Libraries:** When using third-party libraries, ensure type declarations are available. Prefer libraries that come with their own TypeScript types or have well-maintained @types packages.
-- **Version Consistency:** Keep dependencies up to date, and align versions across different packages within the monorepo to avoid compatibility issues.
+### Key Conventions
 
-## Conventions for Specific Frameworks
+1. **TypeScript Usage**
+   - Strict TypeScript checking enabled
+   - Explicit type annotations when necessary
+   - Proper interface and type naming (prefix with T for types, I for interfaces when helpful)
+   - No use of `any` type unless absolutely necessary
 
-While Formbricks is predominantly built with TypeScript, some parts of the codebase tie into framework-specific conventions.
+2. **Imports/Exports**
+   - Follow strict import ordering:
+     1. Mocks (for testing)
+     2. Server-only imports
+     3. Third-party modules
+     4. Internal `@formbricks/*` modules
+     5. Local aliases (`~/*)
+     6. Relative imports
 
-### Next.js (Web Apps)
+3. **Error Handling**
+   - Use typed error responses
+   - Proper error propagation
+   - Consistent error message formatting
+   - Implement error boundaries in React components
 
-- **File-based Routing:** Follow Next.js structure for pages and API endpoints. The main configuration is in `next.config.mjs` and related settings in associated `tsconfig.json` files.
-- **Server-Side Code:** Maintain a clear separation between server-side and client-side logic. Use environment variables and TypeScript interfaces to type-check external data.
+4. **Async/Await**
+   - Prefer async/await over raw promises
+   - Proper error handling in async functions
+   - Use Promise.all for parallel operations
 
-### React Native (Mobile Apps)
+5. **React Specific**
+   - Functional components with TypeScript
+   - Proper use of hooks
+   - Consistent prop typing
+   - Server Components by default in Next.js App Router
 
-- **Component Structure:** Ensure that components adhere to React Native best practices. Type props and state with TypeScript, and separate styling and logic into different files where applicable.
-- **Platform Specifics:** Use platform modules and conditional styling where necessary. Share business logic across platforms when possible.
+### Code Formatting
 
-## Testing and Quality Assurance
+We use Prettier with specific configurations:
 
-- **Type Safety in Tests:** Write unit tests (using packages like Vitest or Jest) to confirm type assumptions and component behaviors. Tests should mirror the strictness of the main codebase.
-- **Linting and Build:** Integrate ESLint and TypeScript checks in your CI pipeline to catch issues early.
+```javascript
+{
+bracketSpacing: true,
+bracketSameLine: true,
+singleQuote: false,
+jsxSingleQuote: false,
+trailingComma: "es5",
+semi: true,
+printWidth: 110,
+arrowParens: "always"
+}
+```
 
-## Conclusion
 
-Adhering to these conventions will maintain a high standard of code quality and consistency throughout the Formbricks codebase. By following these practices, developers ensure smoother collaboration, easier maintenance, and a robust foundation for future development.
+
+These conventions ensure consistency and maintainability across our codebase while promoting best practices in modern JavaScript/TypeScript development.

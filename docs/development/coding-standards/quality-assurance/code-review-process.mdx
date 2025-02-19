@@ -10,6 +10,8 @@ icon: eyes
 
 When a Pull Request (PR) is opened, our automated GitHub workflows perform several critical checks:
 
+> **Note:** At Formbricks, all feature changes must be submitted through Pull Requests - direct pushes to protected branches are not allowed.
+
 - **PR Title Validation**: Ensures clear, descriptive titles following our conventions
 - **Build Verification**: Confirms that the build process completes successfully
 - **Test Suite**: Runs all automated tests to catch potential regressions
@@ -78,7 +80,8 @@ Final steps before merging:
 
 - All review comments must be addressed
 - Required changes are implemented
-- Reviewer approves the changes
+- At least one reviewer approval is required
+- All conversations must be resolved
 - CI/CD pipeline passes again
 - PR is merged into the target branch
 

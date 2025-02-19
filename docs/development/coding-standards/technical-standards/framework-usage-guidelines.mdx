@@ -31,6 +31,49 @@ This document outlines the framework usage guidelines for Formbricks, which is b
 - Integrate error boundaries and loading states appropriately within your App Router structure.
 - Optimize performance with Next.js built-in features such as dynamic imports, the Image component, and code splitting.
 
+## Module Organization
+
+### Feature-based Module Structure
+
+- Organize code into feature-based modules under the `modules` directory, combining all related components, routes, and utilities.
+- Each module should be self-contained and include all necessary files for the feature's functionality.
+
+### Module Structure Example
+
+A typical module structure follows this pattern:
+
+```
+modules/
+  └── feature-name/
+      ├── components/     # React components
+      ├── lib/           # Business logic and utilities
+      ├── types/         # TypeScript types
+      ├── actions.ts     # Server actions
+      └── route.ts       # API routes (if needed)
+```
+
+For example, the survey follow-ups module demonstrates this organization:
+
+- Components for UI elements (`follow-up-modal.tsx`, `follow-up-item.tsx`)
+- Utility functions in `lib/utils.ts`
+- Type definitions specific to the feature
+- Server actions for handling mutations
+- All related files are grouped together for better maintainability
+
+### Benefits of Module Organization
+
+- **Encapsulation**: Each module contains all necessary code for a specific feature
+- **Maintainability**: Related code is co-located, making it easier to understand and modify
+- **Scalability**: New features can be added as separate modules without affecting existing code
+- **Reusability**: Modules can be shared across different parts of the application
+
+### Best Practices
+
+1. Keep modules focused on a single feature or related set of features
+2. Use clear, consistent naming conventions for module directories and files
+3. Share common utilities through a shared library when needed across modules
+4. Maintain separation of concerns within each module (UI, business logic, data access)
+
 ## Tailwind CSS Guidelines
 
 ### Setup and Configuration

@@ -6,43 +6,93 @@ icon: input-text
 
 ## Files and Directories
 
-- Use lowercase and hyphen-separated names (kebab-case) for files and directories. For instance, use `user-profile.ts` instead of `UserProfile.ts`.
-- Group related files in directories with descriptive names, using plural form where appropriate (e.g., `components`, `services`).
-- Reserve clear, singular names for core modules (e.g., `app`, `server`).
+### General Files
+- Use lowercase and hyphen-separated names (kebab-case) for files and directories
+  - ✅ `user-profile.ts`
+  - ❌ `UserProfile.ts`
+- Group related files in directories with descriptive plural names
+  - ✅ `components`, `services`, `utils`
+  - ❌ `component`, `util`
+
+### Special Files
+- Configuration files should follow framework conventions
+  - ✅ `next.config.mjs`, `tailwind.config.js`
+- Test files should mirror source files with `.test` or `.spec` suffix
+  - ✅ `user-service.test.ts` for `user-service.ts`
+- Database migration files should include timestamp and description
+  - ✅ `20241017124431_add_documents_and_insights.sql`
 
 ## Code Symbols
 
 ### Variables and Functions
+- Use camelCase for variables and function names
+  - ✅ `fetchUserData`, `isLoading`, `handleSubmit`
+  - ❌ `FetchUserData`, `is_loading`
+- Boolean variables should use is/has/should prefix
+  - ✅ `isVerifyEmailEnabled`, `hasPermission`, `shouldDisplay`
+- Async functions should use verb prefixes suggesting async
+  - ✅ `fetchData`, `createUser`, `updateProfile`
 
-- Use camelCase for variables and function names (e.g., `fetchData`, `userList`).
-- Choose descriptive names that identify the role or content, avoiding unnecessary abbreviations.
-
-### Classes and Interfaces
-
-- Use PascalCase for classes, interfaces, and React components (e.g., `UserProfile`, `DataManager`).
-- Prefix interfaces with `I` only if it adds clarity in your context, otherwise prefer clean names (e.g., `User` instead of `IUser`).
+### Classes and Types
+- Use PascalCase for:
+  - Classes: `Config`, `Client`, `ResponseAPI`
+  - Interfaces: `TSurveySummaryResponse`, `ApiConfig`
+  - Type aliases: `TResponseData`, `TJsTrackProperties`
+- Prefix types with T and interfaces with I (when helpful)
+  - ✅ `TStats`, `TResponseData`, `IApiConfig`
+- Enum names should be PascalCase, values in UPPER_SNAKE_CASE
+  ```typescript
+  enum ProjectFeatureKeys {
+    FREE = "free",
+    STARTUP = "startup",
+    SCALE = "scale"
+  }
+  ```
 
 ### Constants
+- Use UPPER_SNAKE_CASE for constant values
+  - ✅ `API_TIMEOUT`, `MAX_RETRIES`, `CONTAINER_ID`
+- Use PascalCase for constant references/objects
+  - ✅ `ErrorCodes`, `Config`
 
-- Use UPPER_SNAKE_CASE for constants (e.g., `API_TIMEOUT`, `MAX_RETRIES`).
+### Database Models
+- Use PascalCase singular form for model names
+  - ✅ `Survey`, `Response`, `Document`
+- Use camelCase for field names
+  - ✅ `createdAt`, `environmentId`, `isSpam`
+- Use snake_case for database column names
+  - ✅ `created_at`, `updated_at`
 
-### CSS/Styling
+### Components
+- Use PascalCase for React components and their files
+  - ✅ `SurveyCard.tsx`, `UserProfile.tsx`
+- Component-specific types should be prefixed with component name
+  - ✅ `SurveyCardProps`, `UserProfileData`
 
-- For component-specific stylesheets, follow the file naming of the component (e.g., `UserProfile.module.css` for `UserProfile` component).
-- When using CSS frameworks like Tailwind, rely on utility classes; otherwise, use a consistent methodology (BEM, etc.) for custom styles.
+### API and Endpoints
+- Use kebab-case for API endpoints
+  - ✅ `/api/user-profile`, `/api/survey-responses`
+- Use camelCase for query parameters
+  - ✅ `/api/surveys?pageSize=10&sortOrder=desc`
 
-## Testing
+## Schema and Validation
+- Prefix Zod schemas with Z
+  - ✅ `ZSurvey`, `ZDocument`, `ZInsight`
+- Use descriptive names for validation schemas
+  - ✅ `ZUpdateDocumentAction`, `ZGenerateDocumentObjectSchema`
 
-- Name test files with a clear extension such as `.test.js`, `.spec.ts`, etc., and mirror the structure of the source code. For example, the test for `user-service.ts` should be `user-service.test.ts`.
+## Error Handling
+- Suffix error classes with "Error"
+  - ✅ `ValidationError`, `DatabaseError`, `AuthenticationError`
+- Use descriptive names for error types
+  - ✅ `SURVEY_NOT_FOUND`, `INVALID_RESPONSE`
 
-## Special Cases
+## Best Practices
+- Keep names descriptive but concise
+- Be consistent within each context
+- Follow existing patterns in the codebase
+- Use full words instead of abbreviations unless widely accepted
+  - ✅ `configuration` vs ❌ `config` (except in standard terms)
+  - ✅ `id`, `url` (standard abbreviations are acceptable)
 
-- For configuration files (e.g., `next.config.mjs`, `tailwind.config.js`), follow the established naming provided by the framework unless a project-specific adjustment is necessary.
-- Generated and build artifacts should follow the guidelines set out in the build process documentation.
-
-## Consistency and Refactoring
-
-- Regularly review and refactor names to stay aligned with project evolution. Consistent naming improves maintainability and onboarding of new team members.
-- Automated linting and formatting tools (such as ESLint for JavaScript/TypeScript and Prettier) can help enforce these conventions.
-
-By adhering to these naming conventions, developers can ensure that the codebase remains understandable, maintainable, and scalable over time.
+By following these conventions, we maintain consistency and clarity across the codebase, making it more maintainable and easier to understand for all team members.

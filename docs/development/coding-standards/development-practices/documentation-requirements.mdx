@@ -1,69 +1,129 @@
 ---
 title: "Documentation Requirements"
-description: "Standards for code documentation and comments in the Formbricks codebase"
-icon: file
+description: "Standards for documenting code and features in the Formbricks codebase"
+icon: "book"
 ---
 
-### Function & Method Documentation
+## Overview
 
-Use JSDoc comments for functions and methods:
+At Formbricks, we maintain strict documentation standards using Mintlify to ensure code clarity, maintainability, and ease of use for both internal developers and external contributors.
 
+## Code Documentation
+
+### Function Documentation
+
+1. **Complex Logic Documentation**
+   - All functions with complex logic must include JSDoc comments
+   - Document parameters, return types, and potential side effects
+   - Example:
+
+   
 ```typescript
 /**
- * Creates a new survey response
- * @param {string} surveyId - The ID of the survey
- * @param {Object} responseData - The response data
- * @returns {Promise<Response>} The created response
- * @throws {Error} If survey not found
- */
-async function createResponse(surveyId: string, responseData: ResponseData): Promise<Response> {
-  // Implementation
+Creates a new user and initializes their preferences
+@param {string} name - User's full name
+@param {UserOptions} options - Configuration options for user creation
+@returns {Promise<User>} The created user object
+@throws {ValidationError} If name is invalid
+*/
+async function createUser(name: string, options: UserOptions): Promise<User> {
+// implementation
 }
+
 ```
 
-## Inline Comments
 
-- Use inline comments to explain complex logic
-- Keep comments current with code changes
-- Avoid obvious comments
+2. **TypeScript Ignore Comments**
+   - When using `@ts-ignore` or `@ts-expect-error`, always include a comment explaining why
+   - Example:
 
-## API Documentation
 
-- Document all public APIs
-- Include example usage
-- Specify error cases and handling
+```typescript
+// @ts-expect-error -- Required for dynamic function calls
+void window.formbricks.init(...args);
+```
 
-## Feature Usage Documentation
 
-Document how to use complex features:
+### API Documentation
 
-- **Purpose & Benefits**
+1. **API Endpoints**
+   - All new API endpoints must be documented in the OpenAPI specification
+   - Include request/response schemas, authentication requirements, and examples
+   - Document both Client API and Management API endpoints
+   - Place API documentation in the `docs/api-reference` directory
 
-  - What problem does it solve
-  - Key advantages and use cases
-  - When to use this feature
+2. **Authentication**
+   - Clearly specify authentication requirements
+   - Document API key usage and permissions
+   - Include error scenarios and handling
 
-- **Usage Guide**
+### Feature Documentation
 
-  - Step by step instructions
-  - Code examples and snippets
-  - Configuration options
+   - All new features must include a feature documentation file
+   - Document the feature's purpose, usage, and implementation details
+   - Include code examples and best practices
 
-## Best Practices
+## Writing docs with Mintlify
+We use Mintlify to write our documentation.
 
-1. **Keep Documentation Updated**
+### File Structure
 
-   - Update docs with code changes
-   - Review docs in code reviews
-   - Remove outdated comments
+1. **MDX Files**
+   - All documentation files must use the `.mdx` extension
+   - Include frontmatter with required metadata:
 
-2. **Write Clear Documentation**
+```markdown
+---
+title: "Document Title"
+description: "Brief description of the content"
+icon: "appropriate-icon"
+---
+```
 
-   - Use simple language
-   - Include examples
-   - Explain why, not just what
 
-3. **Document Assumptions**
-   - Note prerequisites
-   - Document edge cases
-   - Explain complex logic
+2. **Navigation**
+   - Add new pages to the appropriate section in `docs/mint.json`
+   - Follow the existing navigation structure
+   - Include proper redirects if URLs change
+
+### Content Guidelines
+
+1. **Writing Style**
+   - Use clear, concise language
+   - Break content into logical sections with proper headings
+   - Include practical examples and code snippets
+   - Use Mintlify components for notes, warnings, and callouts:
+
+```markdown
+<Note>
+Important information goes here
+</Note>
+```
+
+
+2. **Media and Assets**
+   - Store images in the appropriate `/images` subdirectory
+   - Use descriptive alt text for all images
+   - Optimize images for web delivery
+   - Use relative paths for internal links
+
+3. **Code Examples**
+   - Specify the language for all code blocks
+   - Include comments for complex code snippets
+   - Use proper indentation and formatting
+
+## Validation
+
+1. **Local Testing**
+   - Test documentation locally using Mintlify CLI:
+
+```bash
+mintlify dev
+```
+
+2. **Review Process**
+   - Documentation changes require peer review
+   - Verify all links and references work
+   - Ensure proper formatting and rendering
+
+These documentation requirements ensure that our codebase remains maintainable, accessible, and well-documented for both current and future developers.

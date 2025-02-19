@@ -5,114 +5,123 @@ icon: magnifying-glass
 
 ## Overview
 
-At Formbricks, we maintain a robust testing strategy that ensures high-quality code and reliable functionality across all components. Our testing approach is comprehensive, covering multiple layers of the application through different types of tests.
-
-## Testing Philosophy
-
-- **Shift-Left Testing**: We integrate testing early in the development cycle
-- **Test Automation**: Automated tests are integrated into CI/CD pipelines
-- **Modular & Isolated Tests**: Each test focuses on a specific unit of functionality
-- **Documentation & Maintainability**: Tests are self-documenting and maintained alongside source code
+At Formbricks, we maintain a rigorous testing strategy to ensure high-quality code and reliable functionality. Our testing approach is standardized and integrated into our development workflow.
 
 ## Testing Structure
 
-### 1. Unit Testing with Vitest
+### Unit Testing with Vitest
 
-We use Vitest as our primary unit testing framework. Unit tests can be found:
+We use Vitest as our primary testing framework. All unit tests follow these conventions:
 
-- Co-located with source files (`*.test.ts`, `*.spec.ts`)
-- Within `__tests__` directories
-- Testing isolated components, functions, and modules
+1. **File Location and Naming**
 
-Key areas covered:
+   - Test files are co-located with the source files they test
+   - Test files use the `.test.ts` extension (e.g., `utils.test.ts` tests `utils.ts`)
 
-- Business logic validation
-- Utility function behavior
-- Component state management
-- Error handling scenarios
-- Data transformations
+2. **Test Organization**
 
-### 2. End-to-End Testing with Playwright
+   ```typescript
+   import { describe, expect, it } from "vitest";
 
-E2E tests are located in `apps/web/playwright/` and cover:
+   describe("ComponentName or FeatureName", () => {
+     describe("functionName or scenario", () => {
+       it("should describe expected behavior", () => {
+         // test implementation
+       });
+     });
+   });
+   ```
 
-- Complete user workflows
-- Cross-browser compatibility
-- Integration with external services
-- User interface interactions
-- Form submissions and validations
+3. **Coverage Requirements**
+   - Minimum 85% code coverage requirement
+   - Coverage is tracked using V8 provider
+   - Coverage reports include:
+     - Text summaries
+     - HTML reports
+     - LCOV reports
 
-## Testing Practices
+### End-to-End Testing with Playwright
 
-### Test Organization
+E2E tests are located in `apps/web/playwright/` and focus on critical user workflows.
 
-- Tests are co-located with source code when possible
-- Shared test utilities in common directories
-- Consistent naming conventions
-- Well-structured test hierarchies
+## Testing Setup
 
-### Code Coverage
+### Configuration
 
-- Automated coverage reporting via V8 provider
-- Coverage reports include:
-  - Text summaries
-  - HTML reports
-  - LCOV reports
-- Focus on meaningful coverage over percentages
+Our Vitest configuration (`vite.config.ts`) includes:
 
-### Quality Assurance Process
+```typescript
+test: {
+exclude: ['playwright/', 'node_modules/'],
+setupFiles: ['../../packages/lib/vitestSetup.ts'],
+coverage: {
+provider: 'v8',
+reporter: ['text', 'html', 'lcov'],
+reportsDirectory: './coverage',
+},
+}
 
-1. **Pre-commit Testing**
+```
 
-   - Linting checks
-   - Type checking
-   - Build checking
+### Test Utilities
 
-2. **Continuous Integration**
+Common test utilities are available in `vitestSetup.ts`:
 
-   - Automated test suite execution
-   - Cross-browser testing
-   - Performance benchmarks
-
-3. **Feature Testing**
-   - New features require corresponding tests
-   - Both unit and integration tests
-   - Edge case coverage
-
-## Testing Tools and Libraries
-
-- **Vitest**: Primary testing framework
-- **Playwright**: End-to-end testing
-- **vi**: Mocking and spying utilities
+- Mock implementations for commonly used functions
+- Test lifecycle hooks (beforeEach, afterEach)
+- Validation test helpers
 
 ## Best Practices
 
 1. **Test Independence**
 
-   - Each test should be self-contained
-   - Proper setup and teardown
-   - No shared state between tests
+   ```typescript
+   beforeEach(() => {
+     vi.resetModules();
+     vi.resetAllMocks();
+   });
 
-2. **Meaningful Assertions**
+   afterEach(() => {
+     vi.clearAllMocks();
+   });
+   ```
 
-   - Clear test descriptions
-   - Specific assertions
-   - Comprehensive error messages
+2. **Mocking**
 
-3. **Maintainable Tests**
+   - Use Vitest's built-in mocking utilities
+   - Mock external dependencies and services
+   - Example:
 
-   - DRY principles
-   - Shared fixtures and helpers
-   - Clear documentation
+   ```typescript
+   vi.mock("@formbricks/database", () => ({
+     prisma: {
+       user: {
+         create: vi.fn(),
+         findUnique: vi.fn(),
+       },
+     },
+   }));
+   ```
 
-4. **Performance**
-   - Fast execution
-   - Efficient setup/teardown
-   - Parallelization where possible
+3. **Assertions**
+   - Write clear, specific assertions
+   - Test both success and error cases
+   - Example:
+   ```typescript
+   expect(result.ok).toBe(true);
+   expect(result.data).toEqual(expectedData);
+   expect(async () => await invalidCall()).rejects.toThrow(ValidationError);
+   ```
 
-## Continuous Improvement
+## Quality Assurance Process
 
-- Regular review of testing strategies
-- Updates to testing documentation
-- Integration of new testing tools and methods
-- Team training and knowledge sharing
+1. **Continuous Integration**
+
+   - Automated test suite execution on pull requests
+   - Coverage reports generation
+   - Test results reporting
+
+2. **New Features**
+   - Must include corresponding unit tests
+   - Must maintain or improve coverage metrics
+   - Must include relevant E2E tests for user-facing features
