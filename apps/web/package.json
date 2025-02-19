@@ -123,7 +123,8 @@
     "ua-parser-js": "2.0.0",
     "webpack": "5.97.1",
     "xlsx": "0.18.5",
-    "zod": "3.24.1"
+    "zod": "3.24.1",
+    "zod-openapi": "4.2.3"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

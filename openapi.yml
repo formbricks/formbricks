@@ -1,0 +1,160 @@
+openapi: 3.1.0
+info:
+  title: Formbricks API
+  description: Manage Formbricks ressources programmatically.
+  version: 1.0.0
+servers:
+  - url: https://app.formbricks.com/api
+    description: Formbricks Cloud
+tags:
+  - name: responses
+    description: Operations for managing responses.
+components:
+  schemas:
+    response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the response
+        createdAt:
+          type: string
+          description: The date and time the response was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the response was last updated
+          example: 2021-01-01T00:00:00.000Z
+        finished:
+          type: boolean
+          description: Whether the response is finished
+          example: true
+        surveyId:
+          type: string
+          description: The ID of the survey
+        contactId:
+          type:
+            - string
+            - "null"
+          description: The ID of the contact
+        endingId:
+          type:
+            - string
+            - "null"
+          description: The ID of the ending
+        data:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: array
+                items:
+                  type: string
+              - type: object
+                additionalProperties:
+                  type: string
+          description: The data of the response
+          example:
+            question1: answer1
+            question2: 2
+            question3:
+              - answer3
+              - answer4
+            question4:
+              subquestion1: answer5
+        variables:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+          description: The variables of the response
+          example:
+            variable1: answer1
+            variable2: 2
+        ttc:
+          type: object
+          additionalProperties:
+            type: number
+          description: The TTC of the response
+          example:
+            question1: 10
+            question2: 20
+        meta:
+          type: object
+          properties:
+            source:
+              type: string
+              description: The source of the response
+              example: https://example.com
+            url:
+              type: string
+              description: The URL of the response
+              example: https://example.com
+            userAgent:
+              type: object
+              properties:
+                browser:
+                  type: string
+                os:
+                  type: string
+                device:
+                  type: string
+            country:
+              type: string
+            action:
+              type: string
+          description: The meta data of the response
+          example:
+            source: https://example.com
+            url: https://example.com
+            userAgent:
+              browser: Chrome
+              os: Windows
+              device: Desktop
+            country: US
+            action: click
+        contactAttributes:
+          type:
+            - object
+            - "null"
+          additionalProperties:
+            type: string
+          description: The attributes of the contact
+          example:
+            attribute1: value1
+            attribute2: value2
+        singleUseId:
+          type:
+            - string
+            - "null"
+          description: The single use ID of the response
+        language:
+          type:
+            - string
+            - "null"
+          description: The language of the response
+          example: en
+        displayId:
+          type:
+            - string
+            - "null"
+          description: The display ID of the response
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - finished
+        - surveyId
+        - contactId
+        - endingId
+        - data
+        - variables
+        - ttc
+        - meta
+        - contactAttributes
+        - singleUseId
+        - language
+        - displayId
+

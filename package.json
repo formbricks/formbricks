@@ -31,7 +31,8 @@
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
-    "tolgee-pull": "tolgee pull && prettier --write ./packages/lib/messages/*.json"
+    "tolgee-pull": "tolgee pull && prettier --write ./packages/lib/messages/*.json",
+    "generate-api-specs": "tsx ./apps/web/modules/api/openapi-document.ts > ./openapi.yml"
   },
   "devDependencies": {
     "@azure/microsoft-playwright-testing": "1.0.0-beta.6",
