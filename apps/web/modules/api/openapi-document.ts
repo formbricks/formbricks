@@ -1,3 +1,4 @@
+import { responsePaths } from "@/modules/api/management/responses/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
@@ -12,9 +13,9 @@ const document = createDocument({
     description: "Manage Formbricks ressources programmatically.",
     version: "2.0.0",
   },
-  /*   paths: {
+  paths: {
     ...responsePaths,
-  }, */
+  },
   servers: [
     {
       url: "https://app.formbricks.com/api",
