@@ -5,7 +5,7 @@ permissions:
 on:
   push:
     branches:
-      - fix-tolgee-flow
+      - main
 
 jobs:
   tag-production-keys:
