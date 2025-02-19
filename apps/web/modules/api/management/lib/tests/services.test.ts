@@ -1,7 +1,7 @@
 import { environmentId, responseId, surveyId } from "./__mocks__/services.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { getResponse, getSurvey } from "../services";
+import { getResponseSurveyId, getSurveyEnvironmentId } from "../services";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -19,7 +19,7 @@ describe("Services", () => {
     test("return ok with survey data when the survey is found", async () => {
       vi.mocked(prisma.survey.findUnique).mockResolvedValue({ environmentId });
 
-      const result = await getSurvey(surveyId);
+      const result = await getSurveyEnvironmentId(surveyId);
 
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { id: surveyId },
@@ -34,7 +34,7 @@ describe("Services", () => {
     test("return a not_found error when the survey is not found", async () => {
       vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
-      const result = await getSurvey(surveyId);
+      const result = await getSurveyEnvironmentId(surveyId);
 
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { id: surveyId },
@@ -52,7 +52,7 @@ describe("Services", () => {
     test("return an internal_server_error when an exception is thrown", async () => {
       vi.mocked(prisma.survey.findUnique).mockRejectedValue(new Error("db error"));
 
-      const result = await getSurvey(surveyId);
+      const result = await getSurveyEnvironmentId(surveyId);
 
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { id: surveyId },
@@ -72,7 +72,7 @@ describe("Services", () => {
     test("return ok with response data when the response is found", async () => {
       vi.mocked(prisma.response.findUnique).mockResolvedValue({ surveyId });
 
-      const result = await getResponse(responseId);
+      const result = await getResponseSurveyId(responseId);
 
       expect(prisma.response.findUnique).toHaveBeenCalledWith({
         where: { id: responseId },
@@ -87,7 +87,7 @@ describe("Services", () => {
     test("return a not_found error when the response is not found", async () => {
       vi.mocked(prisma.response.findUnique).mockResolvedValue(null);
 
-      const result = await getResponse(responseId);
+      const result = await getResponseSurveyId(responseId);
 
       expect(prisma.response.findUnique).toHaveBeenCalledWith({
         where: { id: responseId },
@@ -105,7 +105,7 @@ describe("Services", () => {
     test("return an internal_server_error when an exception is thrown", async () => {
       vi.mocked(prisma.response.findUnique).mockRejectedValue(new Error("db error"));
 
-      const result = await getResponse(responseId);
+      const result = await getResponseSurveyId(responseId);
 
       expect(prisma.response.findUnique).toHaveBeenCalledWith({
         where: { id: responseId },

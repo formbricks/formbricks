@@ -9,7 +9,7 @@ import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getSurvey = reactCache(async (surveyId: string) =>
+export const getSurveyEnvironmentId = reactCache(async (surveyId: string) =>
   cache(
     async (): Promise<Result<{ environmentId: string }, ApiErrorResponse>> => {
       try {
@@ -31,14 +31,14 @@ export const getSurvey = reactCache(async (surveyId: string) =>
         return err({ type: "internal_server_error", details: [{ field: "survey", issue: error.message }] });
       }
     },
-    [`utils-getSurvey-${surveyId}`],
+    [`services-getSurvey-${surveyId}`],
     {
       tags: [surveyCache.tag.byId(surveyId)],
     }
   )()
 );
 
-export const getResponse = reactCache(async (responseId: string) =>
+export const getResponseSurveyId = reactCache(async (responseId: string) =>
   cache(
     async (): Promise<Result<{ surveyId: string }, ApiErrorResponse>> => {
       try {
@@ -58,7 +58,7 @@ export const getResponse = reactCache(async (responseId: string) =>
         return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
       }
     },
-    [`utils-getResponse-${responseId}`],
+    [`services-getResponse-${responseId}`],
     {
       tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
     }

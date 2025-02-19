@@ -18,6 +18,7 @@ export const responseIdSchema = z
 
 export const responseUpdateSchema = ZResponse.omit({
   id: true,
+  surveyId: true,
 }).openapi({
   ref: "responseUpdate",
   description: "A response to update.",

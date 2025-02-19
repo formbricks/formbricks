@@ -1,5 +1,5 @@
 import { environmentId, responseId, surveyId } from "./__mocks__/helper.mock";
-import { getResponse, getSurvey } from "@/modules/api/management/lib/services";
+import { getResponseSurveyId, getSurveyEnvironmentId } from "@/modules/api/management/lib/services";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
@@ -17,11 +17,11 @@ describe("API Management Helper", () => {
 
   describe("getEnvironmentIdFromSurveyId", () => {
     test("should return ok with environmentId when survey is found", async () => {
-      vi.mocked(getSurvey).mockResolvedValue(ok({ environmentId }));
+      vi.mocked(getSurveyEnvironmentId).mockResolvedValue(ok({ environmentId }));
 
       const result = await getEnvironmentIdFromSurveyId(surveyId);
 
-      expect(getSurvey).toHaveBeenCalledWith(surveyId);
+      expect(getSurveyEnvironmentId).toHaveBeenCalledWith(surveyId);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toBe(environmentId);
@@ -34,11 +34,11 @@ describe("API Management Helper", () => {
         details: [{ field: "survey", issue: "not found" }],
       } as ApiErrorResponse;
 
-      vi.mocked(getSurvey).mockResolvedValue(err(errorResponse));
+      vi.mocked(getSurveyEnvironmentId).mockResolvedValue(err(errorResponse));
 
       const result = await getEnvironmentIdFromSurveyId(surveyId);
 
-      expect(getSurvey).toHaveBeenCalledWith(surveyId);
+      expect(getSurveyEnvironmentId).toHaveBeenCalledWith(surveyId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual(errorResponse);
@@ -48,13 +48,13 @@ describe("API Management Helper", () => {
 
   describe("getEnvironmentIdFromResponseId", () => {
     test("should return ok with environmentId when both response and survey are found", async () => {
-      vi.mocked(getResponse).mockResolvedValue(ok({ surveyId }));
-      vi.mocked(getSurvey).mockResolvedValue(ok({ environmentId }));
+      vi.mocked(getResponseSurveyId).mockResolvedValue(ok({ surveyId }));
+      vi.mocked(getSurveyEnvironmentId).mockResolvedValue(ok({ environmentId }));
 
       const result = await getEnvironmentIdFromResponseId(responseId);
 
-      expect(getResponse).toHaveBeenCalledWith(responseId);
-      expect(getSurvey).toHaveBeenCalledWith(surveyId);
+      expect(getResponseSurveyId).toHaveBeenCalledWith(responseId);
+      expect(getSurveyEnvironmentId).toHaveBeenCalledWith(surveyId);
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toBe(environmentId);
@@ -67,16 +67,16 @@ describe("API Management Helper", () => {
         details: [{ field: "response", issue: "not found" }],
       } as ApiErrorResponse;
 
-      vi.mocked(getResponse).mockResolvedValue(err(errorResponse));
+      vi.mocked(getResponseSurveyId).mockResolvedValue(err(errorResponse));
 
       const result = await getEnvironmentIdFromResponseId(responseId);
 
-      expect(getResponse).toHaveBeenCalledWith(responseId);
+      expect(getResponseSurveyId).toHaveBeenCalledWith(responseId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual(errorResponse);
       }
-      expect(getSurvey).not.toHaveBeenCalled();
+      expect(getSurveyEnvironmentId).not.toHaveBeenCalled();
     });
 
     test("should return error when survey is not found even if response is found", async () => {
@@ -85,13 +85,13 @@ describe("API Management Helper", () => {
         details: [{ field: "survey", issue: "not found" }],
       } as ApiErrorResponse;
 
-      vi.mocked(getResponse).mockResolvedValue(ok({ surveyId }));
-      vi.mocked(getSurvey).mockResolvedValue(err(errorResponse));
+      vi.mocked(getResponseSurveyId).mockResolvedValue(ok({ surveyId }));
+      vi.mocked(getSurveyEnvironmentId).mockResolvedValue(err(errorResponse));
 
       const result = await getEnvironmentIdFromResponseId(responseId);
 
-      expect(getResponse).toHaveBeenCalledWith(responseId);
-      expect(getSurvey).toHaveBeenCalledWith(surveyId);
+      expect(getResponseSurveyId).toHaveBeenCalledWith(responseId);
+      expect(getSurveyEnvironmentId).toHaveBeenCalledWith(surveyId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual(errorResponse);
