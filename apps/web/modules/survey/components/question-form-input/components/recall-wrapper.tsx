@@ -5,8 +5,7 @@ import { RecallItemSelect } from "@/modules/survey/components/question-form-inpu
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { PencilIcon } from "lucide-react";
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from "react";
-import { JSX } from "react";
+import React, { JSX, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import {
