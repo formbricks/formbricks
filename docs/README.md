@@ -2,7 +2,7 @@
 
 This documentation is built using Mintlify. Here's how to run it locally and contribute.
 
-### Local Development
+## Local Development
 
 1. Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify):
 
