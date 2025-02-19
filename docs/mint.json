@@ -92,7 +92,6 @@
         }
       ]
     },
-
     {
       "group": "Core Features",
       "pages": [
@@ -139,6 +138,10 @@
         "xm-and-surveys/core-features/styling-theme",
         "xm-and-surveys/core-features/email-customization"
       ]
+    },
+    {
+      "group": "Enterprise Features",
+      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
     },
     {
       "group": "XM",
