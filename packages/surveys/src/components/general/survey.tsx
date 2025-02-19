@@ -8,11 +8,11 @@ import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
+import { evaluateLogic, performActions } from "@/lib/logic";
 import { parseRecallInformation } from "@/lib/recall";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import type { JSX } from "react";
-import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { type SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import type {
@@ -99,6 +99,7 @@ export function Survey({
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     return localSurvey.questions.find((q) => q.id === questionId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- we only want to run this effect when questionId changes
   }, [questionId, localSurvey.questions, history]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);

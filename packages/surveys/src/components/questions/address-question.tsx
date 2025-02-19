@@ -5,10 +5,10 @@ import { Input } from "@/components/general/input";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useMemo, useRef, useState } from "preact/hooks";
 import { useCallback } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyAddressQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 

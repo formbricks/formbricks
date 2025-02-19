@@ -101,3 +101,11 @@ const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
 
   return possibleDestinations;
 };
+
+export const isFulfilled = <T>(val: PromiseSettledResult<T>): val is PromiseFulfilledResult<T> => {
+  return val.status === "fulfilled";
+};
+
+export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejectedResult => {
+  return val.status === "rejected";
+};
