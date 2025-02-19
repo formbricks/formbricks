@@ -24,7 +24,7 @@ const document = createDocument({
   ],
   tags: [
     {
-      name: "responses",
+      name: "Responses",
       description: "Operations for managing responses.",
     },
   ],

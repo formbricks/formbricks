@@ -7,7 +7,7 @@ servers:
   - url: https://app.formbricks.com/api
     description: Formbricks Cloud
 tags:
-  - name: responses
+  - name: Responses
     description: Operations for managing responses.
 paths:
   /responses:
