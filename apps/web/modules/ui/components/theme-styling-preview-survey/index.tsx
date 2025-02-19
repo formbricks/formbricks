@@ -176,7 +176,7 @@ export const ThemeStylingPreviewSurvey = ({
             <MediaBackground
               surveyType={survey.type}
               styling={project.styling}
-              ContentRef={ContentRef}
+              ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
               isEditorView>
               {!project.styling?.isLogoHidden && (
                 <div className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>

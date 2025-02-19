@@ -10,9 +10,10 @@ on:
   # To guarantee Maintained check is occasionally updated. See
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   schedule:
-    - cron: '17 17 * * 6'
+    - cron: "17 17 * * 6"
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+  workflow_dispatch:
 
 # Declare default permissions as read only.
 permissions: read-all
@@ -26,6 +27,8 @@ jobs:
       security-events: write
       # Needed to publish results and get a badge (see publish_results below).
       id-token: write
+      # Add this permission
+      actions: write # Required for artifact upload
       # Uncomment the permissions below if installing in a private repository.
       # contents: read
       # actions: read
@@ -59,9 +62,9 @@ jobs:
       # Upload the results as artifacts (optional). Commenting out will disable uploads of run results in SARIF
       # format to the repository Actions tab.
       - name: "Upload artifact"
-        uses: actions/upload-artifact@97a0fba1372883ab732affbe8f94b823f91727db # v3.pre.node20
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
-          name: SARIF file
+          name: sarif
           path: results.sarif
           retention-days: 5
 
