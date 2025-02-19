@@ -12,4 +12,6 @@ if [ -z "$NEXT_PUBLIC_TOLGEE_API_KEY" ]; then
   echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
 else
   pnpm run tolgee-pull
+  git add packages/lib/messages
 fi
+
