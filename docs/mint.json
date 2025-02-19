@@ -179,6 +179,45 @@
       "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
     },
     {
+      "group": "Coding Standards",
+      "pages": [
+        {
+          "group": "Code Organization and Structure",
+          "icon": "code",
+          "pages": [
+            "development/coding-standards/code-organization-and-structure/file-and-directory-organization",
+            "development/coding-standards/code-organization-and-structure/naming-conventions",
+            "development/coding-standards/code-organization-and-structure/module-component-structure"
+          ]
+        },
+        {
+          "group": "Development Practices",
+          "icon": "laptop",
+          "pages": [
+            "development/coding-standards/development-practices/code-formatting-rules",
+            "development/coding-standards/development-practices/documentation-requirements",
+            "development/coding-standards/development-practices/error-handling-standards"
+          ]
+        },
+        {
+          "group": "Technical Standards",
+          "icon": "gear",
+          "pages": [
+            "development/coding-standards/technical-standards/language-specific-conventions",
+            "development/coding-standards/technical-standards/framework-usage-guidelines"
+          ]
+        },
+        {
+          "group": "Quality Assurance",
+          "icon": "shield",
+          "pages": [
+            "development/coding-standards/quality-assurance/code-review-process",
+            "development/coding-standards/quality-assurance/testing-methodology"
+          ]
+        }
+      ]
+    },
+    {
       "group": "Contribution",
       "pages": ["development/contribution/contribution"]
     },

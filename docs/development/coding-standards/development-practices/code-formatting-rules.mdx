@@ -1,0 +1,168 @@
+---
+title: "Code Formatting rules"
+description: "A detailed guide to the rules and practices for maintaining code formatting consistency in the Formbricks codebase"
+icon: code
+---
+
+This document outlines the detailed standards and practices for code formatting in the Formbricks codebase. By adhering to these guidelines, developers can ensure that the code remains clean, maintainable, and consistent across all projects.
+
+## 1. Overview
+
+Consistent code formatting improves readability, simplifies code reviews, and minimizes merge conflicts. These guidelines are enforced via automated tools, pre-commit hooks, continuous integration, and editor integrations.
+
+## 2. Formatting Tools
+
+### Prettier
+
+Prettier is used as the primary automatic code formatter. The following configuration is applied:
+
+```javascript
+{
+  bracketSpacing: true,
+  bracketSameLine: true,
+  singleQuote: false,
+  jsxSingleQuote: false,
+  trailingComma: "es5",
+  semi: true,
+  printWidth: 110,
+  arrowParens: "always"
+}
+```
+
+### ESLint
+
+ESLint is used alongside Prettier to ensure that code adheres to best practices and to catch potential errors early in the development process.
+
+### Import Ordering
+
+Imports are sorted automatically. The order is as follows:
+
+1. **Mocks:** Must appear at the very top to properly set up any mocked modules (e.g., `vi.mock` calls).
+2. **Server-only Imports:** Modules that are only run on the server side.
+3. **Third-party Modules:** External libraries and frameworks.
+4. **Internal Modules:** Imports from `@formbricks/*`.
+5. **Local Aliases:** References using aliases like `~/*`.
+6. **Relative Imports:** Paths starting with `./` or `../`.
+
+## 3. File and Directory Naming Conventions
+
+- **Files & Directories:** Use kebab-case for naming.
+
+  - Valid: `user-profile.ts`
+  - Invalid: `UserProfile.ts`
+
+- **Grouping:** Organize related files in well-named directories such as `components/`, `services/`, and `utils/`.
+
+## 4. Code Element Naming
+
+### Variables & Functions
+
+- Use camelCase for variable names, function names, and object keys.
+
+  ```typescript
+  const userData = {};
+  function fetchUserData() {}
+  ```
+
+### Classes & Interfaces
+
+- Use PascalCase for classes and interfaces.
+
+  ```typescript
+  class UserProfile {}
+  interface ApiResponse {}
+  ```
+
+### Constants
+
+- Use UPPER_SNAKE_CASE for constants.
+
+  ```typescript
+  const API_TIMEOUT = 5000;
+  const MAX_RETRIES = 3;
+  ```
+
+## 5. Code Style and Layout
+
+### Whitespace and Indentation
+
+- **Indentation:** 2 spaces per indent level.
+- **Operators:** Add spaces around operators for clarity.
+- **Control Statements:** Include one space after control keywords, e.g., `if (condition) { ... }`.
+
+### Line Length
+
+- **Maximum:** 110 characters per line. Break lines at logical breaking points.
+
+### Brackets and Braces
+
+- **Curly Braces:** Always include curly braces, even for single-line control statements.
+- **Style:** Opening braces should be on the same line as the statement.
+
+  ```typescript
+  if (condition) {
+    // code
+  }
+  ```
+
+### Comments and Documentation
+
+- **JSDoc:** Use JSDoc style for documenting functions, classes, and methods.
+
+  ```typescript
+  /**
+   * Creates a new user
+   * @param {string} name - User's name
+   * @returns {Promise<User>} The created user object
+   */
+  function createUser(name: string): Promise<User> {
+    // implementation
+  }
+  ```
+
+## 6. Language-Specific Guidelines
+
+### TypeScript
+
+- **Type Annotations:** Always define explicit types for function parameters and return values.
+- **Interfaces over Type Aliases:** Prefer using interfaces to define object shapes.
+- **Strict Mode:** Enable strict type-checking in `tsconfig.json`.
+
+### React
+
+- **Functional Components:** Use functional components in combination with hooks.
+- **Props:** Define prop types using interfaces.
+- **File Organization:** One component per file is preferred.
+
+## 7. Enforcement Mechanisms
+
+### Pre-commit Hooks
+
+- Tools like Husky are leveraged to run the formatter and linter before code is committed, ensuring that only formatted code is pushed to the repository.
+
+### Continuous Integration
+
+- Automated CI/CD pipelines are configured to verify formatting and linting rules during the build process, providing early feedback on style issues.
+
+### Editor Integration
+
+- Recommended VS Code extensions include:
+  - `esbenp.prettier-vscode`
+  - `dbaeumer.vscode-eslint`
+  - `bradlc.vscode-tailwindcss`
+
+These extensions ensure that formatting guidelines are enforced as you code, reducing the chance of style violations.
+
+## 8. Best Practices
+
+- **Manual Formatting:** Always run formatting tools (e.g., `pnpm format`) before committing changes.
+- **Lint Verification:** Use `pnpm lint` to check for any deviations from defined rules.
+- **Consistent Updates:** Keep the configuration files (`.prettierrc.js`, `.eslintrc.js`, `tsconfig.json`) up-to-date with the latest standards across the codebase.
+
+## 9. Conclusion
+
+Adhering to these code formatting guidelines ensures that the Formbricks codebase remains clean, consistent, and maintainable. It streamlines collaboration among team members and supports effective review and debugging processes.
+
+---
+
+For further details, refer to specific tool documentation and internal best practices documents available in the repository.

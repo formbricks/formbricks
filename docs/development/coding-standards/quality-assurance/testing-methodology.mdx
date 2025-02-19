@@ -1,0 +1,118 @@
+---
+title: Testing Methodology at Formbricks
+icon: magnifying-glass
+---
+
+## Overview
+
+At Formbricks, we maintain a robust testing strategy that ensures high-quality code and reliable functionality across all components. Our testing approach is comprehensive, covering multiple layers of the application through different types of tests.
+
+## Testing Philosophy
+
+- **Shift-Left Testing**: We integrate testing early in the development cycle
+- **Test Automation**: Automated tests are integrated into CI/CD pipelines
+- **Modular & Isolated Tests**: Each test focuses on a specific unit of functionality
+- **Documentation & Maintainability**: Tests are self-documenting and maintained alongside source code
+
+## Testing Structure
+
+### 1. Unit Testing with Vitest
+
+We use Vitest as our primary unit testing framework. Unit tests can be found:
+
+- Co-located with source files (`*.test.ts`, `*.spec.ts`)
+- Within `__tests__` directories
+- Testing isolated components, functions, and modules
+
+Key areas covered:
+
+- Business logic validation
+- Utility function behavior
+- Component state management
+- Error handling scenarios
+- Data transformations
+
+### 2. End-to-End Testing with Playwright
+
+E2E tests are located in `apps/web/playwright/` and cover:
+
+- Complete user workflows
+- Cross-browser compatibility
+- Integration with external services
+- User interface interactions
+- Form submissions and validations
+
+## Testing Practices
+
+### Test Organization
+
+- Tests are co-located with source code when possible
+- Shared test utilities in common directories
+- Consistent naming conventions
+- Well-structured test hierarchies
+
+### Code Coverage
+
+- Automated coverage reporting via V8 provider
+- Coverage reports include:
+  - Text summaries
+  - HTML reports
+  - LCOV reports
+- Focus on meaningful coverage over percentages
+
+### Quality Assurance Process
+
+1. **Pre-commit Testing**
+
+   - Linting checks
+   - Type checking
+   - Build checking
+
+2. **Continuous Integration**
+
+   - Automated test suite execution
+   - Cross-browser testing
+   - Performance benchmarks
+
+3. **Feature Testing**
+   - New features require corresponding tests
+   - Both unit and integration tests
+   - Edge case coverage
+
+## Testing Tools and Libraries
+
+- **Vitest**: Primary testing framework
+- **Playwright**: End-to-end testing
+- **vi**: Mocking and spying utilities
+
+## Best Practices
+
+1. **Test Independence**
+
+   - Each test should be self-contained
+   - Proper setup and teardown
+   - No shared state between tests
+
+2. **Meaningful Assertions**
+
+   - Clear test descriptions
+   - Specific assertions
+   - Comprehensive error messages
+
+3. **Maintainable Tests**
+
+   - DRY principles
+   - Shared fixtures and helpers
+   - Clear documentation
+
+4. **Performance**
+   - Fast execution
+   - Efficient setup/teardown
+   - Parallelization where possible
+
+## Continuous Improvement
+
+- Regular review of testing strategies
+- Updates to testing documentation
+- Integration of new testing tools and methods
+- Team training and knowledge sharing

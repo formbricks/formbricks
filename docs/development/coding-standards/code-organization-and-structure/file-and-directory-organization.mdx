@@ -1,0 +1,73 @@
+---
+title: File and Directory Organization
+description: This document serves as a detailed guide to the file and directory structure of the Formbricks codebase. It aims to provide insights into how the project is organized, the purpose behind each major directory, and the underlying rationale for our organization method in a monorepo setup.
+icon: file
+---
+
+## Overview
+
+The Formbricks codebase adopts a monorepo architecture. This approach allows for a centralized management of multiple related projects, from web apps and mobile apps to shared libraries and configurations. The structure is designed for scalability, clarity, and ease of collaboration among developers.
+
+## Root Level Structure
+
+At the root of the repository, you can find several critical directories and configuration files:
+
+- **apps/**: Contains the main application projects. This directory segregates different types of applications such as web servers, mobile applications, demos, and documentation sites.
+- **packages/**: Hosts shared libraries, configurations, and internal tooling. These packages include APIs, ESLint and Prettier configurations, UI components, and more. This separation aids in reusability and maintainability.
+- **docs/**: Contains the project documentation including API references, developer guides, and coding standards such as this document on file and directory organization.
+- **docker/**, **helm-chart/**, etc.: Directories dedicated to deployment, container orchestration, and other infrastructure-related assets.
+- **Configuration Files**: Files such as `pnpm-workspace.yaml`, `turbo.json`, and various `package.json` files at different levels establish the project’s dependency graph and build configurations.
+
+## Detailed Directory Breakdown
+
+### apps/
+
+The `apps/` directory is crafted to handle multiple application types:
+
+- **apps/demo/**: A web demo built with Next.js. It includes a `pages/` directory for route-based components, a `lib/` directory for shared utilities, and styles such as `globals.css`.
+- **apps/demo-react-native/**: Contains a React Native demo application. Its structure includes `src/` for source code, configuration files like `babel.config.js`, and assets for mobile deployment.
+- **apps/web/**: Hosts the web application, organized with clear separation between business logic, public assets, and infrastructure. Significant files include `next.config.mjs`, `middleware.ts`, and integration configurations for tools like Tailwind and Sentry.
+
+### packages/
+
+The `packages/` folder is organized by functionality and responsibility. Each subdirectory serves a specific purpose:
+
+- **api/**: Contains API server code and endpoints. This package ensures that backend logic is neatly encapsulated.
+- **config-\***: Various configuration packages for ESLint, Prettier, Tailwind, and TypeScript. This modular approach allows consistent configuration across multiple projects in the repository.
+- **js/** and **js-core/**: Libraries for JavaScript utilities and core functionalities shared across other packages.
+- **react-native/**: Dedicated packages for cross-platform or mobile-specific logic.
+- **ui/**: Contains shared UI components, promoting reusability and design consistency across applications.
+
+### docs/
+
+Documentation is as critical as code. The `docs/` folder contains:
+
+- **api-reference/**: Detailed API documentation that explains available endpoints and their usage.
+- **development/**: Coding standards, guides (such as this one), and best practices to follow when contributing to the project.
+
+### Infrastructure & Deployment Directories
+
+- **docker/**: Scripts and configurations for containerized deployments. This includes Docker Compose files for local development and cronjobs for routine tasks.
+- **helm-chart/**: Kubernetes Helm charts and value configurations for managing production deployments.
+
+## Naming Conventions and Best Practices
+
+- **Clarity**: Directories and files are named to clearly reflect their purpose. For instance, `demo` is used for sample applications, and `config` prefixes denote standardized configurations.
+- **Separation of Concerns**: By segmenting the code into `apps/` and `packages/`, the project distinguishes between runnable applications and shared code libraries.
+- **Consistency**: Common patterns across folders such as having a dedicated `src/` for source code and clear, modular configuration directories are maintained to ensure a uniform development experience.
+
+## Rationale Behind the Organization
+
+1. **Scalability**: As the project grows, separating applications and shared modules makes it easier to manage dependencies and configurations without cross-contamination.
+
+2. **Collaboration**: Clear segregation of responsibilities empowers different teams (frontend, backend, mobile) to work independently while still sharing a common, maintainable structure.
+
+3. **Tooling and Build Efficiency**: Centralized build configurations (like `pnpm-workspace.yaml` and `turbo.json`) optimize dependency management and enable efficient incremental builds across the monorepo.
+
+## Conclusion
+
+The file and directory structure of the Formbricks codebase emphasizes a clean, modular, and scalable design. By adhering to these organizational principles, developers can navigate the system with ease and collaborate effectively across diverse project components.
+
+---
+
+_This documentation will be updated periodically to reflect changes and improvements in our codebase structure._

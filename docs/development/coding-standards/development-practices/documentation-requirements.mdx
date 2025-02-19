@@ -1,0 +1,69 @@
+---
+title: "Documentation Requirements"
+description: "Standards for code documentation and comments in the Formbricks codebase"
+icon: file
+---
+
+### Function & Method Documentation
+
+Use JSDoc comments for functions and methods:
+
+```typescript
+/**
+ * Creates a new survey response
+ * @param {string} surveyId - The ID of the survey
+ * @param {Object} responseData - The response data
+ * @returns {Promise<Response>} The created response
+ * @throws {Error} If survey not found
+ */
+async function createResponse(surveyId: string, responseData: ResponseData): Promise<Response> {
+  // Implementation
+}
+```
+
+## Inline Comments
+
+- Use inline comments to explain complex logic
+- Keep comments current with code changes
+- Avoid obvious comments
+
+## API Documentation
+
+- Document all public APIs
+- Include example usage
+- Specify error cases and handling
+
+## Feature Usage Documentation
+
+Document how to use complex features:
+
+- **Purpose & Benefits**
+
+  - What problem does it solve
+  - Key advantages and use cases
+  - When to use this feature
+
+- **Usage Guide**
+
+  - Step by step instructions
+  - Code examples and snippets
+  - Configuration options
+
+## Best Practices
+
+1. **Keep Documentation Updated**
+
+   - Update docs with code changes
+   - Review docs in code reviews
+   - Remove outdated comments
+
+2. **Write Clear Documentation**
+
+   - Use simple language
+   - Include examples
+   - Explain why, not just what
+
+3. **Document Assumptions**
+   - Note prerequisites
+   - Document edge cases
+   - Explain complex logic

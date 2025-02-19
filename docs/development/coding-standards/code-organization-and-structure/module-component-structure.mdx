@@ -1,0 +1,105 @@
+---
+title: Module/Component Structure
+description: In this document we outline the best practices for organizing modules and components across the codebase. Clear separation of concerns between modules (which encompass business logic and domain-specific functionality) and components (reusable UI elements and building blocks) promotes clarity, scalability, and maintainability.
+icon: boxes-stacked
+---
+
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Module Organization](#module-organization)
+- [Component Organization](#component-organization)
+- [Examples](#examples)
+- [Best Practices](#best-practices)
+- [Conclusion](#conclusion)
+
+## Introduction
+
+Projects in this repository often follow a modular design. Modules are high-level building blocks representing distinct functionalities (e.g., authentication, data management), while components refer to UI and presentational elements. This document details the recommended structure for organizing modules and components to ensure consistency and maintainability.
+
+## Module Organization
+
+Modules encapsulate related functionality for a specific feature or domain. A module folder typically includes:
+
+- **Logic & Services**: Business rules, functions, and API interactions.
+- **Data Models**: Type definitions and interfaces relevant to the module.
+- **Sub-Modules**: Nested directories for further separation of responsibilities when needed.
+
+**Example structure for a module:**
+
+```
+modules/
+  └── authentication/
+      ├── models.ts
+      ├── services.ts
+      ├── hooks.ts
+      └── index.ts
+```
+
+Here, each file plays a distinct role to collectively define the module's functionality.
+
+## Component Organization
+
+Components are primarily intended for UI rendering and are designed for reusability and composition. They can be divided into two main categories:
+
+- **Presentational Components**: Components that render UI based solely on provided data, without managing application logic.
+- **Container Components**: Components that manage state, perform data fetching, and integrate with business logic to pass data to presentational components.
+
+**Example structure for a component folder:**
+
+```
+components/
+  └── Button/
+      ├── Button.tsx
+      ├── Button.styles.css
+      └── index.ts
+```
+
+### Loose vs. Module-Specific Components
+
+- **Loose Components**: Commonly used components that can be placed in a shared directory for reuse across multiple modules.
+- **Module-Specific Components**: Components unique to a module which should reside within that module's folder, maintaining cohesiveness.
+
+## Examples
+
+### Combining Modules and Components
+
+For a feature like a user profile, the module may include both logic and a dedicated set of UI components:
+
+```
+modules/
+  └── user-profile/
+      ├── models.ts
+      ├── services.ts
+      ├── components/
+      │    ├── ProfileView.tsx
+      │    ├── ProfileEdit.tsx
+      │    └── index.ts
+      └── index.ts
+```
+
+### Code Example: A Presentational Component
+
+```jsx
+// Button.tsx
+import React from "react";
+
+const Button = ({ onClick, children }) => (
+  <button className="btn" onClick={onClick}>
+    {children}
+  </button>
+);
+
+export default Button;
+```
+
+## Best Practices
+
+- **Consistency**: Adhere to standardized naming and folder conventions throughout the codebase.
+- **Encapsulation**: Separate business logic, UI, and styling while ensuring their collaboration through well-defined interfaces.
+- **Scalability**: Organize modules in a way that simplifies future feature expansion.
+- **Reusability**: Build components to be small, focused, and composed together to form complex UIs without repetitive code.
+
+---
+
+_This document is regularly updated to reflect evolving coding standards in the repository._
