@@ -764,7 +764,7 @@
     },
     {
       "name": "API v2 Reference (Draft)",
-      "openapi": "/api-v2-reference/openapi.json",
+      "openapi": "/api-v2-reference/openapi.yml",
       "url": "api-v2-reference"
     }
   ],
