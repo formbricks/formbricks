@@ -6,17 +6,19 @@ icon: "code"
 
 ## **How Do Actions Work?**
 
-Actions in Formbricks App Surveys are deeply integrated with user activities within your app. When a user performs a specified action, the Formbricks widget detects this activity and can present a survey to that specific user if the trigger conditions match for that survey. This capability ensures that surveys are triggered at the right time. You can set up these actions through a user-friendly No-Code interface within the Formbricks dashboard.
+
+
+When a user performs a specified action, the Formbricks widget detects this activity and can present a survey to that user if the conditions match. This ensures that surveys are triggered at the right time. You can set up these actions through a user-friendly No-Code interface within the Formbricks dashboard.
 
 ## **Why Are Actions Useful?**
 
 Actions are invaluable for enhancing survey relevance and effectiveness:
 
-- **Personalized Engagement**: Surveys triggered by user actions ensure content is highly relevant and engaging, matching each user’s current context.
+* **Personalized Engagement**: Surveys triggered by user actions ensure content is highly relevant and engaging, matching each user’s current context.
 
-- **User Attributes**: By tying surveys to specific user attributes, such as activity levels or feature usage, you can customize the survey experience to reflect individual user profiles.
+* **User Attributes**: By tying surveys to specific user attributes, such as activity levels or feature usage, you can customize the survey experience to reflect individual user profiles.
 
-- **User Targeting**: Precise targeting based on user attributes ensures that surveys are shown only to users who meet certain criteria, enhancing the relevance and effectiveness of each survey.
+* **User Targeting**: Precise targeting based on user attributes ensures that surveys are shown only to users who meet certain criteria, enhancing the relevance and effectiveness of each survey.
 
 ## **Setting Up No-Code Actions**
 
@@ -38,9 +40,9 @@ Here are four types of No-Code actions you can set up:
 
 Click Action is triggered when a user clicks on a specific element within your application. You can define the element's inner text or CSS selector to trigger the survey.
 
-- **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
+* **Inner Text**: Checks if the innerText of a clicked HTML element, like a button label, matches a specific text. This action allows you to display a survey based on text interactions within your application.
 
-- **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
+* **CSS Selector**: Verifies if a clicked HTML element matches a provided CSS selector, such as a class, ID, or any other CSS selector used in your website. It enables survey triggers based on element interactions.
 
 ### **2. Page view Action**
 
@@ -60,17 +62,17 @@ You can combine the url filters with any of the no-code actions to trigger the s
 
 ### **URL Match Conditions**
 
-- **exactMatch**: Triggers the action when the URL exactly matches the specified string.
+* **exactMatch**: Triggers the action when the URL exactly matches the specified string.
 
-- **contains**: Activates when the URL contains the specified substring.
+* **contains**: Activates when the URL contains the specified substring.
 
-- **startsWith**: Fires when the URL starts with the specified string.
+* **startsWith**: Fires when the URL starts with the specified string.
 
-- **endsWith**: Executes when the URL ends with the specified string.
+* **endsWith**: Executes when the URL ends with the specified string.
 
-- **notMatch**: Triggers when the URL does not match the specified condition.
+* **notMatch**: Triggers when the URL does not match the specified condition.
 
-- **notContains**: Activates when the URL does not contain the specified substring.
+* **notContains**: Activates when the URL does not contain the specified substring.
 
 ## **Setting Up Code Actions**
 
@@ -82,7 +84,6 @@ For more granular control, you can implement actions directly in your codebase:
 2. **Track an Action**: Use formbricks.track() to send an action event to Formbricks.
 
 ```javascript Track an action formbricks.track("Action Name");
-
 ```
 
 Here is an example of how to fire an action when a user clicks a button:
