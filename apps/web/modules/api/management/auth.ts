@@ -63,7 +63,7 @@ export type HandlerFn<TInput = Record<string, unknown>> = ({
 
 export type ExtendedSchemas = {
   body?: z.ZodObject<ZodRawShape>;
-  query?: z.ZodObject<ZodRawShape>
+  query?: z.ZodObject<ZodRawShape>;
   params?: z.ZodObject<ZodRawShape>;
 };
 
@@ -74,7 +74,7 @@ export type ParsedSchemas<S extends ExtendedSchemas | undefined> = {
   params?: S extends { params: z.ZodObject<any> } ? z.infer<S["params"]> : undefined;
 };
 
-export const authenticatedApiClient = async <S extends ExtendedSchemas>({
+export const apiWrapper = async <S extends ExtendedSchemas>({
   request,
   schemas,
   externalParams,
@@ -144,4 +144,44 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   } catch (err) {
     return handleApiError(err);
   }
+};
+
+export const authenticatedApiClient = async <S extends ExtendedSchemas>({
+  request,
+  schemas,
+  externalParams,
+  rateLimit = true,
+  handler,
+}: {
+  request: Request;
+  schemas?: S;
+  externalParams?: Promise<Record<string, any>>;
+  rateLimit?: boolean;
+  handler: HandlerFn<ParsedSchemas<S>>;
+}): Promise<Response> => {
+  const startTime = Date.now();
+  const method = request.method;
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const correlationId = request.headers.get("x-request-id") || "N/A";
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const safeQueryParams = Object.fromEntries(
+    Object.entries(queryParams).filter(([key]) => !["apikey", "token", "secret"].includes(key.toLowerCase()))
+  );
+
+  const response = await apiWrapper({
+    request,
+    schemas,
+    externalParams,
+    rateLimit,
+    handler,
+  });
+
+  const duration = Date.now() - startTime;
+
+  console.log(
+    `[API] ${method} ${path} - ${response.status} - ${duration}ms \n correlationId: ${correlationId} \n queryParams: ${JSON.stringify(safeQueryParams)}`
+  );
+
+  return response;
 };

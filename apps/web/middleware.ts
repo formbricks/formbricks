@@ -25,11 +25,13 @@ import { NextResponse } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const middleware = async (request: NextRequest) => {
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
     const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
-    if (forwardedProto !== "https") {
+    if (isProduction && forwardedProto !== "https") {
       return NextResponse.json(
         { error: "Only HTTPS connections are allowed on the management endpoint." },
         { status: 403 }
@@ -52,7 +54,7 @@ export const middleware = async (request: NextRequest) => {
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-  if (process.env.NODE_ENV !== "production" || RATE_LIMITING_DISABLED) {
+  if (!isProduction || RATE_LIMITING_DISABLED) {
     return NextResponse.next();
   }
 

@@ -1,10 +1,12 @@
 import { deleteDisplay } from "@/modules/api/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/management/responses/[responseId]/lib/utils";
+import { responseUpdateSchema } from "@/modules/api/management/responses/[responseId]/types/responses";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { Response } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
@@ -92,7 +94,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: Omit<Response, "id">
+  responseInput: z.infer<typeof responseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponse>> => {
   try {
     const updatedResponse = await prisma.response.update({
