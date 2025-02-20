@@ -6,6 +6,11 @@ import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
 const config = () => {
   return defineConfig({
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src"),
+      },
+    },
     define: {
       "import.meta.env.VERSION": JSON.stringify(webPackageJson.version),
     },

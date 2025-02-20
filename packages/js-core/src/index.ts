@@ -1,23 +1,25 @@
 /* eslint-disable import/no-default-export -- We need default exports for the js sdk */
-import { type TJsConfigInput, type TJsTrackProperties } from "@formbricks/types/js";
-import { trackCodeAction } from "./lib/actions";
-import { getApi } from "./lib/api";
-import { setAttributeInApp } from "./lib/attributes";
-import { CommandQueue } from "./lib/command-queue";
-import { ErrorHandler } from "./lib/errors";
-import { initialize } from "./lib/initialize";
-import { Logger } from "./lib/logger";
-import { checkPageUrl } from "./lib/no-code-actions";
-import { logoutPerson, resetPerson } from "./lib/person";
+import { CommandQueue } from "@/lib/common/command-queue";
+import { Logger } from "@/lib/common/logger";
+import * as Setup from "@/lib/common/setup";
+import * as Action from "@/lib/survey/action";
+import * as Attribute from "@/lib/user/attribute";
+import * as User from "@/lib/user/user";
+import { type TConfigInput } from "@/types/config";
+import { checkPageUrl } from "./lib/survey/no-code-action";
 
 const logger = Logger.getInstance();
 
 logger.debug("Create command queue");
 const queue = new CommandQueue();
 
-const init = async (initConfig: TJsConfigInput): Promise<void> => {
-  ErrorHandler.init(initConfig.errorHandler);
-  queue.add(false, initialize, initConfig);
+const init = async (initConfig: TConfigInput): Promise<void> => {
+  queue.add(Setup.setup, false, initConfig);
+  await queue.wait();
+};
+
+const setUserId = async (userId: string): Promise<void> => {
+  queue.add(User.setUserId, true, userId);
   await queue.wait();
 };
 
@@ -27,27 +29,35 @@ const setEmail = async (email: string): Promise<void> => {
 };
 
 const setAttribute = async (key: string, value: string): Promise<void> => {
-  queue.add(true, setAttributeInApp, key, value);
+  queue.add(Attribute.setAttributes, true, { [key]: value });
+  await queue.wait();
+};
+
+export const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
+  queue.add(Attribute.setAttributes, true, attributes);
   await queue.wait();
 };
 
 const logout = async (): Promise<void> => {
-  queue.add(true, logoutPerson);
+  queue.add(User.logout, true);
   await queue.wait();
 };
 
-const reset = async (): Promise<void> => {
-  queue.add(true, resetPerson);
-  await queue.wait();
-};
-
-const track = async (code: string, properties?: TJsTrackProperties): Promise<void> => {
-  queue.add(true, trackCodeAction, code, properties);
+const track = async (
+  code: string
+  // properties?: TJsTrackProperties
+): Promise<void> => {
+  queue.add(
+    Action.trackCodeAction,
+    true,
+    code
+    // properties
+  );
   await queue.wait();
 };
 
 const registerRouteChange = async (): Promise<void> => {
-  queue.add(true, checkPageUrl);
+  queue.add(checkPageUrl, true);
   await queue.wait();
 };
 
@@ -55,11 +65,11 @@ const formbricks = {
   init,
   setEmail,
   setAttribute,
+  setAttributes,
+  setUserId,
   track,
   logout,
-  reset,
   registerRouteChange,
-  getApi,
 };
 
 export type TFormbricks = typeof formbricks;

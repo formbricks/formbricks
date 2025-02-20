@@ -42,7 +42,6 @@
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
     "@formbricks/api": "workspace:*",
-    "@formbricks/lib": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",

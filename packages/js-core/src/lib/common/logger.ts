@@ -43,4 +43,8 @@ export class Logger {
   error(message: string): void {
     this.logger(message, "error");
   }
+
+  public resetInstance(): void {
+    Logger.instance = undefined;
+  }
 }
