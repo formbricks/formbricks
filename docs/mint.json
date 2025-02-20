@@ -758,9 +758,14 @@
       "url": "development"
     },
     {
-      "name": "API Reference",
+      "name": "API v1 Reference",
       "openapi": "/api-reference/openapi.json",
       "url": "api-reference"
+    },
+    {
+      "name": "API v2 Reference (Draft)",
+      "openapi": "/api-v2-reference/openapi.yml",
+      "url": "api-v2-reference"
     }
   ],
   "topbarCtaButton": {
