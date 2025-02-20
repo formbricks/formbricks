@@ -163,7 +163,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   const method = request.method;
   const url = new URL(request.url);
   const path = url.pathname;
-  const correlationId = request.headers.get("x-request-id") || "N/A";
+  const correlationId = request.headers.get("x-request-id") || "";
   const queryParams = Object.fromEntries(url.searchParams.entries());
   const safeQueryParams = Object.fromEntries(
     Object.entries(queryParams).filter(([key]) => !["apikey", "token", "secret"].includes(key.toLowerCase()))
@@ -180,7 +180,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   const duration = Date.now() - startTime;
 
   console.log(
-    `[API] ${method} ${path} - ${response.status} - ${duration}ms \n correlationId: ${correlationId} \n queryParams: ${JSON.stringify(safeQueryParams)}`
+    `[API] ${method} ${path} - ${response.status} - ${duration}ms ${correlationId ? `\n correlationId: ${correlationId}` : ""} ${safeQueryParams ? `\n queryParams: ${JSON.stringify(safeQueryParams)}` : ""}`
   );
 
   return response;

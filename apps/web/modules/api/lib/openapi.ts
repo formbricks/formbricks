@@ -7,8 +7,7 @@ import {
   ZGetContactAttributesFilter,
 } from "@/modules/api/management/contact-attributes/types/contact-attributes";
 import { ZContactInput, ZGetContactsFilter } from "@/modules/api/management/contacts/types/contacts";
-import { ZGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
-import { ZResponseInput } from "@/modules/api/management/responses/types/responses";
+import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/management/responses/types/responses";
 import { ZGetSurveysFilter, ZSurveyInput } from "@/modules/api/management/surveys/types/surveys";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
