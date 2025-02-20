@@ -123,7 +123,6 @@
     "are_you_sure": "Bist Du sicher?",
     "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "attributes": "Attribute",
-    "automatic": "Automatisch",
     "avatar": "Avatar",
     "back": "Zurück",
     "billing": "Abrechnung",
@@ -180,7 +179,6 @@
     "edit": "Bearbeiten",
     "email": "E-Mail",
     "embed": "Einbetten",
-    "enable": "Aktivieren",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -1835,8 +1833,7 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      },
-      "this_is_a_new_key": "Das ist ein neuer Schlüssel "
+      }
     },
     "xm-templates": {
       "ces": "CES",

@@ -1,0 +1,98 @@
+---
+title: Naming Conventions
+description: This section outlines the guidelines for naming conventions across the codebase, ensuring consistency and clarity in the project.
+icon: input-text
+---
+
+## Files and Directories
+
+### General Files
+- Use lowercase and hyphen-separated names (kebab-case) for files and directories
+  - ✅ `user-profile.ts`
+  - ❌ `UserProfile.ts`
+- Group related files in directories with descriptive plural names
+  - ✅ `components`, `services`, `utils`
+  - ❌ `component`, `util`
+
+### Special Files
+- Configuration files should follow framework conventions
+  - ✅ `next.config.mjs`, `tailwind.config.js`
+- Test files should mirror source files with `.test` or `.spec` suffix
+  - ✅ `user-service.test.ts` for `user-service.ts`
+- Database migration files should include timestamp and description
+  - ✅ `20241017124431_add_documents_and_insights.sql`
+
+## Code Symbols
+
+### Variables and Functions
+- Use camelCase for variables and function names
+  - ✅ `fetchUserData`, `isLoading`, `handleSubmit`
+  - ❌ `FetchUserData`, `is_loading`
+- Boolean variables should use is/has/should prefix
+  - ✅ `isVerifyEmailEnabled`, `hasPermission`, `shouldDisplay`
+- Async functions should use verb prefixes suggesting async
+  - ✅ `fetchData`, `createUser`, `updateProfile`
+
+### Classes and Types
+- Use PascalCase for:
+  - Classes: `Config`, `Client`, `ResponseAPI`
+  - Interfaces: `TSurveySummaryResponse`, `ApiConfig`
+  - Type aliases: `TResponseData`, `TJsTrackProperties`
+- Prefix types with T and interfaces with I (when helpful)
+  - ✅ `TStats`, `TResponseData`, `IApiConfig`
+- Enum names should be PascalCase, values in UPPER_SNAKE_CASE
+  ```typescript
+  enum ProjectFeatureKeys {
+    FREE = "free",
+    STARTUP = "startup",
+    SCALE = "scale"
+  }
+  ```
+
+### Constants
+- Use UPPER_SNAKE_CASE for constant values
+  - ✅ `API_TIMEOUT`, `MAX_RETRIES`, `CONTAINER_ID`
+- Use PascalCase for constant references/objects
+  - ✅ `ErrorCodes`, `Config`
+
+### Database Models
+- Use PascalCase singular form for model names
+  - ✅ `Survey`, `Response`, `Document`
+- Use camelCase for field names
+  - ✅ `createdAt`, `environmentId`, `isSpam`
+- Use snake_case for database column names
+  - ✅ `created_at`, `updated_at`
+
+### Components
+- Use PascalCase for React components and their files
+  - ✅ `SurveyCard.tsx`, `UserProfile.tsx`
+- Component-specific types should be prefixed with component name
+  - ✅ `SurveyCardProps`, `UserProfileData`
+
+### API and Endpoints
+- Use kebab-case for API endpoints
+  - ✅ `/api/user-profile`, `/api/survey-responses`
+- Use camelCase for query parameters
+  - ✅ `/api/surveys?pageSize=10&sortOrder=desc`
+
+## Schema and Validation
+- Prefix Zod schemas with Z
+  - ✅ `ZSurvey`, `ZDocument`, `ZInsight`
+- Use descriptive names for validation schemas
+  - ✅ `ZUpdateDocumentAction`, `ZGenerateDocumentObjectSchema`
+
+## Error Handling
+- Suffix error classes with "Error"
+  - ✅ `ValidationError`, `DatabaseError`, `AuthenticationError`
+- Use descriptive names for error types
+  - ✅ `SURVEY_NOT_FOUND`, `INVALID_RESPONSE`
+
+## Best Practices
+- Keep names descriptive but concise
+- Be consistent within each context
+- Follow existing patterns in the codebase
+- Use full words instead of abbreviations unless widely accepted
+  - ✅ `configuration` vs ❌ `config` (except in standard terms)
+  - ✅ `id`, `url` (standard abbreviations are acceptable)
+
+By following these conventions, we maintain consistency and clarity across the codebase, making it more maintainable and easier to understand for all team members.

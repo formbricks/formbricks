@@ -93,6 +93,7 @@ export const QuestionFormInput = ({
       : isEndingCard
         ? localSurvey.endings[questionIdx - localSurvey.questions.length].id
         : question.id;
+    //eslint-disable-next-line
   }, [isWelcomeCard, isEndingCard, question?.id]);
 
   const surveyLanguageCodes = useMemo(
