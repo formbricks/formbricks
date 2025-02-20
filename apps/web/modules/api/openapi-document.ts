@@ -1,8 +1,16 @@
+import { contactAttributeKeyPaths } from "@/modules/api/management/contact-attribute-keys/lib/openapi";
+import { contactAttributePaths } from "@/modules/api/management/contact-attributes/lib/openapi";
+import { contactPaths } from "@/modules/api/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/management/responses/lib/openapi";
+import { surveyPaths } from "@/modules/api/management/surveys/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
+import { ZContact } from "@formbricks/database/zod/contact";
+import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
+import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZSurvey } from "@formbricks/database/zod/surveys";
 
 extendZodWithOpenApi(z);
 
@@ -15,6 +23,10 @@ const document = createDocument({
   },
   paths: {
     ...responsePaths,
+    ...contactPaths,
+    ...contactAttributePaths,
+    ...contactAttributeKeyPaths,
+    ...surveyPaths,
   },
   servers: [
     {
@@ -27,10 +39,30 @@ const document = createDocument({
       name: "Responses",
       description: "Operations for managing responses.",
     },
+    {
+      name: "Contacts",
+      description: "Operations for managing contacts.",
+    },
+    {
+      name: "Contact Attributes",
+      description: "Operations for managing contact attributes.",
+    },
+    {
+      name: "Contact Attributes Keys",
+      description: "Operations for managing contact attributes keys.",
+    },
+    {
+      name: "Surveys",
+      description: "Operations for managing surveys.",
+    },
   ],
   components: {
     schemas: {
       response: ZResponse,
+      contact: ZContact,
+      contactAttribute: ZContactAttribute,
+      contactAttributeKey: ZContactAttributeKey,
+      survey: ZSurvey,
     },
   },
 });
