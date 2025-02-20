@@ -50,9 +50,6 @@ x-environment: &environment
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 
-    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_URL_BASE:
-
     # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
     EMAIL_VERIFICATION_DISABLED: 1
 

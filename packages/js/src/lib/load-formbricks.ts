@@ -62,13 +62,14 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
       // reset the initialization state
       isInitializing = true;
 
-      const apiHost = (args[0] as { apiHost: string }).apiHost;
+      const apiHost = (args[0] as { appUrl: string; environmentId: string }).appUrl;
       const loadSDKResult = await loadFormbricksSDK(apiHost);
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
+          console.log("window.formbricks", window.formbricks);
           // @ts-expect-error -- Required for dynamic function calls
-          void window.formbricks.init(...args);
+          void window.formbricks.default.init(...args);
 
           isInitializing = false;
           isInitialized = true;
