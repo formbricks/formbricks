@@ -16,14 +16,12 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
 </Card>
 
 <Card title="Next.js" icon="react" href="#nextjs">
-  [Natively add us to your Next.js project, with support for both App and Pages
-  project
+  [Natively add us to your Next.js project, with support for both App and Pages project
   structure.](https://formbricks.com/docs/app-surveys/framework-guides#next-js)
 </Card>
 
 <Card title="Vue.js" icon="vuejs" href="#vue-js">
-  Learn how to use Formbricks' React Native SDK to integrate your surveys into
-  React Native applications.
+  Learn how to use Formbricks' React Native SDK to integrate your surveys into React Native applications.
 </Card>
 
   <Card title="React Native" icon="react" color="lightblue" href="#react-native">
@@ -165,6 +163,7 @@ export default function FormbricksProvider() {
 ```typescript app/layout.tsx
 // other imports
 import FormbricksProvider from "./formbricks";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -173,7 +172,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <FormbricksProvider />
+      <Suspense>
+        <FormbricksProvider />
+      </Suspense>
       <body>{children}</body>
     </html>
   );
