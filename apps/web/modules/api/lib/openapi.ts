@@ -1,8 +1,7 @@
-import { ZGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
+import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/management/responses/types/responses";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
-import { ZResponseInput } from "@formbricks/types/responses";
 
 export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponses",
