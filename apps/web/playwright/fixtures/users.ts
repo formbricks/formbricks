@@ -82,15 +82,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                           create: [
                             {
                               type: "development",
-                              actionClasses: {
-                                create: [
-                                  {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
-                                  },
-                                ],
-                              },
                               attributeKeys: {
                                 create: [
                                   {
@@ -104,15 +95,6 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                             },
                             {
                               type: "production",
-                              actionClasses: {
-                                create: [
-                                  {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
-                                  },
-                                ],
-                              },
                               attributeKeys: {
                                 create: [
                                   {

@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 /* eslint-disable no-console -- debugging*/
+import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
+import { Modal } from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { StorageAPI } from "@/lib/common/file-upload";
 import { Logger } from "@/lib/common/logger";
@@ -11,10 +15,6 @@ import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageDat
 import type { TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
 import type { SurveyInlineProps } from "@/types/survey";
-import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { FormbricksAPI } from "@formbricks/api";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -158,6 +158,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         setShowSurvey(false);
         setIsSurveyRunning(false);
       }}>
+      {/* @ts-expect-error -- WebView type incompatibility with React.Component */}
       <WebView
         ref={webViewRef}
         originWhitelist={["*"]}

@@ -1,26 +1,27 @@
 "use client";
 
+import { SurveyType } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { TProject } from "@formbricks/types/project";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import React, { useEffect, useRef, useState } from "react";
+import { TProjectStyling } from "@formbricks/types/project";
+import { TSurveyStyling } from "@formbricks/types/surveys/types";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
-  survey: TSurvey;
-  project: TProject;
+  styling: TSurveyStyling | TProjectStyling;
+  surveyType: SurveyType;
   isEditorView?: boolean;
   isMobilePreview?: boolean;
-  ContentRef?: React.RefObject<HTMLDivElement>;
+  ContentRef?: React.RefObject<HTMLDivElement> | null;
   onBackgroundLoaded?: (isLoaded: boolean) => void;
 }
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   children,
-  project,
-  survey,
+  styling,
+  surveyType,
   isEditorView = false,
   isMobilePreview = false,
   ContentRef,
@@ -31,26 +32,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   const [backgroundLoaded, setBackgroundLoaded] = useState(false);
   const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
 
-  // get the background from either the survey or the project styling
-  const background = useMemo(() => {
-    // allow style overwrite is disabled from the project
-    if (!project.styling.allowStyleOverwrite) {
-      return project.styling.background;
-    }
-
-    // allow style overwrite is enabled from the project
-    if (project.styling.allowStyleOverwrite) {
-      // survey style overwrite is disabled
-      if (!survey.styling?.overwriteThemeStyling) {
-        return project.styling.background;
-      }
-
-      // survey style overwrite is enabled
-      return survey.styling.background;
-    }
-
-    return project.styling.background;
-  }, [project.styling.allowStyleOverwrite, project.styling.background, survey.styling]);
+  const background = styling.background;
 
   useEffect(() => {
     if (background?.bgType === "animation" && animatedBackgroundRef.current) {
@@ -187,7 +169,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         className={`relative h-[90%] max-h-[40rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
         <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
-        {survey.type === "link" && renderBackground()}
+        {surveyType === "link" && renderBackground()}
         {renderContent()}
       </div>
     );

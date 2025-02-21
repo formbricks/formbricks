@@ -19,6 +19,7 @@ export const ZPlacement = z.enum(["bottomLeft", "bottomRight", "topLeft", "topRi
 export type TPlacement = z.infer<typeof ZPlacement>;
 
 export const ZAllowedFileExtension = z.enum([
+  "heic",
   "png",
   "jpeg",
   "jpg",

@@ -1,0 +1,102 @@
+---
+title: Modules & Components
+description: In this document we outline the best practices for organizing modules and components across the codebase. Clear separation of concerns between modules (which encompass business logic and domain-specific functionality) and components (reusable UI elements and building blocks) promotes clarity, scalability, and maintainability.
+icon: boxes-stacked
+---
+
+## Introduction
+
+Our codebase follows a modular architecture with two primary organizational units:
+
+1. **UI Components**: Reusable components in the `modules/ui/components` directory
+2. **Feature Modules**: Domain-specific functionality organized by feature in the `modules` directory
+
+## Module Organization
+
+### Core Module Structure
+
+Modules are organized by feature and can be found in the `modules` directory. Each module typically includes:
+
+```
+modules/
+└── feature-name/
+   ├── components/ # Feature-specific components
+   ├── lib/ # Business logic and utilities
+   ├── types/ # TypeScript types
+   ├── actions.ts # Server actions
+   └── route.ts # API routes (if needed)
+```
+
+### Enterprise Edition (EE) Modules
+
+Enterprise features are organized in a dedicated `modules/ee` directory:
+
+```
+modules/
+└── ee/
+├── insights/
+│ ├── components/
+│ ├── experience/
+│ └── types/
+└── contacts/
+├── segments/
+└── components/
+```
+
+## Component Organization
+
+### UI Component Structure
+
+UI components are centralized in `modules/ui/components` and follow a consistent structure:
+
+```
+modules/ui/components/
+└── component-name/
+   ├── index.tsx # Main component implementation
+   ├── stories.tsx # Storybook stories
+   └── components/ # Sub-components (if needed)
+```
+
+### Component Types
+
+1. **Base Components**: Fundamental UI elements like Button, Input, Modal
+
+2. **Composite Components**: More complex components that combine base components
+
+3. **Feature-Specific Components**: Components tied to specific features
+
+
+### Feature Module Example
+
+A feature module with its components and business logic:
+
+```
+modules/survey/
+├── components/
+│ ├── question-form-input/
+│ └── template-list/
+├── editor/
+│ └── components/
+├── lib/
+│ └── utils.ts
+└── types/
+└── index.ts
+```
+
+
+## Best Practices
+
+1. **Component Organization**
+   - Keep components focused and single-purpose
+   - Use proper TypeScript interfaces for props
+   - Implement Storybook stories for UI components
+
+2. **Module Structure**
+   - Organize by feature domain
+   - Separate business logic from UI components
+   - Use proper type definitions
+
+3. **Code Sharing**
+   - Share common utilities through the ui/lib directory
+   - Maintain clear boundaries between modules
+   - Use proper imports with aliases (@/modules/...)

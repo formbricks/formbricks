@@ -8,7 +8,8 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { symmetricEncrypt } from "@formbricks/lib/crypto";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "@formbricks/lib/integration/service";
+import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 
 export const GET = async (req: NextRequest) => {
   const url = req.url;
@@ -53,14 +54,18 @@ export const GET = async (req: NextRequest) => {
     const encryptedAccessToken = symmetricEncrypt(tokenData.access_token, ENCRYPTION_KEY!);
     tokenData.access_token = encryptedAccessToken;
 
-    const notionIntegration = {
+    const notionIntegration: TIntegrationNotionInput = {
       type: "notion" as "notion",
-      environment: environmentId,
       config: {
         key: tokenData,
         data: [],
       },
     };
+
+    const existingIntegration = await getIntegrationByType(environmentId, "notion");
+    if (existingIntegration) {
+      notionIntegration.config.data = existingIntegration.config.data as TIntegrationNotionConfigData[];
+    }
 
     const result = await createOrUpdateIntegration(environmentId, notionIntegration);
 
