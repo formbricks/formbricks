@@ -221,16 +221,7 @@ export function FileInput({
           {showUploader ? (
             <button
               className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
-              type="button"
-              // onKeyDown={(e) => {
-              //   // Accessibility: if spacebar was pressed pass this down to the input
-              //   if (e.key === " ") {
-              //     e.preventDefault();
-              //     document.getElementById(uniqueHtmlFor)?.click();
-              //     document.getElementById(uniqueHtmlFor)?.focus();
-              //   }
-              // }}
-            >
+              type="button">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
