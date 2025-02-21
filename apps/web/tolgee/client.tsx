@@ -3,7 +3,7 @@
 import { TolgeeProvider, TolgeeStaticData } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { branchName } from "../../../branch.json";
+import branch from "../../../branch.json";
 import { TolgeeBase } from "./shared";
 
 type Props = {
@@ -13,7 +13,7 @@ type Props = {
 };
 
 const tolgee = TolgeeBase().init({
-  tagNewKeys: [`draft: ${branchName}`],
+  tagNewKeys: [`draft:${branch.branchName}`],
 });
 
 export const TolgeeNextProvider = ({ language, staticData, children }: Props) => {
@@ -25,6 +25,7 @@ export const TolgeeNextProvider = ({ language, staticData, children }: Props) =>
       router.refresh();
     });
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tolgee, router]);
 
   return (
