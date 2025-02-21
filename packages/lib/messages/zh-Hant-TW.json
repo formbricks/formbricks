@@ -123,7 +123,6 @@
     "are_you_sure": "您確定嗎？",
     "are_you_sure_this_action_cannot_be_undone": "您確定嗎？此操作無法復原。",
     "attributes": "屬性",
-    "automatic": "自動",
     "avatar": "頭像",
     "back": "返回",
     "billing": "帳單",
@@ -180,7 +179,6 @@
     "edit": "編輯",
     "email": "電子郵件",
     "embed": "嵌入",
-    "enable": "啟用",
     "enterprise_license": "企業授權",
     "environment_not_found": "找不到環境",
     "environment_notice": "您目前在 '{'environment'}' 環境中。",
@@ -1394,6 +1392,7 @@
         "error_saving_changes": "儲存變更時發生錯誤",
         "even_after_they_submitted_a_response_e_g_feedback_box": "即使他們提交回應之後（例如，意見反應方塊）",
         "everyone": "所有人",
+        "exists": "存在",
         "fallback_missing": "遺失的回退",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "'{'fieldId'}' 用於問題 '{'questionIndex'}' 的邏輯中。請先從邏輯中移除。",
         "field_name_eg_score_price": "欄位名稱，例如：分數、價格",
@@ -1835,8 +1834,7 @@
         "multiple_industries": "多個產業",
         "use_this_template": "使用此範本",
         "uses_branching_logic": "此問卷使用分支邏輯。"
-      },
-      "this_is_a_new_key": "這是一個更新的 key"
+      }
     },
     "xm-templates": {
       "ces": "CES",

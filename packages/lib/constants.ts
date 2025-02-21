@@ -8,8 +8,6 @@ export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
-export const SHORT_URL_BASE = env.SHORT_URL_BASE ? env.SHORT_URL_BASE : WEBAPP_URL;
-
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
@@ -200,7 +198,7 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW"];
 
 // Billing constants
 

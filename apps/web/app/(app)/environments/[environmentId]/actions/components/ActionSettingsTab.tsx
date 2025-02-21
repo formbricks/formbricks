@@ -156,7 +156,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.eg_clicked_download")}
                           isInvalid={!!error?.message}
-                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
 
@@ -183,7 +183,7 @@ export const ActionSettingsTab = ({
                           {...field}
                           placeholder={t("environments.actions.user_clicked_download_button")}
                           value={field.value ?? ""}
-                          disabled={actionClass.type === "automatic" || isReadOnly ? true : false}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                     </FormItem>
@@ -212,7 +212,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between border-t border-slate-200 py-6">
             <div>
-              {!isReadOnly && actionClass.type !== "automatic" && (
+              {!isReadOnly ? (
                 <Button
                   type="button"
                   variant="destructive"
@@ -222,7 +222,7 @@ export const ActionSettingsTab = ({
                   <TrashIcon />
                   {t("common.delete")}
                 </Button>
-              )}
+              ) : null}
 
               <Button variant="secondary" asChild>
                 <Link href="https://formbricks.com/docs/actions/no-code" target="_blank">
@@ -231,13 +231,13 @@ export const ActionSettingsTab = ({
               </Button>
             </div>
 
-            {!isReadOnly && actionClass.type !== "automatic" && (
+            {!isReadOnly ? (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}
                 </Button>
               </div>
-            )}
+            ) : null}
           </div>
         </form>
       </FormProvider>

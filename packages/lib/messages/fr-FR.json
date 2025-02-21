@@ -123,7 +123,6 @@
     "are_you_sure": "Es-tu sûr ?",
     "are_you_sure_this_action_cannot_be_undone": "Êtes-vous sûr ? Cette action ne peut pas être annulée.",
     "attributes": "Attributs",
-    "automatic": "Automatique",
     "avatar": "Avatar",
     "back": "Retour",
     "billing": "Facturation",
@@ -171,7 +170,7 @@
     "disallow": "Ne pas permettre",
     "discard": "Annuler",
     "dismissed": "Rejeté",
-    "docs": "documents",
+    "docs": "Documentation",
     "documentation": "Documentation",
     "download": "Télécharger",
     "draft": "Brouillon",
@@ -180,7 +179,6 @@
     "edit": "Modifier",
     "email": "Email",
     "embed": "Intégrer",
-    "enable": "Activer",
     "enterprise_license": "Licence d'entreprise",
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
@@ -1394,6 +1392,7 @@
         "error_saving_changes": "Erreur lors de l'enregistrement des modifications",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Même après avoir soumis une réponse (par exemple, la boîte de feedback)",
         "everyone": "Tout le monde",
+        "exists": "Existe",
         "fallback_missing": "Fallback manquant",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",
         "field_name_eg_score_price": "Nom du champ par exemple, score, prix",
@@ -1835,8 +1834,7 @@
         "multiple_industries": "Plusieurs secteurs",
         "use_this_template": "Utilisez ce modèle",
         "uses_branching_logic": "Cette enquête utilise une logique de branchement."
-      },
-      "this_is_a_new_key": "Ceci est une clé mise à jour"
+      }
     },
     "xm-templates": {
       "ces": "CES",

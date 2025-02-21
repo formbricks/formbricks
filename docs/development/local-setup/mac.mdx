@@ -1,0 +1,57 @@
+---
+title: Mac
+description: How to set up Formbricks on a Mac machine
+icon: "apple"
+---
+
+### Local Machine Setup - Mac
+
+<Info>
+  This guide is recommended for advanced users setting up Formbricks on a **Mac** machine.
+</Info>
+
+**Requirements:**
+
+- Node.JS (v20 recommended)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/)
+
+**Steps:**
+
+1. **Clone the project & change directory:**
+    ```bash
+    git clone https://github.com/formbricks/formbricks && cd formbricks
+    ```
+
+2. **Setup NodeJS with nvm:**
+    ```bash
+    nvm install && nvm use
+    ```
+
+3. **Install NodeJS packages with pnpm:**
+    ```bash
+    pnpm install
+    ```
+
+4. **Create a `.env` file from the example:**
+    ```bash
+    cp .env.example .env
+    ```
+
+5. **Generate & set secret values (using BSD sed syntax for macOS):**
+    ```bash
+    sed -i '' '/^ENCRYPTION_KEY=/s|.*|ENCRYPTION_KEY='$(openssl rand -hex 32)'|' .env
+    sed -i '' '/^NEXTAUTH_SECRET=/s|.*|NEXTAUTH_SECRET='$(openssl rand -hex 32)'|' .env
+    sed -i '' '/^CRON_SECRET=/s|.*|CRON_SECRET='$(openssl rand -hex 32)'|' .env
+    ```
+
+6. **Start the development setup:**
+    ```bash
+    pnpm go
+    ```
+
+Visit [http://localhost:3000](http://localhost:3000) to access Formbricks.
+
+<Tip>
+  Ensure you create a new account at first login.
+</Tip> 

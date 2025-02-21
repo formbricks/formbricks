@@ -123,7 +123,6 @@
     "are_you_sure": "Bist Du sicher?",
     "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "attributes": "Attribute",
-    "automatic": "Automatisch",
     "avatar": "Avatar",
     "back": "Zurück",
     "billing": "Abrechnung",
@@ -171,7 +170,7 @@
     "disallow": "Nicht erlauben",
     "discard": "Verwerfen",
     "dismissed": "Entlassen",
-    "docs": "Dokumente",
+    "docs": "Dokumentation",
     "documentation": "Dokumentation",
     "download": "Herunterladen",
     "draft": "Entwurf",
@@ -180,7 +179,6 @@
     "edit": "Bearbeiten",
     "email": "E-Mail",
     "embed": "Einbetten",
-    "enable": "Aktivieren",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -1394,6 +1392,7 @@
         "error_saving_changes": "Fehler beim Speichern der Änderungen",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Sogar nachdem sie eine Antwort eingereicht haben (z.B. Feedback-Box)",
         "everyone": "Jeder",
+        "exists": "Existiert",
         "fallback_missing": "Fehlender Fallback",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} wird in der Logik der Frage {questionIndex} verwendet. Bitte entferne es zuerst aus der Logik.",
         "field_name_eg_score_price": "Feldname z.B. Punktzahl, Preis",
@@ -1835,8 +1834,7 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      },
-      "this_is_a_new_key": "Das ist ein neuer Schlüssel "
+      }
     },
     "xm-templates": {
       "ces": "CES",

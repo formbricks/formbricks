@@ -1,9 +1,9 @@
 // config.test.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockConfig } from "./__mocks__/config.mock";
 import { RNConfig, RN_ASYNC_STORAGE_KEY } from "@/lib/common/config";
 import type { TConfig, TConfigUpdateInput } from "@/types/config";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Define mocks outside of any describe block
 

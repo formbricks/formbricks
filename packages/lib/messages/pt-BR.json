@@ -123,7 +123,6 @@
     "are_you_sure": "Certeza?",
     "are_you_sure_this_action_cannot_be_undone": "Tem certeza? Essa ação não pode ser desfeita.",
     "attributes": "atributos",
-    "automatic": "Automático",
     "avatar": "Avatar",
     "back": "Voltar",
     "billing": "Faturamento",
@@ -171,7 +170,7 @@
     "disallow": "Não permita",
     "discard": "Descartar",
     "dismissed": "Dispensado",
-    "docs": "documentos",
+    "docs": "Documentação",
     "documentation": "Documentação",
     "download": "baixar",
     "draft": "Rascunho",
@@ -180,7 +179,6 @@
     "edit": "Editar",
     "email": "Email",
     "embed": "incorporar",
-    "enable": "habilitar",
     "enterprise_license": "Licença Empresarial",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
@@ -1394,6 +1392,7 @@
         "error_saving_changes": "Erro ao salvar alterações",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Mesmo depois de eles enviarem uma resposta (por exemplo, Caixa de Feedback)",
         "everyone": "Todo mundo",
+        "exists": "Existe",
         "fallback_missing": "Faltando alternativa",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} é usado na lógica da pergunta {questionIndex}. Por favor, remova-o da lógica primeiro.",
         "field_name_eg_score_price": "Nome do campo, por exemplo, pontuação, preço",
@@ -1835,8 +1834,7 @@
         "multiple_industries": "várias indústrias",
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
-      },
-      "this_is_a_new_key": "Esta é uma chave atualizada"
+      }
     },
     "xm-templates": {
       "ces": "CES",

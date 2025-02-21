@@ -1,0 +1,43 @@
+---
+title: "Webhooks"
+description: "With webhooks, you can receive real-time HTTP notifications when specific objects change in your Formbricks environment. This allows you to stay updated and trigger automated actions based on these events."
+---
+
+### **Webhook Triggers**
+
+Webhooks are configured to send notifications based on trigger events. The available triggers include:
+
+* **`responseCreated`**
+
+* **`responseUpdated`**
+
+* **`responseFinished`**
+
+***
+
+### **Creating Webhooks**
+
+You can create webhooks either through the **Formbricks App UI** or programmatically via the **Webhook API**.
+
+#### **Creating Webhooks via UI**
+
+* **Log in to Formbricks**
+  Navigate to the **Integrations** Tab after logging in.
+
+![Step one](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738093544/mugcz9gn3wxg2cucq6wj.webp)
+
+* Click on **Manage Webhooks** & then **Add Webhook** button:
+
+![Step two](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094259/j4a92z2q43twgamogpny.webp)
+
+* Add your webhook listener endpoint & test it to make sure it can receive the test endpoint otherwise you will not be able to save it.
+
+![Step three](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094617/image_kubsnz.jpg)
+
+* Now add the triggers you want to listen to and the surveys!
+
+* That’s it! Your webhooks will not start receiving data as soon as it arrives!
+
+![Step five](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738094816/image_xvrel1.jpg)**API**: Use our documented methods on the **Creation**, **List**, and **Deletion** endpoints of the Webhook API mentioned in the [Postman Documenter](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#62e6ec65-021b-42a4-ac93-d1434b393c6c).
+
+If you encounter any issues or need help setting up webhooks, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
