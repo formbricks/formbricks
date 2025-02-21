@@ -216,6 +216,7 @@ export const getMatchValueProps = (
       "isPartiallySubmitted",
       "isSkipped",
       "isSubmitted",
+      "exists",
     ].includes(condition.operator)
   ) {
     return { show: false, options: [] };

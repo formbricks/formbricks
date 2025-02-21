@@ -456,6 +456,8 @@ const evaluateSingleCondition = (
           const values = Object.values(leftValue);
           return values.length > 0 && !values.includes("");
         } else return false;
+      case "exists":
+        return leftValue !== undefined && leftValue !== null && leftValue !== "";
       default:
         return false;
     }
