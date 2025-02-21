@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { TimeoutStack } from "@/lib/common/timeout-stack";

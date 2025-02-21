@@ -49,7 +49,7 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
   };
 
   // logout the user, remove user state and setup formbricks again
-  await tearDown();
+  tearDown();
 
   try {
     await setup(initParams);

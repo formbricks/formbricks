@@ -67,24 +67,22 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
-          console.log("window.formbricks", window.formbricks);
+          const formbricksInstance = window.formbricks;
           // @ts-expect-error -- Required for dynamic function calls
-          void window.formbricks.init(...args);
+          void formbricksInstance.init(...args);
 
           isInitializing = false;
           isInitialized = true;
 
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
-            type FormbricksProp = keyof typeof window.formbricks;
-
-            if (typeof window.formbricks[functionProp as FormbricksProp] !== "function") {
+            if (typeof formbricksInstance[functionProp as keyof typeof formbricksInstance] !== "function") {
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
 
             // @ts-expect-error -- Required for dynamic function calls
-            (window.formbricks[functionProp] as unknown)(...functionArgs);
+            (formbricksInstance[functionProp] as unknown)(...functionArgs);
           }
         }
       }
@@ -96,11 +94,13 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
       functionsToProcess.push({ prop, args });
     }
   } else if (window.formbricks) {
-    type Formbricks = typeof window.formbricks;
+    // Access the default export for initialized state too
+    const formbricksInstance = window.formbricks;
+    type Formbricks = typeof formbricksInstance;
     type FunctionProp = keyof Formbricks;
     const functionPropTyped = prop as FunctionProp;
 
     // @ts-expect-error -- Required for dynamic function calls
-    await window.formbricks[functionPropTyped](...args);
+    await formbricksInstance[functionPropTyped](...args);
   }
 };

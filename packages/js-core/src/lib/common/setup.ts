@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- required for logging */
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import {
@@ -6,7 +7,7 @@ import {
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
-import { filterSurveys, isNowExpired, wrapThrows , getIsDebug } from "@/lib/common/utils";
+import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
@@ -253,8 +254,7 @@ export const checkSetup = (): Result<void, NotSetupError> => {
   return okVoid();
 };
 
-// eslint-disable-next-line @typescript-eslint/require-await -- disabled for now
-export const tearDown = async (): Promise<void> => {
+export const tearDown = (): void => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
@@ -271,10 +271,7 @@ export const tearDown = async (): Promise<void> => {
   setIsSetup(false);
 };
 
-export const handleErrorOnFirstSetup = async (e: {
-  code: string;
-  responseMessage: string;
-}): Promise<never> => {
+export const handleErrorOnFirstSetup = (e: { code: string; responseMessage: string }): Promise<never> => {
   const logger = Logger.getInstance();
 
   if (e.code === "forbidden") {

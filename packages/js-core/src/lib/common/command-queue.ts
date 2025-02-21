@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- required for command queue */
 /* eslint-disable no-console -- we need to log global errors */
 import { checkSetup } from "@/lib/common/setup";
 import { wrapThrowsAsync } from "@/lib/common/utils";

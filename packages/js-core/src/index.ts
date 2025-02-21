@@ -1,3 +1,4 @@
+/* eslint-disable import/no-default-export -- required for default export*/
 import { CommandQueue } from "@/lib/common/command-queue";
 import { Logger } from "@/lib/common/logger";
 import * as Setup from "@/lib/common/setup";
@@ -32,7 +33,7 @@ const setAttribute = async (key: string, value: string): Promise<void> => {
   await queue.wait();
 };
 
-export const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
+const setAttributes = async (attributes: Record<string, string>): Promise<void> => {
   queue.add(Attribute.setAttributes, true, attributes);
   await queue.wait();
 };
