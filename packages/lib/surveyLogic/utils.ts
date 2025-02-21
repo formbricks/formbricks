@@ -456,8 +456,10 @@ const evaluateSingleCondition = (
           const values = Object.values(leftValue);
           return values.length > 0 && !values.includes("");
         } else return false;
-      case "exists":
+      case "isSet":
         return leftValue !== undefined && leftValue !== null && leftValue !== "";
+      case "isNotSet":
+        return leftValue === undefined || leftValue === null || leftValue === "";
       default:
         return false;
     }
