@@ -1,7 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
+import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
 import { type TResponseUpdate } from "@/types/response";
 import { type TFileUploadParams } from "@/types/storage";
-import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,

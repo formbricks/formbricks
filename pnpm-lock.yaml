@@ -738,12 +738,15 @@ importers:
       vite-plugin-dts:
         specifier: 4.3.0
         version: 4.3.0(@types/node@22.10.2)(rollup@4.34.8)(typescript@5.7.2)(vite@6.0.9(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))
+      zod:
+        specifier: 3.24.2
+        version: 3.24.2
 
   packages/lib:
     dependencies:
       '@ai-sdk/azure':
         specifier: 1.1.9
-        version: 1.1.9(zod@3.24.1)
+        version: 1.1.9(zod@3.24.2)
       '@aws-sdk/client-s3':
         specifier: 3.741.0
         version: 3.741.0(aws-crt@1.25.3)
@@ -767,7 +770,7 @@ importers:
         version: 2.2.2
       '@t3-oss/env-nextjs':
         specifier: 0.12.0
-        version: 0.12.0(typescript@5.7.2)(zod@3.24.1)
+        version: 0.12.0(typescript@5.7.2)(zod@3.24.2)
       '@ungap/structured-clone':
         specifier: 1.3.0
         version: 1.3.0
@@ -12878,6 +12881,9 @@ packages:
   zod@3.24.1:
     resolution: {integrity: sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==}
 
+  zod@3.24.2:
+    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -12894,11 +12900,24 @@ snapshots:
       '@ai-sdk/provider-utils': 2.1.6(zod@3.24.1)
       zod: 3.24.1
 
+  '@ai-sdk/azure@1.1.9(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/openai': 1.1.9(zod@3.24.2)
+      '@ai-sdk/provider': 1.0.7
+      '@ai-sdk/provider-utils': 2.1.6(zod@3.24.2)
+      zod: 3.24.2
+
   '@ai-sdk/openai@1.1.9(zod@3.24.1)':
     dependencies:
       '@ai-sdk/provider': 1.0.7
       '@ai-sdk/provider-utils': 2.1.6(zod@3.24.1)
       zod: 3.24.1
+
+  '@ai-sdk/openai@1.1.9(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.7
+      '@ai-sdk/provider-utils': 2.1.6(zod@3.24.2)
+      zod: 3.24.2
 
   '@ai-sdk/provider-utils@2.1.6(zod@3.24.1)':
     dependencies:
@@ -12908,6 +12927,15 @@ snapshots:
       secure-json-parse: 2.7.0
     optionalDependencies:
       zod: 3.24.1
+
+  '@ai-sdk/provider-utils@2.1.6(zod@3.24.2)':
+    dependencies:
+      '@ai-sdk/provider': 1.0.7
+      eventsource-parser: 3.0.0
+      nanoid: 3.3.8
+      secure-json-parse: 2.7.0
+    optionalDependencies:
+      zod: 3.24.2
 
   '@ai-sdk/provider@1.0.7':
     dependencies:
@@ -18570,17 +18598,17 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@t3-oss/env-core@0.12.0(typescript@5.7.2)(zod@3.24.1)':
+  '@t3-oss/env-core@0.12.0(typescript@5.7.2)(zod@3.24.2)':
     optionalDependencies:
       typescript: 5.7.2
-      zod: 3.24.1
+      zod: 3.24.2
 
-  '@t3-oss/env-nextjs@0.12.0(typescript@5.7.2)(zod@3.24.1)':
+  '@t3-oss/env-nextjs@0.12.0(typescript@5.7.2)(zod@3.24.2)':
     dependencies:
-      '@t3-oss/env-core': 0.12.0(typescript@5.7.2)(zod@3.24.1)
+      '@t3-oss/env-core': 0.12.0(typescript@5.7.2)(zod@3.24.2)
     optionalDependencies:
       typescript: 5.7.2
-      zod: 3.24.1
+      zod: 3.24.2
 
   '@tailwindcss/forms@0.5.9(tailwindcss@3.4.16(ts-node@10.9.2(@types/node@22.10.2)(typescript@5.7.2)))':
     dependencies:
@@ -27551,5 +27579,7 @@ snapshots:
       zod: 3.24.1
 
   zod@3.24.1: {}
+
+  zod@3.24.2: {}
 
   zwitch@2.0.4: {}

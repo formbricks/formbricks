@@ -1,12 +1,11 @@
-/* eslint-disable import/no-default-export -- We need default exports for the js sdk */
 import { CommandQueue } from "@/lib/common/command-queue";
 import { Logger } from "@/lib/common/logger";
 import * as Setup from "@/lib/common/setup";
 import * as Action from "@/lib/survey/action";
+import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput } from "@/types/config";
-import { checkPageUrl } from "./lib/survey/no-code-action";
 
 const logger = Logger.getInstance();
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-console -- Required for error logging */
 /* eslint-disable @typescript-eslint/no-empty-function -- There are some empty functions here that we need */
+import { FormbricksAPI } from "@formbricks/api";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
@@ -10,13 +11,11 @@ import {
   getDefaultLanguageCode,
   getLanguageCode,
   shouldDisplayBasedOnPercentage,
-} from "@/lib/common/utils";
-import { getStyling } from "@/lib/common/utils";
+ getStyling } from "@/lib/common/utils";
 import { SurveyState } from "@/lib/survey/state";
-import { TEnvironmentStateSurvey, TUserState } from "@/types/config";
-import { TResponseHiddenFieldValue, TResponseUpdate } from "@/types/response";
-import { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
-import { FormbricksAPI } from "@formbricks/api";
+import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
+import { type TResponseHiddenFieldValue, type TResponseUpdate } from "@/types/response";
+import { type TFileUploadParams, type TUploadFileConfig } from "@/types/storage";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();

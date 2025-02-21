@@ -69,7 +69,7 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
         if (window.formbricks) {
           console.log("window.formbricks", window.formbricks);
           // @ts-expect-error -- Required for dynamic function calls
-          void window.formbricks.default.init(...args);
+          void window.formbricks.init(...args);
 
           isInitializing = false;
           isInitialized = true;

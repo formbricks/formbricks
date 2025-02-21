@@ -1,3 +1,4 @@
+import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 import type {
   TEnvironmentState,
   TEnvironmentStateActionClass,
@@ -8,7 +9,6 @@ import type {
   TUserState,
 } from "@/types/config";
 import type { Result } from "@/types/error";
-import { TActionClassNoCodeConfig, TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date): number => {

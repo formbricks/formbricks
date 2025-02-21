@@ -1,4 +1,4 @@
-/* eslint-disable no-console -- Required for error logging */
+ 
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
 import { wrapThrows } from "@/lib/common/utils";
 import type { TConfig, TConfigUpdateInput } from "@/types/config";

@@ -6,8 +6,7 @@ import {
   removeAllEventListeners,
 } from "@/lib/common/event-listeners";
 import { Logger } from "@/lib/common/logger";
-import { filterSurveys, isNowExpired, wrapThrows } from "@/lib/common/utils";
-import { getIsDebug } from "@/lib/common/utils";
+import { filterSurveys, isNowExpired, wrapThrows , getIsDebug } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
