@@ -1,7 +1,6 @@
 ---
 title: "User Management"
-description:
-  "Assign different roles to organization members to grant them specific rights like creating surveys, viewing responses, or managing organization members."
+description: "Assign different roles to organization members to grant them specific rights like creating surveys, viewing responses, or managing organization members."
 icon: "user"
 ---
 
@@ -14,9 +13,8 @@ Learn about the different organization-level and team-level roles and how they a
 Permissions in Formbricks are broadly handled using organization-level roles, which apply to all teams and projects in the organization. Users on a self-hosting and Enterprise plan, have access to team-level roles, which enable more granular permissions.
 
 <Note>
-  Access Roles is a feature of the **Enterprise Edition**. In the **Community
-  Edition** and on the **Free** and **Startup** plan in the Cloud you can invite
-  unlimited organization members as `Owner`.
+  Access Roles is a feature of the **Enterprise Edition**. In the **Community Edition** and on the **Free**
+  and **Startup** plan in the Cloud you can invite unlimited organization members as `Owner`.
 </Note>
 
 Here are the different access permissions, ranked from highest to lowest access
@@ -30,16 +28,16 @@ Here are the different access permissions, ranked from highest to lowest access
 
 All users and their organization-level roles are listed in **Organization Settings > General**. Users can hold any of the following org-level roles:
 
+- **Owner** have full access to the organization, its data, and settings. Org Owners can perform Team Admin actions without needing to join the team.
+- **Manager** have full management access to all teams and projects. They can also manage the organization's membership. Org Managers can perform Team Admin actions without needing to join the team. They cannot change other organization settings.
 - **Billing** users can manage payment and compliance details in the organization.
-- **Org Members** can view most data in the organization and act in the projects they are members of. They cannot join projects on their own and need to be assigned.
-- **Org Managers** have full management access to all teams and projects. They can also manage the organization's membership. Org Managers can perform Team Admin actions without needing to join the team. They cannot change other organization settings.
-- **Org Owners** have full access to the organization, its data, and settings. Org Owners can perform Team Admin actions without needing to join the team.
+- **Member** can view most data in the organization and act in the projects they are members of. They cannot join projects on their own and need to be assigned.
 
 ### Permissions at project level
 
-- **read**: read access to all resources (except settings) in the project.
-- **read & write**: read & write access to all resources (except settings) in the project.
-- **manage**: read & write access to all resources including settings in the project.
+- **Read**: Read access to all resources (except settings) in the project.
+- **Read & write**: Read & write access to all resources (except settings) in the project.
+- **Manage**: Read & write access to all resources including settings in the project.
 
 ### Team-level Roles
 
@@ -53,31 +51,32 @@ For more information on user roles & permissions, see below:
 | **Organization**                 |       |         |         |        |
 | Update organization              | ✅    | ❌      | ❌      | ❌     |
 | Delete organization              | ✅    | ❌      | ❌      | ❌     |
-| Add new Member                   | ✅    | ✅      | ❌      | ❌     |
-| Delete Member                    | ✅    | ✅      | ❌      | ❌     |
-| Update Member Access             | ✅    | ✅      | ❌      | ❌     |
-| Update Billing                   | ✅    | ✅      | ✅      | ❌     |
+| Add new member                   | ✅    | ✅      | ❌      | ❌     |
+| Delete member                    | ✅    | ✅      | ❌      | ❌     |
+| Update member access             | ✅    | ✅      | ❌      | ❌     |
+| Update billing                   | ✅    | ✅      | ✅      | ❌     |
 | **Project**                      |       |         |         |        |
-| Create Project                   | ✅    | ✅      | ❌      | ❌     |
-| Update Project Name              | ✅    | ✅      | ❌      | ✅\*\* |
-| Update Project Recontact Options | ✅    | ✅      | ❌      | ✅\*\* |
-| Update Look & Feel               | ✅    | ✅      | ❌      | ✅\*\* |
-| Update Survey Languages          | ✅    | ✅      | ❌      | ✅\*\* |
-| Delete Project                   | ✅    | ✅      | ❌      | ❌     |
+| Create project                   | ✅    | ✅      | ❌      | ❌     |
+| Update project name              | ✅    | ✅      | ❌      | ✅\*\* |
+| Update project recontact options | ✅    | ✅      | ❌      | ✅\*\* |
+| Update look & feel               | ✅    | ✅      | ❌      | ✅\*\* |
+| Update survey languages          | ✅    | ✅      | ❌      | ✅\*\* |
+| Delete project                   | ✅    | ✅      | ❌      | ❌     |
 | **Surveys**                      |       |         |         |        |
-| Create New Survey                | ✅    | ✅      | ❌      | ✅\*   |
-| Edit Survey                      | ✅    | ✅      | ❌      | ✅\*   |
-| Delete Survey                    | ✅    | ✅      | ❌      | ✅\*   |
+| Create new survey                | ✅    | ✅      | ❌      | ✅\*   |
+| Edit survey                      | ✅    | ✅      | ❌      | ✅\*   |
+| Delete survey                    | ✅    | ✅      | ❌      | ✅\*   |
 | View survey results              | ✅    | ✅      | ❌      | ✅     |
 | **Response**                     |       |         |         |        |
 | Delete response                  | ✅    | ✅      | ❌      | ✅\*   |
 | Add tags on response             | ✅    | ✅      | ❌      | ✅\*   |
 | Edit tags on response            | ✅    | ✅      | ❌      | ✅\*   |
+| Download survey responses (CSV)  | ✅    | ✅      | ❌      | ✅\*   |
 | **Actions**                      |       |         |         |        |
-| Create Action                    | ✅    | ✅      | ❌      | ✅\*   |
-| Update Action                    | ✅    | ✅      | ❌      | ✅\*   |
-| Delete Action                    | ✅    | ✅      | ❌      | ✅\*   |
-| **API Keys**                     |       |         |         |        |
+| Create action                    | ✅    | ✅      | ❌      | ✅\*   |
+| Update action                    | ✅    | ✅      | ❌      | ✅\*   |
+| Delete action                    | ✅    | ✅      | ❌      | ✅\*   |
+| **API keys**                     |       |         |         |        |
 | Create API key                   | ✅    | ✅      | ❌      | ✅\*\* |
 | Update API key                   | ✅    | ✅      | ❌      | ✅\*\* |
 | Delete API key                   | ✅    | ✅      | ❌      | ✅\*\* |
@@ -85,10 +84,10 @@ For more information on user roles & permissions, see below:
 | Create tags                      | ✅    | ✅      | ❌      | ✅\*   |
 | Update tags                      | ✅    | ✅      | ❌      | ✅\*   |
 | Delete tags                      | ✅    | ✅      | ❌      | ✅\*\* |
-| **People**                       |       |         |         |        |
-| Delete Person                    | ✅    | ✅      | ❌      | ✅\*   |
+| **Contacts**                       |       |         |         |        |
+| Delete contact                    | ✅    | ✅      | ❌      | ✅\*   |
 | **Integrations**                 |       |         |         |        |
-| Manage Integrations              | ✅    | ✅      | ❌      | ✅\*   |
+| Manage integrations              | ✅    | ✅      | ❌      | ✅\*   |
 
 \* - for the read & write permissions team members
 
@@ -108,16 +107,13 @@ There are two ways to invite organization members: One by one or in bulk.
 
 ![Add member Button Position](/images/xm-and-surveys/core-features/access-roles/add-member.webp)
 
-
 3. In the modal, add the Name, Email and Role of the organization member you want to invite:
 
 ![Individual Invite Modal Tab](/images/xm-and-surveys/core-features/access-roles/individual-invite.webp)
 
-
 <Note>
-  Access Roles is a feature of the **Enterprise Edition**. In the **Community
-  Edition** and on the **Free** and **Startup** plan in the Cloud you can invite
-  unlimited organization members as `Owners`.
+  Access Roles is a feature of the **Enterprise Edition**. In the **Community Edition** and on the **Free**
+  and **Startup** plan in the Cloud you can invite unlimited organization members as `Owners`.
 </Note>
 
 Formbricks sends an email to the organization member with an invitation link. The organization member can accept the invitation or create a new account by clicking on the link.
@@ -127,7 +123,6 @@ Formbricks sends an email to the organization member with an invitation link. Th
 1. Go to the `Organization Settings` page via the menu in the lower right corner:
 
 ![Where to find the Menu Item for Organization Settings](/images/xm-and-surveys/core-features/access-roles/organization-settings-menu.webp)
-
 
 2. Click on the `Add member` button:
 

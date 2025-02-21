@@ -16,7 +16,7 @@ export const UploadImageSurveyBg = ({
       <div className="flex w-full items-center justify-center">
         <FileInput
           id="survey-bg-file-input"
-          allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
+          allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
           environmentId={environmentId}
           onFileUpload={(url: string[]) => {
             if (url.length > 0) {

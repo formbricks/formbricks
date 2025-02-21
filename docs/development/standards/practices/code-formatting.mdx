@@ -1,0 +1,184 @@
+---
+title: "Code Formatting"
+description: "Standards for consistent code formatting across the Formbricks project"
+icon: code
+---
+
+
+## Core Configuration
+
+### Prettier Config
+Formbricks uses a standardized Prettier configuration defined in `@formbricks/config-prettier`:
+```javascript
+module.exports = {
+  bracketSpacing: true,
+  bracketSameLine: true,
+  singleQuote: false,
+  jsxSingleQuote: false,
+  trailingComma: "es5",
+  semi: true,
+  printWidth: 110,
+  arrowParens: "always",
+  importOrder: [
+    // Mocks must be at the top as they contain vi.mock calls
+    "(.*)/__mocks__/(.*)",
+    "server-only",
+    "<THIRD_PARTY_MODULES>",
+    "^@formbricks/(.*)$",
+    "^~/(.*)$",
+    "^[./]",
+  ],
+  importOrderSeparation: false,
+  importOrderSortSpecifiers: true,
+};
+```
+
+Key configurations:
+- 110 characters line width
+- Double quotes for strings
+- ES5 trailing commas
+- Always use parentheses for arrow functions
+- Strict import ordering
+
+### Import Order
+All imports follow a strict ordering:
+1. Mocks (for testing)
+2. Server-only imports
+3. Third-party modules
+4. Internal `@formbricks/*` modules
+5. Local aliases (`~/*)
+6. Relative imports
+
+### TypeScript Config
+- Strict TypeScript checking enabled
+- Consistent use of `tsconfig.json` extending from `@formbricks/config-typescript`
+- Example configuration:
+
+```json
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "strict": true
+  },
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "package.json"]
+}
+```
+
+### JSDoc Comments
+Required for public APIs and complex functions:
+
+```typescript
+/**
+ * Creates a new user
+ * @param {string} name - User's name
+ * @returns {Promise<User>} The created user object
+ */
+function createUser(name: string): Promise<User> {
+  // implementation
+}
+```
+
+### Error Handling
+Standardized error handling using the ErrorHandler class:
+
+```typescript
+export class ErrorHandler {
+  private static instance: ErrorHandler | null;
+  private handleError: (error: unknown) => void;
+  public customized = false;
+  public static initialized = false;
+
+  private constructor(errorHandler?: (error: unknown) => void) {
+    if (errorHandler) {
+      this.handleError = errorHandler;
+      this.customized = true;
+    } else {
+      this.handleError = (error) => {
+        Logger.getInstance().error(JSON.stringify(error));
+      };
+    }
+  }
+
+  // ... additional methods
+}
+```
+
+## Enforcement Tools
+
+### Pre-commit Hooks
+Using Husky and lint-staged for automated checks:
+
+```json
+{
+  "lint-staged": {
+    "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.json": [
+      "prettier --write"
+    ],
+    "packages/database/schema.prisma": [
+      "prisma format"
+    ]
+  }
+}
+```
+
+### ESLint Configuration
+Each package extends from `@formbricks/eslint-config` with specific presets:
+- `library.js` for packages
+- `next.js` for Next.js applications
+- `react.js` for React applications
+
+### Continuous Integration
+- Automated formatting checks in CI/CD pipeline
+- SonarCloud integration for code quality analysis
+- Coverage requirements for tests
+
+## VS Code Integration
+
+### Required Extensions
+- `esbenp.prettier-vscode` - Prettier formatting
+- `dbaeumer.vscode-eslint` - ESLint integration
+- `bradlc.vscode-tailwindcss` - Tailwind CSS support
+
+### Recommended Settings
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "typescript.tsdk": "node_modules/typescript/lib"
+}
+```
+
+## Best Practices
+
+1. **Consistent Formatting**
+   - Always run `pnpm format` before committing
+   - Use VS Code's format on save feature
+   - Follow the established import order
+
+2. **Type Safety**
+   - Enable strict TypeScript checks
+   - Use explicit type annotations when necessary
+   - Avoid using `any` type
+
+3. **Code Organization**
+   - Keep files focused and modular
+   - Group related functionality
+   - Use clear, descriptive names
+
+4. **Documentation**
+   - Document complex logic
+   - Use JSDoc for public APIs
+   - Keep comments current with code changes
+
+These standards ensure consistency across the Formbricks codebase while maintaining high code quality and developer productivity.

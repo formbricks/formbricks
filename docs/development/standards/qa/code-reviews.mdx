@@ -1,0 +1,100 @@
+---
+title: Code Reviews
+description: This document outlines our comprehensive code review process at Formbricks. We maintain high quality, consistency, and best practices within our codebase through this structured approach.
+icon: eyes
+---
+
+
+
+## Initial Checks via GitHub Workflows
+
+When a Pull Request (PR) is opened, our automated GitHub workflows perform several critical checks:
+
+> **Note:** At Formbricks, all feature changes must be submitted through Pull Requests - direct pushes to protected branches are not allowed.
+
+- **PR Title Validation**: Ensures clear, descriptive titles following our conventions
+- **Build Verification**: Confirms that the build process completes successfully
+- **Test Suite**: Runs all automated tests to catch potential regressions
+- **Translation Check**: Identifies any missing translation keys
+- **Linting**: Enforces our coding standards and style guidelines
+
+These checks must pass before proceeding to manual review.
+
+## Reviewer Assignment
+
+Once all automated checks pass successfully:
+
+- A team member with relevant expertise is assigned as the reviewer
+- The reviewer is notified automatically through GitHub
+- Priority is given based on PR urgency and complexity
+
+## Functional Testing and UI Review
+
+The assigned reviewer performs thorough testing:
+
+### Functionality Testing
+
+- Verifies that new features work as specified
+- Tests edge cases and error scenarios
+- Ensures proper error handling
+- Checks integration with existing features
+
+### UI Review (if applicable)
+
+- Validates visual consistency
+- Checks responsive behavior
+- Ensures accessibility standards
+- Reviews user interaction flows
+
+## Feedback Process
+
+If improvements are needed:
+
+- Reviewers add inline comments on GitHub
+- Feedback is specific and actionable
+- Code suggestions are provided when helpful
+- Comments follow our constructive feedback guidelines
+
+## In-depth Code Review
+
+Our code review process utilizes both human expertise and AI assistance:
+
+### Manual Review
+
+- Code structure and organization
+- Design patterns and best practices
+- Performance considerations
+- Security implications
+- Documentation completeness
+
+### AI-Assisted Review
+
+We leverage advanced AI tools for additional insights:
+
+- **Code Rabbit**: Automated code analysis and suggestions
+- **Sonarqube**: Code quality metrics and potential issues
+
+## Resolution and Merge
+
+Final steps before merging:
+
+- All review comments must be addressed
+- Required changes are implemented
+- At least one reviewer approval is required
+- All conversations must be resolved
+- CI/CD pipeline passes again
+- PR is merged into the target branch
+
+## Best Practices
+
+- Keep PRs focused and reasonably sized
+- Respond to review comments promptly
+- Use the "Request Changes" feature when necessary
+- Mark conversations as resolved when addressed
+- Use approve/request changes workflow appropriately
+
+## Conclusion
+
+Our code review process combines automated checks, manual review, and AI assistance to ensure high-quality code contributions. This multi-layered approach helps maintain code quality while promoting knowledge sharing within the team.
+
+Remember: Code reviews are not just about finding issues—they're opportunities for learning and improving our codebase together.
