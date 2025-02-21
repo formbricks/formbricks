@@ -1,15 +1,10 @@
 ---
 title: "Zapier"
-description:
-  "Master the integration of Formbricks with Zapier using our detailed guide. Seamlessly connect your surveys to 5000+ apps, automate data transfers, and enhance feedback management. Start optimizing your workflow today."
+description: "Master the integration of Formbricks with Zapier using our detailed guide. Seamlessly connect your surveys to 5000+ apps, automate data transfers, and enhance feedback management. Start optimizing your workflow today."
 ---
 
-Zapier is a powerful ally. Hook up Formbricks with Zapier and you can send your data to 5000+ other apps. Here is how to do it.
-
 <Note>
-  ### Nail down your survey first? Any changes in the survey cause additional
-  work in the Zap. It makes sense to first settle on the survey you want to run
-  and then get to setting up Zapier.
+  Nail down your survey first? Any changes in the survey cause additional work in the Zap. It makes sense to first settle on the survey you want to run and then get to setting up Zapier.
 </Note>
 
 ## Step 1: Setup your survey incl. `questionId` for every question
@@ -18,7 +13,7 @@ When setting up the Zap your life will be easier when you change the `questionId
 
 ![Update Question ID](/images/xm-and-surveys/core-features/integrations/zapier/update-question-id.webp)
 
-_In every question card in the Advanced Settings you find the Question ID field. Update it so that you’ll recognize the response tied to this question._
+*In every question card in the Advanced Settings you find the Question ID field. Update it so that you’ll recognize the response tied to this question.*
 
 <Note>
   Already published? Duplicate survey You can only update the questionId
@@ -29,7 +24,7 @@ _In every question card in the Advanced Settings you find the Question ID field.
 
 ## Step 2: Send a test response
 
-In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap. 
+In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap.
 
 ![Submit Test Response](/images/xm-and-surveys/core-features/integrations/zapier/submit-test-response.webp)
 
@@ -51,7 +46,6 @@ Now, you have to connect Zapier with Formbricks via an API Key:
 
 ![Connect with Formbricks - 2](/images/xm-and-surveys/core-features/integrations/zapier/connect-with-formbricks-2.webp)
 
-
 Now you need an API key. Please refer to the [API Key Setup](/api-reference/rest-api#how-to-generate-an-api-key) page to learn how to create one.
 
 Once you copied it in the newly opened Zapier window, you will be connected:
@@ -70,7 +64,7 @@ Once you hit “Test” you will see the three most recent submissions for this 
 
 ![Test Submission](/images/xm-and-surveys/core-features/integrations/zapier/test-submission.webp)
 
-_Now you're happy that you updated the questionId's_
+*Now you're happy that you updated the questionId's*
 
 ## Step 7: Set up your Zap
 
@@ -85,4 +79,3 @@ In the action itself we can determine the data and layout of the message. Here, 
 We now receive a notifcation in our Slack channel whenever a Churn survey is completed:
 
 ![Zapier Message](/images/xm-and-surveys/core-features/integrations/zapier/zapier-message.webp)
-

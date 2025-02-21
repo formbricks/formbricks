@@ -1,0 +1,107 @@
+---
+title: Language-Specific
+description: This document outlines the language-specific conventions for the Formbricks codebase, providing guidelines for writing code in TypeScript/JavaScript.
+icon: code
+---
+
+## TypeScript
+
+Our codebase follows the Vercel Engineering Style Guide conventions.
+
+### ESLint Configuration
+
+We maintain three primary ESLint configurations for different project types:
+
+1. **Library Configuration** (for packages):
+
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript"
+]
+```
+
+
+2. **React Configuration** (for React applications):
+
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript",
+"@vercel/style-guide/eslint/browser",
+"@vercel/style-guide/eslint/react",
+"@vercel/style-guide/eslint/next"
+]
+```
+
+
+3. **Next.js Configuration** (for Next.js applications):
+
+```javascript
+extends: [
+"@vercel/style-guide/eslint/node",
+"@vercel/style-guide/eslint/typescript",
+"@vercel/style-guide/eslint/browser",
+"@vercel/style-guide/eslint/react",
+"@vercel/style-guide/eslint/next"
+]
+```
+
+
+### Key Conventions
+
+1. **TypeScript Usage**
+   - Strict TypeScript checking enabled
+   - Explicit type annotations when necessary
+   - Proper interface and type naming (prefix with T for types, I for interfaces when helpful)
+   - No use of `any` type unless absolutely necessary
+
+2. **Imports/Exports**
+   - Follow strict import ordering:
+     1. Mocks (for testing)
+     2. Server-only imports
+     3. Third-party modules
+     4. Internal `@formbricks/*` modules
+     5. Local aliases (`~/*)
+     6. Relative imports
+
+3. **Error Handling**
+   - Use typed error responses
+   - Proper error propagation
+   - Consistent error message formatting
+   - Implement error boundaries in React components
+
+4. **Async/Await**
+   - Prefer async/await over raw promises
+   - Proper error handling in async functions
+   - Use Promise.all for parallel operations
+
+5. **React Specific**
+   - Functional components with TypeScript
+   - Proper use of hooks
+   - Consistent prop typing
+   - Server Components by default in Next.js App Router
+
+### Code Formatting
+
+We use Prettier with specific configurations:
+
+```javascript
+{
+bracketSpacing: true,
+bracketSameLine: true,
+singleQuote: false,
+jsxSingleQuote: false,
+trailingComma: "es5",
+semi: true,
+printWidth: 110,
+arrowParens: "always"
+}
+```
+
+## Swift
+Will be added upon release of the native iOS SDK.
+
+## Kotlin
+Will be added upon release of the native Android SDK.
+
