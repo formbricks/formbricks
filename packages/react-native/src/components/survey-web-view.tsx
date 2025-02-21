@@ -149,6 +149,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     return await storage.uploadFile(file, params);
   };
 
+  const surveyPlacement = survey.projectOverwrites?.placement ?? project.placement;
+
   return (
     <Modal
       animationType="slide"
@@ -168,6 +170,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             isBrandingEnabled,
             styling,
             languageCode,
+            placement: surveyPlacement,
             appUrl: appConfig.get().appUrl,
           }),
         }}
@@ -341,43 +344,70 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       <title>Formbricks WebView Survey</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
- <body style="overflow: hidden; height: 100vh; background: transparent;">
+    <body style="overflow: hidden; height: 100vh; background: transparent; margin: 0;">
       <style>
         .survey-container {
-          width: 100%;
-          height: 100%;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
           display: flex;
-          flex-direction: column;
+          padding: 20px;
+          box-sizing: border-box;
+          pointer-events: none;
         }
         
         #formbricks-react-native {
           width: 100%;
           max-width: 600px;
-          margin-left: auto;
-          margin-right: auto;
+          pointer-events: auto;
         }
 
-        /* For screens smaller than iPad (768px) */
-        @media (max-width: 767px) {
+        #formbricks-react-native > div {
+          width: 100%;
+        }
+
+        @media (max-width: 640px) {
           .survey-container {
-            justify-content: flex-end;
+            padding: 0;
+            align-items: flex-end !important;
+            justify-content: center !important;
+          }
+          
+          #formbricks-react-native {
+            max-width: 100%;
           }
         }
 
-        /* For iPad and larger screens */
-        @media (min-width: 768px) {
-          .survey-container {
-            justify-content: center;
-          }
+        /* Placement-specific styles */
+        .placement-bottomLeft {
+          align-items: flex-end;
+          justify-content: flex-start;
+        }
+        .placement-bottomRight {
+          align-items: flex-end;
+          justify-content: flex-end;
+        }
+        .placement-topLeft {
+          align-items: flex-start;
+          justify-content: flex-start;
+        }
+        .placement-topRight {
+          align-items: flex-start;
+          justify-content: flex-end;
+        }
+        .placement-center {
+          align-items: center;
+          justify-content: center;
         }
       </style>
-      <div class="survey-container">
+      <div class="survey-container placement-${options.placement ?? "center"}">
         <div id="formbricks-react-native">
-          <div style="width: 100%;"></div>
+          <div></div>
         </div>
       </div>
     </body>
-
 
     <script type="text/javascript">
     const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'type': 'Console', 'data': {'type': type, 'log': log}}));
@@ -457,7 +487,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
           onClose,
           onFileUpload
         };
-
+        
         window.formbricksSurveys.renderSurveyInline(surveyProps);
       }
 

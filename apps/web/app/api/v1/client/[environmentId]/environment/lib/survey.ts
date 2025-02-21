@@ -72,6 +72,7 @@ export const getSurveysForEnvironmentState = reactCache(
               },
               displayPercentage: true,
               delay: true,
+              projectOverwrites: true,
             },
           });
 

@@ -32,4 +32,5 @@ export interface SurveyBaseProps {
 
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
+  placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }
