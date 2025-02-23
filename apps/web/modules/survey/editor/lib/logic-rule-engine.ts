@@ -479,6 +479,14 @@ export const getLogicRules = (t: TFnType) => {
           label: t("environments.surveys.edit.does_not_end_with"),
           value: ZSurveyLogicConditionsOperator.Enum.doesNotEndWith,
         },
+        {
+          label: t("environments.surveys.edit.is_set"),
+          value: ZSurveyLogicConditionsOperator.Enum.isSet,
+        },
+        {
+          label: t("environments.surveys.edit.is_not_set"),
+          value: ZSurveyLogicConditionsOperator.Enum.isNotSet,
+        },
       ],
     },
   };
