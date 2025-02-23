@@ -16,8 +16,13 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
     return false;
   }
 
+  let provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
+
+  if (provider.includes("boxyhq")) {
+    provider = "saml";
+  }
+
   if (account.provider) {
-    const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
     // check if accounts for this provider / account Id already exists
     const existingUserWithAccount = await prisma.user.findFirst({
       include: {

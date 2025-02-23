@@ -736,6 +736,7 @@ enum IdentityProvider {
   google
   azuread
   openid
+  saml
 }
 
 /// Stores third-party authentication account information.

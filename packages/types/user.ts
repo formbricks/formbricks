@@ -80,7 +80,7 @@ export const ZUserCreateInput = z.object({
   emailVerified: z.date().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
+  identityProvider: z.enum(["email", "google", "github", "azuread", "openid", "saml"]).optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),
 });

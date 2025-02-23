@@ -1,5 +1,5 @@
 import jackson from "@/modules/ee/sso/lib/jackson";
-import { NextResponse } from "next/server";
+import { redirect } from "next/navigation";
 
 export async function POST(req: Request) {
   const { oauthController } = await jackson();
@@ -17,5 +17,5 @@ export async function POST(req: Request) {
     SAMLResponse,
   });
 
-  return NextResponse.redirect(redirect_url as string);
+  return redirect(redirect_url as string);
 }

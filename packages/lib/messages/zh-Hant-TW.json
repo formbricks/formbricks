@@ -6,6 +6,7 @@
     "continue_with_google": "使用 Google 繼續",
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
+    "continue_with_saml": "使用 SAML SSO 繼續",
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {

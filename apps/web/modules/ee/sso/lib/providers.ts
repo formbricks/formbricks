@@ -1,6 +1,5 @@
 import type { IdentityProvider } from "@prisma/client";
 import AzureAD from "next-auth/providers/azure-ad";
-import BoxyHQSAMLProvider from "next-auth/providers/boxyhq-saml";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import {
@@ -56,7 +55,12 @@ export const getSSOProviders = () => [
       };
     },
   },
-  BoxyHQSAMLProvider({
+  {
+    id: "boxyhq-saml",
+    name: "BoxyHQ SAML",
+    type: "oauth" as const,
+    version: "2.0",
+    checks: ["pkce" as const, "state" as const],
     authorization: {
       url: `${WEBAPP_URL}/api/auth/saml/authorize`,
       params: {
@@ -65,18 +69,22 @@ export const getSSOProviders = () => [
         provider: "saml",
       },
     },
-    token: {
-      url: `${WEBAPP_URL}/api/auth/saml/token`,
-      params: { grant_type: "authorization_code" },
-    },
+    token: `${WEBAPP_URL}/api/auth/saml/token`,
     userinfo: `${WEBAPP_URL}/api/auth/saml/userinfo`,
-    issuer: `${process.env.NEXTAUTH_URL}`,
-    clientId: "dummy",
-    clientSecret: "dummy",
-    httpOptions: {
-      timeout: 30000,
+    profile(profile) {
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+        image: null,
+      };
     },
-  }),
+    options: {
+      clientId: "dummy",
+      clientSecret: "dummy",
+    },
+    allowDangerousEmailAccountLinking: true,
+  },
 ];
 
 export type { IdentityProvider };

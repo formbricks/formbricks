@@ -1,10 +1,13 @@
 import jackson from "@/modules/ee/sso/lib/jackson";
-import type { NextApiRequest, NextApiResponse } from "next";
+import { OAuthTokenReq } from "@boxyhq/saml-jackson";
 
-export async function POST(req: NextApiRequest, res: NextApiResponse) {
+export async function POST(req: Request) {
   const { oauthController } = await jackson();
 
-  const response = await oauthController.token(req.body);
+  const body = await req.formData();
+  const formData = Object.fromEntries(body.entries());
 
-  return res.json(response);
+  const response = await oauthController.token(formData as unknown as OAuthTokenReq);
+
+  return Response.json(response);
 }

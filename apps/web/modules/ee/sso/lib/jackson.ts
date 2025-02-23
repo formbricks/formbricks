@@ -3,12 +3,13 @@ import jackson, {
   type IOAuthController,
   type JacksonOption,
 } from "@boxyhq/saml-jackson";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 
 const samlAudience = "https://saml.boxyhq.com";
 const samlPath = "/api/auth/saml/callback";
 
 const opts: JacksonOption = {
-  externalUrl: `${process.env.NEXTAUTH_URL}`,
+  externalUrl: WEBAPP_URL,
   samlAudience,
   samlPath,
   db: {

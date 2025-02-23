@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  createConnectionAction,
-  deleteConnectionAction,
-  getConnectionsAction,
-} from "@/modules/ee/sso/actions";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { LockIcon } from "lucide-react";
@@ -35,40 +30,15 @@ export const SamlButton = ({ inviteUrl, lastUsed }: SamlButtonProps) => {
       }
     );
   };
-
-  const createConnection = () => {
-    createConnectionAction();
-  };
-
-  const deleteConnection = () => {
-    deleteConnectionAction();
-  };
-
-  const getConnections = () => {
-    getConnectionsAction();
-  };
-
   return (
-    <>
-      <Button type="button" onClick={createConnection}>
-        create connection
-      </Button>
-      <Button type="button" onClick={deleteConnection}>
-        delete connection
-      </Button>
-      <Button type="button" onClick={getConnections}>
-        get connections
-      </Button>
-      <Button
-        type="button"
-        onClick={handleLogin}
-        variant="secondary"
-        className="relative w-full justify-center">
-        {/* {t("auth.continue_with_google")} */}
-        SAML
-        <LockIcon />
-        {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
-      </Button>
-    </>
+    <Button
+      type="button"
+      onClick={handleLogin}
+      variant="secondary"
+      className="relative w-full justify-center">
+      {t("auth.continue_with_saml")}
+      <LockIcon />
+      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+    </Button>
   );
 };

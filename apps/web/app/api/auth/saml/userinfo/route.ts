@@ -1,16 +1,15 @@
 import { responses } from "@/app/lib/api/response";
 import jackson from "@/modules/ee/sso/lib/jackson";
-import type { NextApiRequest, NextApiResponse } from "next";
 import z from "zod";
 
-const extractAuthToken = (req: NextApiRequest) => {
-  const authHeader = req.headers["authorization"];
+const extractAuthToken = (req: Request) => {
+  const authHeader = req.headers.get("authorization");
   const parts = (authHeader || "").split(" ");
   if (parts.length > 1) return parts[1];
 
   // check for query param
   let arr: string[] = [];
-  const { access_token } = requestQuery.parse(req.query);
+  const { access_token } = requestQuery.parse(req.url);
   arr = arr.concat(access_token);
   if (arr[0].length > 0) return arr[0];
 
@@ -21,11 +20,11 @@ const requestQuery = z.object({
   access_token: z.string(),
 });
 
-export async function GET(req: NextApiRequest, res: NextApiResponse) {
+export async function GET(req: Request) {
   const { oauthController } = await jackson();
   const token = extractAuthToken(req);
 
   const user = await oauthController.userInfo(token);
 
-  return res.json(user);
+  return Response.json(user);
 }
