@@ -296,6 +296,8 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "isBooked",
   "isPartiallySubmitted",
   "isCompletelySubmitted",
+  "isSet",
+  "isNotSet",
 ]);
 
 const operatorsWithoutRightOperand = [
@@ -306,6 +308,8 @@ const operatorsWithoutRightOperand = [
   ZSurveyLogicConditionsOperator.Enum.isBooked,
   ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
   ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isSet,
+  ZSurveyLogicConditionsOperator.Enum.isNotSet,
 ] as const;
 
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
@@ -1517,6 +1521,8 @@ const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicConditionsOp
       "doesNotStartWith",
       "endsWith",
       "doesNotEndWith",
+      "isSet",
+      "isNotSet",
     ].includes(operator)
   ) {
     isInvalidOperator = true;
