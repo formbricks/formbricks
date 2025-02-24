@@ -16,13 +16,9 @@ const createConnectionPayload = (): SAMLSSOConnectionWithEncodedMetadata => {
 };
 
 export const preloadConnection = async (connectionController: ConnectionAPIController) => {
-  console.log("preloadConnection", SAML_RAW_METADATA);
   if (SAML_RAW_METADATA) {
-    console.log("SAML_RAW_METADATA is set");
     const connection = createConnectionPayload();
-    console.log("connection", connection);
     await connectionController.createSAMLConnection(connection);
-    console.log("connection created");
   } else {
     console.log("SAML_RAW_METADATA is not set");
   }
