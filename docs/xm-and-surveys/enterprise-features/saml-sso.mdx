@@ -23,18 +23,11 @@ Formbricks supports Security Assertion Markup Language (SAML) SSO. We prioritize
   <Step title='Retrieve XML metadata from your IdP'>
     Keep the XML metadata from your IdP accessible, as you will need it later.
   </Step>
-  <Step title='Log in to your Organization Admin account'>
-    Visit `environments/<ENVIRONMENT_ID>/settings/sso`.
-    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings.webp' />
+  <Step title='Set the SAML_DATABASE_URL environment variable'>
+    Set the `SAML_DATABASE_URL` environment variable in your `.env` file to a dedicated database for SAML(e.g., `postgresql://postgres:@localhost:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=no-verify` parameter.
   </Step>
-  <Step title='Configure SSO with SAML'>
-    Click on the `Configure` button for `SSO with SAML`.
-    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings-configure.webp' />
-  </Step>
-  <Step title='Paste the XML metadata and Save'>
-    In the SAML configuration section, copy and paste the XML metadata from step
-    3 and click on Save.
-    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings-modal.webp' />
+  <Step title='Set the SAML_RAW_METADATA environment variable'>
+    Set the `SAML_RAW_METADATA` environment variable in your `.env` file to the XML metadata from your IdP(e.g., `SAML_RAW_METADATA='<?xml version="1.0" encoding="UTF-8"?><...>'`, please paste the metadata in single quotes)
   </Step>
   <Step title='Your users can now log into Formbricks using SAML'>
     Once setup is complete, provisioned users can log into Formbricks using SAML.

@@ -17,7 +17,7 @@ To learn more about SAML Jackson, please refer to the [BoxyHQ SAML Jackson docum
 SAML (Security Assertion Markup Language) is an XML-based standard for exchanging authentication and authorization data between an Identity Provider (IdP) and Formbricks. Here's how the integration works with BoxyHQ Jackson embedded into the flow:
 
 1. **Login Initiation:**  
-   The user clicks “Sign in with SAML” on Formbricks.
+   The user clicks `Continue with SAML SSO` on Formbricks.
 
 2. **Configuration Retrieval via BoxyHQ:**  
    Formbricks requests the SAML connection details from BoxyHQ Jackson. BoxyHQ securely stores and manages the IdP configuration, including endpoints, certificates, and other metadata.
@@ -50,7 +50,7 @@ sequenceDiagram
 
     Note over FB,BHQ: (Setup phase, done beforehand)<br/>1. Admin configures SAML metadata in Formbricks<br/>2. BoxyHQ stores & manages SAML connection details
 
-    U->>FB: Clicks “Sign in with SAML”
+    U->>FB: Clicks “Continue with SAML SSO"
     FB->>BHQ: Request SAML connection details
     BHQ->>FB: Returns SAML configuration (IdP info)
     FB->>OK: Redirect user to Okta (SAML Auth Request)
@@ -67,10 +67,9 @@ sequenceDiagram
 
 To configure SAML SSO in Formbricks, follow these steps:
 
-1. **Database Setup:** Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable (e.g., `postgresql://postgres:@localhost:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=no-verify` parameter.
-2. **Admin Configuration:** Define the SAML administrators by setting `SAML_ADMINS` as a comma-separated list of admin emails.
-3. **IdP Application:** Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
-4. **User Provisioning:** Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
-5. **Metadata:** Keep the XML metadata from your IdP handy for the next step.
-6. **Metadata Upload:** Log in with one of the SAML admin accounts and navigate to **Organization Settings -> Single Sign-On** in Formbricks. Paste the XML metadata from your IdP into the SAML configuration section.
-7. **Finalize Setup:** Save your configuration. Provisioned users can now use SAML SSO to access Formbricks.
+1. **Database Setup:** Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgresql://postgres:@localhost:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=no-verify` parameter.
+2. **IdP Application:** Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
+3. **User Provisioning:** Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
+4. **Metadata:** Keep the XML metadata from your IdP handy for the next step.
+5. **Metadata Setup:** Set the `SAML_RAW_METADATA` environment variable in your `docker-compose.yml` file to the XML metadata from your IdP(e.g., `SAML_RAW_METADATA='<?xml version="1.0" encoding="UTF-8"?><...>'`, please paste the metadata in single quotes)
+6. **Restart Formbricks:** Restart Formbricks to apply the changes. You can do this by running `docker compose down` and then `docker compose up -d`.
