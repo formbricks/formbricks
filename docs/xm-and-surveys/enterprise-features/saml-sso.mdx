@@ -1,0 +1,42 @@
+---
+title: "SAML SSO"
+icon: "user-shield"
+description: "How to set up SAML SSO for Formbricks"
+---
+
+<Note>This feature is only available with the Formbricks Enterprise plan having a SAML SSO add-on.</Note>
+
+## Overview
+
+Formbricks supports Security Assertion Markup Language (SAML) SSO. We prioritize your ease of access and security by providing robust Single Sign-On (SSO) capabilities.
+
+### Setting up SAML login
+
+<Steps>
+  <Step title='Create a SAML application with your Identity Provider (IdP)'>
+    Follow the instructions here - [SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers)
+  </Step>
+  <Step title='Configure access to the IdP SAML app'>
+    Ensure that all users who need access to Formbricks have access to the IdP SAML
+    app.
+  </Step>
+  <Step title='Retrieve XML metadata from your IdP'>
+    Keep the XML metadata from your IdP accessible, as you will need it later.
+  </Step>
+  <Step title='Log in to your Organization Admin account'>
+    Visit `environments/<ENVIRONMENT_ID>/settings/sso`.
+    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings.webp' />
+  </Step>
+  <Step title='Configure SSO with SAML'>
+    Click on the `Configure` button for `SSO with SAML`.
+    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings-configure.webp' />
+  </Step>
+  <Step title='Paste the XML metadata and Save'>
+    In the SAML configuration section, copy and paste the XML metadata from step
+    3 and click on Save.
+    <img src='/images/xm-and-surveys/core-features/saml-sso/sso-settings-modal.webp' />
+  </Step>
+  <Step title='Your users can now log into Formbricks using SAML'>
+    Once setup is complete, provisioned users can log into Formbricks using SAML.
+  </Step>
+</Steps>

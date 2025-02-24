@@ -123,7 +123,6 @@
     "are_you_sure": "Are you sure?",
     "are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
     "attributes": "Attributes",
-    "automatic": "Automatic",
     "avatar": "Avatar",
     "back": "Back",
     "billing": "Billing",
@@ -180,7 +179,6 @@
     "edit": "Edit",
     "email": "Email",
     "embed": "Embed",
-    "enable": "Enable",
     "enterprise_license": "Enterprise License",
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
@@ -1474,7 +1472,9 @@
         "is_booked": "Is booked",
         "is_clicked": "Is clicked",
         "is_completely_submitted": "Is completely submitted",
+        "is_not_set": "Is not set",
         "is_partially_submitted": "Is partially submitted",
+        "is_set": "Is set",
         "is_skipped": "Is skipped",
         "is_submitted": "Is submitted",
         "jump_to_question": "Jump to question",
@@ -1835,8 +1835,7 @@
         "multiple_industries": "Multiple industries",
         "use_this_template": "Use this template",
         "uses_branching_logic": "This survey uses branching logic."
-      },
-      "this_is_a_new_key": "This is a updated key"
+      }
     },
     "xm-templates": {
       "ces": "CES",

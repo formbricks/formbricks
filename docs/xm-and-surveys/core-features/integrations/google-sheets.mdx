@@ -4,17 +4,8 @@ description:
   "The Google Sheets integration allows you to automatically send responses to a Google Sheet of your choice."
 ---
 
-#### Integrations
-
-# Google Sheets
-
-The Google Sheets integration allows you to automatically send responses to a Google Sheet of your choice.
-
 <Note>
-  If you are on a self-hosted instance, you will need to configure this
-  integration separately. Please follow the guides
-  [here](/self-hosting/configuration/integrations) to configure integrations on your
-  self-hosted instance.
+  If you are on a self-hosted instance, you will need to configure this integration separately. Please follow the guides [here](/self-hosting/configuration/integrations) to configure integrations on your self-hosted instance.
 </Note>
 
 ## Connect Google Sheets
@@ -23,31 +14,29 @@ The Google Sheets integration allows you to automatically send responses to a Go
 
 ![Formbricks Integrations Tab](/images/xm-and-surveys/core-features/integrations/google-sheets/integrations-tab.webp)
 
-2. Now click on the "Connect with Google" button to authenticate yourself with Google.
+1. Now click on the "Connect with Google" button to authenticate yourself with Google.
 
 ![Connect Formbricks with your Google](/images/xm-and-surveys/core-features/integrations/google-sheets/connect-with-google.webp)
 
-3. You will now be taken to the Google OAuth page where you can select the Google account you want to use for the integration.
+1. You will now be taken to the Google OAuth page where you can select the Google account you want to use for the integration.
 
-4. Once you have selected the account and completed the authentication process, you will be taken back to Formbricks Cloud and see the connected status as below:
+2. Once you have selected the account and completed the authentication process, you will be taken back to Formbricks Cloud and see the connected status as below:
 
 ![Formbricks is now connected with Google](/images/xm-and-surveys/core-features/integrations/google-sheets/google-connected.webp)
 
 <Note>
-
-Before the next step, make sure that you have a Formbricks Survey with at least one question and a Google Sheet in the Google account you integrated.
-
+  Before the next step, make sure that you have a Formbricks Survey with at least one question and a Google Sheet in the Google account you integrated.
 </Note>
 
-5. Now click on the "Link New Sheet" button to link a Google Sheet with Formbricks and a modal will open up.
+1. Now click on the "Link New Sheet" button to link a Google Sheet with Formbricks and a modal will open up.
 
 ![Link Formbricks with a Google Sheet](/images/xm-and-surveys/core-features/integrations/google-sheets/link-survey-with-sheet.webp)
 
-6. Enter the spreadsheet URL for the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
+1. Enter the spreadsheet URL for the Google Sheet you want to link with Formbricks and the Survey. On doing so, you will be asked with what questions' responses you want to feed in the Google Sheet. Select the questions and click on the "Link Sheet" button.
 
 ![Select question to link with Google Sheet](/images/xm-and-surveys/core-features/integrations/google-sheets/link-with-questions.webp)
 
-7. On submitting, the modal will close and you will see the linked Google Sheet in the list of linked Google Sheets.
+1. On submitting, the modal will close and you will see the linked Google Sheet in the list of linked Google Sheets.
 
 ![List of linked Google Sheets](/images/xm-and-surveys/core-features/integrations/google-sheets/list-linked-surveys.webp)
 
@@ -58,22 +47,28 @@ Congratulations! You have successfully linked a Google Sheet with Formbricks. No
 To remove the integration with Google Account,
 
 1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+
 2. Select **Manage Sheets** button in the Google Sheets card.
+
 3. Click on the **Delete Integration** button.
+
 4. It will now ask for a confirmation to remove the integration. Click on the **Delete** button to remove the integration. You can always come back and connect again with the same Google Account.
 
 ![Delete Google Integration with Formbricks](/images/xm-and-surveys/core-features/integrations/google-sheets/delete-connection.webp)
 
 ## What info do you need?
 
-- Your **Email ID** for authentication (We use this to identify you)
-- Your **Google Sheets Names and IDs** (We fetch this to list and show you the options of choosing a sheet to integrate with)
-- Write access to **selected Google Sheet** (The google sheet you choose to integrate it with, we write survey responses to it)
+* Your **Email ID** for authentication (We use this to identify you)
+
+* Your **Google Sheets Names and IDs** (We fetch this to list and show you the options of choosing a sheet to integrate with)
+
+* Write access to **selected Google Sheet** (The google sheet you choose to integrate it with, we write survey responses to it)
 
 For the above, we ask for:
 
 1. **User Email**: To identify you (that's it, nothing else, we're opensource, see this in our codebase [here](https://github.com/formbricks/formbricks/blob/main/apps/web/app/api/google-sheet/callback/route.ts#L47C17-L47C25))
-1. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/googleSheet/service.ts#L70))
+
+2. **Google Spreadsheet API**: To write to the spreadsheet you select (that's it, nothing else, we're opensource, see this method in our codebase [here](https://github.com/formbricks/formbricks/blob/main/packages/lib/googleSheet/service.ts#L70))
 
 <Note>We store as little personal information as possible.</Note>
 

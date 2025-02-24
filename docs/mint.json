@@ -92,7 +92,6 @@
         }
       ]
     },
-
     {
       "group": "Core Features",
       "pages": [
@@ -140,6 +139,10 @@
       ]
     },
     {
+      "group": "Enterprise Features",
+      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
+    },
+    {
       "group": "XM",
       "pages": [
         {
@@ -179,8 +182,54 @@
       "pages": ["development/technical-handbook/overview", "development/technical-handbook/database-model"]
     },
     {
-      "group": "Contribution",
+      "group": "Standards",
+      "pages": [
+        {
+          "group": "Code Organization",
+          "icon": "code",
+          "pages": [
+            "development/standards/organization/file-and-directory-organization",
+            "development/standards/organization/naming-conventions",
+            "development/standards/organization/module-component-structure"
+          ]
+        },
+        {
+          "group": "Development Practices",
+          "icon": "laptop",
+          "pages": [
+            "development/standards/practices/code-formatting",
+            "development/standards/practices/documentation",
+            "development/standards/practices/error-handling"
+          ]
+        },
+        {
+          "group": "Technical Standards",
+          "icon": "gear",
+          "pages": [
+            "development/standards/technical/language-specific-conventions",
+            "development/standards/technical/framework-usage"
+          ]
+        },
+        {
+          "group": "Quality Assurance",
+          "icon": "shield",
+          "pages": ["development/standards/qa/code-reviews", "development/standards/qa/testing-methodology"]
+        }
+      ]
+    },
+    {
+      "group": "Contributions",
       "pages": ["development/contribution/contribution"]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        {
+          "group": "Auth & Provision",
+          "icon": "user-shield",
+          "pages": ["development/guides/auth-and-provision/setup-saml-with-identity-providers"]
+        }
+      ]
     },
     {
       "group": "Support",
@@ -195,7 +244,8 @@
       "pages": [
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
-        "self-hosting/setup/cluster-setup"
+        "self-hosting/setup/cluster-setup",
+        "self-hosting/setup/monitoring"
       ]
     },
     {
@@ -203,7 +253,14 @@
       "pages": [
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
-        "self-hosting/configuration/oauth",
+        {
+          "group": "Auth & SSO",
+          "icon": "lock",
+          "pages": [
+            "self-hosting/configuration/auth-sso/oauth",
+            "self-hosting/configuration/auth-sso/saml-sso"
+          ]
+        },
         {
           "group": "Integrations",
           "icon": "bridge",
@@ -701,9 +758,14 @@
       "url": "development"
     },
     {
-      "name": "API Reference",
+      "name": "API v1 Reference",
       "openapi": "/api-reference/openapi.json",
       "url": "api-reference"
+    },
+    {
+      "name": "API v2 Reference (WIP 👷‍♂️)",
+      "openapi": "/api-v2-reference/openapi.yml",
+      "url": "api-v2-reference"
     }
   ],
   "topbarCtaButton": {

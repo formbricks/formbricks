@@ -123,7 +123,6 @@
     "are_you_sure": "Es-tu sûr ?",
     "are_you_sure_this_action_cannot_be_undone": "Êtes-vous sûr ? Cette action ne peut pas être annulée.",
     "attributes": "Attributs",
-    "automatic": "Automatique",
     "avatar": "Avatar",
     "back": "Retour",
     "billing": "Facturation",
@@ -180,7 +179,6 @@
     "edit": "Modifier",
     "email": "Email",
     "embed": "Intégrer",
-    "enable": "Activer",
     "enterprise_license": "Licence d'entreprise",
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
@@ -1474,7 +1472,9 @@
         "is_booked": "Est réservé",
         "is_clicked": "Est cliqué",
         "is_completely_submitted": "Est complètement soumis",
+        "is_not_set": "N'est pas défini",
         "is_partially_submitted": "Est partiellement soumis",
+        "is_set": "Est défini",
         "is_skipped": "Est ignoré",
         "is_submitted": "Est soumis",
         "jump_to_question": "Passer à la question",
@@ -1835,8 +1835,7 @@
         "multiple_industries": "Plusieurs secteurs",
         "use_this_template": "Utilisez ce modèle",
         "uses_branching_logic": "Cette enquête utilise une logique de branchement."
-      },
-      "this_is_a_new_key": "Ceci est une clé mise à jour"
+      }
     },
     "xm-templates": {
       "ces": "CES",

@@ -1,7 +1,7 @@
 import { GlobeIcon } from "@/components/general/globe-icon";
+import { useClickOutside } from "@/lib/utils";
 import { useRef, useState } from "preact/hooks";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
 
 interface LanguageSwitchProps {

@@ -1,0 +1,94 @@
+---
+title: "Setup SAML with Identity Providers"
+description: "This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and upload it on your Formbricks instance."
+---
+
+### SAML Registration with Identity Providers
+
+This guide explains the settings you need to use to configure SAML with your Identity Provider. Once configured, obtain an XML metadata file and upload it on your Formbricks instance.
+
+> **Note:** Please do not add a trailing slash at the end of the URLs. Create them exactly as shown below.
+
+**Assertion consumer service URL / Single Sign-On URL / Destination URL:** [https://app.formbricks.com/api/auth/saml/callback](https://app.formbricks.com/api/auth/saml/callback)
+
+**Entity ID / Identifier / Audience URI / Audience Restriction:** [https://saml.formbricks.com](https://saml.formbricks.com)
+
+**Response:** Signed
+
+**Assertion Signature:** Signed
+
+**Signature Algorithm:** RSA-SHA256
+
+**Assertion Encryption:** Unencrypted
+
+**Mapping Attributes / Attribute Statements:**
+
+* [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier) -> id
+
+* [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress) -> email
+
+* [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname) -> firstName
+
+* [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname) -> lastName
+
+### SAML With Okta
+
+<Steps>
+  <Step title="Create an application with your OIDC provider">
+    For example, in Okta, once you create an account, you can click on Applications on the sidebar menu:
+
+    <img src="/images/development/guides/auth-and-provision/okta/okta-applications.webp" />
+  </Step>
+
+  <Step title="Click on Create App Integration">
+    <img src="/images/development/guides/auth-and-provision/okta/create-app-integration.webp" />
+  </Step>
+
+  <Step title="Select SAML 2.0 in the modal form, and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/select-saml-2.0.webp" />
+  </Step>
+
+  <Step title="Fill the general settings as shown and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/general-settings.webp" />
+  </Step>
+
+  <Step title="Fill the fields mapping as shown and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/fields-mapping.webp" />
+  </Step>
+
+  <Step title="Enter the SAML Integration Settings as shown and click Next">
+    <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
+  </Step>
+
+  <Step title="Check the internal app checkbox and click Finish">
+    <img src="/images/development/guides/auth-and-provision/okta/internal-app.webp" />
+  </Step>
+
+  <Step title="Check that the app is created successfully">
+    <img src="/images/development/guides/auth-and-provision/okta/app-created.webp" />
+  </Step>
+
+  <Step title="Click on the app and head over to the Assignments tab">
+    <img src="/images/development/guides/auth-and-provision/okta/assignments-tab.webp" />
+  </Step>
+
+  <Step title="Click on Assign button and select Assign to People">
+    <img src="/images/development/guides/auth-and-provision/okta/assign-to-people.webp" />
+  </Step>
+
+  <Step title="Select the users you want to assign the app to and click Assign">
+    <img src="/images/development/guides/auth-and-provision/okta/select-users.webp" />
+  </Step>
+
+  <Step title="Head over to the Sign On tab and scroll to the bottom to get the metadata, click on the Actions button">
+    <img src="/images/development/guides/auth-and-provision/okta/actions-button.webp" />
+  </Step>
+
+  <Step title="Click on View IdP metadata">
+    <img src="/images/development/guides/auth-and-provision/okta/view-idp-metadata.webp" />
+  </Step>
+
+  <Step title="Copy the metadata and paste it in the Formbricks SAML configuration" />
+</Steps>
+
+That's it. Now when you try to login with SSO, your application on Okta will handle the authentication.
