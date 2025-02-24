@@ -54,7 +54,10 @@ interface SignupFormProps {
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
   isSSOEnabled: boolean;
+  SAMLSSOEnabled: boolean;
   isTurnstileConfigured: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
 export const SignupForm = ({
@@ -73,7 +76,10 @@ export const SignupForm = ({
   defaultOrganizationId,
   defaultOrganizationRole,
   isSSOEnabled,
+  SAMLSSOEnabled,
   isTurnstileConfigured,
+  samlTenant,
+  samlProduct,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -273,6 +279,9 @@ export const SignupForm = ({
           azureOAuthEnabled={azureOAuthEnabled}
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
+          SAMLSSOEnabled={SAMLSSOEnabled}
+          samlTenant={samlTenant}
+          samlProduct={samlProduct}
           callbackUrl={callbackUrl}
         />
       )}

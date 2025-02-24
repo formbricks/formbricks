@@ -9,9 +9,11 @@ import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 interface SamlButtonProps {
   inviteUrl?: string | null;
   lastUsed?: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
-export const SamlButton = ({ inviteUrl, lastUsed }: SamlButtonProps) => {
+export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct }: SamlButtonProps) => {
   const { t } = useTranslate();
 
   const handleLogin = async () => {
@@ -19,14 +21,14 @@ export const SamlButton = ({ inviteUrl, lastUsed }: SamlButtonProps) => {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Saml");
     }
     signIn(
-      "boxyhq-saml",
+      "saml",
       {
         redirect: true,
         callbackUrl: inviteUrl ? inviteUrl : "/", // redirect after login to /
       },
       {
-        tenant: "formbricks.com",
-        product: "formbricks",
+        tenant: samlTenant,
+        product: samlProduct,
       }
     );
   };

@@ -90,6 +90,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
           whitelabel: true,
           removeBranding: true,
           ai: true,
+          saml: true,
         },
         lastChecked: currentTime,
       };
@@ -156,6 +157,7 @@ export const getEnterpriseLicense = async (): Promise<{
           removeBranding: false,
           contacts: false,
           ai: false,
+          saml: false,
         },
         lastChecked: new Date(),
       };
@@ -369,6 +371,18 @@ export const getIsSSOEnabled = async (): Promise<boolean> => {
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.sso;
+};
+
+export const getIsSAMLSSOEnabled = async (): Promise<boolean> => {
+  if (E2E_TESTING) {
+    const previousResult = await fetchLicenseForE2ETesting();
+    return previousResult && previousResult.features
+      ? previousResult.features.sso && previousResult.features.saml
+      : false;
+  }
+  const licenseFeatures = await getLicenseFeatures();
+  if (!licenseFeatures) return false;
+  return licenseFeatures.sso && licenseFeatures.saml;
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: Organization["billing"]["plan"]) => {

@@ -56,7 +56,7 @@ export const getSSOProviders = () => [
     },
   },
   {
-    id: "boxyhq-saml",
+    id: "saml",
     name: "BoxyHQ SAML",
     type: "oauth" as const,
     version: "2.0",

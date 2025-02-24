@@ -1,7 +1,7 @@
 "use server";
 
 import { preloadConnection } from "@/modules/ee/auth/saml/preload-connection";
-import { IConnectionAPIController, type IOAuthController, type JacksonOption } from "@boxyhq/saml-jackson";
+import type { IConnectionAPIController, IOAuthController, JacksonOption } from "@boxyhq/saml-jackson";
 import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@formbricks/lib/constants";
 
 const opts: JacksonOption = {

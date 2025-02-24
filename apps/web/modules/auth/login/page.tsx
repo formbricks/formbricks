@@ -1,6 +1,10 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSAMLSSOEnabled,
+  getIsSSOEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
@@ -10,6 +14,9 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
   PASSWORD_RESET_DISABLED,
+  SAML_OAUTH_ENABLED,
+  SAML_PRODUCT,
+  SAML_TENANT,
   SIGNUP_ENABLED,
 } from "@formbricks/lib/constants";
 import { LoginForm } from "./components/login-form";
@@ -20,7 +27,13 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const [isMultiOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
+  const [isMultiOrgEnabled, isSSOEnabled, isSAMLSSOEnabled] = await Promise.all([
+    getIsMultiOrgEnabled(),
+    getIsSSOEnabled(),
+    getIsSAMLSSOEnabled(),
+  ]);
+
+  const SAMLSSOEnabled = isSAMLSSOEnabled && SAML_OAUTH_ENABLED;
   return (
     <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
@@ -39,6 +52,9 @@ export const LoginPage = async () => {
             oidcDisplayName={OIDC_DISPLAY_NAME}
             isMultiOrgEnabled={isMultiOrgEnabled}
             isSSOEnabled={isSSOEnabled}
+            SAMLSSOEnabled={SAMLSSOEnabled}
+            samlTenant={SAML_TENANT}
+            samlProduct={SAML_PRODUCT}
           />
         </FormWrapper>
       </div>
