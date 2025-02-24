@@ -49,11 +49,13 @@ This guide explains the settings you need to use to configure SAML with your Ide
   <Step title="Fill the general settings as shown and click Next">
     <img src="/images/development/guides/auth-and-provision/okta/general-settings.webp" />
   </Step>
+  <Step title="Enter the SAML Integration Settings as shown and click Next">
+    - **Single Sign-On URL**: `https://<your-formbricks-instance>/api/auth/saml/callback` or `http://localhost:3000/api/auth/saml/callback` (if you are running Formbricks locally)
+    - **Audience URI (SP Entity ID)**: `https://saml.formbricks.com`
+    <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
+  </Step>
   <Step title="Fill the fields mapping as shown and click Next">
     <img src="/images/development/guides/auth-and-provision/okta/fields-mapping.webp" />
-  </Step>
-  <Step title="Enter the SAML Integration Settings as shown and click Next">
-    <img src="/images/development/guides/auth-and-provision/okta/saml-integration-settings.webp" />
   </Step>
   <Step title="Check the internal app checkbox and click Finish">
     <img src="/images/development/guides/auth-and-provision/okta/internal-app.webp" />
@@ -70,14 +72,13 @@ This guide explains the settings you need to use to configure SAML with your Ide
   <Step title="Select the users you want to assign the app to and click Assign">
     <img src="/images/development/guides/auth-and-provision/okta/select-users.webp" />
   </Step>
-  <Step title="Head over to the Sign On tab and scroll to the bottom to get the metadata, click on the Actions button">
-    <img src="/images/development/guides/auth-and-provision/okta/actions-button.webp" />
+  <Step title="Head over to the Sign On tab and click on the 'view SAML setup instructions' button">
+    <img src="/images/development/guides/auth-and-provision/okta/view-saml-instructions.png" />
   </Step>
-  <Step title="Click on View IdP metadata">
-    <img src="/images/development/guides/auth-and-provision/okta/view-idp-metadata.webp" />
+  <Step title="Scroll to the bottom and copy the IDP metadata">
+    <img src="/images/development/guides/auth-and-provision/okta/idp-metadata.png" />
   </Step>
-
-  <Step title="Copy the metadata and paste it in environment variable SAML_RAW_METADATA" />
+  <Step title="Paste the IDP metadata in environment variable SAML_RAW_METADATA" />
 </Steps>
 
 That's it. Now when you try to login with SSO, your application on Okta will handle the authentication.
