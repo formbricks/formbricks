@@ -30,6 +30,7 @@ export const AZURE_OAUTH_ENABLED =
   env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
 export const OIDC_OAUTH_ENABLED =
   env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
+export const SAML_OAUTH_ENABLED = env.SAML_DATABASE_URL && env.SAML_RAW_METADATA ? true : false;
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
@@ -45,6 +46,13 @@ export const OIDC_CLIENT_SECRET = env.OIDC_CLIENT_SECRET;
 export const OIDC_ISSUER = env.OIDC_ISSUER;
 export const OIDC_DISPLAY_NAME = env.OIDC_DISPLAY_NAME;
 export const OIDC_SIGNING_ALGORITHM = env.OIDC_SIGNING_ALGORITHM;
+
+export const SAML_DATABASE_URL = env.SAML_DATABASE_URL;
+export const SAML_RAW_METADATA = env.SAML_RAW_METADATA;
+export const SAML_TENANT = "formbricks.com";
+export const SAML_PRODUCT = "formbricks";
+export const SAML_AUDIENCE = "https://saml.formbricks.com";
+export const SAML_PATH = "/api/auth/saml/callback";
 
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";

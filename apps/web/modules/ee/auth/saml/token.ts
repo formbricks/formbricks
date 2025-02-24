@@ -1,4 +1,4 @@
-import jackson from "@/modules/ee/sso/lib/jackson";
+import jackson from "@/modules/ee/auth/saml/jackson";
 import { OAuthTokenReq } from "@boxyhq/saml-jackson";
 
 export const POST = async (req: Request) => {

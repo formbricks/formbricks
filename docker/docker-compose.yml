@@ -111,6 +111,9 @@ x-environment: &environment
     # OIDC_DISPLAY_NAME:
     # OIDC_SIGNING_ALGORITHM:
 
+    # Set the below to SAML Provider if you want to enable SAML
+    # SAML_DATABASE_URL:
+    # SAML_RAW_METADATA:
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
     # Oauth credentials for Notion Integration

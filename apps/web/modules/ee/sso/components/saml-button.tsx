@@ -26,10 +26,11 @@ export const SamlButton = ({ inviteUrl, lastUsed }: SamlButtonProps) => {
       },
       {
         tenant: "formbricks.com",
-        product: "formbricks.com",
+        product: "formbricks",
       }
     );
   };
+
   return (
     <Button
       type="button"

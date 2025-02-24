@@ -1,3 +1,3 @@
-import { POST } from "@/modules/ee/sso/api/saml/callback";
+import { POST } from "@/modules/ee/auth/saml/callback";
 
 export { POST };

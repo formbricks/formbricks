@@ -1,4 +1,4 @@
-import jackson from "@/modules/ee/sso/lib/jackson";
+import jackson from "@/modules/ee/auth/saml/jackson";
 import type { OAuthReq } from "@boxyhq/saml-jackson";
 import type { NextApiResponse } from "next";
 import { NextRequest, NextResponse } from "next/server";

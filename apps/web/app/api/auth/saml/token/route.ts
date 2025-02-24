@@ -1,3 +1,3 @@
-import { POST } from "@/modules/ee/sso/api/saml/token";
+import { POST } from "@/modules/ee/auth/saml/token";
 
 export { POST };

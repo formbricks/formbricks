@@ -1,4 +1,4 @@
-import jackson from "@/modules/ee/sso/lib/jackson";
+import jackson from "@/modules/ee/auth/saml/jackson";
 import { redirect } from "next/navigation";
 
 export const POST = async (req: Request) => {

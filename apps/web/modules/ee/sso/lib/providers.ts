@@ -1,5 +1,6 @@
 import type { IdentityProvider } from "@prisma/client";
 import AzureAD from "next-auth/providers/azure-ad";
+import BoxyHQProvider from "next-auth/providers/boxyhq-saml";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import {
