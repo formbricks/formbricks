@@ -6,7 +6,6 @@
     "continue_with_google": "Continue with Google",
     "continue_with_oidc": "Continue with {oidcDisplayName}",
     "continue_with_openid": "Continue with OpenID",
-    "continue_with_saml": "Continue with SAML SSO",
     "forgot-password": {
       "back_to_login": "Back to login",
       "email-sent": {
