@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/restrict-template-expressions -- required for template literals */
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 /* eslint-disable no-console -- debugging*/
 import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
@@ -150,6 +151,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   };
 
   const surveyPlacement = survey.projectOverwrites?.placement ?? project.placement;
+  const clickOutside = survey.projectOverwrites?.clickOutsideClose ?? project.clickOutsideClose;
+  const darkOverlay = survey.projectOverwrites?.darkOverlay ?? project.darkOverlay;
 
   return (
     <Modal
@@ -172,6 +175,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             languageCode,
             placement: surveyPlacement,
             appUrl: appConfig.get().appUrl,
+            clickOutside: surveyPlacement === "center" ? clickOutside : true,
+            darkOverlay,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
@@ -336,6 +341,20 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 }
 
 const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): string => {
+  const isCenter = options.placement === "center";
+
+  const getBackgroundColor = (): "rgba(51, 65, 85, 0.8)" | "rgba(255, 255, 255, 0.9)" | "transparent" => {
+    if (isCenter) {
+      if (options.darkOverlay) {
+        return "rgba(51, 65, 85, 0.8)";
+      }
+
+      return "rgba(255, 255, 255, 0.9)";
+    }
+
+    return "transparent";
+  };
+
   return `
   <!doctype html>
   <html>
@@ -344,7 +363,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       <title>Formbricks WebView Survey</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body style="overflow: hidden; height: 100vh; background: transparent; margin: 0;">
+    <body style="overflow: hidden; height: 100vh; background: ${getBackgroundColor()}; margin: 0;">
       <style>
         .survey-container {
           position: fixed;
@@ -402,7 +421,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
           justify-content: center;
         }
       </style>
-      <div class="survey-container placement-${options.placement ?? "center"}">
+      <div class="survey-container placement-${options.placement ?? "center"}" id="survey-wrapper">
         <div id="formbricks-react-native">
           <div></div>
         </div>
@@ -498,10 +517,12 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       script.onerror = (error) => {
         console.error("Failed to load Formbricks Surveys library:", error);
       };
+
       document.head.appendChild(script);
 
       // Add click handler to close survey when clicking outside
       document.addEventListener('click', function(event) {
+        if(!${options.clickOutside}) return;
         const surveyContainer = document.getElementById('formbricks-react-native');
         if (surveyContainer && !surveyContainer.contains(event.target)) {
           onClose();

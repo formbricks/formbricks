@@ -25,6 +25,7 @@ export interface SurveyBaseProps {
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   clickOutside?: boolean;
+  darkOverlay?: boolean;
   hiddenFieldsRecord?: TResponseData;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;

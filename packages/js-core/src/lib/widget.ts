@@ -107,6 +107,7 @@ const renderWidget = async (
     },
     surveyState
   );
+
   const projectOverwrites = survey.projectOverwrites ?? {};
   const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
   const darkOverlay = projectOverwrites.darkOverlay ?? project.darkOverlay;
