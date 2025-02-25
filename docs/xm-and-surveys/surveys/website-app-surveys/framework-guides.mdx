@@ -165,6 +165,7 @@ export default function FormbricksProvider() {
 ```typescript app/layout.tsx
 // other imports
 import FormbricksProvider from "./formbricks";
+import { Suspense } from "react";
 
 export default function RootLayout({
   children,
@@ -173,7 +174,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <FormbricksProvider />
+      <Suspense>
+        <FormbricksProvider />
+      </Suspense>
       <body>{children}</body>
     </html>
   );
