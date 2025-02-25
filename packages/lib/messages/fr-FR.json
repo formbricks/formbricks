@@ -1392,7 +1392,6 @@
         "error_saving_changes": "Erreur lors de l'enregistrement des modifications",
         "even_after_they_submitted_a_response_e_g_feedback_box": "Même après avoir soumis une réponse (par exemple, la boîte de feedback)",
         "everyone": "Tout le monde",
-        "exists": "Existe",
         "fallback_missing": "Fallback manquant",
         "fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first": "{fieldId} est utilisé dans la logique de la question {questionIndex}. Veuillez d'abord le supprimer de la logique.",
         "field_name_eg_score_price": "Nom du champ par exemple, score, prix",
