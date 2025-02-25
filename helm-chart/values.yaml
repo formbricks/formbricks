@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/formbricks/formbricks
   pullPolicy: IfNotPresent
-  tag: v2.6.0
+  tag: v3.2.0
 
 service:
   type: ClusterIP
@@ -125,7 +125,9 @@ redis:
 
 postgresql:
   enabled: true
-  externalUrl: ""
+  image:
+    repository: ankane/pgvector
+    tag: latest
   auth:
     username: formbricks
     password: formbrickspassword
@@ -134,3 +136,22 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    securityContext:
+      runAsUser: 999
+      runAsGroup: 999
+      fsGroup: 999
+      readOnlyRootFilesystem: false
+    containerSecurityContext:
+      runAsUser: 999
+      runAsGroup: 999
+      readOnlyRootFilesystem: false
+    podSecurityContext:
+      fsGroup: 999
+      runAsUser: 999
+      runAsGroup: 999
+    extraVolumes:
+      - name: postgresql-run
+        emptyDir: {}
+    extraVolumeMounts:
+      - name: postgresql-run
+        mountPath: /var/run/postgresql
