@@ -12,7 +12,14 @@ import { fetchEnvironmentState } from "@/lib/environment/state";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
-import { type TConfig, type TConfigInput, type TEnvironmentState, type TUserState } from "@/types/config";
+import {
+  type TConfig,
+  type TConfigInput,
+  type TEnvironmentState,
+  type TLegacyConfig,
+  type TLegacyConfigInput,
+  type TUserState,
+} from "@/types/config";
 import {
   type MissingFieldError,
   type MissingPersonError,
@@ -29,15 +36,66 @@ export const setIsSetup = (state: boolean): void => {
   isSetup = state;
 };
 
+const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
+  const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
+
+  if (existingConfig) {
+    const parsedConfig = JSON.parse(existingConfig) as TLegacyConfig;
+
+    // Check if we need to migrate (if it has environmentState, it's old format)
+    if (parsedConfig.environmentState) {
+      const { environmentState, personState, attributes, ...rest } = parsedConfig;
+
+      // Create new config structure
+      const newLocalStorageConfig: TConfig = {
+        ...rest,
+        environment: environmentState,
+        ...(personState && {
+          user: {
+            ...personState,
+            data: {
+              ...personState.data,
+              // Copy over language from attributes if it exists
+              ...(attributes?.language && { language: attributes.language }),
+            },
+          },
+        }),
+      };
+
+      return {
+        changed: true,
+        newState: newLocalStorageConfig,
+      };
+    }
+  }
+
+  return { changed: false };
+};
+
 export const setup = async (
-  configInput: TConfigInput
+  configInput: TConfigInput | TLegacyConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
+  console.log("configInput", configInput);
   const isDebug = getIsDebug();
-  const config = Config.getInstance();
   const logger = Logger.getInstance();
 
   if (isDebug) {
     logger.configure({ logLevel: "debug" });
+  }
+
+  let config = Config.getInstance();
+
+  const { changed, newState } = migrateLocalStorage();
+
+  if (changed) {
+    config.resetConfig();
+    config = Config.getInstance();
+
+    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
+    // otherwise, we just sync again!
+    if ("userId" in configInput && !configInput.userId && newState) {
+      config.update(newState);
+    }
   }
 
   if (isSetup) {
@@ -194,7 +252,7 @@ export const setup = async (
     }
   } else {
     logger.debug("No valid configuration found. Resetting config and creating new one.");
-    void config.resetConfig();
+    config.resetConfig();
     logger.debug("Syncing.");
 
     // During setup, if we don't have a valid config, we need to fetch the environment state
@@ -212,15 +270,35 @@ export const setup = async (
         throw environmentStateResponse.error;
       }
 
-      const personState = DEFAULT_USER_STATE_NO_USER_ID;
-      const environmentState = environmentStateResponse.data;
+      // const personState = DEFAULT_USER_STATE_NO_USER_ID;
+      let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
-      const filteredSurveys = filterSurveys(environmentState, personState);
+      if ("userId" in configInput && configInput.userId) {
+        const updatesResponse = await sendUpdatesToBackend({
+          appUrl: configInput.appUrl,
+          environmentId: configInput.environmentId,
+          updates: {
+            userId: configInput.userId,
+            attributes: configInput.attributes,
+          },
+        });
+
+        if (updatesResponse.ok) {
+          userState = updatesResponse.data.state;
+        } else {
+          logger.error(
+            `Error updating user state: ${updatesResponse.error.code} - ${updatesResponse.error.responseMessage ?? ""}`
+          );
+        }
+      }
+
+      const environmentState = environmentStateResponse.data;
+      const filteredSurveys = filterSurveys(environmentState, userState);
 
       config.update({
         appUrl: configInput.appUrl,
         environmentId: configInput.environmentId,
-        user: personState,
+        user: userState,
         environment: environmentState,
         filteredSurveys,
       });

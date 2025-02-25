@@ -14,8 +14,20 @@ logger.debug("Create command queue");
 const queue = new CommandQueue();
 
 const init = async (initConfig: TConfigInput): Promise<void> => {
-  queue.add(Setup.setup, false, initConfig);
-  await queue.wait();
+  // If the initConfig has a userId or attributes, we need to use the legacy init
+
+  if (
+    // @ts-expect-error -- userId and attributes were in the older type
+    initConfig.userId ||
+    // @ts-expect-error -- userId and attributes were in the older type
+    initConfig.attributes
+  ) {
+    logger.debug("Using legacy init");
+    queue.add(Setup.setup, false, initConfig);
+  } else {
+    queue.add(Setup.setup, false, initConfig);
+    await queue.wait();
+  }
 };
 
 const setUserId = async (userId: string): Promise<void> => {

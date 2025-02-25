@@ -139,3 +139,15 @@ export interface TUpdates {
   userId: string;
   attributes?: TAttributes;
 }
+
+export type TLegacyConfigInput = TConfigInput & {
+  userId?: string;
+  attributes?: Record<string, string>;
+};
+
+export type TLegacyConfig = TConfig & {
+  apiHost?: string;
+  environmentState?: TEnvironmentState;
+  personState?: TUserState;
+  attributes?: TAttributes;
+};

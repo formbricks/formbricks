@@ -220,6 +220,7 @@ describe("environment/state.ts", () => {
       (filterSurveys as Mock).mockReturnValue([]);
 
       // mock setInterval:
+      // @ts-expect-error -- mock implementation
       vi.spyOn(window, "setInterval").mockImplementation((fn) => {
         const intervalId = 1;
         fn();
