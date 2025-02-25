@@ -40,7 +40,7 @@ interface LoginFormProps {
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
   isSSOEnabled: boolean;
-  SAMLSSOEnabled: boolean;
+  samlSsoEnabled: boolean;
   samlTenant: string;
   samlProduct: string;
 }
@@ -56,7 +56,7 @@ export const LoginForm = ({
   oidcDisplayName,
   isMultiOrgEnabled,
   isSSOEnabled,
-  SAMLSSOEnabled,
+  samlSsoEnabled,
   samlTenant,
   samlProduct,
 }: LoginFormProps) => {
@@ -252,7 +252,7 @@ export const LoginForm = ({
               azureOAuthEnabled={azureOAuthEnabled}
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
-              SAMLSSOEnabled={SAMLSSOEnabled}
+              samlSsoEnabled={samlSsoEnabled}
               samlTenant={samlTenant}
               samlProduct={samlProduct}
               callbackUrl={callbackUrl}

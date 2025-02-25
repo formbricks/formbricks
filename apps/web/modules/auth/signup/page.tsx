@@ -2,8 +2,8 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
 import {
   getIsMultiOrgEnabled,
-  getIsSAMLSSOEnabled,
   getIsSSOEnabled,
+  getIsSamlSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
@@ -31,13 +31,13 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSSOEnabled, isSAMLSSOEnabled] = await Promise.all([
+  const [isMultOrgEnabled, isSSOEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
     getIsSSOEnabled(),
-    getIsSAMLSSOEnabled(),
+    getIsSamlSsoEnabled(),
   ]);
 
-  const SAMLSSOEnabled = isSAMLSSOEnabled && SAML_OAUTH_ENABLED;
+  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
@@ -68,7 +68,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
             isSSOEnabled={isSSOEnabled}
-            SAMLSSOEnabled={SAMLSSOEnabled}
+            samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
             samlTenant={SAML_TENANT}
             samlProduct={SAML_PRODUCT}

@@ -373,7 +373,7 @@ export const getIsSSOEnabled = async (): Promise<boolean> => {
   return licenseFeatures.sso;
 };
 
-export const getIsSAMLSSOEnabled = async (): Promise<boolean> => {
+export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
     return previousResult && previousResult.features

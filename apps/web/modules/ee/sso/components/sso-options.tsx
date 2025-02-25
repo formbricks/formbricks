@@ -14,7 +14,7 @@ interface SSOOptionsProps {
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   callbackUrl: string;
-  SAMLSSOEnabled: boolean;
+  samlSsoEnabled: boolean;
   samlTenant: string;
   samlProduct: string;
 }
@@ -26,7 +26,7 @@ export const SSOOptions = ({
   oidcOAuthEnabled,
   oidcDisplayName,
   callbackUrl,
-  SAMLSSOEnabled,
+  samlSsoEnabled,
   samlTenant,
   samlProduct,
 }: SSOOptionsProps) => {
@@ -40,7 +40,7 @@ export const SSOOptions = ({
       {oidcOAuthEnabled && (
         <OpenIdButton inviteUrl={callbackUrl} text={t("auth.continue_with_oidc", { oidcDisplayName })} />
       )}
-      {SAMLSSOEnabled && (
+      {samlSsoEnabled && (
         <SamlButton inviteUrl={callbackUrl} samlTenant={samlTenant} samlProduct={samlProduct} />
       )}
     </div>

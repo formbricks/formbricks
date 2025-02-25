@@ -1,7 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
-import { getIsSAMLSSOEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsSSOEnabled, getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
@@ -25,8 +25,8 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
   let provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
 
   if (provider === "saml") {
-    const isSAMLSSOEnabled = await getIsSAMLSSOEnabled();
-    if (!isSAMLSSOEnabled) {
+    const isSamlSsoEnabled = await getIsSamlSsoEnabled();
+    if (!isSamlSsoEnabled) {
       return false;
     }
   }

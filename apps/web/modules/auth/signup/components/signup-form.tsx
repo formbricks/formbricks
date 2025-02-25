@@ -54,7 +54,7 @@ interface SignupFormProps {
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
   isSSOEnabled: boolean;
-  SAMLSSOEnabled: boolean;
+  samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
   samlTenant: string;
   samlProduct: string;
@@ -76,7 +76,7 @@ export const SignupForm = ({
   defaultOrganizationId,
   defaultOrganizationRole,
   isSSOEnabled,
-  SAMLSSOEnabled,
+  samlSsoEnabled,
   isTurnstileConfigured,
   samlTenant,
   samlProduct,
@@ -279,7 +279,7 @@ export const SignupForm = ({
           azureOAuthEnabled={azureOAuthEnabled}
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
-          SAMLSSOEnabled={SAMLSSOEnabled}
+          samlSsoEnabled={samlSsoEnabled}
           samlTenant={samlTenant}
           samlProduct={samlProduct}
           callbackUrl={callbackUrl}
