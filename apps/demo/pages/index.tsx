@@ -38,13 +38,14 @@ export default function AppPage(): React.JSX.Element {
           language: "de",
           "Init Attribute 1": "eight",
           "Init Attribute 2": "two",
+          "Init Attribute 3": "three",
         };
 
         void formbricks.init({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-          // userId,
-          // attributes: userInitAttributes,
+          userId,
+          attributes: userInitAttributes,
         });
       }
 
