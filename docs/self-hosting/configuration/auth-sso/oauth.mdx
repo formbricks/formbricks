@@ -5,9 +5,7 @@ icon: "key"
 ---
 
 <Note>
-  Single Sign-On (SSO) functionality, including OAuth integrations with Google,
-  Microsoft Entra ID, Github and OpenID Connect, requires a valid Formbricks
-  Enterprise License.
+  Single Sign-On (SSO) functionality, including OAuth integrations with Google, Microsoft Entra ID, Github and OpenID Connect, requires a valid Formbricks Enterprise License.
 </Note>
 
 ### Google OAuth
@@ -140,8 +138,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 - Enter a **Description**, set an **Expires** period, then click **Add**.
 
 <Note>
-  You will need to create a new client secret using these steps whenever your
-  chosen expiry period ends.
+  You will need to create a new client secret using these steps whenever your chosen expiry period ends.
 </Note>
 
 ![ninth](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738251467/image_bkirq4.jpg)
@@ -149,9 +146,7 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 - Copy the entry under **Value** to populate the `AZUREAD_CLIENT_SECRET` variable.
 
 <Note>
-  Microsoft will only show this value to you immediately after creation, and you
-  will not be able to access it again. If you lose it, simply start from step 9
-  to create a new secret.
+  Microsoft will only show this value to you immediately after creation, and you will not be able to access it again. If you lose it, simply start from step 9 to create a new secret.
 </Note>
 
 ![tenth](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738251234/image_jen6tp.jpg)
@@ -159,18 +154,16 @@ Do you have a Microsoft Entra ID Tenant? Integrate it with your Formbricks insta
 - Update these environment variables in your `docker-compose.yml` or pass it like your other environment variables to the Formbricks container.
 
 <Note>
-  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g.,
-  "THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
+  You must wrap the `AZUREAD_CLIENT_SECRET` value in double quotes (e.g., "THis~iS4faKe.53CreTvALu3"`) to prevent issues with special characters.
 </Note>
 
 An example `.env` for Microsoft Entra ID in Formbricks would look like:
 
-````yml Formbricks Env for Microsoft Entra ID SSO
+```yml Formbricks Env for Microsoft Entra ID SSO
 AZUREAD_CLIENT_ID=a25cadbd-f049-4690-ada3-56a163a72f4c
 AZUREAD_TENANT_ID=2746c29a-a3a6-4ea1-8762-37816d4b7885
 AZUREAD_CLIENT_SECRET="THis~iS4faKe.53CreTvALu3"
 ```
-
 
 - Restart your Formbricks instance.
 
@@ -191,8 +184,7 @@ Integrating your own OIDC (OpenID Connect) instance with your Formbricks instanc
 - `OIDC_SIGNING_ALGORITHM`
 
 <Note>
-Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}
-/api/auth/callback/openid`.
+  Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}/api/auth/callback/openid`.
 </Note>
 
 - Update these environment variables in your `docker-compose.yml` or pass it directly to the running container.
@@ -203,7 +195,8 @@ An example configuration for a FusionAuth OpenID Connect in Formbricks would loo
 ```yml Formbricks Env for FusionAuth OIDC
 OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7
 OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
-OIDC_ISSUER=http://localhost:9011 OIDC_DISPLAY_NAME=FusionAuth
+OIDC_ISSUER=http://localhost:9011 
+OIDC_DISPLAY_NAME=FusionAuth
 OIDC_SIGNING_ALGORITHM=HS256
 ```
 
@@ -213,4 +206,3 @@ OIDC_SIGNING_ALGORITHM=HS256
 - Restart your Formbricks instance.
 
 - You're all set! Users can now sign up & log in using their OIDC credentials.
-````
