@@ -3,7 +3,6 @@
 import { TolgeeProvider, TolgeeStaticData } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import branch from "../../../branch.json";
 import { TolgeeBase } from "./shared";
 
 type Props = {
@@ -12,8 +11,22 @@ type Props = {
   children: React.ReactNode;
 };
 
+// Handle branch.json which is only available in dev environment
+const getBranchTag = () => {
+  try {
+    // Dynamic import with require to avoid build errors in production
+    const branch =
+      process.env.NODE_ENV === "development" ? require("../../../branch.json") : { branchName: "main" }; // Default fallback for production
+
+    return `draft:${branch.branchName}`;
+  } catch (e) {
+    // Fallback if file doesn't exist
+    return "draft:main";
+  }
+};
+
 const tolgee = TolgeeBase().init({
-  tagNewKeys: [`draft:${branch.branchName}`],
+  tagNewKeys: [getBranchTag()],
 });
 
 export const TolgeeNextProvider = ({ language, staticData, children }: Props) => {
