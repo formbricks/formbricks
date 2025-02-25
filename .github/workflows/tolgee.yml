@@ -30,13 +30,36 @@ jobs:
           npx tolgee tag \
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-extracted \
-            --filter-tag "draft: ${BRANCH_NAME}" \
+            --filter-tag "draft:${BRANCH_NAME}" \
             --tag production \
-            --untag "draft: ${BRANCH_NAME}"
+            --untag "draft:${BRANCH_NAME}"
 
-      - name: Tag Deprecated Keys
+      - name: Tag unused production keys as Deprecated
         run: |
           npx tolgee tag \
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag production \
             --tag deprecated --untag production
+
+      - name: Tag unused draft:current-branch keys as Deprecated
+        run: |
+          BRANCH_NAME=${GITHUB_REF##*/}
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-not-extracted --filter-tag "draft:${BRANCH_NAME}" \
+            --tag deprecated --untag "draft:${BRANCH_NAME}"
+
+      - name: Sync with backup
+        run: |
+          npx tolgee sync \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --backup ./tolgee-backup \
+            --continue-on-warning \
+            --yes
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tolgee-backup-${{ github.sha }}
+          path: ./tolgee-backup
+          retention-days: 90

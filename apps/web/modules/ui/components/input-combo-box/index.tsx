@@ -229,7 +229,7 @@ export const InputCombobox = ({
           className="min-w-0 rounded-none border-0 border-r border-slate-300 bg-white focus:border-slate-400"
           {...inputProps}
           id={`${id}-input`}
-          value={localValue as string | number}
+          value={localValue ?? undefined}
           onChange={onInputChange}
         />
       )}

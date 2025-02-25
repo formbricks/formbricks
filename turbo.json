@@ -159,7 +159,6 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SENTRY_DSN",
-        "SHORT_URL_BASE",
         "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",
