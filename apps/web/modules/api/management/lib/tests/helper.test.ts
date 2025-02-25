@@ -6,8 +6,8 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import { getEnvironmentIdFromResponseId, getEnvironmentIdFromSurveyId } from "../helper";
 
 vi.mock("@/modules/api/management/lib/services", () => ({
-  getSurvey: vi.fn(),
-  getResponse: vi.fn(),
+  getSurveyEnvironmentId: vi.fn(),
+  getResponseSurveyId: vi.fn(),
 }));
 
 describe("API Management Helper", () => {

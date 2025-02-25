@@ -1,6 +1,5 @@
 import { checkRateLimitAndThrowError } from "@/modules/api/lib/rate-limit";
-import { responses } from "@/modules/api/lib/response";
-import { formatZodError, handleApiError } from "@/modules/api/lib/utils";
+import { formatZodError, handleApiError, logApiRequest } from "@/modules/api/lib/utils";
 import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
 import { hashApiKey } from "@/modules/api/management/lib/utils";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
@@ -89,15 +88,17 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 }): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication.ok) return responses.unauthorizedResponse();
+    if (!authentication.ok) throw authentication.error;
 
     let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
     if (schemas?.body) {
       const bodyData = await request.json();
       const bodyResult = schemas.body.safeParse(bodyData);
+
       if (!bodyResult.success) {
-        return responses.unprocessableEntityResponse({
+        throw err({
+          type: "forbidden",
           details: formatZodError(bodyResult.error),
         });
       }
@@ -109,7 +110,8 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
       const queryObject = Object.fromEntries(url.searchParams.entries());
       const queryResult = schemas.query.safeParse(queryObject);
       if (!queryResult.success) {
-        return responses.unprocessableEntityResponse({
+        throw err({
+          type: "unprocessable_entity",
           details: formatZodError(queryResult.error),
         });
       }
@@ -120,7 +122,8 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
       const paramsObject = (await externalParams) || {};
       const paramsResult = schemas.params.safeParse(paramsObject);
       if (!paramsResult.success) {
-        return responses.unprocessableEntityResponse({
+        throw err({
+          type: "unprocessable_entity",
           details: formatZodError(paramsResult.error),
         });
       }
@@ -132,7 +135,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
         identifier: authentication.data.hashedApiKey,
       });
       if (!rateLimitResponse.ok) {
-        return responses.tooManyRequestsResponse();
+        throw rateLimitResponse.error;
       }
     }
 
@@ -142,7 +145,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
       request,
     });
   } catch (err) {
-    return handleApiError(err);
+    return handleApiError(request, err);
   }
 };
 
@@ -160,14 +163,6 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   handler: HandlerFn<ParsedSchemas<S>>;
 }): Promise<Response> => {
   const startTime = Date.now();
-  const method = request.method;
-  const url = new URL(request.url);
-  const path = url.pathname;
-  const correlationId = request.headers.get("x-request-id") || "";
-  const queryParams = Object.fromEntries(url.searchParams.entries());
-  const safeQueryParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([key]) => !["apikey", "token", "secret"].includes(key.toLowerCase()))
-  );
 
   const response = await apiWrapper({
     request,
@@ -179,9 +174,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
 
   const duration = Date.now() - startTime;
 
-  console.log(
-    `[API] ${method} ${path} - ${response.status} - ${duration}ms ${correlationId ? `\n correlationId: ${correlationId}` : ""} ${safeQueryParams ? `\n queryParams: ${JSON.stringify(safeQueryParams)}` : ""}`
-  );
+  logApiRequest(request, response.status, duration);
 
   return response;
 };

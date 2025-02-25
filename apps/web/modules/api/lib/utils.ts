@@ -2,7 +2,9 @@ import { responses } from "@/modules/api/lib/response";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { ZodError } from "zod";
 
-export const handleApiError = (err: ApiErrorResponse): Response => {
+export const handleApiError = (request: Request, err: ApiErrorResponse): Response => {
+  logApiError(request, err);
+
   switch (err.type) {
     case "bad_request":
       return responses.badRequestResponse({ details: err.details });
@@ -19,7 +21,15 @@ export const handleApiError = (err: ApiErrorResponse): Response => {
     case "too_many_requests":
       return responses.tooManyRequestsResponse();
     case "internal_server_error":
-      return responses.internalServerErrorResponse({ details: err.details });
+      // Replace with a generic error message, because we don't want to expose internal errors to API users.
+      return responses.internalServerErrorResponse({
+        details: [
+          {
+            field: "error",
+            issue: "An error occurred while processing your request. Please try again later.",
+          },
+        ],
+      });
     default:
       return responses.internalServerErrorResponse();
   }
@@ -30,4 +40,26 @@ export const formatZodError = (error: ZodError) => {
     field: issue.path.join("."),
     issue: issue.message,
   }));
+};
+
+export const logApiRequest = (request: Request, responseStatus: number, duration: number): void => {
+  const method = request.method;
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const correlationId = request.headers.get("x-request-id") || "";
+  const queryParams = Object.fromEntries(url.searchParams.entries());
+  const safeQueryParams = Object.fromEntries(
+    Object.entries(queryParams).filter(([key]) => !["apikey", "token", "secret"].includes(key.toLowerCase()))
+  );
+
+  console.log(
+    `[API REQUEST DETAILS] ${method} ${path} - ${responseStatus} - ${duration}ms ${correlationId ? `\n correlationId: ${correlationId}` : ""} ${safeQueryParams ? `\n queryParams: ${JSON.stringify(safeQueryParams)}` : ""}`
+  );
+};
+
+export const logApiError = (request: Request, error: ApiErrorResponse): void => {
+  const correlationId = request.headers.get("x-request-id") || "";
+  console.error(
+    `[API ERROR DETAILS] ${correlationId ? `correlationId: ${correlationId}` : ""} - error: ${JSON.stringify(error, null, 2)}`
+  );
 };

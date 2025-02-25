@@ -18,24 +18,41 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
+import { logApiError } from "@/modules/api/lib/utils";
+import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import { NextRequest, NextResponse } from "next/server";
+import { v4 as uuidv4 } from "uuid";
+import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
-const isProduction = process.env.NODE_ENV === "production";
+export const middleware = async (originalRequest: NextRequest) => {
+  // Create a new Request object to override headers and add a unique request ID header
+  const request = new NextRequest(originalRequest, {
+    headers: new Headers(originalRequest.headers),
+  });
 
-export const middleware = async (request: NextRequest) => {
+  request.headers.set("x-request-id", uuidv4());
+
+  // Create a new NextResponse object to forward the new request with headers
+  const nextResponseWithCustomHeader = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
     const forwardedProto = request.headers.get("x-forwarded-proto") || "http";
-    if (isProduction && forwardedProto !== "https") {
-      return NextResponse.json(
-        { error: "Only HTTPS connections are allowed on the management endpoint." },
-        { status: 403 }
-      );
+    if (IS_PRODUCTION && forwardedProto !== "https") {
+      const apiError: ApiErrorResponse = {
+        type: "forbidden",
+        details: [{ field: "", issue: "Only HTTPS connections are allowed on the management endpoint." }],
+      };
+      logApiError(request, apiError);
+
+      return NextResponse.json(apiError, { status: 403 });
     }
   }
 
@@ -49,13 +66,13 @@ export const middleware = async (request: NextRequest) => {
 
   const callbackUrl = request.nextUrl.searchParams.get("callbackUrl");
   if (callbackUrl && !isValidCallbackUrl(callbackUrl, WEBAPP_URL)) {
-    return NextResponse.json({ error: "Invalid callback URL" });
+    return NextResponse.json({ error: "Invalid callback URL" }, { status: 400 });
   }
   if (token && callbackUrl) {
     return NextResponse.redirect(WEBAPP_URL + callbackUrl);
   }
-  if (!isProduction || RATE_LIMITING_DISABLED) {
-    return NextResponse.next();
+  if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
+    return nextResponseWithCustomHeader;
   }
 
   let ip =
@@ -84,14 +101,18 @@ export const middleware = async (request: NextRequest) => {
       } else if (isShareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(`share-${ip}`);
       }
-      return NextResponse.next();
+      return nextResponseWithCustomHeader;
     } catch (e) {
-      console.log(`Rate Limiting IP: ${ip}`);
-      return NextResponse.json({ error: "Too many requests, Please try after a while!" }, { status: 429 });
+      const apiError: ApiErrorResponse = {
+        type: "too_many_requests",
+        details: [{ field: "", issue: "Too many requests. Please try again later." }],
+      };
+      logApiError(request, apiError);
+      return NextResponse.json(apiError, { status: 429 });
     }
   }
 
-  return NextResponse.next();
+  return nextResponseWithCustomHeader;
 };
 
 export const config = {

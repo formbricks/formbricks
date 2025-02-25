@@ -21,12 +21,15 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
       const { params } = parsedInput;
 
       if (!params) {
-        return responses.badRequestResponse();
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "params", issue: "missing" }],
+        });
       }
 
       const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
       if (!environmentIdResult.ok) {
-        return handleApiError(environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error);
       }
 
       const checkAuthorizationResult = await checkAuthorization({
@@ -35,12 +38,12 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
       });
 
       if (!checkAuthorizationResult.ok) {
-        return handleApiError(checkAuthorizationResult.error);
+        return handleApiError(request, checkAuthorizationResult.error);
       }
 
       const response = await getResponse(params.responseId);
       if (!response.ok) {
-        return handleApiError(response.error);
+        return handleApiError(request, response.error);
       }
 
       return responses.successResponse({ data: response.data });
@@ -58,12 +61,15 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
       const { params } = parsedInput;
 
       if (!params) {
-        return responses.badRequestResponse();
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "params", issue: "missing" }],
+        });
       }
 
       const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
       if (!environmentIdResult.ok) {
-        return handleApiError(environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error);
       }
 
       const checkAuthorizationResult = await checkAuthorization({
@@ -72,13 +78,13 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
       });
 
       if (!checkAuthorizationResult.ok) {
-        return handleApiError(checkAuthorizationResult.error);
+        return handleApiError(request, checkAuthorizationResult.error);
       }
 
       const response = await deleteResponse(params.responseId);
 
       if (!response.ok) {
-        return handleApiError(response.error);
+        return handleApiError(request, response.error);
       }
 
       return responses.successResponse({ data: response.data });
@@ -97,12 +103,15 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       const { body, params } = parsedInput;
 
       if (!body || !params) {
-        return responses.badRequestResponse();
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: !body ? "body" : "params", issue: "missing" }],
+        });
       }
 
       const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
       if (!environmentIdResult.ok) {
-        return handleApiError(environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error);
       }
 
       const checkAuthorizationResult = await checkAuthorization({
@@ -111,13 +120,13 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       });
 
       if (!checkAuthorizationResult.ok) {
-        return handleApiError(checkAuthorizationResult.error);
+        return handleApiError(request, checkAuthorizationResult.error);
       }
 
       const response = await updateResponse(params.responseId, body);
 
       if (!response.ok) {
-        return handleApiError(response.error);
+        return handleApiError(request, response.error);
       }
 
       return responses.successResponse({ data: response.data });

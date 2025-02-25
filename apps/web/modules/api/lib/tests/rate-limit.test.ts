@@ -16,7 +16,7 @@ describe("when rate limiting is disabled", () => {
   });
 
   test("should log a warning once and return a stubbed response", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { rateLimiter } = await import("@/modules/api/lib/rate-limit");
     const limiterFunc = rateLimiter();
 
@@ -43,7 +43,7 @@ describe("when UNKEY_ROOT_KEY is missing", () => {
   });
 
   test("should log a warning about missing UNKEY_ROOT_KEY and return stub response", async () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => { });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { rateLimiter } = await import("@/modules/api/lib/rate-limit");
     const limiterFunc = rateLimiter();
 

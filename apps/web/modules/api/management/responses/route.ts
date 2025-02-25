@@ -16,7 +16,10 @@ export const GET = async (request: NextRequest) =>
       const { query } = parsedInput;
 
       if (!query) {
-        return responses.badRequestResponse();
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "query", issue: "missing" }],
+        });
       }
 
       const environmentId = authentication.environmentId;
@@ -27,7 +30,7 @@ export const GET = async (request: NextRequest) =>
         return responses.successResponse(res.data);
       }
 
-      return handleApiError(res.error);
+      return handleApiError(request, res.error);
     },
   });
 
@@ -41,12 +44,15 @@ export const POST = async (request: Request) =>
       const { body } = parsedInput;
 
       if (!body) {
-        return responses.badRequestResponse();
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "body", issue: "missing" }],
+        });
       }
 
       const environmentIdResult = await getEnvironmentIdFromSurveyId(body.surveyId);
       if (!environmentIdResult.ok) {
-        return handleApiError(environmentIdResult.error);
+        return handleApiError(request, environmentIdResult.error);
       }
 
       const environmentId = environmentIdResult.data;
@@ -57,7 +63,7 @@ export const POST = async (request: Request) =>
       });
 
       if (!checkAuthorizationResult.ok) {
-        return handleApiError(checkAuthorizationResult.error);
+        return handleApiError(request, checkAuthorizationResult.error);
       }
 
       // if there is a createdAt but no updatedAt, set updatedAt to createdAt
@@ -67,7 +73,7 @@ export const POST = async (request: Request) =>
 
       const createResponseResult = await createResponse(environmentId, body);
       if (!createResponseResult.ok) {
-        return handleApiError(createResponseResult.error);
+        return handleApiError(request, createResponseResult.error);
       }
 
       return responses.successResponse({ data: createResponseResult.data, cors: true });

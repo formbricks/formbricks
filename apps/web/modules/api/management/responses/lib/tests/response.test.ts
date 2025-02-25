@@ -5,7 +5,7 @@ import {
   response,
   responseFilter,
   responseInput,
-} from "./__mocks__/repsonse.mock";
+} from "./__mocks__/response.mock";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
@@ -13,6 +13,7 @@ import {
 } from "@/modules/api/management/responses/lib/organization";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { IS_PRODUCTION } from "@formbricks/lib/constants";
 import { sendPlanLimitsReachedEventToPosthogWeekly } from "@formbricks/lib/posthogServer";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { createResponse, getResponses } from "../response";
@@ -39,6 +40,7 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: true,
+  IS_PRODUCTION: false,
 }));
 
 describe("Response Lib", () => {
