@@ -176,6 +176,7 @@ export const createSurvey = async (
 
     return transformedSurvey;
   } catch (error) {
+    console.error(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error);
       throw new DatabaseError(error.message);
