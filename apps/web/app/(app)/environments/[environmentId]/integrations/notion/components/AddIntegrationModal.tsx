@@ -7,7 +7,7 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
-import { getQuestionTypes } from "@/modules/survey/editor/lib/questions";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";

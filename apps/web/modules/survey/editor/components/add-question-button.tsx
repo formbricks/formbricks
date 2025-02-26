@@ -5,7 +5,7 @@ import {
   getQuestionDefaults,
   getQuestionTypes,
   universalQuestionPresets,
-} from "@/modules/survey/editor/lib/questions";
+} from "@/modules/survey/lib/questions";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";

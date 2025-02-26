@@ -1,12 +1,12 @@
 "use client";
 
-import { getQuestionIconMap } from "@/modules/survey/editor/lib/questions";
 import { getSurveyFollowUpActionDefaultBody } from "@/modules/survey/editor/lib/utils";
 import {
   TCreateSurveyFollowUpForm,
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";

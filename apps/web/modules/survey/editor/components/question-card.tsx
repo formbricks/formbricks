@@ -17,8 +17,8 @@ import { OpenQuestionForm } from "@/modules/survey/editor/components/open-questi
 import { PictureSelectionForm } from "@/modules/survey/editor/components/picture-selection-form";
 import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
-import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/editor/lib/questions";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";

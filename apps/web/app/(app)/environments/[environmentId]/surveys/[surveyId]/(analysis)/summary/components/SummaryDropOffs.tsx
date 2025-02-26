@@ -1,6 +1,6 @@
 "use client";
 
-import { getQuestionIcon } from "@/modules/survey/editor/lib/questions";
+import { getQuestionIcon } from "@/modules/survey/lib/questions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { TimerIcon } from "lucide-react";

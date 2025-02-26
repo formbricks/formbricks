@@ -1,7 +1,7 @@
 "use client";
 
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
-import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/editor/lib/questions";
+import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
