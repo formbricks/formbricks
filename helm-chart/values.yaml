@@ -44,6 +44,16 @@ autoscaling:
 
 replicaCount: 1
 
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
 formbricksConfig:
   nextAuthSecret: ""
   encryptionKey: ""
@@ -126,8 +136,8 @@ redis:
 postgresql:
   enabled: true
   image:
-    repository: ankane/pgvector
-    tag: latest
+    repository: pgvector/pgvector
+    tag: 0.8.0-pg17
   auth:
     username: formbricks
     password: formbrickspassword
@@ -136,22 +146,11 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
-    securityContext:
-      runAsUser: 999
-      runAsGroup: 999
-      fsGroup: 999
-      readOnlyRootFilesystem: false
-    containerSecurityContext:
-      runAsUser: 999
-      runAsGroup: 999
-      readOnlyRootFilesystem: false
     podSecurityContext:
-      fsGroup: 999
-      runAsUser: 999
-      runAsGroup: 999
-    extraVolumes:
-      - name: postgresql-run
-        emptyDir: {}
-    extraVolumeMounts:
-      - name: postgresql-run
-        mountPath: /var/run/postgresql
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      readOnlyRootFilesystem: false
