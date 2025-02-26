@@ -12,6 +12,15 @@ export default defineConfig({
       provider: 'v8',            // Use V8 as the coverage provider
       reporter: ['text', 'html', 'lcov'], // Generate text summary and HTML reports
       reportsDirectory: './coverage', // Output coverage reports to the coverage/ directory
+      exclude: [
+        '**/*.test.*',
+        '**/*.spec.*', 
+        '**/constants.ts',
+        '**/route.ts',
+        '**/openapi.ts',
+        'playwright/**',
+        'node_modules/**'
+      ]
     },
   },
   plugins: [tsconfigPaths()],

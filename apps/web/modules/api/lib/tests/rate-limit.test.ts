@@ -5,10 +5,11 @@ vi.mock("@unkey/ratelimit", () => ({
 }));
 
 describe("when rate limiting is disabled", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
+    const constants = await vi.importActual("@formbricks/lib/constants");
     vi.doMock("@formbricks/lib/constants", () => ({
-      ...vi.importActual("@formbricks/lib/constants"),
+      ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: true,
       UNKEY_ROOT_KEY: "dummy-key",
@@ -32,10 +33,11 @@ describe("when rate limiting is disabled", () => {
 });
 
 describe("when UNKEY_ROOT_KEY is missing", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
+    const constants = await vi.importActual("@formbricks/lib/constants");
     vi.doMock("@formbricks/lib/constants", () => ({
-      ...vi.importActual("@formbricks/lib/constants"),
+      ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: false,
       UNKEY_ROOT_KEY: "",
@@ -58,9 +60,11 @@ describe("when rate limiting is active (enabled)", () => {
   const mockResponse = { success: true, limit: 5, remaining: 2, reset: 1000 };
   let limitMock: ReturnType<typeof vi.fn>;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.resetModules();
+    const constants = await vi.importActual("@formbricks/lib/constants");
     vi.doMock("@formbricks/lib/constants", () => ({
+      ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: false,
       UNKEY_ROOT_KEY: "valid-key",

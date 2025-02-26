@@ -142,6 +142,7 @@
     "@types/qrcode": "1.5.5",
     "@vitest/coverage-v8": "2.1.8",
     "vite": "6.0.9",
+    "vite-tsconfig-paths": "5.1.4",
     "vitest": "2.1.9",
     "vitest-mock-extended": "2.0.2"
   }
