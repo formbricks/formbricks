@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions -- required for template literals */
 /* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 /* eslint-disable no-console -- debugging*/
-import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
-import { Modal } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { StorageAPI } from "@/lib/common/file-upload";
 import { Logger } from "@/lib/common/logger";
@@ -16,6 +12,10 @@ import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageDat
 import type { TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
 import type { SurveyInlineProps } from "@/types/survey";
+import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
+import { Modal } from "react-native";
+import { WebView, type WebViewMessageEvent } from "react-native-webview";
+import { FormbricksAPI } from "@formbricks/api";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -343,7 +343,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): string => {
   const isCenter = options.placement === "center";
 
-  const getBackgroundColor = (): "rgba(51, 65, 85, 0.8)" | "rgba(255, 255, 255, 0.9)" | "transparent" => {
+  // @ts-expect-error -- TODO: fix this
+  const _getBackgroundColor = (): "rgba(51, 65, 85, 0.8)" | "rgba(255, 255, 255, 0.9)" | "transparent" => {
     if (isCenter) {
       if (options.darkOverlay) {
         return "rgba(51, 65, 85, 0.8)";
@@ -363,67 +364,9 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       <title>Formbricks WebView Survey</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body style="overflow: hidden; height: 100vh; background: ${getBackgroundColor()}; margin: 0;">
-      <style>
-        .survey-container {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          display: flex;
-          padding: 20px;
-          box-sizing: border-box;
-          pointer-events: none;
-        }
-        
-        #formbricks-react-native {
-          width: 100%;
-          max-width: 600px;
-          pointer-events: auto;
-        }
-
-        #formbricks-react-native > div {
-          width: 100%;
-        }
-
-        @media (max-width: 640px) {
-          .survey-container {
-            padding: 0;
-            align-items: flex-end !important;
-            justify-content: center !important;
-          }
-          
-          #formbricks-react-native {
-            max-width: 100%;
-          }
-        }
-
-        /* Placement-specific styles */
-        .placement-bottomLeft {
-          align-items: flex-end;
-          justify-content: flex-start;
-        }
-        .placement-bottomRight {
-          align-items: flex-end;
-          justify-content: flex-end;
-        }
-        .placement-topLeft {
-          align-items: flex-start;
-          justify-content: flex-start;
-        }
-        .placement-topRight {
-          align-items: flex-start;
-          justify-content: flex-end;
-        }
-        .placement-center {
-          align-items: center;
-          justify-content: center;
-        }
-      </style>
-      <div class="survey-container placement-${options.placement ?? "center"}" id="survey-wrapper">
+    <body style="overflow: hidden; height: 100vh; margin: 0;">
+      <div class="survey-container" id="survey-wrapper">
         <div id="formbricks-react-native">
-          <div></div>
         </div>
       </div>
     </body>
@@ -507,7 +450,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
           onFileUpload
         };
         
-        window.formbricksSurveys.renderSurveyInline(surveyProps);
+        window.formbricksSurveys.renderSurvey(surveyProps);
       }
 
       const script = document.createElement("script");

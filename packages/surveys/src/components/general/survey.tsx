@@ -54,6 +54,7 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
 }: SurveyBaseProps) {
+  console.log("onClose", onClose);
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)

@@ -41,3 +41,15 @@ export interface SurveyModalProps extends SurveyBaseProps {
   darkOverlay: boolean;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }
+
+export interface SurveyContainerProps extends SurveyBaseProps {
+  apiHost: string;
+  environmentId: string;
+  userId?: string;
+  mode?: "modal" | "inline";
+  containerId?: string;
+  clickOutside?: boolean;
+  darkOverlay?: boolean;
+  placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+  onDisplayCreated?: (displayId: string) => void;
+}

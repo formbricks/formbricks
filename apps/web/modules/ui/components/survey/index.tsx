@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SurveyInlineProps, SurveyModalProps } from "@formbricks/types/formbricks-surveys";
+import {
+  SurveyContainerProps,
+  SurveyInlineProps,
+  SurveyModalProps,
+} from "@formbricks/types/formbricks-surveys";
 
 const createContainerId = () => `formbricks-survey-container`;
 declare global {
@@ -7,6 +11,7 @@ declare global {
     formbricksSurveys: {
       renderSurveyInline: (props: SurveyInlineProps) => void;
       renderSurveyModal: (props: SurveyModalProps) => void;
+      renderSurvey: (props: SurveyContainerProps) => void;
     };
   }
 }
@@ -14,7 +19,7 @@ declare global {
 export const SurveyInline = (props: Omit<SurveyInlineProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
   const renderInline = useCallback(
-    () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
+    () => window.formbricksSurveys.renderSurvey({ ...props, containerId, mode: "inline" }),
     [containerId, props]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);

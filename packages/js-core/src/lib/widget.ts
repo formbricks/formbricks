@@ -115,8 +115,179 @@ const renderWidget = async (
   const isBrandingEnabled = project.inAppSurveyBranding;
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
+  console.log("survey", survey);
+  console.log("project", project);
+  console.log("projectOverwrites", projectOverwrites);
+  console.log("clickOutside", clickOutside);
+  console.log("darkOverlay", darkOverlay);
+  console.log("placement", placement);
+  console.log("isBrandingEnabled", isBrandingEnabled);
+
   const timeoutId = setTimeout(() => {
-    formbricksSurveys.renderSurveyModal({
+    // formbricksSurveys.renderSurveyModal({
+    //   survey,
+    //   isBrandingEnabled,
+    //   clickOutside,
+    //   darkOverlay,
+    //   languageCode,
+    //   placement,
+    //   styling: getStyling(project, survey),
+    //   getSetIsError: (f: (value: boolean) => void) => {
+    //     setIsError = f;
+    //   },
+    //   getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
+    //     setIsResponseSendingFinished = f;
+    //   },
+    //   onDisplay: async () => {
+    //     const { userId } = config.get().personState.data;
+
+    //     const api = new FormbricksAPI({
+    //       apiHost: config.get().apiHost,
+    //       environmentId: config.get().environmentId,
+    //     });
+
+    //     const res = await api.client.display.create({
+    //       surveyId: survey.id,
+    //       ...(userId && { userId }),
+    //     });
+
+    //     if (!res.ok) {
+    //       throw new Error("Could not create display");
+    //     }
+
+    //     const { id } = res.data;
+
+    //     surveyState.updateDisplayId(id);
+    //     responseQueue.updateSurveyState(surveyState);
+
+    //     const existingDisplays = config.get().personState.data.displays;
+    //     const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+    //     const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
+    //     const previousConfig = config.get();
+
+    //     const updatedPersonState: TJsPersonState = {
+    //       ...previousConfig.personState,
+    //       data: {
+    //         ...previousConfig.personState.data,
+    //         displays,
+    //         lastDisplayAt: new Date(),
+    //       },
+    //     };
+
+    //     const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
+
+    //     config.update({
+    //       ...previousConfig,
+    //       environmentState: previousConfig.environmentState,
+    //       personState: updatedPersonState,
+    //       filteredSurveys,
+    //     });
+    //   },
+    //   onResponse: (responseUpdate: TResponseUpdate) => {
+    //     const { userId } = config.get().personState.data;
+
+    //     const isNewResponse = surveyState.responseId === null;
+
+    //     if (userId) {
+    //       surveyState.updateUserId(userId);
+    //     }
+
+    //     responseQueue.updateSurveyState(surveyState);
+    //     responseQueue.add({
+    //       data: responseUpdate.data,
+    //       ttc: responseUpdate.ttc,
+    //       finished: responseUpdate.finished,
+    //       language:
+    //         responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
+    //       meta: {
+    //         url: window.location.href,
+    //         action,
+    //       },
+    //       variables: responseUpdate.variables,
+    //       hiddenFields,
+    //       displayId: surveyState.displayId,
+    //     });
+
+    //     if (isNewResponse) {
+    //       const responses = config.get().personState.data.responses;
+    //       const newPersonState: TJsPersonState = {
+    //         ...config.get().personState,
+    //         data: {
+    //           ...config.get().personState.data,
+    //           responses: responses.length ? [...responses, surveyState.surveyId] : [surveyState.surveyId],
+    //         },
+    //       };
+
+    //       const filteredSurveys = filterSurveys(config.get().environmentState, newPersonState);
+
+    //       config.update({
+    //         ...config.get(),
+    //         environmentState: config.get().environmentState,
+    //         personState: newPersonState,
+    //         filteredSurveys,
+    //       });
+    //     }
+    //   },
+    //   onClose: closeSurvey,
+    //   onFileUpload: async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
+    //     const api = new FormbricksAPI({
+    //       apiHost: config.get().apiHost,
+    //       environmentId: config.get().environmentId,
+    //     });
+
+    //     return await api.client.storage.uploadFile(
+    //       {
+    //         type: file.type,
+    //         name: file.name,
+    //         base64: file.base64,
+    //       },
+    //       params
+    //     );
+    //   },
+    //   onRetry: () => {
+    //     setIsError(false);
+    //     void responseQueue.processQueue();
+    //   },
+    //   hiddenFieldsRecord: hiddenFields,
+    // });
+
+    formbricksSurveys.renderSurvey({
+      apiHost: config.get().apiHost,
+      environmentId: config.get().environmentId,
+      userId: config.get().personState.data.userId ?? undefined,
+      onDisplayCreated: (displayId: string) => {
+        console.log("from onDisplayCreated: ", displayId);
+
+        surveyState.updateDisplayId(displayId);
+        responseQueue.updateSurveyState(surveyState);
+
+        const existingDisplays = config.get().personState.data.displays;
+        const newDisplay = { surveyId: survey.id, createdAt: new Date() };
+        const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
+        const previousConfig = config.get();
+
+        const updatedPersonState: TJsPersonState = {
+          ...previousConfig.personState,
+          data: {
+            ...previousConfig.personState.data,
+            displays,
+            lastDisplayAt: new Date(),
+          },
+        };
+
+        console.log("updatedPersonState: ", updatedPersonState);
+
+        const filteredSurveys = filterSurveys(previousConfig.environmentState, updatedPersonState);
+
+        console.log("filteredSurveys: ", filteredSurveys);
+
+        config.update({
+          ...previousConfig,
+          environmentState: previousConfig.environmentState,
+          personState: updatedPersonState,
+          filteredSurveys,
+        });
+      },
       survey,
       isBrandingEnabled,
       clickOutside,

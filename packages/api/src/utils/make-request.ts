@@ -16,6 +16,7 @@ export const makeRequest = async <T>(
     headers: {
       "Content-Type": "application/json",
     },
+    cache: "no-store",
     body,
   });
 
