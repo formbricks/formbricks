@@ -29,6 +29,7 @@ interface RankingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function RankingQuestion({
@@ -44,6 +45,7 @@ export function RankingQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  isBackButtonHidden,
 }: RankingQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isCurrent = question.id === currentQuestionId;
@@ -272,7 +274,7 @@ export function RankingQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             tabIndex={isCurrent ? 0 : -1}
