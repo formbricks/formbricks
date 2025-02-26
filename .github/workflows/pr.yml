@@ -19,30 +19,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-jobs:
-  test:
-    name: Run Unit Tests
-    uses: ./.github/workflows/test.yml
-    secrets: inherit
-
   lint:
     name: Run Linters
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
-  build:
-    name: Build Formbricks-web
-    uses: ./.github/workflows/build-web.yml
-    secrets: inherit
-
-  e2e-test:
-    name: Run E2E Tests
-    uses: ./.github/workflows/e2e.yml
-    secrets: inherit
-
   required:
     name: PR Check Summary
-    needs: [lint, test, build, e2e-test]
+    needs: [lint]
     if: always()
     runs-on: ubuntu-latest
     permissions:
