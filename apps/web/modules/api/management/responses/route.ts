@@ -2,7 +2,7 @@ import { responses } from "@/modules/api/lib/response";
 import { handleApiError } from "@/modules/api/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/management/auth/authenticatedApiClient";
 import { checkAuthorization } from "@/modules/api/management/auth/checkAuthorization";
-import { getEnvironmentIdFromSurveyId } from "@/modules/api/management/lib/helper";
+import { getEnvironmentId } from "@/modules/api/management/lib/helper";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/management/responses/types/responses";
 import { NextRequest } from "next/server";
 import { createResponse, getResponses } from "./lib/response";
@@ -51,7 +51,12 @@ export const POST = async (request: Request) =>
         });
       }
 
-      const environmentIdResult = await getEnvironmentIdFromSurveyId(body.surveyId);
+      console.log("body", body);
+
+      const environmentIdResult = await getEnvironmentId(body.surveyId, false);
+
+      console.log("environmentIdResult", environmentIdResult);
+
       if (!environmentIdResult.ok) {
         return handleApiError(request, environmentIdResult.error);
       }

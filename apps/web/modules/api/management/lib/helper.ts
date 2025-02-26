@@ -1,27 +1,16 @@
-import { getResponseSurveyId, getSurveyEnvironmentId } from "@/modules/api/management/lib/services";
+import { getSurveyAndEnvironmentId } from "@/modules/api/management/lib/services";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { Result, ok } from "@formbricks/types/error-handlers";
 
-export const getEnvironmentIdFromSurveyId = async (
-  surveyId: string
+export const getEnvironmentId = async (
+  id: string,
+  isResponseId: boolean
 ): Promise<Result<string, ApiErrorResponse>> => {
-  const surveyResult = await getSurveyEnvironmentId(surveyId);
+  const result = await getSurveyAndEnvironmentId(id, isResponseId);
 
-  if (!surveyResult.ok) {
-    return surveyResult;
+  if (!result.ok) {
+    return result;
   }
 
-  return ok(surveyResult.data.environmentId);
-};
-
-export const getEnvironmentIdFromResponseId = async (
-  responseId: string
-): Promise<Result<string, ApiErrorResponse>> => {
-  const responseResult = await getResponseSurveyId(responseId);
-
-  if (!responseResult.ok) {
-    return responseResult;
-  }
-
-  return await getEnvironmentIdFromSurveyId(responseResult.data.surveyId);
+  return ok(result.data.environmentId);
 };

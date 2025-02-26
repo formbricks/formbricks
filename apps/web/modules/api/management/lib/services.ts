@@ -9,58 +9,43 @@ import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getSurveyEnvironmentId = reactCache(async (surveyId: string) =>
+export const getSurveyAndEnvironmentId = reactCache(async (id: string, isResponseId: boolean) =>
   cache(
-    async (): Promise<Result<{ environmentId: string }, ApiErrorResponse>> => {
+    async (): Promise<Result<{ surveyId: string; environmentId: string }, ApiErrorResponse>> => {
       try {
-        const survey = await prisma.survey.findUnique({
-          where: {
-            id: surveyId,
-          },
+        const result = await prisma.survey.findFirst({
+          where: isResponseId ? { responses: { some: { id } } } : { id },
           select: {
+            id: !isResponseId,
             environmentId: true,
+            responses: isResponseId ? { where: { id }, select: { surveyId: true } } : false,
           },
         });
 
-        if (!survey) {
-          return err({ type: "not_found", details: [{ field: "survey", issue: "not found" }] });
+        if (!result) {
+          return err({
+            type: "not_found",
+            details: [{ field: isResponseId ? "response" : "survey", issue: "not found" }],
+          });
         }
 
-        return ok(survey);
-      } catch (error) {
-        return err({ type: "internal_server_error", details: [{ field: "survey", issue: error.message }] });
-      }
-    },
-    [`services-getSurvey-${surveyId}`],
-    {
-      tags: [surveyCache.tag.byId(surveyId)],
-    }
-  )()
-);
-
-export const getResponseSurveyId = reactCache(async (responseId: string) =>
-  cache(
-    async (): Promise<Result<{ surveyId: string }, ApiErrorResponse>> => {
-      try {
-        const response = await prisma.response.findUnique({
-          where: {
-            id: responseId,
-          },
-          select: { surveyId: true },
-        });
-
-        if (!response) {
+        if (isResponseId && result.responses && result.responses.length > 0) {
+          return ok({ surveyId: result.responses[0].surveyId, environmentId: result.environmentId });
+        } else if (!isResponseId) {
+          return ok({ surveyId: id, environmentId: result.environmentId });
+        } else {
           return err({ type: "not_found", details: [{ field: "response", issue: "not found" }] });
         }
-
-        return ok(response);
       } catch (error) {
-        return err({ type: "internal_server_error", details: [{ field: "response", issue: error.message }] });
+        return err({
+          type: "internal_server_error",
+          details: [{ field: isResponseId ? "response" : "survey", issue: error.message }],
+        });
       }
     },
-    [`services-getResponse-${responseId}`],
+    [`services-getSurveyAndEnvironmentId-${id}-${isResponseId}`],
     {
-      tags: [responseCache.tag.byId(responseId), responseNoteCache.tag.byResponseId(responseId)],
+      tags: [responseCache.tag.byId(id), responseNoteCache.tag.byResponseId(id), surveyCache.tag.byId(id)],
     }
   )()
 );

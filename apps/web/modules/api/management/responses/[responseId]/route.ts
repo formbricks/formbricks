@@ -2,7 +2,7 @@ import { responses } from "@/modules/api/lib/response";
 import { handleApiError } from "@/modules/api/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/management/auth/authenticatedApiClient";
 import { checkAuthorization } from "@/modules/api/management/auth/checkAuthorization";
-import { getEnvironmentIdFromResponseId } from "@/modules/api/management/lib/helper";
+import { getEnvironmentId } from "@/modules/api/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
@@ -28,7 +28,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         });
       }
 
-      const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
+      const environmentIdResult = await getEnvironmentId(params.responseId, true);
       if (!environmentIdResult.ok) {
         return handleApiError(request, environmentIdResult.error);
       }
@@ -68,7 +68,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         });
       }
 
-      const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
+      const environmentIdResult = await getEnvironmentId(params.responseId, true);
       if (!environmentIdResult.ok) {
         return handleApiError(request, environmentIdResult.error);
       }
@@ -110,7 +110,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         });
       }
 
-      const environmentIdResult = await getEnvironmentIdFromResponseId(params.responseId);
+      const environmentIdResult = await getEnvironmentId(params.responseId, true);
       if (!environmentIdResult.ok) {
         return handleApiError(request, environmentIdResult.error);
       }
