@@ -1,10 +1,10 @@
 "use client";
 
+import { getQuestionIcon } from "@/modules/survey/editor/lib/questions";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { TimerIcon } from "lucide-react";
 import { JSX } from "react";
-import { getQuestionIcon } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionType, TSurveySummary } from "@formbricks/types/surveys/types";
 
