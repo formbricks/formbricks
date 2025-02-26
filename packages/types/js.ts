@@ -35,6 +35,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     displayPercentage: true,
     delay: true,
     projectOverwrites: true,
+    isBackButtonHidden: true,
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 

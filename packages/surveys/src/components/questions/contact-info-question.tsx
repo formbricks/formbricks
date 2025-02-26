@@ -25,6 +25,7 @@ interface ContactInfoQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
+  isBackButtonHidden: boolean;
 }
 
 export function ContactInfoQuestion({
@@ -40,6 +41,7 @@ export function ContactInfoQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
+  isBackButtonHidden,
 }: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -181,7 +183,7 @@ export function ContactInfoQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
