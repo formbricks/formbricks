@@ -20,7 +20,6 @@ export const handleApiError = (request: Request, err: ApiErrorResponse): Respons
       return responses.unprocessableEntityResponse({ details: err.details });
     case "too_many_requests":
       return responses.tooManyRequestsResponse();
-    case "internal_server_error":
     default:
       // Replace with a generic error message, because we don't want to expose internal errors to API users.
       return responses.internalServerErrorResponse({
@@ -47,8 +46,10 @@ export const logApiRequest = (request: Request, responseStatus: number, duration
   const path = url.pathname;
   const correlationId = request.headers.get("x-request-id") || "";
   const queryParams = Object.fromEntries(url.searchParams.entries());
+
+  const sensitiveParams = ["apikey", "token", "secret"];
   const safeQueryParams = Object.fromEntries(
-    Object.entries(queryParams).filter(([key]) => !["apikey", "token", "secret"].includes(key.toLowerCase()))
+    Object.entries(queryParams).filter(([key]) => !sensitiveParams.includes(key.toLowerCase()))
   );
 
   console.log(

@@ -5,8 +5,7 @@ import {
   getOrganizationIdFromEnvironmentId,
 } from "@/modules/api/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/management/responses/lib/utils";
-import { TResponseInput } from "@/modules/api/management/responses/types/responses";
-import { TGetResponsesFilter } from "@/modules/api/management/responses/types/responses";
+import { TGetResponsesFilter, TResponseInput } from "@/modules/api/management/responses/types/responses";
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/types/api-success";
 import { Prisma, Response } from "@prisma/client";

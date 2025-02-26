@@ -1,6 +1,5 @@
 import { ApiErrorResponse } from "@/modules/api/types/api-error";
-import { Survey } from "@prisma/client";
-import { Response } from "@prisma/client";
+import { Response, Survey } from "@prisma/client";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { Result, okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
