@@ -1,9 +1,9 @@
 "use client";
 
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";
-import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionSummary } from "@formbricks/types/surveys/types";
 
