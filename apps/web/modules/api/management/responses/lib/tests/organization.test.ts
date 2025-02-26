@@ -203,6 +203,20 @@ describe("Organization Lib", () => {
       }
     });
 
+    test("return for a free plan", async () => {
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue({
+        billing: { ...organizationBilling, plan: "free" },
+      });
+      vi.mocked(prisma.response.aggregate).mockResolvedValue({ _count: { id: 5 } });
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(organizationEnvironments);
+
+      const result = await getMonthlyOrganizationResponseCount(organizationId);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toBe(5);
+      }
+    });
+
     test("handle internal_server_error in aggregation", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: organizationBilling });
       const error = new Error("Aggregate error");
@@ -215,6 +229,20 @@ describe("Organization Lib", () => {
         expect(result.error).toEqual({
           type: "internal_server_error",
           details: [{ field: "organization", issue: "Aggregate error" }],
+        });
+      }
+    });
+
+    test("handle error when getAllEnvironmentsFromOrganizationId fails", async () => {
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ billing: organizationBilling });
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
+
+      const result = await getMonthlyOrganizationResponseCount(organizationId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "organization", issue: "not found" }],
         });
       }
     });

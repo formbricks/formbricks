@@ -1,54 +1,9 @@
 import { checkRateLimitAndThrowError } from "@/modules/api/lib/rate-limit";
-import { formatZodError, handleApiError, logApiRequest } from "@/modules/api/lib/utils";
-import { getEnvironmentIdFromApiKey } from "@/modules/api/management/lib/api-key";
-import { hashApiKey } from "@/modules/api/management/lib/utils";
-import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { formatZodError, handleApiError } from "@/modules/api/lib/utils";
 import { ZodRawShape, z } from "zod";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { Result, err, ok, okVoid } from "@formbricks/types/error-handlers";
-
-export const authenticateRequest = async (
-  request: Request
-): Promise<Result<TAuthenticationApiKey, ApiErrorResponse>> => {
-  const apiKey = request.headers.get("x-api-key");
-  if (apiKey) {
-    const environmentIdResult = await getEnvironmentIdFromApiKey(apiKey);
-    if (!environmentIdResult.ok) {
-      return err(environmentIdResult.error);
-    }
-    const environmentId = environmentIdResult.data;
-    const hashedApiKey = hashApiKey(apiKey);
-    if (environmentId) {
-      const authentication: TAuthenticationApiKey = {
-        type: "apiKey",
-        environmentId,
-        hashedApiKey,
-      };
-      return ok(authentication);
-    }
-    return err({
-      type: "forbidden",
-    });
-  }
-  return err({
-    type: "unauthorized",
-  });
-};
-
-export const checkAuthorization = ({
-  authentication,
-  environmentId,
-}: {
-  authentication: TAuthenticationApiKey;
-  environmentId: string;
-}): Result<void, ApiErrorResponse> => {
-  if (authentication.type === "apiKey" && authentication.environmentId !== environmentId) {
-    return err({
-      type: "unauthorized",
-    });
-  }
-  return okVoid();
-};
+import { err } from "@formbricks/types/error-handlers";
+import { authenticateRequest } from "./authenticateRequest";
 
 export type HandlerFn<TInput = Record<string, unknown>> = ({
   authentication,
@@ -120,6 +75,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 
     if (schemas?.params) {
       const paramsObject = (await externalParams) || {};
+      console.log("paramsObject: ", paramsObject);
       const paramsResult = schemas.params.safeParse(paramsObject);
       if (!paramsResult.success) {
         throw err({
@@ -147,34 +103,4 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   } catch (err) {
     return handleApiError(request, err);
   }
-};
-
-export const authenticatedApiClient = async <S extends ExtendedSchemas>({
-  request,
-  schemas,
-  externalParams,
-  rateLimit = true,
-  handler,
-}: {
-  request: Request;
-  schemas?: S;
-  externalParams?: Promise<Record<string, any>>;
-  rateLimit?: boolean;
-  handler: HandlerFn<ParsedSchemas<S>>;
-}): Promise<Response> => {
-  const startTime = Date.now();
-
-  const response = await apiWrapper({
-    request,
-    schemas,
-    externalParams,
-    rateLimit,
-    handler,
-  });
-
-  const duration = Date.now() - startTime;
-
-  logApiRequest(request, response.status, duration);
-
-  return response;
 };

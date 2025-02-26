@@ -13,16 +13,19 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov'], // Generate text summary and HTML reports
       reportsDirectory: './coverage', // Output coverage reports to the coverage/ directory
       include: [
-        'apps/web/modules/api/**/*.ts',
-        'apps/web/modules/auth/lib/**/*.ts',
-        'apps/web/modules/signup/lib/**/*.ts',
+        'modules/api/**/*.ts',
+        'modules/auth/lib/**/*.ts',
+        'modules/signup/lib/**/*.ts',
       ],
       exclude: [
+        '**/.next/**',
         '**/*.test.*',
         '**/*.spec.*', 
-        '**/constants.ts',
-        '**/route.ts',
-        '**/openapi.ts',
+        '**/constants.ts', // Exclude constants files
+        '**/route.ts', // Exclude route files
+        '**/openapi.ts', // Exclude openapi configuration files
+        '**/openapi-document.ts', // Exclude openapi document files
+        'modules/**/types/**', // Exclude types
       ],
     },
   },

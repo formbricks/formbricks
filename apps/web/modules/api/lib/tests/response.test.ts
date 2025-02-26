@@ -36,6 +36,11 @@ describe("API Responses", () => {
         },
       });
     });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.unauthorizedResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    });
   });
 
   describe("forbiddenResponse", () => {
@@ -49,6 +54,11 @@ describe("API Responses", () => {
           message: "Forbidden",
         },
       });
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.forbiddenResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 
@@ -66,6 +76,11 @@ describe("API Responses", () => {
         },
       });
     });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.notFoundResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    });
   });
 
   describe("conflictResponse", () => {
@@ -79,6 +94,11 @@ describe("API Responses", () => {
           message: "Conflict",
         },
       });
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.conflictResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 
@@ -96,6 +116,11 @@ describe("API Responses", () => {
         },
       });
     });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.unprocessableEntityResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    });
   });
 
   describe("tooManyRequestsResponse", () => {
@@ -109,6 +134,11 @@ describe("API Responses", () => {
           message: "Too Many Requests",
         },
       });
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.tooManyRequestsResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 
@@ -125,6 +155,11 @@ describe("API Responses", () => {
           details,
         },
       });
+    });
+
+    test("include CORS headers when cors is true", () => {
+      const res = responses.internalServerErrorResponse({ cors: true });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
     });
   });
 

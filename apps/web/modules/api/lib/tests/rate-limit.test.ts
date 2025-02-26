@@ -12,21 +12,20 @@ describe("when rate limiting is disabled", () => {
       ...constants,
       MANAGEMENT_API_RATE_LIMIT: { allowedPerInterval: 5, interval: 60 },
       RATE_LIMITING_DISABLED: true,
-      UNKEY_ROOT_KEY: "dummy-key",
     }));
   });
 
   test("should log a warning once and return a stubbed response", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { rateLimiter } = await import("@/modules/api/lib/rate-limit");
-    const limiterFunc = rateLimiter();
 
-    const res1 = await limiterFunc({ identifier: "test-id" });
+    const res1 = await rateLimiter()({ identifier: "test-id" });
     expect(res1).toEqual({ success: true, limit: 10, remaining: 999, reset: 0 });
     expect(warnSpy).toHaveBeenCalledWith("Rate limiting disabled");
 
     // Subsequent calls won't log again.
-    await limiterFunc({ identifier: "another-id" });
+    await rateLimiter()({ identifier: "another-id" });
+
     expect(warnSpy).toHaveBeenCalledTimes(1);
     warnSpy.mockRestore();
   });

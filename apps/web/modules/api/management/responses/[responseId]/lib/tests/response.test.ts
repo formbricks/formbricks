@@ -150,6 +150,27 @@ describe("Response Lib", () => {
         });
       }
     });
+
+    test("handle prisma client error code P2025", async () => {
+      vi.mocked(prisma.response.delete).mockRejectedValue(
+        new PrismaClientKnownRequestError("Response not found", {
+          code: "P2025",
+          clientVersion: "1.0.0",
+          meta: {
+            cause: "Response not found",
+          },
+        })
+      );
+
+      const result = await deleteResponse(responseId);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "not_found",
+          details: [{ field: "response", issue: "not found" }],
+        });
+      }
+    });
   });
 
   describe("updateResponse", () => {

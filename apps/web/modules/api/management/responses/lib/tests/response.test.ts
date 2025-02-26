@@ -5,6 +5,9 @@ import {
   response,
   responseFilter,
   responseInput,
+  responseInputNotFinished,
+  responseInputWithoutDisplay,
+  responseInputWithoutTtc,
 } from "./__mocks__/response.mock";
 import {
   getMonthlyOrganizationResponseCount,
@@ -63,6 +66,51 @@ describe("Response Lib", () => {
       }
     });
 
+    test("handle response for initialTtc not finished", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
+
+      const result = await createResponse(environmentId, responseInputNotFinished);
+      expect(prisma.response.create).toHaveBeenCalled();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
+
+    test("handle response for initialTtc not provided", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
+
+      const result = await createResponse(environmentId, responseInputWithoutTtc);
+      expect(prisma.response.create).toHaveBeenCalled();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
+
+    test("handle response for display not provided", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
+
+      const result = await createResponse(environmentId, responseInputWithoutDisplay);
+      expect(prisma.response.create).toHaveBeenCalled();
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
+
     test("return error if getOrganizationIdFromEnvironmentId fails", async () => {
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(
         err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] })
@@ -109,6 +157,57 @@ describe("Response Lib", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data).toEqual(response);
+      }
+    });
+
+    test("handle error getting monthly organization response count", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(
+        err({ type: "internal_server_error", details: [{ field: "organization", issue: "Aggregate error" }] })
+      );
+
+      const result = await createResponse(environmentId, responseInput);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          details: [{ field: "organization", issue: "Aggregate error" }],
+        });
+      }
+    });
+
+    test("handle error sending plan limits reached event", async () => {
+      vi.mocked(prisma.response.create).mockResolvedValue(response);
+
+      vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
+
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+
+      vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
+
+      vi.mocked(sendPlanLimitsReachedEventToPosthogWeekly).mockRejectedValue(
+        new Error("Error sending plan limits")
+      );
+
+      const result = await createResponse(environmentId, responseInput);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(response);
+      }
+    });
+
+    test("return an internal_server_error error if prisma create fails", async () => {
+      vi.mocked(prisma.response.create).mockRejectedValue(new Error("Internal server error"));
+
+      const result = await createResponse(environmentId, responseInput);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toEqual("internal_server_error");
       }
     });
   });
