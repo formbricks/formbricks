@@ -4,7 +4,7 @@ import { loginAndGetApiKey } from "../../lib/utils";
 import { SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests", () => {
-  let surveyId, environmentId, apiKey: string;
+  let surveyId, environmentId, apiKey;
 
   test("API Tests", async ({ page, users, request }) => {
     try {

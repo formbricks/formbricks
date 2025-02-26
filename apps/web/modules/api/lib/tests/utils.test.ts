@@ -136,7 +136,21 @@ describe("utils", () => {
       logApiRequest(mockRequest, 200, 100);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        `[API REQUEST DETAILS] GET /api/test - 200 - 100ms \n correlationId: 123 \n queryParams: {"safeParam":"value"}`
+        `[API REQUEST DETAILS] GET /api/test - 200 - 100ms\n correlationId: 123\n queryParams: {"safeParam":"value"}`
+      );
+
+      consoleLogSpy.mockRestore();
+    });
+
+    test("logs API request details without correlationId and without safe query params", () => {
+      const consoleLogSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      const mockRequest = new Request("http://localhost/api/test?apikey=123&token=abc");
+      mockRequest.headers.delete("x-request-id");
+
+      logApiRequest(mockRequest, 200, 100);
+      expect(consoleLogSpy).toHaveBeenCalledWith(
+        `[API REQUEST DETAILS] GET /api/test - 200 - 100ms\n queryParams: {}`
       );
 
       consoleLogSpy.mockRestore();
@@ -158,7 +172,27 @@ describe("utils", () => {
       logApiError(mockRequest, error);
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        `[API ERROR DETAILS] correlationId: 123 - error: ${JSON.stringify(error, null, 2)}`
+        `[API ERROR DETAILS]\n correlationId: 123\n error: ${JSON.stringify(error, null, 2)}`
+      );
+
+      consoleErrorSpy.mockRestore();
+    });
+
+    test("logs API error details without correlationId", () => {
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const mockRequest = new Request("http://localhost/api/test");
+      mockRequest.headers.delete("x-request-id");
+
+      const error: ApiErrorResponse = {
+        type: "internal_server_error",
+        details: [{ field: "server", issue: "error occurred" }],
+      };
+
+      logApiError(mockRequest, error);
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        `[API ERROR DETAILS]\n error: ${JSON.stringify(error, null, 2)}`
       );
 
       consoleErrorSpy.mockRestore();

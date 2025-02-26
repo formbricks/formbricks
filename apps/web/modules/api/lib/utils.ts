@@ -21,6 +21,7 @@ export const handleApiError = (request: Request, err: ApiErrorResponse): Respons
     case "too_many_requests":
       return responses.tooManyRequestsResponse();
     case "internal_server_error":
+    default:
       // Replace with a generic error message, because we don't want to expose internal errors to API users.
       return responses.internalServerErrorResponse({
         details: [
@@ -30,8 +31,6 @@ export const handleApiError = (request: Request, err: ApiErrorResponse): Respons
           },
         ],
       });
-    default:
-      return responses.internalServerErrorResponse();
   }
 };
 
@@ -53,13 +52,13 @@ export const logApiRequest = (request: Request, responseStatus: number, duration
   );
 
   console.log(
-    `[API REQUEST DETAILS] ${method} ${path} - ${responseStatus} - ${duration}ms ${correlationId ? `\n correlationId: ${correlationId}` : ""} ${safeQueryParams ? `\n queryParams: ${JSON.stringify(safeQueryParams)}` : ""}`
+    `[API REQUEST DETAILS] ${method} ${path} - ${responseStatus} - ${duration}ms${correlationId ? `\n correlationId: ${correlationId}` : ""}\n queryParams: ${JSON.stringify(safeQueryParams)}`
   );
 };
 
 export const logApiError = (request: Request, error: ApiErrorResponse): void => {
   const correlationId = request.headers.get("x-request-id") || "";
   console.error(
-    `[API ERROR DETAILS] ${correlationId ? `correlationId: ${correlationId}` : ""} - error: ${JSON.stringify(error, null, 2)}`
+    `[API ERROR DETAILS]${correlationId ? `\n correlationId: ${correlationId}` : ""}\n error: ${JSON.stringify(error, null, 2)}`
   );
 };
