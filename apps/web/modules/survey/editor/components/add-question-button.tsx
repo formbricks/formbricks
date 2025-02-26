@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  getCXQuestionTypes,
+  getQuestionDefaults,
+  getQuestionTypes,
+  universalQuestionPresets,
+} from "@/modules/survey/editor/lib/questions";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
 import { Project } from "@prisma/client";
@@ -8,12 +14,6 @@ import { useTranslate } from "@tolgee/react";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import {
-  getCXQuestionTypes,
-  getQuestionDefaults,
-  getQuestionTypes,
-  universalQuestionPresets,
-} from "@formbricks/lib/utils/questions";
 
 interface AddQuestionButtonProps {
   addQuestion: (question: any) => void;

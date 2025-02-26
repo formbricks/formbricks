@@ -1,3 +1,4 @@
+import { getQuestionTypes } from "@/modules/survey/editor/lib/questions";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { ActionClass } from "@prisma/client";
@@ -7,7 +8,6 @@ import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
-import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { InvalidInputError } from "@formbricks/types/errors";
 import {
