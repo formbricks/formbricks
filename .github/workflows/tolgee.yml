@@ -3,7 +3,8 @@ permissions:
   contents: read
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
@@ -11,6 +12,7 @@ jobs:
   tag-production-keys:
     name: Tag Production Keys
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
 
     steps:
       - name: Checkout repository
@@ -21,48 +23,18 @@ jobs:
       - name: Get source branch name
         id: branch-name
         run: |
-          # Get the most recent merge commit
-          MERGE_COMMIT=$(git log --merges -n 1 --format="%H")
-          if [ -n "$MERGE_COMMIT" ]; then
-            # Extract the source branch name from the merge commit message
-            SOURCE_BRANCH=$(git log -1 --format="%s" $MERGE_COMMIT | grep -oP "from '?\K[^']*(?='?)" || echo "")
-            if [ -z "$SOURCE_BRANCH" ]; then
-              # Alternative method: get the first parent's branch
-              SOURCE_BRANCH=$(git name-rev --name-only $(git log -1 --merges --pretty=format:"%P" | cut -d' ' -f1))
-              SOURCE_BRANCH=${SOURCE_BRANCH#remotes/origin/}
-              SOURCE_BRANCH=${SOURCE_BRANCH%~*}
+          # For PR merges, use the head ref from the pull request event
+          SOURCE_BRANCH="${{ github.head_ref }}"
+
+          # Only remove username prefix if needed
+          if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
+            PREFIX=${SOURCE_BRANCH%%/*}
+            if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
+              SOURCE_BRANCH=${SOURCE_BRANCH#*/}
             fi
-            
-            # Only remove username prefix if it matches a GitHub username pattern
-            # GitHub usernames are alphanumeric with hyphens, but cannot start with hyphens
-            # This regex matches patterns like "username/" but preserves "feature/" prefixes
-            if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
-              # Check if this looks like a username prefix (not a feature branch prefix)
-              PREFIX=${SOURCE_BRANCH%%/*}
-              # Common feature branch prefixes to preserve
-              if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
-                # If not a common branch prefix, assume it's a username and remove it
-                SOURCE_BRANCH=${SOURCE_BRANCH#*/}
-              fi
-            fi
-            
-            echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
-          else
-            echo "No merge commit found, using current branch"
-            CURRENT_BRANCH=${GITHUB_REF##*/}
-            
-            # Apply the same username vs feature prefix logic
-            if [[ "$CURRENT_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
-              PREFIX=${CURRENT_BRANCH%%/*}
-              if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
-                CURRENT_BRANCH=${CURRENT_BRANCH#*/}
-              fi
-            fi
-            
-            echo "SOURCE_BRANCH=$CURRENT_BRANCH" >> $GITHUB_ENV
           fi
 
-          # Log the branch name for debugging
+          echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
           echo "Detected source branch: $SOURCE_BRANCH"
 
       - name: Setup Node.js
