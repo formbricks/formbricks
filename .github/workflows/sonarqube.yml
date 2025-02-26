@@ -47,10 +47,6 @@ jobs:
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@bfd4e558cda28cda6b5defafb9232d191be8c203
-        with:
-          args: >
-            -Dsonar.javascript.lcov.reportPaths=apps/web/coverage/lcov.info
-            -Dsonar.coverage.exclusions=**/.next/**,**/*.test.*,**/*.spec.*,**/constants.ts,**/route.ts,**/openapi*.ts,modules/**/types/**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
