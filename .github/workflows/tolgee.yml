@@ -32,10 +32,34 @@ jobs:
               SOURCE_BRANCH=${SOURCE_BRANCH#remotes/origin/}
               SOURCE_BRANCH=${SOURCE_BRANCH%~*}
             fi
+            
+            # Only remove username prefix if it matches a GitHub username pattern
+            # GitHub usernames are alphanumeric with hyphens, but cannot start with hyphens
+            # This regex matches patterns like "username/" but preserves "feature/" prefixes
+            if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
+              # Check if this looks like a username prefix (not a feature branch prefix)
+              PREFIX=${SOURCE_BRANCH%%/*}
+              # Common feature branch prefixes to preserve
+              if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
+                # If not a common branch prefix, assume it's a username and remove it
+                SOURCE_BRANCH=${SOURCE_BRANCH#*/}
+              fi
+            fi
+            
             echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
           else
             echo "No merge commit found, using current branch"
-            echo "SOURCE_BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
+            CURRENT_BRANCH=${GITHUB_REF##*/}
+            
+            # Apply the same username vs feature prefix logic
+            if [[ "$CURRENT_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
+              PREFIX=${CURRENT_BRANCH%%/*}
+              if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
+                CURRENT_BRANCH=${CURRENT_BRANCH#*/}
+              fi
+            fi
+            
+            echo "SOURCE_BRANCH=$CURRENT_BRANCH" >> $GITHUB_ENV
           fi
 
           # Log the branch name for debugging
