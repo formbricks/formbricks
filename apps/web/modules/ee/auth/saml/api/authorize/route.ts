@@ -10,7 +10,7 @@ export const GET = async (req: NextRequest) => {
   const isSamlSsoEnabled = await getIsSamlSsoEnabled();
 
   if (!isSamlSsoEnabled) {
-    return responses.badRequestResponse("SAML SSO is not enabled in your Formbricks license");
+    return responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license");
   }
 
   try {
