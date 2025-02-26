@@ -53,7 +53,7 @@ export const HiddenFieldsSummary = ({ environment, questionSummary, locale }: Hi
         </div>
         {questionSummary.samples.slice(0, visibleResponses).map((response) => (
           <div
-            key={response.value}
+            key={`${response.updatedAt}-${response.value}`}
             className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 md:text-base">
             <div className="pl-4 md:pl-6">
               {response.contact ? (
