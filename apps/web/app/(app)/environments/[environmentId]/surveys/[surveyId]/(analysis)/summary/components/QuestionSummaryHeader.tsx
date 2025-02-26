@@ -1,6 +1,6 @@
 "use client";
 
-import { getQuestionTypes } from "@/modules/survey/editor/lib/questions";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { useTranslate } from "@tolgee/react";
 import { InboxIcon } from "lucide-react";
 import type { JSX } from "react";

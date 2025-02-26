@@ -2,7 +2,7 @@
 
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
-import { getQuestionIconMap } from "@/modules/survey/editor/lib/questions";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
   SelectContent,

@@ -1,6 +1,6 @@
 "use client";
 
-import { getQuestionIconMap } from "@/modules/survey/editor/lib/questions";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";

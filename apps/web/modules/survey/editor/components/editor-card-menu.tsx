@@ -5,7 +5,7 @@ import {
   getQuestionDefaults,
   getQuestionIconMap,
   getQuestionNameMap,
-} from "@/modules/survey/editor/lib/questions";
+} from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {

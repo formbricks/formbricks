@@ -1,5 +1,5 @@
-import { getQuestionTypes } from "@/modules/survey/editor/lib/questions";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { ActionClass } from "@prisma/client";
 import { TFnType } from "@tolgee/react";
