@@ -54,7 +54,6 @@ jobs:
           npx tolgee sync \
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --backup ./tolgee-backup \
-            --remove-unused \
             --continue-on-warning \
             --yes
 
