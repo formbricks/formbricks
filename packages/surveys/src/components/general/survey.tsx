@@ -55,11 +55,21 @@ export function Survey({
   autoFocus,
 }: SurveyBaseProps) {
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
     setlocalSurvey(survey);
   }, [survey]);
+
+  useEffect(() => {
+    setCurrentVariables(
+      survey.variables.reduce<TResponseVariables>((acc, variable) => {
+        acc[variable.id] = variable.value;
+        return acc;
+      }, {})
+    );
+  }, [survey.variables]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
@@ -81,16 +91,6 @@ export function Survey({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
-
-  useEffect(() => {
-    setCurrentVariables(
-      localSurvey.variables.reduce<TResponseVariables>((acc, variable) => {
-        acc[variable.id] = variable.value;
-        return acc;
-      }, {})
-    );
-  }, [localSurvey.variables]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
