@@ -81,12 +81,16 @@ export function Survey({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
-    return localSurvey.variables.reduce<TResponseVariables>((acc, variable) => {
-      acc[variable.id] = variable.value;
-      return acc;
-    }, {});
-  });
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+
+  useEffect(() => {
+    setCurrentVariables(
+      localSurvey.variables.reduce<TResponseVariables>((acc, variable) => {
+        acc[variable.id] = variable.value;
+        return acc;
+      }, {})
+    );
+  }, [localSurvey.variables]);
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
