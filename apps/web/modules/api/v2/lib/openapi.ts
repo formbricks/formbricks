@@ -15,7 +15,7 @@ import { ZContact } from "@formbricks/database/zod/contact";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
-import { ZSurvey } from "@formbricks/database/zod/surveys";
+import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 
 export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getResponses",
@@ -76,7 +76,7 @@ export const getSurveysEndpoint: ZodOpenApiOperationObject = {
       description: "Surveys retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(ZSurvey),
+          schema: z.array(ZSurveyWithoutQuestionType),
         },
       },
     },
@@ -102,7 +102,7 @@ export const createSurveyEndpoint: ZodOpenApiOperationObject = {
       description: "Survey created successfully.",
       content: {
         "application/json": {
-          schema: ZSurvey,
+          schema: ZSurveyWithoutQuestionType,
         },
       },
     },

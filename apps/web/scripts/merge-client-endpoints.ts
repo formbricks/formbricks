@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import * as yaml from "yaml";
 
-// Define the v1 client endpoints to be merged
+// Define the v1 (now v2) client endpoints to be merged
 const v1ClientEndpoints = {
-  "/api/v1/client/responses/{responseId}": {
+  "/responses/{responseId}": {
     put: {
       description:
         "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
@@ -54,9 +54,15 @@ const v1ClientEndpoints = {
       },
       summary: "Update Response",
       tags: ["Client API > Response"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/responses": {
+  "/{environmentId}/responses": {
     post: {
       description:
         "Create a response for a survey and its fields with the user's responses. The userId & meta here is optional",
@@ -80,9 +86,15 @@ const v1ClientEndpoints = {
       },
       summary: "Create Response",
       tags: ["Client API > Response"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/contacts/{userId}/attributes": {
+  "/{environmentId}/contacts/{userId}/attributes": {
     put: {
       description:
         "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks.",
@@ -123,9 +135,15 @@ const v1ClientEndpoints = {
       },
       summary: "Update Contact (Attributes)",
       tags: ["Client API > Contacts"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/identify/contacts/{userId}": {
+  "/{environmentId}/identify/contacts/{userId}": {
     get: {
       description:
         "Retrieves a contact's state including their segments, displays, responses and other tracking information. If the contact doesn't exist, it will be created.",
@@ -146,9 +164,15 @@ const v1ClientEndpoints = {
       },
       summary: "Get Contact State",
       tags: ["Client API > Contacts"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/displays": {
+  "/{environmentId}/displays": {
     post: {
       description:
         "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user.",
@@ -172,9 +196,15 @@ const v1ClientEndpoints = {
       },
       summary: "Create Display",
       tags: ["Client API > Display"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/displays/{displayId}": {
+  "/{environmentId}/displays/{displayId}": {
     put: {
       description:
         "Update a Display for a user. A use case can be when a user submits a response & you want to link it to an existing display.",
@@ -199,9 +229,15 @@ const v1ClientEndpoints = {
       },
       summary: "Update Display",
       tags: ["Client API > Display"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/environment": {
+  "/{environmentId}/environment": {
     get: {
       description: "Retrieves the environment state to be used in Formbricks SDKs",
       responses: {
@@ -217,9 +253,15 @@ const v1ClientEndpoints = {
       },
       summary: "Get Environment State",
       tags: ["Client API > Environment"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
-  "/api/v1/client/{environmentId}/user": {
+  "/{environmentId}/user": {
     post: {
       description:
         "Endpoint for creating or identifying a user within the specified environment. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user.",
@@ -243,13 +285,18 @@ const v1ClientEndpoints = {
       },
       summary: "Create or Identify User",
       tags: ["Client API > User"],
+      servers: [
+        {
+          url: "https://app.formbricks.com/api/v2/client",
+          description: "Formbricks Client",
+        },
+      ],
     },
   },
 };
 
 // Read the generated openapi.yml file
-const openapiFilePath =
-  "/Users/victordossantos/Documents/formbricks/formbricks/docs/api-v2-reference/openapi.yml";
+const openapiFilePath = "../../docs/api-v2-reference/openapi.yml";
 const openapiContent = fs.readFileSync(openapiFilePath, "utf8");
 
 // Parse the YAML content
@@ -257,8 +304,8 @@ const openapiDoc = yaml.parse(openapiContent);
 
 // Merge the v1 client endpoints into the parsed content
 openapiDoc.paths = {
-  ...openapiDoc.paths,
   ...v1ClientEndpoints,
+  ...openapiDoc.paths,
 };
 
 // Write the updated content back to the openapi.yml file

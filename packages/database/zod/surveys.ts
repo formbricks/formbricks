@@ -203,6 +203,9 @@ const ZSurveyBase = z.object({
   inlineTriggers: z.array(z.any()).nullable().openapi({
     description: "Inline triggers configuration",
   }),
+  isBackButtonHidden: z.boolean().openapi({
+    description: "Whether the back button is hidden",
+  }),
   verifyEmail: z
     .object({
       enabled: z.boolean(),
@@ -217,6 +220,15 @@ const ZSurveyBase = z.object({
 });
 
 export const ZSurvey = ZSurveyBase satisfies z.ZodType<Survey>;
+
+export const ZSurveyWithoutQuestionType = ZSurveyBase.omit({
+  questions: true,
+}).extend({
+  questions: z.array(z.any()).openapi({
+    description:
+      "The questions of the survey. It's a list of question objects. We don't provide the type here due to the complexity of the question types.",
+  }),
+});
 
 ZSurvey.openapi({
   ref: "survey",

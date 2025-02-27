@@ -2,7 +2,7 @@ import { surveyIdSchema } from "@/modules/api/v2/management/surveys/[surveyId]/t
 import { ZSurveyInput } from "@/modules/api/v2/management/surveys/types/surveys";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
-import { ZSurvey } from "@formbricks/database/zod/surveys";
+import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 
 export const getSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "getSurvey",
@@ -19,7 +19,7 @@ export const getSurveyEndpoint: ZodOpenApiOperationObject = {
       description: "Response retrieved successfully.",
       content: {
         "application/json": {
-          schema: ZSurvey,
+          schema: ZSurveyWithoutQuestionType,
         },
       },
     },
@@ -41,7 +41,7 @@ export const deleteSurveyEndpoint: ZodOpenApiOperationObject = {
       description: "Response deleted successfully.",
       content: {
         "application/json": {
-          schema: ZSurvey,
+          schema: ZSurveyWithoutQuestionType,
         },
       },
     },
@@ -72,7 +72,7 @@ export const updateSurveyEndpoint: ZodOpenApiOperationObject = {
       description: "Response updated successfully.",
       content: {
         "application/json": {
-          schema: ZSurvey,
+          schema: ZSurveyWithoutQuestionType,
         },
       },
     },

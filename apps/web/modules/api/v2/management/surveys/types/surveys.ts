@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSurvey } from "@formbricks/database/zod/surveys";
+import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 
 export const ZGetSurveysFilter = z
   .object({
@@ -24,7 +24,7 @@ export const ZGetSurveysFilter = z
     }
   );
 
-export const ZSurveyInput = ZSurvey.pick({
+export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   name: true,
   redirectUrl: true,
   type: true,

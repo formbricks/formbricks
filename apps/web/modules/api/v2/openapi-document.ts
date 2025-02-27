@@ -10,7 +10,7 @@ import { ZContact } from "@formbricks/database/zod/contact";
 import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute-keys";
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
-import { ZSurvey } from "@formbricks/database/zod/surveys";
+import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 
 extendZodWithOpenApi(z);
 
@@ -70,7 +70,7 @@ const document = createDocument({
       contact: ZContact,
       contactAttribute: ZContactAttribute,
       contactAttributeKey: ZContactAttributeKey,
-      survey: ZSurvey,
+      survey: ZSurveyWithoutQuestionType,
     },
   },
   security: [
