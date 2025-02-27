@@ -9,8 +9,6 @@ export const checkAuthorization = ({
   authentication: TAuthenticationApiKey;
   environmentId: string;
 }): Result<void, ApiErrorResponse> => {
-  console.log("checkAuthorization", authentication, environmentId);
-
   if (authentication.type === "apiKey" && authentication.environmentId !== environmentId) {
     return err({
       type: "unauthorized",
