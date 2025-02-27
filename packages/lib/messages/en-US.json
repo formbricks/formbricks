@@ -1447,6 +1447,8 @@
         "heading": "Heading",
         "hidden_field_added_successfully": "Hidden field added successfully",
         "hide_advanced_settings": "Hide advanced settings",
+        "hide_back_button": "Hide 'Back' button",
+        "hide_back_button_description": "Do not display the back button in the survey",
         "hide_logo": "Hide logo",
         "hide_progress_bar": "Hide progress bar",
         "hide_the_logo_in_this_specific_survey": "Hide the logo in this specific survey",

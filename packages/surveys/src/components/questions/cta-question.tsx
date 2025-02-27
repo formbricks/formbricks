@@ -23,6 +23,7 @@ interface CTAQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function CTAQuestion({
@@ -37,6 +38,7 @@ export function CTAQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  isBackButtonHidden,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -92,7 +94,7 @@ export function CTAQuestion({
             </button>
           )}
         </div>
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
