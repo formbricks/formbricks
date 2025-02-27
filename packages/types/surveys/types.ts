@@ -1,5 +1,6 @@
 /* eslint-disable no-new -- required for error */
 import { type ZodIssue, z } from "zod";
+import { extendZodWithOpenApi } from "zod-openapi";
 import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZInsight } from "@formbricks/database/zod/insights";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
@@ -16,6 +17,8 @@ import {
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "./validation";
+
+extendZodWithOpenApi(z);
 
 export const ZI18nString = z.record(z.string()).refine((obj) => "default" in obj, {
   message: "Object must have a 'default' key",
@@ -397,6 +400,10 @@ export const ZSingleCondition = z
         path: ["rightOperand"],
       });
     }
+  })
+  .openapi({
+    ref: "SingleCondition",
+    description: "A single condition",
   });
 
 export type TSingleCondition = z.infer<typeof ZSingleCondition>;
@@ -407,11 +414,18 @@ export interface TConditionGroup {
   conditions: (TSingleCondition | TConditionGroup)[];
 }
 
+export const ZConditionUnion: z.ZodType<TSingleCondition | TConditionGroup> = z
+  .union([ZSingleCondition, z.lazy(() => ZConditionGroup)])
+  .openapi({
+    ref: "ConditionUnion",
+    description: "A condition or a group of conditions",
+  });
+
 const ZConditionGroup: z.ZodType<TConditionGroup> = z.lazy(() =>
   z.object({
     id: ZId,
     connector: z.enum(["and", "or"]),
-    conditions: z.array(z.union([ZSingleCondition, ZConditionGroup])),
+    conditions: z.array(ZConditionUnion),
   })
 );
 
