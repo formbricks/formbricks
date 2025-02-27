@@ -18,8 +18,8 @@ import {
   isSyncWithUserIdentificationEndpoint,
   isVerifyEmailRoute,
 } from "@/app/middleware/endpoint-validator";
-import { logApiError } from "@/modules/api/lib/utils";
-import { ApiErrorResponse } from "@/modules/api/types/api-error";
+import { logApiError } from "@/modules/api/v2/lib/utils";
+import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
 import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";

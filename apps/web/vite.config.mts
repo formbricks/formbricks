@@ -13,7 +13,7 @@ export default defineConfig({
       reporter: ['text', 'html', 'lcov'], // Generate text summary and HTML reports
       reportsDirectory: './coverage', // Output coverage reports to the coverage/ directory
       include: [
-        'modules/api/**/*.ts',
+        'modules/api/v2/**/*.ts',
         'modules/auth/lib/**/*.ts',
         'modules/signup/lib/**/*.ts',
       ],

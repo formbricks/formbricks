@@ -1,6 +1,6 @@
 import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { responses } from "@/app/lib/api/response";
-import { hashApiKey } from "@/modules/api/management/lib/utils";
+import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
