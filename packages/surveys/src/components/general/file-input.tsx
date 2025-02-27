@@ -165,9 +165,14 @@ export function FileInput({
           return (
             <div
               key={index}
+              aria-label={`You've successfully uploaded the file ${fileName}`}
+              tabIndex={0}
               className="fb-bg-input-bg-selected fb-border-border fb-relative fb-m-2 fb-rounded-md fb-border">
               <div className="fb-absolute fb-right-0 fb-top-0 fb-m-2">
-                <div className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
+                <button
+                  type="button"
+                  aria-label={`Delete file ${fileName}`}
+                  className="fb-bg-survey-bg fb-flex fb-h-5 fb-w-5 fb-cursor-pointer fb-items-center fb-justify-center fb-rounded-md">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
@@ -180,7 +185,7 @@ export function FileInput({
                     }}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 9l10 10m0-10L9 19" />
                   </svg>
-                </div>
+                </button>
               </div>
               <div className="fb-flex fb-flex-col fb-items-center fb-justify-center fb-p-2">
                 <svg
@@ -193,7 +198,8 @@ export function FileInput({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="fb-text-heading fb-h-6">
+                  className="fb-text-heading fb-h-6"
+                  aria-hidden="true">
                   <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
@@ -218,14 +224,14 @@ export function FileInput({
         <label htmlFor={uniqueHtmlFor} onDragOver={handleDragOver} onDrop={handleDrop}>
           {showUploader ? (
             <div
-              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer"
-              tabIndex={1}
+              className="focus:fb-outline-brand fb-flex fb-flex-col fb-items-center fb-justify-center fb-py-6 hover:fb-cursor-pointer w-full"
+              role="button"
+              aria-label="Upload files by clicking or dragging them here"
+              tabIndex={0}
               onKeyDown={(e) => {
-                // Accessibility: if spacebar was pressed pass this down to the input
-                if (e.key === " ") {
+                if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   document.getElementById(uniqueHtmlFor)?.click();
-                  document.getElementById(uniqueHtmlFor)?.focus();
                 }
               }}>
               <svg
@@ -234,16 +240,19 @@ export function FileInput({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="fb-text-placeholder fb-h-6">
+                className="fb-text-placeholder fb-h-6"
+                aria-hidden="true">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              <p className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400">
-                <span className="fb-font-medium">Click or drag to upload files.</span>
-              </p>
+              <label
+                className="fb-text-placeholder fb-mt-2 fb-text-sm dark:fb-text-slate-400"
+                id={`${uniqueHtmlFor}-label`}>
+                Click or drag to upload files.
+              </label>
               <input
                 type="file"
                 id={uniqueHtmlFor}
@@ -257,6 +266,8 @@ export function FileInput({
                   }
                 }}
                 multiple={allowMultipleFiles}
+                aria-label="File upload"
+                aria-describedby={`${uniqueHtmlFor}-label`}
               />
             </div>
           ) : null}
