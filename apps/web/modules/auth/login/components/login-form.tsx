@@ -40,6 +40,9 @@ interface LoginFormProps {
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
   isSSOEnabled: boolean;
+  samlSsoEnabled: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
 export const LoginForm = ({
@@ -53,6 +56,9 @@ export const LoginForm = ({
   oidcDisplayName,
   isMultiOrgEnabled,
   isSSOEnabled,
+  samlSsoEnabled,
+  samlTenant,
+  samlProduct,
 }: LoginFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -246,6 +252,9 @@ export const LoginForm = ({
               azureOAuthEnabled={azureOAuthEnabled}
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
+              samlSsoEnabled={samlSsoEnabled}
+              samlTenant={samlTenant}
+              samlProduct={samlProduct}
               callbackUrl={callbackUrl}
             />
           )}

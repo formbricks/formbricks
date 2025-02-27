@@ -12,6 +12,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   removeBranding: z.boolean(),
   twoFactorAuth: z.boolean(),
   sso: z.boolean(),
+  saml: z.boolean(),
   ai: z.boolean(),
 });
 
