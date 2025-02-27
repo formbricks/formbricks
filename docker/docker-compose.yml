@@ -188,9 +188,11 @@ services:
       - 3000:3000
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
+      - ./preloaded-connection:/home/nextjs/apps/web/modules/ee/auth/saml/preloaded-connection
     <<: *environment
 
 volumes:
   postgres:
     driver: local
   uploads:
+    driver: local

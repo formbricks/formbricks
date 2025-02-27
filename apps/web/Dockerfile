@@ -105,6 +105,10 @@ ENV HOSTNAME "0.0.0.0"
 RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
+# Prepare volume for SAML preloaded connection
+RUN mkdir -p /home/nextjs/apps/web/modules/ee/auth/saml/preloaded-connection
+VOLUME /home/nextjs/apps/web/modules/ee/auth/saml/preloaded-connection
+
 CMD supercronic -quiet /app/docker/cronjobs & \
     (cd packages/database && npm run db:migrate:deploy) && \
     exec node apps/web/server.js

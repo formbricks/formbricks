@@ -48,3 +48,6 @@ uploads/
 
 # Sentry Config File
 .sentryclirc
+
+# SAML Preloaded Connections
+modules/ee/auth/saml/preloaded-connection/
