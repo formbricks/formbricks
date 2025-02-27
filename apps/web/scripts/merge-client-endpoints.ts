@@ -310,6 +310,12 @@ openapiDoc.paths = {
 
 // Write the updated content back to the openapi.yml file
 const updatedOpenapiContent = yaml.stringify(openapiDoc);
-fs.writeFileSync(openapiFilePath, updatedOpenapiContent);
 
-console.log("Merged v1 client endpoints into the generated v2 documentation.");
+// Write the updated content back to the openapi.yml file
+try {
+  fs.writeFileSync(openapiFilePath, updatedOpenapiContent);
+  console.log("Merged v1 client endpoints into the generated v2 documentation.");
+} catch (error) {
+  console.error("Error writing to OpenAPI file:", error);
+  process.exit(1);
+}

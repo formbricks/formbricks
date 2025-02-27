@@ -225,8 +225,7 @@ export const ZSurveyWithoutQuestionType = ZSurveyBase.omit({
   questions: true,
 }).extend({
   questions: z.array(z.any()).openapi({
-    description:
-      "The questions of the survey. It's a list of question objects. We don't provide the type here due to the complexity of the question types.",
+    description: "The questions of the survey.",
   }),
 });
 
