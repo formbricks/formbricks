@@ -431,7 +431,7 @@ export function Survey({
             )}>
             {content()}
           </div>
-          <div>
+          <div className="fb-space-y-4">
             {isBrandingEnabled ? <FormbricksBranding /> : null}
             {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : null}
           </div>
