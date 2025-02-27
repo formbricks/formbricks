@@ -140,10 +140,8 @@ export function StackedCardsContainer({
       {cardArrangement === "simple" ? (
         <div
           id={`questionCard-${questionIdxTemp.toString()}`}
-          className={cn("fb-w-full fb-bg-survey-bg", fullSizeCards ? "fb-h-full" : "")}
-          style={{
-            ...borderStyles,
-          }}>
+          className={cn("fb-w-full fb-bg-survey-bg fb-overflow-hidden", fullSizeCards ? "fb-h-full" : "")}
+          style={borderStyles}>
           {getCardContent(questionIdxTemp, 0)}
         </div>
       ) : (
