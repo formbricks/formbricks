@@ -41,4 +41,5 @@ export const getMinimalSurvey = (t: TFnType): TSurvey => ({
   isSingleResponsePerEmailEnabled: false,
   variables: [],
   followUps: [],
+  isBackButtonHidden: false,
 });

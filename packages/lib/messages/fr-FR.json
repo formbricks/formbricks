@@ -1447,6 +1447,8 @@
         "heading": "En-tête",
         "hidden_field_added_successfully": "Champ caché ajouté avec succès",
         "hide_advanced_settings": "Cacher les paramètres avancés",
+        "hide_back_button": "Masquer le bouton 'Retour'",
+        "hide_back_button_description": "Ne pas afficher le bouton retour dans l'enquête",
         "hide_logo": "Cacher le logo",
         "hide_progress_bar": "Cacher la barre de progression",
         "hide_the_logo_in_this_specific_survey": "Cacher le logo dans cette enquête spécifique",

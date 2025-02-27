@@ -47,7 +47,8 @@
             "xm-and-surveys/surveys/general-features/shareable-dashboards",
             "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
             "xm-and-surveys/surveys/general-features/metadata",
-            "xm-and-surveys/surveys/general-features/variables"
+            "xm-and-surveys/surveys/general-features/variables",
+            "xm-and-surveys/surveys/general-features/hide-back-button"
           ]
         },
         {
