@@ -61,6 +61,7 @@ export const getSurveysForEnvironmentState = reactCache(
               displayLimit: true,
               displayOption: true,
               hiddenFields: true,
+              isBackButtonHidden: true,
               triggers: {
                 select: {
                   actionClass: {
@@ -72,6 +73,7 @@ export const getSurveysForEnvironmentState = reactCache(
               },
               displayPercentage: true,
               delay: true,
+              projectOverwrites: true,
             },
           });
 

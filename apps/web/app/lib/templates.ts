@@ -7064,5 +7064,6 @@ export const previewSurvey = (projectName: string, t: TFnType) => {
     triggers: [],
     showLanguageSwitch: false,
     followUps: [],
+    isBackButtonHidden: false,
   } as TSurvey;
 };
