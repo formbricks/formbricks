@@ -255,12 +255,6 @@ const renderWidget = async (
     //   languageCode,
     //   placement,
     //   styling: getStyling(project, survey),
-    //   getSetIsError: (f: (value: boolean) => void) => {
-    //     setIsError = f;
-    //   },
-    //   getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
-    //     setIsResponseSendingFinished = f;
-    //   },
     //   onDisplayCreated: () => {
     //     const existingDisplays = config.get().personState.data.displays;
     //     const newDisplay = { surveyId: survey.id, createdAt: new Date() };
@@ -305,10 +299,6 @@ const renderWidget = async (
     //     });
     //   },
     //   onClose: closeSurvey,
-    //   onRetry: () => {
-    //     setIsError(false);
-    //     void responseQueue.processQueue();
-    //   },
     //   hiddenFieldsRecord: hiddenFields,
     // });
   }, survey.delay * 1000);

@@ -95,16 +95,15 @@ export function Survey({
           environmentId,
           retryAttempts: 2,
           onResponseSendingFailed: () => {
-            console.error("error sending response");
-            // setIsError(true);
+            setShowError(true);
+
             if (getSetIsError) {
               getSetIsError((_prev) => {});
             }
           },
           onResponseSendingFinished: () => {
-            // Update the internal state directly
             setIsResponseSendingFinished(true);
-            // Also notify parent component if a setter was provided
+
             if (getSetIsResponseSendingFinished) {
               getSetIsResponseSendingFinished((_prev) => {});
             }
@@ -401,6 +400,7 @@ export function Survey({
           },
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
+          hiddenFields: hiddenFieldsRecord,
         });
 
         if (onResponseCreated) {
@@ -488,13 +488,22 @@ export function Survey({
     return undefined;
   };
 
+  const retryResponse = () => {
+    if (responseQueue) {
+      setShowError(false);
+      void responseQueue.processQueue();
+    } else {
+      onRetry?.();
+    }
+  };
+
   const getCardContent = (questionIdx: number, offset: number): JSX.Element | undefined => {
     if (showError) {
       return (
         <ResponseErrorComponent
           responseData={responseData}
           questions={localSurvey.questions}
-          onRetry={onRetry}
+          onRetry={retryResponse}
         />
       );
     }
@@ -551,7 +560,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={apiHost && environmentId ? onFileUploadApi : onFileUpload}
+              onFileUpload={apiHost && environmentId ? onFileUploadApi : onFileUpload!}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}

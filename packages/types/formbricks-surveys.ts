@@ -1,6 +1,6 @@
 import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "./js";
 import type { TProjectStyling } from "./project";
-import type { TResponseData, TResponseUpdate } from "./responses";
+import type { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "./responses";
 import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 
@@ -27,7 +27,7 @@ export interface SurveyBaseProps {
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   clickOutside?: boolean;
-  hiddenFieldsRecord?: TResponseData;
+  hiddenFieldsRecord?: TResponseHiddenFieldValue;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;
 }
@@ -42,12 +42,13 @@ export interface SurveyModalProps extends SurveyBaseProps {
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }
 
-export interface SurveyContainerProps extends SurveyBaseProps {
+export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
   apiHost?: string;
   environmentId?: string;
   userId?: string;
   onDisplayCreated?: () => void;
   onResponseCreated?: () => void;
+  onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   mode?: "modal" | "inline";
   containerId?: string;
   clickOutside?: boolean;
