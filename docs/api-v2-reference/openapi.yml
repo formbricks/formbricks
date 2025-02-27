@@ -4,19 +4,31 @@ info:
   description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api
+  - url: https://app.formbricks.com/api/v2/management
     description: Formbricks Cloud
 tags:
-  - name: Responses
+  - name: Management API > Responses
     description: Operations for managing responses.
-  - name: Contacts
+  - name: Management API > Contacts
     description: Operations for managing contacts.
-  - name: Contact Attributes
+  - name: Management API > Contact Attributes
     description: Operations for managing contact attributes.
-  - name: Contact Attributes Keys
+  - name: Management API > Contact Attributes Keys
     description: Operations for managing contact attributes keys.
-  - name: Surveys
+  - name: Management API > Surveys
     description: Operations for managing surveys.
+  - name: Client API > Response
+    description: Operations for managing responses.
+  - name: Client API > Contacts
+    description: Operations for managing contacts.
+  - name: Client API > Display
+    description: Operations for managing displays.
+  - name: Client API > Environment
+    description: Operations for managing environments.
+  - name: Client API > User
+    description: Operations for managing users.
+security:
+  - apiKeyAuth: []
 paths:
   /responses:
     get:
@@ -24,7 +36,7 @@ paths:
       summary: Get responses
       description: Gets responses from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: query
           name: limit
@@ -89,7 +101,7 @@ paths:
       summary: Create a response
       description: Creates a response in the database.
       tags:
-        - responses
+        - Management API > Responses
       requestBody:
         required: true
         description: The response to create
@@ -110,7 +122,7 @@ paths:
       summary: Get a response
       description: Gets a response from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -130,7 +142,7 @@ paths:
       summary: Update a response
       description: Updates a response in the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -233,7 +245,7 @@ paths:
       summary: Delete a response
       description: Deletes a response from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -254,7 +266,7 @@ paths:
       summary: Get contacts
       description: Gets contacts from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: query
           name: limit
@@ -307,7 +319,7 @@ paths:
       summary: Create a contact
       description: Creates a contact in the database.
       tags:
-        - contacts
+        - Management API > Contacts
       requestBody:
         required: true
         description: The contact to create
@@ -328,7 +340,7 @@ paths:
       summary: Get a contact
       description: Gets a contact from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -347,7 +359,7 @@ paths:
       summary: Update a contact
       description: Updates a contact in the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -373,7 +385,7 @@ paths:
       summary: Delete a contact
       description: Deletes a contact from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -393,7 +405,7 @@ paths:
       summary: Get contact attributes
       description: Gets contact attributes from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: query
           name: limit
@@ -446,7 +458,7 @@ paths:
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       requestBody:
         required: true
         description: The contact attribute to create
@@ -463,7 +475,7 @@ paths:
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -482,7 +494,7 @@ paths:
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -508,7 +520,7 @@ paths:
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -528,7 +540,7 @@ paths:
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: query
           name: limit
@@ -581,7 +593,7 @@ paths:
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       requestBody:
         required: true
         description: The contact attribute key to create
@@ -598,7 +610,7 @@ paths:
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeKeyId
@@ -617,7 +629,7 @@ paths:
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeKeyId
@@ -643,7 +655,7 @@ paths:
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeId
@@ -663,7 +675,7 @@ paths:
       summary: Get surveys
       description: Gets surveys from the database.
       tags:
-        - surveys
+        - Management API > Surveys
       parameters:
         - in: query
           name: limit
@@ -733,7 +745,7 @@ paths:
       summary: Create a survey
       description: Creates a survey in the database.
       tags:
-        - surveys
+        - Management API > Surveys
       requestBody:
         required: true
         description: The survey to create
@@ -754,7 +766,7 @@ paths:
       summary: Get a survey
       description: Gets a survey from the database.
       tags:
-        - surveys
+        - Management API > Surveys
       parameters:
         - in: path
           name: id
@@ -774,7 +786,7 @@ paths:
       summary: Update a survey
       description: Updates a survey in the database.
       tags:
-        - surveys
+        - Management API >  Surveys
       parameters:
         - in: path
           name: id
@@ -801,7 +813,7 @@ paths:
       summary: Delete a survey
       description: Deletes a survey from the database.
       tags:
-        - surveys
+        - Management API > Surveys
       parameters:
         - in: path
           name: id
@@ -816,7 +828,249 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/survey"
+  /api/v1/client/responses/{responseId}:
+    put:
+      description: Update an existing response for example when you want to mark a
+        response as finished or you want to change an existing response's value.
+      parameters:
+        - in: path
+          name: responseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                data:
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                finished: true
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                data: {}
+              schema:
+                type: object
+          description: OK
+        "404":
+          content:
+            application/json:
+              example:
+                code: not_found
+                details:
+                  resource_type: Response
+                message: Response not found
+              schema:
+                type: object
+          description: Not Found
+      summary: Update Response
+      tags:
+        - Client API > Response
+  /api/v1/client/{environmentId}/responses:
+    post:
+      description: Create a response for a survey and its fields with the user's
+        responses. The userId & meta here is optional
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                responses: {}
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                responseId: response123
+              schema:
+                type: object
+          description: Created
+      summary: Create Response
+      tags:
+        - Client API > Response
+  /api/v1/client/{environmentId}/contacts/{userId}/attributes:
+    put:
+      description: Update a contact's attributes in Formbricks to keep them in sync
+        with your app or when you want to set a custom attribute in Formbricks.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                example-0: {}
+                example-1: {}
+              schema:
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              example:
+                code: internal_server_error
+                details: {}
+                message: "Unable to complete request: Expected"
+              schema:
+                type: object
+          description: Internal Server Error
+      summary: Update Contact (Attributes)
+      tags:
+        - Client API > Contacts
+  /api/v1/client/{environmentId}/identify/contacts/{userId}:
+    get:
+      description: Retrieves a contact's state including their segments, displays,
+        responses and other tracking information. If the contact doesn't exist,
+        it will be created.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Contact State
+      tags:
+        - Client API > Contacts
+  /api/v1/client/{environmentId}/displays:
+    post:
+      description: Create a new display for a valid survey ID. If a userId is passed,
+        the display is linked to the user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                userId: user123
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: Created
+      summary: Create Display
+      tags:
+        - Client API > Display
+  /api/v1/client/{environmentId}/displays/{displayId}:
+    put:
+      description: Update a Display for a user. A use case can be when a user submits
+        a response & you want to link it to an existing display.
+      parameters:
+        - in: path
+          name: displayId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                responseId: response123
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: OK
+      summary: Update Display
+      tags:
+        - Client API > Display
+  /api/v1/client/{environmentId}/environment:
+    get:
+      description: Retrieves the environment state to be used in Formbricks SDKs
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                environmentId: env123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Environment State
+      tags:
+        - Client API > Environment
+  /api/v1/client/{environmentId}/user:
+    post:
+      description: Endpoint for creating or identifying a user within the specified
+        environment. If the user already exists, this will identify them and
+        potentially update user attributes. If they don't exist, it will create
+        a new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                userId: user123
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: identified
+              schema:
+                type: object
+          description: OK
+      summary: Create or Identify User
+      tags:
+        - Client API > User
 components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Use your Formbricks x-api-key to authenticate.
   schemas:
     response:
       type: object
@@ -10064,4 +10318,3 @@ components:
     surveyId:
       type: string
       description: The ID of the survey
-

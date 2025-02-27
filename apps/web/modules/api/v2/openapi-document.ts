@@ -30,33 +30,41 @@ const document = createDocument({
   },
   servers: [
     {
-      url: "https://app.formbricks.com/api",
+      url: "https://app.formbricks.com/api/v2/management",
       description: "Formbricks Cloud",
     },
   ],
   tags: [
     {
-      name: "Responses",
+      name: "Management API > Responses",
       description: "Operations for managing responses.",
     },
     {
-      name: "Contacts",
+      name: "Management API > Contacts",
       description: "Operations for managing contacts.",
     },
     {
-      name: "Contact Attributes",
+      name: "Management API > Contact Attributes",
       description: "Operations for managing contact attributes.",
     },
     {
-      name: "Contact Attributes Keys",
+      name: "Management API > Contact Attributes Keys",
       description: "Operations for managing contact attributes keys.",
     },
     {
-      name: "Surveys",
+      name: "Management API > Surveys",
       description: "Operations for managing surveys.",
     },
   ],
   components: {
+    securitySchemes: {
+      apiKeyAuth: {
+        type: "apiKey",
+        in: "header",
+        name: "x-api-key",
+        description: "Use your Formbricks x-api-key to authenticate.",
+      },
+    },
     schemas: {
       response: ZResponse,
       contact: ZContact,
@@ -65,6 +73,11 @@ const document = createDocument({
       survey: ZSurvey,
     },
   },
+  security: [
+    {
+      apiKeyAuth: [],
+    },
+  ],
 });
 
 console.log(yaml.stringify(document));

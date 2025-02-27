@@ -12,7 +12,9 @@
     "lint": "next lint",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
-    "generate-api-specs": "tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml"
+    "generate-api-specs": "tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml",
+    "merge-client-endpoints": "tsx ./scripts/merge-client-endpoints.ts",
+    "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
   "dependencies": {
     "@ai-sdk/azure": "1.1.9",

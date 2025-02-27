@@ -13,7 +13,7 @@ export const getSurveyEndpoint: ZodOpenApiOperationObject = {
       id: surveyIdSchema,
     }),
   },
-  tags: ["surveys"],
+  tags: ["Management API > Surveys"],
   responses: {
     "200": {
       description: "Response retrieved successfully.",
@@ -30,7 +30,7 @@ export const deleteSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "deleteSurvey",
   summary: "Delete a survey",
   description: "Deletes a survey from the database.",
-  tags: ["surveys"],
+  tags: ["Management API > Surveys"],
   requestParams: {
     path: z.object({
       id: surveyIdSchema,
@@ -52,7 +52,7 @@ export const updateSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateSurvey",
   summary: "Update a survey",
   description: "Updates a survey in the database.",
-  tags: ["surveys"],
+  tags: ["Management API >  Surveys"],
   requestParams: {
     path: z.object({
       id: surveyIdSchema,

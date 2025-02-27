@@ -24,7 +24,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetResponsesFilter.sourceType().required(),
   },
-  tags: ["responses"],
+  tags: ["Management API > Responses"],
   responses: {
     "200": {
       description: "Responses retrieved successfully.",
@@ -41,7 +41,7 @@ export const createResponseEndpoint: ZodOpenApiOperationObject = {
   operationId: "createResponse",
   summary: "Create a response",
   description: "Creates a response in the database.",
-  tags: ["responses"],
+  tags: ["Management API > Responses"],
   requestBody: {
     required: true,
     description: "The response to create",
@@ -70,7 +70,7 @@ export const getSurveysEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetSurveysFilter,
   },
-  tags: ["surveys"],
+  tags: ["Management API > Surveys"],
   responses: {
     "200": {
       description: "Surveys retrieved successfully.",
@@ -87,7 +87,7 @@ export const createSurveyEndpoint: ZodOpenApiOperationObject = {
   operationId: "createSurvey",
   summary: "Create a survey",
   description: "Creates a survey in the database.",
-  tags: ["surveys"],
+  tags: ["Management API > Surveys"],
   requestBody: {
     required: true,
     description: "The survey to create",
@@ -116,7 +116,7 @@ export const getContactsEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     query: ZGetContactsFilter,
   },
-  tags: ["contacts"],
+  tags: ["Management API > Contacts"],
   responses: {
     "200": {
       description: "Contacts retrieved successfully.",
@@ -133,7 +133,7 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContact",
   summary: "Create a contact",
   description: "Creates a contact in the database.",
-  tags: ["contacts"],
+  tags: ["Management API > Contacts"],
   requestBody: {
     required: true,
     description: "The contact to create",
@@ -159,7 +159,7 @@ export const getContactAttributesEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactAttributes",
   summary: "Get contact attributes",
   description: "Gets contact attributes from the database.",
-  tags: ["contact-attributes"],
+  tags: ["Management API > Contact Attributes"],
   requestParams: {
     query: ZGetContactAttributesFilter,
   },
@@ -179,7 +179,7 @@ export const createContactAttributeEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContactAttribute",
   summary: "Create a contact attribute",
   description: "Creates a contact attribute in the database.",
-  tags: ["contact-attributes"],
+  tags: ["Management API > Contact Attributes"],
   requestBody: {
     required: true,
     description: "The contact attribute to create",
@@ -200,7 +200,7 @@ export const getContactAttributeKeysEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactAttributeKeys",
   summary: "Get contact attribute keys",
   description: "Gets contact attribute keys from the database.",
-  tags: ["contact-attribute-keys"],
+  tags: ["Management API > Contact Attribute Keys"],
   requestParams: {
     query: ZGetContactAttributeKeysFilter,
   },
@@ -220,7 +220,7 @@ export const createContactAttributeKeyEndpoint: ZodOpenApiOperationObject = {
   operationId: "createContactAttributeKey",
   summary: "Create a contact attribute key",
   description: "Creates a contact attribute key in the database.",
-  tags: ["contact-attribute-keys"],
+  tags: ["Management API > Contact Attribute Keys"],
   requestBody: {
     required: true,
     description: "The contact attribute key to create",
