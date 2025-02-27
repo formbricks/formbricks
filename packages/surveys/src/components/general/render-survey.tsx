@@ -24,7 +24,25 @@ export function RenderSurvey(props: SurveyContainerProps) {
       onClose={close}
       isOpen={isOpen}>
       {/* @ts-expect-error -- TODO: fix this */}
-      <Survey {...props} onClose={close} />
+      <Survey
+        {...props}
+        onClose={close}
+        onFinished={() => {
+          props.onFinished?.();
+
+          if (props.mode !== "inline") {
+            setTimeout(
+              () => {
+                const firstEnabledEnding = props.survey.endings?.[0];
+                if (firstEnabledEnding?.type !== "redirectToUrl") {
+                  close();
+                }
+              },
+              props.survey.endings.length ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
+            );
+          }
+        }}
+      />
     </SurveyContainer>
   );
 }

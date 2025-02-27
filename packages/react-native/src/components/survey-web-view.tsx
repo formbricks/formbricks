@@ -1,5 +1,3 @@
- 
- 
 /* eslint-disable no-console -- debugging*/
 import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "react-native";
@@ -171,8 +169,9 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               return;
             }
 
-            const { onDisplay, onResponse, onClose, onRetry, onFinished } = validatedMessage.data;
-            if (onDisplay) {
+            const { onDisplayCreated, onResponseCreated, onClose, onRetry, onFinished } =
+              validatedMessage.data;
+            if (onDisplayCreated) {
               const existingDisplays = appConfig.get().user.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
 
@@ -197,7 +196,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
                 filteredSurveys,
               });
             }
-            if (onResponse) {
+            if (onResponseCreated) {
               const responses = appConfig.get().user.data.responses;
               const newPersonState: TUserState = {
                 ...appConfig.get().user,
@@ -248,11 +247,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body style="overflow: hidden; height: 100vh; margin: 0;">
-      <div class="survey-container>
-        <div id="formbricks-react-native">
-          <div></div>
-        </div>
-      </div>
     </body>
 
     <script type="text/javascript">
@@ -273,27 +267,25 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
         window.ReactNativeWebView.postMessage(JSON.stringify({ onFinished: true }));
       };
 
-      function onDisplay() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onDisplay: true }));
+      function onDisplayCreated() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ onDisplayCreated: true }));
       };
 
-      function onResponse(responseUpdate) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true }));
+      function onResponseCreated() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ onResponseCreated: true }));
       };
 
-      function onRetry(responseUpdate) {
+      function onRetry() {
         window.ReactNativeWebView.postMessage(JSON.stringify({ onRetry: true }));
       };
 
       function loadSurvey() {
         const options = ${JSON.stringify(options)};
-        const containerId = "formbricks-react-native";
         const surveyProps = {
           ...options,
-          containerId,
           onFinished,
-          onDisplayCreated: onDisplay,
-          onResponseCreated: onResponse,
+          onDisplayCreated,
+          onResponseCreated,
           onRetry,
           onClose,
         };
