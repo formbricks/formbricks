@@ -67,9 +67,14 @@ sequenceDiagram
 
 To configure SAML SSO in Formbricks, follow these steps:
 
-1. **Database Setup:** Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgresql://postgres:@localhost:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=no-verify` parameter.
+1. **Database Setup:** Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgres://postgres:postgres@postgres:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=disable` parameter.
 2. **IdP Application:** Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
 3. **User Provisioning:** Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
 4. **Metadata:** Keep the XML metadata from your IdP handy for the next step.
-5. **Metadata Setup:** Set the `SAML_RAW_METADATA` environment variable in your `docker-compose.yml` file to the XML metadata from your IdP(e.g., `SAML_RAW_METADATA='<?xml version="1.0" encoding="UTF-8"?><...>'`, please paste the metadata in single quotes)
+5. **Metadata Setup:** Create a file called `connection.xml` in your self-hosted Formbricks instance's `formbricks/saml-connection` directory and paste the XML metadata from your IdP into it. Please create the directory if it doesn't exist. Your metadata file should start with a tag like this: `<?xml version="1.0" encoding="UTF-8"?><...>` or `<md:EntityDescriptor entityID="...">`. Please remove any extra text from the metadata.
 6. **Restart Formbricks:** Restart Formbricks to apply the changes. You can do this by running `docker compose down` and then `docker compose up -d`.
+
+<Note>
+  We don't support multiple SAML connections yet. You can only have one SAML connection at a time. If you
+  change the `connection.xml` file, your existing SAML connection will be overwritten.
+</Note>
