@@ -21,8 +21,12 @@ const getPreloadedConnectionMetadata = async () => {
   return preloadedConnectionMetadata;
 };
 
-const createConnectionPayload = async (metadata: string): Promise<SAMLSSOConnectionWithEncodedMetadata> => {
-  const encodedRawMetadata = Buffer.from(metadata || "", "utf8").toString("base64");
+const getEncodedRawMetadata = (metadata: string) => {
+  return Buffer.from(metadata, "utf8").toString("base64");
+};
+
+const getConnectionPayload = async (metadata: string): Promise<SAMLSSOConnectionWithEncodedMetadata> => {
+  const encodedRawMetadata = getEncodedRawMetadata(metadata);
 
   return {
     name: "SAML SSO",
@@ -36,10 +40,28 @@ const createConnectionPayload = async (metadata: string): Promise<SAMLSSOConnect
 
 export const preloadConnection = async (connectionController: ConnectionAPIController) => {
   const preloadedConnectionMetadata = await getPreloadedConnectionMetadata();
-  if (preloadedConnectionMetadata) {
-    const connection = await createConnectionPayload(preloadedConnectionMetadata);
-    await connectionController.createSAMLConnection(connection);
-  } else {
+
+  if (!preloadedConnectionMetadata) {
     console.log("No preloaded connection metadata found");
+    return;
+  }
+
+  const connections = await connectionController.getConnections({
+    tenant: SAML_TENANT,
+    product: SAML_PRODUCT,
+  });
+
+  const existingConnection = connections[0];
+
+  const connection = await getConnectionPayload(preloadedConnectionMetadata);
+  const newConnection = await connectionController.createSAMLConnection(connection);
+
+  if (newConnection && existingConnection && newConnection.clientID !== existingConnection.clientID) {
+    await connectionController.deleteConnections({
+      clientID: existingConnection.clientID,
+      clientSecret: existingConnection.clientSecret,
+      product: existingConnection.product,
+      tenant: existingConnection.tenant,
+    });
   }
 };
