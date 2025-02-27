@@ -7,8 +7,6 @@ import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@formbr
 const opts: JacksonOption = {
   externalUrl: WEBAPP_URL,
   samlAudience: SAML_AUDIENCE,
-  // TODO: uncomment this when boxyHQ fixes this, Error: Cannot find module as expression is too dynamic
-  // preLoadedConnection: "./modules/ee/auth/saml/pre-loaded",
   samlPath: SAML_PATH,
   db: {
     engine: "sql",

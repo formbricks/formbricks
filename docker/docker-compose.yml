@@ -112,7 +112,8 @@ x-environment: &environment
     # OIDC_SIGNING_ALGORITHM:
 
     # Set the below to SAML Provider if you want to enable SAML
-    # SAML_DATABASE_URL:
+    # SAML_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks-saml?sslmode=disable"
+
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
     # Oauth credentials for Notion Integration
@@ -187,7 +188,7 @@ services:
       - 3000:3000
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
-      - ./preloaded-connection:/home/nextjs/apps/web/modules/ee/auth/saml/preloaded-connection
+      - ./preloaded-connection:/home/nextjs/apps/web/preloaded-connection
     <<: *environment
 
 volumes:
