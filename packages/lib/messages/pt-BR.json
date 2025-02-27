@@ -1447,6 +1447,8 @@
         "heading": "Título",
         "hidden_field_added_successfully": "Campo oculto adicionado com sucesso",
         "hide_advanced_settings": "Ocultar configurações avançadas",
+        "hide_back_button": "Ocultar botão 'Voltar'",
+        "hide_back_button_description": "Não exibir o botão de voltar na pesquisa",
         "hide_logo": "Esconder logo",
         "hide_progress_bar": "Esconder barra de progresso",
         "hide_the_logo_in_this_specific_survey": "Esconder o logo nessa pesquisa específica",
