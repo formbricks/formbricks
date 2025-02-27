@@ -1,4 +1,5 @@
-import { getSessionUser, hashApiKey } from "@/app/lib/api/apiHelper";
+import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
+import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { headers } from "next/headers";
 import { prisma } from "@formbricks/database";
 

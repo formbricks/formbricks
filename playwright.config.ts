@@ -1,7 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// import os from "os";
-
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv

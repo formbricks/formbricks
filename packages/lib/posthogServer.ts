@@ -1,12 +1,10 @@
 import { PostHog } from "posthog-node";
 import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
 import { cache } from "./cache";
+import { IS_PRODUCTION } from "./constants";
 import { env } from "./env";
 
-const enabled =
-  process.env.NODE_ENV === "production" &&
-  env.NEXT_PUBLIC_POSTHOG_API_HOST &&
-  env.NEXT_PUBLIC_POSTHOG_API_KEY;
+const enabled = IS_PRODUCTION && env.NEXT_PUBLIC_POSTHOG_API_HOST && env.NEXT_PUBLIC_POSTHOG_API_KEY;
 
 export const capturePosthogEnvironmentEvent = async (
   environmentId: string,

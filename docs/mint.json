@@ -287,6 +287,10 @@
     {
       "group": "API Documentation",
       "pages": ["api-reference/introduction", "api-reference/rest-api"]
+    },
+    {
+      "group": "API v2 Documentation (Draft)",
+      "pages": ["api-v2-reference/introduction"]
     }
   ],
   "redirects": [

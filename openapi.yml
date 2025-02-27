@@ -1,0 +1,470 @@
+openapi: 3.1.0
+info:
+  title: Formbricks API
+  description: Manage Formbricks ressources programmatically.
+  version: 2.0.0
+servers:
+  - url: https://app.formbricks.com/api
+    description: Formbricks Cloud
+tags:
+  - name: responses
+    description: Operations for managing responses.
+paths:
+  /responses:
+    get:
+      operationId: getResponses
+      summary: Get responses
+      description: Gets responses from the database.
+      tags:
+        - responses
+      parameters:
+        - in: query
+          name: surveyId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: contactId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Responses retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/response"
+    post:
+      operationId: createResponse
+      summary: Create a response
+      description: Creates a response in the database.
+      tags:
+        - responses
+      requestBody:
+        required: true
+        description: The response to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                createdAt:
+                  type: string
+                updatedAt:
+                  type: string
+                environmentId:
+                  type: string
+                surveyId:
+                  type: string
+                userId:
+                  type:
+                    - string
+                    - "null"
+                displayId:
+                  type:
+                    - string
+                    - "null"
+                singleUseId:
+                  type:
+                    - string
+                    - "null"
+                finished:
+                  type: boolean
+                endingId:
+                  type:
+                    - string
+                    - "null"
+                language:
+                  type: string
+                data:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                      - type: array
+                        items:
+                          type: string
+                      - type: object
+                        additionalProperties:
+                          type: string
+                variables:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                ttc:
+                  type: object
+                  additionalProperties:
+                    type: number
+                meta:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    url:
+                      type: string
+                    userAgent:
+                      type: object
+                      properties:
+                        browser:
+                          type: string
+                        device:
+                          type: string
+                        os:
+                          type: string
+                    country:
+                      type: string
+                    action:
+                      type: string
+              required:
+                - environmentId
+                - surveyId
+                - finished
+                - data
+      responses:
+        "201":
+          description: Response created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+  /responses/{id}:
+    get:
+      operationId: getResponse
+      summary: Get a response
+      description: Gets a response from the database.
+      tags:
+        - responses
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the response
+          schema:
+            $ref: "#/components/schemas/responseId"
+          required: true
+      responses:
+        "200":
+          description: Response retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+    put:
+      operationId: updateResponse
+      summary: Update a response
+      description: Updates a response in the database.
+      tags:
+        - responses
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the response
+          schema:
+            $ref: "#/components/schemas/responseId"
+          required: true
+      requestBody:
+        required: true
+        description: The response to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                createdAt:
+                  type: string
+                updatedAt:
+                  type: string
+                environmentId:
+                  type: string
+                surveyId:
+                  type: string
+                userId:
+                  type:
+                    - string
+                    - "null"
+                displayId:
+                  type:
+                    - string
+                    - "null"
+                singleUseId:
+                  type:
+                    - string
+                    - "null"
+                finished:
+                  type: boolean
+                endingId:
+                  type:
+                    - string
+                    - "null"
+                language:
+                  type: string
+                data:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                      - type: array
+                        items:
+                          type: string
+                      - type: object
+                        additionalProperties:
+                          type: string
+                variables:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                ttc:
+                  type: object
+                  additionalProperties:
+                    type: number
+                meta:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    url:
+                      type: string
+                    userAgent:
+                      type: object
+                      properties:
+                        browser:
+                          type: string
+                        device:
+                          type: string
+                        os:
+                          type: string
+                    country:
+                      type: string
+                    action:
+                      type: string
+              required:
+                - environmentId
+                - surveyId
+                - finished
+                - data
+      responses:
+        "200":
+          description: Response updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+    delete:
+      operationId: deleteResponse
+      summary: Delete a response
+      description: Deletes a response from the database.
+      tags:
+        - responses
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the response
+          schema:
+            $ref: "#/components/schemas/responseId"
+          required: true
+      responses:
+        "200":
+          description: Response deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response"
+components:
+  schemas:
+    response:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the response
+        createdAt:
+          type: string
+          description: The date and time the response was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the response was last updated
+          example: 2021-01-01T00:00:00.000Z
+        finished:
+          type: boolean
+          description: Whether the response is finished
+          example: true
+        surveyId:
+          type: string
+          description: The ID of the survey
+        contactId:
+          type:
+            - string
+            - "null"
+          description: The ID of the contact
+        endingId:
+          type:
+            - string
+            - "null"
+          description: The ID of the ending
+        data:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+              - type: array
+                items:
+                  type: string
+              - type: object
+                additionalProperties:
+                  type: string
+          description: The data of the response
+          example:
+            question1: answer1
+            question2: 2
+            question3:
+              - answer3
+              - answer4
+            question4:
+              subquestion1: answer5
+        variables:
+          type: object
+          additionalProperties:
+            anyOf:
+              - type: string
+              - type: number
+          description: The variables of the response
+          example:
+            variable1: answer1
+            variable2: 2
+        ttc:
+          type: object
+          additionalProperties:
+            type: number
+          description: The TTC of the response
+          example:
+            question1: 10
+            question2: 20
+        meta:
+          type: object
+          properties:
+            source:
+              type: string
+              description: The source of the response
+              example: https://example.com
+            url:
+              type: string
+              description: The URL of the response
+              example: https://example.com
+            userAgent:
+              type: object
+              properties:
+                browser:
+                  type: string
+                os:
+                  type: string
+                device:
+                  type: string
+            country:
+              type: string
+            action:
+              type: string
+          description: The meta data of the response
+          example:
+            source: https://example.com
+            url: https://example.com
+            userAgent:
+              browser: Chrome
+              os: Windows
+              device: Desktop
+            country: US
+            action: click
+        contactAttributes:
+          type:
+            - object
+            - "null"
+          additionalProperties:
+            type: string
+          description: The attributes of the contact
+          example:
+            attribute1: value1
+            attribute2: value2
+        singleUseId:
+          type:
+            - string
+            - "null"
+          description: The single use ID of the response
+        language:
+          type:
+            - string
+            - "null"
+          description: The language of the response
+          example: en
+        displayId:
+          type:
+            - string
+            - "null"
+          description: The display ID of the response
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - finished
+        - surveyId
+        - contactId
+        - endingId
+        - data
+        - variables
+        - ttc
+        - meta
+        - contactAttributes
+        - singleUseId
+        - language
+        - displayId
+    responseId:
+      type: string
+      description: The ID of the response
+

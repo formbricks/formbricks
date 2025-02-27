@@ -2,6 +2,7 @@
    and how we can improve it. All data including the IP address is collected anonymously
    and we cannot trace anything back to you or your customers. If you still want to
    disable telemetry, set the environment variable TELEMETRY_DISABLED=1 */
+import { IS_PRODUCTION } from "./constants";
 import { env } from "./env";
 
 const crypto = require("crypto");
@@ -14,7 +15,7 @@ const getTelemetryId = (): string => {
 };
 
 export const captureTelemetry = async (eventName: string, properties = {}) => {
-  if (env.TELEMETRY_DISABLED !== "1" && process.env.NODE_ENV === "production") {
+  if (env.TELEMETRY_DISABLED !== "1" && IS_PRODUCTION) {
     try {
       await fetch("https://telemetry.formbricks.com/capture/", {
         method: "POST",

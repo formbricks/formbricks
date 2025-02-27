@@ -12,7 +12,7 @@ export const verifyPassword = async (password: string, hashedPassword: string) =
   return isValid;
 };
 
-export const hasOrganizationAccess = async (userId: string, organizationId: string) => {
+export const hasOrganizationAccess = async (userId: string, organizationId: string): Promise<boolean> => {
   const membership = await prisma.membership.findUnique({
     where: {
       userId_organizationId: {
@@ -22,11 +22,7 @@ export const hasOrganizationAccess = async (userId: string, organizationId: stri
     },
   });
 
-  if (membership) {
-    return true;
-  }
-
-  return false;
+  return !!membership;
 };
 
 export const isManagerOrOwner = async (userId: string, organizationId: string) => {

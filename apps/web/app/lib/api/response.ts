@@ -15,7 +15,8 @@ interface ApiErrorResponse {
     | "unauthorized"
     | "method_not_allowed"
     | "not_authenticated"
-    | "forbidden";
+    | "forbidden"
+    | "too_many_requests";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -247,7 +248,7 @@ const tooManyRequestsResponse = (
 
   return Response.json(
     {
-      code: "internal_server_error",
+      code: "too_many_requests",
       message,
       details: {},
     } as ApiErrorResponse,
