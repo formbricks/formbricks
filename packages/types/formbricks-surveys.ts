@@ -12,7 +12,7 @@ export interface SurveyBaseProps {
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
-  onDisplay?: () => void;
+  onDisplay?: () => Promise<void>;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
@@ -43,13 +43,15 @@ export interface SurveyModalProps extends SurveyBaseProps {
 }
 
 export interface SurveyContainerProps extends SurveyBaseProps {
-  apiHost: string;
-  environmentId: string;
+  apiHost?: string;
+  environmentId?: string;
   userId?: string;
+  onDisplayCreated?: () => void;
+  onResponseCreated?: () => void;
   mode?: "modal" | "inline";
   containerId?: string;
   clickOutside?: boolean;
   darkOverlay?: boolean;
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
-  onDisplayCreated?: (displayId: string) => void;
+  action?: string;
 }

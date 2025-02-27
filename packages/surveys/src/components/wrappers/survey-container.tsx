@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { cn } from "@formbricks/lib/cn";
 import { type TPlacement } from "@formbricks/types/common";
 
@@ -23,13 +23,33 @@ export function SurveyContainer({
 }: SurveyContainerProps) {
   const [show, setShow] = useState(false);
 
-  // const modalRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const isCenter = placement === "center";
   const isModal = mode === "modal";
 
   useEffect(() => {
     setShow(isOpen);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isCenter && !isModal) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        clickOutside &&
+        show &&
+        modalRef.current &&
+        !(modalRef.current as HTMLElement).contains(e.target as Node) &&
+        onClose
+      ) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, clickOutside, onClose, isCenter]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -50,51 +70,21 @@ export function SurveyContainer({
 
   if (!show) return null;
 
+  if (!isModal) {
+    return (
+      <div id="fbjs" className="fb-formbricks-form" style={{ height: "100%", width: "100%" }}>
+        {children}
+      </div>
+    );
+  }
   return (
-    // <div
-    //   id="fbjs"
-    //   className={cn(
-    //     "fb-formbricks-form",
-    //     isModal && "fb-fixed fb-inset-0 fb-z-[999999]",
-    //     isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none"
-    //   )}
-    //   style={{
-    //     background:
-    //       isModal && isCenter
-    //         ? darkOverlay
-    //           ? "rgba(51, 65, 85, 0.8)"
-    //           : "rgba(255, 255, 255, 0.9)"
-    //         : "transparent",
-    //   }}
-    //   onClick={(e) => {
-    //     if (clickOutside && isCenter && e.target === e.currentTarget) {
-    //       onClose?.();
-    //     }
-    //   }}>
-    //   <div
-    //     className={cn(
-    //       "fb-survey-content",
-    //       "fb-absolute",
-    //       "fb-w-full fb-max-w-[600px]",
-    //       "fb-pointer-events-auto",
-    //       getPlacementStyle(placement)
-    //     )}>
-    //     {children}
-    //   </div>
-    // </div>
-
     <div id="fbjs" className="fb-formbricks-form">
       <div
         aria-live="assertive"
         className={cn(
           isCenter ? "fb-pointer-events-auto" : "fb-pointer-events-none",
           isModal && "fb-z-999999 fb-fixed fb-inset-0 fb-flex fb-items-end"
-        )}
-        onClick={(e) => {
-          if (clickOutside && show && e.target === e.currentTarget) {
-            onClose?.();
-          }
-        }}>
+        )}>
         <div
           className={cn(
             "fb-relative fb-h-full fb-w-full",
@@ -103,7 +93,7 @@ export function SurveyContainer({
             isModal && isCenter && !darkOverlay ? "fb-bg-white/50" : ""
           )}>
           <div
-            // ref={modalRef}
+            ref={modalRef}
             className={cn(
               getPlacementStyle(placement),
               show ? "fb-opacity-100" : "fb-opacity-0",

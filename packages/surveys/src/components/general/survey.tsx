@@ -8,20 +8,26 @@ import { SurveyCloseButton } from "@/components/general/survey-close-button";
 import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
+import { ApiClient } from "@/lib/api-client";
 import { parseRecallInformation } from "@/lib/recall";
+import { ResponseQueue } from "@/lib/response-queue";
+import { SurveyState } from "@/lib/survey-state";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import type { JSX } from "react";
+import { type JSX, useCallback } from "react";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
-import { type SurveyBaseProps } from "@formbricks/types/formbricks-surveys";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
 import type {
   TResponseData,
   TResponseDataValue,
   TResponseTtc,
+  TResponseUpdate,
   TResponseVariables,
 } from "@formbricks/types/responses";
+import { TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
+import { getDefaultLanguageCode } from "../../../../js-core/src/lib/utils";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -34,6 +40,7 @@ export function Survey({
   isBrandingEnabled,
   onDisplay,
   onResponse,
+  onFileUpload,
   onClose,
   onFinished,
   onRetry,
@@ -45,7 +52,6 @@ export function Survey({
   getSetIsResponseSendingFinished,
   getSetQuestionId,
   getSetResponseData,
-  onFileUpload,
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
@@ -53,8 +59,70 @@ export function Survey({
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
-}: SurveyBaseProps) {
-  console.log("onClose", onClose);
+  apiHost,
+  environmentId,
+  userId,
+  action,
+  onDisplayCreated,
+  onResponseCreated,
+}: SurveyContainerProps) {
+  let apiClient: ApiClient | null = null;
+
+  if (apiHost && environmentId) {
+    apiClient = new ApiClient({
+      apiHost,
+      environmentId,
+    });
+  }
+
+  // Add this state to store the responseId
+  const [responseId, setResponseId] = useState<string | null>(null);
+
+  // Initialize surveyState with the stored responseId
+  const surveyState = useMemo(() => {
+    if (apiHost && environmentId) {
+      return new SurveyState(survey.id, null, responseId, userId);
+    }
+    return null;
+  }, [survey.id, responseId, userId, apiHost, environmentId]);
+
+  // Update the responseQueue to use the stored responseId
+  const responseQueue = useMemo(() => {
+    if (apiHost && environmentId && surveyState) {
+      return new ResponseQueue(
+        {
+          apiHost,
+          environmentId,
+          retryAttempts: 2,
+          onResponseSendingFailed: () => {
+            console.error("error sending response");
+            // setIsError(true);
+            if (getSetIsError) {
+              getSetIsError((_prev) => {});
+            }
+          },
+          onResponseSendingFinished: () => {
+            // Update the internal state directly
+            setIsResponseSendingFinished(true);
+            // Also notify parent component if a setter was provided
+            if (getSetIsResponseSendingFinished) {
+              getSetIsResponseSendingFinished((_prev) => {});
+            }
+          },
+          // Add a callback to update the responseId in state
+          setSurveyState: (state) => {
+            if (state.responseId !== responseId) {
+              setResponseId(state.responseId);
+            }
+          },
+        },
+        surveyState
+      );
+    }
+
+    return null;
+  }, [apiHost, environmentId, surveyState, responseId]);
+
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
@@ -111,6 +179,23 @@ export function Survey({
     return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
   };
 
+  const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
+    if (!apiClient) {
+      throw new Error("apiClient not initialized");
+    }
+
+    const response = await apiClient.uploadFile(
+      {
+        type: file.type,
+        name: file.name,
+        base64: file.base64,
+      },
+      params
+    );
+
+    return response;
+  };
+
   useEffect(() => {
     // scroll to top when question changes
     if (contentRef.current) {
@@ -118,9 +203,40 @@ export function Survey({
     }
   }, [questionId]);
 
+  const createDisplay = useCallback(async () => {
+    if (apiClient && surveyState && responseQueue) {
+      try {
+        const display = await apiClient.createDisplay({
+          surveyId: survey.id,
+          ...(userId && { userId }),
+        });
+
+        if (!display.ok) {
+          // @ts-expect-error -- display.error is of type ApiErrorResponse
+          throw new Error(display.error);
+        }
+
+        surveyState.updateDisplayId(display.data.id);
+        responseQueue.updateSurveyState(surveyState);
+
+        if (onDisplayCreated) {
+          onDisplayCreated();
+        }
+      } catch (err) {
+        console.error("error creating display: ", err);
+      }
+    }
+  }, [apiClient, survey, userId, onDisplayCreated, surveyState, responseQueue]);
+
   useEffect(() => {
     // call onDisplay when component is mounted
-    onDisplay?.();
+    // onDisplay?.();
+
+    if (apiHost && environmentId) {
+      createDisplay();
+    } else {
+      onDisplay?.();
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onDisplay should only be called once
   }, []);
@@ -265,6 +381,36 @@ export function Survey({
     return { nextQuestionId, calculatedVariables: calculationResults };
   };
 
+  const onResponseCreateOrUpdate = useCallback(
+    (responseUpdate: TResponseUpdate) => {
+      if (surveyState && responseQueue) {
+        if (userId) {
+          surveyState.updateUserId(userId);
+        }
+
+        responseQueue.updateSurveyState(surveyState);
+        responseQueue.add({
+          data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
+          finished: responseUpdate.finished,
+          language:
+            responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
+          meta: {
+            url: window.location.href,
+            action,
+          },
+          variables: responseUpdate.variables,
+          displayId: surveyState.displayId,
+        });
+
+        if (onResponseCreated) {
+          onResponseCreated();
+        }
+      }
+    },
+    [userId, responseQueue, surveyState, survey, action, onResponseCreated]
+  );
+
   const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
@@ -282,14 +428,27 @@ export function Survey({
 
     onChange(surveyResponseData);
     onChangeVariables(calculatedVariables);
-    onResponse?.({
-      data: surveyResponseData,
-      ttc: responsettc,
-      finished,
-      variables: calculatedVariables,
-      language: selectedLanguage,
-      endingId,
-    });
+
+    if (apiHost && environmentId) {
+      onResponseCreateOrUpdate({
+        data: surveyResponseData,
+        ttc: responsettc,
+        finished,
+        variables: calculatedVariables,
+        language: selectedLanguage,
+        endingId,
+      });
+    } else {
+      onResponse?.({
+        data: surveyResponseData,
+        ttc: responsettc,
+        finished,
+        variables: calculatedVariables,
+        language: selectedLanguage,
+        endingId,
+      });
+    }
+
     if (finished) {
       // Post a message to the parent window indicating that the survey is completed.
       window.parent.postMessage("formbricksSurveyCompleted", "*");
@@ -392,7 +551,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={onFileUpload}
+              onFileUpload={apiHost && environmentId ? onFileUploadApi : onFileUpload}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}

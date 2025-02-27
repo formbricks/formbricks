@@ -1,35 +1,15 @@
-import { SurveyInline } from "@/components/general/survey-inline";
-import { SurveyModal } from "@/components/general/survey-modal";
-import { SurveyNew } from "@/components/general/survey-new";
-import { ApiClient } from "@/lib/api-client";
+import { RenderSurvey } from "@/components/general/render-survey";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
-import {
-  SurveyContainerProps,
-  type SurveyInlineProps,
-  type SurveyModalProps,
-} from "@formbricks/types/formbricks-surveys";
+import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 
-export const renderSurveyInline = (props: SurveyInlineProps) => {
-  addStylesToDom();
-  addCustomThemeToDom({ styling: props.styling });
+export const renderSurveyInline = (props: SurveyContainerProps) => {
+  const inlineProps: SurveyContainerProps = {
+    ...props,
+    mode: "inline",
+  };
 
-  const element = document.getElementById(props.containerId);
-  if (!element) {
-    throw new Error(`renderSurvey: Element with id ${props.containerId} not found.`);
-  }
-  render(h(SurveyInline, props), element);
-};
-
-export const renderSurveyModal = (props: SurveyModalProps) => {
-  addStylesToDom();
-  addCustomThemeToDom({ styling: props.styling });
-
-  // add container element to DOM
-  const element = document.createElement("div");
-  element.id = "formbricks-modal-container";
-  document.body.appendChild(element);
-  render(h(SurveyModal, props), element);
+  renderSurvey(inlineProps);
 };
 
 export const renderSurvey = (props: SurveyContainerProps) => {
@@ -40,8 +20,6 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
   addStylesToDom();
   addCustomThemeToDom({ styling: props.styling });
-
-  const apiClient = new ApiClient(props.apiHost, props.environmentId);
 
   if (mode === "inline") {
     if (!containerId) {
@@ -55,35 +33,17 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
     const { placement, darkOverlay, onClose, ...surveyInlineProps } = props;
 
-    // render(h(SurveyInline, props), element);
-    render(h(SurveyNew, surveyInlineProps), element);
+    render(h(RenderSurvey, surveyInlineProps), element);
   } else {
     const modalContainer = document.createElement("div");
     modalContainer.id = "formbricks-modal-container";
     document.body.appendChild(modalContainer);
-    // render(h(SurveyModal, props), modalContainer);
 
-    const enhancedProps: SurveyContainerProps = {
-      ...props,
-      onDisplay: async () => {
-        try {
-          const display = await apiClient.createDisplay(props.survey.id, props.userId);
-          console.log("display created: ", display);
-
-          if (props.onDisplayCreated) {
-            console.log("about to call onDisplayCreated");
-
-            props.onDisplayCreated(display.data.id);
-          }
-        } catch (err) {
-          console.error("error creating display: ", err);
-        }
-      },
-    };
-
-    render(h(SurveyNew, enhancedProps), modalContainer);
+    render(h(RenderSurvey, props), modalContainer);
   }
 };
+
+export const renderSurveyModal = renderSurvey;
 
 if (typeof window !== "undefined") {
   window.formbricksSurveys = {

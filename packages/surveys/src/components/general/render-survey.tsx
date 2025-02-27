@@ -3,7 +3,7 @@ import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
 
-export function SurveyNew(props: SurveyContainerProps) {
+export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   const close = () => {
@@ -23,6 +23,7 @@ export function SurveyNew(props: SurveyContainerProps) {
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}>
+      {/* @ts-expect-error -- TODO: fix this */}
       <Survey {...props} onClose={close} />
     </SurveyContainer>
   );
