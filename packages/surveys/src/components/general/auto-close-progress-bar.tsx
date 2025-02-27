@@ -4,7 +4,7 @@ interface AutoCloseProgressBarProps {
 
 export function AutoCloseProgressBar({ autoCloseTimeout }: AutoCloseProgressBarProps) {
   return (
-    <div className="fb-bg-accent-bg fb-h-2 fb-w-full fb-overflow-hidden fb-rounded-t-[var(--fb-border-radius)]">
+    <div className="fb-bg-accent-bg fb-h-2 fb-w-full fb-overflow-hidden">
       <div
         key={autoCloseTimeout}
         className="fb-bg-brand fb-z-20 fb-h-2"
