@@ -159,7 +159,6 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
-        "SAML_RAW_METADATA",
         "SENTRY_DSN",
         "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",

@@ -36,12 +36,9 @@ const createConnectionPayload = async (metadata: string): Promise<SAMLSSOConnect
 
 export const preloadConnection = async (connectionController: ConnectionAPIController) => {
   const preloadedConnectionMetadata = await getPreloadedConnectionMetadata();
-  console.log("preloadedConnectionMetadata", preloadedConnectionMetadata);
   if (preloadedConnectionMetadata) {
     const connection = await createConnectionPayload(preloadedConnectionMetadata);
-    console.log("connection", connection);
-    const res = await connectionController.createSAMLConnection(connection);
-    console.log("res", res);
+    await connectionController.createSAMLConnection(connection);
   } else {
     console.log("No preloaded connection metadata found");
   }

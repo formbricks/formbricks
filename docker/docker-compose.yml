@@ -113,7 +113,6 @@ x-environment: &environment
 
     # Set the below to SAML Provider if you want to enable SAML
     # SAML_DATABASE_URL:
-    # SAML_RAW_METADATA:
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
     # Oauth credentials for Notion Integration
