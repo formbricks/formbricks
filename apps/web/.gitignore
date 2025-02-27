@@ -50,4 +50,4 @@ uploads/
 .sentryclirc
 
 # SAML Preloaded Connections
-modules/ee/auth/saml/preloaded-connection/
+saml-connection/

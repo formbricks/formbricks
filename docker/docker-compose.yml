@@ -188,7 +188,7 @@ services:
       - 3000:3000
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
-      - ./preloaded-connection:/home/nextjs/apps/web/preloaded-connection
+      - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
 volumes:

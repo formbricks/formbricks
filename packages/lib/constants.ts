@@ -31,7 +31,7 @@ export const AZURE_OAUTH_ENABLED =
 export const OIDC_OAUTH_ENABLED =
   env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
 export const SAML_OAUTH_ENABLED = env.SAML_DATABASE_URL ? true : false;
-export const SAML_XML_DIR = "./preloaded-connection";
+export const SAML_XML_DIR = "./saml-connection";
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
