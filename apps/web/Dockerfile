@@ -54,7 +54,7 @@ RUN touch apps/web/.env
 RUN pnpm install
 
 # Build the project
-RUN pnpm build --filter=@formbricks/web...
+RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
