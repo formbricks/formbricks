@@ -23,6 +23,7 @@ interface ConsentQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function ConsentQuestion({
@@ -38,6 +39,7 @@ export function ConsentQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
+  isBackButtonHidden,
 }: ConsentQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -126,7 +128,7 @@ export function ConsentQuestion({
           isLastQuestion={isLastQuestion}
         />
         <div />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

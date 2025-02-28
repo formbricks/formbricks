@@ -24,6 +24,7 @@ interface MultipleChoiceMultiProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function MultipleChoiceMultiQuestion({
@@ -39,6 +40,7 @@ export function MultipleChoiceMultiQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  isBackButtonHidden,
 }: MultipleChoiceMultiProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -293,7 +295,7 @@ export function MultipleChoiceMultiQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
