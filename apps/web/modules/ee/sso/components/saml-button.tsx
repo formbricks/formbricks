@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface SamlButtonProps {
-  inviteUrl?: string | null;
+  inviteUrl?: string;
   lastUsed?: boolean;
   samlTenant: string;
   samlProduct: string;

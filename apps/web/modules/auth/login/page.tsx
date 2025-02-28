@@ -2,8 +2,8 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
 import {
   getIsMultiOrgEnabled,
-  getIsSSOEnabled,
   getIsSamlSsoEnabled,
+  getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
@@ -27,9 +27,9 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const [isMultiOrgEnabled, isSSOEnabled, isSamlSsoEnabled] = await Promise.all([
+  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getIsSSOEnabled(),
+    getisSsoEnabled(),
     getIsSamlSsoEnabled(),
   ]);
 
@@ -51,7 +51,7 @@ export const LoginPage = async () => {
             oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
             oidcDisplayName={OIDC_DISPLAY_NAME}
             isMultiOrgEnabled={isMultiOrgEnabled}
-            isSSOEnabled={isSSOEnabled}
+            isSsoEnabled={isSsoEnabled}
             samlSsoEnabled={samlSsoEnabled}
             samlTenant={SAML_TENANT}
             samlProduct={SAML_PRODUCT}

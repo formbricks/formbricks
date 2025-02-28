@@ -7,7 +7,7 @@ import { signIn } from "next-auth/react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface GithubButtonProps {
-  inviteUrl?: string | null;
+  inviteUrl?: string;
   lastUsed?: boolean;
 }
 

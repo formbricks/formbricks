@@ -39,7 +39,7 @@ interface LoginFormProps {
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   samlTenant: string;
   samlProduct: string;
@@ -55,7 +55,7 @@ export const LoginForm = ({
   oidcOAuthEnabled,
   oidcDisplayName,
   isMultiOrgEnabled,
-  isSSOEnabled,
+  isSsoEnabled,
   samlSsoEnabled,
   samlTenant,
   samlProduct,
@@ -245,7 +245,7 @@ export const LoginForm = ({
               </Button>
             )}
           </form>
-          {isSSOEnabled && (
+          {isSsoEnabled && (
             <SSOOptions
               googleOAuthEnabled={googleOAuthEnabled}
               githubOAuthEnabled={githubOAuthEnabled}

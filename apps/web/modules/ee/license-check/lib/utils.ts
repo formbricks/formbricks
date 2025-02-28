@@ -363,7 +363,7 @@ export const getIsTwoFactorAuthEnabled = async (): Promise<boolean> => {
   return licenseFeatures.twoFactorAuth;
 };
 
-export const getIsSSOEnabled = async (): Promise<boolean> => {
+export const getisSsoEnabled = async (): Promise<boolean> => {
   if (E2E_TESTING) {
     const previousResult = await fetchLicenseForE2ETesting();
     return previousResult && previousResult.features ? previousResult.features.sso : false;

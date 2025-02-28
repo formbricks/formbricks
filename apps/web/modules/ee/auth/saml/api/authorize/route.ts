@@ -14,12 +14,16 @@ export const GET = async (req: NextRequest) => {
   }
 
   try {
-    const { redirect_url } = await oauthController.authorize(searchParams as unknown as OAuthReq);
+    const { redirect_url } = await oauthController.authorize(searchParams as OAuthReq);
 
-    return NextResponse.redirect(redirect_url as string);
-  } catch (err) {
-    const { message } = err;
+    if (!redirect_url) {
+      return responses.internalServerErrorResponse("Failed to get redirect URL");
+    }
 
-    return responses.internalServerErrorResponse(message);
+    return NextResponse.redirect(redirect_url);
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "An unknown error occurred";
+
+    return responses.internalServerErrorResponse(errorMessage);
   }
 };

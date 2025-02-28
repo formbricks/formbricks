@@ -2,8 +2,8 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
 import {
   getIsMultiOrgEnabled,
-  getIsSSOEnabled,
   getIsSamlSsoEnabled,
+  getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
@@ -31,9 +31,9 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSSOEnabled, isSamlSsoEnabled] = await Promise.all([
+  const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
     getIsMultiOrgEnabled(),
-    getIsSSOEnabled(),
+    getisSsoEnabled(),
     getIsSamlSsoEnabled(),
   ]);
 
@@ -67,7 +67,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-            isSSOEnabled={isSSOEnabled}
+            isSsoEnabled={isSsoEnabled}
             samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
             samlTenant={SAML_TENANT}

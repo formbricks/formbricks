@@ -53,7 +53,7 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
   samlTenant: string;
@@ -75,7 +75,7 @@ export const SignupForm = ({
   emailVerificationDisabled,
   defaultOrganizationId,
   defaultOrganizationRole,
-  isSSOEnabled,
+  isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
   samlTenant,
@@ -272,7 +272,7 @@ export const SignupForm = ({
           </form>
         </FormProvider>
       )}
-      {isSSOEnabled && (
+      {isSsoEnabled && (
         <SSOOptions
           googleOAuthEnabled={googleOAuthEnabled}
           githubOAuthEnabled={githubOAuthEnabled}

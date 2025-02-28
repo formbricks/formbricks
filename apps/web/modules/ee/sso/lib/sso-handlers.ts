@@ -1,7 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
-import { getIsSSOEnabled, getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
@@ -13,8 +13,8 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
 export const handleSSOCallback = async ({ user, account }: { user: TUser; account: Account }) => {
-  const isSSOEnabled = await getIsSSOEnabled();
-  if (!isSSOEnabled) {
+  const isSsoEnabled = await getisSsoEnabled();
+  if (!isSsoEnabled) {
     return false;
   }
 

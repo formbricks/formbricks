@@ -1,5 +1,11 @@
+import { responses } from "@/app/lib/api/response";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import { redirect } from "next/navigation";
+
+interface SAMLCallbackBody {
+  RelayState: string;
+  SAMLResponse: string;
+}
 
 export const POST = async (req: Request) => {
   const { oauthController } = await jackson();
@@ -7,15 +13,16 @@ export const POST = async (req: Request) => {
   const formData = await req.formData();
   const body = Object.fromEntries(formData.entries());
 
-  const { RelayState, SAMLResponse } = body as unknown as {
-    RelayState: string;
-    SAMLResponse: string;
-  };
+  const { RelayState, SAMLResponse } = body as unknown as SAMLCallbackBody;
 
   const { redirect_url } = await oauthController.samlResponse({
     RelayState,
     SAMLResponse,
   });
 
-  return redirect(redirect_url as string);
+  if (!redirect_url) {
+    return responses.internalServerErrorResponse("Failed to get redirect URL");
+  }
+
+  return redirect(redirect_url);
 };
