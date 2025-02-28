@@ -1,0 +1,136 @@
+---
+title: "SMTP Configuration"
+description: "Set up email functionality for your self-hosted Formbricks instance"
+icon: "envelope"
+---
+
+By default, Formbricks doesn't include an SMTP server for sending emails. However, you can easily configure your self-hosted instance to use your own email provider through environment variables.
+
+## Why Configure SMTP?
+
+Setting up an SMTP server enables important email functionality in Formbricks, including:
+
+- Email verification for new accounts
+- Password reset emails
+- Team member invitation emails
+- Survey response notifications
+
+## Email Configuration Options
+
+Formbricks uses Nodemailer to send emails and supports various SMTP providers like:
+
+- AWS SES
+- SendGrid
+- Mailgun
+- Gmail (for low volume)
+- Custom SMTP servers
+- Other SMTP providers
+
+## Required Environment Variables
+
+To enable email functionality, configure the following environment variables:
+
+```bash
+# Basic SMTP Configuration
+MAIL_FROM=noreply@yourdomain.com
+SMTP_HOST=smtp.yourprovider.com
+SMTP_PORT=587
+SMTP_USER=your_username
+SMTP_PASSWORD=your_password
+```
+
+Additional optional settings:
+
+```bash
+# Enable SMTP_SECURE_ENABLED for TLS (port 465)
+SMTP_SECURE_ENABLED=0
+
+# If set to 0, the server won't require authentication
+SMTP_AUTHENTICATED=1
+
+# If set to 0, the server will accept connections without requiring
+# authorization from the list of supplied CAs (default is 1)
+SMTP_REJECT_UNAUTHORIZED_TLS=0
+```
+
+## Enabling Email Features
+
+By default, email verification and password reset features are **disabled** in Formbricks. To enable these features:
+
+```bash
+# Set to 0 to enable email verification (requires working SMTP)
+EMAIL_VERIFICATION_DISABLED=0
+
+# Set to 0 to enable password reset functionality (requires working SMTP)
+PASSWORD_RESET_DISABLED=0
+```
+
+## Configuration for One-Click Setup
+
+If you're using the one-click setup with Docker Compose, you can either:
+
+1. Edit the docker-compose.yml file and add the SMTP environment variables:
+
+```yaml
+environment:
+  # Email Configuration
+  MAIL_FROM: noreply@yourdomain.com
+  SMTP_HOST: smtp.yourprovider.com
+  SMTP_PORT: 587
+  SMTP_USER: your_username
+  SMTP_PASSWORD: your_password
+  EMAIL_VERIFICATION_DISABLED: 0
+  PASSWORD_RESET_DISABLED: 0
+```
+
+2. Or during the setup, answer "Yes" when prompted to set up the email service:
+
+```
+📧 Do you want to set up the email service? You will need SMTP credentials for the same! [y/N] y
+```
+
+## Provider-Specific Examples
+
+### SendGrid
+
+```bash
+MAIL_FROM=noreply@yourdomain.com
+SMTP_HOST=smtp.sendgrid.net
+SMTP_PORT=587
+SMTP_USER=apikey
+SMTP_PASSWORD=your_sendgrid_api_key
+```
+
+### AWS SES
+
+```bash
+MAIL_FROM=noreply@yourdomain.com
+SMTP_HOST=email-smtp.us-east-1.amazonaws.com
+SMTP_PORT=587
+SMTP_USER=your_ses_access_key
+SMTP_PASSWORD=your_ses_secret_key
+```
+
+### Gmail
+
+```bash
+MAIL_FROM=your_email@gmail.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+```
+
+> **Note**: For Gmail, you need to use an App Password if you have 2FA enabled.
+
+## Troubleshooting
+
+If you're experiencing issues with your email configuration:
+
+1. Check that all required environment variables are set correctly
+2. Verify your SMTP credentials are valid
+3. Ensure your email provider allows sending from the specified MAIL_FROM address
+4. If using Gmail, ensure you're using an App Password
+5. For secure connections, make sure you've set the correct port and SMTP_SECURE_ENABLED value
+
+For additional help, join the conversation on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
