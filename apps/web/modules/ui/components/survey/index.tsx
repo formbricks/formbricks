@@ -15,7 +15,7 @@ declare global {
 export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);
   const renderInline = useCallback(
-    () => window.formbricksSurveys.renderSurveyInline({ ...props, containerId }),
+    () => window.formbricksSurveys.renderSurvey({ ...props, containerId, mode: "inline" }),
     [containerId, props]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
