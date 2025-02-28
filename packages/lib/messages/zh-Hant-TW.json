@@ -6,7 +6,6 @@
     "continue_with_google": "使用 Google 繼續",
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
-    "continue_with_saml": "使用 SAML SSO 繼續",
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {
@@ -53,7 +52,6 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "use_a_backup_code": "使用備份碼"
     },
-    "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
       "have_an_account": "已有帳戶？",
