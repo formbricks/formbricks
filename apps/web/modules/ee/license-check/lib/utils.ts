@@ -380,6 +380,9 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
       ? previousResult.features.sso && previousResult.features.saml
       : false;
   }
+  if (IS_FORMBRICKS_CLOUD) {
+    return false;
+  }
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
   return licenseFeatures.sso && licenseFeatures.saml;
