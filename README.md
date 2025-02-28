@@ -13,7 +13,7 @@
 <h3 align="center">Formbricks</h3>
 
 <p align="center">
-Harvest user-insights, build irresistible experiences.
+The Open Source Qualtrics Alternative
 <br />
 <a href="https://formbricks.com/">Website</a>
 </p>
