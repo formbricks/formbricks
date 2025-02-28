@@ -1,4 +1,4 @@
-import { SAMLSSOConnectionWithEncodedMetadata } from "@boxyhq/saml-jackson";
+import { SAMLSSOConnectionWithEncodedMetadata, SAMLSSORecord } from "@boxyhq/saml-jackson";
 import { ConnectionAPIController } from "@boxyhq/saml-jackson/dist/controller/api";
 import fs from "fs/promises";
 import path from "path";
@@ -23,7 +23,7 @@ const getPreloadedConnectionMetadata = async () => {
   return preloadedConnectionMetadata;
 };
 
-const getConnectionPayload = async (metadata: string): Promise<SAMLSSOConnectionWithEncodedMetadata> => {
+const getConnectionPayload = (metadata: string): SAMLSSOConnectionWithEncodedMetadata => {
   const encodedRawMetadata = Buffer.from(metadata, "utf8").toString("base64");
 
   return {
@@ -52,8 +52,8 @@ export const preloadConnection = async (connectionController: ConnectionAPIContr
 
     const existingConnection = connections[0];
 
-    const connection = await getConnectionPayload(preloadedConnectionMetadata);
-    let newConnection;
+    const connection = getConnectionPayload(preloadedConnectionMetadata);
+    let newConnection: SAMLSSORecord;
     try {
       newConnection = await connectionController.createSAMLConnection(connection);
     } catch (error) {
