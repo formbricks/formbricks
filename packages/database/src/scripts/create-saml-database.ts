@@ -2,10 +2,9 @@ import { PrismaClient } from "@prisma/client";
 
 const createSamlDatabase = async (): Promise<void> => {
   const samlDatabaseUrl = process.env.SAML_DATABASE_URL;
-  const hasEnterpriseLicense = Boolean(process.env.ENTERPRISE_LICENSE_KEY);
 
-  if (!samlDatabaseUrl || !hasEnterpriseLicense) {
-    process.exit(1);
+  if (!samlDatabaseUrl) {
+    return;
   }
 
   const urlRegex =
@@ -14,7 +13,7 @@ const createSamlDatabase = async (): Promise<void> => {
   const dbName = urlMatch?.groups?.database;
 
   if (!dbName) {
-    process.exit(1);
+    return;
   }
 
   // Create a Prisma client to connect to the default database
@@ -36,7 +35,7 @@ const createSamlDatabase = async (): Promise<void> => {
     console.log(`Database '${dbName}' created successfully.`);
   } catch (error) {
     console.error(`Error creating database '${dbName}':`, error);
-    process.exit(1);
+    return;
   } finally {
     await prisma.$disconnect();
   }
@@ -46,6 +45,6 @@ createSamlDatabase()
   .then(() => {
     process.exit(0);
   })
-  .catch(() => {
-    process.exit(1);
+  .catch((error: unknown) => {
+    console.error("Error creating SAML database:", error);
   });
