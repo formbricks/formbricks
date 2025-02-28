@@ -170,6 +170,7 @@ export const QuestionFilterComboBox = ({
                 <div className="p-2">
                   <input
                     type="text"
+                    autoFocus
                     placeholder={t("common.search") + "..."}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
