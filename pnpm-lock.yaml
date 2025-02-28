@@ -678,8 +678,8 @@ importers:
         specifier: 0.12.0
         version: 0.12.0(encoding@0.1.13)
       prisma-json-types-generator:
-        specifier: 3.1.1
-        version: 3.1.1(prisma@6.0.1)(typescript@5.7.2)
+        specifier: 3.2.2
+        version: 3.2.2(prisma@6.0.1)(typescript@5.7.2)
       ts-node:
         specifier: 10.9.2
         version: 10.9.2(@types/node@22.10.2)(typescript@5.7.2)
@@ -3654,8 +3654,8 @@ packages:
   '@prisma/debug@5.0.0':
     resolution: {integrity: sha512-3q/M/KqlQ01/HJXifU/zCNOHkoTWu24kGelMF/IBrRxm7njPqTTbwfnT1dh4JK+nuWM5/Dg1Lv00u2c0l7AHxg==}
 
-  '@prisma/debug@5.20.0':
-    resolution: {integrity: sha512-oCx79MJ4HSujokA8S1g0xgZUGybD4SyIOydoHMngFYiwEwYDQ5tBQkK5XoEHuwOYDKUOKRn/J0MEymckc4IgsQ==}
+  '@prisma/debug@6.0.0':
+    resolution: {integrity: sha512-eUjoNThlDXdyJ1iQ2d7U6aTVwm59EwvODb5zFVNJEokNoSiQmiYWNzZIwZyDmZ+j51j42/0iTaHIJ4/aZPKFRg==}
 
   '@prisma/debug@6.0.1':
     resolution: {integrity: sha512-jQylgSOf7ibTVxqBacnAlVGvek6fQxJIYCQOeX2KexsfypNzXjJQSS2o5s+Mjj2Np93iSOQUaw6TvPj8syhG4w==}
@@ -3684,8 +3684,8 @@ packages:
   '@prisma/generator-helper@5.0.0':
     resolution: {integrity: sha512-pufQ1mhoH6WzKNtzL79HZDoW4Ql3Lf8QEKVmBoW8e3Tdb50bxpYBYue5LBqp9vNW1xd1pgZO53cNiRfLX2d4Zg==}
 
-  '@prisma/generator-helper@5.20.0':
-    resolution: {integrity: sha512-37Aibw0wVRQgQVtCdNAIN71YFnSQfvetok7vd95KKkYkQRbEx94gsvPDpyN9Mw7p3IwA3nFgPfLc3jBRztUkKw==}
+  '@prisma/generator-helper@6.0.0':
+    resolution: {integrity: sha512-5DkG7hspZo6U4OtqI2W0JcgtY37sr7HgT8Q0W/sjL4VoV4px6ivzK6Eif5bKM7q+S4yFUHtjUt/3s69ErfLn7A==}
 
   '@prisma/get-platform@5.0.0':
     resolution: {integrity: sha512-JT/rz/jaMTggDkd9OIma50si9rPLzSFe7XSrV3mKXwtv9t+rdwx5ZhmKJd+Rz6S1vhn/291k21JLfaxOW6u8KQ==}
@@ -10730,12 +10730,12 @@ packages:
     resolution: {integrity: sha512-b5CqA9cCY5jmNJGjx8oUbPw3KSgVd+mu8711MSZIRY9dIF0Vlcs/Au6LR3S5guncydM7Zkh8iz8vC+c2CDj3Xw==}
     hasBin: true
 
-  prisma-json-types-generator@3.1.1:
-    resolution: {integrity: sha512-LYVBKWcnh6SSPf6jNJuQEmByyZtj79kuxzilCF8962ViBNciBzk+pQ8qt7HR7lFUIOEN3sUeOOhJe1RuytGk6A==}
+  prisma-json-types-generator@3.2.2:
+    resolution: {integrity: sha512-kvEbJPIP5gxk65KmLs0nAvY+CxpqVMWb4OsEvXlyXZmp2IGfi5f52BUV7ezTYQNjRPZyR4QlayWJXffoqVVAfA==}
     engines: {node: '>=14.0'}
     hasBin: true
     peerDependencies:
-      prisma: ^5.20
+      prisma: ^5 || ^6
       typescript: ^5.6.2
 
   prisma@6.0.1:
@@ -12133,9 +12133,6 @@ packages:
 
   tslib@1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-
-  tslib@2.7.0:
-    resolution: {integrity: sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==}
 
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
@@ -16448,7 +16445,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@prisma/debug@5.20.0': {}
+  '@prisma/debug@6.0.0': {}
 
   '@prisma/debug@6.0.1': {}
 
@@ -16505,9 +16502,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@prisma/generator-helper@5.20.0':
+  '@prisma/generator-helper@6.0.0':
     dependencies:
-      '@prisma/debug': 5.20.0
+      '@prisma/debug': 6.0.0
 
   '@prisma/get-platform@5.0.0':
     dependencies:
@@ -17419,7 +17416,7 @@ snapshots:
       '@babel/plugin-transform-sticky-regex': 7.25.9(@babel/core@7.26.0)
       '@babel/plugin-transform-typescript': 7.26.7(@babel/core@7.26.0)
       '@babel/plugin-transform-unicode-regex': 7.25.9(@babel/core@7.26.0)
-      '@babel/template': 7.25.9
+      '@babel/template': 7.26.9
       '@react-native/babel-plugin-codegen': 0.74.87(@babel/preset-env@7.26.7(@babel/core@7.26.0))
       babel-plugin-transform-flow-enums: 0.0.2(@babel/core@7.26.0)
       react-refresh: 0.14.2
@@ -19496,7 +19493,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.13':
     dependencies:
-      '@babel/parser': 7.26.7
+      '@babel/parser': 7.26.9
       '@vue/shared': 3.5.13
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -23894,8 +23891,8 @@ snapshots:
   metro-transform-plugins@0.80.12:
     dependencies:
       '@babel/core': 7.26.0
-      '@babel/generator': 7.26.5
-      '@babel/template': 7.25.9
+      '@babel/generator': 7.26.9
+      '@babel/template': 7.26.9
       '@babel/traverse': 7.26.7
       flow-enums-runtime: 0.0.6
       nullthrows: 1.1.1
@@ -23916,9 +23913,9 @@ snapshots:
   metro-transform-worker@0.80.12:
     dependencies:
       '@babel/core': 7.26.0
-      '@babel/generator': 7.26.5
-      '@babel/parser': 7.26.7
-      '@babel/types': 7.26.7
+      '@babel/generator': 7.26.9
+      '@babel/parser': 7.26.9
+      '@babel/types': 7.26.9
       flow-enums-runtime: 0.0.6
       metro: 0.80.12
       metro-babel-transformer: 0.80.12
@@ -25141,11 +25138,11 @@ snapshots:
       - encoding
       - supports-color
 
-  prisma-json-types-generator@3.1.1(prisma@6.0.1)(typescript@5.7.2):
+  prisma-json-types-generator@3.2.2(prisma@6.0.1)(typescript@5.7.2):
     dependencies:
-      '@prisma/generator-helper': 5.20.0
+      '@prisma/generator-helper': 6.0.0
       prisma: 6.0.1
-      tslib: 2.7.0
+      tslib: 2.8.1
       typescript: 5.7.2
 
   prisma@6.0.1:
@@ -26842,8 +26839,6 @@ snapshots:
       strip-bom: 3.0.0
 
   tslib@1.14.1: {}
-
-  tslib@2.7.0: {}
 
   tslib@2.8.1: {}
 
