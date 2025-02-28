@@ -50,7 +50,7 @@ export const EmailCustomizationSettings = ({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || DEFAULT_LOGO_URL);
   const [isSaving, setIsSaving] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null) as React.RefObject<HTMLInputElement>;
 
   const isDefaultLogo = logoUrl === DEFAULT_LOGO_URL;
 

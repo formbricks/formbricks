@@ -144,7 +144,6 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
                       id="hiddenFileInput"
                       ref={(e) => {
                         field.ref(e);
-                        // @ts-expect-error
                         inputRef.current = e;
                       }}
                       className="hidden"

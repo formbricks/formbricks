@@ -17,6 +17,7 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
   async (
     surveyId: string,
     questionId: TSurveyQuestionId,
+    insightResponsesIds: string[],
     limit?: number,
     offset?: number
   ): Promise<TSurveyQuestionSummaryOpenText["insights"]> =>
@@ -33,6 +34,11 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
                   document: {
                     surveyId,
                     questionId,
+                    ...(insightResponsesIds.length > 0 && {
+                      responseId: {
+                        in: insightResponsesIds,
+                      },
+                    }),
                   },
                 },
               },
@@ -74,7 +80,7 @@ export const getInsightsBySurveyIdQuestionId = reactCache(
           throw error;
         }
       },
-      [`getInsightsBySurveyIdQuestionId-${surveyId}-${limit}-${offset}`],
+      [`getInsightsBySurveyIdQuestionId-${surveyId}-${questionId}-${limit}-${offset}`],
       {
         tags: [documentCache.tag.bySurveyId(surveyId)],
       }

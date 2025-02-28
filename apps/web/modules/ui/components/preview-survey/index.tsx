@@ -253,7 +253,7 @@ export const PreviewSurvey = ({
             <MediaBackground
               surveyType={survey.type}
               styling={styling}
-              ContentRef={ContentRef}
+              ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
               isMobilePreview>
               {previewType === "modal" ? (
                 <Modal
@@ -385,7 +385,7 @@ export const PreviewSurvey = ({
               <MediaBackground
                 surveyType={survey.type}
                 styling={styling}
-                ContentRef={ContentRef}
+                ContentRef={ContentRef as React.RefObject<HTMLDivElement>}
                 isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (

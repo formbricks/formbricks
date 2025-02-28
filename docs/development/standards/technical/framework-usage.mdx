@@ -1,0 +1,38 @@
+---
+title: Framework Usage
+icon: book
+---
+
+## Introduction
+
+This document outlines the framework usage guidelines for Formbricks, which is built primarily on Next.js (with heavy use of Server-Side Rendering through the App Router), Tailwind CSS, and Prisma ORM. 
+
+## Next.js
+
+### App Router and Server Components
+
+- Use the Next.js App Router with the /app directory for building the application.
+- Leverage React Server Components, which are the default in the App Router.
+- Perform server-side data fetching directly within page.tsx files using async function components.
+
+### Data Fetching in page.tsx
+
+- Implement data fetching logic directly in your page.tsx components. This allows for server-side rendering without needing separate data fetching methods like getServerSideProps.
+- Utilize React Suspense and streaming features if using advanced asynchronous patterns.
+
+### Server Actions for Mutations
+
+- Define Server Actions in dedicated action.ts files.
+- Server actions serve as entry points for mutations and delegate to service layers that perform Prisma operations and other business logic.
+- This approach promotes separation of concerns and maintainability by keeping form actions and mutations decoupled from UI components.
+
+### Error Handling and Performance
+
+- Integrate error boundaries and loading states appropriately within your App Router structure.
+- Optimize performance with Next.js built-in features such as dynamic imports, the Image component, and code splitting.
+
+## Tailwind CSS
+We follow the Tailwind framework as intended. Please have a look at the [Tailwind CSS Guidelines](https://tailwindcss.com/docs/styling-with-utility-classes) for more information.
+
+## Prisma ORM
+We're working with Prisma as our ORM. Please have a look at the [Prisma ORM Documentation](https://www.prisma.io/docs/orm) for more information.

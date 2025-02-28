@@ -1,32 +1,38 @@
-# Mintlify Starter Kit
+# Formbricks Documentation
 
-Click on `Use this template` to copy the Mintlify starter kit. The starter kit contains examples including
+This documentation is built using Mintlify. Here's how to run it locally and contribute.
 
-- Guide pages
-- Navigation
-- Customizations
-- API Reference pages
-- Use of popular components
+## Local Development
 
-### Development
+1. Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify):
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mintlify) to preview the documentation changes locally. To install, use the following command
-
-```
+```bash
 npm i -g mintlify
 ```
 
-Run the following command at the root of your documentation (where mint.json is)
+2. Clone the Formbricks repository and navigate to the docs folder:
 
+```bash
+git clone https://github.com/formbricks/formbricks.git
+cd formbricks/docs
 ```
+
+3. Run the documentation locally:
+
+```bash
 mintlify dev
 ```
 
-### Publishing Changes
+The documentation will be available at `http://localhost:3000`.
 
-Install our Github App to auto propagate changes from your repo to your deployment. Changes will be deployed to production automatically after pushing to the default branch. Find the link to install on your dashboard.
+### Contributing
 
-#### Troubleshooting
+1. Create a new branch for your changes
+2. Make your documentation updates
+3. Submit a pull request to the main repository
 
-- Mintlify dev isn't running - Run `mintlify install` it'll re-install dependencies.
-- Page loads as a 404 - Make sure you are running in a folder with `mint.json`
+### Troubleshooting
+
+- If Mintlify dev isn't running, try `mintlify install` to reinstall dependencies
+- If a page loads as a 404, ensure you're in the `docs` folder with the `mint.json` file
+- For other issues, please check our [Contributing Guidelines](./CONTRIBUTING.md)

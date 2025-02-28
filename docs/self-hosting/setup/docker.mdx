@@ -16,81 +16,81 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 ## Start
 
-* **Create a New Directory for Formbricks**
+1. **Create a New Directory for Formbricks**
 
-Open a terminal and run the following commands to create and enter a new directory for Formbricks:
+   Open a terminal and run the following commands to create and enter a new directory for Formbricks:
 
-```bash
-mkdir formbricks-quickstart && cd formbricks-quickstart
-```
+   ```bash
+   mkdir formbricks-quickstart && cd formbricks-quickstart
+   ```
 
-* **Download the Docker-Compose File**
+1. **Download the Docker-Compose File**
 
-Get the docker-compose file from the Formbricks repository by running:
+   Get the docker-compose file from the Formbricks repository by running:
 
-```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
-```
+   ```bash
+   curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/main/docker/docker-compose.yml
+   ```
 
-* **Generate NextAuth Secret**
+1. **Generate NextAuth Secret**
 
-You need a NextAuth secret for session signing and encryption. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
+   You need a NextAuth secret for session signing and encryption. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
 
-```bash
-sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
-```
+   ```bash
+   sed -i "/NEXTAUTH_SECRET:$/s/NEXTAUTH_SECRET:.*/NEXTAUTH_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
 
-* **Generate Encryption Key**
+1. **Generate Encryption Key**
 
-Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. The `sed` command below generates a random string using `openssl`, then replaces the `ENCRYPTION_KEY:` placeholder in the `docker-compose.yml` file with this generated secret:
+   Next, you need to generate an Encryption Key. This will be used for authenticating and verifying 2 Factor Authentication. The `sed` command below generates a random string using `openssl`, then replaces the `ENCRYPTION_KEY:` placeholder in the `docker-compose.yml` file with this generated secret:
 
-```bash
-sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
-```
+   ```bash
+   sed -i "/ENCRYPTION_KEY:$/s/ENCRYPTION_KEY:.*/ENCRYPTION_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
 
-* **Generate Cron Secret**
+1. **Generate Cron Secret**
 
-You require a Cron secret to secure API access for running cron jobs. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
+   You require a Cron secret to secure API access for running cron jobs. Run the command below to generate a random string using `openssl` and automatically insert it into the `docker-compose.yml` file:
 
-```bash
-sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
-```
+   ```bash
+   sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
 
-* **Start the Docker Setup**
+1. **Start the Docker Setup**
 
-Now, you’re ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+   Now, you’re ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
 
-```bash
- docker compose up -d
-```
+   ```bash
+   docker compose up -d
+   ```
 
-The `-d` flag runs the containers in the background, so they keep running even after you close the terminal.
+   The `-d` flag runs the containers in the background, so they keep running even after you close the terminal.
 
-* **Open Formbricks in Your Browser**
+1. **Open Formbricks in Your Browser**
 
-Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
+   Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
 
 ## Update
 
 Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
 
-* Pull the latest Formbricks image
+1. Pull the latest Formbricks image
 
-```bash
-docker compose pull
-```
+   ```bash
+   docker compose pull
+   ```
 
-* Stop the Formbricks stack
+1. Stop the Formbricks stack
 
-```bash
-docker compose down
-```
+   ```bash
+   docker compose down
+   ```
 
-* Re-start the Formbricks stack with the updated image
+1. Re-start the Formbricks stack with the updated image
 
-```bash
-docker compose up -d
-```
+   ```bash
+   docker compose up -d
+   ```
 
 ## Debug
 
@@ -137,13 +137,10 @@ formbricks-quickstart-formbricks-1  | Listening on port 3000 url: http://<random
 
 You can close the logs again by hitting `CTRL + C`.
 
-## [](https://formbricks.com/docs/self-hosting/docker#customizing-environment-variables)
-
 <Note>
   **Customizing environment variables**
 
-  To edit any of the available environment variables, check out our [Configure](/self-hosting/configuration) section!
+  To edit any of the available environment variables, check out our [Configuration](/self-hosting/configuration/environment-variables) section!
 </Note>
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
-](https://formbricks.com/docs/developer-docs/rest-api)
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

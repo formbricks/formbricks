@@ -4,13 +4,8 @@ description:
   "The notion integration allows you to automatically send responses to a Notion database of your choice."
 ---
 
-The notion integration allows you to automatically send responses to a Notion database of your choice.
-
 <Note>
-  If you are on a self-hosted instance, you will need to configure this
-  integration separately. Please follow the guides
-  [here](/self-hosting/configuration/integrations) to configure integrations on your
-  self-hosted instance.
+  If you are on a self-hosted instance, you will need to configure this integration separately. Please follow the guides [here](/self-hosting/configuration/integrations) to configure integrations on your self-hosted instance.
 </Note>
 
 ## Formbricks Cloud
@@ -19,13 +14,13 @@ The notion integration allows you to automatically send responses to a Notion da
 
 ![Formbricks Integrations Tab](/images/xm-and-surveys/core-features/integrations/notion/integrations-tab.webp)
 
-2. Now click on the "Connect with Notion" button to authenticate yourself with Notion.
+1. Now click on the "Connect with Notion" button to authenticate yourself with Notion.
 
 ![Connect Formbricks with your Notion account](/images/xm-and-surveys/core-features/integrations/notion/connect-with-notion.webp)
 
-3. You will now be taken to the Notion OAuth page where you can select the Notion account you want to use for the integration
+1. You will now be taken to the Notion OAuth page where you can select the Notion account you want to use for the integration
 
-4. Once you have selected the account and databases and completed the authentication and authorization process, you will be taken back to Formbricks Cloud and see the connected status as below:
+2. Once you have selected the account and databases and completed the authentication and authorization process, you will be taken back to Formbricks Cloud and see the connected status as below:
 
 ![Formbricks is now connected with Notion](/images/xm-and-surveys/core-features/integrations/notion/notion-connected.webp)
 
@@ -34,15 +29,15 @@ The notion integration allows you to automatically send responses to a Notion da
   least one question and a Notion database in the Notion account you integrated.
 </Note>
 
-5. Now click on the "Link New Database" button to link a Notion database with Formbricks and a modal will open up.
+1. Now click on the "Link New Database" button to link a Notion database with Formbricks and a modal will open up.
 
 ![Link Formbricks with a Notion database](/images/xm-and-surveys/core-features/integrations/notion/link-survey-with-database.webp)
 
-6. Select the Notion database you want to link with Formbricks and the Survey. On doing so, you will be asked to map formbricks' survey questions with selected databases' column. Complete the mapping and click on the "Link Database" button.
+1. Select the Notion database you want to link with Formbricks and the Survey. On doing so, you will be asked to map formbricks' survey questions with selected databases' column. Complete the mapping and click on the "Link Database" button.
 
 ![Question to notion database column mapping](/images/xm-and-surveys/core-features/integrations/notion/link-with-databases.webp)
 
-7. On submitting, the modal will close and you will see the linked Notion database in the list of linked Notion databases.
+1. On submitting, the modal will close and you will see the linked Notion database in the list of linked Notion databases.
 
 ![List of linked notion databases](/images/xm-and-surveys/core-features/integrations/notion/list-linked-databases.webp)
 
@@ -53,16 +48,26 @@ Congratulations! You have successfully linked a Notion database with Formbricks.
 Enabling the Notion Integration in a self-hosted environment requires a setup using Notion account and changing the environment variables of your Formbricks instance.
 
 1. Sign up for a [Notion](https://www.notion.so/) account, if you don't have one already.
+
 2. Go to the [my integrations](https://www.notion.so/my-integrations) page and click on **New integration**.
+
 3. Fill up the basic information like **Name**, **Logo** and click on **Submit**.
+
 4. Now, click on **Distribution** tab on the sidebar. A text will appear which will ask you to make the integration public. Click on that toggle button. A form will appear below the text.
+
 5. Now provide it the details such as requested. Under **Redirect URIs** field:
-   - If you are running formbricks locally, you can enter `http://localhost:3000/api/v1/integrations/notion/callback`.
-   - Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/notion/callback`
+
+   * If you are running formbricks locally, you can enter `http://localhost:3000/api/v1/integrations/notion/callback`.
+
+   * Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/notion/callback`
+
 6. Once you've filled all the necessary details, click on **Submit**.
+
 7. A screen will appear which will have **Client ID** and **Client secret**. Copy them and set them as the environment variables in your Formbricks instance as:
-   - `NOTION_OAUTH_CLIENT_ID` - OAuth Client ID
-   - `NOTION_OAUTH_CLIENT_SECRET` - OAuth Client Secret
+
+   * `NOTION_OAUTH_CLIENT_ID` - OAuth Client ID
+
+   * `NOTION_OAUTH_CLIENT_SECRET` - OAuth Client Secret
 
 Voila! You have successfully enabled the Notion integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link a Notion database with Formbricks.
 
@@ -71,8 +76,11 @@ Voila! You have successfully enabled the Notion integration in your self-hosted 
 To remove the integration with Slack Workspace,
 
 1. Visit the Integrations tab in your Formbricks Cloud dashboard.
+
 2. Select "Manage" button in the Slack card.
+
 3. Click on the "Delete Integration" button.
+
 4. It will now ask for a confirmation to remove the integration. Click on the "Delete" button to remove the integration. You can always come back and connect again with the same Notion Account.
 
 ![Delete Notion Integration with Formbricks](/images/xm-and-surveys/core-features/integrations/notion/delete-connection.webp)
