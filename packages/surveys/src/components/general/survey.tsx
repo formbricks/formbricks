@@ -64,6 +64,9 @@ export function Survey({
   action,
   onDisplayCreated,
   onResponseCreated,
+  singleUseId,
+  singleUseResponseId,
+  mode,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -74,16 +77,16 @@ export function Survey({
     });
   }
 
-  // Add this state to store the responseId
-  const [responseId, setResponseId] = useState<string | null>(null);
-
-  // Initialize surveyState with the stored responseId
   const surveyState = useMemo(() => {
     if (apiHost && environmentId) {
-      return new SurveyState(survey.id, null, responseId, userId);
+      if (mode === "inline") {
+        return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId);
+      }
+
+      return new SurveyState(survey.id, null, null, userId);
     }
     return null;
-  }, [survey.id, responseId, userId, apiHost, environmentId]);
+  }, [survey.id, userId, apiHost, environmentId, singleUseId, singleUseResponseId, mode]);
 
   // Update the responseQueue to use the stored responseId
   const responseQueue = useMemo(() => {
@@ -107,19 +110,13 @@ export function Survey({
               getSetIsResponseSendingFinished((_prev) => {});
             }
           },
-          // Add a callback to update the responseId in state
-          setSurveyState: (state) => {
-            if (state.responseId !== responseId) {
-              setResponseId(state.responseId);
-            }
-          },
         },
         surveyState
       );
     }
 
     return null;
-  }, [apiHost, environmentId, surveyState, responseId]);
+  }, [apiHost, environmentId, surveyState]);
 
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
 

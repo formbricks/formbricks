@@ -55,4 +55,6 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   darkOverlay?: boolean;
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
+  singleUseId?: string;
+  singleUseResponseId?: string;
 }

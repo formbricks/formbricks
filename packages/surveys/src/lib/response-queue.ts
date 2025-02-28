@@ -22,7 +22,6 @@ export class ResponseQueue {
   private config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
-  // private api: FormbricksAPI;
   private api: ApiClient;
 
   constructor(config: QueueConfig, surveyState: SurveyState) {
@@ -85,7 +84,6 @@ export class ResponseQueue {
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (this.surveyState.responseId !== null) {
-        // await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
         await this.api.updateResponse({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
         const response = await this.api.createResponse({
