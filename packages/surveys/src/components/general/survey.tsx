@@ -116,7 +116,7 @@ export function Survey({
     }
 
     return null;
-  }, [apiHost, environmentId, surveyState]);
+  }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
 
@@ -163,7 +163,7 @@ export function Survey({
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
   const currentQuestion = useMemo(() => {
     return localSurvey.questions.find((q) => q.id === questionId);
-  }, [questionId, localSurvey.questions, history]);
+  }, [questionId, localSurvey.questions]);
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
@@ -403,7 +403,7 @@ export function Survey({
         }
       }
     },
-    [userId, responseQueue, surveyState, survey, action, onResponseCreated]
+    [surveyState, responseQueue, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
   );
 
   const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
