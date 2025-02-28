@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
@@ -48,6 +49,7 @@ export const QuestionFilterComboBox = ({
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
   const { t } = useTranslate();
@@ -72,6 +74,12 @@ export const QuestionFilterComboBox = ({
   const isDisabledComboBox =
     (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
+
+  const filteredOptions = options?.filter((o) =>
+    (typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o)
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="inline-flex w-full flex-row">
@@ -160,10 +168,21 @@ export const QuestionFilterComboBox = ({
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
               <CommandList>
+                <div className="p-2">
+                  <Input
+                    type="text"
+                    autoFocus
+                    placeholder={t("common.search") + "..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 p-2 text-sm focus:border-slate-300"
+                  />
+                </div>
                 <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
-                  {options?.map((o) => (
+                  {filteredOptions?.map((o, index) => (
                     <CommandItem
+                      key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
                       onSelect={() => {
                         !isMultiple
                           ? onChangeFilterComboBoxValue(
