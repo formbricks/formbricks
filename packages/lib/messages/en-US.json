@@ -1855,10 +1855,6 @@
       "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
     }
   },
-  "health": {
-    "degraded": "Your Formbricks health is degraded",
-    "healthy": "All systems are up and running"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Reach out to your organization owner to get access to projects. Or create an own organization to get started.",

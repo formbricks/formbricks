@@ -1855,10 +1855,6 @@
       "smileys_description": "Use indicadores visuais pra captar feedback em todos os pontos de contato com o cliente."
     }
   },
-  "health": {
-    "degraded": "A saúde do seu Formbricks está degradada",
-    "healthy": "Todos os sistemas estão funcionando"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Entre em contato com o proprietário da sua organização para obter acesso aos projetos. Ou crie uma organização própria para começar.",
