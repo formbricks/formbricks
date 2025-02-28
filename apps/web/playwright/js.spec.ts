@@ -131,7 +131,7 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     await page.waitForSelector("text=Responses");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
     expect(impressionsCount).toEqual("Impressions\n\n1");
