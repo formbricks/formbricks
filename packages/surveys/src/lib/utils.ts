@@ -179,3 +179,10 @@ export const makeRequest = async <T>(
   const successResponse = json as ApiSuccessResponse<T>;
   return ok(successResponse.data);
 };
+
+export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
+  const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
+    return surveyLanguage.default;
+  });
+  if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
+};

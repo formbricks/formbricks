@@ -1,12 +1,10 @@
 /* eslint-disable no-console -- debugging*/
-import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
+import React, { type JSX, useEffect, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
-import { ResponseQueue } from "@/lib/common/response-queue";
 import { filterSurveys, getLanguageCode, getStyling } from "@/lib/common/utils";
-import { SurveyState } from "@/lib/survey/state";
 import { SurveyStore } from "@/lib/survey/store";
 import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "@/types/config";
 import type { SurveyContainerProps } from "@/types/survey";
@@ -33,24 +31,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
   const [languageCode, setLanguageCode] = useState("default");
-
-  const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, null, null, appConfig.get().user.data.userId)
-  );
-
-  const responseQueue = useMemo(
-    () =>
-      new ResponseQueue(
-        {
-          appUrl: appConfig.get().appUrl,
-          environmentId: appConfig.get().environmentId,
-          retryAttempts: 2,
-          setSurveyState,
-        },
-        surveyState
-      ),
-    [surveyState]
-  );
 
   useEffect(() => {
     if (isMultiLanguageSurvey) {
@@ -153,7 +133,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 
           return true;
         }}
-        onMessage={async (event: WebViewMessageEvent) => {
+        onMessage={(event: WebViewMessageEvent) => {
           try {
             const { data } = event.nativeEvent;
             const unvalidatedMessage = JSON.parse(data) as { type: string; data: unknown };
@@ -169,8 +149,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               return;
             }
 
-            const { onDisplayCreated, onResponseCreated, onClose, onRetry, onFinished } =
-              validatedMessage.data;
+            const { onDisplayCreated, onResponseCreated, onClose, onFinished } = validatedMessage.data;
             if (onDisplayCreated) {
               const existingDisplays = appConfig.get().user.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
@@ -202,7 +181,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
                 ...appConfig.get().user,
                 data: {
                   ...appConfig.get().user.data,
-                  responses: [...responses, surveyState.surveyId],
+                  responses: [...responses, survey.id],
                 },
               };
 
@@ -217,10 +196,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
             }
             if (onClose) {
               onCloseSurvey();
-            }
-
-            if (onRetry) {
-              await responseQueue.processQueue();
             }
 
             if (onFinished) {
@@ -275,10 +250,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
         window.ReactNativeWebView.postMessage(JSON.stringify({ onResponseCreated: true }));
       };
 
-      function onRetry() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onRetry: true }));
-      };
-
       function loadSurvey() {
         const options = ${JSON.stringify(options)};
         const surveyProps = {
@@ -286,7 +257,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
           onFinished,
           onDisplayCreated,
           onResponseCreated,
-          onRetry,
           onClose,
         };
         

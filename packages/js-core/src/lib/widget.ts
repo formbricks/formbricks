@@ -1,6 +1,4 @@
 /* eslint-disable no-console -- Required for error logging */
- 
-import { SurveyState } from "@formbricks/lib/surveyState";
 import { getStyling } from "@formbricks/lib/utils/styling";
 import {
   type TJsEnvironmentStateSurvey,
@@ -79,8 +77,6 @@ const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const surveyState = new SurveyState(survey.id, null, null, config.get().personState.data.userId);
-
   const projectOverwrites = survey.projectOverwrites ?? {};
   const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
   const darkOverlay = projectOverwrites.darkOverlay ?? project.darkOverlay;
@@ -131,7 +127,7 @@ const renderWidget = async (
           ...config.get().personState,
           data: {
             ...config.get().personState.data,
-            responses: responses.length ? [...responses, surveyState.surveyId] : [surveyState.surveyId],
+            responses: responses.length ? [...responses, survey.id] : [survey.id],
           },
         };
 

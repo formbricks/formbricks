@@ -12,7 +12,7 @@ import { ApiClient } from "@/lib/api-client";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
-import { cn } from "@/lib/utils";
+import { cn, getDefaultLanguageCode } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type JSX, useCallback } from "react";
 import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
@@ -27,7 +27,6 @@ import type {
 } from "@formbricks/types/responses";
 import { TUploadFileConfig } from "@formbricks/types/storage";
 import { type TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { getDefaultLanguageCode } from "../../../../js-core/src/lib/utils";
 
 interface VariableStackEntry {
   questionId: TSurveyQuestionId;
@@ -229,7 +228,6 @@ export function Survey({
 
   useEffect(() => {
     // call onDisplay when component is mounted
-    // onDisplay?.();
 
     if (apiHost && environmentId) {
       createDisplay();

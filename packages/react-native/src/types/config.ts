@@ -140,7 +140,6 @@ export const ZJsRNWebViewOnMessageData = z.object({
   onFinished: z.boolean().nullish(),
   onDisplayCreated: z.boolean().nullish(),
   onResponseCreated: z.boolean().nullish(),
-  onRetry: z.boolean().nullish(),
   onClose: z.boolean().nullish(),
 });
 
