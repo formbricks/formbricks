@@ -58,17 +58,11 @@ This section provides guidance on how to upgrade your Formbricks deployment usin
 
 ### Upgrade Process
 
-To upgrade your Formbricks deployment when using a local chart (e.g., with Minikube), use:
+To upgrade your Formbricks deployment, use:
 
 ```bash
 # From the helm-chart directory
 helm upgrade my-formbricks ./ --namespace formbricks
-```
-
-For installations from the Helm repository (typically for production deployments):
-```bash
-helm repo update
-helm upgrade my-formbricks formbricks/formbricks --namespace formbricks
 ```
 
 ### Common Upgrade Scenarios
@@ -78,7 +72,7 @@ helm upgrade my-formbricks formbricks/formbricks --namespace formbricks
 To update or add new environment variables, use the `--set` flag with the `env` prefix:
 
 ```bash
-helm upgrade my-formbricks formbricks/formbricks \
+helm upgrade my-formbricks ./ --namespace formbricks \
   --set env.SMTP_HOST=new-smtp.example.com \
   --set env.SMTP_PORT=587 \
   --set env.NEW_CUSTOM_VAR=newvalue
@@ -92,10 +86,10 @@ You can enable or disable features by updating their respective values:
 
 ```bash
 # Disable Redis
-helm upgrade my-formbricks formbricks/formbricks --set redis.enabled=false
+helm upgrade my-formbricks ./ --namespace formbricks --set redis.enabled=false
 
 # Enable Redis
-helm upgrade my-formbricks formbricks/formbricks --set redis.enabled=true
+helm upgrade my-formbricks ./ --namespace formbricks --set redis.enabled=true
 ```
 
 #### 3. Scaling Resources
@@ -103,7 +97,7 @@ helm upgrade my-formbricks formbricks/formbricks --set redis.enabled=true
 To adjust resource allocation:
 
 ```bash
-helm upgrade my-formbricks formbricks/formbricks \
+helm upgrade my-formbricks ./ --namespace formbricks \
   --set resources.limits.cpu=1 \
   --set resources.limits.memory=2Gi \
   --set resources.requests.cpu=500m \
@@ -115,7 +109,7 @@ helm upgrade my-formbricks formbricks/formbricks \
 To modify autoscaling settings:
 
 ```bash
-helm upgrade my-formbricks formbricks/formbricks \
+helm upgrade my-formbricks ./ --namespace formbricks \
   --set autoscaling.minReplicas=3 \
   --set autoscaling.maxReplicas=10 \
   --set autoscaling.metrics[0].resource.target.averageUtilization=75
@@ -127,7 +121,7 @@ To update PostgreSQL database credentials:
 To switch from the built-in PostgreSQL to an external database or update the external database credentials:
 
 ```bash
-helm upgrade my-formbricks formbricks/formbricks \
+helm upgrade my-formbricks ./ --namespace formbricks \
   --set postgresql.enabled=false \
   --set postgresql.externalUrl="postgresql://newuser:newpassword@external-postgres-host:5432/newdatabase"
 ```
