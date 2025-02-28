@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
 import { preloadConnection } from "../preload-connection";
 
@@ -72,7 +72,7 @@ describe("SAML Preload Connection", () => {
     vi.resetAllMocks();
   });
 
-  it("should preload connection from XML file", async () => {
+  test("preload connection from XML file", async () => {
     await preloadConnection(mockConnectionController as any);
 
     expect(fs.readdir).toHaveBeenCalledWith(path.join(SAML_XML_DIR));
@@ -101,7 +101,7 @@ describe("SAML Preload Connection", () => {
     });
   });
 
-  it("should not delete existing connection if client IDs match", async () => {
+  test("not delete existing connection if client IDs match", async () => {
     mockConnectionController.createSAMLConnection.mockResolvedValue({
       clientID: mockExistingConnection.clientID,
     });
@@ -111,7 +111,7 @@ describe("SAML Preload Connection", () => {
     expect(mockConnectionController.deleteConnections).not.toHaveBeenCalled();
   });
 
-  it("should handle case when no XML files are found", async () => {
+  test("handle case when no XML files are found", async () => {
     vi.mocked(fs.readdir).mockResolvedValue(["other-file.txt"] as any);
 
     const consoleErrorSpy = vi.spyOn(console, "error");
@@ -126,7 +126,7 @@ describe("SAML Preload Connection", () => {
     expect(mockConnectionController.createSAMLConnection).not.toHaveBeenCalled();
   });
 
-  it("should handle invalid metadata", async () => {
+  test("handle invalid metadata", async () => {
     const errorMessage = "Invalid metadata";
     mockConnectionController.createSAMLConnection.mockRejectedValue(new Error(errorMessage));
 
