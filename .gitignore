@@ -1,25 +1,26 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-node_modules
+**/node_modules
 .pnp
 .pnp.js
 .pnpm-store/
 
 # testing
-coverage
+**/coverage
 
 # next.js
-.next/
-out/
-build
+**/.next/
+**/out/
+**/build
 
 # node
-dist/
+**/dist/
 
 # misc
-.DS_Store
+**/.DS_Store
 *.pem
+Zone.Identifier
 
 # debug
 npm-debug.log*
@@ -27,21 +28,20 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
 !packages/database/.env
 !apps/web/.env
 
-# turbo
+# build tools
 .turbo
+**/*vite.config.*.timestamp-*
 
-# nixos stuff
+# environment specific
 .direnv
-
-Zone.Identifier
 
 # Playwright
 /test-results/
@@ -49,17 +49,8 @@ Zone.Identifier
 /blob-report/
 /playwright/.cache/
 
-# uploads
+# project specific
 packages/lib/uploads
-
-# Vite Timestamps
-*vite.config.*.timestamp-*
-
-# js compiled assets
 apps/web/public/js
-
-
 packages/database/migrations
-
-# tolgee 
 branch.json

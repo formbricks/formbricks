@@ -1855,10 +1855,6 @@
       "smileys_description": "Verwende visuelle Indikatoren, um Feedback an allen Kundenkontaktpunkten zu erfassen."
     }
   },
-  "health": {
-    "degraded": "Es scheint ein Problem zu geben :(",
-    "healthy": "Alle Systeme laufen und sind betriebsbereit"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Wenden Sie sich an den Eigentümer Ihrer Organisation, um Zugriff auf Projekte zu erhalten. Oder erstellen Sie eine eigene Organisation, um loszulegen.",

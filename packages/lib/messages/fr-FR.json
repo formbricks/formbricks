@@ -1855,10 +1855,6 @@
       "smileys_description": "Utilisez des indicateurs visuels pour recueillir des retours d'expérience à travers les points de contact avec les clients."
     }
   },
-  "health": {
-    "degraded": "La santé de votre Formbricks est dégradée.",
-    "healthy": "Tous les systèmes sont opérationnels."
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Contactez le propriétaire de votre organisation pour obtenir l'accès aux projets. Ou créez votre propre organisation pour commencer.",
