@@ -7,15 +7,15 @@
 .pnpm-store/
 
 # testing
-**/coverage
+coverage
 
 # next.js
-**/.next/
-**/out/
-**/build
+.next/
+out/
+build
 
 # node
-**/dist/
+dist/
 
 # misc
 .DS_Store
@@ -28,17 +28,17 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-**/.env
-**/.env.local
-**/.env.development.local
-**/.env.test.local
-**/.env.production.local
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 !packages/database/.env
 !apps/web/.env
 
 # build tools
 .turbo
-**/*vite.config.*.timestamp-*
+*vite.config.*.timestamp-*
 
 # environment specific
 .direnv
