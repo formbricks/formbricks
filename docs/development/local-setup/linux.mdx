@@ -1,0 +1,57 @@
+---
+title: Linux
+description: How to set up Formbricks on a Linux machine
+icon: "linux"
+---
+
+### Local Machine Setup - Linux
+
+<Info>
+  This guide is recommended for advanced users setting up Formbricks on a **Linux** machine.
+</Info>
+
+Here are the requirements for setting up Formbricks on Linux:
+
+- Node.JS (v20 recommended)
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (to run PostgreSQL/MailHog)
+
+**Steps:**
+
+1. **Clone the project & move into the directory:**
+    ```bash
+    git clone https://github.com/formbricks/formbricks && cd formbricks
+    ```
+
+2. **Setup NodeJS with nvm:**
+    ```bash
+    nvm install && nvm use
+    ```
+
+3. **Install NodeJS packages via pnpm:**
+    ```bash
+    pnpm install
+    ```
+
+4. **Create a `.env` file based on `.env.example`:**
+    ```bash
+    cp .env.example .env
+    ```
+
+5. **Generate & set the secret values:**
+    ```bash
+    sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+    sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+    sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+    ```
+
+6. **Start the development setup:**
+    ```bash
+    pnpm go
+    ```
+
+You can now access Formbricks at [http://localhost:3000](http://localhost:3000).
+
+<Tip>
+  Create a new account on first login as no default account is available.
+</Tip> 

@@ -1,24 +1,24 @@
 "use client";
 
+import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@formbricks/lib/cn";
-import { TProject } from "@formbricks/types/project";
 
 interface ClientLogoProps {
   environmentId?: string;
-  project: TProject;
+  projectLogo: Project["logo"] | null;
   previewSurvey?: boolean;
 }
 
-export const ClientLogo = ({ environmentId, project, previewSurvey = false }: ClientLogoProps) => {
+export const ClientLogo = ({ environmentId, projectLogo, previewSurvey = false }: ClientLogoProps) => {
   const { t } = useTranslate();
   return (
     <div
       className={cn(previewSurvey ? "" : "left-3 top-3 md:left-7 md:top-7", "group absolute z-0 rounded-lg")}
-      style={{ backgroundColor: project.logo?.bgColor }}>
+      style={{ backgroundColor: projectLogo?.bgColor }}>
       {previewSurvey && environmentId && (
         <Link
           href={`/environments/${environmentId}/project/look`}
@@ -30,9 +30,9 @@ export const ClientLogo = ({ environmentId, project, previewSurvey = false }: Cl
           />
         </Link>
       )}
-      {project.logo?.url ? (
+      {projectLogo?.url ? (
         <Image
-          src={project.logo?.url}
+          src={projectLogo?.url}
           className={cn(
             previewSurvey ? "max-h-12" : "max-h-16 md:max-h-20",
             "w-auto max-w-40 rounded-lg object-contain p-1 md:max-w-56"

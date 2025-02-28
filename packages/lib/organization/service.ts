@@ -380,7 +380,8 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
 export const subscribeOrganizationMembersToSurveyResponses = async (
   surveyId: string,
-  createdBy: string
+  createdBy: string,
+  organizationId: string
 ): Promise<void> => {
   try {
     const surveyCreator = await prisma.user.findUnique({
@@ -391,6 +392,10 @@ export const subscribeOrganizationMembersToSurveyResponses = async (
 
     if (!surveyCreator) {
       throw new ResourceNotFoundError("User", createdBy);
+    }
+
+    if (surveyCreator.notificationSettings?.unsubscribedOrganizationIds?.includes(organizationId)) {
+      return;
     }
 
     const defaultSettings = { alert: {}, weeklySummary: {} };

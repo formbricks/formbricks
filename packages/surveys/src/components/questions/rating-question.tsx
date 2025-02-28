@@ -37,6 +37,7 @@ interface RatingQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function RatingQuestion({
@@ -51,6 +52,7 @@ export function RatingQuestion({
   ttc,
   setTtc,
   currentQuestionId,
+  isBackButtonHidden,
 }: RatingQuestionProps) {
   const [hoveredNumber, setHoveredNumber] = useState(0);
   const [startTime, setStartTime] = useState(performance.now());
@@ -246,7 +248,7 @@ export function RatingQuestion({
                   </span>
                 ))}
               </div>
-              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+              <div className="fb-text-subheading fb-mt-4 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
                 <p className="fb-w-1/2 fb-text-left" dir="auto">
                   {getLocalizedValue(question.lowerLabel, languageCode)}
                 </p>
@@ -259,7 +261,9 @@ export function RatingQuestion({
         </div>
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {!question.required && (
+        {question.required ? (
+          <></>
+        ) : (
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
@@ -267,7 +271,7 @@ export function RatingQuestion({
           />
         )}
         <div />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

@@ -50,9 +50,6 @@ x-environment: &environment
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
 
-    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_URL_BASE:
-
     # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
     EMAIL_VERIFICATION_DISABLED: 1
 
@@ -113,6 +110,9 @@ x-environment: &environment
     # OIDC_ISSUER:
     # OIDC_DISPLAY_NAME:
     # OIDC_SIGNING_ALGORITHM:
+
+    # Set the below to SAML Provider if you want to enable SAML
+    # SAML_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks-saml?sslmode=disable"
 
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
@@ -188,9 +188,11 @@ services:
       - 3000:3000
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
+      - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
 volumes:
   postgres:
     driver: local
   uploads:
+    driver: local

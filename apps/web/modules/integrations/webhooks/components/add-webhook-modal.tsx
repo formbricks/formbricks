@@ -3,7 +3,7 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
-import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -111,6 +111,10 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
 
         if (!selectedAllSurveys && selectedSurveys.length === 0) {
           throw new Error(t("common.please_select_at_least_one_survey"));
+        }
+
+        if (isDiscordWebhook(testEndpointInput)) {
+          throw new Error(t("environments.integrations.webhooks.discord_webhook_not_supported"));
         }
 
         const endpointHitSuccessfully = await handleTestEndpoint(false);

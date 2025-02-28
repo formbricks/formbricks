@@ -1,6 +1,6 @@
 "use client";
 
-import { QuestionFormInput } from "@/modules/surveys/components/QuestionFormInput";
+import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
 import {

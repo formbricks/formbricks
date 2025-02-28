@@ -28,6 +28,7 @@ interface DateQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 function CalendarIcon() {
@@ -91,6 +92,7 @@ export function DateQuestion({
   setTtc,
   ttc,
   currentQuestionId,
+  isBackButtonHidden,
 }: DateQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
@@ -158,7 +160,7 @@ export function DateQuestion({
             subheader={question.subheader ? getLocalizedValue(question.subheader, languageCode) : ""}
             questionId={question.id}
           />
-          <div className="fb-text-red-600">
+          <div id="error-message" className="fb-text-red-600" aria-live="assertive">
             <span>{errorMessage}</span>
           </div>
           <div
@@ -166,7 +168,7 @@ export function DateQuestion({
             id="date-picker-root">
             <div className="fb-relative">
               {!datePickerOpen && (
-                <div
+                <button
                   onClick={() => {
                     setDatePickerOpen(true);
                   }}
@@ -174,6 +176,8 @@ export function DateQuestion({
                   onKeyDown={(e) => {
                     if (e.key === " ") setDatePickerOpen(true);
                   }}
+                  aria-label={selectedDate ? `You have selected ${formattedDate}` : "Select a date"}
+                  aria-describedby={errorMessage ? "error-message" : undefined}
                   className="focus:fb-outline-brand fb-bg-input-bg hover:fb-bg-input-bg-selected fb-border-border fb-text-heading fb-rounded-custom fb-relative fb-flex fb-h-[12dvh] fb-w-full fb-cursor-pointer fb-appearance-none fb-items-center fb-justify-center fb-border fb-text-left fb-text-base fb-font-normal">
                   <div className="fb-flex fb-items-center fb-gap-2">
                     {selectedDate ? (
@@ -186,7 +190,7 @@ export function DateQuestion({
                       </div>
                     )}
                   </div>
-                </div>
+                </button>
               )}
 
               <DatePicker
@@ -222,14 +226,14 @@ export function DateQuestion({
                     "calendar-root !fb-bg-input-bg fb-border fb-border-border fb-rounded-custom fb-p-3 fb-h-[46dvh] sm:fb-h-[33dvh] fb-overflow-auto",
                   tileClassName: ({ date }: { date: Date }) => {
                     const baseClass =
-                      "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
+                      "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
                     // today's date class
                     if (
                       date.getDate() === new Date().getDate() &&
                       date.getMonth() === new Date().getMonth() &&
                       date.getFullYear() === new Date().getFullYear()
                     ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
+                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile focus:fb-ring-2 focus:fb-bg-slate-200`;
                     }
                     // active date class
                     if (
@@ -238,10 +242,10 @@ export function DateQuestion({
                       date.getMonth() === selectedDate.getMonth() &&
                       date.getFullYear() === selectedDate.getFullYear()
                     ) {
-                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
+                      return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-calendar-tile`;
                     }
 
-                    return baseClass;
+                    return `${baseClass} !fb-text-heading`;
                   },
                   formatShortWeekday: (_: any, date: Date) => {
                     return date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2);
@@ -270,7 +274,7 @@ export function DateQuestion({
           isLastQuestion={isLastQuestion}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

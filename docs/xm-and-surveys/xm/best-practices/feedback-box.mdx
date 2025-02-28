@@ -1,0 +1,75 @@
+---
+title: "Feedback Box"
+description: "A step-by-step guide to creating a feedback box using Formbricks."
+icon: "box"
+---
+
+The Feedback Box gives your users a direct channel to share their feedback and feel heard.
+
+## Purpose
+
+A low friction way to gather feedback helps catching even the smallest points of frustration in user experiences. Use automations to react rapidly and make users feel heard.
+
+## Formbricks Approach
+
+* Make it easy: 2 clicks to share feedback
+
+* Pipe insights where team can see them and react quickly
+
+## Installation
+
+To add the Feedback Box to your app, you need to perform these steps:
+
+1. Create new Feedback Box at app.formbricks.com
+
+2. Add user action to trigger Feedback Box
+
+3. Update recontact settings to display correctly
+
+### 1. Create new Feedback Box
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Then, create a new survey and look for the "Feedback Box" template:
+
+![Create feedback box by template](/images/xm-and-surveys/xm/best-practices/feedback-box/create-feedback-box-by-template.webp)
+
+### 2. Update question content
+
+Change the questions and answer options according to your preference:
+
+![Change text content](/images/xm-and-surveys/xm/best-practices/feedback-box/change-text-content.webp)
+
+### 3. Create user action to trigger Feedback Box:
+
+Go to the “Audience” tab, find the “When to send” card and choose “Add Action”. We will now use our super cool User Action Tracker:
+
+![Add action](/images/xm-and-surveys/xm/best-practices/feedback-box/add-action.webp)
+
+We have two options to track the Feedback Button in your application: innerText and CSS-Selector:
+
+1. **Inner Text:** This means that whenever a user clicks any HTML item in your app which has an `Inner Text` of `Feedback` the Feedback Box will be displayed.
+
+![Add HTML action](/images/xm-and-surveys/xm/best-practices/feedback-box/action-innertext.webp)
+
+2. **CSS Selector:** This means that when an element with a specific CSS-Selector like `#feedback-button` is clicked, your Feedback Box is triggered.
+
+![Add CSS action](/images/xm-and-surveys/xm/best-practices/feedback-box/action-css.webp)
+
+### 4. Select action in the “When to ask” card
+
+![Select feedback button action](/images/xm-and-surveys/xm/best-practices/feedback-box/select-action.webp)
+
+### 5. Set Recontact Options correctly
+
+Scroll down to “Recontact Options”. Here you have to choose the right settings so that the Feedback Box pops up every time the user action is performed. (Our default is that every user sees every survey only once):
+
+![Set recontact options](/images/xm-and-surveys/xm/best-practices/feedback-box/set-recontact-options.webp)
+
+### 6. You’re ready publish your survey!
+
+![Publish survey](/images/xm-and-surveys/xm/best-practices/feedback-box/publish-survey.webp)
+
+## Setting up the Widget
+
+<Note>Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.</Note>

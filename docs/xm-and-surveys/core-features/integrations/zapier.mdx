@@ -1,0 +1,81 @@
+---
+title: "Zapier"
+description: "Master the integration of Formbricks with Zapier using our detailed guide. Seamlessly connect your surveys to 5000+ apps, automate data transfers, and enhance feedback management. Start optimizing your workflow today."
+---
+
+<Note>
+  Nail down your survey first? Any changes in the survey cause additional work in the Zap. It makes sense to first settle on the survey you want to run and then get to setting up Zapier.
+</Note>
+
+## Step 1: Setup your survey incl. `questionId` for every question
+
+When setting up the Zap your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you publish your survey.
+
+![Update Question ID](/images/xm-and-surveys/core-features/integrations/zapier/update-question-id.webp)
+
+*In every question card in the Advanced Settings you find the Question ID field. Update it so that you’ll recognize the response tied to this question.*
+
+<Note>
+  Already published? Duplicate survey You can only update the questionId
+  when the survey was not yet published. Already published it? Just **duplicate
+  it** to update the questionIds.
+  ![Duplicate Survey](/images/xm-and-surveys/core-features/integrations/zapier/duplicate-survey.webp)
+</Note>
+
+## Step 2: Send a test response
+
+In order to set up Zapier you’ll need a test response. This allows you to select the individual values of each response in your Zap.
+
+![Submit Test Response](/images/xm-and-surveys/core-features/integrations/zapier/submit-test-response.webp)
+
+## Step 3: Setup your Zap
+
+Go to [zapier.com](https://zapier.com) and create a new Zap. Search for “Formbricks” to get started:
+
+![Add New Zap](/images/xm-and-surveys/core-features/integrations/zapier/add-new-zap.webp)
+
+Then, choose the event you want to trigger the Zap on:
+
+![Choose Event](/images/xm-and-surveys/core-features/integrations/zapier/choose-event.webp)
+
+## Step 4: Connect Formbricks with Zapier
+
+Now, you have to connect Zapier with Formbricks via an API Key:
+
+![Connect with Formbricks - 1](/images/xm-and-surveys/core-features/integrations/zapier/connect-with-formbricks-1.webp)
+
+![Connect with Formbricks - 2](/images/xm-and-surveys/core-features/integrations/zapier/connect-with-formbricks-2.webp)
+
+Now you need an API key. Please refer to the [API Key Setup](/api-reference/rest-api#how-to-generate-an-api-key) page to learn how to create one.
+
+Once you copied it in the newly opened Zapier window, you will be connected:
+
+![Successful Connection](/images/xm-and-surveys/core-features/integrations/zapier/success-connected.webp)
+
+## Step 5: Select Survey
+
+Next, you can choose from all the surveys you have created in this environment:
+
+![Select Survey](/images/xm-and-surveys/core-features/integrations/zapier/select-survey.webp)
+
+## Step 6: Test your trigger
+
+Once you hit “Test” you will see the three most recent submissions for this survey. If you don’t have any submissions in the survey, submit one to continue setting up your Zap:
+
+![Test Submission](/images/xm-and-surveys/core-features/integrations/zapier/test-submission.webp)
+
+*Now you're happy that you updated the questionId's*
+
+## Step 7: Set up your Zap
+
+Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a Slack channel:
+
+![Slack Channel Message](/images/xm-and-surveys/core-features/integrations/zapier/slack-channel-msg.webp)
+
+In the action itself we can determine the data and layout of the message. Here, we only choose the submission data. You can also refer to the meta data of the submission and the [attributes](/xm-and-surveys/surveys/website-app-surveys/user-identification) of the person who submitted the survey.
+
+![Slack Message](/images/xm-and-surveys/core-features/integrations/zapier/slack-message.webp)
+
+We now receive a notifcation in our Slack channel whenever a Churn survey is completed:
+
+![Zapier Message](/images/xm-and-surveys/core-features/integrations/zapier/zapier-message.webp)

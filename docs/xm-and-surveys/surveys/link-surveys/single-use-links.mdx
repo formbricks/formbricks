@@ -1,0 +1,51 @@
+---
+title: "Single Use Links"
+description:
+  "Make sure that each respondent only replies once with single use links."
+icon: "link"
+---
+
+This guide will help you understand how to generate and use single-use links within our application.
+
+## Purpose
+
+- Single-use links (or one-time / disposable links) are URLs that grant access to a survey only once.
+
+- The primary purpose of single-use links is to assure that no respondent submits a survey twice.
+
+<Note>
+  Want to create up to 5,000 single-use links? Use our [API endpoint for
+  that.](https://documenter.getpostman.com/view/11026000/2sA3Bq5XEh#c49ef758-a78a-4ef4-a282-262621151f08)
+</Note>
+
+## Using Single-Use Links with Formbricks
+
+Using single-use links with Formbricks is quite straight-forward:
+
+1. In the survey settings, toggle "Single Use Link" on:
+
+   ![Single use survey settings](/images/xm-and-surveys/surveys/link-surveys/single-use-links/single-use-setting.webp)
+
+2. When you publish your survey, the following modal will open:
+
+   ![Share modal with 7 single use links which can be regenerated](/images/xm-and-surveys/surveys/link-surveys/single-use-links/share-modal.webp)
+
+   Here, you can copy and generate as many single-use links as you need.
+
+## URL Encryption
+
+You can encrypt single use URLs to assure information to be protected. To enable it, you have to set the correct environment variable:
+
+![Set the right env var to be able to enable encryption.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/env-variable.webp)
+
+## Check suId of a submission
+
+You can find the suId of each submission in the submission meta data. To view it, simple hover over the Avatar:
+
+![View suId in the submission meta data.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/metadata.webp)
+
+### 'Link used' message
+
+You can customize the 'link used' messaging in the Survey Editor settings:
+
+![Adjust the message shown to people if a link was already used.](/images/xm-and-surveys/surveys/link-surveys/single-use-links/used-message.webp)

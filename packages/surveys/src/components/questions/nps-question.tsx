@@ -24,6 +24,7 @@ interface NPSQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function NPSQuestion({
@@ -38,6 +39,7 @@ export function NPSQuestion({
   ttc,
   setTtc,
   currentQuestionId,
+  isBackButtonHidden,
 }: NPSQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [hoveredNumber, setHoveredNumber] = useState(-1);
@@ -144,7 +146,7 @@ export function NPSQuestion({
                   );
                 })}
               </div>
-              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6">
+              <div className="fb-text-subheading fb-mt-2 fb-flex fb-justify-between fb-px-1.5 fb-text-xs fb-leading-6 fb-space-x-8">
                 <p dir="auto">{getLocalizedValue(question.lowerLabel, languageCode)}</p>
                 <p dir="auto">{getLocalizedValue(question.upperLabel, languageCode)}</p>
               </div>
@@ -153,14 +155,16 @@ export function NPSQuestion({
         </div>
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
-        {!question.required && (
+        {question.required ? (
+          <></>
+        ) : (
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
             buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
             isLastQuestion={isLastQuestion}
           />
         )}
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

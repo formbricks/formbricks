@@ -78,7 +78,12 @@ test.describe("JS Package Test", async () => {
 
     await page.locator("#whenToSendCardTrigger").click();
     await page.getByRole("button", { name: "Add action" }).click();
-    await page.getByText("New SessionGets fired when a").click();
+
+    await page.getByRole("button", { name: "Capture new action" }).click();
+    await page.getByPlaceholder("E.g. Clicked Download").click();
+    await page.getByPlaceholder("E.g. Clicked Download").fill("New Session");
+    await page.getByText("Page View").click();
+    await page.getByRole("button", { name: "Create action" }).click();
 
     await page.locator("#recontactOptionsCardTrigger").click();
     await page.locator("label").filter({ hasText: "Keep showing while conditions" }).click();

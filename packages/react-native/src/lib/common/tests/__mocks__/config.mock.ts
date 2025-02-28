@@ -51,11 +51,10 @@ export const mockConfig: TConfig = {
           ],
           triggers: [
             {
-              // { actionClass: ActionClass }
               actionClass: {
                 id: mockActionClassId,
                 key: "onboardingTrigger",
-                type: "code", // or "automatic"
+                type: "code",
                 name: "Manual Trigger",
                 createdAt: "2025-01-01T10:00:00Z",
                 updatedAt: "2025-01-01T10:00:00Z",

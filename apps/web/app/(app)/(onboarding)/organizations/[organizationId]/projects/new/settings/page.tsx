@@ -48,7 +48,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   if (!organizationTeams) {
     throw new Error(t("common.organization_teams_not_found"));

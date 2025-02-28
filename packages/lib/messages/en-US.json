@@ -123,7 +123,6 @@
     "are_you_sure": "Are you sure?",
     "are_you_sure_this_action_cannot_be_undone": "Are you sure? This action cannot be undone.",
     "attributes": "Attributes",
-    "automatic": "Automatic",
     "avatar": "Avatar",
     "back": "Back",
     "billing": "Billing",
@@ -171,7 +170,7 @@
     "disallow": "Don't allow",
     "discard": "Discard",
     "dismissed": "Dismissed",
-    "docs": "docs",
+    "docs": "Documentation",
     "documentation": "Documentation",
     "download": "Download",
     "draft": "Draft",
@@ -180,7 +179,6 @@
     "edit": "Edit",
     "email": "Email",
     "embed": "Embed",
-    "enable": "Enable",
     "enterprise_license": "Enterprise License",
     "environment_not_found": "Environment not found",
     "environment_notice": "You're currently in the {environment} environment.",
@@ -717,7 +715,9 @@
         "select_a_database": "Select Database",
         "select_a_field_to_map": "Select a field to map",
         "select_a_survey_question": "Select a survey question",
-        "sync_responses_with_a_notion_database": "Sync responses with a Notion Database"
+        "sync_responses_with_a_notion_database": "Sync responses with a Notion Database",
+        "update_connection": "Reconnect Notion",
+        "update_connection_tooltip": "Reconnect the integration to include newly added databases. Your existing integrations will remain intact."
       },
       "notion_integration_description": "Send data to your Notion database",
       "please_select_a_survey_error": "Please select a survey",
@@ -748,6 +748,7 @@
         "add_webhook_description": "Send survey response data to a custom endpoint",
         "all_current_and_new_surveys": "All current and new surveys",
         "created_by_third_party": "Created by a Third Party",
+        "discord_webhook_not_supported": "Discord webhooks are currently not supported.",
         "empty_webhook_message": "Your webhooks will appear here as soon as you add them. ⏲️",
         "endpoint_pinged": "Yay! We are able to ping the webhook!",
         "endpoint_pinged_error": "Unable to ping the webhook!",
@@ -1446,6 +1447,8 @@
         "heading": "Heading",
         "hidden_field_added_successfully": "Hidden field added successfully",
         "hide_advanced_settings": "Hide advanced settings",
+        "hide_back_button": "Hide 'Back' button",
+        "hide_back_button_description": "Do not display the back button in the survey",
         "hide_logo": "Hide logo",
         "hide_progress_bar": "Hide progress bar",
         "hide_the_logo_in_this_specific_survey": "Hide the logo in this specific survey",
@@ -1471,7 +1474,9 @@
         "is_booked": "Is booked",
         "is_clicked": "Is clicked",
         "is_completely_submitted": "Is completely submitted",
+        "is_not_set": "Is not set",
         "is_partially_submitted": "Is partially submitted",
+        "is_set": "Is set",
         "is_skipped": "Is skipped",
         "is_submitted": "Is submitted",
         "jump_to_question": "Jump to question",
@@ -1832,8 +1837,7 @@
         "multiple_industries": "Multiple industries",
         "use_this_template": "Use this template",
         "uses_branching_logic": "This survey uses branching logic."
-      },
-      "this_is_a_new_key": "This is a updated key"
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1850,10 +1854,6 @@
       "smileys": "Smileys",
       "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
     }
-  },
-  "health": {
-    "degraded": "Your Formbricks health is degraded",
-    "healthy": "All systems are up and running"
   },
   "organizations": {
     "landing": {

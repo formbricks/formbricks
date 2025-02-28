@@ -1,4 +1,4 @@
-import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { TUserLocale } from "@formbricks/types/user";
@@ -15,13 +15,7 @@ export const ActionClassDataRow = ({
       <div className="col-span-4 flex items-center pl-6 text-sm">
         <div className="flex items-center">
           <div className="h-5 w-5 flex-shrink-0 text-slate-500">
-            {actionClass.type === "code" ? (
-              <Code2Icon className="h-5 w-5" />
-            ) : actionClass.type === "noCode" ? (
-              <MousePointerClickIcon className="h-5 w-5" />
-            ) : actionClass.type === "automatic" ? (
-              <SparklesIcon className="h-5 w-5" />
-            ) : null}
+            {ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
           </div>
           <div className="ml-4 text-left">
             <div className="font-medium text-slate-900">{actionClass.name}</div>

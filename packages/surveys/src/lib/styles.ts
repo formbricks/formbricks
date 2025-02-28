@@ -77,16 +77,17 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("input-background-color", styling.inputColor?.light);
 
   if (styling.questionColor?.light) {
-    let signatureColor = "";
-    let brandingColor = "";
-
-    if (isLight(styling.questionColor.light)) {
-      signatureColor = mixColor(styling.questionColor.light, "#000000", 0.2);
-      brandingColor = mixColor(styling.questionColor.light, "#000000", 0.3);
-    } else {
-      signatureColor = mixColor(styling.questionColor.light, "#ffffff", 0.2);
-      brandingColor = mixColor(styling.questionColor.light, "#ffffff", 0.3);
-    }
+    const isLightQuestionColor = isLight(styling.questionColor.light);
+    const signatureColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.2
+    );
+    const brandingColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.3
+    );
 
     appendCssVariable("signature-text-color", signatureColor);
     appendCssVariable("branding-text-color", brandingColor);
@@ -115,6 +116,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
     appendCssVariable("accent-background-color", accentColor);
     appendCssVariable("accent-background-color-selected", accentColorSelected);
+
+    if (isLight(brandColor)) {
+      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
+    }
   }
 
   // Close the :root block

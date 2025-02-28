@@ -123,7 +123,6 @@
     "are_you_sure": "Bist Du sicher?",
     "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "attributes": "Attribute",
-    "automatic": "Automatisch",
     "avatar": "Avatar",
     "back": "Zurück",
     "billing": "Abrechnung",
@@ -171,7 +170,7 @@
     "disallow": "Nicht erlauben",
     "discard": "Verwerfen",
     "dismissed": "Entlassen",
-    "docs": "Dokumente",
+    "docs": "Dokumentation",
     "documentation": "Dokumentation",
     "download": "Herunterladen",
     "draft": "Entwurf",
@@ -180,7 +179,6 @@
     "edit": "Bearbeiten",
     "email": "E-Mail",
     "embed": "Einbetten",
-    "enable": "Aktivieren",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -717,7 +715,9 @@
         "select_a_database": "Datenbank auswählen",
         "select_a_field_to_map": "Wähle ein Feld zum Zuordnen aus",
         "select_a_survey_question": "Wähle eine Umfragefrage aus",
-        "sync_responses_with_a_notion_database": "Antworten mit einer Datenbank in Notion synchronisieren"
+        "sync_responses_with_a_notion_database": "Antworten mit einer Datenbank in Notion synchronisieren",
+        "update_connection": "Notion erneut verbinden",
+        "update_connection_tooltip": "Verbinde die Integration erneut, um neu hinzugefügte Datenbanken einzuschließen. Deine bestehenden Integrationen bleiben erhalten."
       },
       "notion_integration_description": "Sende Daten an deine Notion Datenbank",
       "please_select_a_survey_error": "Bitte wähle eine Umfrage aus",
@@ -748,6 +748,7 @@
         "add_webhook_description": "Sende Umfragedaten an einen benutzerdefinierten Endpunkt",
         "all_current_and_new_surveys": "Alle aktuellen und neuen Umfragen",
         "created_by_third_party": "Erstellt von einer dritten Partei",
+        "discord_webhook_not_supported": "Discord-Webhooks werden derzeit nicht unterstützt.",
         "empty_webhook_message": "Deine Webhooks werden hier angezeigt, sobald Du sie hinzufügst ⏲️",
         "endpoint_pinged": "Juhu! Wir können den Webhook anpingen!",
         "endpoint_pinged_error": "Kann den Webhook nicht anpingen!",
@@ -1446,6 +1447,8 @@
         "heading": "Überschrift",
         "hidden_field_added_successfully": "Verstecktes Feld erfolgreich hinzugefügt",
         "hide_advanced_settings": "Erweiterte Einstellungen ausblenden",
+        "hide_back_button": "'Zurück'-Button ausblenden",
+        "hide_back_button_description": "Den Zurück-Button in der Umfrage nicht anzeigen",
         "hide_logo": "Logo verstecken",
         "hide_progress_bar": "Fortschrittsbalken ausblenden",
         "hide_the_logo_in_this_specific_survey": "Logo in dieser speziellen Umfrage verstecken",
@@ -1471,7 +1474,9 @@
         "is_booked": "Ist gebucht",
         "is_clicked": "Wird geklickt",
         "is_completely_submitted": "Vollständig eingereicht",
+        "is_not_set": "Ist nicht festgelegt",
         "is_partially_submitted": "Teilweise eingereicht",
+        "is_set": "Ist festgelegt",
         "is_skipped": "Wird übersprungen",
         "is_submitted": "Wird eingereicht",
         "jump_to_question": "Zur Frage springen",
@@ -1832,8 +1837,7 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      },
-      "this_is_a_new_key": "Das ist ein neuer Schlüssel "
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1850,10 +1854,6 @@
       "smileys": "Smileys",
       "smileys_description": "Verwende visuelle Indikatoren, um Feedback an allen Kundenkontaktpunkten zu erfassen."
     }
-  },
-  "health": {
-    "degraded": "Es scheint ein Problem zu geben :(",
-    "healthy": "Alle Systeme laufen und sind betriebsbereit"
   },
   "organizations": {
     "landing": {

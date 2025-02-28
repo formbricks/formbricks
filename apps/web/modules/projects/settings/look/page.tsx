@@ -10,6 +10,7 @@ import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
+import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -19,7 +20,6 @@ import { SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
 
@@ -41,7 +41,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   if (!organization) {
     throw new Error(t("common.organization_not_found"));
   }
-  const canRemoveBranding = await getWhiteLabelPermission(organization);
+  const canRemoveBranding = await getWhiteLabelPermission(organization.billing.plan);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isMember } = getAccessFlags(currentUserMembership?.role);
@@ -51,8 +51,8 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
 
   const isReadOnly = isMember && !hasManageAccess;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization);
-  const canDoRoleManagement = await getRoleManagementPermission(organization);
+  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
+  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   return (
     <PageContentWrapper>

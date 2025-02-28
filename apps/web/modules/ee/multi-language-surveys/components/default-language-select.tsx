@@ -8,15 +8,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { Language } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
-import type { TLanguage, TProject } from "@formbricks/types/project";
 import type { ConfirmationModalProps } from "./multi-language-card";
 
 interface DefaultLanguageSelectProps {
-  defaultLanguage?: TLanguage;
+  defaultLanguage?: Language;
   handleDefaultLanguageChange: (languageCode: string) => void;
-  project: TProject;
+  projectLanguages: Language[];
   setConfirmationModalInfo: (confirmationModal: ConfirmationModalProps) => void;
   locale: string;
 }
@@ -24,7 +24,7 @@ interface DefaultLanguageSelectProps {
 export function DefaultLanguageSelect({
   defaultLanguage,
   handleDefaultLanguageChange,
-  project,
+  projectLanguages,
   setConfirmationModalInfo,
   locale,
 }: DefaultLanguageSelectProps) {
@@ -61,7 +61,7 @@ export function DefaultLanguageSelect({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {project.languages.map((language) => (
+              {projectLanguages.map((language) => (
                 <SelectItem
                   className="xs:text-base px-0.5 py-1 text-xs text-slate-800 dark:bg-slate-700 dark:text-slate-300 dark:ring-slate-700"
                   key={language.id}

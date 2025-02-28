@@ -1,15 +1,14 @@
 "use client";
 
-import { BackgroundStylingCard } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/BackgroundStylingCard";
-import { CardStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CardStylingSettings";
-import { FormStylingSettings } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/FormStylingSettings";
 import { previewSurvey } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateProjectAction } from "@/modules/projects/settings/actions";
-import { ThemeStylingPreviewSurvey } from "@/modules/projects/settings/look/components/theme-styling-preview-survey";
+import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
+import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
 import {
   FormControl,
   FormDescription,
@@ -19,7 +18,9 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Switch } from "@/modules/ui/components/switch";
+import { ThemeStylingPreviewSurvey } from "@/modules/ui/components/theme-styling-preview-survey";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -27,11 +28,11 @@ import { useCallback, useState } from "react";
 import { SubmitHandler, UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { defaultStyling } from "@formbricks/lib/styling/constants";
-import { TProject, TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
+import { TProjectStyling, ZProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 
 interface ThemeStylingProps {
-  project: TProject;
+  project: Project;
   environmentId: string;
   colors: string[];
   isUnsplashConfigured: boolean;

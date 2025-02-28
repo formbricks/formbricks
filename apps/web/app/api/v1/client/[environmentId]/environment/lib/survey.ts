@@ -1,9 +1,9 @@
+import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -61,6 +61,7 @@ export const getSurveysForEnvironmentState = reactCache(
               displayLimit: true,
               displayOption: true,
               hiddenFields: true,
+              isBackButtonHidden: true,
               triggers: {
                 select: {
                   actionClass: {
@@ -72,6 +73,7 @@ export const getSurveysForEnvironmentState = reactCache(
               },
               displayPercentage: true,
               delay: true,
+              projectOverwrites: true,
             },
           });
 

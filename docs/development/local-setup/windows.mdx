@@ -1,0 +1,57 @@
+---
+title: Windows
+description: How to set up Formbricks on a Windows machine
+icon: "windows"
+---
+
+### Local Machine Setup - Windows
+
+<Info>
+  This guide is intended for **Windows** users. For the best experience, use **WSL2** since pure Windows is not fully supported.
+</Info>
+
+**Requirements:**
+
+- Node.JS (v20 recommended) via WSL2
+- [pnpm](https://pnpm.io/)
+- [Docker](https://www.docker.com/) (ensure Docker Desktop is installed with WSL2 integration enabled)
+
+**Steps (Using WSL2):**
+
+1. **Open your WSL2 terminal and clone the project:**
+    ```bash
+    git clone https://github.com/formbricks/formbricks && cd formbricks
+    ```
+
+2. **Setup NodeJS with nvm in WSL2:**
+    ```bash
+    nvm install && nvm use
+    ```
+
+3. **Install packages using pnpm:**
+    ```bash
+    pnpm install
+    ```
+
+4. **Create a `.env` file:**
+    ```bash
+    cp .env.example .env
+    ```
+
+5. **Generate & set secret values (Linux commands work in WSL2):**
+    ```bash
+    sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+    sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+    sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+    ```
+
+6. **Start the development setup:**
+    ```bash
+    pnpm go
+    ```
+
+Access Formbricks at [http://localhost:3000](http://localhost:3000).
+
+<Tip>
+  If you run into conflicts, ensure any local services (like PostgreSQL) are stopped.
+</Tip> 

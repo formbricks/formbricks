@@ -68,7 +68,7 @@ export const ZActionClassNoCodeConfig = z.union([
 
 export type TActionClassNoCodeConfig = z.infer<typeof ZActionClassNoCodeConfig>;
 
-export const ZActionClassType = z.enum(["code", "noCode", "automatic"]);
+export const ZActionClassType = z.enum(["code", "noCode"]);
 
 export type TActionClassType = z.infer<typeof ZActionClassType>;
 
@@ -108,14 +108,6 @@ const ZActionClassInputNoCode = ZActionClassInputBase.extend({
   noCodeConfig: ZActionClassNoCodeConfig.nullable(),
 });
 
-const ZActionClassInputAutomatic = ZActionClassInputBase.extend({
-  type: z.literal("automatic"),
-});
-
-export const ZActionClassInput = z.union([
-  ZActionClassInputCode,
-  ZActionClassInputNoCode,
-  ZActionClassInputAutomatic,
-]);
+export const ZActionClassInput = z.union([ZActionClassInputCode, ZActionClassInputNoCode]);
 
 export type TActionClassInput = z.infer<typeof ZActionClassInput>;

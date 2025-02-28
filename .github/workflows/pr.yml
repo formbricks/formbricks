@@ -35,11 +35,6 @@ jobs:
     uses: ./.github/workflows/build-web.yml
     secrets: inherit
 
-  docs:
-    name: Build Docs
-    uses: ./.github/workflows/build-docs.yml
-    secrets: inherit
-
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
@@ -47,7 +42,7 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, build, e2e-test, docs]
+    needs: [lint, test, build, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     permissions:

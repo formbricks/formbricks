@@ -123,7 +123,6 @@
     "are_you_sure": "Certeza?",
     "are_you_sure_this_action_cannot_be_undone": "Tem certeza? Essa ação não pode ser desfeita.",
     "attributes": "atributos",
-    "automatic": "Automático",
     "avatar": "Avatar",
     "back": "Voltar",
     "billing": "Faturamento",
@@ -171,7 +170,7 @@
     "disallow": "Não permita",
     "discard": "Descartar",
     "dismissed": "Dispensado",
-    "docs": "documentos",
+    "docs": "Documentação",
     "documentation": "Documentação",
     "download": "baixar",
     "draft": "Rascunho",
@@ -180,7 +179,6 @@
     "edit": "Editar",
     "email": "Email",
     "embed": "incorporar",
-    "enable": "habilitar",
     "enterprise_license": "Licença Empresarial",
     "environment_not_found": "Ambiente não encontrado",
     "environment_notice": "Você está atualmente no ambiente {environment}.",
@@ -717,7 +715,9 @@
         "select_a_database": "Selecionar Banco de Dados",
         "select_a_field_to_map": "Selecione um campo para mapear",
         "select_a_survey_question": "Escolha uma pergunta da pesquisa",
-        "sync_responses_with_a_notion_database": "Sincronizar respostas com um banco de dados do Notion"
+        "sync_responses_with_a_notion_database": "Sincronizar respostas com um banco de dados do Notion",
+        "update_connection": "Reconectar Notion",
+        "update_connection_tooltip": "Reconecte a integração para incluir os novos bancos de dados adicionados. Suas integrações existentes permanecerão intactas."
       },
       "notion_integration_description": "Enviar dados para seu banco de dados do Notion",
       "please_select_a_survey_error": "Por favor, escolha uma pesquisa",
@@ -748,6 +748,7 @@
         "add_webhook_description": "Enviar dados das respostas da pesquisa para um endpoint personalizado",
         "all_current_and_new_surveys": "Todas as pesquisas atuais e novas",
         "created_by_third_party": "Criado por um Terceiro",
+        "discord_webhook_not_supported": "Webhooks do Discord não são suportados no momento.",
         "empty_webhook_message": "Seus webhooks vão aparecer aqui assim que você adicioná-los. ⏲️",
         "endpoint_pinged": "Uhul! Conseguimos pingar o webhook!",
         "endpoint_pinged_error": "Não consegui pingar o webhook!",
@@ -1446,6 +1447,8 @@
         "heading": "Título",
         "hidden_field_added_successfully": "Campo oculto adicionado com sucesso",
         "hide_advanced_settings": "Ocultar configurações avançadas",
+        "hide_back_button": "Ocultar botão 'Voltar'",
+        "hide_back_button_description": "Não exibir o botão de voltar na pesquisa",
         "hide_logo": "Esconder logo",
         "hide_progress_bar": "Esconder barra de progresso",
         "hide_the_logo_in_this_specific_survey": "Esconder o logo nessa pesquisa específica",
@@ -1471,7 +1474,9 @@
         "is_booked": "Tá reservado",
         "is_clicked": "É clicado",
         "is_completely_submitted": "Está completamente submetido",
+        "is_not_set": "Não está definido",
         "is_partially_submitted": "Parcialmente enviado",
+        "is_set": "Está definido",
         "is_skipped": "é pulado",
         "is_submitted": "é submetido",
         "jump_to_question": "Pular para a pergunta",
@@ -1832,8 +1837,7 @@
         "multiple_industries": "várias indústrias",
         "use_this_template": "Use esse modelo",
         "uses_branching_logic": "Essa pesquisa usa lógica de ramificação."
-      },
-      "this_is_a_new_key": "Esta é uma chave atualizada"
+      }
     },
     "xm-templates": {
       "ces": "CES",
@@ -1850,10 +1854,6 @@
       "smileys": "Emoticons",
       "smileys_description": "Use indicadores visuais pra captar feedback em todos os pontos de contato com o cliente."
     }
-  },
-  "health": {
-    "degraded": "A saúde do seu Formbricks está degradada",
-    "healthy": "Todos os sistemas estão funcionando"
   },
   "organizations": {
     "landing": {

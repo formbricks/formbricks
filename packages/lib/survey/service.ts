@@ -1,14 +1,10 @@
 import "server-only";
-import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { TActionClass } from "@formbricks/types/action-classes";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
-import { TEnvironment } from "@formbricks/types/environment";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TProject } from "@formbricks/types/project";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
@@ -19,21 +15,15 @@ import {
   ZSurvey,
   ZSurveyCreateInput,
 } from "@formbricks/types/surveys/types";
-import { actionClassCache } from "../actionClass/cache";
 import { getActionClasses } from "../actionClass/service";
 import { cache } from "../cache";
 import { segmentCache } from "../cache/segment";
 import { ITEMS_PER_PAGE } from "../constants";
-import { getEnvironment } from "../environment/service";
 import {
   getOrganizationByEnvironmentId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "../organization/service";
-import { structuredClone } from "../pollyfills/structuredClone";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { projectCache } from "../project/cache";
-import { getProjectByEnvironmentId } from "../project/service";
-import { responseCache } from "../response/cache";
 import { getIsAIEnabled } from "../utils/ai";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
@@ -79,6 +69,7 @@ export const selectSurvey = {
   autoComplete: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
+  isBackButtonHidden: true,
   redirectUrl: true,
   projectOverwrites: true,
   styling: true,
@@ -132,7 +123,7 @@ export const selectSurvey = {
   followUps: true,
 } satisfies Prisma.SurveySelect;
 
-const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TActionClass[]) => {
+const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
   if (!triggers) return;
 
   // check if all the triggers are valid
@@ -153,7 +144,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: TAc
 const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
-  actionClasses: TActionClass[]
+  actionClasses: ActionClass[]
 ) => {
   if (!updatedTriggers) return {};
   checkTriggersValidity(updatedTriggers, actionClasses);
@@ -342,37 +333,6 @@ export const getSurveyCount = reactCache(
         }
       },
       [`getSurveyCount-${environmentId}`],
-      {
-        tags: [surveyCache.tag.byEnvironmentId(environmentId)],
-      }
-    )()
-);
-
-export const getInProgressSurveyCount = reactCache(
-  async (environmentId: string, filterCriteria?: TSurveyFilterCriteria): Promise<number> =>
-    cache(
-      async () => {
-        validateInputs([environmentId, ZId]);
-        try {
-          const surveyCount = await prisma.survey.count({
-            where: {
-              environmentId: environmentId,
-              status: "inProgress",
-              ...buildWhereClause(filterCriteria),
-            },
-          });
-
-          return surveyCount;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getInProgressSurveyCount-${environmentId}-${JSON.stringify(filterCriteria)}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }
@@ -747,67 +707,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   }
 };
 
-export const deleteSurvey = async (surveyId: string) => {
-  validateInputs([surveyId, ZId]);
-
-  try {
-    const deletedSurvey = await prisma.survey.delete({
-      where: {
-        id: surveyId,
-      },
-      select: selectSurvey,
-    });
-
-    if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
-      const deletedSegment = await prisma.segment.delete({
-        where: {
-          id: deletedSurvey.segment.id,
-        },
-      });
-
-      if (deletedSegment) {
-        segmentCache.revalidate({
-          id: deletedSegment.id,
-          environmentId: deletedSurvey.environmentId,
-        });
-      }
-    }
-
-    responseCache.revalidate({
-      surveyId,
-      environmentId: deletedSurvey.environmentId,
-    });
-    surveyCache.revalidate({
-      id: deletedSurvey.id,
-      environmentId: deletedSurvey.environmentId,
-      resultShareKey: deletedSurvey.resultShareKey ?? undefined,
-    });
-
-    if (deletedSurvey.segment?.id) {
-      segmentCache.revalidate({
-        id: deletedSurvey.segment.id,
-        environmentId: deletedSurvey.environmentId,
-      });
-    }
-
-    // Revalidate public triggers by actionClassId
-    deletedSurvey.triggers.forEach((trigger) => {
-      surveyCache.revalidate({
-        actionClassId: trigger.actionClass.id,
-      });
-    });
-
-    return deletedSurvey;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
 export const createSurvey = async (
   environmentId: string,
   surveyBody: TSurveyCreateInput
@@ -963,7 +862,7 @@ export const createSurvey = async (
     });
 
     if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy);
+      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
     }
 
     await capturePosthogEnvironmentEvent(survey.environmentId, "survey created", {
@@ -972,258 +871,6 @@ export const createSurvey = async (
     });
 
     return transformedSurvey;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const copySurveyToOtherEnvironment = async (
-  environmentId: string,
-  surveyId: string,
-  targetEnvironmentId: string,
-  userId: string
-) => {
-  validateInputs([environmentId, ZId], [surveyId, ZId], [targetEnvironmentId, ZId], [userId, ZId]);
-
-  try {
-    const isSameEnvironment = environmentId === targetEnvironmentId;
-
-    // Fetch required resources
-    const [existingEnvironment, existingProject, existingSurvey] = await Promise.all([
-      getEnvironment(environmentId),
-      getProjectByEnvironmentId(environmentId),
-      getSurvey(surveyId),
-    ]);
-
-    if (!existingEnvironment) throw new ResourceNotFoundError("Environment", environmentId);
-    if (!existingProject) throw new ResourceNotFoundError("Project", environmentId);
-    if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
-
-    let targetEnvironment: TEnvironment | null = null;
-    let targetProject: TProject | null = null;
-
-    if (isSameEnvironment) {
-      targetEnvironment = existingEnvironment;
-      targetProject = existingProject;
-    } else {
-      [targetEnvironment, targetProject] = await Promise.all([
-        getEnvironment(targetEnvironmentId),
-        getProjectByEnvironmentId(targetEnvironmentId),
-      ]);
-
-      if (!targetEnvironment) throw new ResourceNotFoundError("Environment", targetEnvironmentId);
-      if (!targetProject) throw new ResourceNotFoundError("Project", targetEnvironmentId);
-    }
-
-    const {
-      environmentId: _,
-      createdBy,
-      id: existingSurveyId,
-      createdAt,
-      updatedAt,
-      ...restExistingSurvey
-    } = existingSurvey;
-    const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
-
-    // Prepare survey data
-    const surveyData: Prisma.SurveyCreateInput = {
-      ...restExistingSurvey,
-      id: createId(),
-      name: `${existingSurvey.name} (copy)`,
-      type: existingSurvey.type,
-      status: "draft",
-      welcomeCard: structuredClone(existingSurvey.welcomeCard),
-      questions: structuredClone(existingSurvey.questions),
-      endings: structuredClone(existingSurvey.endings),
-      variables: structuredClone(existingSurvey.variables),
-      hiddenFields: structuredClone(existingSurvey.hiddenFields),
-      languages: hasLanguages
-        ? {
-            create: existingSurvey.languages.map((surveyLanguage) => ({
-              language: {
-                connectOrCreate: {
-                  where: {
-                    projectId_code: { code: surveyLanguage.language.code, projectId: targetProject.id },
-                  },
-                  create: {
-                    code: surveyLanguage.language.code,
-                    alias: surveyLanguage.language.alias,
-                    projectId: targetProject.id,
-                  },
-                },
-              },
-              default: surveyLanguage.default,
-              enabled: surveyLanguage.enabled,
-            })),
-          }
-        : undefined,
-      triggers: {
-        create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
-          const baseActionClassData = {
-            name: trigger.actionClass.name,
-            environment: { connect: { id: targetEnvironmentId } },
-            description: trigger.actionClass.description,
-            type: trigger.actionClass.type,
-          };
-
-          if (isSameEnvironment) {
-            return {
-              actionClass: { connect: { id: trigger.actionClass.id } },
-            };
-          } else if (trigger.actionClass.type === "code") {
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    key_environmentId: { key: trigger.actionClass.key!, environmentId: targetEnvironmentId },
-                  },
-                  create: {
-                    ...baseActionClassData,
-                    key: trigger.actionClass.key,
-                  },
-                },
-              },
-            };
-          } else {
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    name_environmentId: {
-                      name: trigger.actionClass.name,
-                      environmentId: targetEnvironmentId,
-                    },
-                  },
-                  create: {
-                    ...baseActionClassData,
-                    noCodeConfig: trigger.actionClass.noCodeConfig
-                      ? structuredClone(trigger.actionClass.noCodeConfig)
-                      : undefined,
-                  },
-                },
-              },
-            };
-          }
-        }),
-      },
-      environment: {
-        connect: {
-          id: targetEnvironmentId,
-        },
-      },
-      creator: {
-        connect: {
-          id: userId,
-        },
-      },
-      surveyClosedMessage: existingSurvey.surveyClosedMessage
-        ? structuredClone(existingSurvey.surveyClosedMessage)
-        : Prisma.JsonNull,
-      singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      projectOverwrites: existingSurvey.projectOverwrites
-        ? structuredClone(existingSurvey.projectOverwrites)
-        : Prisma.JsonNull,
-      styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
-      segment: undefined,
-      followUps: {
-        createMany: {
-          data: existingSurvey.followUps.map((followUp) => ({
-            name: followUp.name,
-            trigger: followUp.trigger,
-            action: followUp.action,
-          })),
-        },
-      },
-    };
-
-    // Handle segment
-    if (existingSurvey.segment) {
-      if (existingSurvey.segment.isPrivate) {
-        surveyData.segment = {
-          create: {
-            title: surveyData.id!,
-            isPrivate: true,
-            filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
-          },
-        };
-      } else if (isSameEnvironment) {
-        surveyData.segment = { connect: { id: existingSurvey.segment.id } };
-      } else {
-        const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
-          where: {
-            title: existingSurvey.segment.title,
-            isPrivate: false,
-            environmentId: targetEnvironmentId,
-          },
-        });
-
-        surveyData.segment = {
-          create: {
-            title: existingSegmentInTargetEnvironment
-              ? `${existingSurvey.segment.title}-${Date.now()}`
-              : existingSurvey.segment.title,
-            isPrivate: false,
-            filters: existingSurvey.segment.filters,
-            environment: { connect: { id: targetEnvironmentId } },
-          },
-        };
-      }
-    }
-
-    const targetProjectLanguageCodes = targetProject.languages.map((language) => language.code);
-    const newSurvey = await prisma.survey.create({
-      data: surveyData,
-      select: selectSurvey,
-    });
-
-    // Identify newly created action classes
-    const newActionClasses = newSurvey.triggers.map((trigger) => trigger.actionClass);
-
-    // Revalidate cache only for newly created action classes
-    for (const actionClass of newActionClasses) {
-      actionClassCache.revalidate({
-        environmentId: actionClass.environmentId,
-        name: actionClass.name,
-        id: actionClass.id,
-      });
-    }
-
-    let newLanguageCreated = false;
-    if (existingSurvey.languages && existingSurvey.languages.length > 0) {
-      const targetLanguageCodes = newSurvey.languages.map((lang) => lang.language.code);
-      newLanguageCreated = targetLanguageCodes.length > targetProjectLanguageCodes.length;
-    }
-
-    // Invalidate caches
-    if (newLanguageCreated) {
-      projectCache.revalidate({ id: targetProject.id, environmentId: targetEnvironmentId });
-    }
-
-    surveyCache.revalidate({
-      id: newSurvey.id,
-      environmentId: newSurvey.environmentId,
-      resultShareKey: newSurvey.resultShareKey ?? undefined,
-    });
-
-    existingSurvey.triggers.forEach((trigger) => {
-      surveyCache.revalidate({
-        actionClassId: trigger.actionClass.id,
-      });
-    });
-
-    if (newSurvey.segment) {
-      segmentCache.revalidate({
-        id: newSurvey.segment.id,
-        environmentId: newSurvey.environmentId,
-      });
-    }
-
-    return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error(error);

@@ -39,7 +39,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization);
+  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;

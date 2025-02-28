@@ -1,9 +1,9 @@
+import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { setup, tearDown } from "@/lib/common/setup";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { logout, setUserId } from "@/lib/user/user";
-import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock dependencies
 vi.mock("@/lib/common/config", () => ({

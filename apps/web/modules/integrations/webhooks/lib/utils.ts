@@ -35,3 +35,9 @@ export const validWebHookURL = (urlInput: string) => {
     return { valid: false, error: "Invalid URL format. Please enter a complete URL including https://" };
   }
 };
+
+export const isDiscordWebhook = (urlString: string) => {
+  const url = new URL(urlString);
+  const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
+  return DISCORD_WEBHOOK_URL_PATTERN.test(url.toString());
+};

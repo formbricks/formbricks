@@ -80,7 +80,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization);
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">

@@ -1,7 +1,7 @@
 /* eslint-disable no-console -- required for logging errors */
+import { FormbricksAPI } from "@formbricks/api";
 import { type SurveyState } from "@/lib/survey/state";
 import { type TResponseUpdate } from "@/types/response";
-import { FormbricksAPI } from "@formbricks/api";
 
 interface QueueConfig {
   appUrl: string;
