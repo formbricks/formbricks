@@ -246,7 +246,8 @@
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
         "self-hosting/setup/cluster-setup",
-        "self-hosting/setup/monitoring"
+        "self-hosting/setup/monitoring",
+        "self-hosting/setup/kubernetes"
       ]
     },
     {
