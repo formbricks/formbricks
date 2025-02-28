@@ -6,6 +6,7 @@
     "continue_with_google": "Continue with Google",
     "continue_with_oidc": "Continue with {oidcDisplayName}",
     "continue_with_openid": "Continue with OpenID",
+    "continue_with_saml": "Continue with SAML SSO",
     "forgot-password": {
       "back_to_login": "Back to login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "New to Formbricks?",
       "use_a_backup_code": "Use a backup code"
     },
+    "saml_connection_error": "Something went wrong. Please check your app console for more details.",
     "signup": {
       "captcha_failed": "Captcha failed",
       "have_an_account": "Have an account?",
@@ -1854,6 +1856,10 @@
       "smileys": "Smileys",
       "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
     }
+  },
+  "health": {
+    "degraded": "Your Formbricks health is degraded",
+    "healthy": "All systems are up and running"
   },
   "organizations": {
     "landing": {
