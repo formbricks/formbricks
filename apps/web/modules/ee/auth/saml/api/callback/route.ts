@@ -8,7 +8,11 @@ interface SAMLCallbackBody {
 }
 
 export const POST = async (req: Request) => {
-  const { oauthController } = await jackson();
+  const jacksonInstance = await jackson();
+  if (!jacksonInstance) {
+    return responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license");
+  }
+  const { oauthController } = jacksonInstance;
 
   const formData = await req.formData();
   const body = Object.fromEntries(formData.entries());

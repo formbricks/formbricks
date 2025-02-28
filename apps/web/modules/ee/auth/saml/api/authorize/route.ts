@@ -5,7 +5,11 @@ import type { OAuthReq } from "@boxyhq/saml-jackson";
 import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
-  const { oauthController } = await jackson();
+  const jacksonInstance = await jackson();
+  if (!jacksonInstance) {
+    return responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license");
+  }
+  const { oauthController } = jacksonInstance;
   const searchParams = Object.fromEntries(req.nextUrl.searchParams);
   const isSamlSsoEnabled = await getIsSamlSsoEnabled();
 
