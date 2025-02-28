@@ -1,0 +1,159 @@
+---
+  title: "Kubernetes Deployment"
+  description: "Deploy Formbricks on a Kubernetes cluster using Helm."
+  icon: "circle-nodes"
+---
+
+# Deploying Formbricks on Kubernetes
+
+This guide explains how to deploy Formbricks on a **Kubernetes cluster** using **Helm**. It assumes that:
+- You **already have a Kubernetes cluster** running (e.g., DigitalOcean, GKE, AWS, Minikube).
+- An **Ingress controller** (e.g., Traefik, Nginx) is configured.
+- You have **Helm installed** on your local machine.
+
+---
+
+## 🚀 **Step 1: Install Formbricks with Helm**
+
+### **1️⃣ Clone the Formbricks Helm Chart**
+```sh
+git clone https://github.com/formbricks/formbricks.git
+cd formbricks/helm-chart
+```
+
+### **2️⃣ Deploy Formbricks**
+```sh
+ helm install my-formbricks ./ \
+  --namespace formbricks \
+  --create-namespace \
+  --set replicaCount=2
+```
+
+
+## 🎯 **Step 2: Verify and Access Formbricks**
+### **Check the Running Services**
+```sh
+kubectl get pods -n formbricks
+kubectl get svc -n formbricks
+kubectl get ingress -n formbricks
+```
+
+### **Access Formbricks**
+- If running locally with **Minikube**:
+  ```sh
+  minikube service my-formbricks -n formbricks
+  ```
+- If deployed on a **cloud cluster**, visit:
+  ```
+  https://formbricks.example.com
+  ```
+
+---
+
+## Upgrading Formbricks
+
+This section provides guidance on how to upgrade your Formbricks deployment using Helm, including examples of common upgrade scenarios.
+
+### Upgrade Process
+
+To upgrade your Formbricks deployment when using a local chart (e.g., with Minikube), use:
+
+```bash
+# From the helm-chart directory
+helm upgrade my-formbricks ./ --namespace formbricks
+```
+
+For installations from the Helm repository (typically for production deployments):
+```bash
+helm repo update
+helm upgrade my-formbricks formbricks/formbricks --namespace formbricks
+```
+
+### Common Upgrade Scenarios
+
+#### 1. Updating Environment Variables
+
+To update or add new environment variables, use the `--set` flag with the `env` prefix:
+
+```bash
+helm upgrade my-formbricks formbricks/formbricks \
+  --set env.SMTP_HOST=new-smtp.example.com \
+  --set env.SMTP_PORT=587 \
+  --set env.NEW_CUSTOM_VAR=newvalue
+```
+
+This command updates the SMTP host and port, and adds a new custom environment variable.
+
+#### 2. Enabling or Disabling Features
+
+You can enable or disable features by updating their respective values:
+
+```bash
+# Disable Redis
+helm upgrade my-formbricks formbricks/formbricks --set redis.enabled=false
+
+# Enable Redis
+helm upgrade my-formbricks formbricks/formbricks --set redis.enabled=true
+```
+
+#### 3. Scaling Resources
+
+To adjust resource allocation:
+
+```bash
+helm upgrade my-formbricks formbricks/formbricks \
+  --set resources.limits.cpu=1 \
+  --set resources.limits.memory=2Gi \
+  --set resources.requests.cpu=500m \
+  --set resources.requests.memory=1Gi
+```
+
+#### 4. Updating Autoscaling Configuration
+
+To modify autoscaling settings:
+
+```bash
+helm upgrade my-formbricks formbricks/formbricks \
+  --set autoscaling.minReplicas=3 \
+  --set autoscaling.maxReplicas=10 \
+  --set autoscaling.metrics[0].resource.target.averageUtilization=75
+```
+
+#### 5. Changing Database Credentials
+
+To update PostgreSQL database credentials:
+To switch from the built-in PostgreSQL to an external database or update the external database credentials:
+
+```bash
+helm upgrade my-formbricks formbricks/formbricks \
+  --set postgresql.enabled=false \
+  --set postgresql.externalUrl="postgresql://newuser:newpassword@external-postgres-host:5432/newdatabase"
+```
+
+This command disables the built-in PostgreSQL and configures Formbricks to use an external PostgreSQL database. Make sure your external database is set up and accessible before making this change.
+
+
+
+## Full Values Documentation
+
+Below is a comprehensive list of all configurable values in the Formbricks Helm chart:
+
+| Field                                                       | Description                                | Default                         |
+| ----------------------------------------------------------- | ------------------------------------------ | ------------------------------- |
+| `image.repository`                                          | Docker image repository for Formbricks     | `ghcr.io/formbricks/formbricks` |
+| `image.pullPolicy`                                          | Image pull policy                          | `IfNotPresent`                  |
+| `image.tag`                                                 | Docker image tag                           | `"2.6.0"`                       |
+| `service.type`                                              | Kubernetes service type                    | `ClusterIP`                     |
+| `service.port`                                              | Kubernetes service port                    | `80`                            |
+| `service.targetPort`                                        | Container port to expose                   | `3000`                          |
+| `resources.limits.cpu`                                      | CPU resource limit                         | `500m`                          |
+| `resources.limits.memory`                                   | Memory resource limit                      | `1Gi`                           |
+| `resources.requests.cpu`                                    | Memory resource request                    | `null`                          |
+| `resources.requests.memory`                                 | Memory resource request                    | `null`                          |
+| `autoscaling.enabled`                                       | Enable autoscaling                         | `false`                         |
+| `autoscaling.minReplicas`                                   | Minimum number of replicas                 | `1`                             |
+| `autoscaling.maxReplicas`                                   | Maximum number of replicas                 | `5`                             |
+| `autoscaling.metrics[0].type`                               | Type of metric for autoscaling             | `Resource`                      |
+| `autoscaling.metrics[0].resource.name`                      | Resource name for autoscaling metric       | `cpu`                           |
+| `autoscaling.metrics[0].resource.target.type`               | Target type for autoscaling                | `Utilization`                   |
+| `autoscaling.metrics[0].resource.target.averageUtilization` | Average utilization target for autoscaling | `80`
