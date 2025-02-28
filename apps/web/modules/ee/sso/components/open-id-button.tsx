@@ -7,7 +7,7 @@ import { useCallback, useEffect } from "react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface OpenIdButtonProps {
-  inviteUrl?: string | null;
+  inviteUrl?: string;
   lastUsed?: boolean;
   directRedirect?: boolean;
   text?: string;

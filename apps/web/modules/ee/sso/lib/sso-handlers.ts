@@ -1,6 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
+import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
@@ -12,12 +13,25 @@ import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
 export const handleSSOCallback = async ({ user, account }: { user: TUser; account: Account }) => {
+  const isSsoEnabled = await getisSsoEnabled();
+  if (!isSsoEnabled) {
+    return false;
+  }
+
   if (!user.email || account.type !== "oauth") {
     return false;
   }
 
+  let provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
+
+  if (provider === "saml") {
+    const isSamlSsoEnabled = await getIsSamlSsoEnabled();
+    if (!isSamlSsoEnabled) {
+      return false;
+    }
+  }
+
   if (account.provider) {
-    const provider = account.provider.toLowerCase().replace("-", "") as IdentityProvider;
     // check if accounts for this provider / account Id already exists
     const existingUserWithAccount = await prisma.user.findFirst({
       include: {
