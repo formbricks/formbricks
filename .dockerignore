@@ -1,39 +1,56 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-# **/node_modules
+**/node_modules
 .pnp
 .pnp.js
 .pnpm-store/
 
 # testing
-coverage
+**/coverage
 
 # next.js
-**/.next
-**/out
+**/.next/
+**/out/
 **/build
 
 # node
-**/dist
+**/dist/
 
 # misc
-.DS_Store
+**/.DS_Store
 *.pem
+Zone.Identifier
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# turbo
-.turbo
+# local env files
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+!packages/database/.env
+!apps/web/.env
 
-# nixos stuff
+# build tools
+.turbo
+**/*vite.config.*.timestamp-*
+
+# environment specific
 .direnv
 
-.vscode
-.github
-**/.turbo
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
 
-.env
+# project specific
+packages/lib/uploads
+apps/web/public/js
+packages/database/migrations
+branch.json
