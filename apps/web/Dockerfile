@@ -50,14 +50,6 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
-# Install rimraf globally
-RUN npm install -g rimraf
-
-RUN npm install -g turbo
-
-# Clean the project
-RUN pnpm clean
-
 # Install the dependencies
 RUN pnpm install
 
