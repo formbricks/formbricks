@@ -254,6 +254,7 @@
       "pages": [
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
+        "self-hosting/configuration/smtp",
         {
           "group": "Auth & SSO",
           "icon": "lock",
