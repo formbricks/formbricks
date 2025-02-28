@@ -108,6 +108,8 @@ After deploying Formbricks, you can verify the installation and access the appli
    kubectl get ingress -n formbricks
    ```
 
+   > **Note:** The Formbricks application pod may take some time to reach a stable state as it runs database migrations during startup.
+
 2. Access Formbricks:
    - If running locally with **Minikube**:
      ```bash
