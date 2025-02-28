@@ -14,6 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, X } from "lucide-react";
@@ -168,7 +169,7 @@ export const QuestionFilterComboBox = ({
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
               <CommandList>
                 <div className="p-2">
-                  <input
+                  <Input
                     type="text"
                     autoFocus
                     placeholder={t("common.search") + "..."}
@@ -179,8 +180,9 @@ export const QuestionFilterComboBox = ({
                 </div>
                 <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
-                  {filteredOptions?.map((o) => (
+                  {filteredOptions?.map((o, index) => (
                     <CommandItem
+                      key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
                       onSelect={() => {
                         !isMultiple
                           ? onChangeFilterComboBoxValue(
