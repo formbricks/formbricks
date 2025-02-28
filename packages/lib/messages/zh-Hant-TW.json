@@ -6,6 +6,7 @@
     "continue_with_google": "使用 Google 繼續",
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
+    "continue_with_saml": "使用 SAML SSO 繼續",
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "use_a_backup_code": "使用備份碼"
     },
+    "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
       "have_an_account": "已有帳戶？",
@@ -123,7 +125,6 @@
     "are_you_sure": "您確定嗎？",
     "are_you_sure_this_action_cannot_be_undone": "您確定嗎？此操作無法復原。",
     "attributes": "屬性",
-    "automatic": "自動",
     "avatar": "頭像",
     "back": "返回",
     "billing": "帳單",
@@ -180,7 +181,6 @@
     "edit": "編輯",
     "email": "電子郵件",
     "embed": "嵌入",
-    "enable": "啟用",
     "enterprise_license": "企業授權",
     "environment_not_found": "找不到環境",
     "environment_notice": "您目前在 '{'environment'}' 環境中。",
@@ -1449,6 +1449,8 @@
         "heading": "標題",
         "hidden_field_added_successfully": "隱藏欄位已成功新增",
         "hide_advanced_settings": "隱藏進階設定",
+        "hide_back_button": "隱藏「Back」按鈕",
+        "hide_back_button_description": "不要在問卷中顯示返回按鈕",
         "hide_logo": "隱藏標誌",
         "hide_progress_bar": "隱藏進度列",
         "hide_the_logo_in_this_specific_survey": "在此特定問卷中隱藏標誌",
@@ -1474,7 +1476,9 @@
         "is_booked": "已預訂",
         "is_clicked": "已點擊",
         "is_completely_submitted": "已完全提交",
+        "is_not_set": "未設定",
         "is_partially_submitted": "已部分提交",
+        "is_set": "已設定",
         "is_skipped": "已跳過",
         "is_submitted": "已提交",
         "jump_to_question": "跳至問題",
@@ -1835,8 +1839,7 @@
         "multiple_industries": "多個產業",
         "use_this_template": "使用此範本",
         "uses_branching_logic": "此問卷使用分支邏輯。"
-      },
-      "this_is_a_new_key": "這是一個更新的 key"
+      }
     },
     "xm-templates": {
       "ces": "CES",

@@ -6,6 +6,7 @@
     "continue_with_google": "Continuer avec Google",
     "continue_with_oidc": "Continuer avec {oidcDisplayName}",
     "continue_with_openid": "Continuer avec OpenID",
+    "continue_with_saml": "Continuer avec SAML SSO",
     "forgot-password": {
       "back_to_login": "Retour à la connexion",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Nouveau sur Formbricks ?",
       "use_a_backup_code": "Utiliser un code de secours"
     },
+    "saml_connection_error": "Quelque chose s'est mal passé. Veuillez vérifier la console de votre application pour plus de détails.",
     "signup": {
       "captcha_failed": "Captcha échoué",
       "have_an_account": "Avez-vous un compte ?",
@@ -123,7 +125,6 @@
     "are_you_sure": "Es-tu sûr ?",
     "are_you_sure_this_action_cannot_be_undone": "Êtes-vous sûr ? Cette action ne peut pas être annulée.",
     "attributes": "Attributs",
-    "automatic": "Automatique",
     "avatar": "Avatar",
     "back": "Retour",
     "billing": "Facturation",
@@ -180,7 +181,6 @@
     "edit": "Modifier",
     "email": "Email",
     "embed": "Intégrer",
-    "enable": "Activer",
     "enterprise_license": "Licence d'entreprise",
     "environment_not_found": "Environnement non trouvé",
     "environment_notice": "Vous êtes actuellement dans l'environnement {environment}.",
@@ -1449,6 +1449,8 @@
         "heading": "En-tête",
         "hidden_field_added_successfully": "Champ caché ajouté avec succès",
         "hide_advanced_settings": "Cacher les paramètres avancés",
+        "hide_back_button": "Masquer le bouton 'Retour'",
+        "hide_back_button_description": "Ne pas afficher le bouton retour dans l'enquête",
         "hide_logo": "Cacher le logo",
         "hide_progress_bar": "Cacher la barre de progression",
         "hide_the_logo_in_this_specific_survey": "Cacher le logo dans cette enquête spécifique",
@@ -1474,7 +1476,9 @@
         "is_booked": "Est réservé",
         "is_clicked": "Est cliqué",
         "is_completely_submitted": "Est complètement soumis",
+        "is_not_set": "N'est pas défini",
         "is_partially_submitted": "Est partiellement soumis",
+        "is_set": "Est défini",
         "is_skipped": "Est ignoré",
         "is_submitted": "Est soumis",
         "jump_to_question": "Passer à la question",
@@ -1835,8 +1839,7 @@
         "multiple_industries": "Plusieurs secteurs",
         "use_this_template": "Utilisez ce modèle",
         "uses_branching_logic": "Cette enquête utilise une logique de branchement."
-      },
-      "this_is_a_new_key": "Ceci est une clé mise à jour"
+      }
     },
     "xm-templates": {
       "ces": "CES",

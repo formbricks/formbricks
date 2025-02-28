@@ -6,6 +6,7 @@
     "continue_with_google": "Login mit Google",
     "continue_with_oidc": "Weiter mit {oidcDisplayName}",
     "continue_with_openid": "Login mit OpenID",
+    "continue_with_saml": "Login mit SAML SSO",
     "forgot-password": {
       "back_to_login": "Zurück zum Login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
+    "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
       "have_an_account": "Hast Du ein Konto?",
@@ -123,7 +125,6 @@
     "are_you_sure": "Bist Du sicher?",
     "are_you_sure_this_action_cannot_be_undone": "Bist Du sicher? Diese Aktion kann nicht rückgängig gemacht werden.",
     "attributes": "Attribute",
-    "automatic": "Automatisch",
     "avatar": "Avatar",
     "back": "Zurück",
     "billing": "Abrechnung",
@@ -180,7 +181,6 @@
     "edit": "Bearbeiten",
     "email": "E-Mail",
     "embed": "Einbetten",
-    "enable": "Aktivieren",
     "enterprise_license": "Enterprise Lizenz",
     "environment_not_found": "Umgebung nicht gefunden",
     "environment_notice": "Du befindest dich derzeit in der {environment}-Umgebung.",
@@ -1449,6 +1449,8 @@
         "heading": "Überschrift",
         "hidden_field_added_successfully": "Verstecktes Feld erfolgreich hinzugefügt",
         "hide_advanced_settings": "Erweiterte Einstellungen ausblenden",
+        "hide_back_button": "'Zurück'-Button ausblenden",
+        "hide_back_button_description": "Den Zurück-Button in der Umfrage nicht anzeigen",
         "hide_logo": "Logo verstecken",
         "hide_progress_bar": "Fortschrittsbalken ausblenden",
         "hide_the_logo_in_this_specific_survey": "Logo in dieser speziellen Umfrage verstecken",
@@ -1474,7 +1476,9 @@
         "is_booked": "Ist gebucht",
         "is_clicked": "Wird geklickt",
         "is_completely_submitted": "Vollständig eingereicht",
+        "is_not_set": "Ist nicht festgelegt",
         "is_partially_submitted": "Teilweise eingereicht",
+        "is_set": "Ist festgelegt",
         "is_skipped": "Wird übersprungen",
         "is_submitted": "Wird eingereicht",
         "jump_to_question": "Zur Frage springen",
@@ -1835,8 +1839,7 @@
         "multiple_industries": "Mehrere Branchen",
         "use_this_template": "Vorlage verwenden",
         "uses_branching_logic": "Diese Umfrage verwendet Logik."
-      },
-      "this_is_a_new_key": "Das ist ein neuer Schlüssel "
+      }
     },
     "xm-templates": {
       "ces": "CES",
