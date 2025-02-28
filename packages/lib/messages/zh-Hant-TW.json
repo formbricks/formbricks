@@ -52,6 +52,7 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "use_a_backup_code": "使用備份碼"
     },
+    "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
       "have_an_account": "已有帳戶？",

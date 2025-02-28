@@ -52,6 +52,7 @@
       "new_to_formbricks": "New to Formbricks?",
       "use_a_backup_code": "Use a backup code"
     },
+    "saml_connection_error": "Something went wrong. Please check your app console for more details.",
     "signup": {
       "captcha_failed": "Captcha failed",
       "have_an_account": "Have an account?",

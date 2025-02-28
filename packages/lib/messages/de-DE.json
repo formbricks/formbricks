@@ -52,6 +52,7 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
+    "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
       "have_an_account": "Hast Du ein Konto?",

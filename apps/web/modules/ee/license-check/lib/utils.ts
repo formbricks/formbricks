@@ -382,7 +382,7 @@ export const getIsSamlSsoEnabled = async (): Promise<boolean> => {
   }
   const licenseFeatures = await getLicenseFeatures();
   if (!licenseFeatures) return false;
-  return licenseFeatures.sso && licenseFeatures.saml;
+  return true;
 };
 
 export const getIsOrganizationAIReady = async (billingPlan: Organization["billing"]["plan"]) => {
