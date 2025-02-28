@@ -110,7 +110,7 @@ export const StackedCard = ({
         ...straightCardArrangementStyles,
         ...getBottomStyles(),
       }}
-      className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out">
+      className="fb-pointer fb-rounded-custom fb-bg-survey-bg fb-absolute fb-inset-x-0 fb-backdrop-blur-md fb-transition-all fb-ease-in-out fb-overflow-hidden">
       <div
         style={{
           opacity: contentOpacity,

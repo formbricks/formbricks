@@ -3,15 +3,19 @@
 
 # Load environment variables from .env files
 if [ -f .env ]; then
-  export $(cat .env | grep -v '#' | xargs)
+  set -a
+  . .env
+  set +a
 fi
 
 pnpm lint-staged
 
-if [ -z "$NEXT_PUBLIC_TOLGEE_API_KEY" ]; then
-  echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
-else
-  pnpm run tolgee-pull
-  git add packages/lib/messages
+# Run tolgee-pull if branch.json exists and NEXT_PUBLIC_TOLGEE_API_KEY is not set
+if [ -f branch.json ]; then
+  if [ -z "$NEXT_PUBLIC_TOLGEE_API_KEY" ]; then
+    echo "Skipping tolgee-pull: NEXT_PUBLIC_TOLGEE_API_KEY is not set"
+  else
+    pnpm run tolgee-pull
+    git add packages/lib/messages
+  fi
 fi
-
