@@ -138,6 +138,7 @@ jobs:
           retention-days: 30
 
       - uses: actions/upload-artifact@v4
+        if: failure()
         with:
           name: app-logs
           path: app.log
