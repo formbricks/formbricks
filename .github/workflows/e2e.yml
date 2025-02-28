@@ -104,11 +104,7 @@ jobs:
 
       - name: Set Azure Secret Variables
         run: |
-          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
-            echo "AZURE_ENABLED=true" >> $GITHUB_ENV
-          else
-            echo "AZURE_ENABLED=false" >> $GITHUB_ENV
-          fi
+          echo "AZURE_ENABLED=false" >> $GITHUB_ENV
 
       - name: Azure login
         if: env.AZURE_ENABLED == 'true'
