@@ -197,6 +197,7 @@ export const LinkSurvey = ({
         }}
         singleUseId={singleUseId}
         singleUseResponseId={responseId}
+        getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
       />
     </LinkSurveyWrapper>
   );

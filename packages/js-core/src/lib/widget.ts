@@ -142,6 +142,7 @@ const renderWidget = async (
       },
       onClose: closeSurvey,
       hiddenFieldsRecord: hiddenFields,
+      getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
   }, survey.delay * 1000);
 
