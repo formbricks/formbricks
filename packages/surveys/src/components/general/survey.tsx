@@ -140,6 +140,7 @@ export function Survey({
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
   );
+  const [isSurveyFinished, setIsSurveyFinished] = useState(false);
   const [selectedLanguage, setselectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
@@ -406,6 +407,14 @@ export function Survey({
     [surveyState, responseQueue, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
   );
 
+  useEffect(() => {
+    if (isResponseSendingFinished && isSurveyFinished) {
+      // Post a message to the parent window indicating that the survey is completed.
+      window.parent.postMessage("formbricksSurveyCompleted", "*");
+      onFinished?.();
+    }
+  }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
+
   const onSubmit = (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
     const respondedQuestionId = Object.keys(surveyResponseData)[0];
     setLoadingElement(true);
@@ -416,6 +425,8 @@ export function Survey({
     const finished =
       nextQuestionId === undefined ||
       !localSurvey.questions.map((question) => question.id).includes(nextQuestionId);
+
+    setIsSurveyFinished(finished);
 
     const endingId = nextQuestionId
       ? localSurvey.endings.find((ending) => ending.id === nextQuestionId)?.id
@@ -444,11 +455,6 @@ export function Survey({
       });
     }
 
-    if (finished) {
-      // Post a message to the parent window indicating that the survey is completed.
-      window.parent.postMessage("formbricksSurveyCompleted", "*");
-      onFinished?.();
-    }
     if (nextQuestionId) {
       setQuestionId(nextQuestionId);
     }
