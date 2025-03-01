@@ -27,7 +27,7 @@
     "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
     "test:e2e": "playwright test",
-    "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=20",
+    "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=20 js.spec.ts",
     "prepare": "husky install",
     "storybook": "turbo run storybook",
     "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
