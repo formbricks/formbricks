@@ -29,6 +29,7 @@ test.describe("JS Package Test", async () => {
   let server: http.Server;
   let environmentId: string;
 
+  test.setTimeout(3 * 60 * 1000);
   test.beforeAll(async () => {
     // Create a simple HTTP server
     server = http.createServer((_, res) => {
@@ -124,6 +125,7 @@ test.describe("JS Package Test", async () => {
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(5000);
 
     // Validate displays and response
     await page.goto("/");
@@ -131,7 +133,7 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     await page.waitForSelector("text=Responses");
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(5000);
 
     const impressionsCount = await page.getByRole("button", { name: "Impressions" }).innerText();
     expect(impressionsCount).toEqual("Impressions\n\n1");

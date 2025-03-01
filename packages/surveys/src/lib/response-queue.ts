@@ -1,10 +1,9 @@
-/* eslint-disable no-console -- required for logging errors */
-import { FormbricksAPI } from "@formbricks/api";
-import { type SurveyState } from "@/lib/survey/state";
-import { type TResponseUpdate } from "@/types/response";
+import { TResponseUpdate } from "@formbricks/types/responses";
+import { ApiClient } from "./api-client";
+import { SurveyState } from "./survey-state";
 
 interface QueueConfig {
-  appUrl: string;
+  apiHost: string;
   environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
@@ -23,20 +22,18 @@ export class ResponseQueue {
   private config: QueueConfig;
   private surveyState: SurveyState;
   private isRequestInProgress = false;
-  private api: FormbricksAPI;
+  private api: ApiClient;
 
-  constructor(config: QueueConfig, surveyState: SurveyState, apiInstance?: FormbricksAPI) {
+  constructor(config: QueueConfig, surveyState: SurveyState) {
     this.config = config;
     this.surveyState = surveyState;
-    this.api =
-      apiInstance ??
-      new FormbricksAPI({
-        apiHost: config.appUrl,
-        environmentId: config.environmentId,
-      });
+    this.api = new ApiClient({
+      apiHost: config.apiHost,
+      environmentId: config.environmentId,
+    });
   }
 
-  add(responseUpdate: TResponseUpdate): void {
+  add(responseUpdate: TResponseUpdate) {
     // update survey state
     this.surveyState.accumulateResponse(responseUpdate);
     if (this.config.setSurveyState) {
@@ -44,10 +41,10 @@ export class ResponseQueue {
     }
     // add response to queue
     this.queue.push(responseUpdate);
-    void this.processQueue();
+    this.processQueue();
   }
 
-  async processQueue(): Promise<void> {
+  async processQueue() {
     if (this.isRequestInProgress) return;
     if (this.queue.length === 0) return;
 
@@ -62,7 +59,7 @@ export class ResponseQueue {
         this.queue.shift(); // remove the successfully sent response from the queue
         break; // exit the retry loop
       }
-      console.error(`Formbricks: Failed to send response. Retrying... ${attempts.toString()}`);
+      console.error(`Formbricks: Failed to send response. Retrying... ${attempts}`);
       await delay(1000); // wait for 1 second before retrying
       attempts++;
     }
@@ -80,26 +77,28 @@ export class ResponseQueue {
         this.config.onResponseSendingFinished();
       }
       this.isRequestInProgress = false;
-      void this.processQueue(); // process the next item in the queue if any
+      this.processQueue(); // process the next item in the queue if any
     }
   }
 
   async sendResponse(responseUpdate: TResponseUpdate): Promise<boolean> {
     try {
       if (this.surveyState.responseId !== null) {
-        await this.api.client.response.update({ ...responseUpdate, responseId: this.surveyState.responseId });
+        await this.api.updateResponse({ ...responseUpdate, responseId: this.surveyState.responseId });
       } else {
-        const response = await this.api.client.response.create({
+        const response = await this.api.createResponse({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
-          userId: this.surveyState.userId ?? null,
-          singleUseId: this.surveyState.singleUseId ?? null,
+          userId: this.surveyState.userId || null,
+          singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
         });
+
         if (!response.ok) {
           throw new Error("Could not create response");
         }
+
         this.surveyState.updateResponseId(response.data.id);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
@@ -113,7 +112,7 @@ export class ResponseQueue {
   }
 
   // update surveyState
-  updateSurveyState(surveyState: SurveyState): void {
+  updateSurveyState(surveyState: SurveyState) {
     this.surveyState = surveyState;
   }
 }
