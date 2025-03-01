@@ -3,6 +3,60 @@ title: "Migration"
 icon: "arrow-right"
 ---
 
+### v3.3
+
+<Info>
+  With Formbricks 3.0, we introduced an automatic data migration system. If you're using a version older than
+  **v2.7**, you must upgrade step-by-step through earlier versions (e.g. **2.4 → 2.5 → 2.6 → 2.7**). Once you
+  reach **v2.7**, you can upgrade directly to **any v3.x or future release** without needing intermediate
+  migrations.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are **self-hosting Formbricks** using the **one-click setup**. If you have a different setup, you may need to adjust the commands accordingly.
+
+Before running these steps, **navigate to the `formbricks` directory** where your `docker-compose.yml` file is located.
+
+1. **Backup your Database**: Backing up your database is crucial before upgrading. Use the following command to create a backup:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v3.3_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you run into “**No such container**”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Info>
+
+If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a restore scenario you will need to use `psql` then with an empty `formbricks` database.
+
+1. Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+1. Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+1. Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+When you start the latest version of **Formbricks**, it will **automatically detect and apply any required data migrations** during startup. You don’t need to run any manual migration steps or download separate migration images.
+
+- Access your updated instance
+
+Once the containers are running, simply go to the **same URL** as before to access your updated **Formbricks** instance.
+
+That’s it! This new process ensures your **Formbricks** setup stays up to date with the latest schema changes as soon as you run the updated container.
+
 ### v3.2
 
 <Info>
@@ -906,9 +960,9 @@ Formbricks v1.2 introduces new features for Link Surveys and enhances security. 
 
 ### New Environment Variables
 
-| Environment Variable | Required | Recommended Generation  | Comments                                                    |
-| -------------------- | -------- | ----------------------- | ----------------------------------------------------------- |
-| `ENCRYPTION_KEY`     | true     | `openssl rand -hex 32`  | Needed for 2 Factor Authentication                          |
+| Environment Variable | Required | Recommended Generation | Comments                           |
+| -------------------- | -------- | ---------------------- | ---------------------------------- |
+| `ENCRYPTION_KEY`     | true     | `openssl rand -hex 32` | Needed for 2 Factor Authentication |
 
 ### Deprecated / Removed Environment Variables
 
