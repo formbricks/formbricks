@@ -6,6 +6,7 @@
     "continue_with_google": "Login mit Google",
     "continue_with_oidc": "Weiter mit {oidcDisplayName}",
     "continue_with_openid": "Login mit OpenID",
+    "continue_with_saml": "Login mit SAML SSO",
     "forgot-password": {
       "back_to_login": "Zurück zum Login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
+    "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
       "have_an_account": "Hast Du ein Konto?",

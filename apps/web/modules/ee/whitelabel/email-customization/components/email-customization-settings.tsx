@@ -25,8 +25,6 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 
 const allowedFileExtensions: TAllowedFileExtension[] = ["jpeg", "png", "jpg", "webp"];
-const DEFAULT_LOGO_URL =
-  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
 
 interface EmailCustomizationSettingsProps {
   organization: TOrganization;
@@ -35,6 +33,7 @@ interface EmailCustomizationSettingsProps {
   isReadOnly: boolean;
   isFormbricksCloud: boolean;
   user: TUser | null;
+  fbLogoUrl: string;
 }
 
 export const EmailCustomizationSettings = ({
@@ -44,15 +43,16 @@ export const EmailCustomizationSettings = ({
   isReadOnly,
   isFormbricksCloud,
   user,
+  fbLogoUrl,
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslate();
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || DEFAULT_LOGO_URL);
+  const [logoUrl, setLogoUrl] = useState<string>(organization.whitelabel?.logoUrl || fbLogoUrl);
   const [isSaving, setIsSaving] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null) as React.RefObject<HTMLInputElement>;
 
-  const isDefaultLogo = logoUrl === DEFAULT_LOGO_URL;
+  const isDefaultLogo = logoUrl === fbLogoUrl;
 
   const router = useRouter();
 
@@ -243,7 +243,7 @@ export const EmailCustomizationSettings = ({
             </div>
             <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
               <Image
-                src={logoUrl || DEFAULT_LOGO_URL}
+                src={logoUrl || fbLogoUrl}
                 alt="Logo"
                 className="mx-auto max-h-[100px] max-w-full object-contain"
                 width={192}
