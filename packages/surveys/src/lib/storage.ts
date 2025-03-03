@@ -1,4 +1,4 @@
-export const getOriginalFileNameFromUrl = (fileURL: string) => {
+export const getOriginalFileNameFromUrl = (fileURL: string): string => {
   try {
     const fileNameFromURL = fileURL.startsWith("/storage/")
       ? fileURL.split("/").pop()
@@ -17,5 +17,6 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
     return fileName;
   } catch (error) {
     console.error(`Error parsing file URL: ${error}`);
+    return "";
   }
 };
