@@ -4,6 +4,12 @@ const getOrdinalSuffix = (day: number) => {
   return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
 };
 
+// Helper function to calculate difference in days between two dates
+export const diffInDays = (date1: Date, date2: Date) => {
+  const diffTime = Math.abs(date2.getTime() - date1.getTime());
+  return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+};
+
 export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): string => {
   const dayOfWeek = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
   const day = date.getDate();
