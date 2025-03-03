@@ -4,7 +4,7 @@ import { type TResponseData, type TResponseVariables } from "@formbricks/types/r
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 // Extracts the ID of recall question from a string containing the "recall" pattern.
-export const extractId = (text: string): string | null => {
+const extractId = (text: string): string | null => {
   const pattern = /#recall:([A-Za-z0-9_-]+)/;
   const match = text.match(pattern);
   if (match && match[1]) {
@@ -15,7 +15,7 @@ export const extractId = (text: string): string | null => {
 };
 
 // Extracts the fallback value from a string containing the "fallback" pattern.
-export const extractFallbackValue = (text: string): string => {
+const extractFallbackValue = (text: string): string => {
   const pattern = /fallback:(\S*)#/;
   const match = text.match(pattern);
   if (match && match[1]) {
@@ -26,7 +26,7 @@ export const extractFallbackValue = (text: string): string => {
 };
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
-export const extractRecallInfo = (headline: string, id?: string): string | null => {
+const extractRecallInfo = (headline: string, id?: string): string | null => {
   const idPattern = id ? id : "[A-Za-z0-9_-]+";
   const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
   const match = headline.match(pattern);

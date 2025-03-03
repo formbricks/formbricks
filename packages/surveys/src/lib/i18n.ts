@@ -1,7 +1,7 @@
 import { TI18nString } from "@formbricks/types/surveys/types";
 
 // Type guard to check if an object is an I18nString
-export const isI18nObject = (obj: any): obj is TI18nString => {
+const isI18nObject = (obj: any): obj is TI18nString => {
   return typeof obj === "object" && obj !== null && Object.keys(obj).includes("default");
 };
 
