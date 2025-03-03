@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  getCXQuestionNameMap,
+  getQuestionDefaults,
+  getQuestionIconMap,
+  getQuestionNameMap,
+} from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -17,12 +23,6 @@ import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ArrowDownIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
-import {
-  getCXQuestionNameMap,
-  getQuestionDefaults,
-  getQuestionIconMap,
-  getQuestionNameMap,
-} from "@formbricks/lib/utils/questions";
 import {
   TSurvey,
   TSurveyEndScreenCard,

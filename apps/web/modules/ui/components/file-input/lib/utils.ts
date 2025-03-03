@@ -2,6 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { TAllowedFileExtension } from "@formbricks/types/common";
+import { convertHeicToJpegAction } from "./actions";
 
 export const uploadFile = async (
   file: File | Blob,
@@ -14,8 +15,6 @@ export const uploadFile = async (
     }
 
     const fileBuffer = await file.arrayBuffer();
-
-    // check the file size
 
     const bufferBytes = fileBuffer.byteLength;
     const bufferKB = bufferBytes / 1024;
@@ -74,7 +73,6 @@ export const uploadFile = async (
       });
     }
 
-    // Add the actual file to be uploaded
     formData.append("file", file);
 
     const uploadResponse = await fetch(signedUrl, {
@@ -96,34 +94,63 @@ export const uploadFile = async (
   }
 };
 
-export const getAllowedFiles = (
+const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {
+  if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
+    return true;
+  }
+  return false;
+};
+
+export const getAllowedFiles = async (
   files: File[],
   allowedFileExtensions: string[],
   maxSizeInMB?: number
-): File[] => {
+): Promise<File[]> => {
   const sizeExceedFiles: string[] = [];
   const unsupportedExtensionFiles: string[] = [];
+  const convertedFiles: File[] = [];
 
-  const allowedFiles = files.filter((file) => {
+  for (const file of files) {
     if (!file || !file.type) {
-      return false;
+      continue;
     }
 
-    const extension = file.name.split(".").pop();
-    const fileSizeInMB = file.size / 1000000; // Kb -> Mb
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    const fileSizeInMB = file.size / 1000000;
 
     if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
       unsupportedExtensionFiles.push(file.name);
-      return false; // Exclude file if extension not allowed
-    } else if (maxSizeInMB && fileSizeInMB > maxSizeInMB) {
-      sizeExceedFiles.push(file.name);
-      return false; // Exclude files larger than the maximum size
+      continue;
     }
 
-    return true;
-  });
+    if (isFileSizeExceed(fileSizeInMB, maxSizeInMB)) {
+      sizeExceedFiles.push(file.name);
+      continue;
+    }
 
-  // Constructing toast messages based on the issues found
+    if (extension === "heic") {
+      const convertedFileResponse = await convertHeicToJpegAction({ file });
+      if (!convertedFileResponse?.data) {
+        unsupportedExtensionFiles.push(file.name);
+        continue;
+      } else {
+        const convertedFileSizeInMB = convertedFileResponse.data.size / 1000000;
+        if (isFileSizeExceed(convertedFileSizeInMB, maxSizeInMB)) {
+          sizeExceedFiles.push(file.name);
+          continue;
+        }
+
+        const convertedFile = new File([convertedFileResponse.data], file.name.replace(/\.heic$/, ".jpg"), {
+          type: "image/jpeg",
+        });
+        convertedFiles.push(convertedFile);
+        continue;
+      }
+    }
+
+    convertedFiles.push(file);
+  }
+
   let toastMessage = "";
   if (sizeExceedFiles.length > 0) {
     toastMessage += `Files exceeding size limit (${maxSizeInMB} MB): ${sizeExceedFiles.join(", ")}. `;
@@ -134,7 +161,7 @@ export const getAllowedFiles = (
   if (toastMessage) {
     toast.error(toastMessage);
   }
-  return allowedFiles;
+  return convertedFiles;
 };
 
 export const checkForYoutubePrivacyMode = (url: string): boolean => {

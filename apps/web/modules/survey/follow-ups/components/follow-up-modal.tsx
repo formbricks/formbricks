@@ -6,6 +6,7 @@ import {
   ZCreateSurveyFollowUpFormSchema,
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";
@@ -38,7 +39,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/database/types/survey-follow-up";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";

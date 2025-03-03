@@ -1,7 +1,8 @@
 import { contactCache } from "@/lib/cache/contact";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
-import { getContactAttributeKeys, getContacts } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { getContacts } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";

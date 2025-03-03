@@ -1,20 +1,13 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call -- required */
 /* eslint-disable no-console -- debugging*/
-import React, { type JSX, useEffect, useMemo, useRef, useState } from "react";
+import React, { type JSX, useEffect, useRef, useState } from "react";
 import { Modal } from "react-native";
 import { WebView, type WebViewMessageEvent } from "react-native-webview";
-import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
-import { StorageAPI } from "@/lib/common/file-upload";
 import { Logger } from "@/lib/common/logger";
-import { ResponseQueue } from "@/lib/common/response-queue";
-import { filterSurveys, getDefaultLanguageCode, getLanguageCode, getStyling } from "@/lib/common/utils";
-import { SurveyState } from "@/lib/survey/state";
+import { filterSurveys, getLanguageCode, getStyling } from "@/lib/common/utils";
 import { SurveyStore } from "@/lib/survey/store";
 import { type TEnvironmentStateSurvey, type TUserState, ZJsRNWebViewOnMessageData } from "@/types/config";
-import type { TResponseUpdate } from "@/types/response";
-import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
-import type { SurveyInlineProps } from "@/types/survey";
+import type { SurveyContainerProps } from "@/types/survey";
 
 const appConfig = RNConfig.getInstance();
 const logger = Logger.getInstance();
@@ -38,24 +31,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   const isBrandingEnabled = project.inAppSurveyBranding;
   const isMultiLanguageSurvey = survey.languages.length > 1;
   const [languageCode, setLanguageCode] = useState("default");
-
-  const [surveyState, setSurveyState] = useState(
-    new SurveyState(survey.id, null, null, appConfig.get().user.data.userId)
-  );
-
-  const responseQueue = useMemo(
-    () =>
-      new ResponseQueue(
-        {
-          appUrl: appConfig.get().appUrl,
-          environmentId: appConfig.get().environmentId,
-          retryAttempts: 2,
-          setSurveyState,
-        },
-        surveyState
-      ),
-    [surveyState]
-  );
 
   useEffect(() => {
     if (isMultiLanguageSurvey) {
@@ -94,21 +69,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     setShowSurvey(true);
   }, [survey.delay, isSurveyRunning, survey.name]);
 
-  const addResponseToQueue = (responseUpdate: TResponseUpdate): void => {
-    const { userId } = appConfig.get().user.data;
-    if (userId) surveyState.updateUserId(userId);
-
-    responseQueue.updateSurveyState(surveyState);
-    responseQueue.add({
-      data: responseUpdate.data,
-      ttc: responseUpdate.ttc,
-      finished: responseUpdate.finished,
-      language:
-        responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
-      displayId: surveyState.displayId,
-    });
-  };
-
   const onCloseSurvey = (): void => {
     const { environment: environmentState, user: personState } = appConfig.get();
     const filteredSurveys = filterSurveys(environmentState, personState);
@@ -124,30 +84,9 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
     setShowSurvey(false);
   };
 
-  const createDisplay = async (surveyId: string): Promise<{ id: string }> => {
-    const { userId } = appConfig.get().user.data;
-
-    const api = new FormbricksAPI({
-      apiHost: appConfig.get().appUrl,
-      environmentId: appConfig.get().environmentId,
-    });
-
-    const res = await api.client.display.create({
-      surveyId,
-      ...(userId && { userId }),
-    });
-
-    if (!res.ok) {
-      throw new Error("Could not create display");
-    }
-
-    return res.data;
-  };
-
-  const uploadFile = async (file: TFileUploadParams["file"], params?: TUploadFileConfig): Promise<string> => {
-    const storage = new StorageAPI(appConfig.get().appUrl, appConfig.get().environmentId);
-    return await storage.uploadFile(file, params);
-  };
+  const surveyPlacement = survey.projectOverwrites?.placement ?? project.placement;
+  const clickOutside = survey.projectOverwrites?.clickOutsideClose ?? project.clickOutsideClose;
+  const darkOverlay = survey.projectOverwrites?.darkOverlay ?? project.darkOverlay;
 
   return (
     <Modal
@@ -164,11 +103,18 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         originWhitelist={["*"]}
         source={{
           html: renderHtml({
+            apiHost: appConfig.get().appUrl,
+            environmentId: appConfig.get().environmentId,
+            userId: appConfig.get().user.data.userId ?? undefined,
             survey,
             isBrandingEnabled,
             styling,
             languageCode,
+            placement: surveyPlacement,
             appUrl: appConfig.get().appUrl,
+            clickOutside: surveyPlacement === "center" ? clickOutside : true,
+            darkOverlay,
+            getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
           }),
         }}
         style={{ backgroundColor: "transparent" }}
@@ -188,7 +134,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
 
           return true;
         }}
-        onMessage={async (event: WebViewMessageEvent) => {
+        onMessage={(event: WebViewMessageEvent) => {
           try {
             const { data } = event.nativeEvent;
             const unvalidatedMessage = JSON.parse(data) as { type: string; data: unknown };
@@ -204,21 +150,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
               return;
             }
 
-            const {
-              onDisplay,
-              onResponse,
-              responseUpdate,
-              onClose,
-              onRetry,
-              onFinished,
-              onFileUpload,
-              fileUploadParams,
-              uploadId,
-            } = validatedMessage.data;
-            if (onDisplay) {
-              const { id } = await createDisplay(survey.id);
-              surveyState.updateDisplayId(id);
-
+            const { onDisplayCreated, onResponseCreated, onClose, onFinished } = validatedMessage.data;
+            if (onDisplayCreated) {
               const existingDisplays = appConfig.get().user.data.displays;
               const newDisplay = { surveyId: survey.id, createdAt: new Date() };
 
@@ -243,85 +176,33 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
                 filteredSurveys,
               });
             }
-            if (onResponse && responseUpdate) {
-              addResponseToQueue(responseUpdate);
+            if (onResponseCreated) {
+              const responses = appConfig.get().user.data.responses;
+              const newPersonState: TUserState = {
+                ...appConfig.get().user,
+                data: {
+                  ...appConfig.get().user.data,
+                  responses: [...responses, survey.id],
+                },
+              };
 
-              const isNewResponse = surveyState.responseId === null;
+              const filteredSurveys = filterSurveys(appConfig.get().environment, newPersonState);
 
-              if (isNewResponse) {
-                const responses = appConfig.get().user.data.responses;
-                const newPersonState: TUserState = {
-                  ...appConfig.get().user,
-                  data: {
-                    ...appConfig.get().user.data,
-                    responses: [...responses, surveyState.surveyId],
-                  },
-                };
-
-                const filteredSurveys = filterSurveys(appConfig.get().environment, newPersonState);
-
-                appConfig.update({
-                  ...appConfig.get(),
-                  environment: appConfig.get().environment,
-                  user: newPersonState,
-                  filteredSurveys,
-                });
-              }
+              appConfig.update({
+                ...appConfig.get(),
+                environment: appConfig.get().environment,
+                user: newPersonState,
+                filteredSurveys,
+              });
             }
             if (onClose) {
               onCloseSurvey();
-            }
-
-            if (onRetry) {
-              await responseQueue.processQueue();
             }
 
             if (onFinished) {
               setTimeout(() => {
                 onCloseSurvey();
               }, 2500);
-            }
-            if (onFileUpload && fileUploadParams) {
-              const fileType = fileUploadParams.file.type;
-              const fileName = fileUploadParams.file.name;
-              const fileDataUri = fileUploadParams.file.base64;
-
-              if (fileDataUri) {
-                const file: TFileUploadParams["file"] = {
-                  // uri: Platform.OS === "android" ? `data:${fileType};base64,${base64Data}` : base64Data,
-                  base64: fileUploadParams.file.base64,
-                  type: fileType,
-                  name: fileName,
-                };
-
-                try {
-                  const fileUploadResult = await uploadFile(file, fileUploadParams.params);
-
-                  if (fileUploadResult) {
-                    // @ts-expect-error -- injectJavaScript is not typed
-
-                    webViewRef.current?.injectJavaScript(`
-                    window.onFileUploadComplete(${JSON.stringify({
-                      success: true,
-                      url: fileUploadResult,
-                      uploadId,
-                    })});
-                  `);
-                  } else {
-                    // @ts-expect-error -- injectJavaScript is not typed
-
-                    webViewRef.current?.injectJavaScript(`
-                    window.onFileUploadComplete(${JSON.stringify({
-                      success: false,
-                      error: "File upload failed",
-                      uploadId,
-                    })});
-                  `);
-                  }
-                } catch (error) {
-                  console.error("Error in file upload: ", error);
-                }
-              }
             }
           } catch (error) {
             logger.error(`Error handling WebView message: ${error as string}`);
@@ -332,7 +213,7 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
   );
 }
 
-const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): string => {
+const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }): string => {
   return `
   <!doctype html>
   <html>
@@ -341,10 +222,8 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       <title>Formbricks WebView Survey</title>
       <script src="https://cdn.tailwindcss.com"></script>
     </head>
-    <body style="overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;">
-      <div id="formbricks-react-native" style="width: 100%;"></div>
+    <body style="overflow: hidden; height: 100vh; margin: 0;">
     </body>
-
 
     <script type="text/javascript">
     const consoleLog = (type, log) => window.ReactNativeWebView.postMessage(JSON.stringify({'type': 'Console', 'data': {'type': type, 'log': log}}));
@@ -364,68 +243,25 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
         window.ReactNativeWebView.postMessage(JSON.stringify({ onFinished: true }));
       };
 
-      function onDisplay() {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onDisplay: true }));
+      function onDisplayCreated() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ onDisplayCreated: true }));
       };
 
-      function onResponse(responseUpdate) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onResponse: true, responseUpdate }));
+      function onResponseCreated() {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ onResponseCreated: true }));
       };
-
-      function onRetry(responseUpdate) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ onRetry: true }));
-      };
-
-      window.fileUploadPromiseCallbacks = new Map();
-
-      function onFileUpload(file, params) {
-        return new Promise((resolve, reject) => {
-          const uploadId = Date.now() + '-' + Math.random(); // Generate a unique ID for this upload
-
-          window.ReactNativeWebView.postMessage(JSON.stringify({ onFileUpload: true, uploadId, fileUploadParams: { file, params } }));
-
-          const promiseResolve = (url) => {
-            resolve(url);
-          }
-
-          const promiseReject = (error) => {
-            reject(error);
-          }
-          
-          window.fileUploadPromiseCallbacks.set(uploadId, { resolve: promiseResolve, reject: promiseReject });
-        });
-      }
-      
-      // Add this function to handle the upload completion
-      function onFileUploadComplete(result) {
-        if (window.fileUploadPromiseCallbacks && window.fileUploadPromiseCallbacks.has(result.uploadId)) {
-          const callback = window.fileUploadPromiseCallbacks.get(result.uploadId);
-          if (result.success) {
-            callback.resolve(result.url);
-          } else {
-           callback.reject(new Error(result.error));
-          }
-
-          // Remove this specific callback
-          window.fileUploadPromiseCallbacks.delete(result.uploadId);
-        }
-      }
 
       function loadSurvey() {
         const options = ${JSON.stringify(options)};
-        const containerId = "formbricks-react-native";
         const surveyProps = {
           ...options,
-          containerId,
           onFinished,
-          onDisplay,
-          onResponse,
-          onRetry,
+          onDisplayCreated,
+          onResponseCreated,
           onClose,
-          onFileUpload
         };
-
-        window.formbricksSurveys.renderSurveyInline(surveyProps);
+        
+        window.formbricksSurveys.renderSurvey(surveyProps);
       }
 
       const script = document.createElement("script");
@@ -435,6 +271,7 @@ const renderHtml = (options: Partial<SurveyInlineProps> & { appUrl?: string }): 
       script.onerror = (error) => {
         console.error("Failed to load Formbricks Surveys library:", error);
       };
+
       document.head.appendChild(script);
     </script>
   </html>

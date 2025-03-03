@@ -1447,6 +1447,8 @@
         "heading": "標題",
         "hidden_field_added_successfully": "隱藏欄位已成功新增",
         "hide_advanced_settings": "隱藏進階設定",
+        "hide_back_button": "隱藏「Back」按鈕",
+        "hide_back_button_description": "不要在問卷中顯示返回按鈕",
         "hide_logo": "隱藏標誌",
         "hide_progress_bar": "隱藏進度列",
         "hide_the_logo_in_this_specific_survey": "在此特定問卷中隱藏標誌",
@@ -1472,7 +1474,9 @@
         "is_booked": "已預訂",
         "is_clicked": "已點擊",
         "is_completely_submitted": "已完全提交",
+        "is_not_set": "未設定",
         "is_partially_submitted": "已部分提交",
+        "is_set": "已設定",
         "is_skipped": "已跳過",
         "is_submitted": "已提交",
         "jump_to_question": "跳至問題",
@@ -1850,10 +1854,6 @@
       "smileys": "表情符號",
       "smileys_description": "使用視覺指標來擷取客戶接觸點的回饋。"
     }
-  },
-  "health": {
-    "degraded": "您的 Formbricks 運作狀況已降低",
-    "healthy": "所有系統都已啟動並執行"
   },
   "organizations": {
     "landing": {

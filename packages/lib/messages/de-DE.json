@@ -1447,6 +1447,8 @@
         "heading": "Überschrift",
         "hidden_field_added_successfully": "Verstecktes Feld erfolgreich hinzugefügt",
         "hide_advanced_settings": "Erweiterte Einstellungen ausblenden",
+        "hide_back_button": "'Zurück'-Button ausblenden",
+        "hide_back_button_description": "Den Zurück-Button in der Umfrage nicht anzeigen",
         "hide_logo": "Logo verstecken",
         "hide_progress_bar": "Fortschrittsbalken ausblenden",
         "hide_the_logo_in_this_specific_survey": "Logo in dieser speziellen Umfrage verstecken",
@@ -1472,7 +1474,9 @@
         "is_booked": "Ist gebucht",
         "is_clicked": "Wird geklickt",
         "is_completely_submitted": "Vollständig eingereicht",
+        "is_not_set": "Ist nicht festgelegt",
         "is_partially_submitted": "Teilweise eingereicht",
+        "is_set": "Ist festgelegt",
         "is_skipped": "Wird übersprungen",
         "is_submitted": "Wird eingereicht",
         "jump_to_question": "Zur Frage springen",
@@ -1850,10 +1854,6 @@
       "smileys": "Smileys",
       "smileys_description": "Verwende visuelle Indikatoren, um Feedback an allen Kundenkontaktpunkten zu erfassen."
     }
-  },
-  "health": {
-    "degraded": "Es scheint ein Problem zu geben :(",
-    "healthy": "Alle Systeme laufen und sind betriebsbereit"
   },
   "organizations": {
     "landing": {

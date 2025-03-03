@@ -24,6 +24,7 @@ interface MultipleChoiceSingleProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 export function MultipleChoiceSingleQuestion({
@@ -39,6 +40,7 @@ export function MultipleChoiceSingleQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  isBackButtonHidden,
 }: MultipleChoiceSingleProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [otherSelected, setOtherSelected] = useState(false);
@@ -250,7 +252,7 @@ export function MultipleChoiceSingleQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}
             tabIndex={isCurrent ? 0 : -1}

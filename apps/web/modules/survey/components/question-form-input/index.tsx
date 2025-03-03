@@ -308,7 +308,7 @@ export const QuestionFormInput = ({
                     {showImageUploader && id === "headline" && (
                       <FileInput
                         id="question-image"
-                        allowedFileExtensions={["png", "jpeg", "jpg", "webp"]}
+                        allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                         environmentId={localSurvey.environmentId}
                         onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
                           if (url) {

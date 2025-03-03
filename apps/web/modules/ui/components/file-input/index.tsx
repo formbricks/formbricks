@@ -68,7 +68,7 @@ export const FileInput = ({
       toast.error(t("common.only_one_file_allowed"));
     }
 
-    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    const allowedFiles = await getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
 
     if (allowedFiles.length === 0) {
       return;
@@ -137,7 +137,7 @@ export const FileInput = ({
   };
 
   const handleUploadMore = async (files: File[]) => {
-    const allowedFiles = getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
+    const allowedFiles = await getAllowedFiles(files, allowedFileExtensions, maxSizeInMB);
     if (allowedFiles.length === 0) {
       return;
     }

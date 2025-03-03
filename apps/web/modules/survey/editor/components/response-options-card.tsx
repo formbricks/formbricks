@@ -205,6 +205,10 @@ export const ResponseOptionsCard = ({
     }
   };
 
+  const handleHideBackButtonToggle = () => {
+    setLocalSurvey({ ...localSurvey, isBackButtonHidden: !localSurvey.isBackButtonHidden });
+  };
+
   useEffect(() => {
     if (!!localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
@@ -515,6 +519,13 @@ export const ResponseOptionsCard = ({
               </AdvancedOptionToggle>
             </>
           )}
+          <AdvancedOptionToggle
+            htmlId="hideBackButton"
+            isChecked={localSurvey.isBackButtonHidden}
+            onToggle={handleHideBackButtonToggle}
+            title={t("environments.surveys.edit.hide_back_button")}
+            description={t("environments.surveys.edit.hide_back_button_description")}
+          />
         </div>
       </Collapsible.CollapsibleContent>
     </Collapsible.Root>

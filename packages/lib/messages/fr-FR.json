@@ -1447,6 +1447,8 @@
         "heading": "En-tête",
         "hidden_field_added_successfully": "Champ caché ajouté avec succès",
         "hide_advanced_settings": "Cacher les paramètres avancés",
+        "hide_back_button": "Masquer le bouton 'Retour'",
+        "hide_back_button_description": "Ne pas afficher le bouton retour dans l'enquête",
         "hide_logo": "Cacher le logo",
         "hide_progress_bar": "Cacher la barre de progression",
         "hide_the_logo_in_this_specific_survey": "Cacher le logo dans cette enquête spécifique",
@@ -1472,7 +1474,9 @@
         "is_booked": "Est réservé",
         "is_clicked": "Est cliqué",
         "is_completely_submitted": "Est complètement soumis",
+        "is_not_set": "N'est pas défini",
         "is_partially_submitted": "Est partiellement soumis",
+        "is_set": "Est défini",
         "is_skipped": "Est ignoré",
         "is_submitted": "Est soumis",
         "jump_to_question": "Passer à la question",
@@ -1850,10 +1854,6 @@
       "smileys": "Émoticônes",
       "smileys_description": "Utilisez des indicateurs visuels pour recueillir des retours d'expérience à travers les points de contact avec les clients."
     }
-  },
-  "health": {
-    "degraded": "La santé de votre Formbricks est dégradée.",
-    "healthy": "Tous les systèmes sont opérationnels."
   },
   "organizations": {
     "landing": {
