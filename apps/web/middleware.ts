@@ -24,12 +24,12 @@ import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 const enforceHttps = (request: NextRequest): Response | null => {
   const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
-  if (IS_PRODUCTION && forwardedProto !== "https") {
+  if (IS_PRODUCTION && !E2E_TESTING && forwardedProto !== "https") {
     const apiError: ApiErrorResponse = {
       type: "forbidden",
       details: [{ field: "", issue: "Only HTTPS connections are allowed on the management endpoint." }],
