@@ -53,8 +53,11 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
+  samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
 export const SignupForm = ({
@@ -72,8 +75,11 @@ export const SignupForm = ({
   emailVerificationDisabled,
   defaultOrganizationId,
   defaultOrganizationRole,
-  isSSOEnabled,
+  isSsoEnabled,
+  samlSsoEnabled,
   isTurnstileConfigured,
+  samlTenant,
+  samlProduct,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -266,13 +272,16 @@ export const SignupForm = ({
           </form>
         </FormProvider>
       )}
-      {isSSOEnabled && (
+      {isSsoEnabled && (
         <SSOOptions
           googleOAuthEnabled={googleOAuthEnabled}
           githubOAuthEnabled={githubOAuthEnabled}
           azureOAuthEnabled={azureOAuthEnabled}
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
+          samlSsoEnabled={samlSsoEnabled}
+          samlTenant={samlTenant}
+          samlProduct={samlProduct}
           callbackUrl={callbackUrl}
         />
       )}

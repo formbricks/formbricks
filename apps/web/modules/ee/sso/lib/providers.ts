@@ -15,6 +15,7 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_ISSUER,
   OIDC_SIGNING_ALGORITHM,
+  WEBAPP_URL,
 } from "@formbricks/lib/constants";
 
 export const getSSOProviders = () => [
@@ -53,6 +54,36 @@ export const getSSOProviders = () => [
         image: profile.picture,
       };
     },
+  },
+  {
+    id: "saml",
+    name: "BoxyHQ SAML",
+    type: "oauth" as const,
+    version: "2.0",
+    checks: ["pkce" as const, "state" as const],
+    authorization: {
+      url: `${WEBAPP_URL}/api/auth/saml/authorize`,
+      params: {
+        scope: "",
+        response_type: "code",
+        provider: "saml",
+      },
+    },
+    token: `${WEBAPP_URL}/api/auth/saml/token`,
+    userinfo: `${WEBAPP_URL}/api/auth/saml/userinfo`,
+    profile(profile) {
+      return {
+        id: profile.id,
+        email: profile.email,
+        name: [profile.firstName, profile.lastName].filter(Boolean).join(" "),
+        image: null,
+      };
+    },
+    options: {
+      clientId: "dummy",
+      clientSecret: "dummy",
+    },
+    allowDangerousEmailAccountLinking: true,
   },
 ];
 

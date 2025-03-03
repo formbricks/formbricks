@@ -78,19 +78,48 @@ This Helm chart deploys the following components:
 
 To quickly deploy Formbricks with default settings:
 
-1. Add the Formbricks Helm repository:
+1. clone the formbricks repository and navigate to the helm-chart directory:
 
    ```bash
-   helm repo add formbricks https://charts.formbricks.com
-   helm repo update
+   git clone https://github.com/formbricks/formbricks.git
+   cd formbricks/helm-chart
    ```
 
-2. Install the chart:
+2. Deploy Formbricks
+
    ```bash
-   helm install my-formbricks formbricks/formbricks --namespace formbricks --create-namespace --set postgresql.enabled=true
+     helm install my-formbricks ./ \
+      --namespace formbricks \
+      --create-namespace \
+      --set replicaCount=2
    ```
 
 This will deploy Formbricks with default settings, including a new PostgreSQL instance, Redis and Traefik disabled.
+
+### Verify and Access Formbricks
+
+After deploying Formbricks, you can verify the installation and access the application:
+
+1. Check the Running Services:
+
+   ```bash
+   kubectl get pods -n formbricks
+   kubectl get svc -n formbricks
+   kubectl get ingress -n formbricks
+   ```
+
+   > **Note:** The Formbricks application pod may take some time to reach a stable state as it runs database migrations during startup.
+
+2. Access Formbricks:
+   - If running locally with **Minikube**:
+     ```bash
+     minikube service my-formbricks -n formbricks
+     ```
+   - If deployed on a **cloud cluster**, visit:
+     ```
+     https://formbricks.example.com
+     ```
+     (Replace with your configured hostname)
 
 ### Usage Examples
 
@@ -110,41 +139,43 @@ Here are various examples of how to install and configure the Formbricks Helm ch
      --set hostname=forms.example.com
    ```
 
-   This command enables Traefik and sets a custom hostname. Replace `forms.example.com` with your actual domain name.
+````
+
+This command enables Traefik and sets a custom hostname. Replace `forms.example.com` with your actual domain name.
 
    </details>
 
    <details>
    <summary>Option 2: Installation with SSL (Recommended for production)</summary>
 
-   1. First, download the values file:
+1.  First, download the values file:
 
-   ```bash
-   helm show values formbricks/formbricks > values.yaml
-   ```
+```bash
+helm show values formbricks/formbricks > values.yaml
+```
 
-   2. Open the `values.yaml` file in a text editor and make the following changes:
+2.  Open the `values.yaml` file in a text editor and make the following changes:
 
-   ```yaml
-   traefik:
-     enabled: true
-     additionalArguments:
-       - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
-   ```
+```yaml
+traefik:
+  enabled: true
+  additionalArguments:
+    - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
+```
 
-   Replace `your-email@example.com` with a valid email address where you want to receive Let's Encrypt notifications.
+Replace `your-email@example.com` with a valid email address where you want to receive Let's Encrypt notifications.
 
-   3. Install Formbricks with the updated values file:
+3.  Install Formbricks with the updated values file:
 
-   ```bash
-   helm install my-formbricks formbricks/formbricks \
-     -f values.yaml \
-     --namespace formbricks \
-     --create-namespace \
-     --set hostname=forms.example.com
-   ```
+```bash
+helm install my-formbricks formbricks/formbricks \
+  -f values.yaml \
+  --namespace formbricks \
+  --create-namespace \
+  --set hostname=forms.example.com
+```
 
-   This command enables Traefik, sets a custom hostname, and uses the configured email address for Let's Encrypt. Remember to replace `forms.example.com` with your actual domain name.
+This command enables Traefik, sets a custom hostname, and uses the configured email address for Let's Encrypt. Remember to replace `forms.example.com` with your actual domain name.
 
    </details>
 
@@ -671,3 +702,5 @@ Please check out [our contribution guide](https://formbricks.com/docs/developer-
 For more detailed information on MicroK8s, including advanced configuration and usage, please refer to the [official MicroK8s documentation](https://microk8s.io/docs).
 
 For Formbricks Helm chart configuration options, see the [Configuration](#configuration) and [Full Values Documentation](#full-values-documentation) sections of this document.
+```
+````

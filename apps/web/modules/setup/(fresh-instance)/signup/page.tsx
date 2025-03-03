@@ -1,5 +1,5 @@
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
-import { getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import {
@@ -14,6 +14,9 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
+  SAML_OAUTH_ENABLED,
+  SAML_PRODUCT,
+  SAML_TENANT,
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
@@ -26,7 +29,11 @@ export const metadata: Metadata = {
 
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
-  const isSSOEnabled = await getIsSSOEnabled();
+
+  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([getisSsoEnabled(), getIsSamlSsoEnabled()]);
+
+  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
+
   const t = await getTranslate();
   return (
     <div className="flex flex-col items-center">
@@ -47,8 +54,11 @@ export const SignupPage = async () => {
         userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-        isSSOEnabled={isSSOEnabled}
+        isSsoEnabled={isSsoEnabled}
+        samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
+        samlTenant={SAML_TENANT}
+        samlProduct={SAML_PRODUCT}
       />
     </div>
   );
