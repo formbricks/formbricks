@@ -136,7 +136,8 @@
         },
         "xm-and-surveys/core-features/user-management",
         "xm-and-surveys/core-features/styling-theme",
-        "xm-and-surveys/core-features/email-customization"
+        "xm-and-surveys/core-features/email-customization",
+        "xm-and-surveys/core-features/test-environment"
       ]
     },
     {
