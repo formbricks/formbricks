@@ -51,11 +51,7 @@ export const POST = async (request: Request) =>
         });
       }
 
-      console.log("body", body);
-
       const environmentIdResult = await getEnvironmentId(body.surveyId, false);
-
-      console.log("environmentIdResult", environmentIdResult);
 
       if (!environmentIdResult.ok) {
         return handleApiError(request, environmentIdResult.error);
