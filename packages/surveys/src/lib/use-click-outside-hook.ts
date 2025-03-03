@@ -1,9 +1,8 @@
-import { RefObject } from "preact";
-import { useEffect } from "preact/hooks";
+import { MutableRef, useEffect } from "preact/hooks";
 
 // Improved version of https://usehooks.com/useOnClickOutside/
 export const useClickOutside = (
-  ref: RefObject<HTMLElement>,
+  ref: MutableRef<HTMLElement | null>,
   handler: (event: MouseEvent | TouchEvent) => void
 ): void => {
   useEffect(() => {

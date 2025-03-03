@@ -1,0 +1,257 @@
+---
+title: File and Directory Org.
+description: This document outlines the structure and organization of files and directories in the Formbricks codebase, providing guidelines for maintaining consistency and clarity across the project.
+icon: folder-tree
+---
+
+## Project Structure Overview
+
+The Formbricks codebase follows a monorepo structure using pnpm workspaces, with two main directories:
+
+* `apps/` - Contains full applications
+
+* `packages/` - Contains shared libraries and utilities
+
+## Apps Directory
+
+The `apps/` directory contains complete applications:
+
+### apps/web/
+
+* Main Formbricks web application (Next.js)
+
+* Primary application with full feature set
+
+* Uses App Router architecture
+
+* Contains environment-specific settings and configurations
+
+### apps/demo/
+
+* Demo application (Next.js)
+
+* Showcases Formbricks in-product surveying functionality
+
+* Used for testing and demonstration purposes
+
+### apps/demo-react-native/
+
+* React Native demo app (React Native)
+
+* Demonstrates mobile integration capabilities
+
+* Example implementation for React Native
+
+### apps/storybook/
+
+* Component documentation
+
+* Visual documentation of UI components
+
+* Testing environment for isolated components
+
+## Packages Directory
+
+The `packages/` directory contains shared libraries and utilities:
+
+### packages/js-core/
+
+* Contains core functionality for in-product surveys
+
+* Shared logic between different SDK implementations
+
+* Base classes and utilities
+
+### packages/js/
+
+* JavaScript SDK for browser-based applications
+
+* Used for running surveys on websites and web apps (browser)
+
+* Public NPM package
+
+### packages/react-native/
+
+* React Native SDK
+
+* Used to run surveys in mobile apps built with React Native / Expo
+
+* Includes native platform adaptations
+
+### packages/lib/
+
+* Shared business logic
+
+* Shared utilities and helpers
+
+### packages/types/
+
+* TypeScript type definitions
+
+* Zod schemas for validation
+
+### packages/database/
+
+* Database schemas and migrations
+
+* Prisma schema definitions
+
+* Migration management
+
+### packages/surveys/
+
+* Survey-specific functionality
+
+* Survey rendering logic and UI components
+
+* Survey state management
+
+## Module Organization
+
+### Core Module Structure
+
+Each feature module follows a consistent structure:
+
+```
+modules/
+└── ee/
+├── insights/
+│ ├── components/
+│ ├── experience/
+│ └── types/
+└── contacts/
+├── segments/
+└── components/
+```
+
+## Adding New Code
+
+### New Features
+
+When adding new features, follow these guidelines:
+
+1. **Determine Scope**:
+
+   * Complete application → `apps/`
+
+   * Shared library → `packages/`
+
+   * Feature for existing app → appropriate module in `apps/web/modules/`
+
+2. **Module Creation**:
+   Create a new module with the standard structure:
+
+   ```
+   modules/
+   └── your-feature/
+       ├── components/    # React components
+       ├── lib/           # Business logic
+       ├── types/         # TypeScript types
+       ├── actions.ts     # Server actions
+       └── route.ts       # API routes
+   ```
+
+3. **Component Organization**:
+
+   * Base UI components → `modules/ui/components/`
+
+   * Feature-specific components → `modules/[feature]/components/`
+
+## Best Practices
+
+### Code Organization
+
+* Keep modules focused and single-purpose
+
+* Maintain clear separation between UI and business logic
+
+* Use proper TypeScript interfaces and types
+
+### File Structure
+
+* Group related files in descriptive directories
+
+* Use consistent naming patterns
+
+* Keep files focused and modular
+
+### Module Independence
+
+* Minimize dependencies between modules
+
+* Share common utilities through appropriate packages
+
+* Maintain clear module boundaries
+
+### Documentation
+
+* Document complex logic and APIs as laid out in the [Documentation](/development/standards/practices/documentation) section
+
+* Keep documentation current with code changes
+
+## Testing Organization
+
+### Test File Location
+
+* Test files should be located alongside the code they test
+
+* Use `.test.ts` or `.spec.ts` suffix for test files
+
+* Example: `user-service.test.ts` for `user-service.ts`
+
+### Test Directory Structure
+
+```
+feature/
+├── tests/ # Test directory (if grouping tests)
+├── components/ # Feature components
+└── lib/ # Business logic
+```
+
+## Configuration Files
+
+### Root Level Configuration
+
+* `.eslintrc.js` - ESLint configuration
+
+* `tsconfig.json` - TypeScript configuration
+
+* `package.json` - Package metadata and scripts
+
+* `.env` - Environment variables
+
+### Package Level Configuration
+
+Each package maintains its own configuration files:
+
+* `package.json` - Package-specific dependencies and scripts
+
+* `tsconfig.json` - Package-specific TypeScript settings
+
+* `.eslintrc.js` - Package-specific linting rules
+
+## Version Control
+
+### Git Organization
+
+* `.gitignore` - Specifies ignored files and directories
+
+* `.github/` - GitHub specific configurations and workflows
+
+* `CHANGELOG.md` - Documents version changes
+
+* `LICENSE` - License information
+
+## Conclusion
+
+Following these organizational patterns ensures:
+
+* Consistent code structure across the project
+
+* Easy navigation and maintenance
+
+* Clear separation of concerns
+
+* Scalable architecture for future growth
+
+Remember to maintain these patterns when adding new code to keep the codebase organized and maintainable.

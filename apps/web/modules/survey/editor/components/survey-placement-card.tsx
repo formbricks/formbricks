@@ -29,18 +29,21 @@ export const SurveyPlacementCard = ({
   const { projectOverwrites } = localSurvey ?? {};
   const { placement, clickOutsideClose, darkOverlay } = projectOverwrites ?? {};
 
-  const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites) => {
+  const setProjectOverwrites = (projectOverwrites: TSurveyProjectOverwrites | null) => {
     setLocalSurvey({ ...localSurvey, projectOverwrites: projectOverwrites });
   };
 
   const togglePlacement = () => {
     if (setProjectOverwrites) {
-      setProjectOverwrites({
-        ...projectOverwrites,
-        placement: !!placement ? null : "bottomRight",
-        clickOutsideClose: false,
-        darkOverlay: false,
-      });
+      if (!!placement) {
+        setProjectOverwrites(null);
+      } else {
+        setProjectOverwrites({
+          placement: "bottomRight",
+          clickOutsideClose: false,
+          darkOverlay: false,
+        });
+      }
     }
   };
 

@@ -7,6 +7,7 @@ import {
   UNSUPPORTED_TYPES_BY_NOTION,
 } from "@/app/(app)/environments/[environmentId]/integrations/notion/constants";
 import NotionLogo from "@/images/notion.png";
+import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { Button } from "@/modules/ui/components/button";
 import { DropdownSelector } from "@/modules/ui/components/dropdown-selector";
 import { Label } from "@/modules/ui/components/label";
@@ -19,7 +20,6 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { getQuestionTypes } from "@formbricks/lib/utils/questions";
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {

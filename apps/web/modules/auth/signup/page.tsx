@@ -1,6 +1,10 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import { getIsMultiOrgEnabled, getIsSSOEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getisSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
@@ -14,6 +18,9 @@ import {
   OIDC_DISPLAY_NAME,
   OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
+  SAML_OAUTH_ENABLED,
+  SAML_PRODUCT,
+  SAML_TENANT,
   SIGNUP_ENABLED,
   TERMS_URL,
   WEBAPP_URL,
@@ -24,7 +31,14 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSSOEnabled] = await Promise.all([getIsMultiOrgEnabled(), getIsSSOEnabled()]);
+  const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
+    getIsMultiOrgEnabled(),
+    getisSsoEnabled(),
+    getIsSamlSsoEnabled(),
+  ]);
+
+  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
+
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
@@ -53,8 +67,11 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-            isSSOEnabled={isSSOEnabled}
+            isSsoEnabled={isSsoEnabled}
+            samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
+            samlTenant={SAML_TENANT}
+            samlProduct={SAML_PRODUCT}
           />
         </FormWrapper>
       </div>

@@ -1,0 +1,137 @@
+---
+title: "Error Handling"
+description: "Standards for handling errors across the Formbricks codebase"
+icon: "triangle-exclamation"
+---
+
+## Overview
+
+At Formbricks, we follow consistent error handling patterns to ensure reliability, debuggability, and maintainability across our codebase. This document outlines our standard approaches to error handling.
+
+## Core Principles
+
+1. **Type Safety**: Use typed errors and results
+2. **Meaningful Messages**: Provide clear, actionable error messages
+3. **Proper Propagation**: Handle or propagate errors appropriately
+4. **Logging**: Ensure errors are properly logged for debugging
+5. **Recovery**: Implement graceful fallbacks where possible
+
+
+
+## Standard Error Types
+
+We maintain a set of standardized error types for different scenarios:
+
+```typescript
+export interface ApiErrorResponse {
+code:
+| "not_found"
+| "gone"
+| "bad_request"
+| "internal_server_error"
+| "unauthorized"
+| "method_not_allowed"
+| "not_authenticated"
+| "forbidden"
+| "network_error";
+message: string;
+status: number;
+url: URL;
+details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
+responseMessage?: string;
+}
+```
+
+
+## Error Handling Patterns
+
+### API Error Handling
+
+For API endpoints:
+
+```typescript
+export const GET = async (request: Request) => {
+try {
+const authentication = await authenticateRequest(request);
+if (!authentication) return responses.notAuthenticatedResponse();
+const data = await fetchData(authentication.environmentId!);
+return responses.successResponse(data);
+} catch (error) {
+if (error instanceof DatabaseError) {
+return responses.badRequestResponse(error.message);
+}
+throw error;
+}
+};
+```
+
+
+### Client-Side Error Handling
+
+For client-side operations:
+
+```typescript
+const handleOperation = async () => {
+const result = await performAction();
+if (!result.ok) {
+logger.error(`Operation failed: ${result.error.message}`);
+toast.error("Operation failed. Please try again.");
+return;
+}
+// Process successful result
+processResult(result.data);
+};
+```
+
+## Best Practices
+
+1. **Never Swallow Errors**
+   - Always handle or propagate errors
+   - Log errors appropriately for debugging
+   - Use error boundaries in React components
+
+2. **Type Safety**
+   - Use typed error responses
+   - Leverage TypeScript for compile-time error checking
+   - Define clear error interfaces
+
+3. **Error Messages**
+   - Include relevant context in error messages
+   - Make messages actionable for developers
+   - Use consistent error formatting
+
+4. **Error Recovery**
+   - Implement fallback behaviors where appropriate
+   - Gracefully degrade functionality when possible
+   - Provide user feedback for recoverable errors
+
+5. **Documentation**
+   - Document expected errors in function JSDoc
+   - Include error handling in code examples
+   - Keep error handling documentation up to date
+
+## Testing Error Scenarios
+
+Always include error case testing:
+
+```typescript
+describe("fetchEnvironmentState()", () => {
+test("returns err(...) on network error", async () => {
+const mockNetworkError = {
+code: "network_error",
+message: "Timeout",
+responseMessage: "Network fail",
+};
+const result = await fetchEnvironmentState();
+expect(result.ok).toBe(false);
+if (!result.ok) {
+expect(result.error.code).toBe(mockNetworkError.code);
+expect(result.error.message).toBe(mockNetworkError.message);
+}
+});
+});
+
+```
+
+
+These standards ensure consistent, reliable error handling across the Formbricks codebase while maintaining good developer experience and system reliability.

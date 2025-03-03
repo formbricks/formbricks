@@ -1,0 +1,154 @@
+---
+title: "Kubernetes Deployment"
+description: "Deploy Formbricks on a Kubernetes cluster using Helm."
+icon: "circle-nodes"
+---
+
+This guide explains how to deploy Formbricks on a Kubernetes cluster using Helm. The primary focus is on deploying Formbricks pods in a production-ready environment with external database services.
+
+## Prerequisites
+
+Before you begin, ensure that:
+
+- You have a running Kubernetes cluster (AWS EKS, GCP GKE, Azure AKS, Minikube, etc.)
+- An Ingress controller (e.g., Traefik, Nginx) is configured
+- You have Helm installed on your local machine
+- For production environments, you have access to external PostgreSQL and Redis services
+
+> **Important:** Running multiple Formbricks pods in a cluster setup requires a Formbricks Enterprise license. With the Community Edition, only a single Formbricks pod is supported. Redis is required when deploying multiple Formbricks pods for proper session handling and caching.
+
+## Basic Installation
+
+### Step 1: Clone the Formbricks Helm Chart
+
+```sh
+git clone https://github.com/formbricks/formbricks.git
+cd formbricks/helm-chart
+```
+
+### Step 2: Deploy Formbricks
+
+For a basic deployment with a single pod (Community Edition) and PostgreSQL running in the cluster:
+
+```sh
+helm install my-formbricks ./ \
+  --namespace formbricks \
+  --set redis.enabled=false \
+  --create-namespace
+```
+
+## Production Deployment
+
+For production environments, we recommend using managed database and cache services like AWS RDS for PostgreSQL and AWS ElastiCache for Redis:
+
+```sh
+helm install my-formbricks ./ \
+  --namespace formbricks \
+  --create-namespace \
+  --set replicaCount=3 \
+  --set postgresql.enabled=false \
+  --set postgresql.externalUrl="postgresql://user:password@your-postgres-host:5432/formbricks" \
+  --set redis.enabled=false \
+  --set redis.externalUrl="redis://your-redis-host:6379"
+```
+
+> **Note:** The above multi-pod configuration requires a Formbricks Enterprise license. Redis is enabled and configured to support multiple Formbricks pods.
+
+## Verify Installation
+
+### Check Running Services
+
+```sh
+kubectl get pods -n formbricks
+kubectl get svc -n formbricks
+kubectl get ingress -n formbricks
+```
+
+> **Note:** The Formbricks application pod may take some time to reach a stable state as it runs database migrations during startup.
+
+### Access Formbricks
+
+- If running locally with Minikube:
+  ```sh
+  minikube service my-formbricks -n formbricks
+  ```
+- If deployed on a cloud cluster, make sure to set up your ingress controller properly and visit the domain or IP address associated with your ingress.
+
+## Upgrading Formbricks
+
+To upgrade your Formbricks deployment, use:
+
+```bash
+# From the helm-chart directory
+helm upgrade my-formbricks ./ --namespace formbricks
+```
+
+### Common Upgrade Scenarios
+
+#### 1. Updating Environment Variables
+
+```bash
+helm upgrade my-formbricks ./ --namespace formbricks \
+  --set env.SMTP_HOST=new-smtp.example.com \
+  --set env.SMTP_PORT=587 \
+  --set env.NEW_CUSTOM_VAR=newvalue
+```
+
+#### 2. Scaling Resources
+
+```bash
+helm upgrade my-formbricks ./ --namespace formbricks \
+  --set resources.limits.cpu=1 \
+  --set resources.limits.memory=2Gi \
+  --set resources.requests.cpu=500m \
+  --set resources.requests.memory=1Gi
+```
+
+#### 3. Updating Autoscaling Configuration
+
+```bash
+helm upgrade my-formbricks ./ --namespace formbricks \
+  --set autoscaling.enabled=true \
+  --set autoscaling.minReplicas=3 \
+  --set autoscaling.maxReplicas=10 \
+  --set autoscaling.metrics[0].resource.target.averageUtilization=75
+```
+
+> **Note:** Enabling autoscaling requires a Formbricks Enterprise license and proper Redis configuration.
+
+#### 4. Changing Database Connection
+
+```bash
+helm upgrade my-formbricks ./ --namespace formbricks \
+  --set postgresql.enabled=false \
+  --set postgresql.externalUrl="postgresql://newuser:newpassword@external-postgres-host:5432/newdatabase"
+```
+
+## Advanced Configuration Options
+
+For advanced configurations including:
+
+- Deploying PostgreSQL and Redis within your Kubernetes cluster
+- Configuring Traefik ingress controller
+- Setting up high availability
+- Customizing autoscaling behavior
+
+Please refer to the complete Helm chart documentation at:
+[https://github.com/formbricks/formbricks/tree/main/helm-chart](https://github.com/formbricks/formbricks/tree/main/helm-chart)
+
+## Key Configuration Values
+
+| Field                     | Description                   | Default                         |
+| ------------------------- | ----------------------------- | ------------------------------- |
+| `replicaCount`            | Number of Formbricks replicas | `1`                             |
+| `image.repository`        | Docker image repository       | `ghcr.io/formbricks/formbricks` |
+| `image.tag`               | Docker image tag              | `"2.6.0"`                       |
+| `resources.limits.cpu`    | CPU resource limit            | `500m`                          |
+| `resources.limits.memory` | Memory resource limit         | `1Gi`                           |
+| `autoscaling.enabled`     | Enable autoscaling            | `false`                         |
+| `postgresql.enabled`      | Deploy PostgreSQL in cluster  | `true`                          |
+| `postgresql.externalUrl`  | External PostgreSQL URL       | `""`                            |
+| `redis.enabled`           | Deploy Redis in cluster       | `false`                         |
+| `redis.externalUrl`       | External Redis URL            | `""`                            |
+
+For the complete list of configuration options, please refer to the Formbricks Helm chart repository.

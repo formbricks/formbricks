@@ -296,6 +296,8 @@ export const ZSurveyLogicConditionsOperator = z.enum([
   "isBooked",
   "isPartiallySubmitted",
   "isCompletelySubmitted",
+  "isSet",
+  "isNotSet",
 ]);
 
 const operatorsWithoutRightOperand = [
@@ -306,6 +308,8 @@ const operatorsWithoutRightOperand = [
   ZSurveyLogicConditionsOperator.Enum.isBooked,
   ZSurveyLogicConditionsOperator.Enum.isPartiallySubmitted,
   ZSurveyLogicConditionsOperator.Enum.isCompletelySubmitted,
+  ZSurveyLogicConditionsOperator.Enum.isSet,
+  ZSurveyLogicConditionsOperator.Enum.isNotSet,
 ] as const;
 
 export const ZDynamicLogicField = z.enum(["question", "variable", "hiddenField"]);
@@ -864,13 +868,14 @@ export const ZSurvey = z
     singleUse: ZSurveySingleUse.nullable(),
     isVerifyEmailEnabled: z.boolean(),
     isSingleResponsePerEmailEnabled: z.boolean(),
+    isBackButtonHidden: z.boolean(),
     pin: z.string().min(4, { message: "PIN must be a four digit number" }).nullish(),
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
   })
   .superRefine((survey, ctx) => {
-    const { questions, languages, welcomeCard, endings } = survey;
+    const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;
 
     let multiLangIssue: z.IssueData | null;
 
@@ -939,7 +944,9 @@ export const ZSurvey = z
       ];
 
       const fieldsToValidate =
-        questionIndex === 0 ? initialFieldsToValidate : [...initialFieldsToValidate, "backButtonLabel"];
+        questionIndex === 0 || isBackButtonHidden
+          ? initialFieldsToValidate
+          : [...initialFieldsToValidate, "backButtonLabel"];
 
       for (const field of fieldsToValidate) {
         // Skip label validation for consent questions as its called checkbox label
@@ -1517,6 +1524,8 @@ const isInvalidOperatorsForHiddenFieldType = (operator: TSurveyLogicConditionsOp
       "doesNotStartWith",
       "endsWith",
       "doesNotEndWith",
+      "isSet",
+      "isNotSet",
     ].includes(operator)
   ) {
     isInvalidOperator = true;

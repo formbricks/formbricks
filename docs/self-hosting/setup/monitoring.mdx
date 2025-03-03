@@ -1,0 +1,91 @@
+---
+title: "Monitoring"
+description: "Monitoring your Formbricks installation for optimal performance."
+icon: "magnifying-glass-chart"
+---
+
+## Logging
+
+Formbricks follows Next.js best practices with all logs being written to stdout/stderr, making it easy to collect and forward logs to your preferred logging solution.
+
+### Docker Container Logs
+
+```bash
+# One-Click setup
+cd formbricks
+docker compose logs
+
+# Standard Docker commands
+docker logs <container-name>
+docker logs -f <container-name> # Follow logs
+```
+
+### Kubernetes Pod Logs
+
+```bash
+kubectl logs <pod-name> -n <namespace>
+kubectl logs -f <pod-name> -n <namespace> # Follow logs
+```
+
+### Log Forwarding
+
+Since all logs are written to stdout/stderr, you can integrate with various logging solutions:
+
+- ELK Stack (Elasticsearch, Logstash, Kibana)
+- Fluentd/Fluent Bit
+- Datadog
+- Splunk
+- CloudWatch Logs (AWS)
+
+## OpenTelemetry Integration (Beta)
+
+Formbricks leverages Next.js's built-in OpenTelemetry instrumentation for comprehensive observability. When enabled, it automatically instruments various aspects of your application.
+
+Set the following environment variables:
+
+```env
+OTEL_ENABLED=true
+OTEL_ENDPOINT=<your-collector-endpoint>
+OTEL_SERVICE_NAME=formbricks
+NEXT_OTEL_VERBOSE=1 # Optional: enables detailed tracing
+```
+
+### Default Instrumentation
+
+The OpenTelemetry integration automatically tracks:
+
+- HTTP requests and responses
+- Route rendering
+- API route execution
+- Server-side operations
+- Database queries
+- External API calls
+
+### Supported Backends
+
+OpenTelemetry can export data to:
+
+- Jaeger
+- Zipkin
+- Prometheus
+- New Relic
+- Datadog
+- Azure Monitor
+
+### Key Metrics
+
+- HTTP request duration
+- Database performance
+- Memory usage
+- Response times
+- Error rates
+
+## Health Checks
+
+Available endpoints:
+
+```
+GET /health
+```
+
+Use these endpoints for monitoring system health in container orchestration and monitoring tools.

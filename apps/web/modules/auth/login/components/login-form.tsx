@@ -39,7 +39,10 @@ interface LoginFormProps {
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
+  samlSsoEnabled: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
 export const LoginForm = ({
@@ -52,7 +55,10 @@ export const LoginForm = ({
   oidcOAuthEnabled,
   oidcDisplayName,
   isMultiOrgEnabled,
-  isSSOEnabled,
+  isSsoEnabled,
+  samlSsoEnabled,
+  samlTenant,
+  samlProduct,
 }: LoginFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -239,13 +245,16 @@ export const LoginForm = ({
               </Button>
             )}
           </form>
-          {isSSOEnabled && (
+          {isSsoEnabled && (
             <SSOOptions
               googleOAuthEnabled={googleOAuthEnabled}
               githubOAuthEnabled={githubOAuthEnabled}
               azureOAuthEnabled={azureOAuthEnabled}
               oidcOAuthEnabled={oidcOAuthEnabled}
               oidcDisplayName={oidcDisplayName}
+              samlSsoEnabled={samlSsoEnabled}
+              samlTenant={samlTenant}
+              samlProduct={samlProduct}
               callbackUrl={callbackUrl}
             />
           )}
