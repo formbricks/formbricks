@@ -1,12 +1,12 @@
 import { getEnvironmentIdFromApiKey } from "@/modules/api/v2/management/lib/api-key";
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const authenticateRequest = async (
   request: Request
-): Promise<Result<TAuthenticationApiKey, ApiErrorResponse>> => {
+): Promise<Result<TAuthenticationApiKey, ApiErrorResponseV2>> => {
   const apiKey = request.headers.get("x-api-key");
   if (apiKey) {
     const environmentIdResult = await getEnvironmentIdFromApiKey(apiKey);

@@ -1,8 +1,8 @@
 import { responses } from "@/modules/api/v2/lib/response";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ZodError } from "zod";
 
-export const handleApiError = (request: Request, err: ApiErrorResponse): Response => {
+export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
   logApiError(request, err);
 
   switch (err.type) {
@@ -57,7 +57,7 @@ export const logApiRequest = (request: Request, responseStatus: number, duration
   );
 };
 
-export const logApiError = (request: Request, error: ApiErrorResponse): void => {
+export const logApiError = (request: Request, error: ApiErrorResponseV2): void => {
   const correlationId = request.headers.get("x-request-id") || "";
   console.error(
     `[API ERROR DETAILS]${correlationId ? `\n correlationId: ${correlationId}` : ""}\n error: ${JSON.stringify(error, null, 2)}`

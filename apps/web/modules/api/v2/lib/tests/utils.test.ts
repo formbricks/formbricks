@@ -1,4 +1,4 @@
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { formatZodError, handleApiError, logApiError, logApiRequest } from "../utils";
@@ -12,7 +12,7 @@ describe("utils", () => {
   describe("handleApiError", () => {
     test('return bad request response for "bad_request" error', async () => {
       const details = [{ field: "param", issue: "invalid" }];
-      const error: ApiErrorResponse = { type: "bad_request", details };
+      const error: ApiErrorResponseV2 = { type: "bad_request", details };
 
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(400);
@@ -23,7 +23,7 @@ describe("utils", () => {
     });
 
     test('return unauthorized response for "unauthorized" error', async () => {
-      const error: ApiErrorResponse = { type: "unauthorized" };
+      const error: ApiErrorResponseV2 = { type: "unauthorized" };
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(401);
       const body = await response.json();
@@ -32,7 +32,7 @@ describe("utils", () => {
     });
 
     test('return forbidden response for "forbidden" error', async () => {
-      const error: ApiErrorResponse = { type: "forbidden" };
+      const error: ApiErrorResponseV2 = { type: "forbidden" };
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(403);
       const body = await response.json();
@@ -42,7 +42,7 @@ describe("utils", () => {
 
     test('return not found response for "not_found" error', async () => {
       const details = [{ field: "resource", issue: "not found" }];
-      const error: ApiErrorResponse = { type: "not_found", details };
+      const error: ApiErrorResponseV2 = { type: "not_found", details };
 
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(404);
@@ -53,7 +53,7 @@ describe("utils", () => {
     });
 
     test('return conflict response for "conflict" error', async () => {
-      const error: ApiErrorResponse = { type: "conflict" };
+      const error: ApiErrorResponseV2 = { type: "conflict" };
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(409);
       const body = await response.json();
@@ -63,7 +63,7 @@ describe("utils", () => {
 
     test('return unprocessable entity response for "unprocessable_entity" error', async () => {
       const details = [{ field: "data", issue: "malformed" }];
-      const error: ApiErrorResponse = { type: "unprocessable_entity", details };
+      const error: ApiErrorResponseV2 = { type: "unprocessable_entity", details };
 
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(422);
@@ -74,7 +74,7 @@ describe("utils", () => {
     });
 
     test('return too many requests response for "too_many_requests" error', async () => {
-      const error: ApiErrorResponse = { type: "too_many_requests" };
+      const error: ApiErrorResponseV2 = { type: "too_many_requests" };
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(429);
       const body = await response.json();
@@ -84,7 +84,7 @@ describe("utils", () => {
 
     test('return internal server error response for "internal_server_error" error with default message', async () => {
       const details = [{ field: "server", issue: "error occurred" }];
-      const error: ApiErrorResponse = { type: "internal_server_error", details };
+      const error: ApiErrorResponseV2 = { type: "internal_server_error", details };
 
       const response = handleApiError(mockRequest, error);
       expect(response.status).toBe(500);
@@ -164,7 +164,7 @@ describe("utils", () => {
       const mockRequest = new Request("http://localhost/api/test");
       mockRequest.headers.set("x-request-id", "123");
 
-      const error: ApiErrorResponse = {
+      const error: ApiErrorResponseV2 = {
         type: "internal_server_error",
         details: [{ field: "server", issue: "error occurred" }],
       };
@@ -184,7 +184,7 @@ describe("utils", () => {
       const mockRequest = new Request("http://localhost/api/test");
       mockRequest.headers.delete("x-request-id");
 
-      const error: ApiErrorResponse = {
+      const error: ApiErrorResponseV2 = {
         type: "internal_server_error",
         details: [{ field: "server", issue: "error occurred" }],
       };

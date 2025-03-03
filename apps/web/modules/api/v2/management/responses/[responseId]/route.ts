@@ -1,7 +1,7 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticatedApiClient";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/checkAuthorization";
+import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
+import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,

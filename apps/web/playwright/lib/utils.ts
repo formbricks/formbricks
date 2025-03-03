@@ -1,6 +1,7 @@
 import { Page } from "@playwright/test";
+import { UsersFixture } from "../fixtures/users";
 
-export async function loginAndGetApiKey(page: Page, users: any) {
+export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   const user = await users.create();
   await user.login();
 

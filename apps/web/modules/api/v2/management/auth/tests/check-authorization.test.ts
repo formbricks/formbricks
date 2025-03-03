@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { checkAuthorization } from "../checkAuthorization";
+import { checkAuthorization } from "../check-authorization";
 
 describe("checkAuthorization", () => {
   it("should return ok if authentication is valid", () => {

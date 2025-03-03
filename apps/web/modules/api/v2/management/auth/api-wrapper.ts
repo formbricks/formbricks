@@ -3,7 +3,7 @@ import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { ZodRawShape, z } from "zod";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { err } from "@formbricks/types/error-handlers";
-import { authenticateRequest } from "./authenticateRequest";
+import { authenticateRequest } from "./authenticate-request";
 
 export type HandlerFn<TInput = Record<string, unknown>> = ({
   authentication,

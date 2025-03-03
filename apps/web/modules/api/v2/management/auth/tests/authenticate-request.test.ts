@@ -2,7 +2,7 @@ import { getEnvironmentIdFromApiKey } from "@/modules/api/v2/management/lib/api-
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
 import { describe, expect, it, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
-import { authenticateRequest } from "../authenticateRequest";
+import { authenticateRequest } from "../authenticate-request";
 
 vi.mock("@/modules/api/v2/management/lib/api-key", () => ({
   getEnvironmentIdFromApiKey: vi.fn(),

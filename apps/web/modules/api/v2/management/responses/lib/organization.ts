@@ -1,4 +1,4 @@
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -8,7 +8,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) =>
   cache(
-    async (): Promise<Result<string, ApiErrorResponse>> => {
+    async (): Promise<Result<string, ApiErrorResponseV2>> => {
       try {
         const organization = await prisma.organization.findFirst({
           where: {
@@ -48,7 +48,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
 
 export const getOrganizationBilling = reactCache(async (organizationId: string) =>
   cache(
-    async (): Promise<Result<Pick<Organization, "billing">, ApiErrorResponse>> => {
+    async (): Promise<Result<Pick<Organization, "billing">, ApiErrorResponseV2>> => {
       try {
         const organization = await prisma.organization.findFirst({
           where: {
@@ -79,7 +79,7 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
 
 export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizationId: string) =>
   cache(
-    async (): Promise<Result<string[], ApiErrorResponse>> => {
+    async (): Promise<Result<string[], ApiErrorResponseV2>> => {
       try {
         const organization = await prisma.organization.findUnique({
           where: {
@@ -124,7 +124,7 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
 
 export const getMonthlyOrganizationResponseCount = reactCache(async (organizationId: string) =>
   cache(
-    async (): Promise<Result<number, ApiErrorResponse>> => {
+    async (): Promise<Result<number, ApiErrorResponseV2>> => {
       try {
         const organization = await getOrganizationBilling(organizationId);
         if (!organization.ok) {

@@ -2,7 +2,7 @@ import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { responseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Response } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
@@ -15,7 +15,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getResponse = reactCache(async (responseId: string) =>
   cache(
-    async (): Promise<Result<Response, ApiErrorResponse>> => {
+    async (): Promise<Result<Response, ApiErrorResponseV2>> => {
       try {
         const responsePrisma = await prisma.response.findUnique({
           where: {
@@ -42,7 +42,7 @@ export const getResponse = reactCache(async (responseId: string) =>
   )()
 );
 
-export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponse>> => {
+export const deleteResponse = async (responseId: string): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const deletedResponse = await prisma.response.delete({
       where: {
@@ -95,7 +95,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 export const updateResponse = async (
   responseId: string,
   responseInput: z.infer<typeof responseUpdateSchema>
-): Promise<Result<Response, ApiErrorResponse>> => {
+): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const updatedResponse = await prisma.response.update({
       where: {

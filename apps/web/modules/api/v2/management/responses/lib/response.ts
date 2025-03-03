@@ -6,7 +6,7 @@ import {
 } from "@/modules/api/v2/management/responses/lib/organization";
 import { getResponsesQuery } from "@/modules/api/v2/management/responses/lib/utils";
 import { TGetResponsesFilter, TResponseInput } from "@/modules/api/v2/management/responses/types/responses";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
@@ -21,7 +21,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 export const createResponse = async (
   environmentId: string,
   responseInput: TResponseInput
-): Promise<Result<Response, ApiErrorResponse>> => {
+): Promise<Result<Response, ApiErrorResponseV2>> => {
   captureTelemetry("response created");
 
   const {
@@ -124,7 +124,7 @@ export const createResponse = async (
 export const getResponses = async (
   environmentId: string,
   params: TGetResponsesFilter
-): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponse>> => {
+): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
     const [responses, count] = await prisma.$transaction([
       prisma.response.findMany({

@@ -1,10 +1,10 @@
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { prisma } from "@formbricks/database";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const deleteDisplay = async (displayId: string): Promise<Result<boolean, ApiErrorResponse>> => {
+export const deleteDisplay = async (displayId: string): Promise<Result<boolean, ApiErrorResponseV2>> => {
   try {
     const display = await prisma.display.delete({
       where: {

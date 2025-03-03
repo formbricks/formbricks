@@ -1,7 +1,7 @@
-import { ApiErrorDetails, ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorDetails, ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiSuccessResponse } from "@/modules/api/v2/types/api-success";
 
-export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponse;
+export type ApiResponse<T> = ApiSuccessResponse<T> | ApiErrorResponseV2;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

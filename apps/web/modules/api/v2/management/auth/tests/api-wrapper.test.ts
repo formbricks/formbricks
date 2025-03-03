@@ -1,13 +1,13 @@
 import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { apiWrapper } from "@/modules/api/v2/management/auth/apiWrapper";
-import { authenticateRequest } from "@/modules/api/v2/management/auth/authenticateRequest";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { apiWrapper } from "@/modules/api/v2/management/auth/api-wrapper";
+import { authenticateRequest } from "@/modules/api/v2/management/auth/authenticate-request";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { err, ok, okVoid } from "@formbricks/types/error-handlers";
 
-vi.mock("../authenticateRequest", () => ({
+vi.mock("../authenticate-request", () => ({
   authenticateRequest: vi.fn(),
 }));
 
@@ -281,10 +281,10 @@ describe("apiWrapper", () => {
       })
     );
     vi.mocked(checkRateLimitAndThrowError).mockResolvedValue(
-      err({ type: "rateLimitExceeded" } as unknown as ApiErrorResponse)
+      err({ type: "rateLimitExceeded" } as unknown as ApiErrorResponseV2)
     );
     vi.mocked(handleApiError).mockImplementation(
-      (_request: Request, _error: ApiErrorResponse): Response =>
+      (_request: Request, _error: ApiErrorResponseV2): Response =>
         new Response("rate limit exceeded", { status: 429 })
     );
 

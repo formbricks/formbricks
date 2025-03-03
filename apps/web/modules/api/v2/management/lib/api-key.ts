@@ -1,6 +1,6 @@
 import { apiKeyCache } from "@/lib/cache/api-key";
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
@@ -9,7 +9,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 export const getEnvironmentIdFromApiKey = reactCache(async (apiKey: string) => {
   const hashedKey = hashApiKey(apiKey);
   return cache(
-    async (): Promise<Result<string, ApiErrorResponse>> => {
+    async (): Promise<Result<string, ApiErrorResponseV2>> => {
       if (!apiKey) {
         return err({
           type: "bad_request",

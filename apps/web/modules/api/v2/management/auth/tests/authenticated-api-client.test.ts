@@ -1,9 +1,9 @@
 import { logApiRequest } from "@/modules/api/v2/lib/utils";
 import { describe, expect, it, vi } from "vitest";
-import { apiWrapper } from "../apiWrapper";
-import { authenticatedApiClient } from "../authenticatedApiClient";
+import { apiWrapper } from "../api-wrapper";
+import { authenticatedApiClient } from "../authenticated-api-client";
 
-vi.mock("../apiWrapper", () => ({
+vi.mock("../api-wrapper", () => ({
   apiWrapper: vi.fn(),
 }));
 

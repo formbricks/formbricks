@@ -1,4 +1,4 @@
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Survey } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -8,7 +8,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getSurveyQuestions = reactCache(async (surveyId: string) =>
   cache(
-    async (): Promise<Result<Pick<Survey, "questions" | "environmentId">, ApiErrorResponse>> => {
+    async (): Promise<Result<Pick<Survey, "questions" | "environmentId">, ApiErrorResponseV2>> => {
       try {
         const survey = await prisma.survey.findUnique({
           where: {

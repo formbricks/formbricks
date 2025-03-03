@@ -1,4 +1,4 @@
-import { ApiErrorResponse } from "@/modules/api/v2/types/api-error";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { type LimitOptions, Ratelimit, type RatelimitResponse } from "@unkey/ratelimit";
 import { MANAGEMENT_API_RATE_LIMIT, RATE_LIMITING_DISABLED, UNKEY_ROOT_KEY } from "@formbricks/lib/constants";
 import { Result, err, okVoid } from "@formbricks/types/error-handlers";
@@ -57,7 +57,7 @@ export function rateLimiter() {
 export const checkRateLimitAndThrowError = async ({
   identifier,
   opts,
-}: RateLimitHelper): Promise<Result<void, ApiErrorResponse>> => {
+}: RateLimitHelper): Promise<Result<void, ApiErrorResponseV2>> => {
   const response = await rateLimiter()({ identifier, opts });
   const { success } = response;
 
