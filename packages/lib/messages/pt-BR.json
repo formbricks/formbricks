@@ -6,6 +6,7 @@
     "continue_with_google": "Continuar com o Google",
     "continue_with_oidc": "Continuar com {oidcDisplayName}",
     "continue_with_openid": "Continuar com OpenID",
+    "continue_with_saml": "Continuar com SAML SSO",
     "forgot-password": {
       "back_to_login": "Voltar para o login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Novo no Formbricks?",
       "use_a_backup_code": "Usar um código de backup"
     },
+    "saml_connection_error": "Algo deu errado. Por favor, verifica o console do app para mais detalhes.",
     "signup": {
       "captcha_failed": "reCAPTCHA falhou",
       "have_an_account": "Já tem uma conta?",
@@ -1894,7 +1896,6 @@
   "s": {
     "check_inbox_or_spam": "Por favor, dá uma olhada na sua pasta de spam se você não encontrar o e-mail na sua caixa de entrada.",
     "completed": "Essa pesquisa gratuita e de código aberto foi encerrada.",
-    "could_not_create_display": "Não foi possível criar a tela",
     "create_your_own": "Crie o seu próprio",
     "enter_pin": "Essa pesquisa está protegida. Insira o PIN abaixo",
     "just_curious": "Só curioso?",

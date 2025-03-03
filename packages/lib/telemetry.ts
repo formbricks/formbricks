@@ -9,7 +9,7 @@ const crypto = require("crypto");
 // We are using the hashed CRON_SECRET as the distinct identifier for the instance for telemetry.
 // The hash cannot be traced back to the original value or the instance itself.
 // This is to ensure that the telemetry data is anonymous but still unique to the instance.
-const getTelemetryId = (): string => {
+export const getTelemetryId = (): string => {
   return crypto.createHash("sha256").update(env.CRON_SECRET).digest("hex");
 };
 

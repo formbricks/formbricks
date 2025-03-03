@@ -1,6 +1,7 @@
 "use server";
 
 import { actionClient } from "@/lib/utils/action-client";
+import { notifyAdminCreation } from "@/modules/auth/lib/admin-notification";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
@@ -10,6 +11,7 @@ import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email"
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
 import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
+import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
@@ -131,6 +133,19 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
           ),
         },
       });
+
+      const isFreshInstance = await getIsFreshInstance();
+      console.log("isFreshInstance", isFreshInstance);
+      console.log("role", role);
+      // If this is a fresh setup (role is owner), notify about admin creation
+      if (role === "owner" && isFreshInstance) {
+        try {
+          await notifyAdminCreation(user.email);
+        } catch (error) {
+          // Log error but continue with signup
+          console.error("Failed to notify about admin creation:", error);
+        }
+      }
     }
   }
 
