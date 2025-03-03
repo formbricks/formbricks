@@ -5,17 +5,18 @@ import {
   generateResultShareUrlAction,
   getResultShareUrlAction,
 } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/actions";
-import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
-import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { getFormattedErrorMessage } from "@formbricks/lib/actionClient/helper";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
+} from "@/modules/ui/components/dropdown-menu";
+import { useTranslate } from "@tolgee/react";
+import { CopyIcon, DownloadIcon, GlobeIcon, LinkIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { ShareSurveyResults } from "../(analysis)/summary/components/ShareSurveyResults";
 
 interface ResultsShareButtonProps {
@@ -24,6 +25,7 @@ interface ResultsShareButtonProps {
 }
 
 export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProps) => {
+  const { t } = useTranslate();
   const [showResultsLinkModal, setShowResultsLinkModal] = useState(false);
 
   const [showPublishModal, setShowPublishModal] = useState(false);
@@ -43,7 +45,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
   const handleUnpublish = () => {
     deleteResultShareUrlAction({ surveyId: survey.id }).then((deleteResultShareUrlResponse) => {
       if (deleteResultShareUrlResponse?.data) {
-        toast.success("Results unpublished successfully.");
+        toast.success(t("environments.surveys.results_unpublished_successfully"));
         setShowPublishModal(false);
       } else {
         const errorMessage = getFormattedErrorMessage(deleteResultShareUrlResponse);
@@ -70,15 +72,13 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       navigator.clipboard
         .writeText(currentUrl)
         .then(() => {
-          toast.success("Link to results copied to clipboard.");
+          toast.success(t("common.copied_to_clipboard"));
         })
-        .catch((err) => {
-          console.error("Failed to copy: ", err);
-          toast.error("Failed to copy link to results to clipboard.");
+        .catch(() => {
+          toast.error(t("environments.surveys.failed_to_copy_link_to_results"));
         });
     } else {
-      console.error("Cannot copy URL: not running in a browser environment.");
-      toast.error("Failed to copy URL: not in a browser environment.");
+      toast.error(t("environments.surveys.failed_to_copy_url"));
     }
   };
   return (
@@ -89,7 +89,9 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
           className="focus:bg-muted cursor-pointer border border-slate-200 outline-none hover:border-slate-300">
           <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
-              <span className="text-sm text-slate-700">Share results</span>
+              <span className="text-sm text-slate-700">
+                {t("environments.surveys.summary.share_results")}
+              </span>
               <LinkIcon className="ml-2 h-4 w-4" />
             </div>
             <DownloadIcon className="block h-4 sm:hidden" />
@@ -100,10 +102,12 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(surveyUrl);
-                toast.success("Link to public results copied");
+                toast.success(t("environments.surveys.summary.link_to_public_results_copied"));
               }}
               icon={<CopyIcon className="ml-1.5 inline h-4 w-4" />}>
-              <p className="text-slate-700">Copy link to public results</p>
+              <p className="text-slate-700">
+                {t("environments.surveys.summary.copy_link_to_public_results")}
+              </p>
             </DropdownMenuItem>
           ) : (
             <DropdownMenuItem
@@ -111,7 +115,7 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
                 copyUrlToClipboard();
               }}
               icon={<CopyIcon className="ml-1.5 h-4 w-4" />}>
-              <p className="flex items-center text-slate-700">Copy link</p>
+              <p className="flex items-center text-slate-700">{t("common.copy_link")}</p>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem
@@ -120,7 +124,9 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
             }}
             icon={<GlobeIcon className="ml-1.5 h-4 w-4" />}>
             <p className="flex items-center text-slate-700">
-              {survey.resultShareKey ? "Unpublish from web" : "Publish to web"}
+              {survey.resultShareKey
+                ? t("environments.surveys.summary.unpublish_from_web")
+                : t("environments.surveys.summary.publish_to_web")}
             </p>
           </DropdownMenuItem>
         </DropdownMenuContent>

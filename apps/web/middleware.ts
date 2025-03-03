@@ -1,21 +1,26 @@
 import {
   clientSideApiEndpointsLimiter,
+  forgotPasswordLimiter,
   loginLimiter,
   shareUrlLimiter,
-  signUpLimiter,
+  signupLimiter,
   syncUserIdentificationLimiter,
+  verifyEmailLimiter,
 } from "@/app/middleware/bucket";
 import {
-  clientSideApiRoute,
   isAuthProtectedRoute,
+  isClientSideApiRoute,
+  isForgotPasswordRoute,
+  isLoginRoute,
+  isShareUrlRoute,
+  isSignupRoute,
   isSyncWithUserIdentificationEndpoint,
-  loginRoute,
-  shareUrlRoute,
-  signupRoute,
-} from "@/app/middleware/endpointValidator";
+  isVerifyEmailRoute,
+} from "@/app/middleware/endpoint-validator";
+import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
@@ -42,15 +47,19 @@ export const middleware = async (request: NextRequest) => {
   let ip =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.ip;
+    ipAddress(request);
 
   if (ip) {
     try {
-      if (loginRoute(request.nextUrl.pathname)) {
+      if (isLoginRoute(request.nextUrl.pathname)) {
         await loginLimiter(`login-${ip}`);
-      } else if (signupRoute(request.nextUrl.pathname)) {
-        await signUpLimiter(`signup-${ip}`);
-      } else if (clientSideApiRoute(request.nextUrl.pathname)) {
+      } else if (isSignupRoute(request.nextUrl.pathname)) {
+        await signupLimiter(`signup-${ip}`);
+      } else if (isVerifyEmailRoute(request.nextUrl.pathname)) {
+        await verifyEmailLimiter(`verify-email-${ip}`);
+      } else if (isForgotPasswordRoute(request.nextUrl.pathname)) {
+        await forgotPasswordLimiter(`forgot-password-${ip}`);
+      } else if (isClientSideApiRoute(request.nextUrl.pathname)) {
         await clientSideApiEndpointsLimiter(`client-side-api-${ip}`);
 
         const envIdAndUserId = isSyncWithUserIdentificationEndpoint(request.nextUrl.pathname);
@@ -58,7 +67,7 @@ export const middleware = async (request: NextRequest) => {
           const { environmentId, userId } = envIdAndUserId;
           await syncUserIdentificationLimiter(`sync-${environmentId}-${userId}`);
         }
-      } else if (shareUrlRoute(request.nextUrl.pathname)) {
+      } else if (isShareUrlRoute(request.nextUrl.pathname)) {
         await shareUrlLimiter(`share-${ip}`);
       }
       return NextResponse.next();
@@ -73,7 +82,6 @@ export const middleware = async (request: NextRequest) => {
 export const config = {
   matcher: [
     "/api/auth/callback/credentials",
-    "/api/v1/users",
     "/api/(.*)/client/:path*",
     "/api/v1/js/actions",
     "/api/v1/client/storage",
@@ -82,6 +90,9 @@ export const config = {
     "/setup/organization/:path*",
     "/api/auth/signout",
     "/auth/login",
+    "/auth/signup",
     "/api/packages/:path*",
+    "/auth/verification-requested",
+    "/auth/forgot-password",
   ],
 };

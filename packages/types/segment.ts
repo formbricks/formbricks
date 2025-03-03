@@ -57,37 +57,13 @@ export type TAllOperators = (typeof ALL_OPERATORS)[number];
 export const ZSegmentFilterValue = z.union([z.string(), z.number()]);
 export type TSegmentFilterValue = z.infer<typeof ZSegmentFilterValue>;
 
-// the type of the root of a filter
-export const ZSegmentFilterRootType = z.enum(["attribute", "segment", "device", "person"]);
-
-// Root of the filter, this defines the type of the filter and the metadata associated with it
-// For example, if the root is "attribute", the attributeClassName is required
-export const ZSegmentFilterRoot = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal(ZSegmentFilterRootType.Enum.attribute),
-    attributeClassId: z.string(),
-  }),
-  z.object({
-    type: z.literal(ZSegmentFilterRootType.Enum.person),
-    userId: z.string(),
-  }),
-  z.object({
-    type: z.literal(ZSegmentFilterRootType.Enum.segment),
-    segmentId: z.string(),
-  }),
-  z.object({
-    type: z.literal(ZSegmentFilterRootType.Enum.device),
-    deviceType: z.string(),
-  }),
-]);
-
 // Each filter has a qualifier, which usually contains the operator for evaluating the filter.
 // Attribute filter -> root will always have type "attribute"
 export const ZSegmentAttributeFilter = z.object({
   id: z.string().cuid2(),
   root: z.object({
     type: z.literal("attribute"),
-    attributeClassName: z.string(),
+    contactAttributeKey: z.string(),
   }),
   value: ZSegmentFilterValue,
   qualifier: z.object({
@@ -288,10 +264,11 @@ export const ZSegmentUpdateInput = z
 
 export type TSegmentUpdateInput = z.infer<typeof ZSegmentUpdateInput>;
 
+// Record of the contact attribute key and the value
 export type TEvaluateSegmentUserAttributeData = Record<string, string | number>;
 
 export interface TEvaluateSegmentUserData {
-  personId: string;
+  contactId: string;
   userId: string;
   environmentId: string;
   attributes: TEvaluateSegmentUserAttributeData;

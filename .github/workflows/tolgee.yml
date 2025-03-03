@@ -1,0 +1,84 @@
+name: Tolgee Tagging on PR Merge
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  tag-production-keys:
+    name: Tag Production Keys
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # This ensures we get the full git history
+
+      - name: Get source branch name
+        id: branch-name
+        run: |
+          # For PR merges, use the head ref from the pull request event
+          SOURCE_BRANCH="${{ github.head_ref }}"
+
+          # Only remove username prefix if needed
+          if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
+            PREFIX=${SOURCE_BRANCH%%/*}
+            if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
+              SOURCE_BRANCH=${SOURCE_BRANCH#*/}
+            fi
+          fi
+
+          echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
+          echo "Detected source branch: $SOURCE_BRANCH"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18 # Ensure compatibility with your project
+
+      - name: Install Tolgee CLI
+        run: npm install -g @tolgee/cli
+
+      - name: Tag Production Keys
+        run: |
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-extracted \
+            --filter-tag "draft:${SOURCE_BRANCH}" \
+            --tag production \
+            --untag "draft:${SOURCE_BRANCH}"
+
+      - name: Tag unused production keys as Deprecated
+        run: |
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-not-extracted --filter-tag production \
+            --tag deprecated --untag production
+
+      - name: Tag unused draft:current-branch keys as Deprecated
+        run: |
+          npx tolgee tag \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --filter-not-extracted --filter-tag "draft:${SOURCE_BRANCH}" \
+            --tag deprecated --untag "draft:${SOURCE_BRANCH}"
+
+      - name: Sync with backup
+        run: |
+          npx tolgee sync \
+            --api-key ${{ secrets.TOLGEE_API_KEY }} \
+            --backup ./tolgee-backup \
+            --continue-on-warning \
+            --yes
+
+      - name: Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tolgee-backup-${{ github.sha }}
+          path: ./tolgee-backup
+          retention-days: 90

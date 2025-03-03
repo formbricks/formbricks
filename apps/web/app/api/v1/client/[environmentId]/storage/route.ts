@@ -1,14 +1,14 @@
 import { responses } from "@/app/lib/api/response";
+import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -22,7 +22,8 @@ export const OPTIONS = async (): Promise<Response> => {
 // this api endpoint will return a signed url for uploading the file to s3 and another url for uploading file to the local storage
 
 export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
-  const environmentId = context.params.environmentId;
+  const params = await context.params;
+  const environmentId = params.environmentId;
 
   const { fileName, fileType, surveyId } = await req.json();
 
@@ -51,7 +52,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.notFoundResponse("OrganizationByEnvironmentId", environmentId);
   }
 
-  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
+  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
 
   return await uploadPrivateFile(fileName, environmentId, fileType, isBiggerFileUploadAllowed);
 };

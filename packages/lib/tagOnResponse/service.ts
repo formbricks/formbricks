@@ -33,7 +33,7 @@ export const addTagToRespone = async (responseId: string, tagId: string): Promis
     responseCache.revalidate({
       id: responseId,
       surveyId: response?.surveyId,
-      personId: response?.person?.id,
+      contactId: response?.contact?.id,
     });
 
     tagOnResponseCache.revalidate({
@@ -71,7 +71,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
     responseCache.revalidate({
       id: responseId,
       surveyId: response?.surveyId,
-      personId: response?.person?.id,
+      contactId: response?.contact?.id,
     });
 
     tagOnResponseCache.revalidate({
@@ -93,7 +93,7 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
 };
 
 export const getTagsOnResponsesCount = reactCache(
-  (environmentId: string): Promise<TTagsCount> =>
+  async (environmentId: string): Promise<TTagsCount> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);

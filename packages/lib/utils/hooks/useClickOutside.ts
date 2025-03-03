@@ -2,7 +2,7 @@ import { RefObject, useEffect } from "react";
 
 // Improved version of https://usehooks.com/useOnClickOutside/
 export const useClickOutside = (
-  ref: RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement | HTMLDivElement | null>,
   handler: (event: MouseEvent | TouchEvent) => void
 ): void => {
   useEffect(() => {

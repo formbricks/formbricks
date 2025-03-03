@@ -2,10 +2,10 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
 import { NextRequest } from "next/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
@@ -13,7 +13,7 @@ import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
   const accessType = "public"; // public files are accessible by anyone
-  const headersList = headers();
+  const headersList = await headers();
 
   const fileType = headersList.get("X-File-Type");
   const encodedFileName = headersList.get("X-File-Name");

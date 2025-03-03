@@ -1,0 +1,87 @@
+import { TFnType } from "@tolgee/react";
+
+export const getCloudPricingData = (t: TFnType) => {
+  return {
+    plans: [
+      {
+        name: t("environments.settings.billing.free"),
+        id: "free",
+        featured: false,
+        description: t("environments.settings.billing.free_description"),
+        price: { monthly: "$0", yearly: "$0" },
+        mainFeatures: [
+          t("environments.settings.billing.unlimited_surveys"),
+          t("environments.settings.billing.unlimited_team_members"),
+          t("environments.settings.billing.3_projects"),
+          t("environments.settings.billing.1500_monthly_responses"),
+          t("environments.settings.billing.2000_monthly_identified_users"),
+          t("environments.settings.billing.website_surveys"),
+          t("environments.settings.billing.app_surveys"),
+          t("environments.settings.billing.unlimited_apps_websites"),
+          t("environments.settings.billing.link_surveys"),
+          t("environments.settings.billing.email_embedded_surveys"),
+          t("environments.settings.billing.logic_jumps_hidden_fields_recurring_surveys"),
+          t("environments.settings.billing.api_webhooks"),
+          t("environments.settings.billing.all_integrations"),
+          t("environments.settings.billing.all_surveying_features"),
+        ],
+        href: "https://app.formbricks.com/auth/signup?plan=free",
+      },
+      {
+        name: t("environments.settings.billing.startup"),
+        id: "startup",
+        featured: false,
+        description: t("environments.settings.billing.startup_description"),
+        price: { monthly: "$39", yearly: "$390 " },
+        mainFeatures: [
+          t("environments.settings.billing.everything_in_free"),
+          t("environments.settings.billing.unlimited_surveys"),
+          t("environments.settings.billing.remove_branding"),
+          t("environments.settings.billing.email_support"),
+          t("environments.settings.billing.3_projects"),
+          t("environments.settings.billing.5000_monthly_responses"),
+          t("environments.settings.billing.7500_monthly_identified_users"),
+        ],
+        href: "https://app.formbricks.com/auth/signup?plan=startup",
+      },
+      {
+        name: t("environments.settings.billing.scale"),
+        id: "scale",
+        featured: true,
+        description: t("environments.settings.billing.scale_description"),
+        price: { monthly: "$149", yearly: "$1,490" },
+        mainFeatures: [
+          t("environments.settings.billing.everything_in_startup"),
+          t("environments.settings.billing.team_access_roles"),
+          t("environments.settings.billing.multi_language_surveys"),
+          t("environments.settings.billing.advanced_targeting"),
+          t("environments.settings.billing.priority_support"),
+          t("environments.settings.billing.5_projects"),
+          t("environments.settings.billing.10000_monthly_responses"),
+          t("environments.settings.billing.30000_monthly_identified_users"),
+        ],
+        href: "https://app.formbricks.com/auth/signup?plan=scale",
+      },
+      {
+        name: t("environments.settings.billing.enterprise"),
+        id: "enterprise",
+        featured: false,
+        description: t("environments.settings.billing.enterprise_description"),
+        price: {
+          monthly: t("environments.settings.billing.say_hi"),
+          yearly: t("environments.settings.billing.say_hi"),
+        },
+        mainFeatures: [
+          t("environments.settings.billing.everything_in_scale"),
+          t("environments.settings.billing.custom_project_limit"),
+          t("environments.settings.billing.custom_miu_limit"),
+          t("environments.settings.billing.premium_support_with_slas"),
+          t("environments.settings.billing.uptime_sla_99"),
+          t("environments.settings.billing.customer_success_manager"),
+          t("environments.settings.billing.technical_onboarding"),
+        ],
+        href: "https://cal.com/johannes/enterprise-cloud",
+      },
+    ],
+  };
+};

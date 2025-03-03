@@ -1,0 +1,197 @@
+---
+title: "Embed Surveys"
+description:
+  "Embed Formbricks surveys seamlessly into your website using an iframe & Email using code snippets."
+icon: "code"
+---
+
+# Embed Surveys in Your Web Page & Emails
+
+Embedding Formbricks surveys directly into your web pages & emails allows you to integrate interactive surveys without redirecting users to a separate survey site. This method ensures a seamless integration and maintains the aesthetic continuity of your website or application and your email marketing campaigns.
+
+## Embedding Surveys in Web Pages
+
+<TellaVideo tellaVideoIdentifier="clvavyy2f00000fjr0mple922" />
+
+1. Create and publish a link survey.
+
+2. Open survey summary page and click on **share** button on the top right.
+
+3. In the survey share modal, click on **Embed survey** button.
+
+4. Navigate to **Embed in a Web Page** tab and click on Copy code
+
+5. Paste the copied iframe code into the HTML of your web page where you want the survey to appear.
+
+### Example of Embedding a Survey on a Web Page
+
+```html Example Embedding Code
+<div style="position: relative; height:100vh; max-height:100vh; overflow:auto;">
+  <iframe
+    src="https://app.formbricks.com/s/<your-surveyId>"
+    frameborder="0"
+    style="position: absolute; left:0; top:0; width:100%; height:100%; border:0;"
+  >
+  </iframe>
+</div>
+```
+
+## Iframe Events
+
+The iframe fires a **formbricksSurveyCompleted** event when a user finishes a survey within the embedded iframe. This event can be captured through a message listener in your webpage's JavaScript
+
+### How to Use it?
+
+1. Embed the Formbricks survey on your webpage using the iframe method as described above.
+
+2. Add an event listener to your webpage’s JavaScript that listens for `message` events from the iframe.
+
+3. Check if the received message indicates that the survey is completed by comparing the `event.data` with the value `formbricksSurveyCompleted`.
+
+<Note>
+  It is important to verify the origin of the message to ensure it comes from
+  the iframe containing your survey, enhancing the security of your event
+  handling.
+</Note>
+
+4. Implement your custom actions within the callback function based on the survey completion.
+
+### Example of Handling Survey Completion Events
+
+```javascript Example Code for Event Listener
+window.addEventListener("message", (event) => {
+  // Replace 'https://app.formbricks.com' with the actual web app url
+  if (
+    event.origin === "https://app.formbricks.com" &&
+    event.data === "formbricksSurveyCompleted"
+  ) {
+    console.log("Survey completed!");
+    // Implement your custom actions here
+  }
+});
+```
+
+## Embed Mode
+
+Embed your survey with a minimalist design, disregarding padding and background.
+
+### How to enable Embed Mode
+
+It can be enabled by simply appending **?embed=true** to your survey link or from UI
+
+1. Open Embed survey tab in survey share modal
+
+2. Toggle **Embed mode**
+
+   ![Toggle embed mode](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/embed-mode-toggle.webp)
+
+   With Embed mode enabled:
+
+   ![Toggle embed mode](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/embed-mode-enabled.webp)
+
+   With Embed mode disabled:
+
+   ![Toggle embed mode](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/embed-mode-disabled.webp)
+
+## Embedding Surveys in Emails
+
+Embedding Formbricks surveys directly into your emails allows you to collect valuable feedback from your users at every touchpoint. Seamlessly integrate interactive surveys into your email campaigns to gather insights and improve user experience.
+
+## Generate an Embed Code
+
+To embed a Formbricks survey in an email, first, create a survey and publish it. Follow these steps to generate the embed code:
+
+1. **Create and Publish a Survey**: Start by creating a link survey and publish it once ready.
+2. **Access the Share Options**: Go to the survey summary page and click the Share button (see below).
+3. **Get the Embed Code**: Click on Embed Survey at the bottom of the share modal, navigate to the `Embed in an Email` tab, and click `Copy Code`.
+4. **Preview and Test**: Before sending it to your users, click on Send Preview to receive a test email. This helps ensure the survey appears correctly.
+
+<TellaVideo tellaVideoIdentifier="clvex3puw05oi0gl4bp1qgc3s" />
+
+## Embedding the Survey in Emails
+
+Different email clients have different support for HTML and CSS. We recommend testing the email in different email clients to ensure the survey looks good in all of them.
+
+Below are some of the methods and services that we know that allows HTML embedding and how you can use them:
+
+<Note>
+  Please use the below methods at your own discretion. We do not officially
+  endorse any of the services mentioned below.
+</Note>
+
+### 1. Gmail
+
+Gmail does not support HTML embedding natively. It's a WYSIWYG (What You See Is What You Get) editor. However, you can use a free plugin like [HTML Editor for Gmail by cloudHQ](https://chromewebstore.google.com/detail/free-html-editor-for-gmai/ioinaaeeacahcmbgfmeaaofhfkijpdeb) to embed HTML in your emails.
+
+- Install the plugin from the Chrome Web Store.
+- Open Gmail and compose a new email.
+- Write your email content after which you want to embed the survey.
+
+  ![Choose a link survey template](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/email-content-without-survey.webp)
+
+- Right next to the Send button you will see a new button called **HTML Editor**. Click on it.
+- This will open a new window with the **Design** tab active. Switch to the **Source** tab.
+
+  ![Choose a link survey template](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/plugin-source-tab.webp)
+
+- Now paste the copied HTML code from Formbricks into this window. On the right, you will see a preview of how the email will look.
+
+  ![Choose a link survey template](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/plugin-add-survey.webp)
+
+- Click on the **Close Editor** button to save the changes & close the editor.
+
+  ![Choose a link survey template](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/email-content-with-survey.webp)
+
+- Voila! You have successfully embedded the survey in your email.
+
+### 2. Sendgrid
+
+Sendgrid supports HTML content in emails directly:
+
+- Compose Your Email: Use Sendgrid's email composition tools to embed the HTML directly into your email body.
+- Reference: For detailed steps, refer to Sendgrid's official documentation [here](https://sendgrid.com/en-us/solutions/email-marketing/email-design) or API docs [here](https://sendgrid.com/docs/for-developers/sending-email/api-getting-started/)
+
+### 3. Mailchimp
+
+Available in their Standard plan and above, Mailchimp allows HTML content embedding:
+
+- Use the Code Block: Drag a code block into your email template and paste the HTML code for the survey.
+- Reference: Check out Mailchimp's guide on pasting in custom HTML [here](https://mailchimp.com/help/paste-in-html-to-create-an-email/)
+
+### 4. Notemailer
+
+Nodemailer is a Node.js module that allows you to send emails with HTML content.
+
+- If you use Node.js to send emails, just attach the `html` parameter in your email message.
+- Reference: Take a look at Nodemailer's official message documentation [here](https://nodemailer.com/message/)
+
+<Note>
+  Please note that the above methods are not exhaustive and there are many other
+  ways to embed HTML in emails.
+</Note>
+
+## Example: Email Footer Survey
+
+Embed a survey link in your email signature to collect feedback subtly yet effectively. Here’s how:
+
+![Choose a link survey template](/images/xm-and-surveys/surveys/link-surveys/embed-surveys/jo-signature.webp)
+
+1. Create a Survey: Adjust an existing survey or create a new one.
+2. Scroll down & enable the **Hidden Fields** option.
+3. Add a new hidden field with the name **helpful**.
+4. Now Publish the survey as a Link Survey & copy the link.
+5. Embed in Your Signature: Add this HTML snippet to your email signature in your email client settings.
+
+```html Embed this in your Email
+Was our conversation helpful?
+<a href="<Link-Survey-URL>?helpful=Yes">Yes 👍</a> |
+<a href="<Link-Survey-URL>?helpful=No">No 👎</a>
+```
+
+Replace `YOUR_SURVEY_LINK` with the actual survey link.
+
+PS: If you do not see any signature settings, just use one of the methods we've mentioned above to embed the HTML code in your email.
+
+---
+
+**Can’t figure it out?**: [Get help in Github Discussions](https://github.com/formbricks/formbricks/discussions)

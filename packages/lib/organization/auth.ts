@@ -51,7 +51,7 @@ export const verifyUserRoleAccess = async (
   };
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(userId, organizationId);
-  const { isOwner, isAdmin } = getAccessFlags(currentUserMembership?.role);
+  const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
 
   if (!isOwner) {
     accessObject.hasCreateOrUpdateAccess = false;
@@ -61,7 +61,7 @@ export const verifyUserRoleAccess = async (
     accessObject.hasBillingAccess = false;
   }
 
-  if (isAdmin) {
+  if (isManager) {
     accessObject.hasCreateOrUpdateMembersAccess = true;
     accessObject.hasDeleteMembersAccess = true;
     accessObject.hasBillingAccess = true;

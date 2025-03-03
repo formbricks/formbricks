@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22-alpine3.20 AS base
 
 #
 ## step 1: Prune monorepo
@@ -18,6 +18,7 @@ FROM node:20-alpine AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
+RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
@@ -32,6 +33,9 @@ ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runt
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
+# Increase Node.js memory limit
+# ENV NODE_OPTIONS="--max_old_space_size=4096"
+
 # Set the working directory
 WORKDIR /app
 
@@ -40,19 +44,17 @@ WORKDIR /app
 # COPY --from=builder /app/out/json/ .
 # COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install the dependencies
-# RUN pnpm install
-
 # Prepare the build
 COPY . .
+
 # Create a .env file
 RUN touch apps/web/.env
 
+# Install the dependencies
 RUN pnpm install
 
 # Build the project
-# RUN pnpm post-install --filter=@formbricks/web...
-RUN pnpm build --filter=@formbricks/web...
+RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
@@ -61,6 +63,8 @@ RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_ver
 ## step 3: setup production runner
 #
 FROM base AS runner
+
+RUN npm install -g corepack@latest
 RUN corepack enable
 
 RUN apk add --no-cache curl \
@@ -73,17 +77,27 @@ WORKDIR /home/nextjs
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
 # Leverage output traces to reduce image size
+
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migrations ./packages/database/migrations
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+
+# Copy Prisma-specific generated files
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
+
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Install Prisma globally
-RUN PRISMA_VERSION=$(cat prisma_version.txt) && npm install -g prisma@$PRISMA_VERSION
+# Copy only @paralleldrive/cuid2 and @noble/hashes
+COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+
+RUN npm install -g tsx typescript prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
@@ -93,6 +107,11 @@ ENV HOSTNAME "0.0.0.0"
 RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
+# Prepare volume for SAML preloaded connection
+RUN mkdir -p /home/nextjs/apps/web/saml-connection
+VOLUME /home/nextjs/apps/web/saml-connection
+
 CMD supercronic -quiet /app/docker/cronjobs & \
     (cd packages/database && npm run db:migrate:deploy) && \
+    (cd packages/database && npm run db:create-saml-database:deploy) && \
     exec node apps/web/server.js

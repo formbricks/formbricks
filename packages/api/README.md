@@ -86,45 +86,17 @@ The API client is now ready to be used across your project. It can be used to in
   });
   ```
 
-### Action
+### Contact Attributes
 
-- Create an Action
-
-  ```ts
-  await api.client.action.create({
-    name: "<your-action-name>", // required
-    properties: {
-      key1: "value1",
-      key2: "value2",
-      key3AsNumber: 123,
-    }, // required
-
-    personId: "<your-person-id>", // optional
-    sessionId: "<your-session-id>", // optional
-  });
-  ```
-
-### People
-
-- Create a Person
+- Update contact attributes
 
   ```ts
-  await api.client.people.create({
+  await api.client.attribute.update({
     userId: "<your-user-id>", // required
-  });
-  ```
-
-- Update a Person
-
-  ```ts
-  await api.client.people.update(personId: "<your-person-id>", // required
-  {
     attributes: {
-      key1: "value1",
-      key2: "value2",
-      key3AsNumber: 456,
+      plan: "Pro",
     }, // required
-  }
+  });
   ```
 
 ### Storage
@@ -142,4 +114,4 @@ The API client is now ready to be used across your project. It can be used to in
   );
   ```
 
-If you have any questions or need help, feel free to reach out to us on our [Discord](https://formbricks.com/discord)
+If you have any questions or need help, feel free to reach out to us on [Github Discussions](https://github.com/formbricks/formbricks/discussions)

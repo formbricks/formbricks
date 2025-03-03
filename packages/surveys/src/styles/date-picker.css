@@ -62,7 +62,7 @@
 
 .calendar-root [class$="navigation"] {
   height: 36px;
-margin-bottom: 0px;
+  margin-bottom: 0px;
 }
 
 .calendar-root [class$="navigation"] button {
@@ -94,22 +94,22 @@ margin-bottom: 0px;
   text-decoration: none;
 }
 
-.react-calendar{
+.react-calendar {
   width: 100%;
   line-height: 2rem;
 }
 
-.react-calendar__tile--active{
+.react-calendar__tile--active {
   background: var(--fb-brand-color) !important;
   border-radius: 6px;
 }
 
-.react-calendar button:hover{
+.react-calendar button:hover {
   background: rgb(226 232 240) !important;
   border-radius: 10%;
 }
 
-.react-calendar button:focus{
+.react-calendar button:focus {
   outline: 2px solid rgb(226 232 240) !important;
   border-radius: 6px;
 }

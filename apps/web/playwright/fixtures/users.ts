@@ -49,8 +49,8 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
       name?: string;
       email?: string;
       organizationName?: string;
-      productName?: string;
-      withoutProduct?: boolean;
+      projectName?: string;
+      withoutProject?: boolean;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
@@ -61,6 +61,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
           name: uname,
           email: userEmail,
           password: hashedPassword,
+          locale: "en-US",
           memberships: {
             create: {
               organization: {
@@ -68,37 +69,39 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
                   name: params?.organizationName ?? "My Organization",
                   billing: {
                     plan: "free",
-                    limits: { monthly: { responses: 500, miu: 1000 } },
+                    limits: { projects: 3, monthly: { responses: 1500, miu: 2000 } },
                     stripeCustomerId: null,
                     periodStart: new Date(),
                     period: "monthly",
                   },
-                  ...(!params?.withoutProduct && {
-                    products: {
+                  ...(!params?.withoutProject && {
+                    projects: {
                       create: {
-                        name: params?.productName ?? "My Product",
+                        name: params?.projectName ?? "My Project",
                         environments: {
                           create: [
                             {
                               type: "development",
-                              actionClasses: {
+                              attributeKeys: {
                                 create: [
                                   {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
+                                    name: "userId",
+                                    key: "userId",
+                                    isUnique: true,
+                                    type: "default",
                                   },
                                 ],
                               },
                             },
                             {
                               type: "production",
-                              actionClasses: {
+                              attributeKeys: {
                                 create: [
                                   {
-                                    name: "New Session",
-                                    description: "Gets fired when a new session is created",
-                                    type: "automatic",
+                                    name: "userId",
+                                    key: "userId",
+                                    isUnique: true,
+                                    type: "default",
                                   },
                                 ],
                               },

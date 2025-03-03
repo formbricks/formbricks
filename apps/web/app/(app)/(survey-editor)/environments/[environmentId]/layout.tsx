@@ -1,18 +1,24 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
 import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
 import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
-import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
-const EnvLayout = async ({ children, params }) => {
+const SurveyEditorEnvironmentLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session || !session.user) {
     return redirect(`/auth/login`);
@@ -20,23 +26,23 @@ const EnvLayout = async ({ children, params }) => {
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
   if (!hasAccess) {
-    throw new AuthorizationError("Not authorized");
+    throw new AuthorizationError(t("common.not_authorized"));
   }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
   return (
@@ -50,7 +56,7 @@ const EnvLayout = async ({ children, params }) => {
           organizationName={organization.name}
           organizationBilling={organization.billing}
         />
-        <FormbricksClient session={session} userEmail={user.email} />
+        <FormbricksClient userId={user.id} email={user.email} />
         <ToasterClient />
         <div className="flex h-screen flex-col">
           <DevEnvironmentBanner environment={environment} />
@@ -61,4 +67,4 @@ const EnvLayout = async ({ children, params }) => {
   );
 };
 
-export default EnvLayout;
+export default SurveyEditorEnvironmentLayout;

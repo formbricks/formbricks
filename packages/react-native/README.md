@@ -24,24 +24,15 @@ npm install @formbricks/react-native
 import Formbricks, { track } from "@formbricks/react-native";
 
 export default function App() {
-  const config = {
-    environmentId: "your-environment-id",
-    apiHost: "https://app.formbricks.com",
-    userId: "hello-user",
-    attributes: {
-      plan: "free",
-    },
-  };
-
   return (
     <View>
       {/* Your app code */}
-      <Formbricks initConfig={config} />
+      <Formbricks appUrl="https://app.formbricks.com" environmentId="your-environment-id" />
     </View>
   );
 }
 ```
 
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Connections instructions** in the Formbricks **Configuration** pages. Please make sure to pass a unique user identifier as `userId` to the Formbricks SDK (e.g. database id, email address).
+Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Connections instructions** in the Formbricks **Configuration** pages.
 
 For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).

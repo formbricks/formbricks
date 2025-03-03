@@ -1,10 +1,7 @@
 "use server";
 
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { disableTwoFactorAuth, enableTwoFactorAuth, setupTwoFactorAuth } from "@formbricks/lib/auth/service";
-import { getOrganizationIdFromEnvironmentId } from "@formbricks/lib/organization/utils";
 import { deleteFile } from "@formbricks/lib/storage/service";
 import { getFileNameWithIdFromUrl } from "@formbricks/lib/storage/utils";
 import { updateUser } from "@formbricks/lib/user/service";
@@ -15,38 +12,6 @@ export const updateUserAction = authenticatedActionClient
   .schema(ZUserUpdateInput.partial())
   .action(async ({ parsedInput, ctx }) => {
     return await updateUser(ctx.user.id, parsedInput);
-  });
-
-const ZSetupTwoFactorAuthAction = z.object({
-  password: z.string(),
-});
-
-export const setupTwoFactorAuthAction = authenticatedActionClient
-  .schema(ZSetupTwoFactorAuthAction)
-  .action(async ({ parsedInput, ctx }) => {
-    return await setupTwoFactorAuth(ctx.user.id, parsedInput.password);
-  });
-
-const ZEnableTwoFactorAuthAction = z.object({
-  code: z.string(),
-});
-
-export const enableTwoFactorAuthAction = authenticatedActionClient
-  .schema(ZEnableTwoFactorAuthAction)
-  .action(async ({ parsedInput, ctx }) => {
-    return await enableTwoFactorAuth(ctx.user.id, parsedInput.code);
-  });
-
-const ZDisableTwoFactorAuthAction = z.object({
-  code: z.string(),
-  password: z.string(),
-  backupCode: z.string().optional(),
-});
-
-export const disableTwoFactorAuthAction = authenticatedActionClient
-  .schema(ZDisableTwoFactorAuthAction)
-  .action(async ({ parsedInput, ctx }) => {
-    return await disableTwoFactorAuth(ctx.user.id, parsedInput);
   });
 
 const ZUpdateAvatarAction = z.object({
@@ -66,12 +31,6 @@ const ZRemoveAvatarAction = z.object({
 export const removeAvatarAction = authenticatedActionClient
   .schema(ZRemoveAvatarAction)
   .action(async ({ parsedInput, ctx }) => {
-    await checkAuthorization({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
-      rules: ["environment", "read"],
-    });
-
     const imageUrl = ctx.user.imageUrl;
     if (!imageUrl) {
       throw new Error("Image not found");

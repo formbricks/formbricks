@@ -1,11 +1,11 @@
 "use server";
 
+import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
-import { actionClient, authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
 import { cache } from "@formbricks/lib/cache";
-import { getOrganizationIdFromActionClassId } from "@formbricks/lib/organization/utils";
 import { getSurveysByActionClassId } from "@formbricks/lib/survey/service";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
@@ -18,10 +18,20 @@ const ZDeleteActionClassAction = z.object({
 export const deleteActionClassAction = authenticatedActionClient
   .schema(ZDeleteActionClassAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
-      rules: ["actionClass", "delete"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
+        },
+      ],
     });
 
     await deleteActionClass(parsedInput.actionClassId);
@@ -40,10 +50,20 @@ export const updateActionClassAction = authenticatedActionClient
       throw new ResourceNotFoundError("ActionClass", parsedInput.actionClassId);
     }
 
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
-      rules: ["actionClass", "update"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "readWrite",
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
+        },
+      ],
     });
 
     return await updateActionClass(
@@ -60,10 +80,20 @@ const ZGetActiveInactiveSurveysAction = z.object({
 export const getActiveInactiveSurveysAction = authenticatedActionClient
   .schema(ZGetActiveInactiveSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromActionClassId(parsedInput.actionClassId),
-      rules: ["survey", "read"],
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
+        },
+      ],
     });
 
     const surveys = await getSurveysByActionClassId(parsedInput.actionClassId);

@@ -1,5 +1,13 @@
 name: PR Update
 
+# Update permissions to include all necessary ones
+permissions:
+  contents: read
+  pull-requests: read
+  actions: read
+  checks: write
+  id-token: write
+
 on:
   pull_request:
     branches:
@@ -12,63 +20,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  changes:
-    name: Detect changes
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      has-files-requiring-all-checks: ${{ steps.filter.outputs.has-files-requiring-all-checks }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/dangerous-git-checkout
-      - uses: dorny/paths-filter@v2
-        id: filter
-        with:
-          filters: |
-            has-files-requiring-all-checks:
-              - "!(**.md|.github/CODEOWNERS)"
-
   test:
     name: Run Unit Tests
-    needs: [changes]
-    if: ${{ needs.changes.outputs.has-files-requiring-all-checks == 'true' }}
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   lint:
     name: Run Linters
-    needs: [changes]
-    if: ${{ needs.changes.outputs.has-files-requiring-all-checks == 'true' }}
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
   build:
     name: Build Formbricks-web
-    needs: [changes]
-    if: ${{ needs.changes.outputs.has-files-requiring-all-checks == 'true' }}
     uses: ./.github/workflows/build-web.yml
-    secrets: inherit
-
-  docs:
-    name: Build Docs
-    needs: [changes]
-    if: ${{ needs.changes.outputs.has-files-requiring-all-checks == 'true' }}
-    uses: ./.github/workflows/build-docs.yml
     secrets: inherit
 
   e2e-test:
     name: Run E2E Tests
-    needs: [changes]
-    if: ${{ needs.changes.outputs.has-files-requiring-all-checks == 'true' }}
     uses: ./.github/workflows/e2e.yml
     secrets: inherit
 
   required:
     name: PR Check Summary
-    needs: [lint, test, build, e2e-test, docs]
+    needs: [lint, test, build, e2e-test]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
     steps:
       - name: fail if conditional jobs failed
         if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')

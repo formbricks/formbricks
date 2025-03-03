@@ -1,5 +1,6 @@
-import { formatDistance } from "date-fns";
-import { intlFormat } from "date-fns";
+import { formatDistance, intlFormat } from "date-fns";
+import { de, enUS, fr, ptBR, zhTW } from "date-fns/locale";
+import { TUserLocale } from "@formbricks/types/user";
 
 export const convertDateString = (dateString: string) => {
   if (!dateString) {
@@ -10,7 +11,7 @@ export const convertDateString = (dateString: string) => {
     date,
     {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     },
     {
@@ -75,10 +76,26 @@ export const convertTimeString = (dateString: string) => {
   );
 };
 
-export const timeSince = (dateString: string) => {
+const getLocaleForTimeSince = (locale: TUserLocale) => {
+  switch (locale) {
+    case "de-DE":
+      return de;
+    case "en-US":
+      return enUS;
+    case "pt-BR":
+      return ptBR;
+    case "fr-FR":
+      return fr;
+    case "zh-Hant-TW":
+      return zhTW;
+  }
+};
+
+export const timeSince = (dateString: string, locale: TUserLocale) => {
   const date = new Date(dateString);
   return formatDistance(date, new Date(), {
     addSuffix: true,
+    locale: getLocaleForTimeSince(locale),
   });
 };
 
@@ -94,12 +111,6 @@ export const formatDate = (date: Date) => {
     month: "long",
     day: "numeric",
   });
-};
-
-export const timeSinceConditionally = (dateString: string) => {
-  return new Date().getTime() - new Date(dateString).getTime() > 14 * 24 * 60 * 60 * 1000
-    ? convertDateTimeStringShort(dateString)
-    : timeSince(dateString);
 };
 
 export const getTodaysDateFormatted = (seperator: string) => {

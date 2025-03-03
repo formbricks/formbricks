@@ -1,55 +1,74 @@
+import { getDefaultEndingCard } from "@/app/lib/templates";
 import { createId } from "@paralleldrive/cuid2";
-import { getDefaultEndingCard } from "@formbricks/lib/templates";
+import { TFnType } from "@tolgee/react";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 
-export const XMSurveyDefault: TXMTemplate = {
-  name: "",
-  endings: [getDefaultEndingCard([])],
-  questions: [],
-  styling: {
-    overwriteThemeStyling: true,
-  },
+function logError(error: Error, context: string) {
+  console.error(`Error in ${context}:`, error);
+}
+
+export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
+  try {
+    return {
+      name: "",
+      endings: [getDefaultEndingCard([], t)],
+      questions: [],
+      styling: {
+        overwriteThemeStyling: true,
+      },
+    };
+  } catch (error) {
+    logError(error, "getXMSurveyDefault");
+    throw error; // Re-throw after logging
+  }
 };
 
-const NPSSurvey = (): TXMTemplate => {
+const npsSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "NPS Survey",
+    ...getXMSurveyDefault(t),
+    name: t("templates.nps_survey_name"),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.NPS,
-        headline: { default: "How likely are you to recommend {{productName}} to a friend or colleague?" },
+        headline: { default: t("templates.nps_survey_question_1_headline") },
         required: true,
-        lowerLabel: { default: "Not at all likely" },
-        upperLabel: { default: "Extremely likely" },
+        lowerLabel: { default: t("templates.nps_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.nps_survey_question_1_upper_label") },
         isColorCodingEnabled: true,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "To help us improve, can you describe the reason(s) for your rating?" },
+        headline: { default: t("templates.nps_survey_question_2_headline") },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Any other comments, feedback, or concerns?" },
+        headline: { default: t("templates.nps_survey_question_3_headline") },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-const StarRatingSurvey = (): TXMTemplate => {
+const starRatingSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
-    ...XMSurveyDefault,
-    name: "{{productName}}'s Rating Survey",
+    ...defaultSurvey,
+    name: t("templates.star_rating_survey_name"),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -86,15 +105,15 @@ const StarRatingSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "number",
-        headline: { default: "How do you like {{productName}}?" },
+        headline: { default: t("templates.star_rating_survey_question_1_headline") },
         required: true,
-        lowerLabel: { default: "Extremely dissatisfied" },
-        upperLabel: { default: "Extremely satisfied" },
+        lowerLabel: { default: t("templates.star_rating_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.star_rating_survey_question_1_upper_label") },
         isColorCodingEnabled: false,
       },
       {
         id: reusableQuestionIds[1],
-        html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
+        html: { default: t("templates.star_rating_survey_question_2_html") },
         type: TSurveyQuestionTypeEnum.CTA,
         logic: [
           {
@@ -117,37 +136,41 @@ const StarRatingSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Happy to hear 🙏 Please write a review for us!" },
+        headline: { default: t("templates.star_rating_survey_question_2_headline") },
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: "Write review" },
+        buttonLabel: { default: t("templates.star_rating_survey_question_2_button_label") },
         buttonExternal: true,
       },
       {
         id: reusableQuestionIds[2],
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Sorry to hear! What is ONE thing we can do better?" },
+        headline: { default: t("templates.star_rating_survey_question_3_headline") },
         required: true,
-        subheader: { default: "Help us improve your experience." },
-        buttonLabel: { default: "Send" },
-        placeholder: { default: "Type your answer here..." },
+        subheader: { default: t("templates.star_rating_survey_question_3_subheader") },
+        buttonLabel: { default: t("templates.star_rating_survey_question_3_button_label") },
+        placeholder: { default: t("templates.star_rating_survey_question_3_placeholder") },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-const CSATSurvey = (): TXMTemplate => {
+const csatSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
-    ...XMSurveyDefault,
-    name: "{{productName}} CSAT",
+    ...defaultSurvey,
+    name: t("templates.csat_survey_name"),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -184,10 +207,10 @@ const CSATSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: "How satisfied are you with your {{productName}} experience?" },
+        headline: { default: t("templates.csat_survey_question_1_headline") },
         required: true,
-        lowerLabel: { default: "Extremely dissatisfied" },
-        upperLabel: { default: "Extremely satisfied" },
+        lowerLabel: { default: t("templates.csat_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.csat_survey_question_1_upper_label") },
         isColorCodingEnabled: false,
       },
       {
@@ -214,62 +237,72 @@ const CSATSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Lovely! Is there anything we can do to improve your experience?" },
+        headline: { default: t("templates.csat_survey_question_2_headline") },
         required: false,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: t("templates.csat_survey_question_2_placeholder") },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: reusableQuestionIds[2],
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Ugh, sorry! Is there anything we can do to improve your experience?" },
+        headline: { default: t("templates.csat_survey_question_3_headline") },
         required: false,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: t("templates.csat_survey_question_3_placeholder") },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-const CESSurvey = (): TXMTemplate => {
+const cessSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "CES Survey",
+    ...getXMSurveyDefault(t),
+    name: t("templates.cess_survey_name"),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.Rating,
         range: 5,
         scale: "number",
-        headline: { default: "{{productName}} makes it easy for me to [ADD GOAL]" },
+        headline: { default: t("templates.cess_survey_question_1_headline") },
         required: true,
-        lowerLabel: { default: "Disagree strongly" },
-        upperLabel: { default: "Agree strongly" },
+        lowerLabel: { default: t("templates.cess_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.cess_survey_question_1_upper_label") },
         isColorCodingEnabled: false,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Thanks! How could we make it easier for you to [ADD GOAL]?" },
+        headline: { default: t("templates.cess_survey_question_2_headline") },
         required: true,
-        placeholder: { default: "Type your answer here..." },
+        placeholder: { default: t("templates.cess_survey_question_2_placeholder") },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-const SmileysRatingSurvey = (): TXMTemplate => {
+const smileysRatingSurvey = (t: TFnType): TXMTemplate => {
   const reusableQuestionIds = [createId(), createId(), createId()];
+  const defaultSurvey = getXMSurveyDefault(t);
 
   return {
-    ...XMSurveyDefault,
-    name: "Smileys Survey",
+    ...defaultSurvey,
+    name: t("templates.smileys_survey_name"),
     questions: [
       {
         id: reusableQuestionIds[0],
@@ -306,15 +339,15 @@ const SmileysRatingSurvey = (): TXMTemplate => {
         ],
         range: 5,
         scale: "smiley",
-        headline: { default: "How do you like {{productName}}?" },
+        headline: { default: t("templates.smileys_survey_question_1_headline") },
         required: true,
-        lowerLabel: { default: "Not good" },
-        upperLabel: { default: "Very satisfied" },
+        lowerLabel: { default: t("templates.smileys_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.smileys_survey_question_1_upper_label") },
         isColorCodingEnabled: false,
       },
       {
         id: reusableQuestionIds[1],
-        html: { default: '<p class="fb-editor-paragraph" dir="ltr"><span>This helps us a lot.</span></p>' },
+        html: { default: t("templates.smileys_survey_question_2_html") },
         type: TSurveyQuestionTypeEnum.CTA,
         logic: [
           {
@@ -337,70 +370,86 @@ const SmileysRatingSurvey = (): TXMTemplate => {
               {
                 id: createId(),
                 objective: "jumpToQuestion",
-                target: XMSurveyDefault.endings[0].id,
+                target: defaultSurvey.endings[0].id,
               },
             ],
           },
         ],
-        headline: { default: "Happy to hear 🙏 Please write a review for us!" },
+        headline: { default: t("templates.smileys_survey_question_2_headline") },
         required: true,
         buttonUrl: "https://formbricks.com/github",
-        buttonLabel: { default: "Write review" },
+        buttonLabel: { default: t("templates.smileys_survey_question_2_button_label") },
         buttonExternal: true,
       },
       {
         id: reusableQuestionIds[2],
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Sorry to hear! What is ONE thing we can do better?" },
+        headline: { default: t("templates.smileys_survey_question_3_headline") },
         required: true,
-        subheader: { default: "Help us improve your experience." },
-        buttonLabel: { default: "Send" },
-        placeholder: { default: "Type your answer here..." },
+        subheader: { default: t("templates.smileys_survey_question_3_subheader") },
+        buttonLabel: { default: t("templates.smileys_survey_question_3_button_label") },
+        placeholder: { default: t("templates.smileys_survey_question_3_placeholder") },
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-const eNPSSurvey = (): TXMTemplate => {
+const enpsSurvey = (t: TFnType): TXMTemplate => {
   return {
-    ...XMSurveyDefault,
-    name: "eNPS Survey",
+    ...getXMSurveyDefault(t),
+    name: t("templates.enps_survey_name"),
     questions: [
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.NPS,
         headline: {
-          default: "How likely are you to recommend working at this company to a friend or colleague?",
+          default: t("templates.enps_survey_question_1_headline"),
         },
         required: false,
-        lowerLabel: { default: "Not at all likely" },
-        upperLabel: { default: "Extremely likely" },
+        lowerLabel: { default: t("templates.enps_survey_question_1_lower_label") },
+        upperLabel: { default: t("templates.enps_survey_question_1_upper_label") },
         isColorCodingEnabled: true,
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "To help us improve, can you describe the reason(s) for your rating?" },
+        headline: { default: t("templates.enps_survey_question_2_headline") },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
       {
         id: createId(),
         type: TSurveyQuestionTypeEnum.OpenText,
-        headline: { default: "Any other comments, feedback, or concerns?" },
+        headline: { default: t("templates.enps_survey_question_3_headline") },
         required: false,
         inputType: "text",
+        charLimit: {
+          enabled: false,
+        },
       },
     ],
   };
 };
 
-export const XMTemplates: TXMTemplate[] = [
-  NPSSurvey(),
-  StarRatingSurvey(),
-  CSATSurvey(),
-  CESSurvey(),
-  SmileysRatingSurvey(),
-  eNPSSurvey(),
-];
+export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
+  try {
+    return [
+      npsSurvey(t),
+      starRatingSurvey(t),
+      csatSurvey(t),
+      cessSurvey(t),
+      smileysRatingSurvey(t),
+      enpsSurvey(t),
+    ];
+  } catch (error) {
+    logError(error, "getXMTemplates");
+    return []; // Return an empty array or handle as needed
+  }
+};

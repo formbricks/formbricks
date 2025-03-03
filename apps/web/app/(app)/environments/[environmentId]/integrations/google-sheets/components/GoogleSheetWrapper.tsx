@@ -3,15 +3,15 @@
 import { ManageIntegration } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/ManageIntegration";
 import { authorize } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/lib/google";
 import googleSheetLogo from "@/images/googleSheetsLogo.png";
+import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 import { useState } from "react";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ConnectIntegration } from "@formbricks/ui/components/ConnectIntegration";
+import { TUserLocale } from "@formbricks/types/user";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {
@@ -20,7 +20,7 @@ interface GoogleSheetWrapperProps {
   surveys: TSurvey[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
-  attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
 export const GoogleSheetWrapper = ({
@@ -29,7 +29,7 @@ export const GoogleSheetWrapper = ({
   surveys,
   googleSheetIntegration,
   webAppUrl,
-  attributeClasses,
+  locale,
 }: GoogleSheetWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
@@ -58,7 +58,6 @@ export const GoogleSheetWrapper = ({
             setOpen={setModalOpen}
             googleSheetIntegration={googleSheetIntegration}
             selectedIntegration={selectedIntegration}
-            attributeClasses={attributeClasses}
           />
           <ManageIntegration
             environment={environment}
@@ -66,6 +65,7 @@ export const GoogleSheetWrapper = ({
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
+            locale={locale}
           />
         </>
       ) : (

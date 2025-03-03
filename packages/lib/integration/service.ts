@@ -63,7 +63,7 @@ export const createOrUpdateIntegration = async (
 };
 
 export const getIntegrations = reactCache(
-  (environmentId: string, page?: number): Promise<TIntegration[]> =>
+  async (environmentId: string, page?: number): Promise<TIntegration[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
@@ -94,7 +94,7 @@ export const getIntegrations = reactCache(
 );
 
 export const getIntegration = reactCache(
-  (integrationId: string): Promise<TIntegration | null> =>
+  async (integrationId: string): Promise<TIntegration | null> =>
     cache(
       async () => {
         try {
@@ -119,7 +119,7 @@ export const getIntegration = reactCache(
 );
 
 export const getIntegrationByType = reactCache(
-  (environmentId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> =>
+  async (environmentId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [type, ZIntegrationType]);

@@ -5,12 +5,9 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TMembership } from "@formbricks/types/memberships";
-import { TUser, TUserCreateInput, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { cache } from "../cache";
-import { createCustomerIoCustomer } from "../customerio";
-import { deleteMembership, updateMembership } from "../membership/service";
-import { deleteOrganization } from "../organization/service";
+import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "../organization/service";
 import { validateInputs } from "../utils/validate";
 import { userCache } from "./cache";
 
@@ -27,11 +24,12 @@ const responseSelection = {
   identityProvider: true,
   objective: true,
   notificationSettings: true,
+  locale: true,
 };
 
 // function to retrive basic information about a user's user
 export const getUser = reactCache(
-  (id: string): Promise<TUser | null> =>
+  async (id: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([id, ZId]);
@@ -64,7 +62,7 @@ export const getUser = reactCache(
 );
 
 export const getUserByEmail = reactCache(
-  (email: string): Promise<TUser | null> =>
+  async (email: string): Promise<TUser | null> =>
     cache(
       async () => {
         validateInputs([email, z.string().email()]);
@@ -92,9 +90,6 @@ export const getUserByEmail = reactCache(
       }
     )()
 );
-
-const getAdminMemberships = (memberships: TMembership[]): TMembership[] =>
-  memberships.filter((membership) => membership.role === "admin");
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
@@ -150,77 +145,15 @@ const deleteUserById = async (id: string): Promise<TUser> => {
   }
 };
 
-export const createUser = async (data: TUserCreateInput): Promise<TUser> => {
-  validateInputs([data, ZUserUpdateInput]);
-
-  try {
-    const user = await prisma.user.create({
-      data: data,
-      select: responseSelection,
-    });
-
-    userCache.revalidate({
-      email: user.email,
-      id: user.id,
-      count: true,
-    });
-
-    // send new user customer.io to customer.io
-    createCustomerIoCustomer(user);
-
-    return user;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-      throw new DatabaseError("User with this email already exists");
-    }
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
 // function to delete a user's user including organizations
 export const deleteUser = async (id: string): Promise<TUser> => {
   validateInputs([id, ZId]);
 
   try {
-    const currentUserMemberships = await prisma.membership.findMany({
-      where: {
-        userId: id,
-      },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            memberships: true,
-          },
-        },
-      },
-    });
+    const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(id);
 
-    for (const currentUserMembership of currentUserMemberships) {
-      const organizationMemberships = currentUserMembership.organization.memberships;
-      const role = currentUserMembership.role;
-      const organizationId = currentUserMembership.organizationId;
-
-      const organizationAdminMemberships = getAdminMemberships(organizationMemberships);
-      const organizationHasAtLeastOneAdmin = organizationAdminMemberships.length > 0;
-      const organizationHasOnlyOneMember = organizationMemberships.length === 1;
-      const currentUserIsOrganizationOwner = role === "owner";
-      await deleteMembership(id, organizationId);
-
-      if (organizationHasOnlyOneMember) {
-        await deleteOrganization(organizationId);
-      } else if (currentUserIsOrganizationOwner && organizationHasAtLeastOneAdmin) {
-        const firstAdmin = organizationAdminMemberships[0];
-        await updateMembership(firstAdmin.userId, organizationId, { role: "owner" });
-      } else if (currentUserIsOrganizationOwner) {
-        await deleteOrganization(organizationId);
-      }
+    for (const organization of organizationsWithSingleOwner) {
+      await deleteOrganization(organization.id);
     }
 
     const deletedUser = await deleteUserById(id);
@@ -260,29 +193,35 @@ export const getUsersWithOrganization = async (organizationId: string): Promise<
   }
 };
 
-export const userIdRelatedToApiKey = async (apiKey: string) => {
-  validateInputs([apiKey, z.string()]);
+export const getUserLocale = reactCache(
+  async (id: string): Promise<TUserLocale | undefined> =>
+    cache(
+      async () => {
+        validateInputs([id, ZId]);
 
-  try {
-    const userId = await prisma.apiKey.findUnique({
-      where: { id: apiKey },
-      select: {
-        environment: {
-          select: {
-            people: {
-              select: {
-                userId: true,
-              },
+        try {
+          const user = await prisma.user.findUnique({
+            where: {
+              id,
             },
-          },
-        },
+            select: responseSelection,
+          });
+
+          if (!user) {
+            return undefined;
+          }
+          return user.locale;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
       },
-    });
-    return userId;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
+      [`getUserLocale-${id}`],
+      {
+        tags: [userCache.tag.byId(id)],
+      }
+    )()
+);

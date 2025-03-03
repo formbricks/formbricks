@@ -17,7 +17,7 @@ type ResponseNoteMock = Prisma.ResponseNoteGetPayload<{
 }>;
 
 export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
-export const mockPersonId = "lhwy39ga2zy8by1ol1bnaiso";
+export const mockContactId = "lhwy39ga2zy8by1ol1bnaiso";
 export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
 export const mockSurveyId = "nlg30c8btxljivh6dfcoxve2";
@@ -48,17 +48,18 @@ export const mockResponseNote: ResponseNoteMock = {
     surveyId: mockSurveyId,
   },
   user: {
-    id: mockPersonId,
+    id: mockContactId,
     name: constantsForTests.fullName,
   },
 };
 
-export const mockPerson = {
-  id: mockPersonId,
+export const mockContact = {
+  id: mockContactId,
   userId: mockUserId,
   createdAt: new Date(2000, 1, 1, 19),
   updatedAt: new Date(2000, 1, 1, 19),
   environmentId: mockEnvironmentId,
+  attributes: [],
 };
 
 export const mockTags = [
@@ -78,7 +79,7 @@ export const mockDisplay: TDisplay = {
   createdAt: new Date(),
   updatedAt: new Date(),
   surveyId: mockSurveyId,
-  personId: mockPersonId,
+  contactId: mockContactId,
   responseId: mockResponseId,
   status: null,
 };
@@ -95,7 +96,7 @@ export const mockResponse: ResponseMock = {
   meta: mockMeta,
   notes: [mockResponseNote],
   tags: mockTags,
-  personId: mockPersonId,
+  personId: mockContactId,
   updatedAt: new Date(),
   language: "English",
   ttc: {},
@@ -128,17 +129,22 @@ export const mockResponses: ResponseMock[] = [
     meta: mockMeta,
     ttc: {},
     variables: {},
-    personAttributes: {
+    contactAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
       "Init Attribute 2": "five",
     },
     singleUseId: mockSingleUseId,
-    personId: mockPersonId,
-    person: null,
+    contactId: mockContactId,
+    contact: {
+      id: mockContactId,
+      attributes: [],
+    },
     language: null,
     tags: getMockTags(["tag1", "tag3"]),
     notes: [],
+    endingId: null,
+    displayId: null,
   },
   {
     id: "clsk8db0r001kk8iujkn32q8g",
@@ -153,13 +159,13 @@ export const mockResponses: ResponseMock[] = [
     meta: mockMeta,
     ttc: {},
     variables: {},
-    personAttributes: {
+    contactAttributes: {
       Plan: "Paid",
       "Init Attribute 1": "six",
       "Init Attribute 2": "four",
     },
     singleUseId: mockSingleUseId,
-    personId: mockPersonId,
+    personId: mockContactId,
     person: null,
     language: null,
     tags: getMockTags(["tag1", "tag2"]),
@@ -183,7 +189,7 @@ export const mockResponses: ResponseMock[] = [
       "Init Attribute 2": "four",
     },
     singleUseId: mockSingleUseId,
-    personId: mockPersonId,
+    personId: mockContactId,
     person: null,
     tags: getMockTags(["tag2", "tag3"]),
     notes: [],
@@ -207,7 +213,7 @@ export const mockResponses: ResponseMock[] = [
       "Init Attribute 2": "two",
     },
     singleUseId: mockSingleUseId,
-    personId: mockPersonId,
+    personId: mockContactId,
     person: null,
     tags: getMockTags(["tag1", "tag4"]),
     notes: [],
@@ -231,7 +237,7 @@ export const mockResponses: ResponseMock[] = [
       "Init Attribute 2": "two",
     },
     singleUseId: mockSingleUseId,
-    personId: mockPersonId,
+    personId: mockContactId,
     person: null,
     tags: getMockTags(["tag4", "tag5"]),
     notes: [],
@@ -267,12 +273,12 @@ export const getFilteredMockResponses = (
     }
   }
 
-  if (fitlerCritera.personAttributes !== undefined) {
+  if (fitlerCritera.contactAttributes !== undefined) {
     result = result.filter((response) => {
-      for (const [key, value] of Object.entries(fitlerCritera.personAttributes || {})) {
-        if (value.op === "equals" && response.personAttributes?.[key] !== value.value) {
+      for (const [key, value] of Object.entries(fitlerCritera.contactAttributes || {})) {
+        if (value.op === "equals" && response.contactAttributes?.[key] !== value.value) {
           return false;
-        } else if (value.op === "notEquals" && response.personAttributes?.[key] === value.value) {
+        } else if (value.op === "notEquals" && response.contactAttributes?.[key] === value.value) {
           return false;
         }
       }
@@ -338,16 +344,17 @@ export const getFilteredMockResponses = (
   if (format) {
     return result.map((response) => ({
       ...response,
-      person: response.person ? { id: response.person.id, userId: response.person.userId } : null,
+      contact: response.contact ? { id: response.contact.id, userId: mockUserId } : null,
       tags: response.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
     }));
   }
+
   return result;
 };
 
 export const mockResponseWithMockPerson: ResponseMock = {
   ...mockResponse,
-  person: mockPerson,
+  contact: mockContact,
 };
 
 export const mockResponseData: TResponseUpdateInput["data"] = {
@@ -367,6 +374,7 @@ export const mockSurveySummaryOutput = {
       dropOffCount: 0,
       dropOffPercentage: 0,
       headline: "Question Text",
+      questionType: "openText",
       questionId: "ars2tjk8hsi8oqk1uac00mo8",
       ttc: 0,
       impressions: 0,
@@ -384,12 +392,17 @@ export const mockSurveySummaryOutput = {
   },
   summary: [
     {
+      insights: undefined,
+      insightsEnabled: undefined,
       question: {
         headline: { default: "Question Text", de: "Fragetext" },
         id: "ars2tjk8hsi8oqk1uac00mo8",
         inputType: "text",
         required: false,
         type: TSurveyQuestionTypeEnum.OpenText,
+        charLimit: {
+          enabled: false,
+        },
       },
       responseCount: 0,
       samples: [],
@@ -500,7 +513,7 @@ export const mockSurvey: TSurvey = {
   displayPercentage: null,
   autoComplete: null,
   isVerifyEmailEnabled: false,
-  productOverwrites: null,
+  projectOverwrites: null,
   styling: null,
   surveyClosedMessage: null,
   singleUse: {

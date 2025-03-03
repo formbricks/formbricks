@@ -1,13 +1,15 @@
 "use server";
 
+import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { authenticatedActionClient } from "@formbricks/lib/actionClient";
-import { checkAuthorization } from "@formbricks/lib/actionClient/utils";
-import { getOrganizationIdFromSurveyId } from "@formbricks/lib/organization/utils";
-import { getResponseCountBySurveyId, getResponses, getSurveySummary } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { getSurveySummary } from "./summary/lib/surveySummary";
 
 export const revalidateSurveyIdPath = async (environmentId: string, surveyId: string) => {
   revalidatePath(`/environments/${environmentId}/surveys/${surveyId}`);
@@ -23,10 +25,22 @@ const ZGetResponsesAction = z.object({
 export const getResponsesAction = authenticatedActionClient
   .schema(ZGetResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getResponses(
@@ -45,10 +59,22 @@ const ZGetSurveySummaryAction = z.object({
 export const getSurveySummaryAction = authenticatedActionClient
   .schema(ZGetSurveySummaryAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getSurveySummary(parsedInput.surveyId, parsedInput.filterCriteria);
@@ -62,11 +88,51 @@ const ZGetResponseCountAction = z.object({
 export const getResponseCountAction = authenticatedActionClient
   .schema(ZGetResponseCountAction)
   .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorization({
+    await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      rules: ["response", "read"],
+      access: [
+        {
+          type: "organization",
+          schema: ZResponseFilterCriteria,
+          data: parsedInput.filterCriteria,
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
     });
 
     return getResponseCountBySurveyId(parsedInput.surveyId, parsedInput.filterCriteria);
+  });
+
+const ZGenerateInsightsForSurveyAction = z.object({
+  surveyId: ZId,
+});
+
+export const generateInsightsForSurveyAction = authenticatedActionClient
+  .schema(ZGenerateInsightsForSurveyAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          schema: ZGenerateInsightsForSurveyAction,
+          data: parsedInput,
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    generateInsightsForSurvey(parsedInput.surveyId);
   });

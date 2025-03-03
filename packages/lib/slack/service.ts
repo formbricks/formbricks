@@ -1,8 +1,10 @@
 import { Prisma } from "@prisma/client";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { SLACK_MESSAGE_LIMIT } from "../constants";
 import { deleteIntegration, getIntegrationByType } from "../integration/service";
+import { truncateText } from "../utils/strings";
 
 export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
@@ -11,8 +13,9 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   let nextCursor: string | undefined = undefined;
 
   do {
-    const url = new URL("https://slack.com/api/conversations.list");
+    const url = new URL("https://slack.com/api/users.conversations");
     url.searchParams.append("limit", "200");
+    url.searchParams.append("types", "private_channel,public_channel");
     if (nextCursor) {
       url.searchParams.append("cursor", nextCursor);
     }
@@ -65,7 +68,7 @@ export const getSlackChannels = async (environmentId: string): Promise<TIntegrat
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError("Database operation failed");
     }
-    throw error;
+    throw new UnknownError(error);
   }
 };
 
@@ -97,11 +100,16 @@ export const writeDataToSlack = async (
           text: `*${questions[i]}*`,
         },
       };
+      const responseText = responses[i];
+      const text =
+        responseText.length > SLACK_MESSAGE_LIMIT
+          ? truncateText(responseText, SLACK_MESSAGE_LIMIT)
+          : responseText;
       let responseSection = {
         type: "section",
         text: {
           type: "mrkdwn",
-          text: `${responses[i]}\n`,
+          text: `${text}\n`,
         },
       };
       blockResponse.push(questionSection, responseSection);

@@ -1,17 +1,23 @@
-import { Code2Icon, MousePointerClickIcon, SparklesIcon } from "lucide-react";
+"use client";
+
+import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
+import { ModalWithTabs } from "@/modules/ui/components/modal-with-tabs";
+import { useTranslate } from "@tolgee/react";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { ModalWithTabs } from "@formbricks/ui/components/ModalWithTabs";
+import { TEnvironment } from "@formbricks/types/environment";
 import { ActionActivityTab } from "./ActionActivityTab";
 import { ActionSettingsTab } from "./ActionSettingsTab";
 
 interface ActionDetailModalProps {
   environmentId: string;
+  environment: TEnvironment;
   open: boolean;
   setOpen: (v: boolean) => void;
   actionClass: TActionClass;
   actionClasses: TActionClass[];
-  membershipRole?: TMembershipRole;
+  isReadOnly: boolean;
+  otherEnvironment: TEnvironment;
+  otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionDetailModal = ({
@@ -20,21 +26,34 @@ export const ActionDetailModal = ({
   setOpen,
   actionClass,
   actionClasses,
-  membershipRole,
+  environment,
+  isReadOnly,
+  otherEnvActionClasses,
+  otherEnvironment,
 }: ActionDetailModalProps) => {
+  const { t } = useTranslate();
   const tabs = [
     {
-      title: "Activity",
-      children: <ActionActivityTab actionClass={actionClass} environmentId={environmentId} />,
+      title: t("common.activity"),
+      children: (
+        <ActionActivityTab
+          otherEnvActionClasses={otherEnvActionClasses}
+          otherEnvironment={otherEnvironment}
+          isReadOnly={isReadOnly}
+          environment={environment}
+          actionClass={actionClass}
+          environmentId={environmentId}
+        />
+      ),
     },
     {
-      title: "Settings",
+      title: t("common.settings"),
       children: (
         <ActionSettingsTab
           actionClass={actionClass}
           actionClasses={actionClasses}
           setOpen={setOpen}
-          membershipRole={membershipRole}
+          isReadOnly={isReadOnly}
         />
       ),
     },
@@ -46,15 +65,7 @@ export const ActionDetailModal = ({
         open={open}
         setOpen={setOpen}
         tabs={tabs}
-        icon={
-          actionClass.type === "code" ? (
-            <Code2Icon className="h-5 w-5" />
-          ) : actionClass.type === "noCode" ? (
-            <MousePointerClickIcon className="h-5 w-5" />
-          ) : actionClass.type === "automatic" ? (
-            <SparklesIcon className="h-5 w-5" />
-          ) : null
-        }
+        icon={ACTION_TYPE_ICON_LOOKUP[actionClass.type]}
         label={actionClass.name}
         description={actionClass.description || ""}
       />

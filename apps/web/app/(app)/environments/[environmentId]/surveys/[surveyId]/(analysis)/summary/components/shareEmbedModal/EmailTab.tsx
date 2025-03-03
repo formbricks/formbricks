@@ -1,12 +1,14 @@
 "use client";
 
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { CodeBlock } from "@/modules/ui/components/code-block";
+import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
+import { useTranslate } from "@tolgee/react";
 import { Code2Icon, CopyIcon, MailIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { Button } from "@formbricks/ui/components/Button";
-import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
-import { LoadingSpinner } from "@formbricks/ui/components/LoadingSpinner";
 import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
 
 interface EmailTabProps {
@@ -17,7 +19,7 @@ interface EmailTabProps {
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [showEmbed, setShowEmbed] = useState(false);
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
-
+  const { t } = useTranslate();
   const emailHtml = useMemo(() => {
     if (!emailHtmlPreview) return "";
     return emailHtmlPreview
@@ -37,14 +39,19 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      await sendEmbedSurveyPreviewEmailAction({ surveyId });
-      toast.success("Email sent!");
+      const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
+      if (val?.data) {
+        toast.success(t("environments.surveys.summary.email_sent"));
+      } else {
+        const errorMessage = getFormattedErrorMessage(val);
+        toast.error(errorMessage);
+      }
     } catch (err) {
       if (err instanceof AuthenticationError) {
-        toast.error("You are not authenticated to perform this action.");
+        toast.error(t("common.not_authenticated"));
         return;
       }
-      toast.error("Something went wrong. Please try again later.");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     }
   };
 
@@ -57,12 +64,12 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             title="Embed survey in your website"
             aria-label="Embed survey in your website"
             onClick={() => {
-              toast.success("Embed code copied to clipboard!");
+              toast.success(t("environments.surveys.summary.embed_code_copied_to_clipboard"));
               navigator.clipboard.writeText(emailHtml);
             }}
-            className="shrink-0"
-            EndIcon={CopyIcon}>
-            Copy code
+            className="shrink-0">
+            {t("common.copy_code")}
+            <CopyIcon />
           </Button>
         ) : (
           <>
@@ -71,21 +78,23 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
               title="send preview email"
               aria-label="send preview email"
               onClick={() => sendPreviewEmail()}
-              EndIcon={MailIcon}
               className="shrink-0">
-              Send Preview
+              {t("environments.surveys.summary.send_preview")}
+              <MailIcon />
             </Button>
           </>
         )}
         <Button
-          title="view embed code for email"
-          aria-label="view embed code for email"
+          title={t("environments.surveys.summary.view_embed_code_for_email")}
+          aria-label={t("environments.surveys.summary.view_embed_code_for_email")}
           onClick={() => {
             setShowEmbed(!showEmbed);
           }}
-          EndIcon={Code2Icon}
           className="shrink-0">
-          {showEmbed ? "Hide Embed Code" : "View Embed Code"}
+          {showEmbed
+            ? t("environments.surveys.summary.hide_embed_code")
+            : t("environments.surveys.summary.view_embed_code")}
+          <Code2Icon />
         </Button>
       </div>
       {showEmbed ? (
@@ -107,7 +116,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           <div>
             <div className="mb-2 border-b border-slate-200 pb-2 text-sm">To : {email || "user@mail.com"}</div>
             <div className="border-b border-slate-200 pb-2 text-sm">
-              Subject : Formbricks Email Survey Preview
+              Subject : {t("environments.surveys.summary.formbricks_email_survey_preview")}
             </div>
             <div className="p-4">
               {emailHtml ? (

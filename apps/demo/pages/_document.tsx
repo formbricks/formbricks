@@ -1,6 +1,6 @@
 import { Head, Html, Main, NextScript } from "next/document";
 
-const Document = () => {
+export default function Document(): React.JSX.Element {
   return (
     <Html lang="en" className="h-full bg-slate-50">
       <Head />
@@ -10,6 +10,4 @@ const Document = () => {
       </body>
     </Html>
   );
-};
-
-export default Document;
+}

@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/modules/ui/components/command";
+import { NetPromoterScoreIcon } from "@/modules/ui/components/icons";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import {
   AirplayIcon,
@@ -26,15 +36,6 @@ import * as React from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@formbricks/ui/components/Command";
-import { NetPromoterScoreIcon } from "@formbricks/ui/components/icons";
 
 export enum OptionsType {
   QUESTIONS = "Questions",
@@ -84,11 +85,11 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
           case TSurveyQuestionTypeEnum.Consent:
             return <CheckIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.PictureSelection:
-            return <ImageIcon width={18} className="text-white" />;
+            return <ImageIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Matrix:
-            return <GridIcon width={18} className="text-white" />;
+            return <GridIcon width={18} height={18} className="text-white" />;
           case TSurveyQuestionTypeEnum.Ranking:
-            return <ListOrderedIcon width={18} className="text-white" />;
+            return <ListOrderedIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.ATTRIBUTES:
         return <User width={18} height={18} className="text-white" />;
@@ -114,7 +115,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
             return <LanguagesIcon width={18} height={18} className="text-white" />;
         }
       case OptionsType.TAGS:
-        return <HashIcon width={18} className="text-white" />;
+        return <HashIcon width={18} height={18} className="text-white" />;
     }
   };
 
@@ -132,7 +133,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
   return (
     <div className="flex h-5 w-[12rem] items-center sm:w-4/5">
       <span className={clsx("rounded-md p-1", getColor())}>{getIconType()}</span>
-      <p className="ml-3 truncate text-base text-slate-600">
+      <p className="ml-3 truncate text-sm text-slate-600">
         {typeof label === "string" ? label : getLocalizedValue(label, "default")}
       </p>
     </div>
@@ -141,6 +142,7 @@ const SelectedCommandItem = ({ label, questionType, type }: Partial<QuestionOpti
 
 export const QuestionsComboBox = ({ options, selected, onChangeValue }: QuestionComboBoxProps) => {
   const [open, setOpen] = React.useState(false);
+  const { t } = useTranslate();
   const commandRef = React.useRef(null);
   const [inputValue, setInputValue] = React.useState("");
   useClickOutside(commandRef, () => setOpen(false));
@@ -161,7 +163,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
           <CommandInput
             value={inputValue}
             onValueChange={setInputValue}
-            placeholder="Search..."
+            placeholder={t("common.search") + "..."}
             className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
           />
         )}
@@ -177,7 +179,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
         {open && (
           <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
             <CommandList>
-              <CommandEmpty>No result found.</CommandEmpty>
+              <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (
                 <>
                   {data?.option.length > 0 && (

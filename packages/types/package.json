@@ -9,9 +9,10 @@
     "clean": "rimraf node_modules .turbo"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "workspace:*"
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/database": "workspace:*"
   },
   "dependencies": {
-    "zod": "3.23.8"
+    "zod": "3.24.1"
   }
 }

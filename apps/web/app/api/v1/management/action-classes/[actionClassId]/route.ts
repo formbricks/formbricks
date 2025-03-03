@@ -21,8 +21,9 @@ const fetchAndAuthorizeActionClass = async (
 
 export const GET = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -38,8 +39,9 @@ export const GET = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -79,17 +81,15 @@ export const PUT = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { actionClassId: string } }
+  props: { params: Promise<{ actionClassId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
     const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
-    }
-    if (actionClass.type === "automatic") {
-      return responses.badRequestResponse("Automatic action classes cannot be deleted");
     }
     const deletedActionClass = await deleteActionClass(params.actionClassId);
     return responses.successResponse(deletedActionClass);

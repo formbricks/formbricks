@@ -70,7 +70,7 @@ export const createResponseNote = async (
 };
 
 export const getResponseNote = reactCache(
-  (responseNoteId: string): Promise<(TResponseNote & { responseId: string }) | null> =>
+  async (responseNoteId: string): Promise<(TResponseNote & { responseId: string }) | null> =>
     cache(
       async () => {
         try {
@@ -101,7 +101,7 @@ export const getResponseNote = reactCache(
 );
 
 export const getResponseNotes = reactCache(
-  (responseId: string): Promise<TResponseNote[]> =>
+  async (responseId: string): Promise<TResponseNote[]> =>
     cache(
       async () => {
         try {

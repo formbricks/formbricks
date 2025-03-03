@@ -95,7 +95,7 @@ export const organizations = {
     {
       role: "Founder",
       useCase: "Increase conversion",
-      productName: "My Product",
+      projectName: "My Project",
     },
   ],
 };
@@ -144,6 +144,9 @@ export const surveys = {
       question: "This is my Picture Select Question",
       description: "This is Picture Select Description",
     },
+    dateQuestion: {
+      question: "This is my Date Question",
+    },
     fileUploadQuestion: {
       question: "This is my File Upload Question",
     },
@@ -155,7 +158,11 @@ export const surveys = {
     },
     address: {
       question: "Where do you live?",
-      placeholder: "Address Line 1",
+      placeholder: {
+        addressLine1: "Address Line 1",
+        city: "City",
+        zip: "Zip",
+      },
     },
     contactInfo: {
       question: "Contact Info",
@@ -230,7 +237,11 @@ export const surveys = {
     },
     address: {
       question: "Where do you live?",
-      placeholder: "Address Line 1",
+      placeholder: {
+        addressLine1: "Address Line 1",
+        city: "City",
+        zip: "Zip",
+      },
     },
     ranking: {
       question: "This is my Ranking Question",
@@ -242,9 +253,12 @@ export const surveys = {
     },
   },
   germanCreate: {
+    next: "Weiter",
+    back: "Zurück",
     welcomeCard: {
       headline: "Willkommen zu meiner Testumfrage Willkommenskarte!", // German translation
       description: "Dies ist die Beschreibung meiner Willkommenskarte!", // German translation
+      buttonLabel: "Weiter",
     },
     openTextQuestion: {
       question: "Dies ist meine offene Textfrage", // German translation
@@ -301,6 +315,14 @@ export const surveys = {
     },
     addressQuestion: {
       question: "Wo wohnst du ?",
+      placeholder: {
+        addressLine1: "Adresse",
+        addressLine2: "Adresse",
+        city: "Adresse",
+        state: "Adresse",
+        zip: "Adresse",
+        country: "Adresse",
+      },
     },
     ranking: {
       question: "Was ist für Sie im Leben am wichtigsten?",

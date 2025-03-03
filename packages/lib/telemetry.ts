@@ -16,11 +16,11 @@ const getTelemetryId = (): string => {
 export const captureTelemetry = async (eventName: string, properties = {}) => {
   if (env.TELEMETRY_DISABLED !== "1" && process.env.NODE_ENV === "production") {
     try {
-      await fetch("https://eu.posthog.com/capture/", {
+      await fetch("https://telemetry.formbricks.com/capture/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          api_key: "phc_6XBUthOJLVe0Ij9EYkwEKpV96fUbA1aXxnHDq5ryASk",
+          api_key: "phc_SoIFUJ8b9ufDm0YOnoOxJf6PXyuHpO7N6RztxFdZTy",
           event: eventName,
           properties: {
             distinct_id: getTelemetryId(),

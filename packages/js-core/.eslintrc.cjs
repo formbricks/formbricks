@@ -1,4 +1,7 @@
 module.exports = {
-  extends: ["@formbricks/eslint-config/legacy-library.js"],
-  parser: "@typescript-eslint/parser",
+  extends: ["@formbricks/eslint-config/library.js"],
+  parserOptions: {
+    project: "tsconfig.json",
+    tsconfigRootDir: __dirname,
+  },
 };

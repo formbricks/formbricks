@@ -1,5 +1,8 @@
+"use client";
+
+import { Badge } from "@/modules/ui/components/badge";
+import { useTranslate } from "@tolgee/react";
 import { cn } from "@formbricks/lib/cn";
-import { Badge } from "@formbricks/ui/components/Badge";
 
 export const SettingsCard = ({
   title,
@@ -18,6 +21,7 @@ export const SettingsCard = ({
   beta?: boolean;
   className?: string;
 }) => {
+  const { t } = useTranslate();
   return (
     <div
       className={cn(
@@ -27,10 +31,12 @@ export const SettingsCard = ({
       id={title}>
       <div className="border-b border-slate-200 px-4 pb-4">
         <div className="flex">
-          <h3 className="text-lg font-medium leading-6 text-slate-900">{title}</h3>
+          <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{title}</h3>
           <div className="ml-2">
-            {beta && <Badge text="Beta" size="normal" type="warning" />}
-            {soon && <Badge text="coming soon" size="normal" type="success" />}
+            {beta && <Badge size="normal" type="warning" text="Beta" />}
+            {soon && (
+              <Badge size="normal" type="success" text={t("environments.settings.enterprise.coming_soon")} />
+            )}
           </div>
         </div>
         <p className="mt-1 text-sm text-slate-500">{description}</p>

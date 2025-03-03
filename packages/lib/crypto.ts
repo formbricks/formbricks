@@ -19,6 +19,7 @@ export const symmetricEncrypt = (text: string, key: string) => {
   const _key = Buffer.from(key, BUFFER_ENCODING);
   const iv = crypto.randomBytes(IV_LENGTH);
 
+  // @ts-ignore -- the package needs to be built
   const cipher = crypto.createCipheriv(ALGORITHM, _key, iv);
   let ciphered = cipher.update(text, INPUT_ENCODING, OUTPUT_ENCODING);
   ciphered += cipher.final(OUTPUT_ENCODING);
@@ -37,6 +38,7 @@ export const symmetricDecrypt = (text: string, key: string) => {
 
   const components = text.split(":");
   const iv_from_ciphertext = Buffer.from(components.shift() || "", OUTPUT_ENCODING);
+  // @ts-ignore -- the package needs to be built
   const decipher = crypto.createDecipheriv(ALGORITHM, _key, iv_from_ciphertext);
   let deciphered = decipher.update(components.join(":"), OUTPUT_ENCODING, INPUT_ENCODING);
   deciphered += decipher.final(INPUT_ENCODING);
@@ -48,6 +50,7 @@ export const getHash = (key: string): string => createHash("sha256").update(key)
 
 // create an aes128 encryption function
 export const encryptAES128 = (encryptionKey: string, data: string): string => {
+  // @ts-ignore -- the package needs to be built
   const cipher = createCipheriv("aes-128-ecb", Buffer.from(encryptionKey, "base64"), "");
   let encrypted = cipher.update(data, "utf-8", "hex");
   encrypted += cipher.final("hex");
@@ -55,6 +58,7 @@ export const encryptAES128 = (encryptionKey: string, data: string): string => {
 };
 // create an aes128 decryption function
 export const decryptAES128 = (encryptionKey: string, data: string): string => {
+  // @ts-ignore -- the package needs to be built
   const cipher = createDecipheriv("aes-128-ecb", Buffer.from(encryptionKey, "base64"), "");
   let decrypted = cipher.update(data, "hex", "utf-8");
   decrypted += cipher.final("utf-8");

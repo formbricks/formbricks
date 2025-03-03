@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZAttributes } from "./attributes";
 import { ZId } from "./common";
 import { ZSurvey } from "./surveys/types";
 import { ZTag } from "./tags";
@@ -45,13 +44,13 @@ export const ZResponseTtc = z.record(z.number());
 
 export type TResponseTtc = z.infer<typeof ZResponseTtc>;
 
-export const ZResponsePersonAttributes = ZAttributes.nullable();
+export const ZResponseContactAttributes = z.record(z.string()).nullable();
 
-export type TResponsePersonAttributes = z.infer<typeof ZResponsePersonAttributes>;
+export type TResponseContactAttributes = z.infer<typeof ZResponseContactAttributes>;
 
-export const ZSurveyPersonAttributes = z.record(z.array(z.string()));
+export const ZSurveyContactAttributes = z.record(z.array(z.string()));
 
-export type TSurveyPersonAttributes = z.infer<typeof ZSurveyPersonAttributes>;
+export type TSurveyContactAttributes = z.infer<typeof ZSurveyContactAttributes>;
 
 export const ZSurveyMetaFieldFilter = z.record(z.array(z.string()));
 
@@ -147,7 +146,7 @@ export const ZResponseFilterCriteria = z.object({
     })
     .optional(),
 
-  personAttributes: z
+  contactAttributes: z
     .record(
       z.object({
         op: z.enum(["equals", "notEquals"]),
@@ -206,12 +205,12 @@ export const ZResponseFilterCriteria = z.object({
     .optional(),
 });
 
-export const ZResponsePerson = z.object({
+export const ZResponseContact = z.object({
   id: ZId,
   userId: z.string(),
 });
 
-export type TResponsePerson = z.infer<typeof ZResponsePerson>;
+export type TResponseContact = z.infer<typeof ZResponseContact>;
 
 export type TResponseFilterCriteria = z.infer<typeof ZResponseFilterCriteria>;
 
@@ -256,9 +255,10 @@ export const ZResponse = z.object({
   updatedAt: z.date(),
   surveyId: z.string().cuid2(),
   displayId: z.string().nullish(),
-  person: ZResponsePerson.nullable(),
-  personAttributes: ZResponsePersonAttributes,
+  contact: ZResponseContact.nullable(),
+  contactAttributes: ZResponseContactAttributes,
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   data: ZResponseData,
   variables: ZResponseVariables,
   ttc: ZResponseTtc.optional(),
@@ -280,6 +280,7 @@ export const ZResponseInput = z.object({
   displayId: z.string().nullish(),
   singleUseId: z.string().nullable().optional(),
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   language: z.string().optional(),
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
@@ -305,6 +306,7 @@ export type TResponseInput = z.infer<typeof ZResponseInput>;
 
 export const ZResponseUpdateInput = z.object({
   finished: z.boolean(),
+  endingId: z.string().nullish(),
   data: ZResponseData,
   variables: ZResponseVariables.optional(),
   ttc: ZResponseTtc.optional(),
@@ -337,6 +339,7 @@ export const ZResponseUpdate = z.object({
     .optional(),
   hiddenFields: ZResponseHiddenFieldValue.optional(),
   displayId: z.string().nullish(),
+  endingId: z.string().nullish(),
 });
 
 export type TResponseUpdate = z.infer<typeof ZResponseUpdate>;
@@ -351,8 +354,8 @@ export const ZResponseTableData = z.object({
   language: z.string().nullable(),
   responseData: ZResponseData,
   variables: z.record(z.union([z.string(), z.number()])),
-  person: ZResponsePerson.nullable(),
-  personAttributes: ZResponsePersonAttributes,
+  person: ZResponseContact.nullable(),
+  contactAttributes: ZResponseContactAttributes,
 });
 
 export type TResponseTableData = z.infer<typeof ZResponseTableData>;

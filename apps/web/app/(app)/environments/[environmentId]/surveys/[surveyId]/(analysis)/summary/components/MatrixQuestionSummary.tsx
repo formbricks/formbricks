@@ -1,19 +1,21 @@
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+"use client";
+
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryMatrix,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TooltipRenderer } from "@formbricks/ui/components/Tooltip";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface MatrixQuestionSummaryProps {
   questionSummary: TSurveyQuestionSummaryMatrix;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -21,12 +23,8 @@ interface MatrixQuestionSummaryProps {
   ) => void;
 }
 
-export const MatrixQuestionSummary = ({
-  questionSummary,
-  survey,
-  attributeClasses,
-  setFilter,
-}: MatrixQuestionSummaryProps) => {
+export const MatrixQuestionSummary = ({ questionSummary, survey, setFilter }: MatrixQuestionSummaryProps) => {
+  const { t } = useTranslate();
   const getOpacityLevel = (percentage: number): string => {
     const parsedPercentage = percentage;
     const opacity = parsedPercentage * 0.75 + 15;
@@ -37,20 +35,18 @@ export const MatrixQuestionSummary = ({
     if (label) {
       return label;
     } else if (percentage !== undefined && totalResponsesForRow !== undefined) {
-      return `${Math.round((percentage / 100) * totalResponsesForRow)} responses`;
+      return `${Math.round((percentage / 100) * totalResponsesForRow)} ${t("common.responses")}`;
     }
     return "";
   };
 
-  const columns = questionSummary.data[0] ? Object.keys(questionSummary.data[0].columnPercentages) : [];
+  const columns = questionSummary.data[0]
+    ? questionSummary.data[0].columnPercentages.map((c) => c.column)
+    : [];
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        attributeClasses={attributeClasses}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div className="overflow-x-auto p-6">
         {/* Summary Table  */}
         <table className="mx-auto border-collapse cursor-default text-left">
@@ -74,7 +70,7 @@ export const MatrixQuestionSummary = ({
                     <p className="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{rowLabel}</p>
                   </TooltipRenderer>
                 </td>
-                {Object.entries(columnPercentages).map(([column, percentage]) => (
+                {columnPercentages.map(({ column, percentage }) => (
                   <td
                     key={column}
                     className="text-center text-slate-500 dark:border-slate-700 dark:text-slate-400">

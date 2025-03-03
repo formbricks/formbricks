@@ -1,25 +1,31 @@
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
-const AccountSettingsLayout = async ({ children, params }) => {
-  const [organization, product, session] = await Promise.all([
+const AccountSettingsLayout = async (props) => {
+  const params = await props.params;
+
+  const { children } = props;
+
+  const t = await getTranslate();
+  const [organization, project, session] = await Promise.all([
     getOrganizationByEnvironmentId(params.environmentId),
-    getProductByEnvironmentId(params.environmentId),
+    getProjectByEnvironmentId(params.environmentId),
     getServerSession(authOptions),
   ]);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
   }
 
-  if (!product) {
-    throw new Error("Product not found");
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   if (!session) {
-    throw new Error("Unauthenticated");
+    throw new Error(t("common.session_not_found"));
   }
 
   return <>{children}</>;

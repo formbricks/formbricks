@@ -1,13 +1,14 @@
 "use client";
 
+import { Switch } from "@/modules/ui/components/switch";
+import { useTranslate } from "@tolgee/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/components/Switch";
 import { updateNotificationSettingsAction } from "../actions";
 
 interface NotificationSwitchProps {
-  surveyOrProductOrOrganizationId: string;
+  surveyOrProjectOrOrganizationId: string;
   notificationSettings: TUserNotificationSettings;
   notificationType: "alert" | "weeklySummary" | "unsubscribedOrganizationIds";
   autoDisableNotificationType?: string;
@@ -15,18 +16,18 @@ interface NotificationSwitchProps {
 }
 
 export const NotificationSwitch = ({
-  surveyOrProductOrOrganizationId,
+  surveyOrProjectOrOrganizationId,
   notificationSettings,
   notificationType,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: NotificationSwitchProps) => {
   const [isLoading, setIsLoading] = useState(false);
-
+  const { t } = useTranslate();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
-      ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)
-      : notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true;
+      ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)
+      : notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true;
 
   const handleSwitchChange = async () => {
     setIsLoading(true);
@@ -34,19 +35,19 @@ export const NotificationSwitch = ({
     let updatedNotificationSettings = { ...notificationSettings };
     if (notificationType === "unsubscribedOrganizationIds") {
       const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
-      if (unsubscribedOrganizationIds.includes(surveyOrProductOrOrganizationId)) {
+      if (unsubscribedOrganizationIds.includes(surveyOrProjectOrOrganizationId)) {
         updatedNotificationSettings.unsubscribedOrganizationIds = unsubscribedOrganizationIds.filter(
-          (id) => id !== surveyOrProductOrOrganizationId
+          (id) => id !== surveyOrProjectOrOrganizationId
         );
       } else {
         updatedNotificationSettings.unsubscribedOrganizationIds = [
           ...unsubscribedOrganizationIds,
-          surveyOrProductOrOrganizationId,
+          surveyOrProjectOrOrganizationId,
         ];
       }
     } else {
-      updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId] =
-        !updatedNotificationSettings[notificationType][surveyOrProductOrOrganizationId];
+      updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId] =
+        !updatedNotificationSettings[notificationType][surveyOrProjectOrOrganizationId];
     }
 
     await updateNotificationSettingsAction({ notificationSettings: updatedNotificationSettings });
@@ -56,25 +57,35 @@ export const NotificationSwitch = ({
   useEffect(() => {
     if (
       autoDisableNotificationType &&
-      autoDisableNotificationElementId === surveyOrProductOrOrganizationId &&
+      autoDisableNotificationElementId === surveyOrProjectOrOrganizationId &&
       isChecked
     ) {
       switch (notificationType) {
         case "alert":
-          if (notificationSettings[notificationType][surveyOrProductOrOrganizationId] === true) {
+          if (notificationSettings[notificationType][surveyOrProjectOrOrganizationId] === true) {
             handleSwitchChange();
-            toast.success("You will not receive any more emails for responses on this survey!", {
-              id: "notification-switch",
-            });
+            toast.success(
+              t(
+                "environments.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
+              ),
+              {
+                id: "notification-switch",
+              }
+            );
           }
           break;
 
         case "unsubscribedOrganizationIds":
-          if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProductOrOrganizationId)) {
+          if (!notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrProjectOrOrganizationId)) {
             handleSwitchChange();
-            toast.success("You will not be auto-subscribed to this organization's surveys anymore!", {
-              id: "notification-switch",
-            });
+            toast.success(
+              t(
+                "environments.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
+              ),
+              {
+                id: "notification-switch",
+              }
+            );
           }
           break;
 
@@ -93,7 +104,9 @@ export const NotificationSwitch = ({
       disabled={isLoading}
       onCheckedChange={async () => {
         await handleSwitchChange();
-        toast.success("Notification settings updated", { id: "notification-switch" });
+        toast.success(t("environments.settings.notifications.notification_settings_updated"), {
+          id: "notification-switch",
+        });
       }}
     />
   );

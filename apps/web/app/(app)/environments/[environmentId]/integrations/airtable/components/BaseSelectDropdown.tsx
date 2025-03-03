@@ -1,13 +1,16 @@
-import { Control, Controller, UseFormSetValue } from "react-hook-form";
-import { TIntegrationItem } from "@formbricks/types/integration";
-import { Label } from "@formbricks/ui/components/Label";
+"use client";
+
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
+} from "@/modules/ui/components/select";
+import { useTranslate } from "@tolgee/react";
+import { Control, Controller, UseFormSetValue } from "react-hook-form";
+import { TIntegrationItem } from "@formbricks/types/integration";
 import { IntegrationModalInputs } from "./AddIntegrationModal";
 
 interface BaseSelectProps {
@@ -27,9 +30,10 @@ export const BaseSelectDropdown = ({
   setValue,
   defaultValue,
 }: BaseSelectProps) => {
+  const { t } = useTranslate();
   return (
     <div className="flex w-full flex-col">
-      <Label htmlFor="base">Airtable base</Label>
+      <Label htmlFor="base">{t("environments.integrations.airtable.airtable_base")}</Label>
       <div className="mt-1 flex">
         <Controller
           control={control}

@@ -1,0 +1,55 @@
+---
+title: GitHub Codespaces
+description: How to set up Formbricks in a GitHub Codespaces environment
+icon: "github"
+---
+
+### GitHub Codespaces Setup
+
+<Info>
+  This guide outlines how to set up Formbricks in a **GitHub Codespaces** environment.
+</Info>
+
+**Requirements:**
+
+- A GitHub Codespace that has support for Node.JS, pnpm, and Docker.
+
+**Steps:**
+
+1. **Open your repository in GitHub Codespaces. If needed, clone the repository:**
+    ```bash
+    git clone https://github.com/formbricks/formbricks && cd formbricks
+    ```
+
+2. **Setup NodeJS with nvm (if not already configured):**
+    ```bash
+    nvm install && nvm use
+    ```
+
+3. **Install the dependencies:**
+    ```bash
+    pnpm install
+    ```
+
+4. **Create a `.env` file from the template:**
+    ```bash
+    cp .env.example .env
+    ```
+
+5. **Generate & set the required secrets:**
+    ```bash
+    sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+    sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+    sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+    ```
+
+6. **Launch the development setup:**
+    ```bash
+    pnpm go
+    ```
+
+Use the Codespaces port forwarding to access Formbricks at [http://localhost:3000](http://localhost:3000).
+
+<Tip>
+  Make sure your Codespaces port configuration is set to allow access to the app.
+</Tip> 

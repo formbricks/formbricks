@@ -3,9 +3,9 @@ import preflight from "@/styles/preflight.css?inline";
 import calendarCss from "react-calendar/dist/Calendar.css?inline";
 import datePickerCss from "react-date-picker/dist/DatePicker.css?inline";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
-import { TProductStyling } from "@formbricks/types/product";
-import { TSurveyStyling } from "@formbricks/types/surveys/types";
-import editorCss from "../../../ui/components/Editor/stylesEditorFrontend.css?inline";
+import { type TProjectStyling } from "@formbricks/types/project";
+import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import editorCss from "../../../../apps/web/modules/ui/components/editor/styles-editor-frontend.css?inline";
 import datePickerCustomCss from "../styles/date-picker.css?inline";
 
 export const addStylesToDom = () => {
@@ -18,7 +18,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TSurveyStyling }) => {
+export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom");
 
@@ -33,7 +33,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   let cssVariables = ":root {\n";
 
   // Helper function to append the variable if it's not undefined
-  const appendCssVariable = (variableName: string, value: string | undefined) => {
+  const appendCssVariable = (variableName: string, value?: string) => {
     if (value !== undefined) {
       cssVariables += `--fb-${variableName}: ${value};\n`;
     }
@@ -45,9 +45,9 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   // Use the helper function to append CSS variables
   appendCssVariable("brand-color", styling.brandColor?.light);
   appendCssVariable("focus-color", styling.brandColor?.light);
-  if (!!styling.brandColor?.light) {
+  if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
-    appendCssVariable("brand-text-color", isLight(styling.brandColor?.light) ? "black" : "white");
+    appendCssVariable("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
   } else {
     // If the brand color is undefined, default to white
     appendCssVariable("brand-text-color", "#ffffff");
@@ -62,37 +62,38 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
   appendCssVariable("subheading-color", styling.questionColor?.light);
 
   if (styling.questionColor?.light) {
-    appendCssVariable("placeholder-color", mixColor(styling.questionColor?.light, "#ffffff", 0.3));
+    appendCssVariable("placeholder-color", mixColor(styling.questionColor.light, "#ffffff", 0.3));
   }
 
   appendCssVariable("border-color", styling.inputBorderColor?.light);
 
   if (styling.inputBorderColor?.light) {
-    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor?.light, "#000000", 0.1));
+    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
   }
 
   appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
   appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
-  appendCssVariable("border-radius", `${roundness}px`);
+  appendCssVariable("border-radius", `${Number(roundness).toString()}px`);
   appendCssVariable("input-background-color", styling.inputColor?.light);
 
   if (styling.questionColor?.light) {
-    let signatureColor = "";
-    let brandingColor = "";
-
-    if (isLight(styling.questionColor?.light)) {
-      signatureColor = mixColor(styling.questionColor?.light, "#000000", 0.2);
-      brandingColor = mixColor(styling.questionColor?.light, "#000000", 0.3);
-    } else {
-      signatureColor = mixColor(styling.questionColor?.light, "#ffffff", 0.2);
-      brandingColor = mixColor(styling.questionColor?.light, "#ffffff", 0.3);
-    }
+    const isLightQuestionColor = isLight(styling.questionColor.light);
+    const signatureColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.2
+    );
+    const brandingColor = mixColor(
+      styling.questionColor.light,
+      isLightQuestionColor ? "#000000" : "#ffffff",
+      0.3
+    );
 
     appendCssVariable("signature-text-color", signatureColor);
     appendCssVariable("branding-text-color", brandingColor);
   }
 
-  if (!!styling.inputColor?.light) {
+  if (styling.inputColor?.light) {
     if (
       styling.inputColor.light === "#fff" ||
       styling.inputColor.light === "#ffffff" ||
@@ -102,7 +103,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        mixColor(styling.inputColor?.light, "#000000", 0.025)
+        mixColor(styling.inputColor.light, "#000000", 0.025)
       );
     }
   }
@@ -115,6 +116,10 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProductStyling | TS
 
     appendCssVariable("accent-background-color", accentColor);
     appendCssVariable("accent-background-color-selected", accentColorSelected);
+
+    if (isLight(brandColor)) {
+      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
+    }
   }
 
   // Close the :root block

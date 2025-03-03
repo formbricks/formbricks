@@ -7,7 +7,6 @@ export const TYPE_MAPPING = {
   [TSurveyQuestionTypeEnum.OpenText]: [
     "created_by",
     "created_time",
-    "date",
     "email",
     "last_edited_by",
     "last_edited_time",

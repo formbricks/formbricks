@@ -1,9 +1,10 @@
 import { FormbricksAPI } from "@formbricks/api";
-import { TAttributes } from "@formbricks/types/attributes";
+import { type TAttributes } from "@formbricks/types/attributes";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { Config } from "./config";
-import { MissingPersonError, NetworkError, Result, err, ok, okVoid } from "./errors";
+import { type Result, err, ok, okVoid } from "./errors";
 import { Logger } from "./logger";
-import { fetchPersonState } from "./personState";
+import { fetchPersonState } from "./person-state";
 import { filterSurveys } from "./utils";
 
 const config = Config.getInstance();
@@ -17,8 +18,9 @@ export const updateAttribute = async (
     {
       changed: boolean;
       message: string;
+      messages?: string[];
     },
-    Error | NetworkError
+    ApiErrorResponse
   >
 > => {
   const { apiHost, environmentId } = config.get();
@@ -29,7 +31,7 @@ export const updateAttribute = async (
       code: "network_error",
       status: 500,
       message: "Missing userId",
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId ?? ""}/attributes`),
       responseMessage: "Missing userId",
     });
   }
@@ -42,9 +44,9 @@ export const updateAttribute = async (
   const res = await api.client.attribute.update({ userId, attributes: { [key]: value } });
 
   if (!res.ok) {
-    // @ts-expect-error
-    if (res.error.details?.ignore) {
-      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
+    const responseError = res.error;
+    if (responseError.details?.ignore) {
+      logger.error(responseError.message);
       return {
         ok: true,
         value: {
@@ -53,23 +55,33 @@ export const updateAttribute = async (
         },
       };
     }
+
     return err({
-      code: "network_error",
-      // @ts-expect-error
-      status: res.error.status ?? 500,
-      message: res.error.message ?? `Error updating person with userId ${userId}`,
-      url: `${config.get().apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
+      code: res.error.code,
+      status: res.error.status,
+      message: `Error updating person with userId ${userId}`,
+      url: new URL(`${apiHost}/api/v1/client/${environmentId}/contacts/${userId}/attributes`),
       responseMessage: res.error.message,
     });
   }
 
+  const responseMessages = res.data.messages;
+
+  if (responseMessages && responseMessages.length > 0) {
+    for (const message of responseMessages) {
+      logger.debug(message);
+    }
+  }
+
   if (res.data.changed) {
     logger.debug("Attribute updated in Formbricks");
+
     return {
       ok: true,
       value: {
         changed: true,
         message: "Attribute updated in Formbricks",
+        messages: responseMessages,
       },
     };
   }
@@ -79,6 +91,7 @@ export const updateAttribute = async (
     value: {
       changed: false,
       message: "Attribute not updated in Formbricks",
+      messages: responseMessages,
     },
   };
 };
@@ -88,22 +101,9 @@ export const updateAttributes = async (
   environmentId: string,
   userId: string,
   attributes: TAttributes
-): Promise<Result<TAttributes, NetworkError>> => {
+): Promise<Result<TAttributes, ApiErrorResponse>> => {
   // clean attributes and remove existing attributes if config already exists
   const updatedAttributes = { ...attributes };
-
-  try {
-    const existingAttributes = config.get().personState.data.attributes;
-    if (existingAttributes) {
-      for (const [key, value] of Object.entries(existingAttributes)) {
-        if (updatedAttributes[key] === value) {
-          delete updatedAttributes[key];
-        }
-      }
-    }
-  } catch (e) {
-    logger.debug("config not set; sending all attributes to backend");
-  }
 
   // send to backend if updatedAttributes is not empty
   if (Object.keys(updatedAttributes).length === 0) {
@@ -111,7 +111,7 @@ export const updateAttributes = async (
     return ok(updatedAttributes);
   }
 
-  logger.debug("Updating attributes: " + JSON.stringify(updatedAttributes));
+  logger.debug(`Updating attributes: ${JSON.stringify(updatedAttributes)}`);
 
   const api = new FormbricksAPI({
     apiHost,
@@ -121,36 +121,35 @@ export const updateAttributes = async (
   const res = await api.client.attribute.update({ userId, attributes: updatedAttributes });
 
   if (res.ok) {
-    return ok(updatedAttributes);
-  } else {
-    // @ts-expect-error
-    if (res.error.details?.ignore) {
-      logger.error(res.error.message ?? `Error updating person with userId ${userId}`);
-      return ok(updatedAttributes);
+    if (res.data.messages) {
+      for (const message of res.data.messages) {
+        logger.debug(message);
+      }
     }
 
-    return err({
-      code: "network_error",
-      status: 500,
-      message: `Error updating person with userId ${userId}`,
-      url: `${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`,
-      responseMessage: res.error.message,
-    });
-  }
-};
-
-export const isExistingAttribute = (key: string, value: string): boolean => {
-  if (config.get().personState.data.attributes[key] === value) {
-    return true;
+    return ok(updatedAttributes);
   }
 
-  return false;
+  const responseError = res.error;
+
+  if (responseError.details?.ignore) {
+    logger.error(responseError.message);
+    return ok(updatedAttributes);
+  }
+
+  return err({
+    code: responseError.code,
+    status: responseError.status,
+    message: `Error updating person with userId ${userId}`,
+    url: new URL(`${apiHost}/api/v1/client/${environmentId}/people/${userId}/attributes`),
+    responseMessage: responseError.responseMessage,
+  });
 };
 
 export const setAttributeInApp = async (
   key: string,
-  value: any
-): Promise<Result<void, NetworkError | MissingPersonError>> => {
+  value: string
+): Promise<Result<void, ApiErrorResponse>> => {
   if (key === "userId") {
     logger.error("Setting userId is no longer supported. Please set the userId in the init call instead.");
     return okVoid();
@@ -158,12 +157,7 @@ export const setAttributeInApp = async (
 
   const userId = config.get().personState.data.userId;
 
-  logger.debug("Setting attribute: " + key + " to value: " + value);
-  // check if attribute already exists with this value
-  if (isExistingAttribute(key, value.toString())) {
-    logger.debug("Attribute already set to this value. Skipping update.");
-    return okVoid();
-  }
+  logger.debug(`Setting attribute: ${key} to value: ${value}`);
 
   if (!userId) {
     logger.error(
@@ -191,11 +185,19 @@ export const setAttributeInApp = async (
         ...config.get(),
         personState,
         filteredSurveys,
+        attributes: {
+          ...config.get().attributes,
+          [key]: value.toString(),
+        },
       });
     }
 
     return okVoid();
   }
+  const error = result.error;
+  if (error.code === "forbidden") {
+    logger.error(`Authorization error: ${error.responseMessage ?? ""}`);
+  }
 
-  return err(result.error as NetworkError);
+  return err(result.error);
 };

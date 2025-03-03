@@ -1,0 +1,91 @@
+---
+title: "Improve Trial Conversion"
+description: "Improve Trial Conversion with Formbricks"
+icon: "chart-line-up"
+---
+
+When a user doesn't convert, you want to know why. A micro-survey displayed at exactly the right time gives you a window into understanding the most relevant question: To pay or not to pay?
+
+## Purpose
+
+Understanding why free users don’t convert to paid users helps boost revenue. This insight allows you to adjust your offering to encourage more users to upgrade.
+
+## Formbricks Approach
+
+- Ask at exactly the right point in time.
+- Ask to understand the problem, don’t ask for solutions.
+
+## Installation
+
+To display the Trial Conversion Survey in your app you want to proceed as follows:
+
+- Create new Trial Conversion Survey at [app.formbricks.com](https://app.formbricks.com/).
+- Set up the user action to display survey at right point in time.
+- Print it.
+
+<Note>
+  ### Is the Formbricks Widget Running?
+  We assume you’ve already installed the Formbricks Widget in your web app, as it’s required to display messages and surveys. If not, follow the [Quick Start Guide (takes 15 mins max.)](/xm-and-surveys/surveys/website-app-surveys/quickstart).
+</Note>
+
+### 1. Create new Trial Conversion Survey
+
+If you don't have an account yet, create one at [app.formbricks.com](https://app.formbricks.com/auth/signup)
+
+Click on **Create Survey** and select the template, **Improve Trial Conversion**:
+
+![Create survey by template](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/create-survey.webp)
+
+### 2. Optional: Update questions
+
+You can update the questions and answer options.
+
+![Change text content](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/change-text.webp)
+
+_Want to change the button color? Adjust it in the project settings!_
+
+Save, and move over to the **Audience** tab.
+
+### 3. Pre-segment your audience (coming soon)
+
+<Note>
+### Filter by Attribute Coming Soon
+
+We're working on pre-segmenting users by attributes. This manual will be updated in the coming days.
+</Note>
+
+Pre-segmentation isn't needed for this survey since you likely want to target all users who cancel their trial. You can use a specific user action, like clicking **Cancel Trial**, to show the survey only to users trying your product.
+
+### 4. Set up a trigger for the Trial Conversion Survey:
+
+How you trigger your survey depends on your product. There are two options:
+
+- **Trigger by Page view:** If you have a page like `/trial-cancelled` for users who cancel their trial subscription, create a user action with the type "Page View." Select "Limit to specific pages" and apply URL filters with these settings:
+
+![Change text content](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/action-pageurl.webp)
+
+Whenever a user visits this page, the survey will be displayed ✅
+
+- **Trigger by Button Click:** In a different case, you have a “Cancel Trial" button in your app. You can setup a user Action with the `Inner Text`:
+
+![Change text content](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/action-innertext.webp)
+
+Please have a look at our complete [Actions manual](/xm-and-surveys/surveys/website-app-surveys/actions) if you have questions.
+
+### 5. Select Action in the “When to ask” card
+
+![Select feedback button action](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/select-action.webp)
+
+### 6. Last step: Set Recontact Options correctly
+
+Finally, scroll down to "Recontact Options" and select the appropriate settings to gather the most insights. Ensure the survey is always displayed, even if the user has seen it in the past few days.
+
+![Set recontact options](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/recontact-options.webp)
+
+### 7. Congrats! You’re ready to publish your survey 🥳
+
+![Publish survey](/images/xm-and-surveys/xm/best-practices/improve-trial-cr/publish.webp)
+
+<Note>
+  Formbricks Widget running? You need to have the Formbricks Widget installed to display the Feedback Box in your app. Please follow [this tutorial (Step 4 onwards)](/xm-and-surveys/surveys/website-app-surveys/quickstart) to install the widget.
+</Note>

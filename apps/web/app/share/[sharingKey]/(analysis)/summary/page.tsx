@@ -1,16 +1,26 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { getAttributeClasses } from "@formbricks/lib/attributeClass/service";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+type Params = Promise<{
+  sharingKey: string;
+}>;
+
+interface SummaryPageProps {
+  params: Params;
+}
+
+const Page = async (props: SummaryPageProps) => {
+  const t = await getTranslate();
+  const params = await props.params;
   const surveyId = await getSurveyIdByResultShareKey(params.sharingKey);
 
   if (!surveyId) {
@@ -19,21 +29,22 @@ const Page = async ({ params }) => {
 
   const survey = await getSurvey(surveyId);
   if (!survey) {
-    throw new Error("Survey not found");
+    throw new Error(t("common.survey_not_found"));
   }
+
   const environmentId = survey.environmentId;
-  const [environment, attributeClasses, product] = await Promise.all([
+
+  const [environment, project] = await Promise.all([
     getEnvironment(environmentId),
-    getAttributeClasses(environmentId),
-    getProductByEnvironmentId(environmentId),
+    getProjectByEnvironmentId(environmentId),
   ]);
 
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new Error(t("common.environment_not_found"));
   }
 
-  if (!product) {
-    throw new Error("Product not found");
+  if (!project) {
+    throw new Error(t("common.project_not_found"));
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
@@ -55,7 +66,9 @@ const Page = async ({ params }) => {
           surveyId={survey.id}
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
-          attributeClasses={attributeClasses}
+          isAIEnabled={false} // Disable AI for sharing page for now
+          isReadOnly={true}
+          locale={DEFAULT_LOCALE}
         />
       </PageContentWrapper>
     </div>

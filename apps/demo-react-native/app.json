@@ -1,32 +1,33 @@
 {
   "expo": {
-    "name": "react-native-demo",
-    "slug": "react-native-demo",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "jsEngine": "hermes",
-    "assetBundlePatterns": ["**/*"],
-    "ios": {
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSCameraUsageDescription": "Take pictures for certain activities.",
-        "NSPhotoLibraryUsageDescription": "Select pictures for certain activities.",
-        "NSMicrophoneUsageDescription": "Need microphone access for recording videos."
-      }
-    },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "foregroundImage": "./assets/adaptive-icon.png"
       }
     },
+    "assetBundlePatterns": ["**/*"],
+    "icon": "./assets/icon.png",
+    "ios": {
+      "infoPlist": {
+        "NSCameraUsageDescription": "Take pictures for certain activities.",
+        "NSMicrophoneUsageDescription": "Need microphone access for recording videos.",
+        "NSPhotoLibraryUsageDescription": "Select pictures for certain activities."
+      },
+      "supportsTablet": true
+    },
+    "jsEngine": "hermes",
+    "name": "react-native-demo",
+    "newArchEnabled": true,
+    "orientation": "portrait",
+    "slug": "react-native-demo",
+    "splash": {
+      "backgroundColor": "#ffffff",
+      "image": "./assets/splash.png",
+      "resizeMode": "contain"
+    },
+    "userInterfaceStyle": "light",
+    "version": "1.0.0",
     "web": {
       "favicon": "./assets/favicon.png"
     }

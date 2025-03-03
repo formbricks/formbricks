@@ -12,14 +12,14 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const GET = async (
   _: NextRequest,
-  {
-    params,
-  }: {
-    params: {
+  props: {
+    params: Promise<{
       environmentId: string;
-    };
+    }>;
   }
 ): Promise<Response> => {
+  const params = await props.params;
+
   try {
     // validate using zod
     const inputValidation = ZJsSyncInput.safeParse({
@@ -36,16 +36,20 @@ export const GET = async (
 
     try {
       const environmentState = await getEnvironmentState(params.environmentId);
+      const { data, revalidateEnvironment } = environmentState;
 
-      if (environmentState.revalidateEnvironment) {
+      if (revalidateEnvironment) {
         environmentCache.revalidate({
           id: inputValidation.data.environmentId,
-          productId: environmentState.state.product.id,
+          projectId: data.project.id,
         });
       }
 
       return responses.successResponse(
-        environmentState.state,
+        {
+          data,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 30), // 30 minutes
+        },
         true,
         "public, s-maxage=600, max-age=840, stale-while-revalidate=600, stale-if-error=600"
       );

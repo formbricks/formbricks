@@ -40,17 +40,15 @@ x-environment: &environment
     # SMTP_PORT:
     # SMTP_USER:
     # SMTP_PASSWORD:
+    # SMTP_AUTHENTICATED:
 
     # (Additional option for TLS (port 465) only)
-    # SMTP_SECURE_ENABLED: 1
+    # SMTP_SECURE_ENABLED:
 
     # If set to 0, the server will accept connections without requiring authorization from the list of supplied CAs (default is 1).
     # SMTP_REJECT_UNAUTHORIZED_TLS: 0
 
     ############################################## OPTIONAL (APP CONFIGURATION) ##############################################
-
-    # Set the below value if you have and want to use a custom URL for the links created by the Link Shortener
-    # SHORT_URL_BASE:
 
     # Set the below to 0 to enable Email Verification for new signups (will required Email Configuration)
     EMAIL_VERIFICATION_DISABLED: 1
@@ -89,6 +87,10 @@ x-environment: &environment
 
     ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
 
+    # Set the below from Cloudflare Turnstile if you want to enable turnstile in signups
+    # NEXT_PUBLIC_TURNSTILE_SITE_KEY:
+    # TURNSTILE_SECRET_KEY:
+
     # Set the below from GitHub if you want to enable GitHub OAuth
     # GITHUB_ID:
     # GITHUB_SECRET:
@@ -108,6 +110,9 @@ x-environment: &environment
     # OIDC_ISSUER:
     # OIDC_DISPLAY_NAME:
     # OIDC_SIGNING_ALGORITHM:
+
+    # Set the below to SAML Provider if you want to enable SAML
+    # SAML_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks-saml?sslmode=disable"
 
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 
@@ -138,6 +143,9 @@ x-environment: &environment
     # Set the below to have your own Imprint Page URL on auth & link survey page
     # IMPRINT_URL:
 
+    # Set the below to have your own Address on email footer
+    # IMPRINT_ADDRESS:
+
     ########################################## OPTIONAL (SERVER CONFIGURATION) ###########################################
 
     # Set the below to 1 to disable Rate Limiting across Formbricks
@@ -158,12 +166,12 @@ x-environment: &environment
     # Insert an existing organization id or generate a valid CUID for a new one at https://www.getuniqueid.com/cuid (e.g. cjld2cjxh0000qzrmn831i7rn)
     # (Role Management is an Enterprise feature)
     # DEFAULT_ORGANIZATION_ID:
-    # DEFAULT_ORGANIZATION_ROLE: admin
+    # DEFAULT_ORGANIZATION_ROLE: owner
 
 services:
   postgres:
     restart: always
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg17
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -180,9 +188,11 @@ services:
       - 3000:3000
     volumes:
       - uploads:/home/nextjs/apps/web/uploads/
+      - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
 
 volumes:
   postgres:
     driver: local
   uploads:
+    driver: local

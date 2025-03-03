@@ -1,16 +1,18 @@
 import { responses } from "@/app/lib/api/response";
+import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@/modules/email";
 import { headers } from "next/headers";
-import { sendNoLiveSurveyNotificationEmail, sendWeeklySummaryNotificationEmail } from "@formbricks/email";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getNotificationResponse } from "./lib/notificationResponse";
 import { getOrganizationIds } from "./lib/organization";
-import { getProductsByOrganizationId } from "./lib/product";
+import { getProjectsByOrganizationId } from "./lib/project";
 
 const BATCH_SIZE = 500;
 
 export const POST = async (): Promise<Response> => {
+  const headersList = await headers();
   // Check authentication
-  if (headers().get("x-api-key") !== CRON_SECRET) {
+  if (headersList.get("x-api-key") !== CRON_SECRET) {
     return responses.notAuthenticatedResponse();
   }
 
@@ -22,38 +24,42 @@ export const POST = async (): Promise<Response> => {
   // Paginate through organizations
   for (let i = 0; i < organizationIds.length; i += BATCH_SIZE) {
     const batchedOrganizationIds = organizationIds.slice(i, i + BATCH_SIZE);
-    // Fetch products for batched organizations asynchronously
-    const batchedProductsPromises = batchedOrganizationIds.map((organizationId) =>
-      getProductsByOrganizationId(organizationId)
+    // Fetch projects for batched organizations asynchronously
+    const batchedProjectsPromises = batchedOrganizationIds.map((organizationId) =>
+      getProjectsByOrganizationId(organizationId)
     );
 
-    const batchedProducts = await Promise.all(batchedProductsPromises);
-    for (const products of batchedProducts) {
-      for (const product of products) {
-        const organizationMembers = product.organization.memberships;
+    const batchedProjects = await Promise.all(batchedProjectsPromises);
+    for (const projects of batchedProjects) {
+      for (const project of projects) {
+        const organizationMembers = project.organization.memberships;
         const organizationMembersWithNotificationEnabled = organizationMembers.filter(
           (member) =>
             member.user.notificationSettings?.weeklySummary &&
-            member.user.notificationSettings.weeklySummary[product.id]
+            member.user.notificationSettings.weeklySummary[project.id]
         );
 
         if (organizationMembersWithNotificationEnabled.length === 0) continue;
 
-        const notificationResponse = getNotificationResponse(product.environments[0], product.name);
+        const notificationResponse = getNotificationResponse(project.environments[0], project.name);
 
         if (notificationResponse.insights.numLiveSurvey === 0) {
           for (const organizationMember of organizationMembersWithNotificationEnabled) {
-            emailSendingPromises.push(
-              sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
-            );
+            if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
+              emailSendingPromises.push(
+                sendNoLiveSurveyNotificationEmail(organizationMember.user.email, notificationResponse)
+              );
+            }
           }
           continue;
         }
 
         for (const organizationMember of organizationMembersWithNotificationEnabled) {
-          emailSendingPromises.push(
-            sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
-          );
+          if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
+            emailSendingPromises.push(
+              sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
+            );
+          }
         }
       }
     }

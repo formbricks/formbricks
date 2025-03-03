@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.tolgee.io/cli-schema.json",
+  "format": "JSON_TOLGEE",
+  "patterns": ["./apps/web/**/*.ts?(x)"],
+  "projectId": 10304,
+  "pull": {
+    "path": "./packages/lib/messages"
+  },
+  "push": {
+    "files": [
+      {
+        "language": "en-US",
+        "path": "./packages/lib/messages/en-US.json"
+      },
+      {
+        "language": "de-DE",
+        "path": "./packages/lib/messages/de-DE.json"
+      },
+      {
+        "language": "fr-FR",
+        "path": "./packages/lib/messages/fr-FR.json"
+      },
+      {
+        "language": "pt-BR",
+        "path": "./packages/lib/messages/pt-BR.json"
+      },
+      {
+        "language": "zh-Hant-TW",
+        "path": "./packages/lib/messages/zh-Hant-TW.json"
+      }
+    ],
+    "forceMode": "OVERRIDE"
+  },
+  "strictNamespace": false
+}

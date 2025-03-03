@@ -1,8 +1,8 @@
 import type { AppProps } from "next/app";
 import Head from "next/head";
-import "@formbricks/ui/globals.css";
+import "../globals.css";
 
-const App = ({ Component, pageProps }: AppProps) => {
+export default function App({ Component, pageProps }: AppProps): React.JSX.Element {
   return (
     <>
       <Head>
@@ -17,6 +17,4 @@ const App = ({ Component, pageProps }: AppProps) => {
       <Component {...pageProps} />
     </>
   );
-};
-
-export default App;
+}

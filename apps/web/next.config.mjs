@@ -5,7 +5,6 @@ import { fileURLToPath } from "node:url";
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-
 jiti("@formbricks/lib/env");
 
 /** @type {import('next').NextConfig} */
@@ -19,16 +18,17 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  experimental: {
-    serverComponentsExternalPackages: ["@aws-sdk"],
-    staleTimes: {
-      dynamic: 0,
-    },
-    outputFileTracingIncludes: {
-      "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
-    },
+  serverExternalPackages: ["@aws-sdk"],
+  outputFileTracingIncludes: {
+    "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
-  transpilePackages: ["@formbricks/database", "@formbricks/ee", "@formbricks/ui", "@formbricks/lib"],
+  i18n: {
+    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW"],
+    localeDetection: false,
+    defaultLocale: "en-US",
+  },
+  experimental: {},
+  transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
       {
@@ -58,6 +58,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "api-iam.eu.intercom.io",
       },
     ],
   },
@@ -161,6 +165,11 @@ const nextConfig = {
             key: "X-Content-Type-Options",
             value: "nosniff",
           },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.intercom.io https://*.intercomcdn.com https:; style-src 'self' 'unsafe-inline' https://*.intercomcdn.com https:; img-src 'self' blob: data: https://*.intercom.io https://*.intercomcdn.com data: https:; font-src 'self' data: https://*.intercomcdn.com https:; connect-src 'self' https://*.intercom.io wss://*.intercom.io https://*.intercomcdn.com https:; frame-src 'self' https://*.intercom.io https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'",
+          },
         ],
       },
       {
@@ -231,6 +240,26 @@ const nextConfig = {
         source: "/api/v1/client/:environmentId/app/people/:userId",
         destination: "/api/v1/client/:environmentId/identify/people/:userId",
       },
+      {
+        source: "/api/v1/client/:environmentId/identify/people/:userId",
+        destination: "/api/v1/client/:environmentId/identify/contacts/:userId",
+      },
+      {
+        source: "/api/v1/client/:environmentId/people/:userId/attributes",
+        destination: "/api/v1/client/:environmentId/contacts/:userId/attributes",
+      },
+      {
+        source: "/api/v1/management/people/:id*",
+        destination: "/api/v1/management/contacts/:id*",
+      },
+      {
+        source: "/api/v1/management/attribute-classes",
+        destination: "/api/v1/management/contact-attribute-keys",
+      },
+      {
+        source: "/api/v1/management/attribute-classes/:id*",
+        destination: "/api/v1/management/contact-attribute-keys/:id*",
+      },
     ];
   },
   env: {
@@ -247,6 +276,7 @@ if (process.env.CUSTOM_CACHE_DISABLED !== "1") {
 if (process.env.WEBAPP_URL) {
   nextConfig.experimental.serverActions = {
     allowedOrigins: [process.env.WEBAPP_URL.replace(/https?:\/\//, "")],
+    bodySizeLimit: "2mb",
   };
 }
 
@@ -288,7 +318,7 @@ const sentryConfig = {
 };
 
 const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryOptions, sentryConfig)
+  ? withSentryConfig(nextConfig, sentryOptions)
   : nextConfig;
 
-export default exportConfig;
+export default nextConfig;

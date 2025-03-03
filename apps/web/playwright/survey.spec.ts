@@ -1,7 +1,7 @@
 import { surveys } from "@/playwright/utils/mock";
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { createSurvey, createSurveyWithLogic } from "./utils/helper";
+import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
 
 test.use({
   launchOptions: {
@@ -11,8 +11,6 @@ test.use({
 
 test.describe("Survey Create & Submit Response without logic", async () => {
   let url: string | null;
-
-  test.slow();
 
   test("Create survey and submit response", async ({ page, users }) => {
     const user = await users.create();
@@ -168,24 +166,55 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Matrix Question
       await expect(page.getByText(surveys.createAndSubmit.matrix.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.matrix.description)).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[0] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[1] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.rows[2] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[0] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[1] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[2] })).toBeVisible();
-      await expect(page.getByRole("cell", { name: surveys.createAndSubmit.matrix.columns[3] })).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("rowheader", { name: surveys.createAndSubmit.matrix.rows[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[0] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[1] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[2] })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: surveys.createAndSubmit.matrix.columns[3] })
+      ).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-9").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("row", { name: "Roses" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Trees" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Ocean" }).getByRole("cell").nth(1).click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Roses – 0" })
+        .locator("div")
+        .click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Trees – 0" })
+        .locator("div")
+        .click();
+      await page
+        .getByRole("cell", { name: "How much do you love these flowers?: Ocean – 0" })
+        .locator("div")
+        .click();
       await page.locator("#questionCard-9").getByRole("button", { name: "Next" }).click();
 
       // Address Question
       await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder).fill("This is my Address");
+      await expect(
+        page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+      ).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+        .fill("This is my Address");
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
+      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Contact Info Question
@@ -199,7 +228,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       for (let i = 0; i < surveys.createAndSubmit.ranking.choices.length; i++) {
         await page.getByText(surveys.createAndSubmit.ranking.choices[i]).click();
       }
-      await page.getByRole("button", { name: "Finish" }).click();
+      await page.locator("#questionCard-12").getByRole("button", { name: "Next" }).click();
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
 
@@ -211,6 +240,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 });
 
 test.describe("Multi Language Survey Create", async () => {
+  // 4 minutes
+  test.setTimeout(1000 * 60 * 4);
+
   test("Create Survey", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
@@ -236,12 +268,12 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Save changes" }).click();
     await page.waitForTimeout(2000);
     await page.getByRole("link", { name: "Surveys" }).click();
-    await page.getByRole("button", { name: "Start from scratch Create a" }).click();
+    await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.locator("#multi-lang-toggle").click();
     await page.getByRole("combobox").click();
     await page.getByLabel("English (en)").click();
-    await page.getByRole("button", { name: "Set English as default" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByLabel("German").click();
     await page.locator("#welcome-toggle").click();
     await page.getByText("Welcome CardShownOn").click();
@@ -249,42 +281,67 @@ test.describe("Multi Language Survey Create", async () => {
     // Add questions in default language
     await page.getByText("Add question").click();
     await page.getByRole("button", { name: "Single-Select" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.singleSelectQuestion.question);
+    await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.singleSelectQuestion.options[0]);
+    await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.singleSelectQuestion.options[1]);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Multi-Select" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.multiSelectQuestion.question);
+    await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
+    await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
+    await page.getByPlaceholder("Option 3").fill(surveys.createAndSubmit.multiSelectQuestion.options[2]);
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Picture Selection" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.pictureSelectQuestion.question);
+
+    // Handle file uploads
+    await uploadFileForFileUploadQuestion(page);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Rating" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.ratingQuestion.question);
+    await page.getByPlaceholder("Not good").fill(surveys.createAndSubmit.ratingQuestion.lowLabel);
+    await page.getByPlaceholder("Very satisfied").fill(surveys.createAndSubmit.ratingQuestion.highLabel);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Net Promoter Score (NPS)" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.npsQuestion.question);
+    await page.getByLabel("Lower label").fill(surveys.createAndSubmit.npsQuestion.lowLabel);
+    await page.getByLabel("Upper label").fill(surveys.createAndSubmit.npsQuestion.highLabel);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Date" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.dateQuestion.question);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "File Upload" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.fileUploadQuestion.question);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
@@ -293,18 +350,58 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Matrix" }).scrollIntoViewIfNeeded();
     await page.getByRole("button", { name: "Matrix" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.matrix.question);
+    await page.locator("#row-0").click();
+    await page.locator("#row-0").fill(surveys.createAndSubmit.matrix.rows[0]);
+    await page.locator("#row-1").click();
+    await page.locator("#row-1").fill(surveys.createAndSubmit.matrix.rows[1]);
+    await page.getByRole("button", { name: "Add row" }).click();
+    await page.locator("#row-2").click();
+    await page.locator("#row-2").fill(surveys.createAndSubmit.matrix.rows[2]);
+    await page.locator("#column-0").click();
+    await page.locator("#column-0").fill(surveys.createAndSubmit.matrix.columns[0]);
+    await page.locator("#column-1").click();
+    await page.locator("#column-1").fill(surveys.createAndSubmit.matrix.columns[1]);
+    await page.getByRole("button", { name: "Add column" }).click();
+    await page.locator("#column-2").click();
+    await page.locator("#column-2").fill(surveys.createAndSubmit.matrix.columns[2]);
+    await page.getByRole("button", { name: "Add column" }).click();
+    await page.locator("#column-3").click();
+    await page.locator("#column-3").fill(surveys.createAndSubmit.matrix.columns[3]);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Address" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.address.question);
+    await page.getByRole("row", { name: "Address Line 2" }).getByRole("switch").nth(1).click();
+    await page.getByRole("row", { name: "City" }).getByRole("cell").nth(2).click();
+    await page.getByRole("row", { name: "State" }).getByRole("switch").nth(1).click();
+    await page.getByRole("row", { name: "Zip" }).getByRole("cell").nth(2).click();
+    await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
+
     await page
       .locator("div")
       .filter({ hasText: /^Add questionAdd a new question to your survey$/ })
       .nth(1)
       .click();
     await page.getByRole("button", { name: "Ranking" }).click();
+    await page.getByLabel("Question*").fill(surveys.createAndSubmit.ranking.question);
+    await page.getByPlaceholder("Option 1").click();
+    await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.ranking.choices[0]);
+    await page.getByPlaceholder("Option 2").click();
+    await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.ranking.choices[1]);
+    await page.getByRole("button", { name: "Add option" }).click();
+    await page.getByPlaceholder("Option 3").click();
+    await page.getByPlaceholder("Option 3").fill(surveys.createAndSubmit.ranking.choices[2]);
+    await page.getByRole("button", { name: "Add option" }).click();
+    await page.getByPlaceholder("Option 4").click();
+    await page.getByPlaceholder("Option 4").fill(surveys.createAndSubmit.ranking.choices[3]);
+    await page.getByRole("button", { name: "Add option" }).click();
+    await page.getByPlaceholder("Option 5").click();
+    await page.getByPlaceholder("Option 5").fill(surveys.createAndSubmit.ranking.choices[4]);
 
     // Enable translation in german
     await page.getByText("Welcome CardShownOn").click();
@@ -316,6 +413,8 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator(".editor-input").fill(surveys.germanCreate.welcomeCard.description);
     await page.getByLabel("Note*").click();
     await page.getByLabel("Note*").fill(surveys.germanCreate.welcomeCard.headline);
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.welcomeCard.buttonLabel);
 
     // Fill Open text question in german
     await page.getByRole("main").getByText("Free text").click();
@@ -325,6 +424,9 @@ test.describe("Multi Language Survey Create", async () => {
       .fill(surveys.germanCreate.openTextQuestion.question);
     await page.getByLabel("Placeholder").click();
     await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
 
     // Fill Single select question in german
     await page.getByRole("main").getByText("Single-Select").click();
@@ -336,6 +438,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.singleSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").click();
     await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.singleSelectQuestion.options[1]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Multi select question in german
     await page.getByRole("main").getByText("Multi-Select").click();
@@ -350,6 +457,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.multiSelectQuestion.options[1]);
     await page.getByPlaceholder("Option 3").click();
     await page.getByPlaceholder("Option 3").fill(surveys.germanCreate.multiSelectQuestion.options[2]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Picture select question in german
     await page.getByRole("main").getByText("Picture Selection").click();
@@ -357,6 +469,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.pictureSelectQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Rating question in german
     await page.getByRole("main").getByText("Rating").click();
@@ -368,6 +485,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
     await page.getByPlaceholder("Very satisfied").click();
     await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill NPS question in german
     await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
@@ -377,6 +497,9 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Lower Label").fill(surveys.germanCreate.npsQuestion.lowLabel);
     await page.getByLabel("Upper Label").click();
     await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Date question in german
     await page.getByRole("main").getByText("Date").click();
@@ -384,6 +507,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.dateQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill File upload question in german
     await page.getByRole("main").getByText("File Upload").click();
@@ -391,6 +519,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.fileUploadQuestion.question);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Matrix question in german
     await page.getByRole("main").getByText("Matrix").click();
@@ -410,6 +543,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.locator("#column-2").fill(surveys.germanCreate.matrix.columns[2]);
     await page.locator("#column-3").click();
     await page.locator("#column-3").fill(surveys.germanCreate.matrix.columns[3]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Address question in german
     await page.getByRole("main").getByText("Address").click();
@@ -417,6 +555,33 @@ test.describe("Multi Language Survey Create", async () => {
     await page
       .getByPlaceholder("Your question here. Recall")
       .fill(surveys.germanCreate.addressQuestion.question);
+    await page.locator('[id="addressLine1\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine1\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine1);
+    await page.locator('[id="addressLine2\\.placeholder"]').click();
+    await page
+      .locator('[id="addressLine2\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine2);
+    await page.locator('[id="city\\.placeholder"]').click();
+    await page
+      .locator('[id="city\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.city);
+    await page.locator('[id="state\\.placeholder"]').click();
+    await page
+      .locator('[id="state\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.state);
+    await page.locator('[id="zip\\.placeholder"]').click();
+    await page.locator('[id="zip\\.placeholder"]').fill(surveys.germanCreate.addressQuestion.placeholder.zip);
+    await page.locator('[id="country\\.placeholder"]').click();
+    await page
+      .locator('[id="country\\.placeholder"]')
+      .fill(surveys.germanCreate.addressQuestion.placeholder.country);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Next").click();
+    await page.getByPlaceholder("Next").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Ranking question in german
     await page.getByRole("main").getByText("Ranking").click();
@@ -432,6 +597,11 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 4").fill(surveys.germanCreate.ranking.choices[3]);
     await page.getByPlaceholder("Option 5").click();
     await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.ranking.choices[4]);
+    await page.getByText("Show Advanced settings").first().click();
+    await page.getByPlaceholder("Finish").click();
+    await page.getByPlaceholder("Finish").fill(surveys.germanCreate.next);
+    await page.getByPlaceholder("Back").click();
+    await page.getByPlaceholder("Back").fill(surveys.germanCreate.back);
 
     // Fill Thank you card in german
     await page.getByText("Ending card").first().click();
@@ -458,7 +628,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
 
-    // await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary$/);
+    await page.waitForTimeout(5000);
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
@@ -469,7 +639,8 @@ test.describe("Multi Language Survey Create", async () => {
 });
 
 test.describe("Testing Survey with advanced logic", async () => {
-  test.setTimeout(180000);
+  // 6 minutes
+  test.setTimeout(1000 * 60 * 6);
   let url: string | null;
 
   test("Create survey and submit response", async ({ page, users }) => {
@@ -617,31 +788,31 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.question)).toBeVisible();
       await expect(page.getByText(surveys.createWithLogicAndSubmit.matrix.description)).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[0] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[0] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[1] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[1] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
+        page.getByRole("rowheader", { name: surveys.createWithLogicAndSubmit.matrix.rows[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[0] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[1] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[2] })
       ).toBeVisible();
       await expect(
-        page.getByRole("cell", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
+        page.getByRole("columnheader", { name: surveys.createWithLogicAndSubmit.matrix.columns[3] })
       ).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
       await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await page.getByRole("row", { name: "Roses" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Trees" }).getByRole("cell").nth(1).click();
-      await page.getByRole("row", { name: "Ocean" }).getByRole("cell").nth(1).click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Roses – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Trees – 0" }).locator("div").click();
+      await page.getByRole("cell", { name: "This is my Matrix Question: Ocean – 0" }).locator("div").click();
       await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
 
       // CTA Question
@@ -694,11 +865,23 @@ test.describe("Testing Survey with advanced logic", async () => {
 
       // Address Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.address.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)).toBeVisible();
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+      ).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder)
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
-      await page.getByRole("button", { name: "Finish" }).click();
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+      ).toBeVisible();
+      await page
+        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+        .fill("This is my city");
+      await expect(
+        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip)
+      ).toBeVisible();
+      await page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
+      await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
       await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
@@ -713,12 +896,14 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
 
       await page.getByRole("button", { name: "Close" }).click();
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
-      await expect(page.getByRole("table")).toBeVisible();
+      await page.waitForSelector("#response-table");
+
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
+
+      await page.waitForLoadState("networkidle");
       await page.waitForTimeout(5000);
       await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
     });

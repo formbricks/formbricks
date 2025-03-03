@@ -29,7 +29,7 @@ test.describe("Email Signup Flow Test", async () => {
     await page.getByPlaceholder("work@email.com").press("Tab");
     await page.fill('input[name="password"]', password);
     await page.press('input[name="password"]', "Enter");
-    let alertMessage = "user with this email address already exists";
+    let alertMessage = "User with this email already exists";
     await (await page.waitForSelector(`text=${alertMessage}`)).isVisible();
   });
 

@@ -1,32 +1,29 @@
 "use client";
 
-import { BellRingIcon, UserCircleIcon } from "lucide-react";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
 
-export const AccountSettingsNavbar = ({
-  environmentId,
-  activeId,
-  loading,
-}: {
-  activeId: string;
+interface AccountSettingsNavbarProps {
   environmentId?: string;
+  activeId: string;
   loading?: boolean;
-}) => {
+}
+
+export const AccountSettingsNavbar = ({ environmentId, activeId, loading }: AccountSettingsNavbarProps) => {
   const pathname = usePathname();
+  const { t } = useTranslate();
   const navigation = [
     {
       id: "profile",
-      label: "Profile",
+      label: t("common.profile"),
       href: `/environments/${environmentId}/settings/profile`,
-      icon: <UserCircleIcon className="h-5 w-5" />,
       current: pathname?.includes("/profile"),
     },
     {
       id: "notifications",
-      label: "Notifications",
+      label: t("common.notifications"),
       href: `/environments/${environmentId}/settings/notifications`,
-      icon: <BellRingIcon className="h-5 w-5" />,
       current: pathname?.includes("/notifications"),
     },
   ];

@@ -1,3 +1,5 @@
+import { getWebhookCountBySource } from "@/app/(app)/environments/[environmentId]/integrations/lib/webhook";
+import ActivePiecesLogo from "@/images/activepieces.webp";
 import AirtableLogo from "@/images/airtableLogo.svg";
 import GoogleSheetsLogo from "@/images/googleSheetsLogo.png";
 import JsLogo from "@/images/jslogo.png";
@@ -7,24 +9,27 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { Card } from "@/modules/ui/components/integration-card";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import Image from "next/image";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { redirect } from "next/navigation";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { getWebhookCountBySource } from "@formbricks/lib/webhook/service";
 import { TIntegrationType } from "@formbricks/types/integration";
-import { Card } from "@formbricks/ui/components/Card";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 
-const Page = async ({ params }) => {
+const Page = async (props) => {
+  const params = await props.params;
   const environmentId = params.environmentId;
-
+  const t = await getTranslate();
   const [
     environment,
     integrations,
@@ -34,6 +39,7 @@ const Page = async ({ params }) => {
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
+    activePiecesWebhookCount,
   ] = await Promise.all([
     getEnvironment(environmentId),
     getIntegrations(environmentId),
@@ -43,20 +49,35 @@ const Page = async ({ params }) => {
     getWebhookCountBySource(environmentId, "zapier"),
     getWebhookCountBySource(environmentId, "make"),
     getWebhookCountBySource(environmentId, "n8n"),
+    getWebhookCountBySource(environmentId, "activepieces"),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
     integrations.some((integration) => integration.type === type);
   if (!session) {
-    throw new Error("Session not found");
+    throw new Error(t("common.session_not_found"));
   }
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new Error(t("common.organization_not_found"));
+  }
+
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isViewer } = getAccessFlags(currentUserMembership?.role);
+  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
+
+  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.projectId);
+
+  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
+
+  const isReadOnly = isMember && hasReadAccess;
+
+  if (isBilling) {
+    return redirect(`/environments/${params.environmentId}/settings/billing`);
+  }
 
   const isGoogleSheetsIntegrationConnected = isIntegrationConnected("googleSheets");
   const isNotionIntegrationConnected = isIntegrationConnected("notion");
@@ -67,150 +88,176 @@ const Page = async ({ params }) => {
   const widgetSetupCompleted = !!environment?.appSetupCompleted;
   const integrationCards = [
     {
-      docsHref: "https://formbricks.com/docs/integrations/zapier",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/zapier",
+      docsText: t("common.docs"),
       docsNewTab: true,
       connectHref: "https://zapier.com/apps/formbricks/integrations",
-      connectText: "Connect",
+      connectText: t("common.connect"),
       connectNewTab: true,
       label: "Zapier",
-      description: "Integrate Formbricks with 5000+ apps via Zapier",
+      description: t("environments.integrations.zapier_integration_description"),
       icon: <Image src={ZapierLogo} alt="Zapier Logo" />,
       connected: zapierWebhookCount > 0,
       statusText:
         zapierWebhookCount === 1
           ? "1 zap"
           : zapierWebhookCount === 0
-            ? "Not Connected"
+            ? t("common.not_connected")
             : `${zapierWebhookCount} zaps`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/webhooks`,
-      connectText: "Manage Webhooks",
+      connectText: t("environments.integrations.manage_webhooks"),
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/api/management/webhooks",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks",
+      docsText: t("common.docs"),
       docsNewTab: true,
       label: "Webhooks",
-      description: "Trigger Webhooks based on actions in your surveys",
+      description: t("environments.integrations.webhook_integration_description"),
       icon: <Image src={WebhookLogo} alt="Webhook Logo" />,
       connected: userWebhookCount > 0,
       statusText:
         userWebhookCount === 1
           ? "1 webhook"
           : userWebhookCount === 0
-            ? "Not Connected"
+            ? t("common.not_connected")
             : `${userWebhookCount} webhooks`,
+      disabled: false,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/google-sheets`,
-      connectText: `${isGoogleSheetsIntegrationConnected ? "Manage Sheets" : "Connect"}`,
+      connectText: `${isGoogleSheetsIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/integrations/google-sheets",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/google-sheets",
+      docsText: t("common.docs"),
       docsNewTab: true,
       label: "Google Sheets",
-      description: "Instantly populate your spreadsheets with survey data",
+      description: t("environments.integrations.google_sheet_integration_description"),
       icon: <Image src={GoogleSheetsLogo} alt="Google sheets Logo" />,
       connected: isGoogleSheetsIntegrationConnected,
-      statusText: isGoogleSheetsIntegrationConnected ? "Connected" : "Not Connected",
+      statusText: isGoogleSheetsIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/airtable`,
-      connectText: `${isAirtableIntegrationConnected ? "Manage Table" : "Connect"}`,
+      connectText: `${isAirtableIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/integrations/airtable",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/airtable",
+      docsText: t("common.docs"),
       docsNewTab: true,
       label: "Airtable",
-      description: "Instantly populate your airtable table with survey data",
+      description: t("environments.integrations.airtable_integration_description"),
       icon: <Image src={AirtableLogo} alt="Airtable Logo" />,
       connected: isAirtableIntegrationConnected,
-      statusText: isAirtableIntegrationConnected ? "Connected" : "Not Connected",
+      statusText: isAirtableIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/slack`,
-      connectText: `${isSlackIntegrationConnected ? "Manage" : "Connect"}`,
+      connectText: `${isSlackIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/integrations/slack",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/slack",
+      docsText: t("common.docs"),
       docsNewTab: true,
       label: "Slack",
-      description: "Instantly Connect your Slack Workspace with Formbricks",
+      description: t("environments.integrations.slack_integration_description"),
       icon: <Image src={SlackLogo} alt="Slack Logo" />,
       connected: isSlackIntegrationConnected,
-      statusText: isSlackIntegrationConnected ? "Connected" : "Not Connected",
+      statusText: isSlackIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
     },
     {
-      docsHref: "https://formbricks.com/docs/integrations/n8n",
-      connectText: `${isN8nIntegrationConnected ? "Manage" : "Connect"}`,
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/n8n",
+      connectText: `${isN8nIntegrationConnected ? t("common.manage") : t("common.connect")}`,
+      docsText: t("common.docs"),
       docsNewTab: true,
       connectHref: "https://n8n.io",
       connectNewTab: true,
       label: "n8n",
-      description: "Integrate Formbricks with 350+ apps via n8n",
+      description: t("environments.integrations.n8n_integration_description"),
       icon: <Image src={n8nLogo} alt="n8n Logo" />,
       connected: n8nwebhookCount > 0,
       statusText:
         n8nwebhookCount === 1
-          ? "1 integration"
+          ? `1 ${t("common.integration")}`
           : n8nwebhookCount === 0
-            ? "Not Connected"
-            : `${n8nwebhookCount} integrations`,
+            ? t("common.not_connected")
+            : `${n8nwebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
-      docsHref: "https://formbricks.com/docs/integrations/make",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/make",
+      docsText: t("common.docs"),
       docsNewTab: true,
       connectHref: "https://www.make.com/en/integrations/formbricks",
-      connectText: "Connect",
+      connectText: t("common.connect"),
       connectNewTab: true,
       label: "Make.com",
-      description: "Integrate Formbricks with 1000+ apps via Make",
+      description: t("environments.integrations.make_integration_description"),
       icon: <Image src={MakeLogo} alt="Make Logo" />,
       connected: makeWebhookCount > 0,
       statusText:
         makeWebhookCount === 1
-          ? "1 integration"
+          ? `1 ${t("common.integration")}`
           : makeWebhookCount === 0
-            ? "Not Connected"
-            : `${makeWebhookCount} integration`,
+            ? t("common.not_connected")
+            : `${makeWebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
     {
       connectHref: `/environments/${params.environmentId}/integrations/notion`,
-      connectText: `${isNotionIntegrationConnected ? "Manage" : "Connect"}`,
+      connectText: `${isNotionIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
-      docsHref: "https://formbricks.com/docs/integrations/notion",
-      docsText: "Docs",
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/notion",
+      docsText: t("common.docs"),
       docsNewTab: true,
       label: "Notion",
-      description: "Send data to your Notion database",
+      description: t("environments.integrations.notion_integration_description"),
       icon: <Image src={notionLogo} alt="Notion Logo" />,
       connected: isNotionIntegrationConnected,
-      statusText: isNotionIntegrationConnected ? "Connected" : "Not Connected",
+      statusText: isNotionIntegrationConnected ? t("common.connected") : t("common.not_connected"),
+      disabled: isReadOnly,
+    },
+    {
+      docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/activepieces",
+      docsText: t("common.docs"),
+      docsNewTab: true,
+      connectHref: "https://www.activepieces.com/pieces/formbricks",
+      connectText: t("common.connect"),
+      connectNewTab: true,
+      label: "Activepieces",
+      description: t("environments.integrations.activepieces_integration_description"),
+      icon: <Image src={ActivePiecesLogo} alt="ActivePieces Logo" />,
+      connected: activePiecesWebhookCount > 0,
+      statusText:
+        activePiecesWebhookCount === 1
+          ? `1 ${t("common.integration")}`
+          : activePiecesWebhookCount === 0
+            ? t("common.not_connected")
+            : `${activePiecesWebhookCount} ${t("common.integrations")}`,
+      disabled: isReadOnly,
     },
   ];
 
   integrationCards.unshift({
     docsHref: "https://formbricks.com/docs/app-surveys/quickstart",
-    docsText: "Docs",
+    docsText: t("common.docs"),
     docsNewTab: true,
-    connectHref: `/environments/${environmentId}/product/app-connection`,
-    connectText: "Connect",
+    connectHref: `/environments/${environmentId}/project/app-connection`,
+    connectText: t("common.connect"),
     connectNewTab: false,
     label: "Javascript SDK",
-    description: "Integrate Formbricks into your Website or App",
+    description: t("environments.integrations.website_or_app_integration_description"),
     icon: <Image src={JsLogo} alt="Javascript Logo" />,
     connected: widgetSetupCompleted,
-    statusText: widgetSetupCompleted ? "App Connected" : "Not Connected",
+    statusText: widgetSetupCompleted ? t("common.connected") : t("common.not_connected"),
+    disabled: false,
   });
-
-  if (isViewer) return <ErrorComponent />;
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Integrations" />
+      <PageHeader pageTitle={t("common.integrations")} />
       <div className="grid grid-cols-3 place-content-stretch gap-4 lg:grid-cols-3">
         {integrationCards.map((card) => (
           <Card
@@ -226,6 +273,7 @@ const Page = async ({ params }) => {
             icon={card.icon}
             connected={card.connected}
             statusText={card.statusText}
+            disabled={card.disabled}
           />
         ))}
       </div>

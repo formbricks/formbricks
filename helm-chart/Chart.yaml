@@ -1,0 +1,19 @@
+apiVersion: v2
+name: formbricks
+description: A Helm chart for Formbricks with PostgreSQL, Redis, Traefik, and cert-manager
+type: application
+version: 0.1.2
+appVersion: "1.0.0"
+dependencies:
+  - name: postgresql
+    version: 15.5.36
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 20.1.5
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: traefik
+    version: 32.0.0
+    repository: https://helm.traefik.io/traefik
+    condition: traefik.enabled

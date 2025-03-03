@@ -1,24 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
+import { type JSX, useState } from "react";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
+import { TEnvironment } from "@formbricks/types/environment";
 import { ActionDetailModal } from "./ActionDetailModal";
 
 interface ActionClassesTableProps {
   environmentId: string;
   actionClasses: TActionClass[];
+  environment: TEnvironment;
   children: [JSX.Element, JSX.Element[]];
+  isReadOnly: boolean;
+  otherEnvironment: TEnvironment;
+  otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionClassesTable = ({
   environmentId,
   actionClasses,
+  environment,
   children: [TableHeading, actionRows],
+  isReadOnly,
+  otherEnvActionClasses,
+  otherEnvironment,
 }: ActionClassesTableProps) => {
   const [isActionDetailModalOpen, setActionDetailModalOpen] = useState(false);
-  const { membershipRole, error } = useMembershipRole(environmentId);
 
   const [activeActionClass, setActiveActionClass] = useState<TActionClass>();
 
@@ -28,35 +34,41 @@ export const ActionClassesTable = ({
     setActionDetailModalOpen(true);
   };
 
-  if (error) {
-    return <ErrorComponent />;
-  }
   return (
     <>
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         {TableHeading}
         <div id="actionClassesWrapper" className="flex flex-col">
-          {actionClasses.map((actionClass, index) => (
-            <button
-              onClick={(e) => {
-                handleOpenActionDetailModalClick(e, actionClass);
-              }}
-              className="w-full"
-              title={actionClass.name}
-              key={actionClass.id}>
-              {actionRows[index]}
-            </button>
-          ))}
+          {actionClasses.length > 0 ? (
+            actionClasses.map((actionClass, index) => (
+              <button
+                onClick={(e) => {
+                  handleOpenActionDetailModalClick(e, actionClass);
+                }}
+                className="w-full"
+                title={actionClass.name}
+                key={actionClass.id}>
+                {actionRows[index]}
+              </button>
+            ))
+          ) : (
+            <div className="py-8 text-center">
+              <span className="text-sm text-slate-500">No actions found</span>
+            </div>
+          )}
         </div>
       </div>
       {activeActionClass && (
         <ActionDetailModal
           environmentId={environmentId}
+          environment={environment}
           open={isActionDetailModalOpen}
           setOpen={setActionDetailModalOpen}
           actionClasses={actionClasses}
           actionClass={activeActionClass}
-          membershipRole={membershipRole}
+          isReadOnly={isReadOnly}
+          otherEnvActionClasses={otherEnvActionClasses}
+          otherEnvironment={otherEnvironment}
         />
       )}
     </>

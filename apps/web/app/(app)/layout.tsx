@@ -1,11 +1,13 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
+import { IntercomClient } from "@/app/IntercomClient";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
+import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-client";
+import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
-import { authOptions } from "@formbricks/lib/authOptions";
+import { INTERCOM_SECRET_KEY, IS_INTERCOM_CONFIGURED } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
-import { NoMobileOverlay } from "@formbricks/ui/components/NoMobileOverlay";
-import { PHProvider, PostHogPageview } from "@formbricks/ui/components/PostHogClient";
-import { ToasterClient } from "@formbricks/ui/components/ToasterClient";
 
 const AppLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
@@ -19,7 +21,12 @@ const AppLayout = async ({ children }) => {
       </Suspense>
       <PHProvider>
         <>
-          {session && user ? <FormbricksClient session={session} userEmail={user.email} /> : null}
+          {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
+          <IntercomClient
+            isIntercomConfigured={IS_INTERCOM_CONFIGURED}
+            intercomSecretKey={INTERCOM_SECRET_KEY}
+            user={user}
+          />
           <ToasterClient />
           {children}
         </>

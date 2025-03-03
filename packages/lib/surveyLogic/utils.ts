@@ -1,11 +1,11 @@
 import { createId } from "@paralleldrive/cuid2";
+import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
   TActionCalculate,
   TActionObjective,
   TConditionGroup,
   TSingleCondition,
-  TSurvey,
   TSurveyLogic,
   TSurveyLogicAction,
   TSurveyQuestion,
@@ -212,7 +212,7 @@ export const getUpdatedActionBody = (
 };
 
 export const evaluateLogic = (
-  localSurvey: TSurvey,
+  localSurvey: TJsEnvironmentStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   conditions: TConditionGroup,
@@ -234,7 +234,7 @@ export const evaluateLogic = (
 };
 
 const evaluateSingleCondition = (
-  localSurvey: TSurvey,
+  localSurvey: TJsEnvironmentStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   condition: TSingleCondition,
@@ -425,6 +425,18 @@ const evaluateSingleCondition = (
           Array.isArray(rightValue) &&
           rightValue.some((v) => leftValue.includes(v))
         );
+      case "doesNotIncludeAllOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.every((v) => !leftValue.includes(v))
+        );
+      case "doesNotIncludeOneOf":
+        return (
+          Array.isArray(leftValue) &&
+          Array.isArray(rightValue) &&
+          rightValue.some((v) => !leftValue.includes(v))
+        );
       case "isAccepted":
         return leftValue === "accepted";
       case "isClicked":
@@ -444,6 +456,10 @@ const evaluateSingleCondition = (
           const values = Object.values(leftValue);
           return values.length > 0 && !values.includes("");
         } else return false;
+      case "isSet":
+        return leftValue !== undefined && leftValue !== null && leftValue !== "";
+      case "isNotSet":
+        return leftValue === undefined || leftValue === null || leftValue === "";
       default:
         return false;
     }
@@ -464,7 +480,7 @@ const getVariableValue = (
 };
 
 const getLeftOperandValue = (
-  localSurvey: TSurvey,
+  localSurvey: TJsEnvironmentStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   leftOperand: TSingleCondition["leftOperand"],
@@ -529,7 +545,7 @@ const getLeftOperandValue = (
 };
 
 const getRightOperandValue = (
-  localSurvey: TSurvey,
+  localSurvey: TJsEnvironmentStateSurvey,
   data: TResponseData,
   variablesData: TResponseVariables,
   rightOperand: TSingleCondition["rightOperand"]
@@ -552,7 +568,7 @@ const getRightOperandValue = (
 };
 
 export const performActions = (
-  survey: TSurvey,
+  survey: TJsEnvironmentStateSurvey,
   actions: TSurveyLogicAction[],
   data: TResponseData,
   calculationResults: TResponseVariables
@@ -586,7 +602,7 @@ export const performActions = (
 };
 
 const performCalculation = (
-  survey: TSurvey,
+  survey: TJsEnvironmentStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
   calculations: Record<string, number | string>

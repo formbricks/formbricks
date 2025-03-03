@@ -7,6 +7,7 @@ import type {
   TSurveyLanguage,
   TSurveyLogicAction,
   TSurveyQuestion,
+  TSurveyQuestionId,
 } from "./types";
 
 export const FORBIDDEN_IDS = [
@@ -20,6 +21,7 @@ export const FORBIDDEN_IDS = [
   "verifiedEmail",
   "multiLanguage",
   "embed",
+  "verify",
 ];
 
 const FIELD_TO_LABEL_MAP: Record<string, string> = {
@@ -191,7 +193,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
   const recStack: Record<string, boolean> = {};
   const cyclicQuestions = new Set<string>();
 
-  const checkForCyclicLogic = (questionId: string): boolean => {
+  const checkForCyclicLogic = (questionId: TSurveyQuestionId): boolean => {
     if (!visited[questionId]) {
       visited[questionId] = true;
       recStack[questionId] = true;
@@ -213,7 +215,19 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
         }
       }
 
-      // Handle default behavior
+      // Check fallback logic
+      if (question?.logicFallback) {
+        const fallbackQuestionId = question.logicFallback;
+        if (!visited[fallbackQuestionId] && checkForCyclicLogic(fallbackQuestionId)) {
+          cyclicQuestions.add(questionId);
+          return true;
+        } else if (recStack[fallbackQuestionId]) {
+          cyclicQuestions.add(questionId);
+          return true;
+        }
+      }
+
+      // Handle default behavior: move to the next question if no jump actions or fallback logic is defined
       const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
       const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
       if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {

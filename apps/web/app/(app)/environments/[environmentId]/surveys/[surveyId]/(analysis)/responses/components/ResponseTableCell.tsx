@@ -1,9 +1,9 @@
+import { getCommonPinningStyles } from "@/modules/ui/components/data-table/lib/utils";
+import { TableCell } from "@/modules/ui/components/table";
 import { Cell, Row, flexRender } from "@tanstack/react-table";
 import { Maximize2Icon } from "lucide-react";
 import { cn } from "@formbricks/lib/cn";
 import { TResponse, TResponseTableData } from "@formbricks/types/responses";
-import { getCommonPinningStyles } from "@formbricks/ui/components/DataTable/lib/utils";
-import { TableCell } from "@formbricks/ui/components/Table";
 
 interface ResponseTableCellProps {
   cell: Cell<TResponseTableData, unknown>;

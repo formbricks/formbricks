@@ -1,25 +1,27 @@
 "use client";
 
 import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionsComboBox";
-import clsx from "clsx";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import * as React from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
-import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import {
   Command,
   CommandEmpty,
   CommandGroup,
   CommandItem,
   CommandList,
-} from "@formbricks/ui/components/Command";
+} from "@/modules/ui/components/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
+} from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
+import { useTranslate } from "@tolgee/react";
+import clsx from "clsx";
+import { ChevronDown, ChevronUp, X } from "lucide-react";
+import * as React from "react";
+import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
+import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 
 type QuestionFilterComboBoxProps = {
   filterOptions: string[] | undefined;
@@ -47,9 +49,10 @@ export const QuestionFilterComboBox = ({
   const [open, setOpen] = React.useState(false);
   const [openFilterValue, setOpenFilterValue] = React.useState<boolean>(false);
   const commandRef = React.useRef(null);
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   const defaultLanguageCode = "default";
   useClickOutside(commandRef, () => setOpen(false));
-
+  const { t } = useTranslate();
   // multiple when question type is multi selection
   const isMultiple =
     type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ||
@@ -72,6 +75,12 @@ export const QuestionFilterComboBox = ({
     (type === TSurveyQuestionTypeEnum.NPS || type === TSurveyQuestionTypeEnum.Rating) &&
     (filterValue === "Submitted" || filterValue === "Skipped");
 
+  const filteredOptions = options?.filter((o) =>
+    (typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o)
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="inline-flex w-full flex-row">
       {filterOptions && filterOptions?.length <= 1 ? (
@@ -92,7 +101,7 @@ export const QuestionFilterComboBox = ({
             )}>
             <div className="flex items-center justify-between">
               {!filterValue ? (
-                <p className="text-slate-400">Select...</p>
+                <p className="text-slate-400">{t("common.select")}...</p>
               ) : (
                 <p className="mr-1 max-w-[50px] truncate text-slate-600 sm:max-w-[80px]">{filterValue}</p>
               )}
@@ -132,8 +141,9 @@ export const QuestionFilterComboBox = ({
             ) : (
               <div className="no-scrollbar flex w-[7rem] gap-3 overflow-auto md:w-[10rem] lg:w-[18rem]">
                 {typeof filterComboBoxValue !== "string" &&
-                  filterComboBoxValue?.map((o) => (
+                  filterComboBoxValue?.map((o, index) => (
                     <button
+                      key={`${o}-${index}`}
                       type="button"
                       onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
                       className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
@@ -144,7 +154,7 @@ export const QuestionFilterComboBox = ({
               </div>
             )
           ) : (
-            <p className="text-slate-400">Select...</p>
+            <p className="text-slate-400">{t("common.select")}...</p>
           )}
           <div>
             {open ? (
@@ -158,10 +168,21 @@ export const QuestionFilterComboBox = ({
           {open && (
             <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
               <CommandList>
-                <CommandEmpty>No result found.</CommandEmpty>
+                <div className="p-2">
+                  <Input
+                    type="text"
+                    autoFocus
+                    placeholder={t("common.search") + "..."}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-md border border-slate-300 p-2 text-sm focus:border-slate-300"
+                  />
+                </div>
+                <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
                 <CommandGroup>
-                  {options?.map((o) => (
+                  {filteredOptions?.map((o, index) => (
                     <CommandItem
+                      key={`option-${typeof o === "object" ? getLocalizedValue(o, defaultLanguageCode) : o}-${index}`}
                       onSelect={() => {
                         !isMultiple
                           ? onChangeFilterComboBoxValue(

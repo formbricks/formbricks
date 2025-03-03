@@ -1,0 +1,20 @@
+pre {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 #ffffff;
+}
+
+pre::-webkit-scrollbar {
+  width: 4px !important;
+  border-radius: 99px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 99px;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border: 3px solid #cbd5e1;
+  border-radius: 99px;
+}

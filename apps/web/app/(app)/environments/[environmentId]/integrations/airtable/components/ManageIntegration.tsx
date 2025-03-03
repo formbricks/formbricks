@@ -5,18 +5,20 @@ import {
   AddIntegrationModal,
   IntegrationModalInputs,
 } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AddIntegrationModal";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { EmptySpaceFiller } from "@/modules/ui/components/empty-space-filler";
+import { useTranslate } from "@tolgee/react";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { DeleteDialog } from "@formbricks/ui/components/DeleteDialog";
-import { EmptySpaceFiller } from "@formbricks/ui/components/EmptySpaceFiller";
+import { TUserLocale } from "@formbricks/types/user";
 
 interface ManageIntegrationProps {
   airtableIntegration: TIntegrationAirtable;
@@ -25,21 +27,19 @@ interface ManageIntegrationProps {
   setIsConnected: (data: boolean) => void;
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
-  attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
-const tableHeaders = ["Survey", "Table Name", "Questions", "Updated At"];
+const tableHeaders = [
+  "common.survey",
+  "environments.integrations.airtable.table_name",
+  "common.questions",
+  "common.updated_at",
+];
 
 export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const {
-    airtableIntegration,
-    environment,
-    environmentId,
-    setIsConnected,
-    surveys,
-    airtableArray,
-    attributeClasses,
-  } = props;
+  const { airtableIntegration, environment, environmentId, setIsConnected, surveys, airtableArray } = props;
+  const { t } = useTranslate();
   const [isDeleting, setisDeleting] = useState(false);
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
   const [defaultValues, setDefaultValues] = useState<(IntegrationModalInputs & { index: number }) | null>(
@@ -50,17 +50,22 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
   const integrationData = airtableIntegration?.config?.data ?? [];
 
   const handleDeleteIntegration = async () => {
-    try {
-      setisDeleting(true);
-      await deleteIntegrationAction({ integrationId: airtableIntegration.id });
+    setisDeleting(true);
+
+    const deleteIntegrationActionResult = await deleteIntegrationAction({
+      integrationId: airtableIntegration.id,
+    });
+
+    if (deleteIntegrationActionResult?.data) {
+      toast.success(t("environments.integrations.integration_removed_successfully"));
       setIsConnected(false);
-      toast.success("Integration removed successfully");
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setisDeleting(false);
-      setIsDeleteIntegrationModalOpen(false);
+    } else {
+      const errorMessage = getFormattedErrorMessage(deleteIntegrationActionResult);
+      toast.error(errorMessage);
     }
+
+    setisDeleting(false);
+    setIsDeleteIntegrationModalOpen(false);
   };
 
   const handleModal = (val: boolean) => {
@@ -76,7 +81,9 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
         <div className="flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
           <span className="cursor-pointer text-slate-500">
-            Connected with {airtableIntegration.config.email}
+            {t("environments.integrations.connected_with_email", {
+              email: airtableIntegration.config.email,
+            })}
           </span>
         </div>
         <Button
@@ -84,7 +91,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
             setDefaultValues(null);
             handleModal(true);
           }}>
-          Link new table
+          {t("environments.integrations.airtable.link_new_table")}
         </Button>
       </div>
 
@@ -93,7 +100,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           <div className="grid h-12 grid-cols-8 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
             {tableHeaders.map((header, idx) => (
               <div key={idx} className={`col-span-2 hidden text-center sm:block`}>
-                {header}
+                {t(header)}
               </div>
             ))}
           </div>
@@ -111,6 +118,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
                   includeVariables: !!data.includeVariables,
                   includeHiddenFields: !!data.includeHiddenFields,
                   includeMetadata: !!data.includeMetadata,
+                  includeCreatedAt: !!data.includeCreatedAt,
                   index,
                 });
                 setIsModalOpen(true);
@@ -118,7 +126,9 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               <div className="col-span-2 text-center">{data.surveyName}</div>
               <div className="col-span-2 text-center">{data.tableName}</div>
               <div className="col-span-2 text-center">{data.questions}</div>
-              <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
+              <div className="col-span-2 text-center">
+                {timeSince(data.createdAt.toString(), props.locale)}
+              </div>
             </div>
           ))}
         </div>
@@ -128,26 +138,22 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
             type="table"
             environment={environment}
             noWidgetRequired={true}
-            emptyMessage="Your airtable integrations will appear here as soon as you add them. ⏲️"
+            emptyMessage={t("environments.integrations.airtable.no_integrations_yet")}
           />
         </div>
       )}
 
-      <Button
-        variant="minimal"
-        onClick={() => setIsDeleteIntegrationModalOpen(true)}
-        className="mt-4"
-        StartIcon={Trash2Icon}
-        startIconClassName="h-5 w-5 mr-2">
-        Delete Integration
+      <Button variant="ghost" onClick={() => setIsDeleteIntegrationModalOpen(true)} className="mt-4">
+        <Trash2Icon />
+        {t("environments.integrations.delete_integration")}
       </Button>
 
       <DeleteDialog
         open={isDeleteIntegrationModalOpen}
         setOpen={setIsDeleteIntegrationModalOpen}
-        deleteWhat="airtable connection"
+        deleteWhat={t("environments.integrations.airtable.airtable_integration")}
         onDelete={handleDeleteIntegration}
-        text="Are you sure? Your integrations will break."
+        text={t("environments.integrations.delete_integration_confirmation")}
         isDeleting={isDeleting}
       />
 
@@ -159,7 +165,6 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
           environmentId={environmentId}
           surveys={surveys}
           airtableIntegration={airtableIntegration}
-          attributeClasses={attributeClasses}
           {...data}
         />
       )}

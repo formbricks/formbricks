@@ -397,7 +397,7 @@ test.describe("Create and Delete Action", async () => {
   });
 
   test("Create and Delete Action", async ({ page }) => {
-    await test.step("Create Action", async () => {
+    await test.step("Create action", async () => {
       await createNoCodeClickAction({
         page,
         name: actions.delete.noCode.name,

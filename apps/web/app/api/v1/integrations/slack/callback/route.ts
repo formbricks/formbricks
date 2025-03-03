@@ -1,8 +1,12 @@
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
-import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
-import { TIntegrationSlackConfig, TIntegrationSlackCredential } from "@formbricks/types/integration/slack";
+import { createOrUpdateIntegration, getIntegrationByType } from "@formbricks/lib/integration/service";
+import {
+  TIntegrationSlackConfig,
+  TIntegrationSlackConfigData,
+  TIntegrationSlackCredential,
+} from "@formbricks/types/integration/slack";
 
 export const GET = async (req: NextRequest) => {
   const url = req.url;
@@ -22,18 +26,32 @@ export const GET = async (req: NextRequest) => {
   if (!SLACK_CLIENT_ID) return responses.internalServerErrorResponse("Slack client id is missing");
   if (!SLACK_CLIENT_SECRET) return responses.internalServerErrorResponse("Slack client secret is missing");
 
-  const formData = new FormData();
-  formData.append("code", code ?? "");
-  formData.append("client_id", SLACK_CLIENT_ID ?? "");
-  formData.append("client_secret", SLACK_CLIENT_SECRET ?? "");
-
+  const formData = {
+    code,
+    client_id: SLACK_CLIENT_ID,
+    client_secret: SLACK_CLIENT_SECRET,
+  };
+  const formBody: string[] = [];
+  for (const property in formData) {
+    const encodedKey = encodeURIComponent(property);
+    const encodedValue = encodeURIComponent(formData[property]);
+    formBody.push(encodedKey + "=" + encodedValue);
+  }
+  const bodyString = formBody.join("&");
   if (code) {
     const response = await fetch("https://slack.com/api/oauth.v2.access", {
       method: "POST",
-      body: formData,
+      body: bodyString,
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
     });
 
     const data = await response.json();
+
+    if (!data.ok) {
+      return responses.badRequestResponse(data.error);
+    }
 
     const slackCredentials: TIntegrationSlackCredential = {
       app_id: data.app_id,
@@ -44,18 +62,20 @@ export const GET = async (req: NextRequest) => {
       team: data.team,
     };
 
+    const slackIntegration = await getIntegrationByType(environmentId, "slack");
+
     const slackConfiguration: TIntegrationSlackConfig = {
-      data: [],
+      data: (slackIntegration?.config.data as TIntegrationSlackConfigData[]) ?? [],
       key: slackCredentials,
     };
 
-    const slackIntegration = {
+    const integration = {
       type: "slack" as "slack",
       environment: environmentId,
       config: slackConfiguration,
     };
 
-    const result = await createOrUpdateIntegration(environmentId, slackIntegration);
+    const result = await createOrUpdateIntegration(environmentId, integration);
 
     if (result) {
       return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/slack`);

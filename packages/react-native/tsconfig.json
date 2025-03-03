@@ -1,8 +1,12 @@
 {
-  "extends": "@formbricks/config-typescript/react-native-library.json",
-  "include": ["."],
-  "exclude": ["dist", "build", "node_modules"],
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
     "strict": true
-  }
+  },
+  "exclude": ["dist", "build", "node_modules"],
+  "extends": "@formbricks/config-typescript/react-native-library.json",
+  "include": [".", "../database/src/index.ts"]
 }

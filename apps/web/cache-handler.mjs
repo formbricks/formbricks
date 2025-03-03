@@ -11,7 +11,7 @@ const createTimeoutPromise = (ms, rejectReason) => {
 CacheHandler.onCreation(async () => {
   let client;
 
-  if (process.env.REDIS_URL) {
+  if (process.env.REDIS_URL && process.env.ENTERPRISE_LICENSE_KEY) {
     try {
       // Create a Redis client.
       client = createClient({
@@ -45,6 +45,8 @@ CacheHandler.onCreation(async () => {
           });
       }
     }
+  } else if (process.env.REDIS_URL) {
+    console.log("Redis clustering requires an Enterprise License. Falling back to LRU cache.");
   }
 
   /** @type {import("@neshca/cache-handler").Handler | null} */
@@ -61,7 +63,7 @@ CacheHandler.onCreation(async () => {
     // Fallback to LRU handler if Redis client is not available.
     // The application will still work, but the cache will be in memory only and not shared.
     handler = createLruHandler();
-    console.warn("Falling back to LRU handler because Redis client is not available.");
+    console.log("Using LRU handler for caching.");
   }
 
   return {

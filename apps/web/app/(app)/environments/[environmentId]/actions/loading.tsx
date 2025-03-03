@@ -1,16 +1,20 @@
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
+"use client";
+
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
+  const { t } = useTranslate();
   return (
     <>
       <PageContentWrapper>
-        <PageHeader pageTitle="Actions" />
+        <PageHeader pageTitle={t("common.actions")} />
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="grid h-12 grid-cols-6 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
-            <span className="sr-only">Edit</span>
-            <div className="col-span-4 pl-6">User Actions</div>
-            <div className="col-span-2 text-center">Created</div>
+            <span className="sr-only">{t("common.edit")}</span>
+            <div className="col-span-4 pl-6">{t("environments.actions.user_actions")}</div>
+            <div className="col-span-2 text-center">{t("common.created")}</div>
           </div>
           {[...Array(3)].map((_, index) => (
             <div

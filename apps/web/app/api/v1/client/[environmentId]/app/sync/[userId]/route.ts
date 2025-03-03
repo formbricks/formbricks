@@ -1,24 +1,27 @@
+// Deprecated: This api route is deprecated now and will be removed in the future.
+// Deprecated: This is currently only being used for the older react native SDKs. Please upgrade to the latest SDKs.
+import { getContactByUserId } from "@/app/api/v1/client/[environmentId]/app/sync/lib/contact";
+import { getSyncSurveys } from "@/app/api/v1/client/[environmentId]/app/sync/lib/survey";
 import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/sync/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { contactCache } from "@/lib/cache/contact";
 import { NextRequest, userAgent } from "next/server";
+import { prisma } from "@formbricks/database";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
-import { getAttributes } from "@formbricks/lib/attribute/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, updateEnvironment } from "@formbricks/lib/environment/service";
 import {
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
 } from "@formbricks/lib/organization/service";
-import { createPerson, getPersonByUserId } from "@formbricks/lib/person/service";
 import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
-import { getSyncSurveys } from "@formbricks/lib/survey/service";
-import { TJsAppStateSync, ZJsPeopleUserIdInput } from "@formbricks/types/js";
+import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -27,15 +30,14 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const GET = async (
   request: NextRequest,
-  {
-    params,
-  }: {
-    params: {
+  props: {
+    params: Promise<{
       environmentId: string;
       userId: string;
-    };
+    }>;
   }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const { device } = userAgent(request);
 
@@ -59,10 +61,10 @@ export const GET = async (
       throw new Error("Environment does not exist");
     }
 
-    const product = await getProductByEnvironmentId(environmentId);
+    const project = await getProjectByEnvironmentId(environmentId);
 
-    if (!product) {
-      throw new Error("Product not found");
+    if (!project) {
+      throw new Error("Project not found");
     }
 
     if (!environment.appSetupCompleted) {
@@ -92,7 +94,13 @@ export const GET = async (
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
-            limits: { monthly: { responses: monthlyResponseLimit, miu: null } },
+            limits: {
+              projects: null,
+              monthly: {
+                responses: monthlyResponseLimit,
+                miu: null,
+              },
+            },
           });
         } catch (error) {
           console.error(`Error sending plan limits reached event to Posthog: ${error}`);
@@ -100,43 +108,81 @@ export const GET = async (
       }
     }
 
-    let person = await getPersonByUserId(environmentId, userId);
+    let contact = await getContactByUserId(environmentId, userId);
+    if (!contact) {
+      contact = await prisma.contact.create({
+        data: {
+          attributes: {
+            create: {
+              attributeKey: {
+                connect: {
+                  key_environmentId: {
+                    key: "userId",
+                    environmentId,
+                  },
+                },
+              },
+              value: userId,
+            },
+          },
+          environment: { connect: { id: environmentId } },
+        },
+        select: {
+          id: true,
+          attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
+        },
+      });
 
-    if (!person) {
-      person = await createPerson(environmentId, userId);
+      if (contact) {
+        contactCache.revalidate({
+          userId: contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
+          id: contact.id,
+          environmentId,
+        });
+      }
     }
 
+    const contactAttributes = contact.attributes.reduce((acc, attribute) => {
+      acc[attribute.attributeKey.key] = attribute.value;
+      return acc;
+    }, {}) as Record<string, string>;
+
     const [surveys, actionClasses] = await Promise.all([
-      getSyncSurveys(environmentId, person.id, device.type === "mobile" ? "phone" : "desktop"),
+      getSyncSurveys(
+        environmentId,
+        contact.id,
+        contactAttributes,
+        device.type === "mobile" ? "phone" : "desktop"
+      ),
       getActionClasses(environmentId),
     ]);
 
-    if (!product) {
-      throw new Error("Product not found");
+    if (!project) {
+      throw new Error("Project not found");
     }
 
-    const updatedProduct: any = {
-      ...product,
-      brandColor: product.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-      ...(product.styling.highlightBorderColor?.light && {
-        highlightBorderColor: product.styling.highlightBorderColor.light,
+    const updatedProject: any = {
+      ...project,
+      brandColor: project.styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
+      ...(project.styling.highlightBorderColor?.light && {
+        highlightBorderColor: project.styling.highlightBorderColor.light,
       }),
     };
-    const attributes = await getAttributes(person.id);
-    const language = attributes["language"];
+
+    const language = contactAttributes["language"];
 
     // Scenario 1: Multi language and updated trigger action classes supported.
     // Use the surveys as they are.
     let transformedSurveys: TSurvey[] = surveys;
 
     // creating state object
-    let state: TJsAppStateSync = {
+    let state = {
       surveys: !isAppSurveyResponseLimitReached
-        ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, attributes))
+        ? transformedSurveys.map((survey) => replaceAttributeRecall(survey, contactAttributes))
         : [],
       actionClasses,
       language,
-      product: updatedProduct,
+      project: updatedProject,
     };
 
     return responses.successResponse({ ...state }, true);

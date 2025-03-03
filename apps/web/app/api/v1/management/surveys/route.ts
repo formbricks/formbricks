@@ -1,6 +1,9 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -29,6 +32,11 @@ export const POST = async (request: Request): Promise<Response> => {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
+    const organization = await getOrganizationByEnvironmentId(authentication.environmentId);
+    if (!organization) {
+      return responses.notFoundResponse("Organization", null);
+    }
+
     let surveyInput;
     try {
       surveyInput = await request.json();
@@ -49,6 +57,20 @@ export const POST = async (request: Request): Promise<Response> => {
 
     const environmentId = authentication.environmentId;
     const surveyData = { ...inputValidation.data, environmentId: undefined };
+
+    if (surveyData.followUps?.length) {
+      const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
+      if (!isSurveyFollowUpsEnabled) {
+        return responses.forbiddenResponse("Survey follow ups are not enabled allowed for this organization");
+      }
+    }
+
+    if (surveyData.languages && surveyData.languages.length) {
+      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
+      if (!isMultiLanguageEnabled) {
+        return responses.forbiddenResponse("Multi language is not enabled for this organization");
+      }
+    }
 
     const survey = await createSurvey(environmentId, surveyData);
     return responses.successResponse(survey);

@@ -1,7 +1,7 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import Link from "next/link";
 import React from "react";
 import { cn } from "@formbricks/lib/cn";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
 
 interface NavigationLinkProps {
   href: string;
@@ -53,7 +53,7 @@ export const NavigationLink = ({
             {children}
             <span
               className={cn(
-                "ml-2 transition-opacity duration-100",
+                "ml-2 flex transition-opacity duration-100",
                 isTextVisible ? "opacity-0" : "opacity-100"
               )}>
               {linkText}

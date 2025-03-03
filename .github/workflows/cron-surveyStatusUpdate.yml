@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
   # "Scheduled workflows run on the latest commit on the default or base branch."
   # — https://docs.github.com/en/actions/learn-github-actions/events-that-trigger-workflows#schedule
-  # schedule:
-  # Runs “At 00:00.” (see https://crontab.guru)
-  # - cron: "0 0 * * *"
+  schedule:
+    # Runs "At 00:00." (see https://crontab.guru)
+    - cron: "0 0 * * *"
+
+permissions:
+  contents: read
+
 jobs:
   cron-weeklySummary:
     env:

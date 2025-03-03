@@ -3,28 +3,21 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
-import { BellRing, Code2Icon, Eye, LinkIcon, MoreVertical, SquarePenIcon, UsersRound } from "lucide-react";
-import Link from "next/link";
+import { Badge } from "@/modules/ui/components/badge";
+import { IconBar } from "@/modules/ui/components/iconbar";
+import { useTranslate } from "@tolgee/react";
+import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { Badge } from "@formbricks/ui/components/Badge";
-import { Button } from "@formbricks/ui/components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@formbricks/ui/components/DropdownMenu";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
-  isViewer: boolean;
+  isReadOnly: boolean;
   webAppUrl: string;
   user: TUser;
 }
@@ -39,10 +32,11 @@ interface ModalState {
 export const SurveyAnalysisCTA = ({
   survey,
   environment,
-  isViewer,
+  isReadOnly,
   webAppUrl,
   user,
 }: SurveyAnalysisCTAProps) => {
+  const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -80,10 +74,10 @@ export const SurveyAnalysisCTA = ({
     navigator.clipboard
       .writeText(surveyUrl)
       .then(() => {
-        toast.success("Copied link to clipboard");
+        toast.success(t("common.copied_to_clipboard"));
       })
       .catch((err) => {
-        toast.error("Failed to copy link");
+        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
         console.error(err);
       });
     setModalState((prev) => ({ ...prev, dropdown: false }));
@@ -107,90 +101,64 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
+  const iconActions = [
+    {
+      icon: Eye,
+      tooltip: t("common.preview"),
+      onClick: () => window.open(getPreviewUrl(), "_blank"),
+      isVisible: survey.type === "link",
+    },
+    {
+      icon: LinkIcon,
+      tooltip: t("common.copy_link"),
+      onClick: handleCopyLink,
+      isVisible: survey.type === "link",
+    },
+    {
+      icon: Code2Icon,
+      tooltip: t("common.embed"),
+      onClick: () => handleModalState("embed")(true),
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: BellRing,
+      tooltip: t("environments.surveys.summary.configure_alerts"),
+      onClick: () => router.push(`/environments/${survey.environmentId}/settings/notifications`),
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: UsersRound,
+      tooltip: t("environments.surveys.summary.send_to_panel"),
+      onClick: () => {
+        handleModalState("panel")(true);
+        setModalState((prev) => ({ ...prev, dropdown: false }));
+      },
+      isVisible: !isReadOnly,
+    },
+    {
+      icon: SquarePenIcon,
+      tooltip: t("common.edit"),
+      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      isVisible: !isReadOnly,
+    },
+  ];
+
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {survey.resultShareKey && (
-        <Badge text="Results are public" type="warning" size="normal" className="rounded-lg" />
+        <Badge
+          type="warning"
+          size="normal"
+          className="rounded-lg"
+          text={t("environments.surveys.summary.results_are_public")}
+        />
       )}
 
-      {(widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
+      {!isReadOnly && (widgetSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
         <SurveyStatusDropdown environment={environment} survey={survey} />
       )}
 
-      {!isViewer && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => handleModalState("embed")(true)}
-          EndIcon={Code2Icon}>
-          Embed
-        </Button>
-      )}
-
-      {survey.type === "link" && (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => window.open(getPreviewUrl(), "_blank")}
-          EndIcon={Eye}>
-          Preview
-        </Button>
-      )}
-
-      {!isViewer && (
-        <Button href={`/environments/${environment.id}/surveys/${survey.id}/edit`} EndIcon={SquarePenIcon}>
-          Edit
-        </Button>
-      )}
-
-      {!isViewer && (
-        <div id={`${survey.name.toLowerCase().replace(/\s+/g, "-")}-survey-actions`}>
-          <DropdownMenu
-            open={modalState.dropdown}
-            onOpenChange={(open) => setModalState((prev) => ({ ...prev, dropdown: open }))}>
-            <DropdownMenuTrigger className="z-10 cursor-pointer" asChild>
-              <Button variant="secondary" className="p-2">
-                <MoreVertical className="h-7 w-4" />
-                <span className="sr-only">Open options</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="mr-8 w-40">
-              <DropdownMenuGroup>
-                {survey.type === "link" && (
-                  <DropdownMenuItem>
-                    <button onClick={handleCopyLink} className="flex w-full items-center">
-                      <LinkIcon className="mr-2 h-4 w-4" />
-                      Copy Link
-                    </button>
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuItem>
-                  <button
-                    onClick={() => {
-                      handleModalState("panel")(true);
-                      setModalState((prev) => ({ ...prev, dropdown: false }));
-                    }}
-                    className="flex w-full items-center">
-                    <UsersRound className="mr-2 h-4 w-4" />
-                    Send to panel
-                  </button>
-                </DropdownMenuItem>
-
-                <DropdownMenuItem>
-                  <Link
-                    href={`/environments/${survey.environmentId}/settings/notifications`}
-                    className="flex w-full items-center"
-                    onClick={() => setModalState((prev) => ({ ...prev, dropdown: false }))}>
-                    <BellRing className="mr-2 h-4 w-4" />
-                    Configure alerts
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
+      <IconBar actions={iconActions} />
 
       {user && (
         <>

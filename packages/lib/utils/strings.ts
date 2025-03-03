@@ -24,3 +24,7 @@ export const isCapitalized = (str: string) => str.charAt(0) === str.charAt(0).to
 export const startsWithVowel = (str: string): boolean => {
   return /^[aeiouAEIOU]/.test(str);
 };
+
+export const truncateText = (text: string, limit: number): string => {
+  return text.length > limit ? `${text.substring(0, limit)}...` : text;
+};

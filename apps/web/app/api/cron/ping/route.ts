@@ -6,7 +6,7 @@ import { CRON_SECRET } from "@formbricks/lib/constants";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 
 export const POST = async () => {
-  const headersList = headers();
+  const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
 
   if (!apiKey || apiKey !== CRON_SECRET) {

@@ -1,5 +1,5 @@
-const SurveyLayout = ({ children }) => {
-  return <div className="h-dvh">{children}</div>;
-};
+import { LinkSurveyLayout, viewport } from "@/modules/survey/link/layout";
 
-export default SurveyLayout;
+export { viewport };
+
+export default LinkSurveyLayout;

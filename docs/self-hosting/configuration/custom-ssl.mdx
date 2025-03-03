@@ -1,0 +1,149 @@
+---
+title: "Custom SSL Certificate"
+description: "Using Formbricks One-Click Setup with a Custom SSL Certificate."
+icon: "lock"
+---
+
+<Note>
+  Formbricks One-Click setup already comes with a valid SSL certificate using **Let's Encrypt**. This guide is only if you already have a valid SSL certificate that you need to use due to company policy or other requirements.
+</Note>
+
+Formbricks' One-Click setup automatically creates an SSL certificate using **Let's Encrypt**. However, some setups need a custom SSL certificate. This is common for intranets or systems with special certificate rules that use an internal or custom certificate authority (CA).
+
+### Step 1: Navigate to the Formbricks Folder
+
+Move into the `formbricks/` directory:
+
+```bash
+cd formbricks
+```
+
+### Step 2: Create a Folder for SSL Certificates
+
+Create a folder called `certs` and place your SSL certificate files inside:
+
+```bash
+mkdir certs
+# Move your SSL certificate files to the certs folder
+mv /path/to/your/fullchain.crt certs/
+mv /path/to/your/cert.key certs/
+```
+
+### Step 3: Understand SSL Certificate Files
+
+* **fullchain.crt** – Your SSL certificate, including the full certificate chain.
+
+* **cert.key** – The private key used to encrypt data.
+
+### Step 4: Set Correct File Permissions
+
+Ensure the certificate files have the right permissions:
+
+```bash
+sudo chown root:root certs/*
+sudo chmod 600 certs/*
+```
+
+### Step 5: Update `traefik.yaml`
+
+Modify the file to define HTTP and HTTPS settings:
+
+<CodeGroup>
+  ```yaml traefik.yaml
+  entryPoints:
+    web:
+      address: ":80"
+      http:
+        redirections:
+          entryPoint:
+            to: websecure
+            scheme: https
+            permanent: true
+    websecure:
+      address: ":443"
+
+  providers:
+    docker:
+      watch: true
+      exposedByDefault: false
+    file:
+      directory: /etc/traefik/dynamic
+  ```
+</CodeGroup>
+
+### Step 6: Create `certs-traefik.yaml`
+
+Create a `certs-traefik.yaml` file that specifies the path to your custom SSL certificate and key.
+
+<CodeGroup>
+  ```yaml certs-traefik.yaml
+  tls:
+    certificates:
+      - certFile: /certs/fullchain.crt
+        keyFile: /certs/cert.key
+  ```
+</CodeGroup>
+
+### Step 7: Update `docker-compose.yml`
+
+Modify the configuration to enforce SSL. The rest of the configuration should remain the same as the One-Click setup:
+
+<CodeGroup>
+  ```yaml docker-compose.yml
+  services:
+    formbricks:
+      restart: always
+      image: ghcr.io/formbricks/formbricks:latest
+      depends_on:
+        - postgres
+      labels:
+        - "traefik.enable=true"  # Enable Traefik for this service
+        - "traefik.http.routers.formbricks.rule=Host(`my-domain.com`)"  # Use your actual domain or IP
+        - "traefik.http.routers.formbricks.entrypoints=websecure"  # Use the websecure entrypoint (port 443 with TLS)
+        - "traefik.http.routers.formbricks.tls=true"  # Enable TLS
+        - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
+      ports:
+        - 3000:3000
+      volumes:
+        - uploads:/home/nextjs/apps/web/uploads/
+      <<: *environment
+
+    traefik:
+      image: "traefik:v2.7"
+      restart: always
+      container_name: "traefik"
+      depends_on:
+        - formbricks
+      ports:
+        - "80:80"
+        - "443:443"
+        - "8080:8080"
+      volumes:
+        - ./traefik.yaml:/traefik.yaml
+        - ./acme.json:/acme.json
+        - /var/run/docker.sock:/var/run/docker.sock:ro
+        - ./certs:/certs
+        - ./certs-traefik.yaml:/etc/traefik/dynamic/certs-traefik.yaml
+  ```
+</CodeGroup>
+
+## Summary
+
+* **Navigate to the Formbricks folder**
+
+* **Create a `certs/` folder** and move your certificate files inside.
+
+* **Ensure you have the correct certificate files** (`fullchain.crt` and `cert.key`).
+
+* **Update file permissions** for security.
+
+* **Modify `traefik.yaml`** to handle HTTPS.
+
+* **Create `certs-traefik.yaml`** to point to your certificate files.
+
+* **Update `docker-compose.yml`** to use your custom SSL certificate.
+
+This setup ensures that Formbricks securely communicates using your own SSL certificate. 🚀
+
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
+](https://formbricks.com/docs/developer-docs/rest-api)

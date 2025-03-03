@@ -8,6 +8,7 @@ export type TOrganizationBillingPeriod = z.infer<typeof ZOrganizationBillingPeri
 
 // responses and miu can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
+  projects: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
     miu: z.number().nullable(),
@@ -21,15 +22,22 @@ export const ZOrganizationBilling = z.object({
   plan: ZOrganizationBillingPlan.default("free"),
   period: ZOrganizationBillingPeriod.default("monthly"),
   limits: ZOrganizationBillingPlanLimits.default({
+    projects: 3,
     monthly: {
-      responses: 500,
-      miu: 1000,
+      responses: 1500,
+      miu: 2000,
     },
   }),
   periodStart: z.date(),
 });
 
 export type TOrganizationBilling = z.infer<typeof ZOrganizationBilling>;
+
+export const ZOrganizationWhitelabel = z.object({
+  logoUrl: z.string().nullable(),
+});
+
+export type TOrganizationWhitelabel = z.infer<typeof ZOrganizationWhitelabel>;
 
 export const ZOrganization = z.object({
   id: z.string().cuid2(),
@@ -38,7 +46,9 @@ export const ZOrganization = z.object({
   name: z.string({ message: "Organization name is required" }).trim().min(1, {
     message: "Organization name must be at least 1 character long",
   }),
+  whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling,
+  isAIEnabled: z.boolean().default(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
@@ -50,7 +60,9 @@ export type TOrganizationCreateInput = z.infer<typeof ZOrganizationCreateInput>;
 
 export const ZOrganizationUpdateInput = z.object({
   name: z.string(),
+  whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling.optional(),
+  isAIEnabled: z.boolean().optional(),
 });
 
 export type TOrganizationUpdateInput = z.infer<typeof ZOrganizationUpdateInput>;

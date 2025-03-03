@@ -1,10 +1,13 @@
+"use client";
+
 import { ResponseTable } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTable";
+import { TFnType, useTranslate } from "@tolgee/react";
 import React from "react";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseDataValue, TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser } from "@formbricks/types/user";
+import { TUser, TUserLocale } from "@formbricks/types/user";
 
 interface ResponseDataViewProps {
   survey: TSurvey;
@@ -12,12 +15,13 @@ interface ResponseDataViewProps {
   user?: TUser;
   environment: TEnvironment;
   environmentTags: TTag[];
-  isViewer: boolean;
+  isReadOnly: boolean;
   fetchNextPage: () => void;
   hasMore: boolean;
   deleteResponses: (responseIds: string[]) => void;
   updateResponse: (responseId: string, updatedResponse: TResponse) => void;
   isFetchingFirstPage: boolean;
+  locale: TUserLocale;
 }
 
 const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
@@ -69,11 +73,17 @@ const extractResponseData = (response: TResponse, survey: TSurvey): Record<strin
   return responseData;
 };
 
-const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResponseTableData[] => {
+const mapResponsesToTableData = (
+  responses: TResponse[],
+  survey: TSurvey,
+  t: TFnType
+): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
     createdAt: response.createdAt,
-    status: response.finished ? "Completed ✅" : "Not Completed ⏳",
+    status: response.finished
+      ? t("environments.surveys.responses.completed")
+      : t("environments.surveys.responses.not_completed"),
     responseId: response.id,
     tags: response.tags,
     notes: response.notes,
@@ -85,8 +95,8 @@ const mapResponsesToTableData = (responses: TResponse[], survey: TSurvey): TResp
     ),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
     language: response.language,
-    person: response.person,
-    personAttributes: response.personAttributes,
+    person: response.contact,
+    contactAttributes: response.contactAttributes,
   }));
 };
 
@@ -96,14 +106,16 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   user,
   environment,
   environmentTags,
-  isViewer,
+  isReadOnly,
   fetchNextPage,
   hasMore,
   deleteResponses,
   updateResponse,
   isFetchingFirstPage,
+  locale,
 }) => {
-  const data = mapResponsesToTableData(responses, survey);
+  const { t } = useTranslate();
+  const data = mapResponsesToTableData(responses, survey, t);
 
   return (
     <div className="w-full">
@@ -113,13 +125,14 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         responses={responses}
         user={user}
         environmentTags={environmentTags}
-        isViewer={isViewer}
+        isReadOnly={isReadOnly}
         environment={environment}
         fetchNextPage={fetchNextPage}
         hasMore={hasMore}
         deleteResponses={deleteResponses}
         updateResponse={updateResponse}
         isFetchingFirstPage={isFetchingFirstPage}
+        locale={locale}
       />
     </div>
   );

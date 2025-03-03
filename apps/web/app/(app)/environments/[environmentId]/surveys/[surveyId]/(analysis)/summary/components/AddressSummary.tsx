@@ -1,37 +1,32 @@
+"use client";
+
+import { ArrayResponse } from "@/modules/ui/components/array-response";
+import { PersonAvatar } from "@/modules/ui/components/avatars";
+import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { getPersonIdentifier } from "@formbricks/lib/person/utils";
 import { timeSince } from "@formbricks/lib/time";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
+import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
-import { ArrayResponse } from "@formbricks/ui/components/ArrayResponse";
-import { PersonAvatar } from "@formbricks/ui/components/Avatars";
+import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface AddressSummaryProps {
   questionSummary: TSurveyQuestionSummaryAddress;
   environmentId: string;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
+  locale: TUserLocale;
 }
 
-export const AddressSummary = ({
-  questionSummary,
-  environmentId,
-  survey,
-  attributeClasses,
-}: AddressSummaryProps) => {
+export const AddressSummary = ({ questionSummary, environmentId, survey, locale }: AddressSummaryProps) => {
+  const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-      <QuestionSummaryHeader
-        questionSummary={questionSummary}
-        survey={survey}
-        attributeClasses={attributeClasses}
-      />
+      <QuestionSummaryHeader questionSummary={questionSummary} survey={survey} />
       <div>
         <div className="grid h-10 grid-cols-4 items-center border-y border-slate-200 bg-slate-100 text-sm font-bold text-slate-600">
-          <div className="pl-4 md:pl-6">User</div>
-          <div className="col-span-2 pl-4 md:pl-6">Response</div>
-          <div className="px-4 md:px-6">Time</div>
+          <div className="pl-4 md:pl-6">{t("common.user")}</div>
+          <div className="col-span-2 pl-4 md:pl-6">{t("common.response")}</div>
+          <div className="px-4 md:px-6">{t("common.time")}</div>
         </div>
         <div className="max-h-[62vh] w-full overflow-y-auto">
           {questionSummary.samples.map((response) => {
@@ -40,15 +35,15 @@ export const AddressSummary = ({
                 key={response.id}
                 className="grid grid-cols-4 items-center border-b border-slate-100 py-2 text-sm text-slate-800 last:border-transparent md:text-base">
                 <div className="pl-4 md:pl-6">
-                  {response.person ? (
+                  {response.contact ? (
                     <Link
                       className="ph-no-capture group flex items-center"
-                      href={`/environments/${environmentId}/people/${response.person.id}`}>
+                      href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
                       <div className="hidden md:flex">
-                        <PersonAvatar personId={response.person.id} />
+                        <PersonAvatar personId={response.contact.id} />
                       </div>
                       <p className="ph-no-capture break-all text-slate-600 group-hover:underline md:ml-2">
-                        {getPersonIdentifier(response.person, response.personAttributes)}
+                        {getContactIdentifier(response.contact, response.contactAttributes)}
                       </p>
                     </Link>
                   ) : (
@@ -56,7 +51,7 @@ export const AddressSummary = ({
                       <div className="hidden md:flex">
                         <PersonAvatar personId="anonymous" />
                       </div>
-                      <p className="break-all text-slate-600 md:ml-2">Anonymous</p>
+                      <p className="break-all text-slate-600 md:ml-2">{t("common.anonymous")}</p>
                     </div>
                   )}
                 </div>
@@ -65,7 +60,7 @@ export const AddressSummary = ({
                 </div>
 
                 <div className="px-4 text-slate-500 md:px-6">
-                  {timeSince(new Date(response.updatedAt).toISOString())}
+                  {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                 </div>
               </div>
             );

@@ -1,0 +1,60 @@
+---
+title: Slack (On Premise)
+description: Send survey responses automatically to Slack workspace.
+---
+
+Send survey responses automatically to Slack workspace.
+
+<Note>
+  If you are using Formbricks Cloud, you will need to configure this
+  integration differently. Please follow this guide
+  [here](/xm-and-surveys/core-features/integrations/slack) to set it up.
+</Note>
+
+## Setup
+
+Enabling the Slack Integration in a self-hosted environment requires a setup using slack workspace account and changing the environment variables of your Formbricks instance.
+
+<Note>Make sure your self-hosted Formbricks instance works with SSL as Slack requires it.</Note>
+
+* Create a Slack workspace if you don't have one already.
+
+* Go to the [Your apps](https://api.slack.com/apps) page and **Create New App**.
+
+* Click on **From Scratch** and provide the **App Name** and select your workspace in **Pick a workspace to develop your app in:** dropdown. Click on **Create App**.
+
+* Go to the **OAuth & Permissions** tab on the sidebar and add the following **Bot Token Scopes**:
+
+  * `channels:read`
+
+  * `groups:read`
+
+  * `chat:write`
+
+  * `chat:write.public`
+
+  * `chat:write.customize`
+
+* Add the **Redirect URLs** under **OAuth & Permissions** tab. You can add the following URLs:
+
+  * If you are running formbricks locally, you can enter `https://localhost:3000/api/v1/integrations/slack/callback`.
+
+  * Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/slack/callback`
+
+* Now, click on **Install to Workspace** and **Allow** the permissions.
+
+* Go to the **Basic Information** tab on the sidebar and copy the **Client ID** and **Client Secret**. Copy them & add it to your **Formbricks environment variables** as in the docker compose file:
+
+* `SLACK_CLIENT_ID` - OAuth Client ID
+
+* `SLACK_CLIENT_SECRET` - OAuth Client Secret
+
+* Now, you need to enable the public distribution of your app. Go to the **Basic Information** tab and click on the **Manage distribution** button and click on the "Distribute App".
+
+* Scroll down to the **Share your app with other workspaces** section, complete the checklist and click on the **Activate public distribution** button.
+
+Voila! You have successfully enabled the Slack integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Slack Integration](/xm-and-surveys/core-features/integrations/slack) section to link a Slack workspace with Formbricks.
+
+
+
+Still struggling or something not working as expected? [Join our Github Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!

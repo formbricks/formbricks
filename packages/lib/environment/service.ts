@@ -18,12 +18,12 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getProducts } from "../product/service";
+import { getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
 export const getEnvironment = reactCache(
-  (environmentId: string): Promise<TEnvironment | null> =>
+  async (environmentId: string): Promise<TEnvironment | null> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);
@@ -52,23 +52,23 @@ export const getEnvironment = reactCache(
 );
 
 export const getEnvironments = reactCache(
-  (productId: string): Promise<TEnvironment[]> =>
+  async (projectId: string): Promise<TEnvironment[]> =>
     cache(
       async (): Promise<TEnvironment[]> => {
-        validateInputs([productId, ZId]);
-        let productPrisma;
+        validateInputs([projectId, ZId]);
+        let projectPrisma;
         try {
-          productPrisma = await prisma.product.findFirst({
+          projectPrisma = await prisma.project.findFirst({
             where: {
-              id: productId,
+              id: projectId,
             },
             include: {
               environments: true,
             },
           });
 
-          if (!productPrisma) {
-            throw new ResourceNotFoundError("Product", productId);
+          if (!projectPrisma) {
+            throw new ResourceNotFoundError("Project", projectId);
           }
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -78,7 +78,7 @@ export const getEnvironments = reactCache(
         }
 
         const environments: TEnvironment[] = [];
-        for (let environment of productPrisma.environments) {
+        for (let environment of projectPrisma.environments) {
           let targetEnvironment: TEnvironment = ZEnvironment.parse(environment);
           environments.push(targetEnvironment);
         }
@@ -92,9 +92,9 @@ export const getEnvironments = reactCache(
           throw new ValidationError("Data validation of environments array failed");
         }
       },
-      [`getEnvironments-${productId}`],
+      [`getEnvironments-${projectId}`],
       {
-        tags: [environmentCache.tag.byProductId(productId)],
+        tags: [environmentCache.tag.byProjectId(projectId)],
       }
     )()
 );
@@ -116,7 +116,7 @@ export const updateEnvironment = async (
 
     environmentCache.revalidate({
       id: environmentId,
-      productId: updatedEnvironment.productId,
+      projectId: updatedEnvironment.projectId,
     });
 
     return updatedEnvironment;
@@ -128,60 +128,70 @@ export const updateEnvironment = async (
   }
 };
 
-export const getFirstEnvironmentByUserId = async (userId: string): Promise<TEnvironment | null> => {
+export const getFirstEnvironmentIdByUserId = async (userId: string): Promise<string | null> => {
   try {
     const organizations = await getOrganizationsByUserId(userId);
     if (organizations.length === 0) {
-      throw new Error(`Unable to get first environment: User ${userId} has no organizations`);
+      return null;
     }
     const firstOrganization = organizations[0];
-    const products = await getProducts(firstOrganization.id);
-    if (products.length === 0) {
-      throw new Error(
-        `Unable to get first environment: Organization ${firstOrganization.id} has no products`
-      );
+    const projects = await getUserProjects(userId, firstOrganization.id);
+    if (projects.length === 0) {
+      return null;
     }
-    const firstProduct = products[0];
-    const productionEnvironment = firstProduct.environments.find(
+    const firstProject = projects[0];
+    const productionEnvironment = firstProject.environments.find(
       (environment) => environment.type === "production"
     );
     if (!productionEnvironment) {
-      throw new Error(
-        `Unable to get first environment: Product ${firstProduct.id} has no production environment`
-      );
+      return null;
     }
-    return productionEnvironment;
+    return productionEnvironment.id;
   } catch (error) {
     throw error;
   }
 };
 
 export const createEnvironment = async (
-  productId: string,
+  projectId: string,
   environmentInput: Partial<TEnvironmentCreateInput>
 ): Promise<TEnvironment> => {
-  validateInputs([productId, ZId], [environmentInput, ZEnvironmentCreateInput]);
+  validateInputs([projectId, ZId], [environmentInput, ZEnvironmentCreateInput]);
 
   try {
     const environment = await prisma.environment.create({
       data: {
         type: environmentInput.type || "development",
-        product: { connect: { id: productId } },
+        project: { connect: { id: projectId } },
         appSetupCompleted: environmentInput.appSetupCompleted || false,
-        actionClasses: {
+        attributeKeys: {
           create: [
             {
-              name: "New Session",
-              description: "Gets fired when a new session is created",
-              type: "automatic",
+              key: "userId",
+              name: "User Id",
+              description: "The user id of a contact",
+              type: "default",
+              isUnique: true,
             },
-          ],
-        },
-        attributeClasses: {
-          create: [
-            // { name: "userId", description: "The internal ID of the person", type: "automatic" },
-            { name: "email", description: "The email of the person", type: "automatic" },
-            { name: "language", description: "The language used by the person", type: "automatic" },
+            {
+              key: "email",
+              name: "Email",
+              description: "The email of a contact",
+              type: "default",
+              isUnique: true,
+            },
+            {
+              key: "firstName",
+              name: "First Name",
+              description: "Your contact's first name",
+              type: "default",
+            },
+            {
+              key: "lastName",
+              name: "Last Name",
+              description: "Your contact's last name",
+              type: "default",
+            },
           ],
         },
       },
@@ -189,7 +199,7 @@ export const createEnvironment = async (
 
     environmentCache.revalidate({
       id: environment.id,
-      productId: environment.productId,
+      projectId: environment.projectId,
     });
 
     await capturePosthogEnvironmentEvent(environment.id, "environment created", {

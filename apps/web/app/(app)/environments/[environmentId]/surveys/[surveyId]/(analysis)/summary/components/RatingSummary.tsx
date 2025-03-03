@@ -1,23 +1,25 @@
+"use client";
+
 import { convertFloatToNDecimal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
+import { ProgressBar } from "@/modules/ui/components/progress-bar";
+import { RatingResponse } from "@/modules/ui/components/rating-response";
+import { useTranslate } from "@tolgee/react";
 import { CircleSlash2, SmileIcon, StarIcon } from "lucide-react";
 import { useMemo } from "react";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import {
   TI18nString,
   TSurvey,
+  TSurveyQuestionId,
   TSurveyQuestionSummaryRating,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { ProgressBar } from "@formbricks/ui/components/ProgressBar";
-import { RatingResponse } from "@formbricks/ui/components/RatingResponse";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface RatingSummaryProps {
   questionSummary: TSurveyQuestionSummaryRating;
   survey: TSurvey;
-  attributeClasses: TAttributeClass[];
   setFilter: (
-    questionId: string,
+    questionId: TSurveyQuestionId,
     label: TI18nString,
     questionType: TSurveyQuestionTypeEnum,
     filterValue: string,
@@ -25,12 +27,8 @@ interface RatingSummaryProps {
   ) => void;
 }
 
-export const RatingSummary = ({
-  questionSummary,
-  survey,
-  attributeClasses,
-  setFilter,
-}: RatingSummaryProps) => {
+export const RatingSummary = ({ questionSummary, survey, setFilter }: RatingSummaryProps) => {
+  const { t } = useTranslate();
   const getIconBasedOnScale = useMemo(() => {
     const scale = questionSummary.question.scale;
     if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
@@ -43,11 +41,12 @@ export const RatingSummary = ({
       <QuestionSummaryHeader
         questionSummary={questionSummary}
         survey={survey}
-        attributeClasses={attributeClasses}
-        insights={
+        additionalInfo={
           <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
-            <div>Overall: {questionSummary.average.toFixed(2)}</div>
+            <div>
+              {t("environments.surveys.summary.overall")}: {questionSummary.average.toFixed(2)}
+            </div>
           </div>
         }
       />
@@ -61,7 +60,7 @@ export const RatingSummary = ({
                 questionSummary.question.id,
                 questionSummary.question.headline,
                 questionSummary.question.type,
-                "Is equal to",
+                t("environments.surveys.summary.is_equal_to"),
                 result.rating.toString()
               )
             }>
@@ -77,12 +76,12 @@ export const RatingSummary = ({
                 </div>
                 <div>
                   <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
-                    {convertFloatToNDecimal(result.percentage, 1)}%
+                    {convertFloatToNDecimal(result.percentage, 2)}%
                   </p>
                 </div>
               </div>
               <p className="flex w-32 items-end justify-end text-slate-600">
-                {result.count} {result.count === 1 ? "response" : "responses"}
+                {result.count} {result.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
             <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
@@ -93,10 +92,10 @@ export const RatingSummary = ({
         <div className="rounded-b-lg border-t bg-white px-6 py-4">
           <div key="dismissed">
             <div className="text flex justify-between px-2">
-              <p className="font-semibold text-slate-700">dismissed</p>
+              <p className="font-semibold text-slate-700">{t("common.dismissed")}</p>
               <p className="flex w-32 items-end justify-end text-slate-600">
                 {questionSummary.dismissed.count}{" "}
-                {questionSummary.dismissed.count === 1 ? "response" : "responses"}
+                {questionSummary.dismissed.count === 1 ? t("common.response") : t("common.responses")}
               </p>
             </div>
           </div>

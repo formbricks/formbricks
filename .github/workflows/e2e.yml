@@ -1,9 +1,28 @@
 name: E2E Tests
+
 on:
   workflow_call:
+    secrets:
+      AZURE_CLIENT_ID:
+        required: false
+      AZURE_TENANT_ID:
+        required: false
+      AZURE_SUBSCRIPTION_ID:
+        required: false
+      PLAYWRIGHT_SERVICE_URL:
+        required: false
+      # Add other secrets if necessary
   workflow_dispatch:
+
 env:
   TELEMETRY_DISABLED: 1
+
+permissions:
+  id-token: write
+  contents: read
+  actions: read
+  checks: write
+
 jobs:
   build:
     name: Run E2E Tests
@@ -11,7 +30,7 @@ jobs:
     timeout-minutes: 60
     services:
       postgres:
-        image: postgres:latest
+        image: pgvector/pgvector:pg17
         env:
           POSTGRES_DB: postgres
           POSTGRES_USER: postgres
@@ -50,6 +69,7 @@ jobs:
           sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
+          echo "" >> .env
           echo "E2E_TESTING=1" >> .env
         shell: bash
 
@@ -59,7 +79,8 @@ jobs:
 
       - name: Apply Prisma Migrations
         run: |
-          pnpm prisma migrate deploy
+          # pnpm prisma migrate deploy
+          pnpm db:migrate:dev
 
       - name: Run App
         run: |
@@ -81,11 +102,35 @@ jobs:
       - name: Install Playwright
         run: pnpm exec playwright install --with-deps
 
-      - name: Run E2E Tests
+      - name: Set Azure Secret Variables
+        run: |
+          if [[ -n "${{ secrets.AZURE_CLIENT_ID }}" && -n "${{ secrets.AZURE_TENANT_ID }}" && -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
+            echo "AZURE_ENABLED=true" >> $GITHUB_ENV
+          else
+            echo "AZURE_ENABLED=false" >> $GITHUB_ENV
+          fi
+
+      - name: Azure login
+        if: env.AZURE_ENABLED == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run E2E Tests (Azure)
+        if: env.AZURE_ENABLED == 'true'
+        env:
+          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
+        run: |
+          pnpm test-e2e:azure
+
+      - name: Run E2E Tests (Local)
+        if: env.AZURE_ENABLED == 'false'
         run: |
           pnpm test:e2e
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report

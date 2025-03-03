@@ -43,7 +43,7 @@ export const getQuestionResponseMapping = (
     const answer = response.data[question.id];
 
     questionResponseMapping.push({
-      question: parseRecallInfo(getLocalizedValue(question.headline, "default"), {}, response.data),
+      question: parseRecallInfo(getLocalizedValue(question.headline, "default"), response.data),
       response: convertResponseValue(answer, question),
       type: question.type,
     });

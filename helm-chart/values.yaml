@@ -1,0 +1,156 @@
+image:
+  repository: ghcr.io/formbricks/formbricks
+  pullPolicy: IfNotPresent
+  tag: v3.2.0
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 4
+          periodSeconds: 15
+      selectPolicy: Max
+
+replicaCount: 1
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+formbricksConfig:
+  nextAuthSecret: ""
+  encryptionKey: ""
+  cronSecret: ""
+
+env: {}
+
+hostname: ""
+email: ""
+
+traefik:
+  enabled: true
+  ingressRoute:
+    dashboard:
+      enabled: false
+  additionalArguments:
+    - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
+    - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+    - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+    - "--entrypoints.web.address=:80"
+    - "--entrypoints.websecure.address=:443"
+    - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+    - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
+    - "--log.level=DEBUG"
+    - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+    - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+    - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
+    - "--providers.file.filename=/config/traefik.toml"
+  volumes:
+    - name: traefik-config
+      mountPath: "/config"
+      type: configMap
+  tls:
+    enabled: true
+    certResolver: letsencrypt
+  ports:
+    web:
+      port: 80
+    websecure:
+      port: 443
+      tls:
+        enabled: true
+        certResolver: letsencrypt
+  persistence:
+    enabled: true
+    name: traefik-acme
+    accessMode: ReadWriteOnce
+    size: 128Mi
+    path: /data
+  podSecurityContext:
+    fsGroup: 0
+  hostNetwork: true
+  securityContext:
+    capabilities:
+      drop:
+        - ALL
+      add:
+        - NET_ADMIN
+        - NET_BIND_SERVICE
+        - NET_BROADCAST
+        - NET_RAW
+    runAsUser: 0
+    runAsGroup: 0
+    runAsNonRoot: false
+    readOnlyRootFilesystem: true
+
+redis:
+  enabled: false
+  externalUrl: ""
+  architecture: standalone
+  auth:
+    enabled: true
+    password: redispassword
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 0
+
+postgresql:
+  enabled: true
+  image:
+    repository: pgvector/pgvector
+    tag: 0.8.0-pg17
+  auth:
+    username: formbricks
+    password: formbrickspassword
+    database: formbricks
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      readOnlyRootFilesystem: false

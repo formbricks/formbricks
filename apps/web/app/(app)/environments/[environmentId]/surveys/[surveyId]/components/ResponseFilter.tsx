@@ -8,14 +8,16 @@ import { getSurveyFilterDataAction } from "@/app/(app)/environments/[environment
 import { QuestionFilterComboBox } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/QuestionFilterComboBox";
 import { generateQuestionAndFilterOptions } from "@/app/lib/surveys/surveys";
 import { getSurveyFilterDataBySurveySharingKeyAction } from "@/app/share/[sharingKey]/actions";
+import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useTranslate } from "@tolgee/react";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, TrashIcon } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { Button } from "@formbricks/ui/components/Button";
-import { Checkbox } from "@formbricks/ui/components/Checkbox";
-import { Popover, PopoverContent, PopoverTrigger } from "@formbricks/ui/components/Popover";
 import { OptionsType, QuestionOption, QuestionsComboBox } from "./QuestionsComboBox";
 
 export type QuestionFilterOptions = {
@@ -30,7 +32,9 @@ interface ResponseFilterProps {
 }
 
 export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
+  const { t } = useTranslate();
   const params = useParams();
+  const [parent] = useAutoAnimate();
   const sharingKey = params.sharingKey as string;
   const isSharingPage = !!sharingKey;
 
@@ -211,10 +215,16 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
         align="start"
         className="w-[300px] border-slate-200 bg-slate-100 p-6 sm:w-[400px] md:w-[750px] lg:w-[1000px]">
         <div className="mb-8 flex flex-wrap items-start justify-between">
-          <p className="text-slate800 hidden text-lg font-semibold sm:block">Show all responses that match</p>
-          <p className="block text-base text-slate-500 sm:hidden">Show all responses where...</p>
+          <p className="text-slate800 hidden text-lg font-semibold sm:block">
+            {t("environments.surveys.summary.show_all_responses_that_match")}
+          </p>
+          <p className="block text-base text-slate-500 sm:hidden">
+            {t("environments.surveys.summary.show_all_responses_where")}
+          </p>
           <div className="flex items-center space-x-2">
-            <label className="text-sm font-normal text-slate-600">Only completed</label>
+            <label className="text-sm font-normal text-slate-600">
+              {t("environments.surveys.summary.only_completed")}
+            </label>
             <Checkbox
               className={clsx("rounded-md", filterValue.onlyComplete && "bg-black text-white")}
               checked={filterValue.onlyComplete}
@@ -224,74 +234,77 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
             />
           </div>
         </div>
-        {filterValue.filter?.map((s, i) => (
-          <>
-            <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
-              <div
-                className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
-                key={`${s.questionType.id}-${i}`}>
-                <QuestionsComboBox
-                  key={`${s.questionType.label}-${i}`}
-                  options={questionComboBoxOptions}
-                  selected={s.questionType}
-                  onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
-                />
-                <QuestionFilterComboBox
-                  key={`${s.questionType.id}-${i}`}
-                  filterOptions={
-                    selectedOptions.questionFilterOptions.find(
-                      (q) =>
-                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                        q.id === s.questionType.id
-                    )?.filterOptions
-                  }
-                  filterComboBoxOptions={
-                    selectedOptions.questionFilterOptions.find(
-                      (q) =>
-                        (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
-                        q.id === s.questionType.id
-                    )?.filterComboBoxOptions
-                  }
-                  filterValue={filterValue.filter[i].filterType.filterValue}
-                  filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
-                  type={
-                    s?.questionType?.type === OptionsType.QUESTIONS
-                      ? s?.questionType?.questionType
-                      : s?.questionType?.type
-                  }
-                  handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
-                  onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
-                  onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
-                  disabled={!s?.questionType?.label}
-                />
+
+        <div ref={parent}>
+          {filterValue.filter?.map((s, i) => (
+            <React.Fragment key={i}>
+              <div className="flex w-full flex-wrap gap-3 md:flex-nowrap">
+                <div
+                  className="grid w-full grid-cols-1 items-center gap-3 md:grid-cols-2"
+                  key={`${s.questionType.id}-${i}`}>
+                  <QuestionsComboBox
+                    key={`${s.questionType.label}-${i}`}
+                    options={questionComboBoxOptions}
+                    selected={s.questionType}
+                    onChangeValue={(value) => handleOnChangeQuestionComboBoxValue(value, i)}
+                  />
+                  <QuestionFilterComboBox
+                    key={`${s.questionType.id}-${i}`}
+                    filterOptions={
+                      selectedOptions.questionFilterOptions.find(
+                        (q) =>
+                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                          q.id === s.questionType.id
+                      )?.filterOptions
+                    }
+                    filterComboBoxOptions={
+                      selectedOptions.questionFilterOptions.find(
+                        (q) =>
+                          (q.type === s.questionType.questionType || q.type === s.questionType.type) &&
+                          q.id === s.questionType.id
+                      )?.filterComboBoxOptions
+                    }
+                    filterValue={filterValue.filter[i].filterType.filterValue}
+                    filterComboBoxValue={filterValue.filter[i].filterType.filterComboBoxValue}
+                    type={
+                      s?.questionType?.type === OptionsType.QUESTIONS
+                        ? s?.questionType?.questionType
+                        : s?.questionType?.type
+                    }
+                    handleRemoveMultiSelect={(value) => handleRemoveMultiSelect(value, i)}
+                    onChangeFilterComboBoxValue={(value) => handleOnChangeFilterComboBoxValue(value, i)}
+                    onChangeFilterValue={(value) => handleOnChangeFilterValue(value, i)}
+                    disabled={!s?.questionType?.label}
+                  />
+                </div>
+                <div className="flex w-full items-center justify-end gap-1 md:w-auto">
+                  <p className="block font-light text-slate-500 md:hidden">Delete</p>
+                  <TrashIcon
+                    className="w-4 cursor-pointer text-slate-500 md:text-black"
+                    onClick={() => handleDeleteFilter(i)}
+                  />
+                </div>
               </div>
-              <div className="flex w-full items-center justify-end gap-1 md:w-auto">
-                <p className="block font-light text-slate-500 md:hidden">Delete</p>
-                <TrashIcon
-                  className="w-4 cursor-pointer text-slate-500 md:text-black"
-                  onClick={() => handleDeleteFilter(i)}
-                />
-              </div>
-            </div>
-            {i !== filterValue.filter.length - 1 && (
-              <div className="my-6 flex items-center">
-                <p className="mr-6 text-base text-slate-600">And</p>
-                <hr className="w-full text-slate-600" />
-              </div>
-            )}
-          </>
-        ))}
+              {i !== filterValue.filter.length - 1 && (
+                <div className="my-6 flex items-center">
+                  <p className="mr-6 text-base text-slate-600">And</p>
+                  <hr className="w-full text-slate-600" />
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
         <div className="mt-8 flex items-center justify-between">
           <Button size="sm" variant="secondary" onClick={handleAddNewFilter}>
-            Add filter
+            {t("common.add_filter")}
             <Plus width={18} height={18} className="ml-2" />
           </Button>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleApplyFilters}>
-              Apply filters
+              {t("common.apply_filters")}
             </Button>
-            <Button size="sm" variant="minimal" onClick={handleClearAllFilters}>
-              Clear all
+            <Button size="sm" variant="ghost" onClick={handleClearAllFilters}>
+              {t("common.clear_all")}
             </Button>
           </div>
         </div>

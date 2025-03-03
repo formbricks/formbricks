@@ -1,21 +1,24 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
+import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
+import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
+import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
+import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
+import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
-import { getEnterpriseLicense } from "@formbricks/ee/lib/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import {
   getMonthlyActiveOrganizationPeopleCount,
   getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
-import { getProducts } from "@formbricks/lib/product/service";
+import { getUserProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { DevEnvironmentBanner } from "@formbricks/ui/components/DevEnvironmentBanner";
-import { LimitsReachedBanner } from "@formbricks/ui/components/LimitsReachedBanner";
-import { PendingDowngradeBanner } from "@formbricks/ui/components/PendingDowngradeBanner";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
@@ -24,6 +27,7 @@ interface EnvironmentLayoutProps {
 }
 
 export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
+  const t = await getTranslate();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
     getEnvironment(environmentId),
@@ -32,24 +36,37 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   ]);
 
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
-  if (!organization || !environment) {
-    throw new Error("Organization or environment not found");
+  if (!organization) {
+    throw new Error(t("common.organization_not_found"));
   }
 
-  const [products, environments] = await Promise.all([
-    getProducts(organization.id),
-    getEnvironments(environment.productId),
+  if (!environment) {
+    throw new Error(t("common.environment_not_found"));
+  }
+
+  const [projects, environments] = await Promise.all([
+    getUserProjects(user.id, organization.id),
+    getEnvironments(environment.projectId),
   ]);
 
-  if (!products || !environments || !organizations) {
-    throw new Error("Products, environments or organizations not found");
+  if (!projects || !environments || !organizations) {
+    throw new Error(t("environments.projects_environments_organizations_not_found"));
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
+  const membershipRole = currentUserMembership?.role;
+  const { isMember } = getAccessFlags(membershipRole);
+
   const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
+
+  const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
+
+  if (isMember && !projectPermission) {
+    throw new Error(t("common.project_permission_not_found"));
+  }
 
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
 
@@ -62,6 +79,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
       getMonthlyOrganizationResponseCount(organization.id),
     ]);
   }
+
+  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -88,17 +107,20 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           environment={environment}
           organization={organization}
           organizations={organizations}
-          products={products}
+          projects={projects}
+          organizationProjectsLimit={organizationProjectsLimit}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
+          membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
+          isLicenseActive={active}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
-            membershipRole={currentUserMembership?.role}
+            membershipRole={membershipRole}
+            projectPermission={projectPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

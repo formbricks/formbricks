@@ -1,12 +1,18 @@
 "use client";
 
-import { DisableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/DisableTwoFactorModal";
-import { EnableTwoFactorModal } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/EnableTwoFactorModal";
+import { DisableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/disable-two-factor-modal";
+import { EnableTwoFactorModal } from "@/modules/ee/two-factor-auth/components/enable-two-factor-modal";
+import { Switch } from "@/modules/ui/components/switch";
+import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
-import { Switch } from "@formbricks/ui/components/Switch";
 
-export const AccountSecurity = ({ user }: { user: TUser }) => {
+interface AccountSecurityProps {
+  user: TUser;
+}
+
+export const AccountSecurity = ({ user }: AccountSecurityProps) => {
+  const { t } = useTranslate();
   const [twoFactorModalOpen, setTwoFactorModalOpen] = useState(false);
   const [disableTwoFactorModalOpen, setDisableTwoFactorModalOpen] = useState(false);
 
@@ -24,14 +30,15 @@ export const AccountSecurity = ({ user }: { user: TUser }) => {
           }}
         />
         <div className="flex flex-col">
-          <h1 className="text-sm font-semibold text-slate-800">Two factor authentication</h1>
+          <h1 className="text-sm font-semibold text-slate-800">
+            {t("environments.settings.profile.two_factor_authentication")}
+          </h1>
 
           <p className="text-xs text-slate-600">
-            Add an extra layer of security to your account in case your password is stolen.
+            {t("environments.settings.profile.two_factor_authentication_description")}
           </p>
         </div>
       </div>
-
       <EnableTwoFactorModal open={twoFactorModalOpen} setOpen={setTwoFactorModalOpen} />
       <DisableTwoFactorModal open={disableTwoFactorModalOpen} setOpen={setDisableTwoFactorModalOpen} />
     </div>

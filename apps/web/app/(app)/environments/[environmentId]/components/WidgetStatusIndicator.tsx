@@ -1,4 +1,9 @@
-import { AlertTriangleIcon, CheckIcon } from "lucide-react";
+"use client";
+
+import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
+import { AlertTriangleIcon, CheckIcon, RotateCcwIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
 
@@ -7,16 +12,18 @@ interface WidgetStatusIndicatorProps {
 }
 
 export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProps) => {
+  const { t } = useTranslate();
+  const router = useRouter();
   const stati = {
     notImplemented: {
       icon: AlertTriangleIcon,
-      title: `Formbricks SDK is not yet connected.`,
-      subtitle: `Connect your website or app with Formbricks`,
+      title: t("environments.project.app-connection.formbricks_sdk_not_connected"),
+      subtitle: t("environments.project.app-connection.formbricks_sdk_not_connected_description"),
     },
     running: {
       icon: CheckIcon,
-      title: "Receiving data 💃🕺",
-      subtitle: `Formbricks SDK is connected`,
+      title: t("environments.project.app-connection.receiving_data"),
+      subtitle: t("environments.project.app-connection.formbricks_sdk_connected"),
     },
   };
 
@@ -47,6 +54,12 @@ export const WidgetStatusIndicator = ({ environment }: WidgetStatusIndicatorProp
       </div>
       <p className="text-md font-bold text-slate-800 md:text-xl">{currentStatus.title}</p>
       <p className="w-2/3 text-balance text-sm text-slate-600">{currentStatus.subtitle}</p>
+      {status === "notImplemented" && (
+        <Button variant="outline" size="sm" className="bg-white" onClick={() => router.refresh()}>
+          <RotateCcwIcon />
+          {t("environments.project.app-connection.recheck")}
+        </Button>
+      )}
     </div>
   );
 };

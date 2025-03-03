@@ -1,20 +1,20 @@
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
-import { getPerson } from "@formbricks/lib/person/service";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
-import { createResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { createResponse } from "./lib/response";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -22,8 +22,18 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
-  const { environmentId } = context.params;
+  const params = await context.params;
+  const requestHeaders = await headers();
+  let responseInput;
+  try {
+    responseInput = await request.json();
+  } catch (error) {
+    return responses.badRequestResponse("Invalid JSON in request body", { error: error.message }, true);
+  }
+
+  const { environmentId } = params;
   const environmentIdValidation = ZId.safeParse(environmentId);
+  const responseInputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
 
   if (!environmentIdValidation.success) {
     return responses.badRequestResponse(
@@ -33,35 +43,36 @@ export const POST = async (request: Request, context: Context): Promise<Response
     );
   }
 
-  const responseInput = await request.json();
-
-  // legacy workaround for formbricks-js 1.2.0 & 1.2.1
-  if (responseInput.personId && typeof responseInput.personId === "string") {
-    const person = await getPerson(responseInput.personId);
-    responseInput.userId = person?.userId;
-    delete responseInput.personId;
-  }
-
-  const agent = UAParser(request.headers.get("user-agent"));
-  const country =
-    headers().get("CF-IPCountry") ||
-    headers().get("X-Vercel-IP-Country") ||
-    headers().get("CloudFront-Viewer-Country") ||
-    undefined;
-  const inputValidation = ZResponseInput.safeParse({ ...responseInput, environmentId });
-
-  if (!inputValidation.success) {
+  if (!responseInputValidation.success) {
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
-      transformErrorToDetails(inputValidation.error),
+      transformErrorToDetails(responseInputValidation.error),
       true
     );
   }
 
+  const userAgent = request.headers.get("user-agent") || undefined;
+  const agent = new UAParser(userAgent);
+
+  const country =
+    requestHeaders.get("CF-IPCountry") ||
+    requestHeaders.get("X-Vercel-IP-Country") ||
+    requestHeaders.get("CloudFront-Viewer-Country") ||
+    undefined;
+
+  const responseInputData = responseInputValidation.data;
+
+  if (responseInputData.userId) {
+    const isContactsEnabled = await getIsContactsEnabled();
+    if (!isContactsEnabled) {
+      return responses.forbiddenResponse("User identification is only available for enterprise users.", true);
+    }
+  }
+
   // get and check survey
-  const survey = await getSurvey(responseInput.surveyId);
+  const survey = await getSurvey(responseInputData.surveyId);
   if (!survey) {
-    return responses.notFoundResponse("Survey", responseInput.surveyId, true);
+    return responses.notFoundResponse("Survey", responseInputData.surveyId, true);
   }
   if (survey.environmentId !== environmentId) {
     return responses.badRequestResponse(
@@ -77,19 +88,19 @@ export const POST = async (request: Request, context: Context): Promise<Response
   let response: TResponse;
   try {
     const meta: TResponseInput["meta"] = {
-      source: responseInput?.meta?.source,
-      url: responseInput?.meta?.url,
+      source: responseInputData?.meta?.source,
+      url: responseInputData?.meta?.url,
       userAgent: {
-        browser: agent?.browser.name,
-        device: agent?.device.type || "desktop",
-        os: agent?.os.name,
+        browser: agent.getBrowser().name,
+        device: agent.getDevice().type || "desktop",
+        os: agent.getOS().name,
       },
       country: country,
-      action: responseInput?.meta?.action,
+      action: responseInputData?.meta?.action,
     };
 
     response = await createResponse({
-      ...inputValidation.data,
+      ...responseInputData,
       meta,
     });
   } catch (error) {

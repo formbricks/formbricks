@@ -1,21 +1,21 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
   "configurations": [
     {
       "name": "Launch localhost:3002",
-      "type": "firefox",
-      "request": "launch",
       "reAttach": true,
+      "request": "launch",
+      "type": "firefox",
       "url": "http://localhost:3002/",
       "webRoot": "${workspaceFolder}"
     },
     {
       "name": "Attach",
-      "type": "firefox",
-      "request": "attach"
+      "request": "attach",
+      "type": "firefox"
     }
-  ]
+  ],
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0"
 }

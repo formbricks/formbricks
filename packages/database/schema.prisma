@@ -2,24 +2,19 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 // generator dbml {
 //  provider = "prisma-dbml-generator"
 // }
-
-generator zod {
-  provider      = "zod-prisma"
-  output        = "./zod"
-  imports       = "./zod-utils"
-  relationModel = "default"
-}
 
 generator json {
   provider = "prisma-json-types-generator"
@@ -36,8 +31,19 @@ enum WebhookSource {
   zapier
   make
   n8n
+  activepieces
 }
 
+/// Represents a webhook endpoint for receiving survey-related events.
+/// Webhooks can be configured to receive notifications about response creation, updates, and completion.
+///
+/// @property id - Unique identifier for the webhook
+/// @property name - Optional display name for the webhook
+/// @property url - The endpoint URL where events will be sent
+/// @property source - Origin of the webhook (user, zapier, make, etc.)
+/// @property environment - Associated environment
+/// @property triggers - Types of events that trigger this webhook
+/// @property surveyIds - List of surveys this webhook is monitoring
 model Webhook {
   id            String             @id @default(cuid())
   name          String?
@@ -53,96 +59,137 @@ model Webhook {
   @@index([environmentId])
 }
 
-model Attribute {
-  id               String         @id @default(cuid())
-  createdAt        DateTime       @default(now()) @map(name: "created_at")
-  updatedAt        DateTime       @updatedAt @map(name: "updated_at")
-  attributeClass   AttributeClass @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
-  attributeClassId String
-  person           Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String
-  value            String
+/// Represents an attribute value associated with a contact.
+/// Used to store custom properties and characteristics of contacts.
+///
+/// @property id - Unique identifier for the attribute
+/// @property attributeKey - Reference to the attribute definition
+/// @property contact - The contact this attribute belongs to
+/// @property value - The actual value of the attribute
+model ContactAttribute {
+  id             String              @id @default(cuid())
+  createdAt      DateTime            @default(now()) @map(name: "created_at")
+  updatedAt      DateTime            @updatedAt @map(name: "updated_at")
+  attributeKey   ContactAttributeKey @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId String
+  contact        Contact             @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId      String
+  value          String
 
-  @@unique([personId, attributeClassId])
+  @@unique([contactId, attributeKeyId])
+  @@index([attributeKeyId, value])
 }
 
-enum AttributeType {
-  code
-  noCode
-  automatic
+enum ContactAttributeType {
+  default
+  custom
 }
 
-model AttributeClass {
+/// Defines the possible attributes that can be assigned to contacts.
+/// Acts as a schema for contact attributes within an environment.
+///
+/// @property id - Unique identifier for the attribute key
+/// @property isUnique - Whether the attribute must have unique values across contacts
+/// @property key - The attribute identifier used in the system
+/// @property name - Display name for the attribute
+/// @property type - Whether this is a default or custom attribute
+/// @property environment - The environment this attribute belongs to
+model ContactAttributeKey {
   id               String                  @id @default(cuid())
   createdAt        DateTime                @default(now()) @map(name: "created_at")
   updatedAt        DateTime                @updatedAt @map(name: "updated_at")
-  name             String
+  isUnique         Boolean                 @default(false)
+  key              String
+  name             String?
   description      String?
-  archived         Boolean                 @default(false)
-  type             AttributeType
+  type             ContactAttributeType    @default(custom)
   environment      Environment             @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId    String
-  attributes       Attribute[]
+  attributes       ContactAttribute[]
   attributeFilters SurveyAttributeFilter[]
 
-  @@unique([name, environmentId])
+  @@unique([key, environmentId])
   @@index([environmentId, createdAt])
-  @@index([environmentId, archived])
 }
 
-model Person {
-  id            String      @id @default(cuid())
-  userId        String
-  createdAt     DateTime    @default(now()) @map(name: "created_at")
-  updatedAt     DateTime    @updatedAt @map(name: "updated_at")
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+/// Represents a person or user who can receive and respond to surveys.
+/// Contacts are environment-specific and can have multiple attributes and responses.
+///
+/// @property id - Unique identifier for the contact
+/// @property userId - Optional external user identifier
+/// @property environment - The environment this contact belongs to
+/// @property responses - Survey responses from this contact
+/// @property attributes - Custom attributes associated with this contact
+/// @property displays - Record of surveys shown to this contact
+model Contact {
+  id            String             @id @default(cuid())
+  userId        String?
+  createdAt     DateTime           @default(now()) @map(name: "created_at")
+  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
   environmentId String
   responses     Response[]
-  attributes    Attribute[]
+  attributes    ContactAttribute[]
   displays      Display[]
 
-  @@unique([environmentId, userId])
   @@index([environmentId])
 }
 
+/// Stores a user's response to a survey, including their answers and metadata.
+/// Each response is linked to a specific survey and optionally to a contact.
+///
+/// @property id - Unique identifier for the response
+/// @property finished - Whether the survey was completed
+/// @property survey - The associated survey
+/// @property contact - The optional contact who provided the response
+/// @property data - JSON object containing the actual response data
+/// @property variables - Custom variables used in the response
+/// @property ttc - Time to completion metrics
+/// @property meta - Additional metadata about the response
 model Response {
-  id               String            @id @default(cuid())
-  createdAt        DateTime          @default(now()) @map(name: "created_at")
-  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
-  finished         Boolean           @default(false)
-  survey           Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId         String
-  person           Person?           @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId         String?
-  notes            ResponseNote[]
-  /// @zod.custom(imports.ZResponseData)
+  id                String            @id @default(cuid())
+  createdAt         DateTime          @default(now()) @map(name: "created_at")
+  updatedAt         DateTime          @default(now()) @map(name: "updated_at")
+  finished          Boolean           @default(false)
+  survey            Survey            @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId          String
+  contact           Contact?          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId         String?
+  endingId          String?
+  notes             ResponseNote[]
   /// [ResponseData]
-  data             Json              @default("{}")
-  /// @zod.custom(imports.ZResponseVariables)
+  data              Json              @default("{}")
   /// [ResponseVariables]
-  variables        Json              @default("{}")
-  /// @zod.custom(imports.ZResponseTtc)
+  variables         Json              @default("{}")
   /// [ResponseTtc]
-  ttc              Json              @default("{}")
-  /// @zod.custom(imports.ZResponseMeta)
+  ttc               Json              @default("{}")
   /// [ResponseMeta]
-  meta             Json              @default("{}")
-  tags             TagsOnResponses[]
-  /// @zod.custom(imports.ZResponsePersonAttributes)
-  /// [ResponsePersonAttributes]
-  personAttributes Json?
+  meta              Json              @default("{}")
+  tags              TagsOnResponses[]
+  /// [ResponseContactAttributes]
+  contactAttributes Json?
   // singleUseId, used to prevent multiple responses
-  singleUseId      String?
-  language         String?
-  displayId        String?           @unique
-  display          Display?          @relation(fields: [displayId], references: [id])
+  singleUseId       String?
+  language          String?
+  documents         Document[]
+  displayId         String?           @unique
+  display           Display?          @relation(fields: [displayId], references: [id])
 
   @@unique([surveyId, singleUseId])
   @@index([surveyId, createdAt]) // to determine monthly response count
-  @@index([personId, createdAt]) // to determine monthly identified users (persons)
+  @@index([contactId, createdAt]) // to determine monthly identified users (persons)
   @@index([surveyId])
 }
 
+/// Represents notes or comments added to survey responses by team members.
+/// Used for internal communication and response analysis.
+///
+/// @property id - Unique identifier for the note
+/// @property response - The associated survey response
+/// @property user - The team member who created the note
+/// @property text - Content of the note
+/// @property isResolved - Whether the note has been marked as resolved
+/// @property isEdited - Whether the note has been modified
 model ResponseNote {
   id         String   @id @default(cuid())
   createdAt  DateTime @default(now()) @map(name: "created_at")
@@ -158,6 +205,13 @@ model ResponseNote {
   @@index([responseId])
 }
 
+/// Represents a label that can be applied to survey responses.
+/// Used for categorizing and organizing responses within an environment.
+///
+/// @property id - Unique identifier for the tag
+/// @property name - Display name of the tag
+/// @property responses - Survey responses tagged with this label
+/// @property environment - The environment this tag belongs to
 model Tag {
   id            String            @id @default(cuid())
   createdAt     DateTime          @default(now()) @map(name: "created_at")
@@ -171,6 +225,11 @@ model Tag {
   @@index([environmentId])
 }
 
+/// Junction table linking tags to responses.
+/// Enables many-to-many relationship between tags and responses.
+///
+/// @property response - The tagged response
+/// @property tag - The tag applied to the response
 model TagsOnResponses {
   responseId String
   response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
@@ -194,22 +253,40 @@ enum DisplayStatus {
   responded
 }
 
+/// Records when a survey is shown to a user.
+/// Tracks survey display history and response status.
+///
+/// @property id - Unique identifier for the display event
+/// @property survey - The survey that was displayed
+/// @property contact - The contact who saw the survey
+/// @property status - Whether the survey was just seen or responded to
+/// @property response - The associated response if one exists
 model Display {
   id         String         @id @default(cuid())
   createdAt  DateTime       @default(now()) @map(name: "created_at")
   updatedAt  DateTime       @updatedAt @map(name: "updated_at")
   survey     Survey         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId   String
-  person     Person?        @relation(fields: [personId], references: [id], onDelete: Cascade)
-  personId   String?
+  contact    Contact?       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
   responseId String?        @unique //deprecated
   status     DisplayStatus?
   response   Response?
 
   @@index([surveyId])
-  @@index([personId, createdAt])
+  @@index([contactId, createdAt])
 }
 
+/// Links surveys to specific trigger actions.
+/// Defines which user actions should cause a survey to be displayed.
+/// This is the connection table between Surveys and ActionClasses that determines
+/// when and under what conditions a survey should be triggered.
+///
+/// @property id - Unique identifier for the trigger
+/// @property survey - The survey to be triggered
+/// @property actionClass - The action that triggers the survey
+/// @property createdAt - When the trigger was created
+/// @property updatedAt - When the trigger was last modified
 model SurveyTrigger {
   id            String      @id @default(cuid())
   createdAt     DateTime    @default(now()) @map(name: "created_at")
@@ -228,20 +305,28 @@ enum SurveyAttributeFilterCondition {
   notEquals
 }
 
+/// Defines targeting rules for surveys based on contact attributes.
+/// Used to show surveys only to contacts matching specific criteria.
+///
+/// @property id - Unique identifier for the filter
+/// @property attributeKey - The contact attribute to filter on
+/// @property survey - The survey being filtered
+/// @property condition - The comparison operator to use
+/// @property value - The value to compare against
 model SurveyAttributeFilter {
-  id               String                         @id @default(cuid())
-  createdAt        DateTime                       @default(now()) @map(name: "created_at")
-  updatedAt        DateTime                       @updatedAt @map(name: "updated_at")
-  attributeClass   AttributeClass                 @relation(fields: [attributeClassId], references: [id], onDelete: Cascade)
-  attributeClassId String
-  survey           Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId         String
-  condition        SurveyAttributeFilterCondition
-  value            String
+  id             String                         @id @default(cuid())
+  createdAt      DateTime                       @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                       @updatedAt @map(name: "updated_at")
+  attributeKey   ContactAttributeKey            @relation(fields: [attributeKeyId], references: [id], onDelete: Cascade)
+  attributeKeyId String
+  survey         Survey                         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String
+  condition      SurveyAttributeFilterCondition
+  value          String
 
-  @@unique([surveyId, attributeClassId])
+  @@unique([surveyId, attributeKeyId])
   @@index([surveyId])
-  @@index([attributeClassId])
+  @@index([attributeKeyId])
 }
 
 enum SurveyType {
@@ -258,6 +343,18 @@ enum displayOptions {
   respondMultiple
 }
 
+/// Represents a complete survey configuration including questions, styling, and display rules.
+/// Core model for the survey functionality in Formbricks.
+///
+/// @property id - Unique identifier for the survey
+/// @property name - Display name of the survey
+/// @property type - Survey delivery method (link, web, website, app)
+/// @property status - Current state of the survey (draft, active, completed, etc)
+/// @property environment - The environment this survey belongs to
+/// @property questions - JSON array containing survey questions configuration
+/// @property displayOption - Rules for how often the survey can be shown
+/// @property triggers - Actions that can trigger this survey
+/// @property attributeFilters - Rules for targeting specific contacts
 model Survey {
   id                  String                  @id @default(cuid())
   createdAt           DateTime                @default(now()) @map(name: "created_at")
@@ -270,20 +367,15 @@ model Survey {
   creator             User?                   @relation(fields: [createdBy], references: [id])
   createdBy           String?
   status              SurveyStatus            @default(draft)
-  /// @zod.custom(imports.ZSurveyWelcomeCard)
   /// [SurveyWelcomeCard]
   welcomeCard         Json                    @default("{\"enabled\": false}")
-  /// @zod.custom(imports.ZSurveyQuestions)
   /// [SurveyQuestions]
   questions           Json                    @default("[]")
-  /// @zod.custom(imports.ZSurveyEnding)
   /// [SurveyEnding]
   endings             Json[]                  @default([])
   thankYouCard        Json? //deprecated            
-  /// @zod.custom(imports.ZSurveyHiddenFields)
   /// [SurveyHiddenFields]
   hiddenFields        Json                    @default("{\"enabled\": false}")
-  /// @zod.custom(imports.ZSurveyVariables)
   /// [SurveyVariables]
   variables           Json                    @default("[]")
   responses           Response[]
@@ -291,7 +383,6 @@ model Survey {
   recontactDays       Int?
   displayLimit        Int?
   triggers            SurveyTrigger[]
-  /// @zod.custom(imports.ZSurveyInlineTriggers)
   /// [SurveyInlineTriggers]
   inlineTriggers      Json?
   attributeFilters    SurveyAttributeFilter[]
@@ -301,45 +392,72 @@ model Survey {
   delay               Int                     @default(0)
   runOnDate           DateTime?
   closeOnDate         DateTime?
-  /// @zod.custom(imports.ZSurveyClosedMessage)
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?
   segment             Segment?                @relation(fields: [segmentId], references: [id])
 
-  /// @zod.custom(imports.ZSurveyProductOverwrites)
-  /// [SurveyProductOverwrites]
-  productOverwrites Json?
+  /// [SurveyProjectOverwrites]
+  projectOverwrites Json?
 
-  /// @zod.custom(imports.ZSurveyStyling)
   /// [SurveyStyling]
   styling Json?
 
-  /// @zod.custom(imports.ZSurveySingleUse)
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  /// @zod.custom(imports.ZSurveyVerifyEmail)
   /// [SurveyVerifyEmail]
   verifyEmail                     Json? // deprecated
   isVerifyEmailEnabled            Boolean          @default(false)
   isSingleResponsePerEmailEnabled Boolean          @default(false)
+  isBackButtonHidden              Boolean          @default(false)
   pin                             String?
   resultShareKey                  String?          @unique
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
+  documents                       Document[]
+  followUps                       SurveyFollowUp[]
 
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }
 
+/// Defines follow-up actions for survey responses.
+/// Enables automated actions based on specific survey response conditions.
+///
+/// @property id - Unique identifier for the follow-up
+/// @property survey - The associated survey
+/// @property name - Display name for the follow-up
+/// @property trigger - Conditions that activate the follow-up
+/// @property action - Actions to take when triggered
+model SurveyFollowUp {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map(name: "created_at")
+  updatedAt DateTime @updatedAt @map(name: "updated_at")
+  survey    Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId  String
+  name      String
+  /// [SurveyFollowUpTrigger]
+  trigger   Json
+  /// [SurveyFollowUpAction]
+  action    Json
+}
+
 enum ActionType {
   code
   noCode
-  automatic
 }
 
+/// Represents a user action that can trigger surveys.
+/// Used to define points in the user journey where surveys can be shown.
+///
+/// @property id - Unique identifier for the action
+/// @property name - Display name of the action
+/// @property type - Whether this is a code or no-code action
+/// @property key - Unique identifier used in code implementation
+/// @property noCodeConfig - Configuration for no-code setup
+/// @property environment - The environment this action belongs to
 model ActionClass {
   id             String          @id @default(cuid())
   createdAt      DateTime        @default(now()) @map(name: "created_at")
@@ -348,7 +466,6 @@ model ActionClass {
   description    String?
   type           ActionType
   key            String?
-  /// @zod.custom(imports.ZActionClassNoCodeConfig)
   /// [ActionClassNoCodeConfig]
   noCodeConfig   Json?
   environment    Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
@@ -372,11 +489,17 @@ enum IntegrationType {
   slack
 }
 
+/// Represents third-party service integrations.
+/// Enables data flow between Formbricks and external services.
+///
+/// @property id - Unique identifier for the integration
+/// @property type - The service being integrated (Google Sheets, Notion, etc.)
+/// @property environment - The environment this integration belongs to
+/// @property config - Service-specific configuration details
 model Integration {
   id            String          @id @default(cuid())
   type          IntegrationType
   environmentId String
-  /// @zod.custom(imports.ZIntegrationConfig)
   /// [IntegrationConfig]
   config        Json
   environment   Environment     @relation(fields: [environmentId], references: [id], onDelete: Cascade)
@@ -385,26 +508,62 @@ model Integration {
   @@index([environmentId])
 }
 
+enum DataMigrationStatus {
+  pending
+  applied
+  failed
+}
+
+/// Tracks database schema migrations.
+/// Used to manage and track the state of data structure changes.
+///
+/// @property id - Unique identifier for the migration
+/// @property name - Name of the migration
+/// @property status - Current state of the migration (pending, applied, failed)
+/// @property startedAt - When the migration began
+/// @property finishedAt - When the migration completed
+model DataMigration {
+  id         String              @id @default(cuid())
+  startedAt  DateTime            @default(now()) @map(name: "started_at")
+  finishedAt DateTime?           @map(name: "finished_at")
+  name       String              @unique
+  status     DataMigrationStatus
+}
+
+/// Represents either a production or development environment within a project.
+/// Each project has exactly two environments, serving as the main reference point
+/// for most Formbricks resources including surveys and actions.
+///
+/// @property id - Unique identifier for the environment
+/// @property type - Either 'production' or 'development'
+/// @property project - Reference to parent project
+/// @property widgetSetupCompleted - Tracks initial widget setup status
+/// @property surveys - Collection of surveys in this environment
+/// @property contacts - Collection of contacts/users tracked
+/// @property actionClasses - Defined actions that can trigger surveys
+/// @property attributeKeys - Custom attributes configuration
 model Environment {
-  id                   String           @id @default(cuid())
-  createdAt            DateTime         @default(now()) @map(name: "created_at")
-  updatedAt            DateTime         @updatedAt @map(name: "updated_at")
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now()) @map(name: "created_at")
+  updatedAt            DateTime              @updatedAt @map(name: "updated_at")
   type                 EnvironmentType
-  product              Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId            String
-  widgetSetupCompleted Boolean          @default(false)
-  appSetupCompleted    Boolean          @default(false)
+  project              Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId            String
+  widgetSetupCompleted Boolean               @default(false)
+  appSetupCompleted    Boolean               @default(false)
   surveys              Survey[]
-  people               Person[]
+  contacts             Contact[]
   actionClasses        ActionClass[]
-  attributeClasses     AttributeClass[]
+  attributeKeys        ContactAttributeKey[]
   apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
   segments             Segment[]
   integration          Integration[]
+  documents            Document[]
+  insights             Insight[]
 
-  @@index([productId])
+  @@index([projectId])
 }
 
 enum WidgetPlacement {
@@ -415,7 +574,18 @@ enum WidgetPlacement {
   center
 }
 
-model Product {
+/// Main grouping mechanism for resources in Formbricks.
+/// Each organization can have multiple projects to separate different applications or products.
+///
+/// @property id - Unique identifier for the project
+/// @property name - Display name of the project
+/// @property organization - Reference to parent organization
+/// @property environments - Development and production environments
+/// @property styling - Project-wide styling configuration
+/// @property config - Project-specific configuration
+/// @property recontactDays - Default recontact delay for surveys
+/// @property placement - Default widget placement for in-app surveys
+model Project {
   id                   String          @id @default(cuid())
   createdAt            DateTime        @default(now()) @map(name: "created_at")
   updatedAt            DateTime        @updatedAt @map(name: "updated_at")
@@ -425,11 +595,9 @@ model Product {
   environments         Environment[]
   brandColor           String? // deprecated; use styling.brandColor instead
   highlightBorderColor String? // deprecated
-  /// @zod.custom(imports.ZProductStyling)
   /// [Styling]
   styling              Json            @default("{\"allowStyleOverwrite\":true}")
-  /// @zod.custom(imports.ZProductConfig)
-  /// [ProductConfig]
+  /// [ProjectConfig]
   config               Json            @default("{}")
   recontactDays        Int             @default(7)
   linkSurveyBranding   Boolean         @default(true) // Determines if the survey branding should be displayed in link surveys
@@ -438,25 +606,46 @@ model Product {
   clickOutsideClose    Boolean         @default(true)
   darkOverlay          Boolean         @default(false)
   languages            Language[]
-  /// @zod.custom(imports.ZLogo)
   /// [Logo]
   logo                 Json?
+  projectTeams         ProjectTeam[]
 
   @@unique([organizationId, name])
   @@index([organizationId])
 }
 
+/// Represents the top-level organizational hierarchy in Formbricks.
+/// Self-hosting instances typically have a single organization, while Formbricks Cloud
+/// supports multiple organizations with multi-tenancy.
+///
+/// @property id - Unique identifier for the organization
+/// @property name - Display name of the organization
+/// @property memberships - User memberships within the organization
+/// @property projects - Collection of projects owned by the organization
+/// @property billing - JSON field containing billing information
+/// @property whitelabel - Whitelabel configuration for the organization
+/// @property isAIEnabled - Controls access to AI-powered features
 model Organization {
   id          String       @id @default(cuid())
   createdAt   DateTime     @default(now()) @map(name: "created_at")
   updatedAt   DateTime     @updatedAt @map(name: "updated_at")
   name        String
   memberships Membership[]
-  products    Product[]
-  /// @zod.custom(imports.ZTeamBilling)
-  /// [TeamBilling]
+  projects    Project[]
+  /// [OrganizationBilling]
   billing     Json
+  /// [OrganizationWhitelabel]
+  whitelabel  Json         @default("{}")
   invites     Invite[]
+  isAIEnabled Boolean      @default(false)
+  teams       Team[]
+}
+
+enum OrganizationRole {
+  owner
+  manager
+  member
+  billing
 }
 
 enum MembershipRole {
@@ -467,38 +656,69 @@ enum MembershipRole {
   viewer
 }
 
+/// Links users to organizations with specific roles.
+/// Manages organization membership and permissions.
+/// Core model for managing user access within organizations.
+///
+/// @property organization - The organization the user belongs to
+/// @property user - The member user
+/// @property accepted - Whether the user has accepted the membership
+/// @property role - User's role within the organization (owner, manager, member, billing)
 model Membership {
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId         String
-  accepted       Boolean        @default(false)
-  role           MembershipRole
+  accepted       Boolean          @default(false)
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
 
   @@id([userId, organizationId])
   @@index([userId])
   @@index([organizationId])
 }
 
+/// Represents pending invitations to join an organization.
+/// Used to manage the process of adding new users to an organization.
+/// Once accepted, invites are converted into memberships.
+///
+/// @property id - Unique identifier for the invite
+/// @property email - Email address of the invited user
+/// @property name - Optional display name for the invited user
+/// @property organization - The organization sending the invite
+/// @property creator - The user who created the invite
+/// @property acceptor - The user who accepted the invite (if accepted)
+/// @property expiresAt - When the invite becomes invalid
+/// @property role - Intended role for the invited user
+/// @property teamIds - Teams the user will be added to upon acceptance
 model Invite {
-  id             String         @id @default(uuid())
+  id             String           @id @default(uuid())
   email          String
   name           String?
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
-  creator        User           @relation("inviteCreatedBy", fields: [creatorId], references: [id])
+  creator        User             @relation("inviteCreatedBy", fields: [creatorId], references: [id])
   creatorId      String
-  acceptor       User?          @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
+  acceptor       User?            @relation("inviteAcceptedBy", fields: [acceptorId], references: [id], onDelete: Cascade)
   acceptorId     String?
-  accepted       Boolean        @default(false)
-  createdAt      DateTime       @default(now())
+  createdAt      DateTime         @default(now())
   expiresAt      DateTime
-  role           MembershipRole @default(admin)
+  deprecatedRole MembershipRole? //deprecated
+  role           OrganizationRole @default(member)
+  teamIds        String[]         @default([])
 
   @@index([email, organizationId])
   @@index([organizationId])
 }
 
+/// Represents API authentication keys.
+/// Used for authenticating API requests to Formbricks.
+///
+/// @property id - Unique identifier for the API key
+/// @property label - Optional descriptive name for the key
+/// @property hashedKey - Securely stored API key
+/// @property environment - The environment this key belongs to
+/// @property lastUsedAt - Timestamp of last usage
 model ApiKey {
   id            String      @id @unique @default(cuid())
   createdAt     DateTime    @default(now())
@@ -517,8 +737,18 @@ enum IdentityProvider {
   google
   azuread
   openid
+  saml
 }
 
+/// Stores third-party authentication account information.
+/// Enables OAuth and other external authentication methods.
+///
+/// @property id - Unique identifier for the account
+/// @property user - The Formbricks user who owns this account
+/// @property provider - The authentication provider (GitHub, Google, etc.)
+/// @property providerAccountId - User ID from the provider
+/// @property access_token - OAuth access token
+/// @property refresh_token - OAuth refresh token
 model Account {
   id                String   @id @default(cuid())
   createdAt         DateTime @default(now()) @map(name: "created_at")
@@ -566,13 +796,25 @@ enum Intention {
   other
 }
 
+/// Represents a user in the Formbricks system.
+/// Central model for user authentication and profile management.
+///
+/// @property id - Unique identifier for the user
+/// @property name - Display name of the user
+/// @property email - User's email address
+/// @property role - User's professional role
+/// @property objective - User's main goal with Formbricks
+/// @property twoFactorEnabled - Whether 2FA is active
+/// @property memberships - Organizations the user belongs to
+/// @property notificationSettings - User's notification preferences
 model User {
-  id                        String           @id @default(cuid())
-  createdAt                 DateTime         @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime         @updatedAt @map(name: "updated_at")
-  name                      String
-  email                     String           @unique
-  emailVerified             DateTime?        @map(name: "email_verified")
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  updatedAt     DateTime  @updatedAt @map(name: "updated_at")
+  name          String
+  email         String    @unique
+  emailVerified DateTime? @map(name: "email_verified")
+
   imageUrl                  String?
   twoFactorSecret           String?
   twoFactorEnabled          Boolean          @default(false)
@@ -588,15 +830,21 @@ model User {
   invitesAccepted           Invite[]         @relation("inviteAcceptedBy")
   role                      Role?
   objective                 Objective?
-  /// @zod.custom(imports.ZUserNotificationSettings)
-  /// @zod.custom(imports.ZUserNotificationSettings)
   /// [UserNotificationSettings]
   notificationSettings      Json             @default("{}")
+  /// [Locale]
+  locale                    String           @default("en-US")
   surveys                   Survey[]
+  teamUsers                 TeamUser[]
 
   @@index([email])
 }
 
+/// Maps a short URL to its full destination.
+/// Used for creating memorable, shortened URLs for surveys.
+///
+/// @property id - Short identifier/slug for the URL
+/// @property url - The full destination URL
 model ShortUrl {
   id        String   @id // generate nanoId in service
   createdAt DateTime @default(now()) @map(name: "created_at")
@@ -604,6 +852,14 @@ model ShortUrl {
   url       String   @unique
 }
 
+/// Defines a segment of contacts based on attributes.
+/// Used for targeting surveys to specific user groups.
+///
+/// @property id - Unique identifier for the segment
+/// @property title - Display name of the segment
+/// @property filters - Rules defining the segment
+/// @property isPrivate - Whether the segment is private
+/// @property environment - The environment this segment belongs to
 model Segment {
   id            String      @id @default(cuid())
   createdAt     DateTime    @default(now()) @map(name: "created_at")
@@ -611,7 +867,6 @@ model Segment {
   title         String
   description   String?
   isPrivate     Boolean     @default(true)
-  /// @zod.custom(imports.ZSegmentFilters)
   /// [SegmentFilter]
   filters       Json        @default("[]")
   environmentId String
@@ -622,19 +877,33 @@ model Segment {
   @@index([environmentId])
 }
 
+/// Represents a supported language in the system.
+/// Used for multilingual survey support.
+///
+/// @property id - Unique identifier for the language
+/// @property code - Language code (e.g., 'en-US')
+/// @property alias - Optional friendly name
+/// @property project - The project this language is enabled for
 model Language {
   id              String           @id @default(cuid())
   createdAt       DateTime         @default(now()) @map(name: "created_at")
   updatedAt       DateTime         @updatedAt @map(name: "updated_at")
   code            String
   alias           String?
-  product         Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId       String
   surveyLanguages SurveyLanguage[]
 
-  @@unique([productId, code])
+  @@unique([projectId, code])
 }
 
+/// Links surveys to their supported languages.
+/// Manages which languages are available for each survey.
+///
+/// @property language - The supported language
+/// @property survey - The associated survey
+/// @property default - Whether this is the default language
+/// @property enabled - Whether this language is currently active
 model SurveyLanguage {
   language   Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
   languageId String
@@ -646,4 +915,153 @@ model SurveyLanguage {
   @@id([languageId, surveyId])
   @@index([surveyId])
   @@index([languageId])
+}
+
+enum InsightCategory {
+  featureRequest
+  complaint
+  praise
+  other
+}
+
+/// Stores analyzed insights from survey responses.
+/// Used for tracking patterns and extracting meaningful information.
+///
+/// @property id - Unique identifier for the insight
+/// @property category - Type of insight (feature request, complaint, etc.)
+/// @property title - Summary of the insight
+/// @property description - Detailed explanation
+/// @property vector - Embedding vector for similarity search
+model Insight {
+  id               String                      @id @default(cuid())
+  createdAt        DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId    String
+  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  category         InsightCategory
+  title            String
+  description      String
+  vector           Unsupported("vector(512)")?
+  documentInsights DocumentInsight[]
+}
+
+/// Links insights to source documents.
+/// Enables tracing insights back to original responses.
+///
+/// @property document - The source document
+/// @property insight - The derived insight
+model DocumentInsight {
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  insightId  String
+  insight    Insight  @relation(fields: [insightId], references: [id], onDelete: Cascade)
+
+  @@id([documentId, insightId])
+  @@index([insightId])
+}
+
+enum Sentiment {
+  positive
+  negative
+  neutral
+}
+
+/// Represents a processed text document from survey responses.
+/// Used for analysis and insight generation.
+///
+/// @property id - Unique identifier for the document
+/// @property survey - The associated survey
+/// @property response - The source response
+/// @property sentiment - Analyzed sentiment (positive, negative, neutral)
+/// @property text - The document content
+/// @property vector - Embedding vector for similarity search
+model Document {
+  id               String                      @id @default(cuid())
+  createdAt        DateTime                    @default(now()) @map(name: "created_at")
+  updatedAt        DateTime                    @updatedAt @map(name: "updated_at")
+  environmentId    String
+  environment      Environment                 @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  surveyId         String?
+  survey           Survey?                     @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  responseId       String?
+  response         Response?                   @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  questionId       String?
+  sentiment        Sentiment
+  isSpam           Boolean
+  text             String
+  vector           Unsupported("vector(512)")?
+  documentInsights DocumentInsight[]
+
+  @@unique([responseId, questionId])
+  @@index([createdAt])
+}
+
+/// Represents a team within an organization.
+/// Enables group-based access control and collaboration.
+///
+/// @property id - Unique identifier for the team
+/// @property name - Display name of the team
+/// @property organization - The parent organization
+/// @property teamUsers - Users who are part of this team
+/// @property projectTeams - Projects this team has access to
+model Team {
+  id             String        @id @default(cuid())
+  createdAt      DateTime      @default(now()) @map(name: "created_at")
+  updatedAt      DateTime      @updatedAt @map(name: "updated_at")
+  name           String
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teamUsers      TeamUser[]
+  projectTeams   ProjectTeam[]
+
+  @@unique([organizationId, name])
+}
+
+enum TeamUserRole {
+  admin
+  contributor
+}
+
+/// Links users to teams with specific roles.
+/// Manages team membership and permissions.
+///
+/// @property team - The associated team
+/// @property user - The team member
+/// @property role - User's role within the team
+model TeamUser {
+  createdAt DateTime     @default(now()) @map(name: "created_at")
+  updatedAt DateTime     @updatedAt @map(name: "updated_at")
+  teamId    String
+  team      Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      TeamUserRole
+
+  @@id([teamId, userId])
+  @@index([userId])
+}
+
+enum ProjectTeamPermission {
+  read
+  readWrite
+  manage
+}
+
+/// Defines team access to specific projects.
+/// Manages project-level permissions for teams.
+///
+/// @property project - The accessed project
+/// @property team - The team receiving access
+/// @property permission - Level of access granted
+model ProjectTeam {
+  createdAt  DateTime              @default(now()) @map(name: "created_at")
+  updatedAt  DateTime              @updatedAt @map(name: "updated_at")
+  projectId  String
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  teamId     String
+  team       Team                  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  permission ProjectTeamPermission @default(read)
+
+  @@id([projectId, teamId])
+  @@index([teamId])
 }

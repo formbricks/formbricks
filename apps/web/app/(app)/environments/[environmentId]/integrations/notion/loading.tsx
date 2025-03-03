@@ -1,21 +1,25 @@
-import { Button } from "@formbricks/ui/components/Button";
-import { GoBackButton } from "@formbricks/ui/components/GoBackButton";
+"use client";
+
+import { Button } from "@/modules/ui/components/button";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
+import { useTranslate } from "@tolgee/react";
 
 const Loading = () => {
+  const { t } = useTranslate();
   return (
     <div className="mt-6 p-6">
       <GoBackButton />
       <div className="mb-6 text-right">
         <Button className="pointer-events-none animate-pulse cursor-not-allowed select-none bg-slate-200">
-          Link new database
+          {t("environments.integrations.notion.link_database")}
         </Button>
       </div>
 
       <div className="rounded-lg border border-slate-200">
         <div className="grid h-12 grid-cols-6 content-center rounded-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-2 text-center">Survey</div>
-          <div className="col-span-2 text-center">Database Name</div>
-          <div className="col-span-2 text-center">Updated At</div>
+          <div className="col-span-2 text-center">{t("common.survey")}</div>
+          <div className="col-span-2 text-center">{t("environments.integrations.notion.database_name")}</div>
+          <div className="col-span-2 text-center">{t("common.updated_at")}</div>
         </div>
         <div className="grid-cols-7">
           {[...Array(3)].map((_, index) => (

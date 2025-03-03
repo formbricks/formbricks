@@ -1,11 +1,11 @@
 {
-  "extends": "@formbricks/config-typescript/js-library.json",
-  "include": ["src", "package.json", "../types/surveys.d.ts"],
   "compilerOptions": {
-    "strict": true,
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "strict": true
+  },
+  "extends": "@formbricks/config-typescript/js-library.json",
+  "include": ["src", "package.json", "../types/surveys.d.ts"]
 }

@@ -1,13 +1,15 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { CodeBlock } from "@/modules/ui/components/code-block";
+import { Html5Icon, NpmIcon } from "@/modules/ui/components/icons";
+import { TabBar } from "@/modules/ui/components/tab-bar";
+import { useTranslate } from "@tolgee/react";
+import Link from "next/link";
 import "prismjs/themes/prism.css";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
-import { CodeBlock } from "@formbricks/ui/components/CodeBlock";
-import { TabBar } from "@formbricks/ui/components/TabBar";
-import { Html5Icon, NpmIcon } from "@formbricks/ui/components/icons";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 
 const tabs = [
   { id: "html", label: "HTML", icon: <Html5Icon /> },
@@ -17,7 +19,7 @@ const tabs = [
 interface OnboardingSetupInstructionsProps {
   environmentId: string;
   webAppUrl: string;
-  channel: TProductConfigChannel;
+  channel: TProjectConfigChannel;
   widgetSetupCompleted: boolean;
 }
 
@@ -27,6 +29,7 @@ export const OnboardingSetupInstructions = ({
   channel,
   widgetSetupCompleted,
 }: OnboardingSetupInstructionsProps) => {
+  const { t } = useTranslate();
   const [activeTab, setActiveTab] = useState(tabs[0].id);
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
@@ -103,29 +106,29 @@ export const OnboardingSetupInstructions = ({
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
               npm install @formbricks/js
             </CodeBlock>
-            <p>or</p>
+            <p>{t("common.or")}</p>
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
               yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
-              Import Formbricks and initialize the widget in your Component (e.g. App.tsx):
+              {t("environments.connect.import_formbricks_and_initialize_the_widget_in_your_component")}
             </p>
             <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
               {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
             </CodeBlock>
-            <Button
-              id="onboarding-inapp-connect-read-npm-docs"
-              className="mt-3"
-              variant="secondary"
-              href={`https://formbricks.com/docs/${channel}-surveys/framework-guides`}
-              target="_blank">
-              Read docs
+            <Button id="onboarding-inapp-connect-read-npm-docs" className="mt-3" variant="secondary" asChild>
+              <Link
+                className="no-underline"
+                href={`https://formbricks.com/docs/${channel}-surveys/framework-guides`}
+                target="_blank">
+                {t("common.read_docs")}
+              </Link>
             </Button>
           </div>
         ) : activeTab === "html" ? (
           <div className="prose prose-slate">
             <p className="-mb-1 mt-6 text-sm text-slate-700">
-              Insert this code into the &lt;head&gt; tag of your website:
+              {t("environments.connect.insert_this_code_into_the_head_tag_of_your_website")}
             </p>
             <div>
               <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
@@ -136,21 +139,23 @@ export const OnboardingSetupInstructions = ({
             <div className="mt-4 flex justify-between space-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
-                variant={widgetSetupCompleted ? "secondary" : "primary"}
+                variant={widgetSetupCompleted ? "secondary" : "default"}
                 onClick={() => {
                   navigator.clipboard.writeText(
                     channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys
                   );
-                  toast.success("Copied to clipboard");
+                  toast.success(t("common.copied_to_clipboard"));
                 }}>
-                Copy code
+                {t("common.copy_code")}
               </Button>
-              <Button
-                id="onboarding-inapp-connect-step-by-step-manual"
-                variant="secondary"
-                href={`https://formbricks.com/docs/${channel}-surveys/framework-guides#html`}
-                target="_blank">
-                Step by step manual
+
+              <Button id="onboarding-inapp-connect-step-by-step-manual" variant="secondary" asChild>
+                <Link
+                  href={`https://formbricks.com/docs/${channel}-surveys/framework-guides#html`}
+                  target="_blank"
+                  className="no-underline">
+                  {t("common.step_by_step_manual")}
+                </Link>
               </Button>
             </div>
           </div>

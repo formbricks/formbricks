@@ -1,19 +1,20 @@
 "use client";
 
+import { Button } from "@/modules/ui/components/button";
+import { useTranslate } from "@tolgee/react";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TEnvironment } from "@formbricks/types/environment";
-import { TProductConfigChannel } from "@formbricks/types/product";
-import { Button } from "@formbricks/ui/components/Button";
+import { TProjectConfigChannel } from "@formbricks/types/project";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
 interface ConnectWithFormbricksProps {
   environment: TEnvironment;
   webAppUrl: string;
   widgetSetupCompleted: boolean;
-  channel: TProductConfigChannel;
+  channel: TProjectConfigChannel;
 }
 
 export const ConnectWithFormbricks = ({
@@ -22,13 +23,9 @@ export const ConnectWithFormbricks = ({
   widgetSetupCompleted,
   channel,
 }: ConnectWithFormbricksProps) => {
+  const { t } = useTranslate();
   const router = useRouter();
-
   const handleFinishOnboarding = async () => {
-    if (!widgetSetupCompleted) {
-      router.push(`/environments/${environment.id}/connect/invite`);
-      return;
-    }
     router.push(`/environments/${environment.id}/surveys`);
   };
 
@@ -64,8 +61,10 @@ export const ConnectWithFormbricks = ({
           )}>
           {widgetSetupCompleted ? (
             <div>
-              <p className="text-3xl">Congrats!</p>
-              <p className="pt-4 text-sm font-medium text-slate-600">Well done! We&apos;re connected.</p>
+              <p className="text-3xl">{t("environments.connect.congrats")}</p>
+              <p className="pt-4 text-sm font-medium text-slate-600">
+                {t("environments.connect.connection_successful_message")}
+              </p>
             </div>
           ) : (
             <div className="flex animate-pulse flex-col items-center space-y-4">
@@ -73,17 +72,21 @@ export const ConnectWithFormbricks = ({
                 <span className="animate-ping-slow absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
                 <span className="relative inline-flex h-10 w-10 rounded-full bg-slate-500"></span>
               </span>
-              <p className="pt-4 text-sm font-medium text-slate-600">Waiting for your signal...</p>
+              <p className="pt-4 text-sm font-medium text-slate-600">
+                {t("environments.connect.waiting_for_your_signal")}
+              </p>
             </div>
           )}
         </div>
       </div>
       <Button
         id="finishOnboarding"
-        variant={widgetSetupCompleted ? "primary" : "minimal"}
-        onClick={handleFinishOnboarding}
-        EndIcon={ArrowRight}>
-        {widgetSetupCompleted ? "Finish Onboarding" : "I don't know how to do it"}
+        variant={widgetSetupCompleted ? "default" : "ghost"}
+        onClick={handleFinishOnboarding}>
+        {widgetSetupCompleted
+          ? t("environments.connect.finish_onboarding")
+          : t("environments.connect.do_it_later")}
+        <ArrowRight />
       </Button>
     </div>
   );

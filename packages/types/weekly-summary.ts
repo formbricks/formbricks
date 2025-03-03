@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZAttributeClass } from "./attribute-classes";
+import { ZContactAttributeKey } from "./contact-attribute-key";
 import { ZResponseData } from "./responses";
 import { ZSurveyHiddenFields, ZSurveyQuestion, ZSurveyQuestionType, ZSurveyStatus } from "./surveys/types";
 import { ZUserNotificationSettings } from "./user";
@@ -36,7 +36,7 @@ export const ZWeeklySummaryNotificationResponse = z.object({
   environmentId: z.string(),
   currentDate: z.date(),
   lastWeekDate: z.date(),
-  productName: z.string(),
+  projectName: z.string(),
   surveys: z.array(ZWeeklySummaryNotificationDataSurvey),
   insights: ZWeeklySummaryInsights,
 });
@@ -68,14 +68,16 @@ export type TWeeklySummarySurveyData = z.infer<typeof ZWeeklySummarySurveyData>;
 export const ZWeeklySummaryEnvironmentData = z.object({
   id: z.string(),
   surveys: z.array(ZWeeklySummarySurveyData),
-  attributeClasses: z.array(ZAttributeClass),
+  attributeKeys: z.array(ZContactAttributeKey),
 });
 
 export type TWeeklySummaryEnvironmentData = z.infer<typeof ZWeeklySummaryEnvironmentData>;
 
 export const ZWeeklySummaryUserData = z.object({
+  id: z.string(),
   email: z.string(),
   notificationSettings: ZUserNotificationSettings,
+  locale: z.string(),
 });
 
 export type TWeeklySummaryUserData = z.infer<typeof ZWeeklySummaryUserData>;
@@ -92,11 +94,11 @@ export const ZWeeklyEmailOrganizationData = z.object({
 
 export type TWeeklyEmailOrganizationData = z.infer<typeof ZWeeklyEmailOrganizationData>;
 
-export const ZWeeklySummaryProductData = z.object({
+export const ZWeeklySummaryProjectData = z.object({
   id: z.string(),
   name: z.string(),
   environments: z.array(ZWeeklySummaryEnvironmentData),
   organization: ZWeeklyEmailOrganizationData,
 });
 
-export type TWeeklySummaryProductData = z.infer<typeof ZWeeklySummaryProductData>;
+export type TWeeklySummaryProjectData = z.infer<typeof ZWeeklySummaryProjectData>;

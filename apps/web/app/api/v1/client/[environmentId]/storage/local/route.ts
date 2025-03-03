@@ -2,9 +2,8 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
-import { headers } from "next/headers";
+import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
-import { getBiggerUploadFileSizePermission } from "@formbricks/ee/lib/service";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -12,9 +11,9 @@ import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 
 interface Context {
-  params: {
+  params: Promise<{
     environmentId: string;
-  };
+  }>;
 }
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -24,26 +23,25 @@ export const OPTIONS = async (): Promise<Response> => {
       headers: {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, Authorization, X-File-Name, X-File-Type, X-Survey-ID, X-Signature, X-Timestamp, X-UUID",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     }
   );
 };
 
 export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
-  const environmentId = context.params.environmentId;
+  const params = await context.params;
+  const environmentId = params.environmentId;
 
   const accessType = "private"; // private files are accessible only by authorized users
-  const headersList = headers();
 
-  const fileType = headersList.get("X-File-Type");
-  const encodedFileName = headersList.get("X-File-Name");
-  const surveyId = headersList.get("X-Survey-ID");
-
-  const signedSignature = headersList.get("X-Signature");
-  const signedUuid = headersList.get("X-UUID");
-  const signedTimestamp = headersList.get("X-Timestamp");
+  const formData = await req.json();
+  const fileType = formData.fileType as string;
+  const encodedFileName = formData.fileName as string;
+  const surveyId = formData.surveyId as string;
+  const signedSignature = formData.signature as string;
+  const signedUuid = formData.uuid as string;
+  const signedTimestamp = formData.timestamp as string;
 
   if (!fileType) {
     return responses.badRequestResponse("contentType is required");
@@ -100,7 +98,6 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.unauthorizedResponse();
   }
 
-  const formData = await req.json();
   const base64String = formData.fileBase64String as string;
 
   const buffer = Buffer.from(base64String.split(",")[1], "base64");
@@ -111,7 +108,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization);
+    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

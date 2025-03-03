@@ -1,0 +1,92 @@
+---
+title: "Quiz Time"
+icon: "brain"
+description: "How to Create a Quiz Using Formbricks - Step-by-Step Guide"
+---
+
+# Creating a quiz with Formbricks - Step-by-step Guide
+
+Welcome to this guide on creating engaging quizzes with Formbricks! Quizzes help you capture customer insights, explore user personalities, or simply add fun for your team. With Formbricks, you can personalize quizzes in minutes add scores, customize backgrounds, and more, all without any technical skills!
+
+## What we'll build
+
+By the end of this tutorial, you'll have created a simple trivia Quiz featuring:
+
+1. Score calculations.
+2. Multiple endings depending on the score.
+
+## Setting up the form
+
+First, make sure you have a Formbricks account. If not, you can create one [here](https://app.formbricks.com):
+
+1. Head to the Surveys page and click on **New Survey**.
+2. Select Start from Scratch to create a new form.
+3. Go to the settings and select form type as **Link Survey**
+4. In the form editor, click the three dots next to a question, then select Change Question Type and choose **Single-Select**.
+
+![Change Question type to Single-Select](/images/xm-and-surveys/xm/best-practices/quiz-time/single-select.webp)
+
+5. Add a welcoming statement to greet your users and explain the Quiz's purpose.
+6. Personalize the greeting to make it inviting and encourage engagement.
+
+**Note:** While we’re creating a Link Survey here, the process is similar for Web and App surveys.
+
+## Adding the questions
+
+Next, let's create a question for example with multiple options:
+
+What country has the longest coastline in the world?
+A) Canada
+B) Japan
+C) India
+D) Nepal
+
+![Sample Question](/images/xm-and-surveys/xm/best-practices/quiz-time/quiz.webp)
+
+## Calculate Score
+
+Now that we have our question ready, let’s add the logic to calculate scores.
+
+1. Scroll down in the editor and click on variables.
+2. Create a new variable named `score` with a default value of 0
+
+![Create Variable named Score image](/images/xm-and-surveys/xm/best-practices/quiz-time/score.webp)
+
+3. Now go back to the question and expand the advanced settings by clicking on `> Show Advanced Settings`.
+4. Under the conditional logic you should see the option to `Add Logic`. Click on that.
+
+![Add Logic Button](/images/xm-and-surveys/xm/best-practices/quiz-time/conditional-logic.webp)
+
+
+5. Now you should see conditional logic. Customize the logic to match your needs for example:
+
+**When** `question` equals `YOUR_ANSWER_HERE` **Then** `Calculate` `score` `Add +` `01`. So it should look something like this.
+
+![When-Then Conditional Logic](/images/xm-and-surveys/xm/best-practices/quiz-time/when-then.webp)
+
+6. Let's duplicate and customize these questions. Click on the duplicate icon at the top of the question.
+7. Now edit the questions, options, and answers in the **conditional logic**
+
+## Creating Multiple Endings Based on Scores
+
+Once you have all the questions and the calculation logic in place, it’s time to customize the endings. Scroll down to the Ending Card section. We will create two cards for this quiz: one for when the user fails the quiz and another for when the user passes.
+
+1. Customize the ending card.
+2. Display the score by typing `@score`. ( You can address all the variables or questions by just typing @ ).
+3. Add logic to the last question. ( this is necessary to redirect the user based on the score ). Kind of like this:
+
+**When** `score` >= `03` **Then** `Jump to` `Pass`. So it should look something like this.
+
+![Conditional Logic for ending card](/images/xm-and-surveys/xm/best-practices/quiz-time/ending-logic.webp)
+
+4. Ensure that the Fail card is positioned above the Pass card. This allows any condition that does not meet the criteria of being greater than or equal to 3 to jump to the Fail card.
+
+![Pass or Fail ending Cards](/images/xm-and-surveys/xm/best-practices/quiz-time/pass-fail.webp)
+
+5. That's it! Now you can save and publish the quiz.
+
+# Wrapping Up
+
+Congratulations! You’ve successfully created a Quiz with Formbricks. You can play around with the quiz that we just created [here](https://app.formbricks.com/s/cm2wwt3vu0001ir8o7ys0bezz).
+
+A great quiz can serve as an excellent lead generator, a job fit checker, or just a fun icebreaker for your team. You now have the skills to build that! If you want to read more about building quizzes and how you can create a Job Fit Quiz check this article [here](https://www.harshbhat.me/blog/formbricks-quiz).

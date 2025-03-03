@@ -12,8 +12,8 @@ import { QuestionFilterOptions } from "@/app/(app)/environments/[environmentId]/
 import {
   TResponseFilterCriteria,
   TResponseHiddenFieldsFilter,
+  TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
-  TSurveyPersonAttributes,
 } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -51,7 +51,7 @@ const filterOptions = {
 export const generateQuestionAndFilterOptions = (
   survey: TSurvey,
   environmentTags: TTag[] | undefined,
-  attributes: TSurveyPersonAttributes,
+  attributes: TSurveyContactAttributes,
   meta: TSurveyMetaFieldFilter,
   hiddenFields: TResponseHiddenFieldsFilter
 ): {
@@ -440,15 +440,15 @@ export const getFormattedFilters = (
   // for attributes
   if (attributes.length) {
     attributes.forEach(({ filterType, questionType }) => {
-      if (!filters.personAttributes) filters.personAttributes = {};
+      if (!filters.contactAttributes) filters.contactAttributes = {};
       if (!filterType.filterComboBoxValue) return;
       if (filterType.filterValue === "Equals") {
-        filters.personAttributes[questionType.label ?? ""] = {
+        filters.contactAttributes[questionType.label ?? ""] = {
           op: "equals",
           value: filterType.filterComboBoxValue as string,
         };
       } else if (filterType.filterValue === "Not equals") {
-        filters.personAttributes[questionType.label ?? ""] = {
+        filters.contactAttributes[questionType.label ?? ""] = {
           op: "notEquals",
           value: filterType.filterComboBoxValue as string,
         };

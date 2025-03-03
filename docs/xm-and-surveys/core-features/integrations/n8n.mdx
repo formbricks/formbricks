@@ -1,0 +1,103 @@
+---
+title: "n8n"
+description: "Integrate Formbricks with n8n for a streamlined workflow experience."
+---
+
+<Note>
+  The Formbricks n8n node is currently only available in the n8n self-hosted
+  version as a community node. To install it go to "Settings" -> "Community
+  Nodes" and install @formbricks/n8n-nodes-formbricks.
+</Note>
+
+n8n allows you to build flexible workflows focused on deep data integration. And with sharable templates and a user-friendly UI, the less technical people on your team can collaborate on them too. Unlike other tools, complexity is not a limitation. So you can build whatever you want — without stressing over budget. Hook up Formbricks with n8n and you can send your data to 350+ other apps. Here is how to do it.
+
+## Step 1: Setup your survey incl. `questionId` for every question
+
+<Note>
+  Nailed down your survey? Any changes in the survey cause additional work in
+  the n8n node. It makes sense to first settle on the survey you want to run and
+  then get to setting up n8n.
+</Note>
+
+When setting up the node your life will be easier when you change the `questionId`s of your survey questions. You can only do so **before** you publish your survey.
+
+![Update Question ID](/images/xm-and-surveys/core-features/integrations/n8n/update-question-id.webp)
+
+*In every question card in the Advanced Settings you find the Question ID field. Update it so that you'll recognize the response tied to this question.*
+
+<Note>
+  Already published? Duplicate survey You can only update the questionId
+  when the survey was not yet published. Already published it? Just **duplicate
+  it** to update the questionIds.
+  ![Duplicate Survey](/images/xm-and-surveys/core-features/integrations/n8n/duplicate-survey.webp)
+</Note>
+
+## Step 2: Setup your n8n workflow
+
+Go to [n8n.io](https://n8n.io) and create a new workflow. Search for “Formbricks” to get started:
+
+![Add Formbricks Trigger](/images/xm-and-surveys/core-features/integrations/n8n/add-formbricks-trigger.webp)
+
+## Step 3: Connect Formbricks with n8n
+
+Now, you have to connect n8n with Formbricks via an API Key:
+
+![Create new credential button](/images/xm-and-surveys/core-features/integrations/n8n/create-new-credential-btn.webp)
+
+Click on Create New Credentail button to add your host and API Key
+
+![Add host and api key](/images/xm-and-surveys/core-features/integrations/n8n/add-api-key.webp)
+
+Now you need an API key. Please refer to the [API Key Setup](/api-reference/rest-api#how-to-generate-an-api-key) page to learn how to create one.
+
+Once you copied it in the API Key field, hit Save button to test the connection and save the credentials.
+
+![Successful Connection](/images/xm-and-surveys/core-features/integrations/n8n/success-connection.webp)
+
+## Step 4: Select Event
+
+Next, you can choose the event you want to trigger the node on. You can select multiple events:
+
+![Select Event](/images/xm-and-surveys/core-features/integrations/n8n/select-event.webp)
+
+Here, we are adding `Response Finished` as an event, which will trigger when the survey has been filled out.
+
+## Step 5: Select Survey
+
+Next, you can choose from all the surveys you have created in this environment. You can select multiple surveys:
+
+![Select Survey](/images/xm-and-surveys/core-features/integrations/n8n/select-survey.webp)
+
+Here, we are selecting two surveys.
+
+![Selected Surveys](/images/xm-and-surveys/core-features/integrations/n8n/selected-surveys.webp)
+
+## Step 6: Test your trigger
+
+In order to set up n8n you'll need a test response in the selected survey. This allows you to select the individual values of each response in your workflow.
+
+![Submit Test Response](/images/xm-and-surveys/core-features/integrations/n8n/submit-test-response.webp)
+
+Next, click on Listen for event button.
+
+![Listen for event](/images/xm-and-surveys/core-features/integrations/n8n/listen-for-event.webp)
+
+Then, go to the survey which you selected. Fill it out, and wait for the particular event to trigger (in this case it's `Response Finished`). Once the event is triggered you will see the response that you filled out in the survey.
+
+![Test Response Success](/images/xm-and-surveys/core-features/integrations/n8n/test-response-success.webp)
+
+Now you have all the data you need at hand. The next steps depend on what you want to do with it. In this tutorial, we will send submissions to a discord channel:
+
+## Step 7: Add discord to your workflow
+
+Click on the plus and search `Discord`.
+
+![Add Discord](/images/xm-and-surveys/core-features/integrations/n8n/add-discord.webp)
+
+Fill in the `Webhook URL` and the `Content` that you want to receive in the respective discord channel. Next, click on `Execute Node` button to test the node.
+
+![Fill Discord Details](/images/xm-and-surveys/core-features/integrations/n8n/fill-discord-details.webp)
+
+Once the execution is successful, you'll receive the content in the discord channel.
+
+![Discord Response](/images/xm-and-surveys/core-features/integrations/n8n/discord-response.webp)

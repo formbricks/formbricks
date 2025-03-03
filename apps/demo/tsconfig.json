@@ -1,5 +1,5 @@
 {
+  "exclude": ["node_modules"],
   "extends": "@formbricks/config-typescript/nextjs.json",
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"]
 }

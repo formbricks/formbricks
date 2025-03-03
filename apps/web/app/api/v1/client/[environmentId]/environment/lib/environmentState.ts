@@ -1,6 +1,5 @@
 import { prisma } from "@formbricks/database";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
-import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
@@ -14,12 +13,13 @@ import {
   capturePosthogEnvironmentEvent,
   sendPlanLimitsReachedEventToPosthogWeekly,
 } from "@formbricks/lib/posthogServer";
-import { productCache } from "@formbricks/lib/product/cache";
-import { getProductByEnvironmentId } from "@formbricks/lib/product/service";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
-import { getSurveys } from "@formbricks/lib/survey/service";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState } from "@formbricks/types/js";
+import { getActionClassesForEnvironmentState } from "./actionClass";
+import { getProjectForEnvironmentState } from "./project";
+import { getSurveysForEnvironmentState } from "./survey";
 
 /**
  *
@@ -29,14 +29,14 @@ import { TJsEnvironmentState } from "@formbricks/types/js";
  */
 export const getEnvironmentState = async (
   environmentId: string
-): Promise<{ state: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
+): Promise<{ data: TJsEnvironmentState["data"]; revalidateEnvironment?: boolean }> =>
   cache(
     async () => {
       let revalidateEnvironment = false;
-      const [environment, organization, product] = await Promise.all([
+      const [environment, organization, project] = await Promise.all([
         getEnvironment(environmentId),
         getOrganizationByEnvironmentId(environmentId),
-        getProductByEnvironmentId(environmentId),
+        getProjectForEnvironmentState(environmentId),
       ]);
 
       if (!environment) {
@@ -47,8 +47,8 @@ export const getEnvironmentState = async (
         throw new ResourceNotFoundError("organization", null);
       }
 
-      if (!product) {
-        throw new ResourceNotFoundError("product", null);
+      if (!project) {
+        throw new ResourceNotFoundError("project", null);
       }
 
       if (!environment.appSetupCompleted) {
@@ -81,8 +81,9 @@ export const getEnvironmentState = async (
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
             plan: organization.billing.plan,
             limits: {
+              projects: null,
               monthly: {
-                miu: organization.billing.limits.monthly.miu,
+                miu: null,
                 responses: organization.billing.limits.monthly.responses,
               },
             },
@@ -93,22 +94,22 @@ export const getEnvironmentState = async (
       }
 
       const [surveys, actionClasses] = await Promise.all([
-        getSurveys(environmentId),
-        getActionClasses(environmentId),
+        getSurveysForEnvironmentState(environmentId),
+        getActionClassesForEnvironmentState(environmentId),
       ]);
 
       const filteredSurveys = surveys.filter(
         (survey) => survey.type === "app" && survey.status === "inProgress"
       );
 
-      const state: TJsEnvironmentState["data"] = {
+      const data: TJsEnvironmentState["data"] = {
         surveys: !isMonthlyResponsesLimitReached ? filteredSurveys : [],
         actionClasses,
-        product,
+        project: project,
       };
 
       return {
-        state,
+        data,
         revalidateEnvironment,
       };
     },
@@ -118,7 +119,7 @@ export const getEnvironmentState = async (
       tags: [
         environmentCache.tag.byId(environmentId),
         organizationCache.tag.byEnvironmentId(environmentId),
-        productCache.tag.byEnvironmentId(environmentId),
+        projectCache.tag.byEnvironmentId(environmentId),
         surveyCache.tag.byEnvironmentId(environmentId),
         actionClassCache.tag.byEnvironmentId(environmentId),
       ],

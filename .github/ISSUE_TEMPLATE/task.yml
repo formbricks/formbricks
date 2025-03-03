@@ -1,0 +1,11 @@
+name: Task (internal)
+description: "Template for creating a task. Used by the Formbricks Team only \U0001f4e5"
+type: task
+body:
+  - type: textarea
+    id: task-summary
+    attributes:
+      label: Task description
+      description: A clear detailed-rich description of the task.
+    validations:
+      required: true

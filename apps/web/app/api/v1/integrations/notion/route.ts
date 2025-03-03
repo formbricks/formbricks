@@ -1,7 +1,7 @@
 import { responses } from "@/app/lib/api/response";
+import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
-import { authOptions } from "@formbricks/lib/authOptions";
 import {
   NOTION_AUTH_URL,
   NOTION_OAUTH_CLIENT_ID,

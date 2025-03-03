@@ -1,15 +1,19 @@
-import toast from "react-hot-toast";
-import { TEnvironment } from "@formbricks/types/environment";
-import { TSurvey } from "@formbricks/types/surveys/types";
+"use client";
+
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@formbricks/ui/components/Select";
-import { SurveyStatusIndicator } from "@formbricks/ui/components/SurveyStatusIndicator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbricks/ui/components/Tooltip";
+} from "@/modules/ui/components/select";
+import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useTranslate } from "@tolgee/react";
+import toast from "react-hot-toast";
+import { TEnvironment } from "@formbricks/types/environment";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {
@@ -23,41 +27,46 @@ export const SurveyStatusDropdown = ({
   updateLocalSurveyStatus,
   survey,
 }: SurveyStatusDropdownProps) => {
+  const { t } = useTranslate();
   const isCloseOnDateEnabled = survey.closeOnDate !== null;
   const closeOnDate = survey.closeOnDate ? new Date(survey.closeOnDate) : null;
   const isStatusChangeDisabled =
     (survey.status === "scheduled" || (isCloseOnDateEnabled && closeOnDate && closeOnDate < new Date())) ??
     false;
 
+  const handleStatusChange = async (status: TSurvey["status"]) => {
+    const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
+
+    if (updateSurveyActionResponse?.data) {
+      toast.success(
+        status === "inProgress"
+          ? t("common.survey_live")
+          : status === "paused"
+            ? t("common.survey_paused")
+            : status === "completed"
+              ? t("common.survey_completed")
+              : ""
+      );
+    } else {
+      const errorMessage = getFormattedErrorMessage(updateSurveyActionResponse);
+      toast.error(errorMessage);
+    }
+
+    if (updateLocalSurveyStatus) updateLocalSurveyStatus(status);
+  };
+
   return (
     <>
       {survey.status === "draft" ? (
         <div className="flex items-center">
-          <p className="text-sm italic text-slate-600">Draft</p>
+          <p className="text-sm italic text-slate-600">{t("common.draft")}</p>
         </div>
       ) : (
         <Select
           value={survey.status}
           disabled={isStatusChangeDisabled}
-          onValueChange={(value) => {
-            const castedValue = value as TSurvey["status"];
-            updateSurveyAction({ survey: { ...survey, status: castedValue } })
-              .then(() => {
-                toast.success(
-                  value === "inProgress"
-                    ? "Survey live"
-                    : value === "paused"
-                      ? "Survey paused"
-                      : value === "completed"
-                        ? "Survey completed"
-                        : ""
-                );
-              })
-              .catch((error) => {
-                toast.error(`Error: ${error.message}`);
-              });
-
-            if (updateLocalSurveyStatus) updateLocalSurveyStatus(value as TSurvey["status"]);
+          onValueChange={(value: TSurvey["status"]) => {
+            handleStatusChange(value);
           }}>
           <TooltipProvider delayDuration={50}>
             <Tooltip open={isStatusChangeDisabled ? undefined : false}>
@@ -69,10 +78,10 @@ export const SurveyStatusDropdown = ({
                         <SurveyStatusIndicator status={survey.status} />
                       )}
                       <span className="ml-2 text-sm text-slate-700">
-                        {survey.status === "scheduled" && "Scheduled"}
-                        {survey.status === "inProgress" && "In-progress"}
-                        {survey.status === "paused" && "Paused"}
-                        {survey.status === "completed" && "Completed"}
+                        {survey.status === "scheduled" && t("common.scheduled")}
+                        {survey.status === "inProgress" && t("common.in_progress")}
+                        {survey.status === "paused" && t("common.paused")}
+                        {survey.status === "completed" && t("common.completed")}
                       </span>
                     </div>
                   </SelectValue>
@@ -82,27 +91,24 @@ export const SurveyStatusDropdown = ({
                 <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
                   <div className="flex w-full items-center justify-center gap-4">
                     <SurveyStatusIndicator status={"inProgress"} />
-                    In-progress
+                    {t("common.in_progress")}
                   </div>
                 </SelectItem>
                 <SelectItem className="group font-normal hover:text-slate-900" value="paused">
                   <div className="flex w-full items-center justify-center gap-2">
                     <SurveyStatusIndicator status={"paused"} />
-                    Paused
+                    {t("common.paused")}
                   </div>
                 </SelectItem>
                 <SelectItem className="group font-normal hover:text-slate-900" value="completed">
                   <div className="flex w-full items-center justify-center gap-2">
                     <SurveyStatusIndicator status={"completed"} />
-                    Completed
+                    {t("common.completed")}
                   </div>
                 </SelectItem>
               </SelectContent>
 
-              <TooltipContent>
-                To update the survey status, update the schedule and close setting in the survey response
-                options.
-              </TooltipContent>
+              <TooltipContent>{t("environments.surveys.survey_status_tooltip")}</TooltipContent>
             </Tooltip>
           </TooltipProvider>
         </Select>

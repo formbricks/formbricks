@@ -1,34 +1,30 @@
 "use client";
 
-import { CreateNewActionTab } from "@/app/(app)/(survey-editor)/environments/[environmentId]/surveys/[surveyId]/edit/components/CreateNewActionTab";
+import { CreateNewActionTab } from "@/modules/survey/editor/components/create-new-action-tab";
+import { Button } from "@/modules/ui/components/button";
+import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { MousePointerClickIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
-import { useMembershipRole } from "@formbricks/lib/membership/hooks/useMembershipRole";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { Button } from "@formbricks/ui/components/Button";
-import { ErrorComponent } from "@formbricks/ui/components/ErrorComponent";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface AddActionModalProps {
   environmentId: string;
   actionClasses: TActionClass[];
+  isReadOnly: boolean;
 }
 
-export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalProps) => {
+export const AddActionModal = ({ environmentId, actionClasses, isReadOnly }: AddActionModalProps) => {
+  const { t } = useTranslate();
   const [open, setOpen] = useState(false);
-  const { membershipRole, isLoading, error } = useMembershipRole(environmentId);
-  const { isViewer } = getAccessFlags(membershipRole);
-  const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
 
-  if (error) {
-    return <ErrorComponent />;
-  }
+  const [newActionClasses, setNewActionClasses] = useState<TActionClass[]>(actionClasses);
 
   return (
     <>
-      <Button size="sm" loading={isLoading} onClick={() => setOpen(true)} EndIcon={PlusIcon}>
-        Add Action
+      <Button size="sm" onClick={() => setOpen(true)}>
+        {t("common.add_action")}
+        <PlusIcon />
       </Button>
       <Modal open={open} setOpen={setOpen} noPadding closeOnOutsideClick={false} restrictOverflow>
         <div className="flex h-full flex-col rounded-lg">
@@ -39,9 +35,11 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
                   <MousePointerClickIcon className="h-5 w-5" />
                 </div>
                 <div>
-                  <div className="text-xl font-medium text-slate-700">Track New User Action</div>
+                  <div className="text-xl font-medium text-slate-700">
+                    {t("environments.actions.track_new_user_action")}
+                  </div>
                   <div className="text-sm text-slate-500">
-                    Track a user action to display surveys or create user segment.
+                    {t("environments.actions.track_user_action_to_display_surveys_or_create_user_segment")}
                   </div>
                 </div>
               </div>
@@ -52,7 +50,7 @@ export const AddActionModal = ({ environmentId, actionClasses }: AddActionModalP
           <CreateNewActionTab
             actionClasses={newActionClasses}
             environmentId={environmentId}
-            isViewer={isViewer}
+            isReadOnly={isReadOnly}
             setActionClasses={setNewActionClasses}
             setOpen={setOpen}
           />

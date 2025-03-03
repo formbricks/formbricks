@@ -6,6 +6,11 @@ on:
   #  branches:
   #    - main
 
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 env:

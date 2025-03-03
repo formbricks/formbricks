@@ -29,12 +29,12 @@ const canUserAccessResponse = async (authentication: any, response: TResponse): 
 
 export const GET = async (
   request: Request,
-  { params }: { params: { responseId: string } }
+  props: { params: Promise<{ responseId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    await fetchAndValidateResponse(authentication, params.responseId);
     const response = await fetchAndValidateResponse(authentication, params.responseId);
     if (response) {
       return responses.successResponse(response);
@@ -47,8 +47,9 @@ export const GET = async (
 
 export const DELETE = async (
   request: Request,
-  { params }: { params: { responseId: string } }
+  props: { params: Promise<{ responseId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
@@ -65,8 +66,9 @@ export const DELETE = async (
 
 export const PUT = async (
   request: Request,
-  { params }: { params: { responseId: string } }
+  props: { params: Promise<{ responseId: string }> }
 ): Promise<Response> => {
+  const params = await props.params;
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();

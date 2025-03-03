@@ -1,12 +1,13 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { authOptions } from "@/modules/auth/lib/authOptions";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
-import { authOptions } from "@formbricks/lib/authOptions";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { PageContentWrapper } from "@formbricks/ui/components/PageContentWrapper";
-import { PageHeader } from "@formbricks/ui/components/PageHeader";
 import { EditAlerts } from "./components/EditAlerts";
 import { EditWeeklySummary } from "./components/EditWeeklySummary";
 import { IntegrationsTip } from "./components/IntegrationsTip";
@@ -22,12 +23,12 @@ const setCompleteNotificationSettings = (
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {
-    for (const product of membership.organization.products) {
+    for (const project of membership.organization.projects) {
       // set default values for weekly summary
-      newNotificationSettings.weeklySummary[product.id] =
-        (notificationSettings.weeklySummary && notificationSettings.weeklySummary[product.id]) || false;
+      newNotificationSettings.weeklySummary[project.id] =
+        (notificationSettings.weeklySummary && notificationSettings.weeklySummary[project.id]) || false;
       // set default values for alerts
-      for (const environment of product.environments) {
+      for (const environment of project.environments) {
         for (const survey of environment.surveys) {
           newNotificationSettings.alert[survey.id] =
             notificationSettings[survey.id]?.responseFinished ||
@@ -44,13 +45,76 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
+      role: {
+        not: "billing",
+      },
+      OR: [
+        {
+          // Fetch all projects if user role is owner or manager
+          role: {
+            in: ["owner", "manager"],
+          },
+        },
+        {
+          // Filter projects based on team membership if user is not owner or manager
+          organization: {
+            projects: {
+              some: {
+                projectTeams: {
+                  some: {
+                    team: {
+                      teamUsers: {
+                        some: {
+                          userId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
     },
     select: {
       organization: {
         select: {
           id: true,
           name: true,
-          products: {
+          projects: {
+            // Apply conditional filtering based on user's role
+            where: {
+              OR: [
+                {
+                  // Fetch all projects if user is owner or manager
+                  organization: {
+                    memberships: {
+                      some: {
+                        userId,
+                        role: {
+                          in: ["owner", "manager"],
+                        },
+                      },
+                    },
+                  },
+                },
+                {
+                  // Only include projects accessible through teams if user is not owner or manager
+                  projectTeams: {
+                    some: {
+                      team: {
+                        teamUsers: {
+                          some: {
+                            userId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              ],
+            },
             select: {
               id: true,
               name: true,
@@ -77,31 +141,35 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async ({ params, searchParams }) => {
+const Page = async (props) => {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+  const t = await getTranslate();
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error("Unauthorized");
+    throw new Error(t("common.session_not_found"));
   }
   const autoDisableNotificationType = searchParams["type"];
   const autoDisableNotificationElementId = searchParams["elementId"];
 
   const [user, memberships] = await Promise.all([getUser(session.user.id), getMemberships(session.user.id)]);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(t("common.user_not_found"));
   }
 
   if (user?.notificationSettings) {
     user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
   }
-
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle="Account Settings">
+      <PageHeader pageTitle={t("common.account_settings")}>
         <AccountSettingsNavbar environmentId={params.environmentId} activeId="notifications" />
       </PageHeader>
       <SettingsCard
-        title="Email alerts (Surveys)"
-        description="Set up an alert to get an email on new responses.">
+        title={t("environments.settings.notifications.email_alerts_surveys")}
+        description={t(
+          "environments.settings.notifications.set_up_an_alert_to_get_an_email_on_new_responses"
+        )}>
         <EditAlerts
           memberships={memberships}
           user={user}
@@ -112,8 +180,8 @@ const Page = async ({ params, searchParams }) => {
       </SettingsCard>
       <IntegrationsTip environmentId={params.environmentId} />
       <SettingsCard
-        title="Weekly summary (Products)"
-        description="Stay up-to-date with a Weekly every Monday.">
+        title={t("environments.settings.notifications.weekly_summary_projects")}
+        description={t("environments.settings.notifications.stay_up_to_date_with_a_Weekly_every_Monday")}>
         <EditWeeklySummary memberships={memberships} user={user} environmentId={params.environmentId} />
       </SettingsCard>
     </PageContentWrapper>

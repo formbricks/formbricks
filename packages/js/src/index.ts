@@ -1,19 +1,20 @@
-import { type TFormbricksApp } from "@formbricks/js-core";
+import type Formbricks from "@formbricks/js-core";
 import { loadFormbricksToProxy } from "./lib/load-formbricks";
 
+type TFormbricks = typeof Formbricks;
 declare global {
   interface Window {
-    formbricks: TFormbricksApp | undefined;
+    formbricks: TFormbricks | undefined;
   }
 }
 
-const formbricksProxyHandler: ProxyHandler<TFormbricksApp> = {
+const formbricksProxyHandler: ProxyHandler<TFormbricks> = {
   get(_target, prop, _receiver) {
     return (...args: unknown[]) => loadFormbricksToProxy(prop as string, ...args);
   },
 };
 
-const formbricksApp: TFormbricksApp = new Proxy({} as TFormbricksApp, formbricksProxyHandler);
+const formbricks: TFormbricks = new Proxy({} as TFormbricks, formbricksProxyHandler);
 
 // eslint-disable-next-line import/no-default-export -- Required for UMD
-export default formbricksApp;
+export default formbricks;

@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- Required for logging */
 type LogLevel = "debug" | "error";
 
 interface LoggerConfig {
@@ -8,8 +9,6 @@ export class Logger {
   private static instance: Logger | undefined;
   private logLevel: LogLevel = "error";
 
-  private constructor() {}
-
   static getInstance(): Logger {
     if (!Logger.instance) {
       Logger.instance = new Logger();
@@ -18,7 +17,7 @@ export class Logger {
   }
 
   configure(config: LoggerConfig): void {
-    if (config && config.logLevel !== undefined) {
+    if (config.logLevel !== undefined) {
       this.logLevel = config.logLevel;
     }
   }

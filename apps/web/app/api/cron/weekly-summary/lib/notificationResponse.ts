@@ -12,7 +12,7 @@ import {
 
 export const getNotificationResponse = (
   environment: TWeeklySummaryEnvironmentData,
-  productName: string
+  projectName: string
 ): TWeeklySummaryNotificationResponse => {
   const insights = {
     totalCompletedResponses: 0,
@@ -25,11 +25,9 @@ export const getNotificationResponse = (
   const surveys: TWeeklySummaryNotificationDataSurvey[] = [];
   // iterate through the surveys and calculate the overall insights
   for (const survey of environment.surveys) {
-    const parsedSurvey = replaceHeadlineRecall(
-      survey as unknown as TSurvey,
-      "default",
-      environment.attributeClasses
-    ) as TSurvey & { responses: TWeeklyEmailResponseData[] };
+    const parsedSurvey = replaceHeadlineRecall(survey as unknown as TSurvey, "default") as TSurvey & {
+      responses: TWeeklyEmailResponseData[];
+    };
     const surveyData: TWeeklySummaryNotificationDataSurvey = {
       id: parsedSurvey.id,
       name: parsedSurvey.name,
@@ -73,7 +71,7 @@ export const getNotificationResponse = (
     environmentId: environment.id,
     currentDate: new Date(),
     lastWeekDate,
-    productName: productName,
+    projectName: projectName,
     surveys,
     insights,
   };

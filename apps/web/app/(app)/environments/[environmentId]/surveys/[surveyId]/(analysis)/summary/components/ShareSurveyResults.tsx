@@ -1,8 +1,12 @@
+"use client";
+
+import { Button } from "@/modules/ui/components/button";
+import { Modal } from "@/modules/ui/components/modal";
+import { useTranslate } from "@tolgee/react";
 import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react";
 import { Clipboard } from "lucide-react";
+import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { Button } from "@formbricks/ui/components/Button";
-import { Modal } from "@formbricks/ui/components/Modal";
 
 interface ShareEmbedSurveyProps {
   open: boolean;
@@ -20,6 +24,7 @@ export const ShareSurveyResults = ({
   showPublishModal,
   surveyUrl,
 }: ShareEmbedSurveyProps) => {
+  const { t } = useTranslate();
   return (
     <Modal open={open} setOpen={setOpen} size="lg">
       {showPublishModal && surveyUrl ? (
@@ -27,10 +32,11 @@ export const ShareSurveyResults = ({
           <div className="flex flex-col items-center gap-y-6 text-center">
             <CheckCircle2Icon className="h-20 w-20 text-slate-300" />
             <div>
-              <p className="text-lg font-medium text-slate-600">Your survey results are public!</p>
+              <p className="text-lg font-medium text-slate-600">
+                {t("environments.surveys.summary.survey_results_are_public")}
+              </p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results are shared with anyone who has the link. The results will not be indexed
-                by search engines.
+                {t("environments.surveys.summary.survey_results_are_shared_with_anyone_who_has_the_link")}
               </p>
             </div>
             <div className="flex gap-2">
@@ -45,7 +51,7 @@ export const ShareSurveyResults = ({
                 className="hover:cursor-pointer"
                 onClick={() => {
                   navigator.clipboard.writeText(surveyUrl);
-                  toast.success("Link copied to clipboard!");
+                  toast.success(t("common.link_copied"));
                 }}>
                 <Clipboard />
               </Button>
@@ -56,10 +62,12 @@ export const ShareSurveyResults = ({
                 variant="secondary"
                 className="text-center"
                 onClick={() => handleUnpublish()}>
-                Unpublish
+                {t("environments.surveys.summary.unpublish_from_web")}
               </Button>
-              <Button className="text-center" href={surveyUrl} target="_blank">
-                View site
+              <Button className="text-center" asChild>
+                <Link href={surveyUrl} target="_blank" rel="noopener noreferrer">
+                  {t("environments.surveys.summary.view_site")}
+                </Link>
               </Button>
             </div>
           </div>
@@ -70,15 +78,14 @@ export const ShareSurveyResults = ({
             <AlertCircleIcon className="h-20 w-20 text-slate-300" />
             <div>
               <p className="text-lg font-medium text-slate-600">
-                You are about to release these survey results to the public.
+                {t("environments.surveys.summary.publish_to_web_warning")}
               </p>
               <p className="text-balanced mt-2 text-sm text-slate-500">
-                Your survey results will be public. Anyone outside your organization can access them if they
-                have the link.
+                {t("environments.surveys.summary.publish_to_web_warning_description")}
               </p>
             </div>
             <Button type="submit" className="h-full text-center" onClick={() => handlePublish()}>
-              Publish to public web
+              {t("environments.surveys.summary.publish_to_web")}
             </Button>
           </div>
         </div>

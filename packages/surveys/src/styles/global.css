@@ -33,7 +33,7 @@
 /* this is for styling the HtmlBody component */
 .fb-htmlbody {
   @apply fb-block fb-text-sm fb-font-normal fb-leading-6;
-  /* need to use !important because in packages/ui/components/editor/stylesEditorFrontend.css the color is defined for some classes */
+  /* need to use !important because in packages/ui/components/editor/styles-editor-frontend.css the color is defined for some classes */
   color: var(--fb-subheading-color) !important;
 }
 
@@ -93,7 +93,7 @@ p.fb-editor-paragraph {
   --fb-rating-selected: black;
   --fb-close-btn-color: var(--slate-500);
   --fb-close-btn-color-hover: var(--slate-700);
-
+  --fb-calendar-tile-color: var(--slate-50);
   --fb-border-radius: 8px;
 }
 

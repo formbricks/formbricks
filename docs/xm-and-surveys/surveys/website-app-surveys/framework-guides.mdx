@@ -1,0 +1,381 @@
+---
+title: "Framework Guides"
+icon: "book"
+---
+
+Integrate the **Formbricks App Survey SDK** into your app using multiple options. Explore the available choices below. If you need something else, open a [**GitHub Discussion**](https://github.com/formbricks/formbricks/discussions), and we’ll be happy to help!
+
+<CardGroup cols={2}>
+  <Card title="HTML" icon="html5" color="orange" href="#html">
+    [All you need to do is add three lines of code to your HTML script, and that's it!](https://formbricks.com/docs/app-surveys/framework-guides#html)
+  </Card>
+
+<Card title="React.js" icon="react" color="lightblue" href="#reactjs">
+  [Load our JavaScript library with your environment ID, and you're ready to
+  go!](https://formbricks.com/docs/app-surveys/framework-guides#react-js)
+</Card>
+
+<Card title="Next.js" icon="react" href="#nextjs">
+  [Natively add us to your Next.js project, with support for both App and Pages
+  project
+  structure.](https://formbricks.com/docs/app-surveys/framework-guides#next-js)
+</Card>
+
+<Card title="Vue.js" icon="vuejs" href="#vue-js">
+  Learn how to use Formbricks' React Native SDK to integrate your surveys into
+  React Native applications.
+</Card>
+
+  <Card title="React Native" icon="react" color="lightblue" href="#react-native">
+    [Easily integrate our SDK with your React Native app for seamless survey support.](https://formbricks.com/docs/app-surveys/framework-guides#react-native)
+  </Card>
+</CardGroup>
+
+## Prerequisites
+
+Before getting started, make sure you have:
+
+- A running web application with user authentication in your chosen framework.
+
+- A Formbricks account with your **environment ID** and **API host**, available in the **Setup Checklist** under **Settings**.
+
+## HTML
+
+All you need to do is copy a `<script>` tag to your HTML head:
+
+```javascript
+<!-- START Formbricks Surveys -->
+<script type="text/javascript">
+!function(){
+    var apiHost = "https://app.formbricks.com";
+    var environmentId = "<your-environment-id>";
+    var userId = "<your-user-id>"; //optional
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+</script>
+<!-- END Formbricks Surveys -->
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| api-host       | string | URL of the hosted Formbricks instance. |
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## React.js
+
+Install the Formbricks SDK using one of the following package managers: `npm`, `pnpm`, or `yarn`. &#x20;
+Note that **`zod`** is required as a peer dependency and must also be installed in your project.
+
+```javascript npm
+npm install @formbricks/js zod
+```
+
+```bash pnpm
+pnpm add @formbricks/js zod
+```
+
+```bash yarn
+yarn add @formbricks/js zod
+```
+
+Update your `App.js/ts` file to initialize Formbricks.
+
+```javascript src/App.js
+// other imports
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+    userId: "<user-id>", //optional
+  });
+}
+
+function App() {
+  // your own app
+}
+
+export default App;
+```
+
+## Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| api-host       | string | URL of the hosted Formbricks instance. |
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## Next.js
+
+Next.js projects use either the **App Directory** or the **Pages Directory**. Since the Formbricks SDK runs on the client side, follow these steps based on your setup:
+
+- **App Directory**: Create a new component in `app/formbricks.tsx` and call it in `app/layout.tsx`.
+
+- **Pages Directory**: Initialize Formbricks directly in `_app.tsx`.
+
+Code snippets for the integration for both conventions are provided to further assist you.
+
+```bash npm
+npm install @formbricks/js zod
+```
+
+```bash pnpm
+pnpm add @formbricks/js zod
+```
+
+```bash yarn
+yarn add @formbricks/js zod
+```
+
+### App directory
+
+```typescript app/formbricks.tsx
+"use client";
+
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import formbricks from "@formbricks/js";
+
+export default function FormbricksProvider() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    formbricks.init({
+      environmentId: "<environment-id>",
+      apiHost: "<api-host>",
+      userId: "<user-id>", //optional
+    });
+  }, []);
+
+  useEffect(() => {
+    formbricks?.registerRouteChange();
+  }, [pathname, searchParams]);
+
+  return null;
+}
+```
+
+```typescript app/layout.tsx
+// other imports
+import FormbricksProvider from "./formbricks";
+import { Suspense } from "react";
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <Suspense>
+        <FormbricksProvider />
+      </Suspense>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+### Pages directory
+
+```javascript src/pages/_app.tsx
+// other import
+import { useRouter } from "next/router";
+import { useEffect } from "react";
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+    userId: "<user-id>", //optional
+  });
+}
+
+export default function App({ Component, pageProps }: AppProps) {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Connect next.js router to Formbricks
+    const handleRouteChange = formbricks?.registerRouteChange;
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, []);
+  return <Component {...pageProps} />;
+}
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| api-host       | string | URL of the hosted Formbricks instance. |
+
+First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
+
+Next, go to the [**Validate Your Setup**](#validate-your-setup) section to verify your setup!
+
+## Vue.js
+
+Integrating the Formbricks SDK with Vue.js is easy. We’ll ensure the SDK is only loaded and used on the client side, as it’s not meant for server-side use.
+
+```bash npm
+npm install @formbricks/js
+```
+
+```bash pnpm
+pnpm add @formbricks/js
+```
+
+```bash yarn
+yarn add @formbricks/js
+```
+
+```javascript src/formbricks.js
+import formbricks from "@formbricks/js";
+
+if (typeof window !== "undefined") {
+  formbricks.init({
+    environmentId: "<environment-id>",
+    apiHost: "<api-host>",
+    userId: "<user-id>", //optional
+  });
+}
+
+export default formbricks;
+```
+
+```javascript src/main.js
+// other imports
+import formbricks from "@/formbricks";
+
+const app = createApp(App);
+
+app.use(router);
+
+app.mount("#app");
+
+router.afterEach((to, from) => {
+  if (typeof formbricks !== "undefined") {
+    formbricks.registerRouteChange();
+  }
+});
+```
+
+### Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| api-host       | string | URL of the hosted Formbricks instance. |
+
+Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
+
+## React Native
+
+Install the Formbricks React Native SDK using one of the package managers, i.e., npm, pnpm, or yarn.
+
+```bash npm
+npm install @formbricks/react-native
+```
+
+```bash pnpm
+pnpm add @formbricks/react-native
+```
+
+```bash yarn
+yarn add @formbricks/react-native
+```
+
+Now, update your `App.js/App.tsx` file to initialize Formbricks:
+
+```javascript src/App.js
+// other imports
+import Formbricks from "@formbricks/react-native";
+
+const config = {
+  environmentId: "<environment-id>",
+  apiHost: "<api-host>",
+  userId: "<user-id>", // optional
+};
+
+export default function App() {
+  return (
+    <>
+      {/* Your app content */}
+      <Formbricks initConfig={config} />
+    </>
+  );
+}
+```
+
+## Required Customizations
+
+| Name           | Type   | Description                            |
+| -------------- | ------ | -------------------------------------- |
+| environment-id | string | Formbricks Environment ID.             |
+| api-host       | string | URL of the hosted Formbricks instance. |
+
+## Validate your setup
+
+Once you’ve completed the steps above, validate your setup by checking the Setup Checklist in the Settings. The widget status indicator should change from this:
+
+![first validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122589/image_ecaovs.jpg)
+To this:
+
+![second validate](https://res.cloudinary.com/dwdb9tvii/image/upload/v1738122750/image_ymaenn.jpg)
+
+## Debugging Formbricks Integration
+
+Enabling debug mode in your browser can help troubleshoot issues with Formbricks. Here’s how to activate it and what to look for in the logs.
+
+### Activate Debug Mode
+
+To enable debug mode, add `?formbricksDebug=true` to your app’s URL (e.g., [`https://example.com?formbricksDebug=true)`](<https://example.com?formbricksDebug=true)>).&#x20;
+
+#### View Debug Logs
+
+1. Open your browser’s developer tools:
+
+- **Google Chrome/Edge**: Press `F12` or right-click and select "**Inspect" > "Console**".
+
+- **Firefox**: Press `F12` or right-click and select "**Inspect Element" > "Console**".
+
+- **Safari**: Press `Option + Command + C` to open developer tools and go to the "**Console**" tab.
+
+#### Common Use Cases
+
+Debug mode is helpful for:
+
+- Verifying Formbricks initialization.
+
+- Identifying issues with survey triggers.
+
+- Troubleshooting unexpected behavior.
+
+#### Debug Log Messages
+
+Logs provide insights into:
+
+- API calls and responses.
+
+- Survey triggers and form interactions.
+
+- Initialization errors.
+
+If you're stuck, visit [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions) for assistance.
+
+```
+
+```

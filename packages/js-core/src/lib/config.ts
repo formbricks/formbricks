@@ -1,6 +1,6 @@
-import { TJsConfig, TJsConfigUpdateInput } from "@formbricks/types/js";
+import { type TJsConfig, type TJsConfigUpdateInput } from "@formbricks/types/js";
 import { JS_LOCAL_STORAGE_KEY } from "./constants";
-import { Result, err, ok, wrapThrows } from "./errors";
+import { type Result, err, ok, wrapThrows } from "./errors";
 
 export class Config {
   private static instance: Config | undefined;
@@ -22,18 +22,16 @@ export class Config {
   }
 
   public update(newConfig: TJsConfigUpdateInput): void {
-    if (newConfig) {
-      this.config = {
-        ...this.config,
-        ...newConfig,
-        status: {
-          value: newConfig.status?.value || "success",
-          expiresAt: newConfig.status?.expiresAt || null,
-        },
-      };
+    this.config = {
+      ...this.config,
+      ...newConfig,
+      status: {
+        value: newConfig.status?.value ?? "success",
+        expiresAt: newConfig.status?.expiresAt ?? null,
+      },
+    };
 
-      this.saveToStorage();
-    }
+    void this.saveToStorage();
   }
 
   public get(): TJsConfig {
@@ -43,7 +41,7 @@ export class Config {
     return this.config;
   }
 
-  public loadFromLocalStorage(): Result<TJsConfig, Error> {
+  public loadFromLocalStorage(): Result<TJsConfig> {
     if (typeof window !== "undefined") {
       const savedConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
       if (savedConfig) {
@@ -54,8 +52,8 @@ export class Config {
 
         // check if the config has expired
         if (
-          parsedConfig.environmentState?.expiresAt &&
-          new Date(parsedConfig.environmentState.expiresAt) <= new Date()
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environmentState
+          new Date(parsedConfig.environmentState?.expiresAt) <= new Date()
         ) {
           return err(new Error("Config in local storage has expired"));
         }
@@ -67,18 +65,18 @@ export class Config {
     return err(new Error("No or invalid config in local storage"));
   }
 
-  private async saveToStorage(): Promise<Result<Promise<void>, Error>> {
-    return wrapThrows(async () => {
-      await localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(this.config));
+  private saveToStorage(): Result<void> {
+    return wrapThrows(() => {
+      localStorage.setItem(JS_LOCAL_STORAGE_KEY, JSON.stringify(this.config));
     })();
   }
 
   // reset the config
 
-  public async resetConfig(): Promise<Result<Promise<void>, Error>> {
+  public resetConfig(): Result<void> {
     this.config = null;
 
-    return wrapThrows(async () => {
+    return wrapThrows(() => {
       localStorage.removeItem(JS_LOCAL_STORAGE_KEY);
     })();
   }

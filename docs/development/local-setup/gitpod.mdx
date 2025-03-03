@@ -1,0 +1,55 @@
+---
+title: Gitpod
+description: How to set up Formbricks in a Gitpod workspace
+icon: "code"
+---
+
+### Gitpod Setup
+
+<Info>
+  This guide explains how to set up Formbricks in a **Gitpod** workspace.
+</Info>
+
+**Requirements:**
+
+- A Gitpod workspace with Node.JS, pnpm, and Docker support.
+
+**Steps:**
+
+1. **Open the repository in Gitpod. The workspace typically clones the repo automatically. If not:**
+    ```bash
+    git clone https://github.com/formbricks/formbricks && cd formbricks
+    ```
+
+2. **Setup NodeJS with nvm:**
+    ```bash
+    nvm install && nvm use
+    ```
+
+3. **Install dependencies:**
+    ```bash
+    pnpm install
+    ```
+
+4. **Create a `.env` file:**
+    ```bash
+    cp .env.example .env
+    ```
+
+5. **Generate & set secret values:**
+    ```bash
+    sed -i '/^ENCRYPTION_KEY=/c\ENCRYPTION_KEY='$(openssl rand -hex 32) .env
+    sed -i '/^NEXTAUTH_SECRET=/c\NEXTAUTH_SECRET='$(openssl rand -hex 32) .env
+    sed -i '/^CRON_SECRET=/c\CRON_SECRET='$(openssl rand -hex 32) .env
+    ```
+
+6. **Run the development setup:**
+    ```bash
+    pnpm go
+    ```
+
+Access the running app via the forwarded port (typically [http://localhost:3000](http://localhost:3000) inside Gitpod).
+
+<Tip>
+  Check your Gitpod settings to ensure Docker is enabled if required.
+</Tip> 

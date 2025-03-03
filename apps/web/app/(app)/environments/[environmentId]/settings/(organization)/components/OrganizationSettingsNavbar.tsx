@@ -1,10 +1,18 @@
 "use client";
 
-import { BoltIcon, CreditCardIcon, UsersIcon } from "lucide-react";
+import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
+import { useTranslate } from "@tolgee/react";
 import { usePathname } from "next/navigation";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { TMembershipRole } from "@formbricks/types/memberships";
-import { SecondaryNavigation } from "@formbricks/ui/components/SecondaryNavigation";
+import { TOrganizationRole } from "@formbricks/types/memberships";
+
+interface OrganizationSettingsNavbarProps {
+  environmentId?: string;
+  isFormbricksCloud: boolean;
+  membershipRole?: TOrganizationRole;
+  activeId: string;
+  loading?: boolean;
+}
 
 export const OrganizationSettingsNavbar = ({
   environmentId,
@@ -12,39 +20,37 @@ export const OrganizationSettingsNavbar = ({
   membershipRole,
   activeId,
   loading,
-}: {
-  environmentId?: string;
-  isFormbricksCloud: boolean;
-  membershipRole?: TMembershipRole;
-  activeId: string;
-  loading?: boolean;
-}) => {
+}: OrganizationSettingsNavbarProps) => {
   const pathname = usePathname();
-  const { isAdmin, isOwner } = getAccessFlags(membershipRole);
-  const isPricingDisabled = !isOwner && !isAdmin;
+  const { isMember } = getAccessFlags(membershipRole);
+  const isPricingDisabled = isMember;
+  const { t } = useTranslate();
 
   const navigation = [
     {
-      id: "members",
-      label: "Members",
-      href: `/environments/${environmentId}/settings/members`,
-      icon: <UsersIcon className="h-5 w-5" />,
-      current: pathname?.includes("/members"),
+      id: "general",
+      label: t("common.general"),
+      href: `/environments/${environmentId}/settings/general`,
+      current: pathname?.includes("/general"),
       hidden: false,
     },
     {
       id: "billing",
-      label: "Billing & Plan",
+      label: t("common.billing"),
       href: `/environments/${environmentId}/settings/billing`,
-      icon: <CreditCardIcon className="h-5 w-5" />,
-      hidden: !isFormbricksCloud || isPricingDisabled,
+      hidden: !isFormbricksCloud || loading,
       current: pathname?.includes("/billing"),
     },
     {
+      id: "teams",
+      label: t("common.teams"),
+      href: `/environments/${environmentId}/settings/teams`,
+      current: pathname?.includes("/teams"),
+    },
+    {
       id: "enterprise",
-      label: "Enterprise License",
+      label: t("common.enterprise_license"),
       href: `/environments/${environmentId}/settings/enterprise`,
-      icon: <BoltIcon className="h-5 w-5" />,
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),
     },
