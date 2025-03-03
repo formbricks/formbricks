@@ -6,19 +6,11 @@ import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getPrefillValue } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Project, Response } from "@prisma/client";
-import { useTranslate } from "@tolgee/react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { FormbricksAPI } from "@formbricks/api";
-import { ResponseQueue } from "@formbricks/lib/responseQueue";
-import { SurveyState } from "@formbricks/lib/surveyState";
-import { TJsFileUploadParams } from "@formbricks/types/js";
-import { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "@formbricks/types/responses";
-import { TUploadFileConfig } from "@formbricks/types/storage";
+import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
-let setIsError = (_: boolean) => {};
-let setIsResponseSendingFinished = (_: boolean) => {};
 let setQuestionId = (_: string) => {};
 let setResponseData = (_: TResponseData) => {};
 
@@ -57,15 +49,10 @@ export const LinkSurvey = ({
   locale,
   isPreview,
 }: LinkSurveyProps) => {
-  const { t } = useTranslate();
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
-  const sourceParam = searchParams.get("source");
   const suId = searchParams.get("suId");
-  const defaultLanguageCode = survey.languages.find((surveyLanguage) => {
-    return surveyLanguage.default;
-  })?.language.code;
 
   const startAt = searchParams.get("startAt");
   const isStartAtValid = useMemo(() => {
@@ -84,32 +71,8 @@ export const LinkSurvey = ({
     return isValid;
   }, [survey, startAt]);
 
-  // pass in the responseId if the survey is a single use survey, ensures survey state is updated with the responseId
-  let surveyState = useMemo(() => {
-    return new SurveyState(survey.id, singleUseId, responseId);
-  }, [survey.id, singleUseId, responseId]);
-
   const prefillValue = getPrefillValue(survey, searchParams, languageCode);
 
-  const responseQueue = useMemo(
-    () =>
-      new ResponseQueue(
-        {
-          apiHost: webAppUrl,
-          environmentId: survey.environmentId,
-          retryAttempts: 2,
-          onResponseSendingFailed: () => {
-            setIsError(true);
-          },
-          onResponseSendingFinished: () => {
-            // when response of current question is processed successfully
-            setIsResponseSendingFinished(true);
-          },
-        },
-        surveyState
-      ),
-    [webAppUrl, survey.environmentId, surveyState]
-  );
   const [autoFocus, setAutofocus] = useState(false);
   const hasFinishedSingleUseResponse = useMemo(() => {
     if (singleUseResponse?.finished) {
@@ -148,11 +111,7 @@ export const LinkSurvey = ({
     }
   }, [survey.isVerifyEmailEnabled, verifiedEmail]);
 
-  useEffect(() => {
-    responseQueue.updateSurveyState(surveyState);
-  }, [responseQueue, surveyState]);
-
-  if (!surveyState.isResponseFinished() && hasFinishedSingleUseResponse) {
+  if (hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
@@ -211,81 +170,14 @@ export const LinkSurvey = ({
       PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
+        apiHost={!isPreview ? webAppUrl : undefined}
+        environmentId={!isPreview ? survey.environmentId : undefined}
         survey={survey}
         styling={determineStyling()}
         languageCode={languageCode}
         isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
-        getSetIsError={(f: (value: boolean) => void) => {
-          setIsError = f;
-        }}
-        getSetIsResponseSendingFinished={
-          !isPreview
-            ? (f: (value: boolean) => void) => {
-                setIsResponseSendingFinished = f;
-              }
-            : undefined
-        }
-        onRetry={() => {
-          setIsError(false);
-          void responseQueue.processQueue();
-        }}
-        onDisplay={() => {
-          if (!isPreview) {
-            void (async () => {
-              const api = new FormbricksAPI({
-                apiHost: webAppUrl,
-                environmentId: survey.environmentId,
-              });
-
-              const res = await api.client.display.create({
-                surveyId: survey.id,
-              });
-
-              if (!res.ok) {
-                throw new Error(t("s.could_not_create_display"));
-              }
-
-              const { id } = res.data;
-
-              surveyState.updateDisplayId(id);
-              responseQueue.updateSurveyState(surveyState);
-            })();
-          }
-        }}
-        onResponse={(responseUpdate: TResponseUpdate) => {
-          !isPreview &&
-            responseQueue.add({
-              data: {
-                ...responseUpdate.data,
-                ...hiddenFieldsRecord,
-                ...getVerifiedEmail,
-              },
-              ttc: responseUpdate.ttc,
-              finished: responseUpdate.finished,
-              endingId: responseUpdate.endingId,
-              language:
-                responseUpdate.language === "default" && defaultLanguageCode
-                  ? defaultLanguageCode
-                  : responseUpdate.language,
-              meta: {
-                url: window.location.href,
-                source: typeof sourceParam === "string" ? sourceParam : "",
-              },
-              variables: responseUpdate.variables,
-              displayId: surveyState.displayId,
-              ...(Object.keys(hiddenFieldsRecord).length > 0 && { hiddenFields: hiddenFieldsRecord }),
-            });
-        }}
-        onFileUpload={async (file: TJsFileUploadParams["file"], params: TUploadFileConfig) => {
-          const api = new FormbricksAPI({
-            apiHost: webAppUrl,
-            environmentId: survey.environmentId,
-          });
-
-          const uploadedUrl = await api.client.storage.uploadFile(file, params);
-          return uploadedUrl;
-        }}
+        onFileUpload={isPreview ? async (file) => `https://formbricks.com/${file.name}` : undefined}
         // eslint-disable-next-line jsx-a11y/no-autofocus -- need it as focus behaviour is different in normal surveys and survey preview
         autoFocus={autoFocus}
         prefillResponseData={prefillValue}
@@ -299,7 +191,13 @@ export const LinkSurvey = ({
         }}
         startAtQuestionId={startAt && isStartAtValid ? startAt : undefined}
         fullSizeCards={isEmbed}
-        hiddenFieldsRecord={hiddenFieldsRecord}
+        hiddenFieldsRecord={{
+          ...hiddenFieldsRecord,
+          ...getVerifiedEmail,
+        }}
+        singleUseId={singleUseId}
+        singleUseResponseId={responseId}
+        getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
       />
     </LinkSurveyWrapper>
   );

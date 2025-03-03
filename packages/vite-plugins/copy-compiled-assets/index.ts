@@ -6,6 +6,7 @@ import { type Plugin, type ResolvedConfig } from "vite";
 interface CopyCompiledAssetsPluginOptions {
   filename: string;
   distDir: string;
+  skipDirectoryCheck?: boolean; // New option to skip checking non-existent directories
 }
 
 const ensureDirectoryExists = async (dirPath: string): Promise<void> => {
@@ -32,30 +33,67 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
     },
 
     async writeBundle() {
-      const outputDir = path.resolve(config.root, "../../apps/web/public/js");
-      const distDir = path.resolve(config.root, options.distDir);
+      try {
+        const outputDir = path.resolve(config.root, "../../apps/web/public/js");
+        const distDir = path.resolve(config.root, options.distDir);
 
-      // Create the output directory if it doesn't exist
-      // fs.ensureDirSync(outputDir);
-      await ensureDirectoryExists(outputDir);
-      console.log(`Ensured directory exists: ${outputDir}`);
+        // Create the output directory if it doesn't exist
+        await ensureDirectoryExists(outputDir);
+        console.log(`Ensured directory exists: ${outputDir}`);
 
-      // Copy files from distDir to outputDir
-      const filesToCopy = await readdir(distDir);
-
-      for (const file of filesToCopy) {
-        const srcFile = path.resolve(distDir, file);
-        const destFile = path.resolve(outputDir, file.replace("index", options.filename));
-        // Check if the srcFile is a regular file before copying
-        const fileStat = await stat(srcFile);
-        if (!fileStat.isFile()) {
-          continue; // Skip directories, or other non-regular files
+        // Check if the dist directory exists
+        try {
+          await access(distDir);
+        } catch (error) {
+          if ((error as { code: string }).code === "ENOENT") {
+            console.error(`Error: Distribution directory ${distDir} does not exist`);
+            if (!options.skipDirectoryCheck) {
+              throw error;
+            } else {
+              console.log(`Skipping directory check as skipDirectoryCheck is enabled`);
+              return; // Skip further processing
+            }
+          } else {
+            throw error;
+          }
         }
 
-        await copyFile(srcFile, destFile);
-      }
+        // Copy files from distDir to outputDir
+        const filesToCopy = await readdir(distDir);
+        let copiedFiles = 0;
 
-      console.log(`Copied ${filesToCopy.length.toString()} files to ${outputDir} (${options.filename})`);
+        for (const file of filesToCopy) {
+          const srcFile = path.resolve(distDir, file);
+          const destFile = path.resolve(outputDir, file.replace("index", options.filename));
+
+          try {
+            // Check if the srcFile is a regular file before copying
+            const fileStat = await stat(srcFile);
+            if (!fileStat.isFile()) {
+              continue; // Skip directories, or other non-regular files
+            }
+
+            await copyFile(srcFile, destFile);
+            copiedFiles++;
+          } catch (error) {
+            if ((error as { code: string }).code === "ENOENT" && options.skipDirectoryCheck) {
+              console.log(`Skipping non-existent file: ${srcFile}`);
+              continue;
+            }
+            throw error;
+          }
+        }
+
+        console.log(`Copied ${String(copiedFiles)} files to ${outputDir} (${options.filename})`);
+      } catch (error) {
+        if (options.skipDirectoryCheck) {
+          console.error(
+            `Warning: Error during copy operation, but continuing due to skipDirectoryCheck: ${String(error)}`
+          );
+        } else {
+          throw error;
+        }
+      }
     },
   };
 }

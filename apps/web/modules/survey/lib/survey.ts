@@ -41,6 +41,7 @@ export const selectSurvey = {
   pin: true,
   resultShareKey: true,
   showLanguageSwitch: true,
+  isBackButtonHidden: true,
   languages: {
     select: {
       default: true,
