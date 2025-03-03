@@ -1,21 +1,9 @@
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 // Helper function to get the month name
-export const getMonthName = (monthIndex: number) => {
-  return monthNames[monthIndex];
+export const getMonthName = (monthIndex: number, locale: string = "en-US") => {
+  if (monthIndex < 0 || monthIndex > 11) {
+    throw new Error("Month index must be between 0 and 11");
+  }
+  return new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(2000, monthIndex, 1));
 };
 
 // Helper function to format the date with an ordinal suffix
@@ -42,22 +30,19 @@ export const isValidDateString = (value: string) => {
   }
 
   const date = new Date(value);
-  return date;
+  return !isNaN(date.getTime());
 };
 
-export const formatDateWithOrdinal = (date: Date): string => {
-  const getOrdinalSuffix = (day: number) => {
-    const suffixes = ["th", "st", "nd", "rd"];
-    const relevantDigits = day < 30 ? day % 20 : day % 30;
-    return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
-  };
+const getOrdinalSuffix = (day: number): string => {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const relevantDigits = day < 30 ? day % 20 : day % 30;
+  return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
+};
 
-  const dayOfWeekNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-  const dayOfWeek = dayOfWeekNames[date.getDay()];
+export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): string => {
+  const dayOfWeek = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
   const day = date.getDate();
-  const monthIndex = date.getMonth();
+  const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
   const year = date.getFullYear();
-
-  return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
+  return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
