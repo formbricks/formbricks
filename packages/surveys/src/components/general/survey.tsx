@@ -166,9 +166,7 @@ export function Survey({
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
-  const currentQuestion = useMemo(() => {
-    return localSurvey.questions.find((q) => q.id === questionId);
-  }, [questionId, localSurvey.questions]);
+  const currentQuestion = localSurvey.questions[currentQuestionIndex];
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
