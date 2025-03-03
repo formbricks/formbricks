@@ -6,6 +6,7 @@
     "continue_with_google": "Login mit Google",
     "continue_with_oidc": "Weiter mit {oidcDisplayName}",
     "continue_with_openid": "Login mit OpenID",
+    "continue_with_saml": "Login mit SAML SSO",
     "forgot-password": {
       "back_to_login": "Zurück zum Login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Neu bei Formbricks?",
       "use_a_backup_code": "Einen Backup-Code verwenden"
     },
+    "saml_connection_error": "Etwas ist schiefgelaufen. Bitte überprüfe die App-Konsole für weitere Details.",
     "signup": {
       "captcha_failed": "reCAPTCHA fehlgeschlagen",
       "have_an_account": "Hast Du ein Konto?",
@@ -1855,10 +1857,6 @@
       "smileys_description": "Verwende visuelle Indikatoren, um Feedback an allen Kundenkontaktpunkten zu erfassen."
     }
   },
-  "health": {
-    "degraded": "Es scheint ein Problem zu geben :(",
-    "healthy": "Alle Systeme laufen und sind betriebsbereit"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Wenden Sie sich an den Eigentümer Ihrer Organisation, um Zugriff auf Projekte zu erhalten. Oder erstellen Sie eine eigene Organisation, um loszulegen.",
@@ -1898,7 +1896,6 @@
   "s": {
     "check_inbox_or_spam": "Bitte überprüfe auch deinen Spam-Ordner, falls Du die E-Mail nicht in deinem Posteingang siehst.",
     "completed": "Diese kostenlose und quelloffene Umfrage wurde geschlossen.",
-    "could_not_create_display": "Konnte Anzeige nicht erstellen",
     "create_your_own": "Erstelle deine eigene",
     "enter_pin": "Diese Umfrage ist geschützt. Gib unten die PIN ein",
     "just_curious": "Einfach neugierig?",
