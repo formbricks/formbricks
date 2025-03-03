@@ -17,6 +17,7 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
+import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -25,7 +26,14 @@ const Page = async (props) => {
   const t = await getTranslate();
   const [session, surveys, slackIntegration, environment] = await Promise.all([
     getServerSession(authOptions),
-    getSurveys(params.environmentId),
+    getSurveys(params.environmentId, undefined, undefined, {
+      status: [
+        ZSurveyStatus.Enum.draft,
+        ZSurveyStatus.Enum.scheduled,
+        ZSurveyStatus.Enum.inProgress,
+        ZSurveyStatus.Enum.paused,
+      ],
+    }),
     getIntegrationByType(params.environmentId, "slack"),
     getEnvironment(params.environmentId),
   ]);

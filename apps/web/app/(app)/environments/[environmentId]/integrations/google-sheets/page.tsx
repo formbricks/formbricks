@@ -22,6 +22,7 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -29,7 +30,14 @@ const Page = async (props) => {
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),
-    getSurveys(params.environmentId),
+    getSurveys(params.environmentId, undefined, undefined, {
+      status: [
+        ZSurveyStatus.Enum.draft,
+        ZSurveyStatus.Enum.scheduled,
+        ZSurveyStatus.Enum.inProgress,
+        ZSurveyStatus.Enum.paused,
+      ],
+    }),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
   ]);
