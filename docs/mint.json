@@ -289,7 +289,7 @@
     },
     {
       "group": "API Documentation",
-      "pages": ["api-reference/introduction", "api-reference/rest-api"]
+      "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
     }
   ],
   "redirects": [
