@@ -1,0 +1,106 @@
+{{- if and (.Values.karpenter) (.Values.karpenter.enabled) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-karpenter-crds
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: public.ecr.aws/karpenter
+      targetRevision: {{ .Values.karpenter.chartVersion }}
+      chart: karpenter-crd
+      helm:
+        releaseName: karpenter-crds
+        ignoreMissingValueFiles: true
+        values: |
+          {{- if .Values.karpenter.enableCrdWebhookConfig }}
+          webhook:
+            enabled: true
+            serviceNamespace: {{ .Values.karpenter.namespace }}
+          {{- end }}
+  destination:
+    namespace: '{{ .Values.karpenter.namespace }}'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+      - ServerSideApply=true  # Big CRDs.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-karpenter
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: '{{ .Values.addons_repo_url }}'
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      ref: values
+    - repoURL: public.ecr.aws/karpenter
+      targetRevision: {{ .Values.karpenter.chartVersion }}
+      chart: karpenter
+      helm:
+        skipCrds: true
+        releaseName: karpenter
+        ignoreMissingValueFiles: true
+        valueFiles:
+          - $values/{{ .Values.addons_repo_basepath }}addons/karpenter/values.yaml
+          - $values/{{ .Values.addons_repo_basepath }}addons/karpenter/values-{{ .Values.karpenter.chartVersion }}.yaml
+        values: |
+          settings:
+            clusterName: {{ .Values.karpenter.clusterName }}
+            clusterEndpoint: {{ .Values.karpenter.clusterEndpoint }}
+            interruptionQueue: {{ .Values.karpenter.interruptionQueue }}
+          serviceAccount:
+            name: karpenter
+            annotations:
+              eks.amazonaws.com/role-arn: {{ .Values.karpenter.iamRoleArn }}
+          {{- if and (.Values.karpenter.values) (not (empty .Values.karpenter.values)) }}
+            {{- toYaml .Values.karpenter.values | nindent 10 }}
+          {{- end }}
+{{/*    - repoURL: '{{ .Values.addons_repo_url }}'*/}}
+{{/*      targetRevision: '{{ .Values.addons_repo_revision }}'*/}}
+{{/*      path: bootstrap/addons/karpenter*/}}
+{{/*      helm:*/}}
+{{/*        releaseName: karpenter-resources*/}}
+{{/*        ignoreMissingValueFiles: true*/}}
+{{/*        values: |*/}}
+{{/*          clusterName: {{ .Values.karpenter.clusterName }}*/}}
+{{/*          nodeIamRoleName: {{ .Values.karpenter.nodeIamRoleName }}*/}}
+{{/*          truemarkNodeClassDefaults:*/}}
+{{/*            {{- toYaml .Values.karpenter.truemarkNodeClassDefaults | nindent 12 }}*/}}
+{{/*          truemarkNodePoolDefaults:*/}}
+{{/*            {{- toYaml .Values.karpenter.truemarkNodePoolDefaults | nindent 12 }}*/}}
+  destination:
+    namespace: '{{ .Values.karpenter.namespace }}'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+---
+{{- end }}

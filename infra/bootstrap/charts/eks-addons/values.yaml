@@ -1,0 +1,135 @@
+argocdNamespace: argocd
+argocdProject: default
+clusterName: in-cluster
+addons_repo_url: https://github.com/d3vb0ox/formbricks
+addons_repo_revision: main
+addons_repo_basepath: infra/bootstrap
+
+# Cert Manager
+certManager:
+  enabled: false
+  name: cert-manager
+  createNamespace: true
+  chartVersion: v1.14.3
+  iamRoleArn: ""
+  serviceAccount:
+    create: true
+    name: cert-manager
+  namespace: cert-manager
+  values: {}
+
+# AWS Load Balancer Controller
+loadBalancerController:
+  enabled: false
+  name: aws-load-balancer-controller
+  createNamespace: true
+  chartVersion: 1.10.0
+  iamRoleArn: ""
+  serviceAccount:
+    create: true
+    name: aws-load-balancer-controller-sa
+  namespace: kube-system
+  values: {}
+
+# Karpenter
+karpenter:
+  enabled: false
+  name: karpenter
+  createNamespace: true
+  chartVersion: 1.0.7
+  iamRoleArn: ""
+  serviceAccount:
+    create: true
+    name: karpenter
+  namespace: karpenter
+  enableCrdWebhookConfig: false
+  values: {}
+
+# External DNS
+externalDNS:
+  enabled: false
+  name: external-dns
+  createNamespace: true
+  chartVersion: 1.15.0
+  iamRoleArn: ""
+  serviceAccount:
+    create: true
+    name: external-dns
+  namespace: external-dns
+  values: {}
+
+# External Secrets
+externalSecrets:
+  enabled: false
+  name: external-secrets
+  createNamespace: true
+  chartVersion: 0.7.0
+  iamRoleArn: ""
+  serviceAccount:
+    create: true
+    name: external-secrets
+  namespace: external-secrets
+  values: {}
+
+# ISTIO
+istio:
+  chartVersion: 1.23.3
+  createNamespace: true
+  enabled: true
+  base:
+    enabled: true
+    name: istio-base
+    serviceAccount:
+      create: true
+    namespace: istio-system
+    values: {}
+  istiod:
+    enabled: true
+    name: istio-discovery
+    serviceAccount:
+      create: true
+    namespace: istio-system
+    values: {}
+  ingress_enabled: true
+  proxyProtocolSelectorLabel: ingress-external
+  ingress:
+    external:
+      enabled: true
+      name: istio-ingress-external
+      serviceAccount:
+        create: true
+      namespace: istio-ingress
+      serviceType: LoadBalancer
+      loadBalancerScheme: internet-facing
+      certificateArns: ""
+      prefixLists: ""
+      loadBalancerSouraceRanges: ""
+    internal:
+      enabled: true
+      name: istio-ingress-internal
+      serviceAccount:
+          create: true
+      namespace: istio-ingress
+      serviceType: LoadBalancer
+      loadBalancerScheme: internal
+      certificateArns: ""
+      prefixLists: ""
+      loadBalancerSouraceRanges: ""
+
+velero:
+  enabled: true
+  chartVersion: 8.0.0
+  namespace: velero
+  values: {}
+
+keda:
+  enabled: true
+  chartVersion: 2.16.0
+  namespace: keda
+  values : {}
+
+awsCsiEbsResources:
+  enabled: false
+  values: {
+    csidriver: ebs.csi.aws.com
+  }
