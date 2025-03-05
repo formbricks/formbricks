@@ -1,0 +1,64 @@
+{{- if and (.Values.loadBalancerController) (.Values.loadBalancerController.enabled) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-aws-load-balancer-controller
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: https://aws.github.io/eks-charts
+      targetRevision: {{ .Values.loadBalancerController.chartVersion | default "1.10.0" }}
+      chart: aws-load-balancer-controller
+      helm:
+        releaseName: aws-load-balancer-controller
+        ignoreMissingValueFiles: true
+        values: |
+          vpcId: '{{ .Values.loadBalancerController.vpcId }}'
+          clusterName: {{ .Values.loadBalancerController.clusterName }}
+          serviceAccount:
+            name: {{ .Values.loadBalancerController.serviceAccount.name | default "aws-load-balancer-controller-sa" }}
+            annotations:
+              eks.amazonaws.com/role-arn: {{ .Values.loadBalancerController.iamRoleArn | default "" }}
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                preference:
+                  matchExpressions:
+                  - key: CriticalAddonsOnly
+                    operator: In
+                    values:
+                    - "true"
+              - weight: 2
+                preference:
+                  matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: In
+                    values:
+                    - "system"
+                    - "truemark-system"
+          tolerations:
+            - key: "CriticalAddonsOnly"
+              operator: "Exists"
+              effect: "NoSchedule"
+  destination:
+    namespace: '{{ .Values.loadBalancerController.namespace }}'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=false"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+      - ServerSideApply=true  # Big CRDs.
+{{- end }}

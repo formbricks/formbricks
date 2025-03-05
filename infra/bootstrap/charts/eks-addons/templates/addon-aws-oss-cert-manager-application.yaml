@@ -1,0 +1,147 @@
+{{- if and (.Values.certManager) (.Values.certManager.enabled) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-cert-manager
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: '{{ .Values.addons_repo_url }}'
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      ref: values
+    - repoURL: https://charts.jetstack.io
+      targetRevision: {{ .Values.certManager.chartVersion }}
+      chart: cert-manager
+      helm:
+        releaseName: cert-manager
+        ignoreMissingValueFiles: true
+        valueFiles:
+          - $values/{{ .Values.addons_repo_basepath }}addons/cert-manager/values.yaml
+          - $values/{{ .Values.addons_repo_basepath }}addons/cert-manager/values-{{ .Values.certManager.chartVersion }}.yaml
+        valuesObject:
+          {{- if semverCompare "<1.15.0" .Values.certManager.chartVersion }}
+          installCRDs: true
+          {{- else if semverCompare ">=1.15.0" .Values.certManager.chartVersion }}
+          crds:
+            enabled: true
+            keep: true
+          {{- end }}
+          serviceAccount:
+            name: cert-manager
+            annotations:
+              eks.amazonaws.com/role-arn: {{ .Values.certManager.iamRoleArn }}
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                preference:
+                  matchExpressions:
+                  - key: CriticalAddonsOnly
+                    operator: In
+                    values:
+                    - "true"
+              - weight: 2
+                preference:
+                  matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: In
+                    values:
+                    - "system"
+                    - "truemark-system"
+          tolerations:
+            - key: "CriticalAddonsOnly"
+              operator: "Exists"
+              effect: "NoSchedule"
+          cainjector:
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  preference:
+                    matchExpressions:
+                    - key: CriticalAddonsOnly
+                      operator: In
+                      values:
+                      - "true"
+                - weight: 2
+                  preference:
+                    matchExpressions:
+                    - key: "karpenter.sh/nodepool"
+                      operator: In
+                      values:
+                      - "system"
+                      - "truemark-system"
+            tolerations:
+              - key: "CriticalAddonsOnly"
+                operator: "Exists"
+                effect: "NoSchedule"
+          webhook:
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  preference:
+                    matchExpressions:
+                    - key: CriticalAddonsOnly
+                      operator: In
+                      values:
+                      - "true"
+                - weight: 2
+                  preference:
+                    matchExpressions:
+                    - key: "karpenter.sh/nodepool"
+                      operator: In
+                      values:
+                      - "system"
+                      - "truemark-system"
+            tolerations:
+              - key: "CriticalAddonsOnly"
+                operator: "Exists"
+                effect: "NoSchedule"
+          startupapicheck:
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 1
+                  preference:
+                    matchExpressions:
+                    - key: "CriticalAddonsOnly"
+                      operator: In
+                      values:
+                      - "true"
+                - weight: 2
+                  preference:
+                    matchExpressions:
+                    - key: "karpenter.sh/nodepool"
+                      operator: In
+                      values:
+                      - "system"
+                      - "truemark-system"
+            tolerations:
+              - key: "CriticalAddonsOnly"
+                operator: "Exists"
+                effect: "NoSchedule"
+          {{- if and (.Values.certManager.values) (not (empty .Values.certManager.values)) }}
+            {{- toYaml .Values.certManager.values | nindent 10 }}
+          {{- end }}
+  destination:
+    namespace: '{{ .Values.certManager.namespace }}'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+      - ServerSideApply=true  # Big CRDs.
+{{- end }}

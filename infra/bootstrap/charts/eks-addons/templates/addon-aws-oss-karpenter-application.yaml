@@ -76,19 +76,19 @@ spec:
           {{- if and (.Values.karpenter.values) (not (empty .Values.karpenter.values)) }}
             {{- toYaml .Values.karpenter.values | nindent 10 }}
           {{- end }}
-{{/*    - repoURL: '{{ .Values.addons_repo_url }}'*/}}
-{{/*      targetRevision: '{{ .Values.addons_repo_revision }}'*/}}
-{{/*      path: bootstrap/addons/karpenter*/}}
-{{/*      helm:*/}}
-{{/*        releaseName: karpenter-resources*/}}
-{{/*        ignoreMissingValueFiles: true*/}}
-{{/*        values: |*/}}
-{{/*          clusterName: {{ .Values.karpenter.clusterName }}*/}}
-{{/*          nodeIamRoleName: {{ .Values.karpenter.nodeIamRoleName }}*/}}
-{{/*          truemarkNodeClassDefaults:*/}}
-{{/*            {{- toYaml .Values.karpenter.truemarkNodeClassDefaults | nindent 12 }}*/}}
-{{/*          truemarkNodePoolDefaults:*/}}
-{{/*            {{- toYaml .Values.karpenter.truemarkNodePoolDefaults | nindent 12 }}*/}}
+    - repoURL: '{{ .Values.addons_repo_url }}'
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      path: bootstrap/addons/karpenter
+      helm:
+        releaseName: karpenter-resources
+        ignoreMissingValueFiles: true
+        values: |
+          clusterName: {{ .Values.karpenter.clusterName }}
+          nodeIamRoleName: {{ .Values.karpenter.nodeIamRoleName }}
+          nodeClassDefaults:
+            {{- toYaml .Values.karpenter.nodeClassDefaults | nindent 12 }}
+          nodePoolDefaults:
+            {{- toYaml .Values.karpenter.nodePoolDefaults | nindent 12 }}
   destination:
     namespace: '{{ .Values.karpenter.namespace }}'
     name: '{{ .Values.clusterName }}'

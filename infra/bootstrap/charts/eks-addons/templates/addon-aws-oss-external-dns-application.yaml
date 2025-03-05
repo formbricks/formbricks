@@ -1,0 +1,70 @@
+{{- if and (.Values.externalDNS) (.Values.externalDNS.enabled) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: addons-external-dns
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: '{{ .Values.addons_repo_url }}'
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      ref: values
+    - repoURL: https://kubernetes-sigs.github.io/external-dns
+      targetRevision: {{ .Values.externalDNS.chartVersion }}
+      chart: external-dns
+      helm:
+        releaseName: external-dns
+        ignoreMissingValueFiles: true
+        valueFiles:
+          - $values/{{ .Values.addons_repo_basepath }}addons/external-dns/values.yaml
+          - $values/{{ .Values.addons_repo_basepath }}addons/external-dns/values-{{ .Values.externalDNS.chartVersion }}.yaml
+        values: |
+          serviceAccount:
+            name: external-dns
+            annotations:
+              eks.amazonaws.com/role-arn: {{ .Values.externalDNS.iamRoleArn }}
+          affinity:
+            nodeAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 1
+                preference:
+                  matchExpressions:
+                  - key: CriticalAddonsOnly
+                    operator: In
+                    values:
+                    - "true"
+              - weight: 2
+                preference:
+                  matchExpressions:
+                  - key: "karpenter.sh/nodepool"
+                    operator: In
+                    values:
+                    - "system"
+                    - "truemark-system"
+          tolerations:
+            - key: "CriticalAddonsOnly"
+              operator: "Exists"
+              effect: "NoSchedule"
+          {{- if and (.Values.externalDNS.values) (not (empty .Values.externalDNS.values)) }}
+            {{- toYaml .Values.externalDNS.values | nindent 10 }}
+          {{- end }}
+  destination:
+    namespace: '{{ .Values.externalDNS.namespace }}'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+{{- end }}
