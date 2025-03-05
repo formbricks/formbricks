@@ -1,5 +1,5 @@
+import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "preact/hooks";
-import { cn } from "@formbricks/lib/cn";
 import { type TPlacement } from "@formbricks/types/common";
 
 interface SurveyContainerProps {

@@ -21,7 +21,7 @@ export const checkForYoutubeUrl = (url: string): boolean => {
   }
 };
 
-const checkForVimeoUrl = (url: string): boolean => {
+export const checkForVimeoUrl = (url: string): boolean => {
   try {
     const vimeoUrl = new URL(url);
 
@@ -37,7 +37,7 @@ const checkForVimeoUrl = (url: string): boolean => {
   }
 };
 
-const checkForLoomUrl = (url: string): boolean => {
+export const checkForLoomUrl = (url: string): boolean => {
   try {
     const loomUrl = new URL(url);
 

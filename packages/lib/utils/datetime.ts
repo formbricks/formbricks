@@ -1,17 +1,8 @@
-const monthNames = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const getOrdinalSuffix = (day: number) => {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const relevantDigits = day < 30 ? day % 20 : day % 30;
+  return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
+};
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date) => {
@@ -19,42 +10,12 @@ export const diffInDays = (date1: Date, date2: Date) => {
   return Math.floor(diffTime / (1000 * 60 * 60 * 24));
 };
 
-// Helper function to get the month name
-export const getMonthName = (monthIndex: number) => {
-  return monthNames[monthIndex];
-};
-
-export const formatDateWithOrdinal = (date: Date): string => {
-  const getOrdinalSuffix = (day: number) => {
-    const suffixes = ["th", "st", "nd", "rd"];
-    const relevantDigits = day < 30 ? day % 20 : day % 30;
-    return suffixes[relevantDigits <= 3 ? relevantDigits : 0];
-  };
-
-  const dayOfWeekNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-  const dayOfWeek = dayOfWeekNames[date.getDay()];
+export const formatDateWithOrdinal = (date: Date, locale: string = "en-US"): string => {
+  const dayOfWeek = new Intl.DateTimeFormat(locale, { weekday: "long" }).format(date);
   const day = date.getDate();
-  const monthIndex = date.getMonth();
+  const month = new Intl.DateTimeFormat(locale, { month: "long" }).format(date);
   const year = date.getFullYear();
-
-  return `${dayOfWeek}, ${monthNames[monthIndex]} ${day}${getOrdinalSuffix(day)}, ${year}`;
-};
-
-// Helper function to format the date with an ordinal suffix
-export const getOrdinalDate = (date: number) => {
-  const j = date % 10,
-    k = date % 100;
-  if (j === 1 && k !== 11) {
-    return date + "st";
-  }
-  if (j === 2 && k !== 12) {
-    return date + "nd";
-  }
-  if (j === 3 && k !== 13) {
-    return date + "rd";
-  }
-  return date + "th";
+  return `${dayOfWeek}, ${month} ${day}${getOrdinalSuffix(day)}, ${year}`;
 };
 
 export const isValidDateString = (value: string) => {

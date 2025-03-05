@@ -1,5 +1,4 @@
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
-import { MutableRef, useEffect } from "preact/hooks";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -106,39 +105,12 @@ const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
   return possibleDestinations;
 };
 
-// Improved version of https://usehooks.com/useOnClickOutside/
-export const useClickOutside = (
-  ref: MutableRef<HTMLElement | null>,
-  handler: (event: MouseEvent | TouchEvent) => void
-): void => {
-  useEffect(() => {
-    let startedInside = false;
-    let startedWhenMounted = false;
+export const isFulfilled = <T>(val: PromiseSettledResult<T>): val is PromiseFulfilledResult<T> => {
+  return val.status === "fulfilled";
+};
 
-    const listener = (event: MouseEvent | TouchEvent) => {
-      // Do nothing if `mousedown` or `touchstart` started inside ref element
-      if (startedInside || !startedWhenMounted) return;
-      // Do nothing if clicking ref's element or descendent elements
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
-
-      handler(event);
-    };
-
-    const validateEventStart = (event: MouseEvent | TouchEvent) => {
-      startedWhenMounted = ref.current !== null;
-      startedInside = ref.current !== null && ref.current.contains(event.target as Node);
-    };
-
-    document.addEventListener("mousedown", validateEventStart);
-    document.addEventListener("touchstart", validateEventStart);
-    document.addEventListener("click", listener);
-
-    return () => {
-      document.removeEventListener("mousedown", validateEventStart);
-      document.removeEventListener("touchstart", validateEventStart);
-      document.removeEventListener("click", listener);
-    };
-  }, [ref, handler]);
+export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejectedResult => {
+  return val.status === "rejected";
 };
 
 export const makeRequest = async <T>(
