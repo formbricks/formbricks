@@ -78,7 +78,7 @@ spec:
           {{- end }}
     - repoURL: '{{ .Values.addons_repo_url }}'
       targetRevision: '{{ .Values.addons_repo_revision }}'
-      path: bootstrap/addons/karpenter
+      path: infra/bootstrap/addons/karpenter
       helm:
         releaseName: karpenter-resources
         ignoreMissingValueFiles: true
