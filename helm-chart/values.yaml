@@ -1,3 +1,5 @@
+#ENTERPRISE_LICENSE_KEY
+#enterpriseLicenseKey: ""
 image:
   repository: ghcr.io/formbricks/formbricks
   pullPolicy: IfNotPresent
@@ -65,7 +67,7 @@ hostname: ""
 email: ""
 
 traefik:
-  enabled: true
+  enabled: false
   ingressRoute:
     dashboard:
       enabled: false
@@ -121,12 +123,15 @@ traefik:
     readOnlyRootFilesystem: true
 
 redis:
-  enabled: false
+  enabled: true
+  fullnameOverride: "formbricks-redis"
   externalUrl: ""
   architecture: standalone
   auth:
     enabled: true
-    password: redispassword
+    existingSecret: "formbricks-data-secrets"
+    existingSecretPasswordKey: "REDIS_PASSWORD"
+
   master:
     persistence:
       enabled: false
@@ -135,13 +140,20 @@ redis:
 
 postgresql:
   enabled: true
+  fullnameOverride: "formbricks-postgres"
   image:
     repository: pgvector/pgvector
     tag: 0.8.0-pg17
   auth:
     username: formbricks
-    password: formbrickspassword
     database: formbricks
+    existingSecret: "formbricks-data-secrets"
+    secretKeys:
+      adminPasswordKey: "ADMIN_PASSWORD"
+      userPasswordKey: "USER_PASSWORD"
+#    username: formbricks
+#    password: formbrickspassword
+#    database: formbricks
   primary:
     persistence:
       enabled: true

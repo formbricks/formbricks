@@ -24,11 +24,17 @@ spec:
               protocol: TCP
           envFrom:
             - secretRef:
-                name: {{ include "formbricks.fullname" . }}-secrets
+                name: {{ include "formbricks.fullname" . }}-app-secrets
+            - secretRef:
+                name: {{ include "formbricks.fullname" . }}-data-secrets
           env:
             {{- range $key, $value := .Values.env }}
             - name: {{ $key }}
               value: {{ $value | quote }}
+            {{- end }}
+            {{- with .Values.enterpriseLicenseKey }}
+            - name: ENTERPRISE_LICENSE_KEY
+              value: {{ . | quote }}
             {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
