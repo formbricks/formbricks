@@ -82,13 +82,17 @@ spec:
       helm:
         releaseName: karpenter-resources
         ignoreMissingValueFiles: true
-        values: |
+        valuesObject:
           clusterName: {{ .Values.karpenter.clusterName }}
           nodeIamRoleName: {{ .Values.karpenter.nodeIamRoleName }}
+          {{- with .Values.karpenter.nodeClassDefaults }}
           nodeClassDefaults:
-            {{- toYaml .Values.karpenter.nodeClassDefaults | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.karpenter.nodePoolDefaults }}
           nodePoolDefaults:
-            {{- toYaml .Values.karpenter.nodePoolDefaults | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
   destination:
     namespace: '{{ .Values.karpenter.namespace }}'
     name: '{{ .Values.clusterName }}'
