@@ -24,6 +24,7 @@ interface CTAQuestionProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function CTAQuestion({
@@ -39,6 +40,7 @@ export function CTAQuestion({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  onOpenExternalURL,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -69,7 +71,11 @@ export function CTAQuestion({
             tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
-                window.open(question.buttonUrl, "_blank")?.focus();
+                if (onOpenExternalURL) {
+                  onOpenExternalURL(question.buttonUrl);
+                } else {
+                  window.open(question.buttonUrl, "_blank")?.focus();
+                }
               }
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);

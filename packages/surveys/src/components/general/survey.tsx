@@ -67,6 +67,7 @@ export function Survey({
   singleUseId,
   singleUseResponseId,
   mode,
+  onOpenExternalURL,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -544,6 +545,7 @@ export function Survey({
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
               variablesData={currentVariables}
+              onOpenExternalURL={onOpenExternalURL}
             />
           );
         }
@@ -570,6 +572,7 @@ export function Survey({
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
+              onOpenExternalURL={onOpenExternalURL}
             />
           )
         );
