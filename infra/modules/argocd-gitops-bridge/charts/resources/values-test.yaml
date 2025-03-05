@@ -1,0 +1,15 @@
+argocd_application_name: ""
+argocd_project: "default"
+
+source:
+  repoURL: ""
+  targetRevision: "HEAD"
+  path: ""
+  helm:
+    values: ""
+    valueFiles: ""
+
+destination:
+  server: "https://kubernetes.default.svc"
+
+ignoreDifferences: []
