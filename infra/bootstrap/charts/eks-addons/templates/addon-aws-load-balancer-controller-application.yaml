@@ -25,28 +25,6 @@ spec:
             name: {{ .Values.loadBalancerController.serviceAccount.name | default "aws-load-balancer-controller-sa" }}
             annotations:
               eks.amazonaws.com/role-arn: {{ .Values.loadBalancerController.iamRoleArn | default "" }}
-          affinity:
-            nodeAffinity:
-              preferredDuringSchedulingIgnoredDuringExecution:
-              - weight: 1
-                preference:
-                  matchExpressions:
-                  - key: CriticalAddonsOnly
-                    operator: In
-                    values:
-                    - "true"
-              - weight: 2
-                preference:
-                  matchExpressions:
-                  - key: "karpenter.sh/nodepool"
-                    operator: In
-                    values:
-                    - "system"
-                    - "truemark-system"
-          tolerations:
-            - key: "CriticalAddonsOnly"
-              operator: "Exists"
-              effect: "NoSchedule"
   destination:
     namespace: '{{ .Values.loadBalancerController.namespace }}'
     name: '{{ .Values.clusterName }}'

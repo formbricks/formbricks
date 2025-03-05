@@ -33,6 +33,23 @@ output "route53_ns_records" {
   value = module.route53_zones.route53_zone_name_servers
 }
 
+
+module "acm" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "5.1.1"
+
+  domain_name = "prod.k8s.formbricks.com"
+  zone_id     = module.route53_zones.route53_zone_zone_id["k8s.formbricks.com"]
+
+  subject_alternative_names = [
+    "*.prod.k8s.formbricks.com",
+  ]
+
+  validation_method = "DNS"
+
+  tags = local.tags
+}
+
 ################################################################################
 # VPC
 ################################################################################
