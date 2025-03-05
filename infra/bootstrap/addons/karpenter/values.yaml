@@ -1,0 +1,70 @@
+nodeClassDefaults:
+  amiFamily: Bottlerocket
+  amiSelectorTerms:
+  - alias: bottlerocket@latest
+  blockDeviceMappings:
+  - deviceName: /dev/xvda
+    ebs:
+      encrypted: true
+      volumeSize: 30Gi
+      volumeType: gp3
+  - deviceName: /dev/xvdb
+    ebs:
+      encrypted: true
+      volumeSize: 100Gi
+      volumeType: gp3
+nodePoolDefaults:
+  arm64:
+    expireAfter: 720h
+    requirements:
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+          - m
+          - c
+          - r
+      - key: karpenter.k8s.aws/instance-cpu
+        operator: In
+        values:
+          - '4'
+          - '8'
+          - '16'
+      - key: karpenter.k8s.aws/instance-hypervisor
+        operator: In
+        values:
+          - nitro
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+          - arm64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+          - on-demand
+  amd64:
+    expireAfter: 720h
+    requirements:
+      - key: karpenter.k8s.aws/instance-category
+        operator: In
+        values:
+          - m
+          - c
+          - r
+      - key: karpenter.k8s.aws/instance-cpu
+        operator: In
+        values:
+          - '4'
+          - '8'
+          - '16'
+      - key: karpenter.k8s.aws/instance-hypervisor
+        operator: In
+        values:
+          - nitro
+      - key: kubernetes.io/arch
+        operator: In
+        values:
+          - amd64
+      - key: karpenter.sh/capacity-type
+        operator: In
+        values:
+          - on-demand

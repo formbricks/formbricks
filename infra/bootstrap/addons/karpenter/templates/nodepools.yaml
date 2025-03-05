@@ -1,0 +1,25 @@
+{{- range $k, $v := .Values.nodePoolDefaults }}
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default-{{ $k }}
+spec:
+  disruption:
+    budgets:
+      - nodes: 10%
+    consolidateAfter: 0s
+    consolidationPolicy: WhenEmptyOrUnderutilized
+  template:
+    metadata: {}
+    spec:
+      expireAfter: {{ $v.expireAfter }}
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+      requirements:
+        {{- toYaml $v.requirements | nindent 8 }}
+
+  weight: 10
+{{- end }}

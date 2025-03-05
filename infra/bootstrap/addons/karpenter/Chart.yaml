@@ -1,0 +1,5 @@
+apiVersion: v2
+name: karpenter
+description: A Helm chart for installing the karpenter nodeclass and nodepools
+type: application
+version: 0.0.1
