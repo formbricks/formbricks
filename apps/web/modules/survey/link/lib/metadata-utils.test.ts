@@ -22,7 +22,7 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 
 // Mock constants
 vi.mock("@formbricks/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: false,
+  IS_FORMBRICKS_CLOUD: vi.fn(() => false),
   WEBAPP_URL: "https://test.formbricks.com",
 }));
 
@@ -91,6 +91,8 @@ describe("Metadata Utils", () => {
         name: "Test Survey",
         welcomeCard: {
           enabled: true,
+          timeToFinish: false,
+          showResponseCount: false,
           headline: {
             default: "Welcome Headline",
           },
@@ -138,7 +140,7 @@ describe("Metadata Utils", () => {
 
     it("adds Formbricks to title when IS_FORMBRICKS_CLOUD is true", async () => {
       // Change the mock for this specific test
-      vi.mocked(IS_FORMBRICKS_CLOUD).mockReturnValue(true);
+      (IS_FORMBRICKS_CLOUD as unknown as ReturnType<typeof vi.fn>).mockReturnValue(true);
 
       const mockSurvey = {
         id: mockSurveyId,
@@ -156,7 +158,7 @@ describe("Metadata Utils", () => {
       expect(result.title).toBe("Test Survey | Formbricks");
 
       // Reset the mock
-      vi.mocked(IS_FORMBRICKS_CLOUD).mockReturnValue(false);
+      (IS_FORMBRICKS_CLOUD as unknown as ReturnType<typeof vi.fn>).mockReturnValue(false);
     });
   });
 
@@ -194,7 +196,7 @@ describe("Metadata Utils", () => {
       const surveyName = "Test Survey With Spaces";
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
-      expect(result.openGraph.images[0]).toContain("name=Test%20Survey%20With%20Spaces");
+      expect(result.openGraph?.images?.[0]).toContain("name=Test%20Survey%20With%20Spaces");
     });
   });
 });
