@@ -1,10 +1,10 @@
 import { FILE_PICK_EVENT } from "@/lib/constants";
+import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getMimeType } from "@/lib/utils";
+import { isFulfilled, isRejected } from "@/lib/utils";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { type JSXInternal } from "preact/src/jsx";
-import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
-import { isFulfilled, isRejected } from "@formbricks/lib/utils/promises";
 import { type TAllowedFileExtension } from "@formbricks/types/common";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
