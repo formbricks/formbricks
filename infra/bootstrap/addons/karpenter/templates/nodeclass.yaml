@@ -19,7 +19,7 @@ spec:
         karpenter.sh/discovery: {{ .Values.clusterName }}
   subnetSelectorTerms:
     - tags:
-        network: private
+        "karpenter.sh/discovery": {{ .Values.clusterName }}
   tags:
     Name: {{ .Values.clusterName }}-node
     karpenter.sh/discovery: {{ .Values.clusterName }}
