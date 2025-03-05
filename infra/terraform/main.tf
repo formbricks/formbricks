@@ -60,7 +60,7 @@ module "vpc" {
   private_subnet_tags = {
     "kubernetes.io/role/internal-elb" = 1
     # Tags subnets for Karpenter auto-discovery
-    "karpenter.sh/discovery" = local.name
+    "karpenter.sh/discovery" = "${local.name}-eks"
   }
 
   tags = local.tags
@@ -226,7 +226,7 @@ module "eks" {
     # NOTE - if creating multiple security groups with this module, only tag the
     # security group that Karpenter should utilize with the following tag
     # (i.e. - at most, only one security group should have this tag in your account)
-    "karpenter.sh/discovery" = local.name
+    "karpenter.sh/discovery" = "${local.name}-eks"
   })
 
   tags = local.tags
