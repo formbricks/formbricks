@@ -11,10 +11,10 @@ import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { TProduct, TProductSurvey } from "@formbricks/types/product";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyRendererProps {
-  survey: TProductSurvey;
+  survey: TSurvey;
   searchParams: {
     verify?: string;
     lang?: string;

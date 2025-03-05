@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { ENCRYPTION_KEY, WEBAPP_URL } from "@formbricks/lib/constants";
-import { symmetricEncrypt } from "@formbricks/lib/crypto";
+import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 
 /**
  * Creates an encrypted personalized survey link for a contact
@@ -77,22 +77,4 @@ export const verifyContactSurveyToken = (token: string): { contactId: string; su
     console.error("Error verifying contact survey token:", error);
     throw new Error("Invalid or expired survey token");
   }
-};
-
-// Helper function to decrypt values from the token
-const symmetricDecrypt = (text: string, key: string): string => {
-  const components = text.split(":");
-  if (!components.length) throw new Error("Invalid encrypted value");
-
-  const iv = Buffer.from(components.shift() || "", "hex");
-  const decipher = require("crypto").createDecipheriv(
-    "aes256",
-    Buffer.from(key, key.length === 32 ? "latin1" : "hex"),
-    iv
-  );
-
-  let deciphered = decipher.update(components.join(":"), "hex", "utf8");
-  deciphered += decipher.final("utf8");
-
-  return deciphered;
 };

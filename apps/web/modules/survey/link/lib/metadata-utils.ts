@@ -1,11 +1,9 @@
-// filepath: /Users/matthiasnannt/Developer/formbricks/apps/web/modules/survey/link/components/metadata-utils.ts
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
-import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+import { TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 
 /**
  * Utility function to encode name for URL usage
@@ -33,29 +31,28 @@ export const getBasicSurveyMetadata = async (surveyId: string) => {
   }
 
   const project = await getProjectByEnvironmentId(survey.environmentId);
-  const welcomeCard = survey.welcomeCard as { enabled: boolean; title?: string; subtitle?: string };
+  const welcomeCard = survey.welcomeCard as TSurveyWelcomeCard;
 
-  // Set title to either welcome card title or survey name
+  // Set title to either welcome card headline or survey name
   let title = "Survey";
-  if (welcomeCard.enabled && welcomeCard.title) {
-    title = welcomeCard.title;
+  if (welcomeCard.enabled && welcomeCard.headline?.default) {
+    title = welcomeCard.headline.default;
   } else {
     title = survey.name;
   }
 
-  // Set description to either welcome card subtitle or default
-  let description = "";
-  if (welcomeCard.enabled && welcomeCard.subtitle) {
-    description = welcomeCard.subtitle;
-  } else {
-    description = "Complete this survey";
+  // Set description to either welcome card html content or default
+  let description = "Complete this survey";
+  if (welcomeCard.enabled && welcomeCard.html?.default) {
+    description = welcomeCard.html.default;
   }
 
   // Add product name in title if it's Formbricks cloud
   if (IS_FORMBRICKS_CLOUD) {
     title = `${title} | Formbricks`;
   } else if (project) {
-    title = `${title} | ${project.name}`;
+    // Since project name is not available in the returned type, we'll just use a generic name
+    title = `${title} | Survey`;
   }
 
   return {

@@ -1,4 +1,4 @@
-import { getBasicSurveyMetadata } from "@/modules/survey/link/components/metadata-utils";
+import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
 import { Metadata } from "next";
 
 export const getMetadataForContactSurvey = async (surveyId: string): Promise<Metadata> => {
