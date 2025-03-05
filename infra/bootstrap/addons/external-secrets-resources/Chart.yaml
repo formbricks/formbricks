@@ -1,0 +1,7 @@
+apiVersion: v2
+name: external-secrets-resources
+description: |
+  This Helm chart is designed to deploy resources required for external-secrets.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
