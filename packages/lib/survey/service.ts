@@ -9,7 +9,6 @@ import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   TSurvey,
   TSurveyCreateInput,
-  TSurveyFilterCriteria,
   TSurveyOpenTextQuestion,
   TSurveyQuestions,
   ZSurvey,
@@ -27,13 +26,7 @@ import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { getIsAIEnabled } from "../utils/ai";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import {
-  buildOrderByClause,
-  buildWhereClause,
-  doesSurveyHasOpenTextQuestion,
-  getInsightsEnabled,
-  transformPrismaSurvey,
-} from "./utils";
+import { doesSurveyHasOpenTextQuestion, getInsightsEnabled, transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;
@@ -272,12 +265,7 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (
-    environmentId: string,
-    limit?: number,
-    offset?: number,
-    filterCriteria?: TSurveyFilterCriteria
-  ): Promise<TSurvey[]> =>
+  async (environmentId: string, limit?: number, offset?: number): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
@@ -286,10 +274,11 @@ export const getSurveys = reactCache(
           const surveysPrisma = await prisma.survey.findMany({
             where: {
               environmentId,
-              ...buildWhereClause(filterCriteria),
             },
             select: selectSurvey,
-            orderBy: buildOrderByClause(filterCriteria?.sortBy),
+            orderBy: {
+              createdAt: "desc",
+            },
             take: limit,
             skip: offset,
           });
@@ -303,7 +292,7 @@ export const getSurveys = reactCache(
           throw error;
         }
       },
-      [`getSurveys-${environmentId}-${limit}-${offset}-${JSON.stringify(filterCriteria)}`],
+      [`getSurveys-${environmentId}-${limit}-${offset}`],
       {
         tags: [surveyCache.tag.byEnvironmentId(environmentId)],
       }

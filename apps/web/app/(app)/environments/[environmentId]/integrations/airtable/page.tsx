@@ -1,4 +1,5 @@
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/integrations/airtable/components/AirtableWrapper";
+import { getSurveys } from "@/app/(app)/environments/[environmentId]/integrations/lib/surveys";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -15,11 +16,9 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
-import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -27,14 +26,7 @@ const Page = async (props) => {
   const isEnabled = !!AIRTABLE_CLIENT_ID;
   const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),
-    getSurveys(params.environmentId, undefined, undefined, {
-      status: [
-        ZSurveyStatus.Enum.draft,
-        ZSurveyStatus.Enum.scheduled,
-        ZSurveyStatus.Enum.inProgress,
-        ZSurveyStatus.Enum.paused,
-      ],
-    }),
+    getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
   ]);

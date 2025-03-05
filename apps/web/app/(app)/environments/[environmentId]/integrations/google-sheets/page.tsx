@@ -1,4 +1,5 @@
 import { GoogleSheetWrapper } from "@/app/(app)/environments/[environmentId]/integrations/google-sheets/components/GoogleSheetWrapper";
+import { getSurveys } from "@/app/(app)/environments/[environmentId]/integrations/lib/surveys";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -19,10 +20,8 @@ import { getIntegrations } from "@formbricks/lib/integration/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
-import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -30,14 +29,7 @@ const Page = async (props) => {
   const isEnabled = !!(GOOGLE_SHEETS_CLIENT_ID && GOOGLE_SHEETS_CLIENT_SECRET && GOOGLE_SHEETS_REDIRECT_URL);
   const [session, surveys, integrations, environment] = await Promise.all([
     getServerSession(authOptions),
-    getSurveys(params.environmentId, undefined, undefined, {
-      status: [
-        ZSurveyStatus.Enum.draft,
-        ZSurveyStatus.Enum.scheduled,
-        ZSurveyStatus.Enum.inProgress,
-        ZSurveyStatus.Enum.paused,
-      ],
-    }),
+    getSurveys(params.environmentId),
     getIntegrations(params.environmentId),
     getEnvironment(params.environmentId),
   ]);

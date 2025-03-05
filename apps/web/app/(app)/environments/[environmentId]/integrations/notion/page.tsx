@@ -1,3 +1,4 @@
+import { getSurveys } from "@/app/(app)/environments/[environmentId]/integrations/lib/surveys";
 import { NotionWrapper } from "@/app/(app)/environments/[environmentId]/integrations/notion/components/NotionWrapper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -21,10 +22,8 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { getSurveys } from "@formbricks/lib/survey/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
-import { ZSurveyStatus } from "@formbricks/types/surveys/types";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -37,14 +36,7 @@ const Page = async (props) => {
   );
   const [session, surveys, notionIntegration, environment] = await Promise.all([
     getServerSession(authOptions),
-    getSurveys(params.environmentId, undefined, undefined, {
-      status: [
-        ZSurveyStatus.Enum.draft,
-        ZSurveyStatus.Enum.scheduled,
-        ZSurveyStatus.Enum.inProgress,
-        ZSurveyStatus.Enum.paused,
-      ],
-    }),
+    getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "notion"),
     getEnvironment(params.environmentId),
   ]);
