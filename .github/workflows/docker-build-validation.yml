@@ -1,0 +1,96 @@
+name: Docker Build Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-docker-build:
+    name: Validate Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./apps/web/Dockerfile
+          push: false
+          load: true
+          tags: formbricks-test:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Test Docker Image with Health Check
+        run: |
+          echo "🧪 Testing if the Docker image starts correctly..."
+          # Start the container in the background with port mapping
+          docker run --name formbricks-test \
+            -p 3000:3000 \
+            -e DATABASE_URL="postgresql://test:test@localhost:5432/formbricks" \
+            -e NEXTAUTH_SECRET="test_nextauth_secret_at_least_32_chars_long" \
+            -e ENCRYPTION_KEY="test_encryption_key_must_be_at_least_32_chars_long" \
+            -e CRON_SECRET="test_cron_secret_key_must_be_32_chars_or_longer" \
+            -d formbricks-test:${{ github.sha }}
+
+          # Give it some time to start up
+          sleep 10
+
+          # Check if the container is running (would exit on crash)
+          if [ "$(docker inspect -f {{.State.Running}} formbricks-test)" != "true" ]; then
+            echo "❌ Container failed to start properly!"
+            docker logs formbricks-test
+            exit 1
+          else
+            echo "✅ Container started successfully!"
+          fi
+
+          # Try to access the health endpoint 5 times (with 5 seconds between each try)
+          echo "🏥 Testing /health endpoint..."
+
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          HEALTH_CHECK_SUCCESS=false
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Attempt $RETRY_COUNT of $MAX_RETRIES..."
+            
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/health)
+            
+            if [ "$STATUS_CODE" = "200" ]; then
+              echo "✅ Health check successful!"
+              HEALTH_CHECK_SUCCESS=true
+              break
+            else
+              echo "❌ Health check returned status code $STATUS_CODE"
+              echo "Waiting 5 seconds before next attempt..."
+              sleep 5
+            fi
+          done
+
+          # Show container logs regardless of success/failure for debugging purposes
+          echo "📋 Container logs:"
+          docker logs formbricks-test
+
+          # Clean up the container
+          echo "🧹 Cleaning up..."
+          docker rm -f formbricks-test
+
+          # Exit with failure if health check didn't succeed
+          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
+            echo "❌ Health check failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+          echo "✨ Docker validation complete - all checks passed!"
