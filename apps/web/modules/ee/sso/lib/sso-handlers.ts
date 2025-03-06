@@ -1,6 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
+import { TOidcNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
@@ -79,9 +80,24 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       return true;
     }
 
+    let userName = "";
+
+    if (provider === "openid") {
+      const oidcUser = user as TUser & TOidcNameFields;
+      if (oidcUser.name) {
+        userName = oidcUser.name;
+      } else if (oidcUser.given_name || oidcUser.family_name) {
+        userName = `${oidcUser.given_name} ${oidcUser.family_name}`;
+      } else if (oidcUser.preferred_username) {
+        userName = oidcUser.preferred_username;
+      }
+    } else if (user.name) {
+      userName = user.name;
+    }
+
     const userProfile = await createUser({
       name:
-        user.name ||
+        userName ||
         user.email
           .split("@")[0]
           .replace(/[^'\p{L}\p{M}\s\d-]+/gu, " ")
