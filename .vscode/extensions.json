@@ -6,6 +6,8 @@
     "dbaeumer.vscode-eslint", // eslint plugin
     "esbenp.prettier-vscode", // prettier plugin
     "Prisma.prisma", // syntax|format|completion for prisma
-    "yzhang.markdown-all-in-one" // nicer markdown support
+    "yzhang.markdown-all-in-one", // nicer markdown support
+    "vitest.explorer", // run tests directly from the code window
+    "sonarsource.sonarlint-vscode" // sonarqube linter for vscode
   ]
 }

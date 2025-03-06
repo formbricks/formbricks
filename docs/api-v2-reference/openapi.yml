@@ -1,28 +1,292 @@
 openapi: 3.1.0
 info:
   title: Formbricks API
-  description: Manage Formbricks ressources programmatically.
+  description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api
+  - url: https://app.formbricks.com/api/v2/management
     description: Formbricks Cloud
 tags:
-  - name: Responses
+  - name: Management API > Responses
     description: Operations for managing responses.
-  - name: Contacts
+  - name: Management API > Contacts
     description: Operations for managing contacts.
-  - name: Contact Attributes
+  - name: Management API > Contact Attributes
     description: Operations for managing contact attributes.
-  - name: Contact Attributes Keys
+  - name: Management API > Contact Attributes Keys
     description: Operations for managing contact attributes keys.
+  - name: Management API > Surveys
+    description: Operations for managing surveys.
+security:
+  - apiKeyAuth: []
 paths:
+  /responses/{responseId}:
+    put:
+      description: Update an existing response for example when you want to mark a
+        response as finished or you want to change an existing response's value.
+      parameters:
+        - in: path
+          name: responseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                data:
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                finished: true
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                data: {}
+              schema:
+                type: object
+          description: OK
+        "404":
+          content:
+            application/json:
+              example:
+                code: not_found
+                details:
+                  resource_type: Response
+                message: Response not found
+              schema:
+                type: object
+          description: Not Found
+      summary: Update Response
+      tags:
+        - Client API > Response
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/responses:
+    post:
+      description: Create a response for a survey and its fields with the user's
+        responses. The userId & meta here is optional
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                responses: {}
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                responseId: response123
+              schema:
+                type: object
+          description: Created
+      summary: Create Response
+      tags:
+        - Client API > Response
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/contacts/{userId}/attributes:
+    put:
+      description: Update a contact's attributes in Formbricks to keep them in sync
+        with your app or when you want to set a custom attribute in Formbricks.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                example-0: {}
+                example-1: {}
+              schema:
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              example:
+                code: internal_server_error
+                details: {}
+                message: "Unable to complete request: Expected"
+              schema:
+                type: object
+          description: Internal Server Error
+      summary: Update Contact (Attributes)
+      tags:
+        - Client API > Contacts
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/identify/contacts/{userId}:
+    get:
+      description: Retrieves a contact's state including their segments, displays,
+        responses and other tracking information. If the contact doesn't exist,
+        it will be created.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Contact State
+      tags:
+        - Client API > Contacts
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/displays:
+    post:
+      description: Create a new display for a valid survey ID. If a userId is passed,
+        the display is linked to the user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                userId: user123
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: Created
+      summary: Create Display
+      tags:
+        - Client API > Display
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/displays/{displayId}:
+    put:
+      description: Update a Display for a user. A use case can be when a user submits
+        a response & you want to link it to an existing display.
+      parameters:
+        - in: path
+          name: displayId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                responseId: response123
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: OK
+      summary: Update Display
+      tags:
+        - Client API > Display
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/environment:
+    get:
+      description: Retrieves the environment state to be used in Formbricks SDKs
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                environmentId: env123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Environment State
+      tags:
+        - Client API > Environment
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/user:
+    post:
+      description: Endpoint for creating or identifying a user within the specified
+        environment. If the user already exists, this will identify them and
+        potentially update user attributes. If they don't exist, it will create
+        a new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                userId: user123
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: identified
+              schema:
+                type: object
+          description: OK
+      summary: Create or Identify User
+      tags:
+        - Client API > User
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
   /responses:
     get:
       operationId: getResponses
       summary: Get responses
       description: Gets responses from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: query
           name: limit
@@ -87,7 +351,7 @@ paths:
       summary: Create a response
       description: Creates a response in the database.
       tags:
-        - responses
+        - Management API > Responses
       requestBody:
         required: true
         description: The response to create
@@ -108,7 +372,7 @@ paths:
       summary: Get a response
       description: Gets a response from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -128,7 +392,7 @@ paths:
       summary: Update a response
       description: Updates a response in the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -231,7 +495,7 @@ paths:
       summary: Delete a response
       description: Deletes a response from the database.
       tags:
-        - responses
+        - Management API > Responses
       parameters:
         - in: path
           name: id
@@ -252,7 +516,7 @@ paths:
       summary: Get contacts
       description: Gets contacts from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: query
           name: limit
@@ -305,7 +569,7 @@ paths:
       summary: Create a contact
       description: Creates a contact in the database.
       tags:
-        - contacts
+        - Management API > Contacts
       requestBody:
         required: true
         description: The contact to create
@@ -326,7 +590,7 @@ paths:
       summary: Get a contact
       description: Gets a contact from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -345,7 +609,7 @@ paths:
       summary: Update a contact
       description: Updates a contact in the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -371,7 +635,7 @@ paths:
       summary: Delete a contact
       description: Deletes a contact from the database.
       tags:
-        - contacts
+        - Management API > Contacts
       parameters:
         - in: path
           name: contactId
@@ -391,7 +655,7 @@ paths:
       summary: Get contact attributes
       description: Gets contact attributes from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: query
           name: limit
@@ -444,7 +708,7 @@ paths:
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       requestBody:
         required: true
         description: The contact attribute to create
@@ -461,7 +725,7 @@ paths:
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -480,7 +744,7 @@ paths:
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -506,7 +770,7 @@ paths:
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
       tags:
-        - contact-attributes
+        - Management API > Contact Attributes
       parameters:
         - in: path
           name: contactAttributeId
@@ -526,7 +790,7 @@ paths:
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: query
           name: limit
@@ -579,7 +843,7 @@ paths:
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       requestBody:
         required: true
         description: The contact attribute key to create
@@ -596,7 +860,7 @@ paths:
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeKeyId
@@ -615,7 +879,7 @@ paths:
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeKeyId
@@ -641,7 +905,7 @@ paths:
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
       tags:
-        - contact-attribute-keys
+        - Management API > Contact Attribute Keys
       parameters:
         - in: path
           name: contactAttributeId
@@ -655,7 +919,172 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
+  /surveys:
+    get:
+      operationId: getSurveys
+      summary: Get surveys
+      description: Gets surveys from the database.
+      tags:
+        - Management API > Surveys
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum:
+              - createdAt
+              - updatedAt
+            default: createdAt
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+        - in: query
+          name: surveyType
+          schema:
+            type: string
+            enum:
+              - link
+              - app
+        - in: query
+          name: surveyStatus
+          schema:
+            type: string
+            enum:
+              - draft
+              - scheduled
+              - inProgress
+              - paused
+              - completed
+      responses:
+        "200":
+          description: Surveys retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/survey"
+    post:
+      operationId: createSurvey
+      summary: Create a survey
+      description: Creates a survey in the database.
+      tags:
+        - Management API > Surveys
+      requestBody:
+        required: true
+        description: The survey to create
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/surveyInput"
+      responses:
+        "201":
+          description: Survey created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/survey"
+  /surveys/{id}:
+    get:
+      operationId: getSurvey
+      summary: Get a survey
+      description: Gets a survey from the database.
+      tags:
+        - Management API > Surveys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the survey
+          schema:
+            $ref: "#/components/schemas/surveyId"
+          required: true
+      responses:
+        "200":
+          description: Response retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/survey"
+    put:
+      operationId: updateSurvey
+      summary: Update a survey
+      description: Updates a survey in the database.
+      tags:
+        - Management API >  Surveys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the survey
+          schema:
+            $ref: "#/components/schemas/surveyId"
+          required: true
+      requestBody:
+        required: true
+        description: The survey to update
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/surveyInput"
+      responses:
+        "200":
+          description: Response updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/survey"
+    delete:
+      operationId: deleteSurvey
+      summary: Delete a survey
+      description: Deletes a survey from the database.
+      tags:
+        - Management API > Surveys
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the survey
+          schema:
+            $ref: "#/components/schemas/surveyId"
+          required: true
+      responses:
+        "200":
+          description: Response deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/survey"
 components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: Use your Formbricks x-api-key to authenticate.
   schemas:
     response:
       type: object
@@ -701,7 +1130,7 @@ components:
                 additionalProperties:
                   type: string
           description: The data of the response
-          example: &a1
+          example: &a2
             question1: answer1
             question2: 2
             question3:
@@ -716,7 +1145,7 @@ components:
               - type: string
               - type: number
           description: The variables of the response
-          example: &a2
+          example: &a3
             variable1: answer1
             variable2: 2
         ttc:
@@ -724,7 +1153,7 @@ components:
           additionalProperties:
             type: number
           description: The TTC of the response
-          example: &a3
+          example: &a4
             question1: 10
             question2: 20
         meta:
@@ -752,7 +1181,7 @@ components:
             action:
               type: string
           description: The meta data of the response
-          example: &a4
+          example: &a5
             source: https://example.com
             url: https://example.com
             userAgent:
@@ -916,6 +1345,591 @@ components:
         - description
         - type
         - environmentId
+    survey:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the survey
+        createdAt:
+          type: string
+          description: The date and time the survey was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the survey was last updated
+          example: 2021-01-01T00:00:00.000Z
+        name:
+          type: string
+          description: The name of the survey
+        redirectUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: The URL to redirect to after the survey is completed
+        type:
+          type: string
+          enum:
+            - link
+            - web
+            - website
+            - app
+          description: The type of the survey
+        status:
+          type: string
+          enum:
+            - draft
+            - scheduled
+            - inProgress
+            - paused
+            - completed
+          description: The status of the survey
+        thankYouMessage:
+          type:
+            - string
+            - "null"
+          description: The thank you message of the survey
+        showLanguageSwitch:
+          type:
+            - boolean
+            - "null"
+          description: Whether to show the language switch
+        showThankYouMessage:
+          type:
+            - boolean
+            - "null"
+          description: Whether to show the thank you message
+        welcomeCard:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            timeToFinish:
+              type: boolean
+            showResponseCount:
+              type: boolean
+            headline:
+              type: object
+              additionalProperties:
+                type: string
+            html:
+              type: object
+              additionalProperties:
+                type: string
+            fileUrl:
+              type: string
+            buttonLabel:
+              type: object
+              additionalProperties:
+                type: string
+            videoUrl:
+              type: string
+          required:
+            - enabled
+            - timeToFinish
+            - showResponseCount
+          description: The welcome card configuration
+        displayProgressBar:
+          type:
+            - boolean
+            - "null"
+          description: Whether to display the progress bar
+        resultShareKey:
+          type:
+            - string
+            - "null"
+          description: The result share key of the survey
+        pin:
+          type:
+            - string
+            - "null"
+          description: The pin of the survey
+        createdBy:
+          type:
+            - string
+            - "null"
+          description: The user who created the survey
+        environmentId:
+          type: string
+          description: The environment ID of the survey
+        endings:
+          type: array
+          items:
+            anyOf:
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    const: endScreen
+                  headline:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  subheader:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  buttonLabel:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  buttonLink:
+                    type: string
+                    format: uri
+                  imageUrl:
+                    type: string
+                  videoUrl:
+                    type: string
+                required:
+                  - id
+                  - type
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    const: redirectToUrl
+                  url:
+                    type: string
+                  label:
+                    type: string
+                required:
+                  - id
+                  - type
+          default: &a6 []
+          description: The endings of the survey
+        thankYouCard:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            message:
+              type: string
+          required:
+            - enabled
+            - message
+          description: The thank you card of the survey (deprecated)
+        hiddenFields:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            fieldIds:
+              type: array
+              items:
+                type: string
+          required:
+            - enabled
+          description: Hidden fields configuration
+        variables:
+          type: array
+          items:
+            oneOf:
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string
+                    const: number
+                  value:
+                    type: number
+                    default: 0
+                required:
+                  - id
+                  - name
+                  - type
+                  - value
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string
+                    const: text
+                  value:
+                    type: string
+                    default: ""
+                required:
+                  - id
+                  - name
+                  - type
+                  - value
+          description: Survey variables
+        displayOption:
+          type: string
+          enum: &a7
+            - displayOnce
+            - displayMultiple
+            - displaySome
+            - respondMultiple
+          description: Display options for the survey
+        recontactDays:
+          type:
+            - number
+            - "null"
+          description: Days before recontacting
+        displayLimit:
+          type:
+            - number
+            - "null"
+          description: Display limit for the survey
+        autoClose:
+          type:
+            - number
+            - "null"
+          description: Auto close time in seconds
+        autoComplete:
+          type:
+            - number
+            - "null"
+          description: Auto complete time in seconds
+        delay:
+          type: number
+          description: Delay before showing survey
+        runOnDate:
+          type:
+            - string
+            - "null"
+          description: Date to run the survey
+        closeOnDate:
+          type:
+            - string
+            - "null"
+          description: Date to close the survey
+        surveyClosedMessage:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            heading:
+              type: string
+            subheading:
+              type: string
+          required:
+            - enabled
+            - heading
+            - subheading
+          description: Message shown when survey is closed
+        segmentId:
+          type:
+            - string
+            - "null"
+          description: ID of the segment
+        projectOverwrites:
+          type:
+            - object
+            - "null"
+          properties:
+            brandColor:
+              type:
+                - string
+                - "null"
+              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+            highlightBorderColor:
+              type:
+                - string
+                - "null"
+              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+            placement:
+              type:
+                - string
+                - "null"
+              enum: &a9
+                - bottomLeft
+                - bottomRight
+                - topLeft
+                - topRight
+                - center
+            clickOutsideClose:
+              type:
+                - boolean
+                - "null"
+            darkOverlay:
+              type:
+                - boolean
+                - "null"
+          description: Project specific overwrites
+        styling:
+          type:
+            - object
+            - "null"
+          properties:
+            brandColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            questionColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            inputColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            inputBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardBackgroundColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardShadowColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            highlightBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            isDarkModeEnabled:
+              type:
+                - boolean
+                - "null"
+            roundness:
+              type:
+                - number
+                - "null"
+            cardArrangement:
+              type:
+                - object
+                - "null"
+              properties:
+                linkSurveys:
+                  type: string
+                  enum: &a1
+                    - casual
+                    - straight
+                    - simple
+                appSurveys:
+                  type: string
+                  enum: *a1
+              required:
+                - linkSurveys
+                - appSurveys
+            background:
+              type:
+                - object
+                - "null"
+              properties:
+                bg:
+                  type:
+                    - string
+                    - "null"
+                bgType:
+                  type:
+                    - string
+                    - "null"
+                  enum: &a8
+                    - animation
+                    - color
+                    - image
+                    - upload
+                brightness:
+                  type:
+                    - number
+                    - "null"
+            hideProgressBar:
+              type:
+                - boolean
+                - "null"
+            isLogoHidden:
+              type:
+                - boolean
+                - "null"
+          description: Survey styling configuration
+        singleUse:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            isEncrypted:
+              type: boolean
+          required:
+            - enabled
+            - isEncrypted
+          description: Single use configuration
+        isVerifyEmailEnabled:
+          type: boolean
+          description: Whether email verification is enabled
+        isSingleResponsePerEmailEnabled:
+          type: boolean
+          description: Whether single response per email is enabled
+        inlineTriggers:
+          type:
+            - array
+            - "null"
+          items: {}
+          description: Inline triggers configuration
+        isBackButtonHidden:
+          type: boolean
+          description: Whether the back button is hidden
+        verifyEmail:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            message:
+              type: string
+          required:
+            - enabled
+            - message
+          description: Email verification configuration (deprecated)
+        displayPercentage:
+          type:
+            - number
+            - "null"
+          description: The display percentage of the survey
+        questions:
+          type: array
+          items: {}
+          description: The questions of the survey.
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - name
+        - redirectUrl
+        - type
+        - status
+        - thankYouMessage
+        - showLanguageSwitch
+        - showThankYouMessage
+        - welcomeCard
+        - displayProgressBar
+        - resultShareKey
+        - pin
+        - createdBy
+        - environmentId
+        - endings
+        - thankYouCard
+        - hiddenFields
+        - variables
+        - displayOption
+        - recontactDays
+        - displayLimit
+        - autoClose
+        - autoComplete
+        - delay
+        - runOnDate
+        - closeOnDate
+        - surveyClosedMessage
+        - segmentId
+        - projectOverwrites
+        - styling
+        - singleUse
+        - isVerifyEmailEnabled
+        - isSingleResponsePerEmailEnabled
+        - inlineTriggers
+        - isBackButtonHidden
+        - verifyEmail
+        - displayPercentage
+        - questions
     responseCreate:
       type: object
       properties:
@@ -968,7 +1982,7 @@ components:
                 additionalProperties:
                   type: string
           description: The data of the response
-          example: *a1
+          example: *a2
         variables:
           type: object
           additionalProperties:
@@ -976,13 +1990,13 @@ components:
               - type: string
               - type: number
           description: The variables of the response
-          example: *a2
+          example: *a3
         ttc:
           type: object
           additionalProperties:
             type: number
           description: The TTC of the response
-          example: *a3
+          example: *a4
         meta:
           type: object
           properties:
@@ -1008,7 +2022,7 @@ components:
             action:
               type: string
           description: The meta data of the response
-          example: *a4
+          example: *a5
       required:
         - surveyId
         - finished
@@ -1085,4 +2099,487 @@ components:
         - type
         - environmentId
       description: Input data for creating or updating a contact attribute
-
+    surveyInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the survey
+        redirectUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: The URL to redirect to after the survey is completed
+        type:
+          type: string
+          enum:
+            - link
+            - web
+            - website
+            - app
+          description: The type of the survey
+        environmentId:
+          type: string
+          description: The environment ID of the survey
+        questions:
+          type: array
+          items: {}
+          description: The questions of the survey.
+        endings:
+          type: array
+          items:
+            anyOf:
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    const: endScreen
+                  headline:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  subheader:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  buttonLabel:
+                    type: object
+                    additionalProperties:
+                      type: string
+                  buttonLink:
+                    type: string
+                    format: uri
+                  imageUrl:
+                    type: string
+                  videoUrl:
+                    type: string
+                required:
+                  - id
+                  - type
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    const: redirectToUrl
+                  url:
+                    type: string
+                  label:
+                    type: string
+                required:
+                  - id
+                  - type
+          default: *a6
+          description: The endings of the survey
+        thankYouCard:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            message:
+              type: string
+          required:
+            - enabled
+            - message
+          description: The thank you card of the survey (deprecated)
+        hiddenFields:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            fieldIds:
+              type: array
+              items:
+                type: string
+          required:
+            - enabled
+          description: Hidden fields configuration
+        variables:
+          type: array
+          items:
+            oneOf:
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string
+                    const: number
+                  value:
+                    type: number
+                    default: 0
+                required:
+                  - id
+                  - name
+                  - type
+              - type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  type:
+                    type: string
+                    const: text
+                  value:
+                    type: string
+                    default: ""
+                required:
+                  - id
+                  - name
+                  - type
+          description: Survey variables
+        displayOption:
+          type: string
+          enum: *a7
+          description: Display options for the survey
+        recontactDays:
+          type:
+            - number
+            - "null"
+          description: Days before recontacting
+        displayLimit:
+          type:
+            - number
+            - "null"
+          description: Display limit for the survey
+        autoClose:
+          type:
+            - number
+            - "null"
+          description: Auto close time in seconds
+        autoComplete:
+          type:
+            - number
+            - "null"
+          description: Auto complete time in seconds
+        delay:
+          type: number
+          description: Delay before showing survey
+        runOnDate:
+          type:
+            - string
+            - "null"
+          description: Date to run the survey
+        closeOnDate:
+          type:
+            - string
+            - "null"
+          description: Date to close the survey
+        singleUse:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            isEncrypted:
+              type: boolean
+          required:
+            - enabled
+            - isEncrypted
+          description: Single use configuration
+        isVerifyEmailEnabled:
+          type: boolean
+          description: Whether email verification is enabled
+        isSingleResponsePerEmailEnabled:
+          type: boolean
+          description: Whether single response per email is enabled
+        inlineTriggers:
+          type:
+            - array
+            - "null"
+          items: {}
+          description: Inline triggers configuration
+        verifyEmail:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            message:
+              type: string
+          required:
+            - enabled
+            - message
+          description: Email verification configuration (deprecated)
+        displayPercentage:
+          type:
+            - number
+            - "null"
+          description: The display percentage of the survey
+        welcomeCard:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            timeToFinish:
+              type: boolean
+            showResponseCount:
+              type: boolean
+            headline:
+              type: object
+              additionalProperties:
+                type: string
+            html:
+              type: object
+              additionalProperties:
+                type: string
+            fileUrl:
+              type: string
+            buttonLabel:
+              type: object
+              additionalProperties:
+                type: string
+            videoUrl:
+              type: string
+          required:
+            - enabled
+            - timeToFinish
+            - showResponseCount
+          description: The welcome card configuration
+        surveyClosedMessage:
+          type:
+            - object
+            - "null"
+          properties:
+            enabled:
+              type: boolean
+            heading:
+              type: string
+            subheading:
+              type: string
+          required:
+            - enabled
+            - heading
+            - subheading
+          description: Message shown when survey is closed
+        styling:
+          type:
+            - object
+            - "null"
+          properties:
+            brandColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            questionColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            inputColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            inputBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardBackgroundColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            cardShadowColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            highlightBorderColor:
+              type:
+                - object
+                - "null"
+              properties:
+                light:
+                  type: string
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+                dark:
+                  type:
+                    - string
+                    - "null"
+                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+              required:
+                - light
+            isDarkModeEnabled:
+              type:
+                - boolean
+                - "null"
+            roundness:
+              type:
+                - number
+                - "null"
+            cardArrangement:
+              type:
+                - object
+                - "null"
+              properties:
+                linkSurveys:
+                  type: string
+                  enum: *a1
+                appSurveys:
+                  type: string
+                  enum: *a1
+              required:
+                - linkSurveys
+                - appSurveys
+            background:
+              type:
+                - object
+                - "null"
+              properties:
+                bg:
+                  type:
+                    - string
+                    - "null"
+                bgType:
+                  type:
+                    - string
+                    - "null"
+                  enum: *a8
+                brightness:
+                  type:
+                    - number
+                    - "null"
+            hideProgressBar:
+              type:
+                - boolean
+                - "null"
+            isLogoHidden:
+              type:
+                - boolean
+                - "null"
+          description: Survey styling configuration
+        projectOverwrites:
+          type:
+            - object
+            - "null"
+          properties:
+            brandColor:
+              type:
+                - string
+                - "null"
+              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+            highlightBorderColor:
+              type:
+                - string
+                - "null"
+              pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
+            placement:
+              type:
+                - string
+                - "null"
+              enum: *a9
+            clickOutsideClose:
+              type:
+                - boolean
+                - "null"
+            darkOverlay:
+              type:
+                - boolean
+                - "null"
+          description: Project specific overwrites
+        showLanguageSwitch:
+          type:
+            - boolean
+            - "null"
+          description: Whether to show the language switch
+      required:
+        - name
+        - type
+        - environmentId
+        - questions
+        - hiddenFields
+        - displayOption
+        - delay
+        - singleUse
+        - isVerifyEmailEnabled
+        - isSingleResponsePerEmailEnabled
+        - welcomeCard
+      description: A survey input object for creating or updating surveys
+    surveyId:
+      type: string
+      description: The ID of the survey
