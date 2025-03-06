@@ -16,18 +16,19 @@
 -keepattributes SourceFile,LineNumberTable,Exceptions,InnerClasses,Signature,Deprecated,*Annotation*,EnclosingMethod
 
 # add all known-to-be-safely-shrinkable classes to the beginning of line below
--keep class !androidx.legacy.**,!com.google.android.**,** { *; }
+-keep class !androidx.legacy.**,!com.google.android.**,!androidx.** { *; }
 -keep class android.support.v4.app.** { *; }
+
+
 
 
 # Retrofit
 -dontwarn okio.**
 -keep class com.squareup.okhttp.** { *; }
 -keep interface com.squareup.okhttp.** { *; }
+-keep class retrofit.** { *; }
 -dontwarn com.squareup.okhttp.**
 
--dontwarn rx.**
--dontwarn retrofit.**
 -keep class retrofit.** { *; }
 -keepclasseswithmembers class * {
     @retrofit.http.* <methods>;

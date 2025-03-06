@@ -8,7 +8,11 @@ data class JsMessageData(
 ) {
     companion object {
         fun from(string: String): JsMessageData {
-            return Gson().fromJson(string, JsMessageData::class.java)
+            return try {
+                Gson().fromJson(string, JsMessageData::class.java)
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Invalid JSON format: ${e.message}", e)
+            }
         }
     }
 }

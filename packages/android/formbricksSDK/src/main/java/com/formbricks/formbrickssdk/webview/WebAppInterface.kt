@@ -4,6 +4,7 @@ import android.webkit.JavascriptInterface
 import com.formbricks.formbrickssdk.model.javascript.JsMessageData
 import com.formbricks.formbrickssdk.model.javascript.EventType
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
+import com.google.gson.JsonParseException
 import timber.log.Timber
 
 class WebAppInterface(private val callback: WebAppCallback?) {
@@ -34,6 +35,12 @@ class WebAppInterface(private val callback: WebAppCallback?) {
             }
         } catch (e: Exception) {
             Timber.tag("WebAppInterface error").e(e)
+        } catch (e: JsonParseException) {
+            Timber.tag("WebAppInterface error").e(e, "Failed to parse JSON message: $data")
+        } catch (e: IllegalArgumentException) {
+            Timber.tag("WebAppInterface error").e(e, "Invalid message format: $data")
+        } catch (e: Exception) {
+            Timber.tag("WebAppInterface error").e(e, "Unexpected error processing message: $data")
         }
     }
 

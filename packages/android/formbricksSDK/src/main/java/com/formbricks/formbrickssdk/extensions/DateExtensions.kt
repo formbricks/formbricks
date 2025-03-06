@@ -21,9 +21,13 @@ fun Date.dateString(): String {
 
 fun UserStateData.lastDisplayAt(): Date? {
     lastDisplayAt?.let {
-        val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-        val dateTime = LocalDateTime.parse(it, formatter)
-        return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        try {
+            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
+            val dateTime = LocalDateTime.parse(it, formatter)
+            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        } catch (e: Exception) {
+           return null
+        }
     }
 
     return null
@@ -31,9 +35,13 @@ fun UserStateData.lastDisplayAt(): Date? {
 
 fun UserState.expiresAt(): Date? {
     expiresAt?.let {
-        val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-        val dateTime = LocalDateTime.parse(it, formatter)
-        return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        try {
+            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
+            val dateTime = LocalDateTime.parse(it, formatter)
+            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     return null
@@ -41,9 +49,13 @@ fun UserState.expiresAt(): Date? {
 
 fun EnvironmentDataHolder.expiresAt(): Date? {
     data?.expiresAt?.let {
-        val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-        val dateTime = LocalDateTime.parse(it, formatter)
-        return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        try {
+            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
+            val dateTime = LocalDateTime.parse(it, formatter)
+            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     return null
