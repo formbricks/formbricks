@@ -8,7 +8,7 @@ import { useCallback, useEffect } from "react";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@formbricks/lib/localStorage";
 
 interface AzureButtonProps {
-  inviteUrl?: string | null;
+  inviteUrl?: string;
   directRedirect?: boolean;
   lastUsed?: boolean;
 }

@@ -1,9 +1,37 @@
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
-import { formatDateWithOrdinal, isValidDateString } from "@formbricks/lib/utils/datetime";
-import { extractFallbackValue, extractId, extractRecallInfo } from "@formbricks/lib/utils/recall";
+import { formatDateWithOrdinal, isValidDateString } from "@/lib/date-time";
+import { getLocalizedValue } from "@/lib/i18n";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyQuestion } from "@formbricks/types/surveys/types";
+
+// Extracts the ID of recall question from a string containing the "recall" pattern.
+const extractId = (text: string): string | null => {
+  const pattern = /#recall:([A-Za-z0-9_-]+)/;
+  const match = text.match(pattern);
+  if (match && match[1]) {
+    return match[1];
+  } else {
+    return null;
+  }
+};
+
+// Extracts the fallback value from a string containing the "fallback" pattern.
+const extractFallbackValue = (text: string): string => {
+  const pattern = /fallback:(\S*)#/;
+  const match = text.match(pattern);
+  if (match && match[1]) {
+    return match[1];
+  } else {
+    return "";
+  }
+};
+
+// Extracts the complete recall information (ID and fallback) from a headline string.
+const extractRecallInfo = (headline: string, id?: string): string | null => {
+  const idPattern = id ? id : "[A-Za-z0-9_-]+";
+  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:(\\S*)#`);
+  const match = headline.match(pattern);
+  return match ? match[0] : null;
+};
 
 export const replaceRecallInfo = (
   text: string,
@@ -54,7 +82,7 @@ export const parseRecallInformation = (
   responseData: TResponseData,
   variables: TResponseVariables
 ) => {
-  const modifiedQuestion = structuredClone(question);
+  const modifiedQuestion = JSON.parse(JSON.stringify(question));
   if (question.headline[languageCode].includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),

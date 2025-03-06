@@ -33,7 +33,11 @@ const config = () => {
         rollupTypes: true,
         bundledPackages: ["@formbricks/api", "@formbricks/types"],
       }),
-      copyCompiledAssetsPlugin({ filename: "formbricks", distDir: resolve(__dirname, "dist") }),
+      copyCompiledAssetsPlugin({
+        filename: "formbricks",
+        distDir: resolve(__dirname, "dist"),
+        skipDirectoryCheck: true, // Skip checking for subdirectories that might not exist
+      }),
     ],
     test: {
       setupFiles: ["./vitest.setup.ts"],

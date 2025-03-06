@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/formbricks/formbricks
   pullPolicy: IfNotPresent
-  tag: v2.6.0
+  tag: v3.2.0
 
 service:
   type: ClusterIP
@@ -43,6 +43,16 @@ autoscaling:
       selectPolicy: Max
 
 replicaCount: 1
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
 
 formbricksConfig:
   nextAuthSecret: ""
@@ -125,7 +135,9 @@ redis:
 
 postgresql:
   enabled: true
-  externalUrl: ""
+  image:
+    repository: pgvector/pgvector
+    tag: 0.8.0-pg17
   auth:
     username: formbricks
     password: formbrickspassword
@@ -134,3 +146,11 @@ postgresql:
     persistence:
       enabled: true
       size: 10Gi
+    podSecurityContext:
+      enabled: true
+      fsGroup: 1001
+      runAsUser: 1001
+    containerSecurityContext:
+      enabled: true
+      runAsUser: 1001
+      readOnlyRootFilesystem: false

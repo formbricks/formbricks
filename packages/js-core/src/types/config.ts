@@ -21,6 +21,7 @@ export type TEnvironmentStateSurvey = Pick<
   | "hiddenFields"
   | "delay"
   | "projectOverwrites"
+  | "isBackButtonHidden"
 > & {
   languages: (SurveyLanguage & { language: Language })[];
   triggers: { actionClass: ActionClass }[];

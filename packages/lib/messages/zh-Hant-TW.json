@@ -6,6 +6,7 @@
     "continue_with_google": "使用 Google 繼續",
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
+    "continue_with_saml": "使用 SAML SSO 繼續",
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "use_a_backup_code": "使用備份碼"
     },
+    "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
       "have_an_account": "已有帳戶？",
@@ -1447,6 +1449,8 @@
         "heading": "標題",
         "hidden_field_added_successfully": "隱藏欄位已成功新增",
         "hide_advanced_settings": "隱藏進階設定",
+        "hide_back_button": "隱藏「Back」按鈕",
+        "hide_back_button_description": "不要在問卷中顯示返回按鈕",
         "hide_logo": "隱藏標誌",
         "hide_progress_bar": "隱藏進度列",
         "hide_the_logo_in_this_specific_survey": "在此特定問卷中隱藏標誌",
@@ -1853,10 +1857,6 @@
       "smileys_description": "使用視覺指標來擷取客戶接觸點的回饋。"
     }
   },
-  "health": {
-    "degraded": "您的 Formbricks 運作狀況已降低",
-    "healthy": "所有系統都已啟動並執行"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "請聯絡您的組織擁有者以取得專案存取權限。或建立自己的組織以開始使用。",
@@ -1896,7 +1896,6 @@
   "s": {
     "check_inbox_or_spam": "如果您的收件匣中沒有看到電子郵件，也請檢查您的垃圾郵件資料夾。",
     "completed": "此免費且開源的問卷已關閉。",
-    "could_not_create_display": "無法建立顯示",
     "create_your_own": "建立您自己的",
     "enter_pin": "此問卷已受保護。請輸入下方 PIN 碼",
     "just_curious": "只是好奇？",

@@ -4,12 +4,13 @@ import { Headline } from "@/components/general/headline";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getMonthName, getOrdinalDate } from "@/lib/date-time";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { cn } from "@/lib/utils";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import DatePicker from "react-date-picker";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getMonthName, getOrdinalDate } from "@formbricks/lib/utils/datetime";
+import { DatePickerProps } from "react-date-picker";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyDateQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import "../../styles/date-picker.css";
@@ -28,6 +29,7 @@ interface DateQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
 }
 
 function CalendarIcon() {
@@ -91,6 +93,7 @@ export function DateQuestion({
   setTtc,
   ttc,
   currentQuestionId,
+  isBackButtonHidden,
 }: DateQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const [errorMessage, setErrorMessage] = useState("");
@@ -259,7 +262,7 @@ export function DateQuestion({
                   setDatePickerOpen(false);
                   setSelectedDate(selectedDate);
                 }}
-                calendarIcon={<CalendarIcon />}
+                calendarIcon={(<CalendarIcon />) as DatePickerProps["calendarIcon"]}
                 showLeadingZeros={false}
               />
             </div>
@@ -272,7 +275,7 @@ export function DateQuestion({
           isLastQuestion={isLastQuestion}
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

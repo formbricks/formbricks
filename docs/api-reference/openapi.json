@@ -6952,7 +6952,7 @@
     },
     "/api/v1/management/surveys/{surveyId}/singleUseIds": {
       "get": {
-        "description": "Generates multiple single use survey links for a survey based on its id. Count of links can be controlled using the limit query param(min: 1, max: 5000, default: 10).",
+        "description": "Generates multiple single use survey links for a survey based on its id.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -6969,6 +6969,21 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "description": "Number of links to generate.",
+            "example": 10,
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "exclusiveMaximum": false,
+              "exclusiveMinimum": false,
+              "maximum": 5000,
+              "minimum": 1,
+              "type": "integer"
             }
           }
         ],
@@ -7710,7 +7725,7 @@
           }
         },
         "summary": "Health Check",
-        "tags": ["default"]
+        "tags": ["Health"]
       }
     }
   },

@@ -6,6 +6,7 @@
     "continue_with_google": "Continue with Google",
     "continue_with_oidc": "Continue with {oidcDisplayName}",
     "continue_with_openid": "Continue with OpenID",
+    "continue_with_saml": "Continue with SAML SSO",
     "forgot-password": {
       "back_to_login": "Back to login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "New to Formbricks?",
       "use_a_backup_code": "Use a backup code"
     },
+    "saml_connection_error": "Something went wrong. Please check your app console for more details.",
     "signup": {
       "captcha_failed": "Captcha failed",
       "have_an_account": "Have an account?",
@@ -265,7 +267,7 @@
     "off": "Off",
     "on": "On",
     "only_one_file_allowed": "Only one file is allowed",
-    "only_owners_managers_and_manage_access_members_can_perform_this_action": "Only owners, managers and manage access members can perform this action.",
+    "only_owners_managers_and_manage_access_members_can_perform_this_action": "Only owners and managers can perform this action.",
     "or": "or",
     "organization": "Organization",
     "organization_not_found": "Organization not found",
@@ -1447,6 +1449,8 @@
         "heading": "Heading",
         "hidden_field_added_successfully": "Hidden field added successfully",
         "hide_advanced_settings": "Hide advanced settings",
+        "hide_back_button": "Hide 'Back' button",
+        "hide_back_button_description": "Do not display the back button in the survey",
         "hide_logo": "Hide logo",
         "hide_progress_bar": "Hide progress bar",
         "hide_the_logo_in_this_specific_survey": "Hide the logo in this specific survey",
@@ -1853,10 +1857,6 @@
       "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
     }
   },
-  "health": {
-    "degraded": "Your Formbricks health is degraded",
-    "healthy": "All systems are up and running"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Reach out to your organization owner to get access to projects. Or create an own organization to get started.",
@@ -1896,7 +1896,6 @@
   "s": {
     "check_inbox_or_spam": "Please also check your spam folder if you don't see the email in your inbox.",
     "completed": "This free & open-source survey has been closed.",
-    "could_not_create_display": "Could not create display",
     "create_your_own": "Create your own",
     "enter_pin": "This survey is protected. Enter the PIN below",
     "just_curious": "Just curious?",

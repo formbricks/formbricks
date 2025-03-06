@@ -1,39 +1,29 @@
 /* eslint-disable no-console -- Required for error logging */
-/* eslint-disable @typescript-eslint/no-empty-function -- There are some empty functions here that we need */
-import { FormbricksAPI } from "@formbricks/api";
+import { type TJsPersonState } from "@formbricks/types/js";
+import { type TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
-import { ResponseQueue } from "@/lib/common/response-queue";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
-  getDefaultLanguageCode,
   getLanguageCode,
+  getStyling,
   shouldDisplayBasedOnPercentage,
- getStyling } from "@/lib/common/utils";
-import { SurveyState } from "@/lib/survey/state";
+} from "@/lib/common/utils";
 import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
-import { type TResponseHiddenFieldValue, type TResponseUpdate } from "@/types/response";
-import { type TFileUploadParams, type TUploadFileConfig } from "@/types/storage";
 
 const config = Config.getInstance();
 const logger = Logger.getInstance();
 const timeoutStack = TimeoutStack.getInstance();
 
 let isSurveyRunning = false;
-let setIsError = (_: boolean): void => {};
-let setIsResponseSendingFinished = (_: boolean): void => {};
 
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
 
-export const triggerSurvey = async (
-  survey: TEnvironmentStateSurvey,
-  action?: string
-  // properties?: TJsTrackProperties
-): Promise<void> => {
+export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: string): Promise<void> => {
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
@@ -42,11 +32,6 @@ export const triggerSurvey = async (
       return; // skip displaying the survey
     }
   }
-
-  // const hiddenFieldsObject: TResponseHiddenFieldValue = handleHiddenFields(
-  //   survey.hiddenFields,
-  //   properties?.hiddenFields
-  // );
 
   await renderWidget(survey, action);
 };
@@ -84,22 +69,6 @@ const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const surveyState = new SurveyState(survey.id, null, null, config.get().user.data.userId);
-
-  const responseQueue = new ResponseQueue(
-    {
-      appUrl: config.get().appUrl,
-      environmentId: config.get().environmentId,
-      retryAttempts: 2,
-      onResponseSendingFailed: () => {
-        setIsError(true);
-      },
-      onResponseSendingFinished: () => {
-        setIsResponseSendingFinished(true);
-      },
-    },
-    surveyState
-  );
   const projectOverwrites = survey.projectOverwrites ?? {};
   const clickOutside = projectOverwrites.clickOutsideClose ?? project.clickOutsideClose;
   const darkOverlay = projectOverwrites.darkOverlay ?? project.darkOverlay;
@@ -108,7 +77,12 @@ const renderWidget = async (
   const formbricksSurveys = await loadFormbricksSurveysExternally();
 
   const timeoutId = setTimeout(() => {
-    formbricksSurveys.renderSurveyModal({
+    formbricksSurveys.renderSurvey({
+      apiHost: config.get().appUrl,
+      environmentId: config.get().environmentId,
+      userId: config.get().user.data.userId ?? undefined,
+      action,
+      // @ts-expect-error -- the types are not compatible because they come from different places (types package vs local types)
       survey,
       isBrandingEnabled,
       clickOutside,
@@ -116,34 +90,7 @@ const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(project, survey),
-      getSetIsError: (f: (value: boolean) => void) => {
-        setIsError = f;
-      },
-      getSetIsResponseSendingFinished: (f: (value: boolean) => void) => {
-        setIsResponseSendingFinished = f;
-      },
-      onDisplay: async () => {
-        const { userId } = config.get().user.data;
-
-        const api = new FormbricksAPI({
-          apiHost: config.get().appUrl,
-          environmentId: config.get().environmentId,
-        });
-
-        const res = await api.client.display.create({
-          surveyId: survey.id,
-          ...(userId && { userId }),
-        });
-
-        if (!res.ok) {
-          throw new Error("Could not create display");
-        }
-
-        const { id } = res.data;
-
-        surveyState.updateDisplayId(id);
-        responseQueue.updateSurveyState(surveyState);
-
+      onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
         const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
@@ -167,72 +114,28 @@ const renderWidget = async (
           filteredSurveys,
         });
       },
-      onResponse: (responseUpdate: TResponseUpdate) => {
-        const { userId } = config.get().user.data;
-
-        const isNewResponse = surveyState.responseId === null;
-
-        if (userId) {
-          surveyState.updateUserId(userId);
-        }
-
-        responseQueue.updateSurveyState(surveyState);
-        responseQueue.add({
-          data: responseUpdate.data,
-          ttc: responseUpdate.ttc,
-          finished: responseUpdate.finished,
-          language:
-            responseUpdate.language === "default" ? getDefaultLanguageCode(survey) : responseUpdate.language,
-          meta: {
-            url: window.location.href,
-            action,
+      onResponseCreated: () => {
+        const responses = config.get().user.data.responses;
+        const newPersonState: TJsPersonState = {
+          ...config.get().user,
+          data: {
+            ...config.get().user.data,
+            responses: responses.length ? [...responses, survey.id] : [survey.id],
           },
-          variables: responseUpdate.variables,
-          hiddenFields,
-          displayId: surveyState.displayId,
+        };
+
+        const filteredSurveys = filterSurveys(config.get().environment, newPersonState);
+
+        config.update({
+          ...config.get(),
+          environment: config.get().environment,
+          user: newPersonState,
+          filteredSurveys,
         });
-
-        if (isNewResponse) {
-          const responses = config.get().user.data.responses;
-          const newUserState: TUserState = {
-            ...config.get().user,
-            data: {
-              ...config.get().user.data,
-              responses: responses.length ? [...responses, surveyState.surveyId] : [surveyState.surveyId],
-            },
-          };
-
-          const filteredSurveys = filterSurveys(config.get().environment, newUserState);
-
-          config.update({
-            ...config.get(),
-            environment: config.get().environment,
-            user: newUserState,
-            filteredSurveys,
-          });
-        }
       },
       onClose: closeSurvey,
-      onFileUpload: async (file: TFileUploadParams["file"], params: TUploadFileConfig) => {
-        const api = new FormbricksAPI({
-          apiHost: config.get().appUrl,
-          environmentId: config.get().environmentId,
-        });
-
-        return await api.client.storage.uploadFile(
-          {
-            type: file.type,
-            name: file.name,
-            base64: file.base64,
-          },
-          params
-        );
-      },
-      onRetry: () => {
-        setIsError(false);
-        void responseQueue.processQueue();
-      },
       hiddenFieldsRecord: hiddenFields,
+      getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
   }, survey.delay * 1000);
 
