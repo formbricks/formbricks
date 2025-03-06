@@ -187,6 +187,4 @@ const mimeTypes: { [key in TAllowedFileExtension]: string } = {
 };
 
 // Function to convert file extension to its MIME type
-export const getMimeType = (extension: TAllowedFileExtension): string => {
-  return mimeTypes[extension];
-};
+export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];
