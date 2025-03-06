@@ -1,4 +1,5 @@
 import "server-only";
+import { responseSelection } from "@/app/api/v1/client/[environmentId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
@@ -18,59 +19,6 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getContact } from "./contact";
-
-export const responseSelection = {
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  surveyId: true,
-  finished: true,
-  data: true,
-  meta: true,
-  ttc: true,
-  variables: true,
-  contactAttributes: true,
-  singleUseId: true,
-  language: true,
-  displayId: true,
-  contact: {
-    select: {
-      id: true,
-      attributes: {
-        select: { attributeKey: true, value: true },
-      },
-    },
-  },
-  tags: {
-    select: {
-      tag: {
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          name: true,
-          environmentId: true,
-        },
-      },
-    },
-  },
-  notes: {
-    select: {
-      id: true,
-      createdAt: true,
-      updatedAt: true,
-      text: true,
-      user: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      isResolved: true,
-      isEdited: true,
-    },
-  },
-} satisfies Prisma.ResponseSelect;
 
 export const createResponse = async (responseInput: TResponseInputV2): Promise<TResponse> => {
   validateInputs([responseInput, ZResponseInput]);
