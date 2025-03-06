@@ -277,7 +277,7 @@ export const getSurveys = reactCache(
             },
             select: selectSurvey,
             orderBy: {
-              createdAt: "desc",
+              updatedAt: "desc",
             },
             take: limit,
             skip: offset,
