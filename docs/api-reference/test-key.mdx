@@ -1,0 +1,50 @@
+---
+title: "Test API Key"
+icon: "message-check"
+description: "Here is how you can test your API key to make sure it is working."
+---
+
+To test if your API key is working, you can use the following request:
+
+### Mandatory Headers
+
+| Name            | x-Api-Key                |
+| --------------- | ------------------------ |
+| **Type**        | string                   |
+| **Description** | Your Formbricks API key. |
+
+### Request
+
+```bash cURL
+GET - /api/v1/me
+
+curl --location \
+'https://app.formbricks.com/api/v1/me' \
+--header \
+'x-api-key: <your-api-key>'
+```
+
+### Response
+
+<CodeGroup>
+  
+
+```bash 200 (Success)
+{
+  "id": "cll2m30r70004mx0huqkitgqv",
+  "createdAt": "2023-08-08T18:04:59.922Z",
+  "updatedAt": "2023-08-08T18:04:59.922Z",
+  "type": "production",
+  "project": {
+      "id": "cll2m30r60003mx0hnemjfckr",
+      "name": "My Project"
+  },
+  "appSetupCompleted": false,
+  "websiteSetupCompleted": false,
+}
+```
+
+```bash 401 (Not Authenticated)
+Not authenticated
+```
+</CodeGroup>

@@ -1,11 +1,12 @@
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
+import { hasEmailAttribute } from "@/modules/ee/contacts/lib/contact-attributes";
 import { prisma } from "@formbricks/database";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributes, ZContactAttributes } from "@formbricks/types/contact-attribute";
-import { getContactAttributeKeys } from "./contacts";
 
 export const updateAttributes = async (
   contactId: string,
@@ -24,24 +25,7 @@ export const updateAttributes = async (
   const [contactAttributeKeys, existingEmailAttribute] = await Promise.all([
     getContactAttributeKeys(environmentId),
     contactAttributesParam.email
-      ? prisma.contactAttribute.findFirst({
-          where: {
-            AND: [
-              {
-                attributeKey: {
-                  key: "email",
-                },
-                value: contactAttributesParam.email,
-              },
-              {
-                NOT: {
-                  contactId,
-                },
-              },
-            ],
-          },
-          select: { id: true },
-        })
+      ? hasEmailAttribute(contactAttributesParam.email, environmentId, contactId)
       : Promise.resolve(null),
   ]);
 
