@@ -48,6 +48,7 @@ final class UserManager {
         newDisplays.append(Display(surveyId: surveyId, createdAt: DateFormatter.isoFormatter.string(from: lastDisplayedAt)))
         displays = newDisplays
         self.lastDisplayedAt = lastDisplayedAt
+        SurveyManager.shared.filterSurveys()
     }
     
     /// Saves `surveyId` to the `responses` property.
@@ -55,6 +56,7 @@ final class UserManager {
         var newResponses = responses ?? []
         newResponses.append(surveyId)
         responses = newResponses
+        SurveyManager.shared.filterSurveys()
     }
     
     /// Syncs the user state with the server if the user id is set and the expiration date has passed.

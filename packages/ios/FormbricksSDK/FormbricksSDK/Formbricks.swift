@@ -128,7 +128,7 @@ import Network
         }
         
         Formbricks.language = language
-        UserManager.shared.add(attribute: language, forKey: "language")
+        UserManager.shared.set(language: language)
     }
     
     /**

@@ -2,16 +2,15 @@ package com.formbricks.formbrickssdk.model.environment
 
 import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
 @Serializable
 enum class DisplayOptionType {
-    @SerialName("respondMultiple") RESPOND_MULTIPLE,
-    @SerialName("displayOnce") DISPLAY_ONCE,
-    @SerialName("displayMultiple") DISPLAY_MULTIPLE,
-    @SerialName("displaySome") DISPLAY_SOME,
+    @SerializedName("respondMultiple") RESPOND_MULTIPLE,
+    @SerializedName("displayOnce") DISPLAY_ONCE,
+    @SerializedName("displayMultiple") DISPLAY_MULTIPLE,
+    @SerializedName("displaySome") DISPLAY_SOME,
 }
 
 @OptIn(ExperimentalSerializationApi::class)

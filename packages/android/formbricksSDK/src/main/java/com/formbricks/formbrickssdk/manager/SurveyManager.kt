@@ -33,10 +33,12 @@ object SurveyManager {
     private const val FORMBRICKS_PREFS = "formbricks_prefs"
     private const val PREF_FORMBRICKS_DATA_HOLDER = "formbricksDataHolder"
 
-    private val refreshTimer = Timer()
-    private var displayTimer = Timer()
+    internal val refreshTimer = Timer()
+    internal var displayTimer = Timer()
+    internal var hasApiError = false
+    internal var isShowingSurvey = false
     private val prefManager by lazy { Formbricks.applicationContext.getSharedPreferences(FORMBRICKS_PREFS, Context.MODE_PRIVATE) }
-    private var filteredSurveys: MutableList<Survey> = mutableListOf()
+    internal var filteredSurveys: MutableList<Survey> = mutableListOf()
 
     private var environmentDataHolderJson: String?
         get() {
@@ -101,12 +103,14 @@ object SurveyManager {
      * Checks if the environment state needs to be refreshed based on its [expiresAt] property,
      * and if so, refreshes it, starts the refresh timer, and filters the surveys.
      */
-    fun refreshEnvironmentIfNeeded() {
-        environmentDataHolder?.expiresAt()?.let {
-            if (it.after(Date())) {
-                Timber.tag("SurveyManager").d("Environment state is still valid until $it")
-                filterSurveys()
-                return
+    fun refreshEnvironmentIfNeeded(force: Boolean = false) {
+        if (!force) {
+            environmentDataHolder?.expiresAt()?.let {
+                if (it.after(Date())) {
+                    Timber.tag("SurveyManager").d("Environment state is still valid until $it")
+                    filterSurveys()
+                    return
+                }
             }
         }
 
@@ -115,7 +119,9 @@ object SurveyManager {
                 environmentDataHolder = FormbricksApi.getEnvironmentState().getOrThrow()
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
+                hasApiError = false
             } catch (e: Exception) {
+                hasApiError = true
                 Timber.tag("SurveyManager").e(e, "Unable to refresh environment state.")
                 startErrorTimer()
             }
@@ -139,6 +145,7 @@ object SurveyManager {
 
         if (shouldDisplay) {
             firstSurveyWithActionClass?.id?.let {
+                isShowingSurvey = true
                 val timeout = firstSurveyWithActionClass.delay ?: 0.0
                 stopDisplayTimer()
                 displayTimer.schedule(object : TimerTask() {

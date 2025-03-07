@@ -37,7 +37,7 @@ object UserManager {
     private var backingResponses: List<String>? = null
     private var backingLastDisplayedAt: Date? = null
     private var backingExpiresAt: Date? = null
-    private val syncTimer = Timer()
+    internal val syncTimer = Timer()
 
     /**
      * Starts an update queue with the given user id.
@@ -87,6 +87,7 @@ object UserManager {
         newDisplays.add(Display(surveyId, lastDisplayedAt.dateString()))
         displays = newDisplays
         this.lastDisplayedAt = lastDisplayedAt
+        SurveyManager.filterSurveys()
     }
 
     /**
@@ -98,6 +99,7 @@ object UserManager {
         val newResponses = responses?.toMutableList() ?: mutableListOf()
         newResponses.add(surveyId)
         responses = newResponses
+        SurveyManager.filterSurveys()
     }
 
     /**
