@@ -1,18 +1,20 @@
 import { getTranslate } from "@/tolgee/server";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
+import React from "react";
 import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
 
 const fbLogoUrl = FB_LOGO_URL;
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  html: string;
-  logoUrl?: string;
+  readonly html: string;
+  readonly logoUrl?: string;
 }
 
 export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
+  console.log(t("emails.imprint"));
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
   return (

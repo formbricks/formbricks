@@ -17,7 +17,7 @@ import { useTranslate } from "@tolgee/react";
 import { RepeatIcon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
@@ -202,13 +202,18 @@ export const EmailCustomizationSettings = ({
 
                     <div className="flex items-center gap-2">
                       <Button
+                        data-testid="replace-logo-button"
                         variant="secondary"
                         onClick={() => inputRef.current?.click()}
                         disabled={isReadOnly}>
                         <RepeatIcon className="h-4 w-4" />
                         {t("environments.settings.general.replace_logo")}
                       </Button>
-                      <Button onClick={removeLogo} variant="outline" disabled={isReadOnly}>
+                      <Button
+                        data-testid="remove-logo-button"
+                        onClick={removeLogo}
+                        variant="outline"
+                        disabled={isReadOnly}>
                         <Trash2Icon className="h-4 w-4" />
                         {t("environments.settings.general.remove_logo")}
                       </Button>
@@ -233,7 +238,11 @@ export const EmailCustomizationSettings = ({
               </div>
 
               <div className="flex gap-4">
-                <Button variant="secondary" disabled={isReadOnly} onClick={sendTestEmail}>
+                <Button
+                  data-testid="send-test-email-button"
+                  variant="secondary"
+                  disabled={isReadOnly}
+                  onClick={sendTestEmail}>
                   {t("common.send_test_email")}
                 </Button>
                 <Button onClick={handleSave} disabled={!logoFile || isReadOnly} loading={isSaving}>
@@ -243,6 +252,7 @@ export const EmailCustomizationSettings = ({
             </div>
             <div className="shadow-card-xl min-h-52 w-[446px] rounded-t-lg border border-slate-100 px-10 pb-4 pt-10">
               <Image
+                data-testid="email-customization-preview-image"
                 src={logoUrl || fbLogoUrl}
                 alt="Logo"
                 className="mx-auto max-h-[100px] max-w-full object-contain"

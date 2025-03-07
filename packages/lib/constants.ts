@@ -256,6 +256,8 @@ export const BILLING_LIMITS = {
   },
 } as const;
 
+export const AI_AZURE_LLM_RESSOURCE_NAME = env.AI_AZURE_LLM_RESSOURCE_NAME;
+
 export const IS_AI_CONFIGURED = Boolean(
   env.AI_AZURE_EMBEDDINGS_API_KEY &&
     env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID &&

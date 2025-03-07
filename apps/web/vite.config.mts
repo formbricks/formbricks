@@ -5,6 +5,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    environment: "node",
+    environmentMatchGlobs: [
+      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
+      ["**/*.test.tsx", "jsdom"],
+    ],
     exclude: ['playwright/**', 'node_modules/**'],
     setupFiles: ['../../packages/lib/vitestSetup.ts'],
     env: loadEnv('', process.cwd(), ''),
@@ -16,6 +21,10 @@ export default defineConfig({
         'modules/api/v2/**/*.ts',
         'modules/auth/lib/**/*.ts',
         'modules/signup/lib/**/*.ts',
+        'modules/ee/whitelabel/email-customization/components/*.tsx',
+        'modules/email/components/email-template.tsx',
+        'modules/email/emails/survey/follow-up.tsx',
+        'app/(app)/environments/**/settings/(organization)/general/page.tsx',
       ],
       exclude: [
         '**/.next/**',
