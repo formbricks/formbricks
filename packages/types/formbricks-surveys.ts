@@ -50,6 +50,7 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   onDisplayCreated?: () => void | Promise<void>;
   onResponseCreated?: () => void | Promise<void>;
   onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
   mode?: "modal" | "inline";
   containerId?: string;
   clickOutside?: boolean;

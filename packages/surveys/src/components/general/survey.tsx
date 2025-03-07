@@ -48,6 +48,9 @@ export function Survey({
   onClose,
   onFinished,
   onRetry,
+  onDisplayCreated,
+  onResponseCreated,
+  onOpenExternalURL,
   isRedirectDisabled = false,
   prefillResponseData,
   skipPrefilled,
@@ -64,8 +67,6 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
   action,
-  onDisplayCreated,
-  onResponseCreated,
   singleUseId,
   singleUseResponseId,
 }: SurveyContainerProps) {
@@ -552,6 +553,7 @@ export function Survey({
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
               variablesData={currentVariables}
+              onOpenExternalURL={onOpenExternalURL}
             />
           );
         }
@@ -578,6 +580,7 @@ export function Survey({
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
+              onOpenExternalURL={onOpenExternalURL}
             />
           )
         );
