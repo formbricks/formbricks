@@ -1,0 +1,5 @@
+apiVersion: v2
+name: eks-workloads
+description: A Helm chart for installing the EKS workloads
+type: application
+version: 0.0.1

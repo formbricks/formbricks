@@ -1,0 +1,40 @@
+{{- if and (.Values.formbricks) (.Values.formbricks.enabled) }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: formbricks
+  namespace: {{ .Values.argocdNamespace | default "argocd" }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: {{ .Values.argocdProject | default "default" }}
+  sources:
+    - repoURL: '{{ .Values.addons_repo_url }}'
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      ref: values
+    - repoURL: https://github.com/d3vb0ox/formbricks.git
+      targetRevision: '{{ .Values.addons_repo_revision }}'
+      path: helm-chart
+      chart: formbricks
+      helm:
+        releaseName: formbricks
+        ignoreMissingValueFiles: true
+        valuesObject:
+          certificateArn: '{{ .Values.formbricks.certificateArn }}'
+  destination:
+    namespace: 'formbricks'
+    name: '{{ .Values.clusterName }}'
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "Validate=false"
+      - "PrunePropagationPolicy=Foreground"
+      - "PruneLast=true"
+      - "RespectIgnoreDifferences=false"
+{{- end }}
