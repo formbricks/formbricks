@@ -27,7 +27,7 @@ export const env = createEnv({
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
-    ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)).optional(),
+    ENCRYPTION_KEY: z.string().optional(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
     FORMBRICKS_ENCRYPTION_KEY: z.string().optional(),
     GITHUB_ID: z.string().optional(),
