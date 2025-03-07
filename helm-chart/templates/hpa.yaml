@@ -1,39 +1,33 @@
-{{- if .Values.autoscaling.enabled }}
+{{- if and .Values.autoscaling.enabled .Values.deployment.enabled }}
+---
+{{- if .Capabilities.APIVersions.Has "autoscaling/v2/HorizontalPodAutoscaler" }}
 apiVersion: autoscaling/v2
+{{- else }}
+apiVersion: autoscaling/v2beta2
+{{- end }}
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "formbricks.fullname" . }}
+  name: {{ template "formbricks.name" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+    {{- with .Values.autoscaling.additionalLabels }}
+      {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- if .Values.autoscaling.annotations }}
+  annotations:
+    {{- toYaml .Values.autoscaling.annotations | nindent 4 }}
+  {{- end }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "formbricks.fullname" . }}
+    name: {{ template "formbricks.name" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:
-    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
-    - type: Resource
-      resource:
-        name: cpu
-        target:
-          type: Utilization
-          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
-    {{- end }}
+    {{- toYaml .Values.autoscaling.metrics | nindent 4 }}
+  {{- if .Values.autoscaling.behavior }}
   behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-        - type: Pods
-          value: 4
-          periodSeconds: 15
-      selectPolicy: Max
+    {{- toYaml .Values.autoscaling.behavior | nindent 4 }}
+  {{- end }}
 {{- end }}
