@@ -276,7 +276,7 @@ redis:
   architecture: standalone
   auth:
     enabled: true
-    existingSecret: "formbricks-redis"
+    existingSecret: "formbricks-app-secrets"
     existingSecretPasswordKey: "REDIS_PASSWORD"
   networkPolicy:
     enabled: false
@@ -300,7 +300,7 @@ postgresql:
   auth:
     username: formbricks
     database: formbricks
-    existingSecret: "formbricks-postgres"
+    existingSecret: "formbricks-app-secrets"
     secretKeys:
       adminPasswordKey: "POSTGRES_ADMIN_PASSWORD"
       userPasswordKey: "POSTGRES_USER_PASSWORD"
