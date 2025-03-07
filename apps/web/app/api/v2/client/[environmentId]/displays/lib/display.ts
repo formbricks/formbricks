@@ -7,7 +7,7 @@ import { prisma } from "@formbricks/database";
 import { displayCache } from "@formbricks/lib/display/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getContact } from "./contact";
+import { doesContactExist } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInputV2]);
@@ -15,10 +15,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
   const { environmentId, contactId, surveyId } = displayInput;
 
   try {
-    let contact: { id: string } | null = null;
-    if (contactId) {
-      contact = await getContact(contactId);
-    }
+    const contactExists = contactId ? await doesContactExist(contactId) : false;
 
     const display = await prisma.display.create({
       data: {
@@ -28,10 +25,10 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
           },
         },
 
-        ...(contact && {
+        ...(contactExists && {
           contact: {
             connect: {
-              id: contact.id,
+              id: contactId,
             },
           },
         }),
