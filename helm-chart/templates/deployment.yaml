@@ -154,10 +154,10 @@ spec:
                   secretKeyRef:
                     name: {{ template "formbricks.name" . }}-app-secrets
                     key: NEXTAUTH_SECRET
-          {{- range $key, $value := .Values.deployment.env }}
-          - name: {{ $key }}
-            value: "{{ $value }}"
-          {{- end }}
+            {{- range $key, $value := .Values.deployment.env }}
+            - name: {{ $key }}
+              value: "{{ $value }}"
+            {{- end }}
 
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
