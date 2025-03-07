@@ -488,6 +488,7 @@
     "survey_response_finished_email_this_form": "這個表單",
     "survey_response_finished_email_turn_off_notifications": "關閉通知，適用於",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "關閉所有新建立表單的通知",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "關閉此表單的通知",
     "survey_response_finished_email_view_more_responses": "檢視另外 '{'responseCount'}' 個回應",
     "survey_response_finished_email_view_survey_summary": "檢視問卷摘要",
     "verification_email_click_on_this_link": "您也可以點擊此連結：",

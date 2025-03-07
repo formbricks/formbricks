@@ -488,6 +488,7 @@
     "survey_response_finished_email_this_form": "esse formulário",
     "survey_response_finished_email_turn_off_notifications": "Desativar notificações para",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Desativar notificações para todos os formulários recém-criados",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "Desativar notificações para este formulário",
     "survey_response_finished_email_view_more_responses": "Ver mais {responseCount} respostas",
     "survey_response_finished_email_view_survey_summary": "Ver resumo da pesquisa",
     "verification_email_click_on_this_link": "Você também pode clicar neste link:",

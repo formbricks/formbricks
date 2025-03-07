@@ -488,6 +488,7 @@
     "survey_response_finished_email_this_form": "ce formulaire",
     "survey_response_finished_email_turn_off_notifications": "Désactiver les notifications pour",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Désactiver les notifications pour tous les formulaires nouvellement créés",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "Désactiver les notifications pour ce formulaire",
     "survey_response_finished_email_view_more_responses": "Voir {responseCount} réponses supplémentaires",
     "survey_response_finished_email_view_survey_summary": "Voir le résumé de l'enquête",
     "verification_email_click_on_this_link": "Vous pouvez également cliquer sur ce lien :",
