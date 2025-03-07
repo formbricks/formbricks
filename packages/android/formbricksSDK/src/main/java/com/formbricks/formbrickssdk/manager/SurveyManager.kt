@@ -5,7 +5,6 @@ import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.api.FormbricksApi
 import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
-import com.formbricks.formbrickssdk.model.environment.DisplayOptionType
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
 import com.formbricks.formbrickssdk.model.user.Display
@@ -19,10 +18,6 @@ import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
-
-interface FileUploadListener {
-    fun fileUploaded(url: String, uploadId: String)
-}
 
 /**
  *  The SurveyManager is responsible for managing the surveys that are displayed to the user.
@@ -225,17 +220,17 @@ object SurveyManager {
     private fun filterSurveysBasedOnDisplayType(surveys: List<Survey>, displays: List<Display>, responses: List<String>): List<Survey> {
         return surveys.filter { survey ->
             when (survey.displayOption) {
-                DisplayOptionType.RESPOND_MULTIPLE -> true
+                "respondMultiple" -> true
 
-                DisplayOptionType.DISPLAY_ONCE -> {
+                "displayOnce" -> {
                     displays.none { it.surveyId == survey.id }
                 }
 
-                DisplayOptionType.DISPLAY_MULTIPLE -> {
+                "displayMultiple" -> {
                     responses.none { it == survey.id }
                 }
 
-                DisplayOptionType.DISPLAY_SOME -> {
+                "displaySome" -> {
                     survey.displayLimit?.let { limit ->
                         if (responses.any { it == survey.id }) {
                             return@filter false

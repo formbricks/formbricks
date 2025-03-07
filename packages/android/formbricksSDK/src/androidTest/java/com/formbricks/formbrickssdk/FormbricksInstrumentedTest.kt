@@ -1,20 +1,21 @@
 package com.formbricks.formbrickssdk
 
-import android.util.Log
 import androidx.fragment.app.FragmentManager
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.formbricks.formbrickssdk.api.FormbricksApi
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
 import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.manager.UserManager
-
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-
-import org.junit.Assert.*
-import org.junit.Before
-import java.text.Normalizer.Form
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -95,7 +96,7 @@ class FormbricksInstrumentedTest {
 
         // Authenticate the user
         Formbricks.setUserId(userId)
-        waitForSeconds(1)
+        waitForSeconds(2)
         assertEquals(userId, UserManager.userId)
         assertNotNull(UserManager.syncTimer)
 

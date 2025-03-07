@@ -1,25 +1,29 @@
+import Foundation
+
 /// Store and manage user state and sync with the server when needed.
 final class UserManager {
     static let shared = UserManager()
     private init() { }
     
     private static let userIdKey = "userIdKey"
+    private static let contactIdKey = "contactIdKey"
     private static let segmentsKey = "segmentsKey"
     private static let displaysKey = "displaysKey"
     private static let responsesKey = "responsesKey"
     private static let lastDisplayedAtKey = "lastDisplayedAtKey"
     private static let expiresAtKey = "expiresAtKey"
     
-    private let service = FormbricksService()
+    internal var service = FormbricksService()
     
     private var backingUserId: String?
+    private var backingContactId: String?
     private var backingSegments: [String]?
     private var backingDisplays: [Display]?
     private var backingResponses: [String]?
     private var backingLastDisplayedAt: Date?
     private var backingExpiresAt: Date?
     
-    private var syncTimer: Timer?
+    internal var syncTimer: Timer?
     
     /// Starts an update queue with the given user id.
     func set(userId: String) {
@@ -77,6 +81,7 @@ final class UserManager {
             switch result {
             case .success(let userResponse):
                 self?.userId = userResponse.data.state?.data?.userId
+                self?.contactId = userResponse.data.state?.data?.contactId
                 self?.segments = userResponse.data.state?.data?.segments
                 self?.displays = userResponse.data.state?.data?.displays
                 self?.responses = userResponse.data.state?.data?.responses
@@ -130,6 +135,15 @@ extension UserManager {
         } set {
             UserDefaults.standard.set(newValue, forKey: UserManager.userIdKey)
             backingUserId = newValue
+        }
+    }
+    private(set) var contactId: String? {
+        get {
+            backingContactId = backingContactId ?? UserDefaults.standard.string(forKey: UserManager.contactIdKey)
+            return backingContactId
+        } set {
+            UserDefaults.standard.set(newValue, forKey: UserManager.contactIdKey)
+            backingContactId = newValue
         }
     }
     private(set) var segments: [String]? {

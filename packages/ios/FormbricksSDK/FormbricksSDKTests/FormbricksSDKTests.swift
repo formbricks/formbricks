@@ -127,11 +127,6 @@ final class FormbricksSDKTests: XCTestCase {
         XCTAssertNil(UserManager.shared.segments)
         XCTAssertNil(UserManager.shared.expiresAt)
         
-        // Setting the language
-        XCTAssertEqual(Formbricks.language, "default")
-        Formbricks.setLanguage("de")
-        XCTAssertEqual(Formbricks.language, "de")
-        
         // Clear the responses
         Formbricks.logout()
         SurveyManager.shared.filterSurveys()

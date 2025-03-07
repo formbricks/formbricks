@@ -29,7 +29,7 @@
           "autoClose": null,
           "delay": 0,
           "displayLimit": 1,
-          "displayOption": "displaySome",
+          "displayOption": "displayMultiple",
           "displayPercentage": 100,
           "endings": [
             {
