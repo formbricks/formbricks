@@ -1,3 +1,5 @@
+import Foundation
+
 struct FormbricksAPIError: Codable, LocalizedError {
     let code: String
     let message: String

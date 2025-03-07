@@ -1,7 +1,5 @@
 package com.formbricks.formbrickssdk.network
 
-import com.formbricks.formbrickssdk.model.upload.FetchStorageUrlRequestBody
-import com.formbricks.formbrickssdk.model.upload.FetchStorageUrlResponse
 import com.formbricks.formbrickssdk.model.user.PostUserBody
 import com.formbricks.formbrickssdk.model.user.UserResponse
 import retrofit2.Call
@@ -18,14 +16,8 @@ interface FormbricksService {
     @POST("$API_PREFIX/client/{environmentId}/user")
     fun postUser(@Path("environmentId") environmentId: String, @Body body: PostUserBody): Call<UserResponse>
 
-    @POST("$API_PREFIX/client/{environmentId}/storage")
-    fun fetchStorageUrl(@Path("environmentId") environmentId: String, @Body body: FetchStorageUrlRequestBody): Call<FetchStorageUrlResponse>
-
-//    @POST("{path}")
-//    fun uploadFile(@Path("path") path: String, @Body fileUploadBody: FileUploadBody): Call<Map<String, Any>>
-
     companion object {
-        const val API_PREFIX = "/api/v1"
+        const val API_PREFIX = "/api/v2"
     }
 
 }

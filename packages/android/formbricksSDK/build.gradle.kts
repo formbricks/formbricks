@@ -4,6 +4,7 @@ plugins {
     kotlin("kapt")
     kotlin("plugin.serialization") version "2.1.0"
     id("org.jetbrains.dokka") version "1.9.10"
+    id("jacoco")
 }
 
 android {
@@ -18,6 +19,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            enableAndroidTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -36,6 +40,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf(
+            "jdk.internal.*",
+        )
     }
 }
 
@@ -64,4 +77,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(project(":formbricksSDK"))
 }
