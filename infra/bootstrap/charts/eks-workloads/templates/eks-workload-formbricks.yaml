@@ -53,7 +53,7 @@ spec:
       selfHeal: true
     syncOptions:
       - "CreateNamespace=true"
-      - "Validate=false"
+      - "Validate=true"
       - "PrunePropagationPolicy=Foreground"
       - "PruneLast=true"
       - "RespectIgnoreDifferences=false"
