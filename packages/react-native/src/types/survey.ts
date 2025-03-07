@@ -40,6 +40,7 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   apiHost: string;
   environmentId: string;
   userId?: string;
+  contactId?: string;
   onDisplayCreated?: () => void;
   onResponseCreated?: () => void;
   mode?: "modal" | "inline";

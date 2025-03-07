@@ -34,6 +34,11 @@ interface VariableStackEntry {
 }
 
 export function Survey({
+  apiHost,
+  environmentId,
+  userId,
+  contactId,
+  mode,
   survey,
   styling,
   isBrandingEnabled,
@@ -58,15 +63,11 @@ export function Survey({
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
-  apiHost,
-  environmentId,
-  userId,
   action,
   onDisplayCreated,
   onResponseCreated,
   singleUseId,
   singleUseResponseId,
-  mode,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -80,13 +81,13 @@ export function Survey({
   const surveyState = useMemo(() => {
     if (apiHost && environmentId) {
       if (mode === "inline") {
-        return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId);
+        return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId, contactId);
       }
 
-      return new SurveyState(survey.id, null, null, userId);
+      return new SurveyState(survey.id, null, null, userId, contactId);
     }
     return null;
-  }, [survey.id, userId, apiHost, environmentId, singleUseId, singleUseResponseId, mode]);
+  }, [apiHost, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
   const responseQueue = useMemo(() => {
@@ -207,6 +208,7 @@ export function Survey({
         const display = await apiClient.createDisplay({
           surveyId: survey.id,
           ...(userId && { userId }),
+          ...(contactId && { contactId }),
         });
 
         if (!display.ok) {
@@ -224,7 +226,7 @@ export function Survey({
         console.error("error creating display: ", err);
       }
     }
-  }, [apiClient, survey, userId, onDisplayCreated, surveyState, responseQueue]);
+  }, [apiClient, surveyState, responseQueue, survey.id, userId, contactId, onDisplayCreated]);
 
   useEffect(() => {
     // call onDisplay when component is mounted
@@ -381,6 +383,10 @@ export function Survey({
   const onResponseCreateOrUpdate = useCallback(
     (responseUpdate: TResponseUpdate) => {
       if (surveyState && responseQueue) {
+        if (contactId) {
+          surveyState.updateContactId(contactId);
+        }
+
         if (userId) {
           surveyState.updateUserId(userId);
         }
@@ -406,7 +412,7 @@ export function Survey({
         }
       }
     },
-    [surveyState, responseQueue, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
+    [surveyState, responseQueue, contactId, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
   );
 
   useEffect(() => {
