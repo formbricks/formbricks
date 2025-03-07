@@ -87,8 +87,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 
 
 {{- define "formbricks.postgresAdminPassword" -}}
-{{- $secretName := printf "%s-postgres" (include "formbricks.name" .) }}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-postgres" (include "formbricks.name" .))) }}
 {{- if and $secret (index $secret.data "POSTGRES_ADMIN_PASSWORD") }}
     {{- index $secret.data "POSTGRES_ADMIN_PASSWORD" | b64dec -}}
 {{- else }}
@@ -97,8 +96,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.postgresUserPassword" -}}
-{{- $secretName := printf "%s-postgres" (include "formbricks.name" .) }}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-postgres" (include "formbricks.name" .))) }}
 {{- if and $secret (index $secret.data "POSTGRES_USER_PASSWORD") }}
     {{- index $secret.data "POSTGRES_USER_PASSWORD" | b64dec -}}
 {{- else }}
@@ -107,8 +105,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.redisPassword" -}}
-{{- $secretName := printf "%s-redis" (include "formbricks.name" .) }}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
 {{- if and $secret (index $secret.data "REDIS_PASSWORD") }}
     {{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
 {{- else }}

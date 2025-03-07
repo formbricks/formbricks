@@ -278,6 +278,8 @@ redis:
     enabled: true
     existingSecret: "formbricks-redis"
     existingSecretPasswordKey: "REDIS_PASSWORD"
+  networkPolicy:
+    enabled: false
   master:
     persistence:
       enabled: true
@@ -303,6 +305,8 @@ postgresql:
       adminPasswordKey: "POSTGRES_ADMIN_PASSWORD"
       userPasswordKey: "POSTGRES_USER_PASSWORD"
   primary:
+    networkPolicy:
+      enabled: false
     persistence:
       enabled: true
       size: 10Gi
