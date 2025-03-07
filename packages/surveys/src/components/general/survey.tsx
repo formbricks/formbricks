@@ -9,13 +9,13 @@ import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { evaluateLogic, performActions } from "@/lib/logic";
 import { parseRecallInformation } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { SurveyState } from "@/lib/survey-state";
 import { cn, getDefaultLanguageCode } from "@/lib/utils";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type JSX, useCallback } from "react";
-import { evaluateLogic, performActions } from "@formbricks/lib/surveyLogic/utils";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { type TJsEnvironmentStateSurvey, TJsFileUploadParams } from "@formbricks/types/js";
 import type {
@@ -34,6 +34,11 @@ interface VariableStackEntry {
 }
 
 export function Survey({
+  apiHost,
+  environmentId,
+  userId,
+  contactId,
+  mode,
   survey,
   styling,
   isBrandingEnabled,
@@ -43,6 +48,9 @@ export function Survey({
   onClose,
   onFinished,
   onRetry,
+  onDisplayCreated,
+  onResponseCreated,
+  onOpenExternalURL,
   isRedirectDisabled = false,
   prefillResponseData,
   skipPrefilled,
@@ -58,15 +66,9 @@ export function Survey({
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
-  apiHost,
-  environmentId,
-  userId,
   action,
-  onDisplayCreated,
-  onResponseCreated,
   singleUseId,
   singleUseResponseId,
-  mode,
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
@@ -80,13 +82,13 @@ export function Survey({
   const surveyState = useMemo(() => {
     if (apiHost && environmentId) {
       if (mode === "inline") {
-        return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId);
+        return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId, contactId);
       }
 
-      return new SurveyState(survey.id, null, null, userId);
+      return new SurveyState(survey.id, null, null, userId, contactId);
     }
     return null;
-  }, [survey.id, userId, apiHost, environmentId, singleUseId, singleUseResponseId, mode]);
+  }, [apiHost, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
   const responseQueue = useMemo(() => {
@@ -119,11 +121,21 @@ export function Survey({
   }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
   // Update localSurvey when the survey prop changes (it changes in case of survey editor)
   useEffect(() => {
     setlocalSurvey(survey);
   }, [survey]);
+
+  useEffect(() => {
+    setCurrentVariables(
+      survey.variables.reduce<TResponseVariables>((acc, variable) => {
+        acc[variable.id] = variable.value;
+        return acc;
+      }, {})
+    );
+  }, [survey.variables]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
@@ -146,12 +158,6 @@ export function Survey({
   const [history, setHistory] = useState<string[]>([]);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(() => {
-    return localSurvey.variables.reduce<TResponseVariables>((acc, variable) => {
-      acc[variable.id] = variable.value;
-      return acc;
-    }, {});
-  });
 
   const [ttc, setTtc] = useState<TResponseTtc>({});
   const cardArrangement = useMemo(() => {
@@ -162,9 +168,7 @@ export function Survey({
   }, [localSurvey.type, styling.cardArrangement?.linkSurveys, styling.cardArrangement?.appSurveys]);
 
   const currentQuestionIndex = localSurvey.questions.findIndex((q) => q.id === questionId);
-  const currentQuestion = useMemo(() => {
-    return localSurvey.questions.find((q) => q.id === questionId);
-  }, [questionId, localSurvey.questions]);
+  const currentQuestion = localSurvey.questions[currentQuestionIndex];
 
   const contentRef = useRef<HTMLDivElement | null>(null);
   const showProgressBar = !styling.hideProgressBar;
@@ -205,6 +209,7 @@ export function Survey({
         const display = await apiClient.createDisplay({
           surveyId: survey.id,
           ...(userId && { userId }),
+          ...(contactId && { contactId }),
         });
 
         if (!display.ok) {
@@ -222,7 +227,7 @@ export function Survey({
         console.error("error creating display: ", err);
       }
     }
-  }, [apiClient, survey, userId, onDisplayCreated, surveyState, responseQueue]);
+  }, [apiClient, surveyState, responseQueue, survey.id, userId, contactId, onDisplayCreated]);
 
   useEffect(() => {
     // call onDisplay when component is mounted
@@ -379,6 +384,10 @@ export function Survey({
   const onResponseCreateOrUpdate = useCallback(
     (responseUpdate: TResponseUpdate) => {
       if (surveyState && responseQueue) {
+        if (contactId) {
+          surveyState.updateContactId(contactId);
+        }
+
         if (userId) {
           surveyState.updateUserId(userId);
         }
@@ -404,7 +413,7 @@ export function Survey({
         }
       }
     },
-    [surveyState, responseQueue, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
+    [surveyState, responseQueue, contactId, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
   );
 
   useEffect(() => {
@@ -544,6 +553,7 @@ export function Survey({
               isResponseSendingFinished={isResponseSendingFinished}
               responseData={responseData}
               variablesData={currentVariables}
+              onOpenExternalURL={onOpenExternalURL}
             />
           );
         }
@@ -570,6 +580,7 @@ export function Survey({
               autoFocusEnabled={autoFocusEnabled}
               currentQuestionId={questionId}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
+              onOpenExternalURL={onOpenExternalURL}
             />
           )
         );

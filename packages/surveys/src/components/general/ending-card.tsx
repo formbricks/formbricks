@@ -4,9 +4,9 @@ import { LoadingSpinner } from "@/components/general/loading-spinner";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { useEffect } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
@@ -21,6 +21,7 @@ interface EndingCardProps {
   languageCode: string;
   responseData: TResponseData;
   variablesData: TResponseVariables;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function EndingCard({
@@ -33,11 +34,13 @@ export function EndingCard({
   languageCode,
   responseData,
   variablesData,
+  onOpenExternalURL,
 }: EndingCardProps) {
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
       <QuestionMedia imgUrl={endingCard.imageUrl} videoUrl={endingCard.videoUrl} />
     ) : null;
+
   const checkmark = (
     <div className="fb-text-brand fb-flex fb-flex-col fb-items-center fb-justify-center">
       <svg
@@ -61,7 +64,11 @@ export function EndingCard({
     try {
       const url = replaceRecallInfo(urlString, responseData, variablesData);
       if (url && new URL(url)) {
-        window.top?.location.replace(url);
+        if (onOpenExternalURL) {
+          onOpenExternalURL(url);
+        } else {
+          window.top?.location.replace(url);
+        }
       }
     } catch (error) {
       console.error("Invalid URL after recall processing:", error);

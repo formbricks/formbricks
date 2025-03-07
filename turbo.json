@@ -183,7 +183,8 @@
         "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
-        "UNSPLASH_ACCESS_KEY"
+        "UNSPLASH_ACCESS_KEY",
+        "UNKEY_ROOT_KEY"
       ],
       "outputs": ["dist/**", ".next/**"]
     },
