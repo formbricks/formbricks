@@ -290,7 +290,7 @@
     },
     {
       "group": "API v1 Documentation",
-      "pages": ["api-reference/introduction", "api-reference/rest-api"]
+      "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
     },
     {
       "group": "API v2 Documentation (Draft)",
