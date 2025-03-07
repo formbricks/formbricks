@@ -50,30 +50,27 @@ variable "metrics_server_helm_config" {
   type        = any
   default     = {}
 }
-variable "keda_helm_config" {
-  description = "Configuration for the Keda add-on."
-  type        = any
-  default     = {}
-}
-variable "istio_helm_config" {
-  description = "Configuration for the Istio add-on."
-  type        = any
-  default     = {}
-}
+
 variable "aws_load_balancer_controller_helm_config" {
   description = "Configuration for the AWS Load Balancer Controller add-on."
   type        = any
   default     = {}
 }
 
-variable "velero_helm_config" {
-  description = "Configuration for the Velero add-on."
-  type        = any
-  default     = {}
+variable "workloads_repo_url" {
+  description = "URL of the EKS Addons Helm repository."
+  type        = string
+  default     = "https://github.com/d3vb0ox/formbricks"
 }
 
-variable "observability_helm_config" {
-  description = "Configuration for the Truemark Observability add-on."
-  type        = any
-  default     = {}
+variable "workloads_target_revision" {
+  description = "The target revision of the EKS Addons Helm repository."
+  type        = string
+  default     = "main"
+}
+
+variable "workloads_repo_path" {
+  description = "Path to the EKS Addons Helm repository."
+  type        = string
+  default     = "infra/bootstrap/charts/eks-workloads"
 }

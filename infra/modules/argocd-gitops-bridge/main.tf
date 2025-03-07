@@ -140,7 +140,7 @@ resource "kubernetes_secret_v1" "cluster" {
 # Create App of Apps
 ################################################################################
 resource "helm_release" "eks_addons" {
-  for_each = var.create ? var.apps : {}
+  for_each = var.create ? var.apps : { eks-addons = null, workloads = null }
 
   name      = each.key
   namespace = try(var.argocd.namespace, "argocd")

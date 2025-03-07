@@ -85,6 +85,20 @@ locals {
         }
       })
     }
+    workloads = {
+      project              = "default"
+      repo_url             = var.workloads_repo_url
+      target_revision      = var.workloads_target_revision
+      addons_repo_revision = var.workloads_target_revision
+      path                 = var.workloads_repo_path
+      values = merge({
+        addons_repo_revision = var.workloads_target_revision
+        formbricks = {
+          certificateArn = try(module.acm.acm_certificate_arn, "")
+          ingressHost    = "app.k8s.formbricks.com"
+        }
+      })
+    }
   }
 }
 
@@ -119,9 +133,9 @@ module "gitops_bridge_bootstrap" {
   apps = local.argocd_apps
 }
 
-################################################################################
+###############################################################################
 # EKS Blueprints Addons
-################################################################################
+###############################################################################
 module "addons" {
   source                             = "../modules/addons"
   oidc_provider_arn                  = module.eks.oidc_provider_arn
@@ -152,18 +166,7 @@ module "addons" {
   # External Secrets
   enable_external_secrets = local.addons.enable_external_secrets
 
-  # Metrics Server
-  enable_metrics_server = local.addons.enable_metrics_server
-
-  # Keda
-  enable_keda = local.addons.enable_keda
-
   # Load Balancer Controller
   enable_aws_load_balancer_controller = local.addons.enable_aws_load_balancer_controller
 
-  # Velero
-  enable_velero = local.addons.enable_velero
-
-  # AWS EBS CSI Resources
-  enable_aws_ebs_csi_resources = local.addons.enable_aws_ebs_csi_resources
 }
