@@ -19,6 +19,11 @@ spec:
         releaseName: formbricks
         ignoreMissingValueFiles: true
         valuesObject:
+          deployment:
+            {{- if .Values.formbricks.env }}
+            env:
+              {{- toYaml .Values.formbricks.env | nindent 14 }}
+            {{- end }}
           ingress:
             enabled: true
             ingressClassName: alb
