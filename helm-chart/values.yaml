@@ -1,159 +1,303 @@
-#ENTERPRISE_LICENSE_KEY
-#enterpriseLicenseKey: ""
-image:
-  repository: ghcr.io/formbricks/formbricks
-  pullPolicy: IfNotPresent
-  tag: v3.2.0
+# Override the name for the application.
+# If not set, the chart name will be used.
+nameOverride: ""
 
-service:
-  type: ClusterIP
-  port: 80
-  targetPort: 3000
+# Override the name of the application component.
+# Defaults to the same value as nameOverride.
+componentOverride: ""
 
-resources:
-  limits:
-    cpu: 500m
-    memory: 1Gi
+# Override the application "part-of" label.
+# Defaults to the chart name if not set.
+partOfOverride: ""
 
+##########################################################
+# Enterprise Configuration
+##########################################################
+enterprise:
+  licenseKey: ""
+
+##########################################################
+# Deployment Configuration
+##########################################################
+deployment:
+  # Deployment strategy configuration
+  strategy:
+    type: RollingUpdate  # Type of deployment strategy (RollingUpdate/Recreate)
+    # rollingUpdate:
+    #   maxSurge: 25%
+    #   maxUnavailable: 25%
+
+  # Automatically reload deployment when ConfigMaps or Secrets change
+  reloadOnChange: false
+
+  # NodeSelector for scheduling pods on specific nodes
+  nodeSelector: {}
+
+  # Additional labels for Deployment
+  additionalLabels: {}
+
+  # Additional pod labels to be used in the Service's label selector
+  additionalPodLabels: {}
+
+  # Deployment annotations
+  annotations: {}
+
+  # Additional pod annotations
+  additionalPodAnnotations: {}
+
+  # Number of replicas
+  replicas: 1
+
+  # Image pull secrets for private container registries
+  imagePullSecrets: ""
+
+  # Environment variables from ConfigMaps or Secrets
+  envFrom:
+  #  app-secrets:
+  #    type: secret
+  #    nameSuffix: app-secrets
+
+  # Environment variables passed to the app container
+  env:
+  # SMTP_PASSWORD:
+  #   valueFrom:
+  #     secretKeyRef:
+  #       name: smtp-secret
+  #       key: password
+
+  # Tolerations for scheduling pods on tainted nodes
+  tolerations: []
+
+  # Pod affinity and anti-affinity rules
+  affinity: {}
+
+  # Topology spread constraints for better scheduling
+  topologySpreadConstraints: []
+
+  # Number of previous ReplicaSet versions to retain
+  revisionHistoryLimit: 2
+
+  # Application container image
+  image:
+    repository: "ghcr.io/formbricks/formbricks"
+    tag: "v3.2.0"
+    digest: ""  # If set, digest takes precedence over the tag
+    pullPolicy: IfNotPresent
+
+  # Health probes configuration
+  probes:
+    startupProbe:
+      failureThreshold: 30
+      periodSeconds: 10
+      tcpSocket:
+        port: 3000
+
+    readinessProbe:
+      failureThreshold: 5
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+      initialDelaySeconds: 10
+      httpGet:
+        path: /health
+        port: 3000
+
+    livenessProbe:
+      failureThreshold: 5
+      periodSeconds: 10
+      successThreshold: 1
+      timeoutSeconds: 5
+      initialDelaySeconds: 10
+      httpGet:
+        path: /health
+        port: 3000
+
+  # Resource requests and limits
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      memory: 512Mi
+      cpu: 500m
+
+  # Container security context
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+
+  # Pod security context
+  securityContext: {}
+
+  # Command override
+  command: []
+
+  # Arguments override
+  args: []
+
+  # Container ports
+  ports:
+    http:
+      containerPort: 3000
+      protocol: TCP
+      exposed: true
+
+##########################################################
+# Horizontal Pod Autoscaler (HPA)
+##########################################################
 autoscaling:
-  enabled: false
-  minReplicas: 2
-  maxReplicas: 5
+  enabled: true  # Enable/disable HPA
+  additionalLabels: {}  # Additional labels for the HPA resource
+  annotations: {}  # Annotations for HPA
+  minReplicas: 1  # Minimum number of replicas
+  maxReplicas: 10  # Maximum number of replicas
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-        - type: Percent
-          value: 100
-          periodSeconds: 15
-        - type: Pods
-          value: 4
-          periodSeconds: 15
-      selectPolicy: Max
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 60
 
-replicaCount: 1
+##########################################################
+# Service Configuration
+##########################################################
+service:
+  enabled: true  # Enable/disable Kubernetes Service
+  additionalLabels: {}  # Additional labels for Service
+  annotations: {}  # Annotations for Service
+  type: ClusterIP  # Service type (ClusterIP, NodePort, LoadBalancer)
+  ports: []  # Additional ports
 
-livenessProbe:
-  httpGet:
-    path: /health
-    port: 3000
-  initialDelaySeconds: 30
-  periodSeconds: 10
-  timeoutSeconds: 5
-  failureThreshold: 3
-  successThreshold: 1
+##########################################################
+# Role-Based Access Control (RBAC)
+##########################################################
+rbac:
+  enabled: false  # Enable/disable RBAC
+  serviceAccount:
+    enabled: false  # Enable/disable ServiceAccount
+    name: ""  # Custom ServiceAccount name
+    additionalLabels: {}  # Additional labels
+    annotations: {}  # Annotations
 
-formbricksConfig:
-  nextAuthSecret: ""
-  encryptionKey: ""
-  cronSecret: ""
+##########################################################
+# Cron Job Configuration
+##########################################################
+cronJob:
+  enabled: false  # Enable/disable CronJobs
+  jobs: {}  # Define cron jobs
 
-env: {}
-
-hostname: ""
-email: ""
-
-traefik:
-  enabled: false
-  ingressRoute:
-    dashboard:
-      enabled: false
-  additionalArguments:
-    - "--certificatesresolvers.letsencrypt.acme.email=your-email@example.com"
-    - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-    - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-    - "--entrypoints.web.address=:80"
-    - "--entrypoints.websecure.address=:443"
-    - "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
-    - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-v02.api.letsencrypt.org/directory"
-    - "--log.level=DEBUG"
-    - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-    - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-    - "--entrypoints.web.http.redirections.entryPoint.permanent=true"
-    - "--providers.file.filename=/config/traefik.toml"
-  volumes:
-    - name: traefik-config
-      mountPath: "/config"
-      type: configMap
-  tls:
-    enabled: true
-    certResolver: letsencrypt
-  ports:
-    web:
-      port: 80
-    websecure:
-      port: 443
-      tls:
-        enabled: true
-        certResolver: letsencrypt
-  persistence:
-    enabled: true
-    name: traefik-acme
-    accessMode: ReadWriteOnce
-    size: 128Mi
-    path: /data
-  podSecurityContext:
-    fsGroup: 0
-  hostNetwork: true
-  securityContext:
-    capabilities:
-      drop:
-        - ALL
-      add:
-        - NET_ADMIN
-        - NET_BIND_SERVICE
-        - NET_BROADCAST
-        - NET_RAW
-    runAsUser: 0
-    runAsGroup: 0
-    runAsNonRoot: false
-    readOnlyRootFilesystem: true
-
-redis:
+##########################################################
+# Kubernetes Secret Configuration (Quick Start)
+##########################################################
+secret:
   enabled: true
+
+##########################################################
+# External Secrets Configuration
+##########################################################
+externalSecret:
+  enabled: false  # Enable/disable ExternalSecrets
+  secretStore:
+    name: aws-secrets-manager  # Secret store reference name
+    kind: ClusterSecretStore  # Type of secret store
+  refreshInterval: "1h"  # Frequency of secret sync
+  files:
+    redis:
+      data:
+        REDIS_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_PASSWORD
+    postgres:
+      data:
+        POSTGRES_ADMIN_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_ADMIN_PASSWORD
+        POSTGRES_USER_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_USER_PASSWORD
+    app-secrets:
+      data:
+        DATABASE_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: DATABASE_URL
+        REDIS_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_URL
+        CRON_SECRET:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: CRON_SECRET
+        ENCRYPTION_KEY:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: ENCRYPTION_KEY
+        NEXTAUTH_SECRET:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: NEXTAUTH_SECRET
+
+##########################################################
+# Ingress Configuration
+##########################################################
+ingress:
+  enabled: false  # Enable/disable Ingress
+  ingressClassName: alb  # Specify the Ingress class
+  hosts:
+    - host: k8s.formbricks.com
+      paths:
+        - path: /
+          pathType: "Prefix"
+          serviceName: "formbricks"
+  annotations: {}  # Ingress annotations
+
+
+##########################################################
+# Redis Configuration
+##########################################################
+redis:
+  enabled: true  # Enable/disable Redis
+  externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
-  externalUrl: ""
   architecture: standalone
   auth:
     enabled: true
-    existingSecret: "formbricks-data-secrets"
+    existingSecret: "formbricks-redis"
     existingSecretPasswordKey: "REDIS_PASSWORD"
-
   master:
     persistence:
-      enabled: false
-  replica:
-    replicaCount: 0
+      enabled: true
 
+##########################################################
+# PostgreSQL Configuration
+##########################################################
 postgresql:
-  enabled: true
-  fullnameOverride: "formbricks-postgres"
+  enabled: true  # Enable/disable PostgreSQL
+  externalDatabaseUrl: ""
+  global:
+    security:
+      allowInsecureImages: true
+  fullnameOverride: "formbricks-postgresql"
   image:
     repository: pgvector/pgvector
     tag: 0.8.0-pg17
   auth:
     username: formbricks
     database: formbricks
-    existingSecret: "formbricks-data-secrets"
+    existingSecret: "formbricks-postgres"
     secretKeys:
-      adminPasswordKey: "ADMIN_PASSWORD"
-      userPasswordKey: "USER_PASSWORD"
-#    username: formbricks
-#    password: formbrickspassword
-#    database: formbricks
+      adminPasswordKey: "POSTGRES_ADMIN_PASSWORD"
+      userPasswordKey: "POSTGRES_USER_PASSWORD"
   primary:
     persistence:
       enabled: true

@@ -22,7 +22,7 @@ locals {
     external_dns                 = "1.15.2"
     karpenter                    = "1.3.0"
     external_secrets             = "0.14.3"
-    aws_load_balancer_controller = "1.11.1"
+    aws_load_balancer_controller = "1.10.0"
     #     keda                         = "2.16.0"
     #     istio                        = "1.23.3"
   }

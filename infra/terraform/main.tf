@@ -10,6 +10,7 @@ locals {
     MangedBy    = "Terraform"
     Blueprint   = local.name
   }
+  domain = "k8s.formbricks.com"
 }
 
 ################################################################################
@@ -21,9 +22,9 @@ module "route53_zones" {
 
   zones = {
     "k8s.formbricks.com" = {
-      comment = "k8s.formbricks.com (testing)"
+      comment = "${local.domain} (testing)"
       tags = {
-        Name = "k8s.formbricks.com"
+        Name = local.domain
       }
     }
   }
@@ -38,11 +39,11 @@ module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "5.1.1"
 
-  domain_name = "prod.k8s.formbricks.com"
-  zone_id     = module.route53_zones.route53_zone_zone_id["k8s.formbricks.com"]
+  domain_name = local.domain
+  zone_id     = module.route53_zones.route53_zone_zone_id[local.domain]
 
   subject_alternative_names = [
-    "*.prod.k8s.formbricks.com",
+    "*.${local.domain}",
   ]
 
   validation_method = "DNS"
