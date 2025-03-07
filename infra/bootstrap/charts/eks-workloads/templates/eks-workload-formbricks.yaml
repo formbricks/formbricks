@@ -13,9 +13,8 @@ spec:
   project: {{ .Values.argocdProject | default "default" }}
   sources:
     - repoURL: '{{ .Values.workloads_repo_url }}'
-      targetRevision: '{{ .Values.workloads_target_revision }}'
+{{/*      targetRevision: '{{ .Values.workloads_target_revision }}'*/}}
       path: "helm-chart"
-      chart: formbricks
       helm:
         releaseName: formbricks
         ignoreMissingValueFiles: true
