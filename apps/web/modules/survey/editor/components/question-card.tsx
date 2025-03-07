@@ -18,6 +18,7 @@ import { PictureSelectionForm } from "@/modules/survey/editor/components/picture
 import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-question-form";
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
+import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
@@ -29,7 +30,6 @@ import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import {
   TI18nString,

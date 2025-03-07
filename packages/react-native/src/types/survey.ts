@@ -35,3 +35,17 @@ export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
 }
+
+export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
+  apiHost: string;
+  environmentId: string;
+  userId?: string;
+  onDisplayCreated?: () => void;
+  onResponseCreated?: () => void;
+  mode?: "modal" | "inline";
+  containerId?: string;
+  clickOutside?: boolean;
+  darkOverlay?: boolean;
+  placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+  action?: string;
+}

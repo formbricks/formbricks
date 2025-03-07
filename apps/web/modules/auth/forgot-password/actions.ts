@@ -4,9 +4,10 @@ import { actionClient } from "@/lib/utils/action-client";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendForgotPasswordEmail } from "@/modules/email";
 import { z } from "zod";
+import { ZUserEmail } from "@formbricks/types/user";
 
 const ZForgotPasswordAction = z.object({
-  email: z.string().max(255).email({ message: "Invalid email" }),
+  email: ZUserEmail,
 });
 
 export const forgotPasswordAction = actionClient

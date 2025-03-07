@@ -30,6 +30,8 @@ export const AZURE_OAUTH_ENABLED =
   env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
 export const OIDC_OAUTH_ENABLED =
   env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
+export const SAML_OAUTH_ENABLED = env.SAML_DATABASE_URL ? true : false;
+export const SAML_XML_DIR = "./saml-connection";
 
 export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
@@ -45,6 +47,12 @@ export const OIDC_CLIENT_SECRET = env.OIDC_CLIENT_SECRET;
 export const OIDC_ISSUER = env.OIDC_ISSUER;
 export const OIDC_DISPLAY_NAME = env.OIDC_DISPLAY_NAME;
 export const OIDC_SIGNING_ALGORITHM = env.OIDC_SIGNING_ALGORITHM;
+
+export const SAML_DATABASE_URL = env.SAML_DATABASE_URL;
+export const SAML_TENANT = "formbricks.com";
+export const SAML_PRODUCT = "formbricks";
+export const SAML_AUDIENCE = "https://saml.formbricks.com";
+export const SAML_PATH = "/api/auth/saml/callback";
 
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
@@ -155,6 +163,11 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
 };
+export const MANAGEMENT_API_RATE_LIMIT = {
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
+};
+
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
   allowedPerInterval: 100,
@@ -185,6 +198,7 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
@@ -256,3 +270,7 @@ export const IS_INTERCOM_CONFIGURED = Boolean(env.NEXT_PUBLIC_INTERCOM_APP_ID &&
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 
 export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
+
+export const IS_PRODUCTION = env.NODE_ENV === "production";
+
+export const IS_DEVELOPMENT = env.NODE_ENV === "development";

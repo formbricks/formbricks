@@ -5,9 +5,9 @@ import { Input } from "@/components/general/input";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useCallback, useMemo, useRef, useState } from "preact/hooks";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyContactInfoQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -25,6 +25,7 @@ interface ContactInfoQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   currentQuestionId: TSurveyQuestionId;
   autoFocusEnabled: boolean;
+  isBackButtonHidden: boolean;
 }
 
 export function ContactInfoQuestion({
@@ -40,6 +41,7 @@ export function ContactInfoQuestion({
   setTtc,
   currentQuestionId,
   autoFocusEnabled,
+  isBackButtonHidden,
 }: ContactInfoQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -181,7 +183,7 @@ export function ContactInfoQuestion({
           buttonLabel={getLocalizedValue(question.buttonLabel, languageCode)}
           isLastQuestion={isLastQuestion}
         />
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

@@ -21,17 +21,14 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { env } from "@formbricks/lib/env";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TUserLocale, ZUserName } from "@formbricks/types/user";
+import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
   name: ZUserName,
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
+  password: ZUserPassword,
 });
 
 const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -53,8 +50,11 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
-  isSSOEnabled: boolean;
+  isSsoEnabled: boolean;
+  samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
+  samlTenant: string;
+  samlProduct: string;
 }
 
 export const SignupForm = ({
@@ -72,8 +72,11 @@ export const SignupForm = ({
   emailVerificationDisabled,
   defaultOrganizationId,
   defaultOrganizationRole,
-  isSSOEnabled,
+  isSsoEnabled,
+  samlSsoEnabled,
   isTurnstileConfigured,
+  samlTenant,
+  samlProduct,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -266,13 +269,16 @@ export const SignupForm = ({
           </form>
         </FormProvider>
       )}
-      {isSSOEnabled && (
+      {isSsoEnabled && (
         <SSOOptions
           googleOAuthEnabled={googleOAuthEnabled}
           githubOAuthEnabled={githubOAuthEnabled}
           azureOAuthEnabled={azureOAuthEnabled}
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
+          samlSsoEnabled={samlSsoEnabled}
+          samlTenant={samlTenant}
+          samlProduct={samlProduct}
           callbackUrl={callbackUrl}
         />
       )}

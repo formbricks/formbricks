@@ -33,6 +33,9 @@ ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runt
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
+# Increase Node.js memory limit
+# ENV NODE_OPTIONS="--max_old_space_size=4096"
+
 # Set the working directory
 WORKDIR /app
 
@@ -41,19 +44,17 @@ WORKDIR /app
 # COPY --from=builder /app/out/json/ .
 # COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install the dependencies
-# RUN pnpm install
-
 # Prepare the build
 COPY . .
+
 # Create a .env file
 RUN touch apps/web/.env
 
+# Install the dependencies
 RUN pnpm install
 
 # Build the project
-# RUN pnpm post-install --filter=@formbricks/web...
-RUN pnpm build --filter=@formbricks/web...
+RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
@@ -76,6 +77,7 @@ WORKDIR /home/nextjs
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
 # Leverage output traces to reduce image size
+
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
@@ -105,6 +107,11 @@ ENV HOSTNAME "0.0.0.0"
 RUN mkdir -p /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/uploads/
 
+# Prepare volume for SAML preloaded connection
+RUN mkdir -p /home/nextjs/apps/web/saml-connection
+VOLUME /home/nextjs/apps/web/saml-connection
+
 CMD supercronic -quiet /app/docker/cronjobs & \
     (cd packages/database && npm run db:migrate:deploy) && \
+    (cd packages/database && npm run db:create-saml-database:deploy) && \
     exec node apps/web/server.js

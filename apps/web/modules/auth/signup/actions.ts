@@ -15,12 +15,12 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { UnknownError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
-import { ZUserLocale, ZUserName } from "@formbricks/types/user";
+import { ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 
 const ZCreateUserAction = z.object({
   name: ZUserName,
-  email: z.string().max(255).email({ message: "Invalid email" }),
-  password: z.string().min(8),
+  email: ZUserEmail,
+  password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
   defaultOrganizationId: z.string().optional(),

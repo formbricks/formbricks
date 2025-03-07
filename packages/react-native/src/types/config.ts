@@ -1,8 +1,8 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
 import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
 import { z } from "zod";
-import { type TResponseUpdate, ZResponseUpdate } from "@/types/response";
-import { type TFileUploadParams, ZFileUploadParams } from "@/types/storage";
+import { type TResponseUpdate } from "@/types/response";
+import { type TFileUploadParams } from "@/types/storage";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,
@@ -138,14 +138,22 @@ export interface TWebViewOnMessageData {
 
 export const ZJsRNWebViewOnMessageData = z.object({
   onFinished: z.boolean().nullish(),
-  onDisplay: z.boolean().nullish(),
-  onResponse: z.boolean().nullish(),
-  responseUpdate: ZResponseUpdate.nullish(),
-  onRetry: z.boolean().nullish(),
+  onDisplayCreated: z.boolean().nullish(),
+  onResponseCreated: z.boolean().nullish(),
   onClose: z.boolean().nullish(),
-  onFileUpload: z.boolean().nullish(),
-  fileUploadParams: ZFileUploadParams.nullish(),
-  uploadId: z.string().nullish(),
+  onFilePick: z.boolean().nullish(),
+  fileUploadParams: z
+    .object({
+      allowedFileExtensions: z.string().nullish(),
+      allowMultipleFiles: z.boolean().nullish(),
+    })
+    .nullish(),
+  onOpenExternalURL: z.boolean().nullish(),
+  onOpenExternalURLParams: z
+    .object({
+      url: z.string(),
+    })
+    .nullish(),
 });
 
 export interface TUpdates {

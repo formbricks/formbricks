@@ -6,6 +6,7 @@
     "continue_with_google": "使用 Google 繼續",
     "continue_with_oidc": "使用 '{'oidcDisplayName'}' 繼續",
     "continue_with_openid": "使用 OpenID 繼續",
+    "continue_with_saml": "使用 SAML SSO 繼續",
     "forgot-password": {
       "back_to_login": "返回登入",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "use_a_backup_code": "使用備份碼"
     },
+    "saml_connection_error": "發生錯誤。請檢查您的 app 主控台以取得更多詳細資料。",
     "signup": {
       "captcha_failed": "驗證碼失敗",
       "have_an_account": "已有帳戶？",
@@ -483,9 +485,8 @@
     "survey_response_finished_email_congrats": "恭喜，您收到了新的問卷回應！有人剛完成您的問卷：'{'surveyName'}'",
     "survey_response_finished_email_dont_want_notifications": "不想收到這些通知？",
     "survey_response_finished_email_hey": "嗨 \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "這個表單",
-    "survey_response_finished_email_turn_off_notifications": "關閉通知，適用於",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "關閉所有新建立表單的通知",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "關閉此表單的通知",
     "survey_response_finished_email_view_more_responses": "檢視另外 '{'responseCount'}' 個回應",
     "survey_response_finished_email_view_survey_summary": "檢視問卷摘要",
     "verification_email_click_on_this_link": "您也可以點擊此連結：",
@@ -1855,10 +1856,6 @@
       "smileys_description": "使用視覺指標來擷取客戶接觸點的回饋。"
     }
   },
-  "health": {
-    "degraded": "您的 Formbricks 運作狀況已降低",
-    "healthy": "所有系統都已啟動並執行"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "請聯絡您的組織擁有者以取得專案存取權限。或建立自己的組織以開始使用。",
@@ -1898,7 +1895,6 @@
   "s": {
     "check_inbox_or_spam": "如果您的收件匣中沒有看到電子郵件，也請檢查您的垃圾郵件資料夾。",
     "completed": "此免費且開源的問卷已關閉。",
-    "could_not_create_display": "無法建立顯示",
     "create_your_own": "建立您自己的",
     "enter_pin": "此問卷已受保護。請輸入下方 PIN 碼",
     "just_curious": "只是好奇？",

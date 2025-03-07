@@ -6,6 +6,7 @@
     "continue_with_google": "Continue with Google",
     "continue_with_oidc": "Continue with {oidcDisplayName}",
     "continue_with_openid": "Continue with OpenID",
+    "continue_with_saml": "Continue with SAML SSO",
     "forgot-password": {
       "back_to_login": "Back to login",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "New to Formbricks?",
       "use_a_backup_code": "Use a backup code"
     },
+    "saml_connection_error": "Something went wrong. Please check your app console for more details.",
     "signup": {
       "captcha_failed": "Captcha failed",
       "have_an_account": "Have an account?",
@@ -265,7 +267,7 @@
     "off": "Off",
     "on": "On",
     "only_one_file_allowed": "Only one file is allowed",
-    "only_owners_managers_and_manage_access_members_can_perform_this_action": "Only owners, managers and manage access members can perform this action.",
+    "only_owners_managers_and_manage_access_members_can_perform_this_action": "Only owners and managers can perform this action.",
     "or": "or",
     "organization": "Organization",
     "organization_not_found": "Organization not found",
@@ -483,9 +485,8 @@
     "survey_response_finished_email_congrats": "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Don't want to get these notifications?",
     "survey_response_finished_email_hey": "Hey \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "this form",
-    "survey_response_finished_email_turn_off_notifications": "Turn off notifications for",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Turn off notifications for all newly created forms",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "Turn off notifications for this form",
     "survey_response_finished_email_view_more_responses": "View {responseCount} more responses",
     "survey_response_finished_email_view_survey_summary": "View survey summary",
     "verification_email_click_on_this_link": "You can also click on this link:",
@@ -1855,10 +1856,6 @@
       "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
     }
   },
-  "health": {
-    "degraded": "Your Formbricks health is degraded",
-    "healthy": "All systems are up and running"
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Reach out to your organization owner to get access to projects. Or create an own organization to get started.",
@@ -1898,7 +1895,6 @@
   "s": {
     "check_inbox_or_spam": "Please also check your spam folder if you don't see the email in your inbox.",
     "completed": "This free & open-source survey has been closed.",
-    "could_not_create_display": "Could not create display",
     "create_your_own": "Create your own",
     "enter_pin": "This survey is protected. Enter the PIN below",
     "just_curious": "Just curious?",

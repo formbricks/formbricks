@@ -1,8 +1,8 @@
-import { hasOrganizationAccess } from "@/app/lib/api/apiHelper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
+import { hasOrganizationAccess } from "@formbricks/lib/auth";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -16,7 +16,7 @@ export const GET = async (_: Request, context: { params: Promise<{ organizationI
   // check auth
   const session = await getServerSession(authOptions);
   if (!session) throw new AuthenticationError("Not authenticated");
-  const hasAccess = await hasOrganizationAccess(session.user, organizationId);
+  const hasAccess = await hasOrganizationAccess(session.user.id, organizationId);
   if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organizationId);

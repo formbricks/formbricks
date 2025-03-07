@@ -6,6 +6,7 @@
     "continue_with_google": "Continuer avec Google",
     "continue_with_oidc": "Continuer avec {oidcDisplayName}",
     "continue_with_openid": "Continuer avec OpenID",
+    "continue_with_saml": "Continuer avec SAML SSO",
     "forgot-password": {
       "back_to_login": "Retour à la connexion",
       "email-sent": {
@@ -52,6 +53,7 @@
       "new_to_formbricks": "Nouveau sur Formbricks ?",
       "use_a_backup_code": "Utiliser un code de secours"
     },
+    "saml_connection_error": "Quelque chose s'est mal passé. Veuillez vérifier la console de votre application pour plus de détails.",
     "signup": {
       "captcha_failed": "Captcha échoué",
       "have_an_account": "Avez-vous un compte ?",
@@ -483,9 +485,8 @@
     "survey_response_finished_email_congrats": "Félicitations, vous avez reçu une nouvelle réponse à votre enquête ! Quelqu'un vient de compléter votre enquête : {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Vous ne voulez pas recevoir ces notifications ?",
     "survey_response_finished_email_hey": "Salut \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "ce formulaire",
-    "survey_response_finished_email_turn_off_notifications": "Désactiver les notifications pour",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Désactiver les notifications pour tous les formulaires nouvellement créés",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "Désactiver les notifications pour ce formulaire",
     "survey_response_finished_email_view_more_responses": "Voir {responseCount} réponses supplémentaires",
     "survey_response_finished_email_view_survey_summary": "Voir le résumé de l'enquête",
     "verification_email_click_on_this_link": "Vous pouvez également cliquer sur ce lien :",
@@ -1855,10 +1856,6 @@
       "smileys_description": "Utilisez des indicateurs visuels pour recueillir des retours d'expérience à travers les points de contact avec les clients."
     }
   },
-  "health": {
-    "degraded": "La santé de votre Formbricks est dégradée.",
-    "healthy": "Tous les systèmes sont opérationnels."
-  },
   "organizations": {
     "landing": {
       "no_projects_warning_subtitle": "Contactez le propriétaire de votre organisation pour obtenir l'accès aux projets. Ou créez votre propre organisation pour commencer.",
@@ -1898,7 +1895,6 @@
   "s": {
     "check_inbox_or_spam": "Veuillez également vérifier votre dossier de spam si vous ne voyez pas l'e-mail dans votre boîte de réception.",
     "completed": "Cette enquête gratuite et open-source a été fermée.",
-    "could_not_create_display": "Impossible de créer l'affichage",
     "create_your_own": "Créez le vôtre",
     "enter_pin": "Ce sondage est protégé. Entrez le code PIN ci-dessous",
     "just_curious": "Juste curieux ?",

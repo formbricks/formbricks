@@ -73,6 +73,7 @@ export const env = createEnv({
     S3_SECRET_KEY: z.string().optional(),
     S3_ENDPOINT_URL: z.string().optional(),
     S3_FORCE_PATH_STYLE: z.enum(["1", "0"]).optional(),
+    SAML_DATABASE_URL: z.string().optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
@@ -99,6 +100,8 @@ export const env = createEnv({
     LANGFUSE_SECRET_KEY: z.string().optional(),
     LANGFUSE_PUBLIC_KEY: z.string().optional(),
     LANGFUSE_BASEURL: z.string().optional(),
+    UNKEY_ROOT_KEY: z.string().optional(),
+    NODE_ENV: z.enum(["development", "production", "test"]).optional(),
   },
 
   /*
@@ -196,6 +199,7 @@ export const env = createEnv({
     S3_SECRET_KEY: process.env.S3_SECRET_KEY,
     S3_ENDPOINT_URL: process.env.S3_ENDPOINT_URL,
     S3_FORCE_PATH_STYLE: process.env.S3_FORCE_PATH_STYLE,
+    SAML_DATABASE_URL: process.env.SAML_DATABASE_URL,
     SIGNUP_DISABLED: process.env.SIGNUP_DISABLED,
     SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
@@ -215,5 +219,7 @@ export const env = createEnv({
     VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
+    UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
+    NODE_ENV: process.env.NODE_ENV,
   },
 });

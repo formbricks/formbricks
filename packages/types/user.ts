@@ -28,18 +28,21 @@ export const ZUserName = z
   .min(1, { message: "Name should be at least 1 character long" })
   .regex(/^[\p{L}\p{M}\s'\d-]+$/u, "Invalid name format");
 
-export const ZUserEmail = z.string().email({ message: "Invalid email" });
+export const ZUserEmail = z.string().max(255).email({ message: "Invalid email" });
 
 export type TUserEmail = z.infer<typeof ZUserEmail>;
 
 export const ZUserPassword = z
   .string()
   .min(8)
+  .max(128, { message: "Password must be 128 characters or less" })
   .regex(/^(?=.*[A-Z])(?=.*\d).*$/);
 
 export type TUserPassword = z.infer<typeof ZUserPassword>;
 
 export type TUserNotificationSettings = z.infer<typeof ZUserNotificationSettings>;
+
+const ZUserIdentityProvider = z.enum(["email", "google", "github", "azuread", "openid", "saml"]);
 
 export const ZUser = z.object({
   id: z.string(),
@@ -48,7 +51,7 @@ export const ZUser = z.object({
   emailVerified: z.date().nullable(),
   imageUrl: z.string().url().nullable(),
   twoFactorEnabled: z.boolean(),
-  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]),
+  identityProvider: ZUserIdentityProvider,
   createdAt: z.date(),
   updatedAt: z.date(),
   role: ZRole.nullable(),
@@ -80,7 +83,7 @@ export const ZUserCreateInput = z.object({
   emailVerified: z.date().optional(),
   role: ZRole.optional(),
   objective: ZUserObjective.nullish(),
-  identityProvider: z.enum(["email", "google", "github", "azuread", "openid"]).optional(),
+  identityProvider: ZUserIdentityProvider.optional(),
   identityProviderAccountId: z.string().optional(),
   locale: ZUserLocale.optional(),
 });

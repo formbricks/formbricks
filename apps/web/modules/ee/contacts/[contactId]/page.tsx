@@ -1,7 +1,8 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { AttributesSection } from "@/modules/ee/contacts/[contactId]/components/attributes-section";
 import { DeleteContactButton } from "@/modules/ee/contacts/[contactId]/components/delete-contact-button";
-import { getContact, getContactAttributes } from "@/modules/ee/contacts/lib/contacts";
+import { getContactAttributes } from "@/modules/ee/contacts/lib/contact-attributes";
+import { getContact } from "@/modules/ee/contacts/lib/contacts";
 import { getContactIdentifier } from "@/modules/ee/contacts/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";

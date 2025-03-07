@@ -1,4 +1,7 @@
-import { MutableRef, useEffect } from "preact/hooks";
+import { ApiResponse, ApiSuccessResponse } from "@/types/api";
+import { TAllowedFileExtension } from "@formbricks/types/common";
+import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
+import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import {
   type TShuffleOption,
@@ -103,37 +106,85 @@ const getPossibleNextQuestions = (question: TSurveyQuestion): string[] => {
   return possibleDestinations;
 };
 
-// Improved version of https://usehooks.com/useOnClickOutside/
-export const useClickOutside = (
-  ref: MutableRef<HTMLElement | null>,
-  handler: (event: MouseEvent | TouchEvent) => void
-): void => {
-  useEffect(() => {
-    let startedInside = false;
-    let startedWhenMounted = false;
-
-    const listener = (event: MouseEvent | TouchEvent) => {
-      // Do nothing if `mousedown` or `touchstart` started inside ref element
-      if (startedInside || !startedWhenMounted) return;
-      // Do nothing if clicking ref's element or descendent elements
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
-
-      handler(event);
-    };
-
-    const validateEventStart = (event: MouseEvent | TouchEvent) => {
-      startedWhenMounted = ref.current !== null;
-      startedInside = ref.current !== null && ref.current.contains(event.target as Node);
-    };
-
-    document.addEventListener("mousedown", validateEventStart);
-    document.addEventListener("touchstart", validateEventStart);
-    document.addEventListener("click", listener);
-
-    return () => {
-      document.removeEventListener("mousedown", validateEventStart);
-      document.removeEventListener("touchstart", validateEventStart);
-      document.removeEventListener("click", listener);
-    };
-  }, [ref, handler]);
+export const isFulfilled = <T>(val: PromiseSettledResult<T>): val is PromiseFulfilledResult<T> => {
+  return val.status === "fulfilled";
 };
+
+export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejectedResult => {
+  return val.status === "rejected";
+};
+
+export const makeRequest = async <T>(
+  apiHost: string,
+  endpoint: string,
+  method: "GET" | "POST" | "PUT" | "DELETE",
+  data?: unknown
+): Promise<Result<T, ApiErrorResponse>> => {
+  const url = new URL(apiHost + endpoint);
+  const body = data ? JSON.stringify(data) : undefined;
+
+  const res = await wrapThrowsAsync(fetch)(url.toString(), {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store",
+    body,
+  });
+
+  // TODO: Only return api error response relevant keys
+  if (!res.ok) return err(res.error as unknown as ApiErrorResponse);
+
+  const response = res.data;
+  const json = (await response.json()) as ApiResponse;
+
+  if (!response.ok) {
+    const errorResponse = json as ApiErrorResponse;
+    return err({
+      code: errorResponse.code === "forbidden" ? "forbidden" : "network_error",
+      status: response.status,
+      message: errorResponse.message || "Something went wrong",
+      url,
+      ...(Object.keys(errorResponse.details ?? {}).length > 0 && { details: errorResponse.details }),
+    });
+  }
+
+  const successResponse = json as ApiSuccessResponse<T>;
+  return ok(successResponse.data);
+};
+
+export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
+  const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
+    return surveyLanguage.default;
+  });
+  if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
+};
+
+const mimeTypes: { [key in TAllowedFileExtension]: string } = {
+  heic: "image/heic",
+  png: "image/png",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  webp: "image/webp",
+  pdf: "application/pdf",
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xls: "application/vnd.ms-excel",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  plain: "text/plain",
+  csv: "text/csv",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  avi: "video/x-msvideo",
+  mkv: "video/x-matroska",
+  webm: "video/webm",
+  zip: "application/zip",
+  rar: "application/vnd.rar",
+  "7z": "application/x-7z-compressed",
+  tar: "application/x-tar",
+};
+
+// Function to convert file extension to its MIME type
+export const getMimeType = (extension: TAllowedFileExtension): string => mimeTypes[extension];

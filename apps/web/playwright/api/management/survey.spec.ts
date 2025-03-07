@@ -1,37 +1,21 @@
 import { expect } from "@playwright/test";
 import { test } from "../../lib/fixtures";
+import { loginAndGetApiKey } from "../../lib/utils";
+import { SURVEYS_API_URL } from "../constants";
 
 test.describe("API Tests", () => {
-  let surveyId: string;
-  let environmentId: string;
-  let apiKey: string;
+  let surveyId, environmentId, apiKey;
 
   test("API Tests", async ({ page, users, request }) => {
-    const user = await users.create();
-    await user.login();
-
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-
-    await test.step("Copy API Key", async () => {
-      environmentId =
-        /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-        (() => {
-          throw new Error("Unable to parse environmentId from URL");
-        })();
-
-      await page.goto(`/environments/${environmentId}/project/api-keys`);
-
-      await page.getByRole("button", { name: "Add Production API Key" }).isVisible();
-      await page.getByRole("button", { name: "Add Production API Key" }).click();
-      await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
-      await page.getByRole("button", { name: "Add API Key" }).click();
-      await page.locator(".copyApiKeyIcon").click();
-
-      apiKey = await page.evaluate("navigator.clipboard.readText()");
-    });
+    try {
+      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+    } catch (error) {
+      console.error("Error during login and getting API key:", error);
+      throw error;
+    }
 
     await test.step("Create Survey from API", async () => {
-      const response = await request.post(`/api/v1/management/surveys`, {
+      const response = await request.post(SURVEYS_API_URL, {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -67,10 +51,12 @@ test.describe("API Tests", () => {
       const responseBody = await response.json();
       expect(responseBody.data.name).toEqual("My new Survey from API");
       expect(responseBody.data.environmentId).toEqual(environmentId);
+
+      surveyId = responseBody.data.id;
     });
 
     await test.step("List Surveys from API", async () => {
-      const response = await request.get(`/api/v1/management/surveys`, {
+      const response = await request.get(SURVEYS_API_URL, {
         headers: {
           "x-api-key": apiKey,
         },
@@ -85,7 +71,7 @@ test.describe("API Tests", () => {
     });
 
     await test.step("Get Survey by ID from API", async () => {
-      const responseSurvey = await request.get(`/api/v1/management/surveys/${surveyId}`, {
+      const responseSurvey = await request.get(`${SURVEYS_API_URL}/${surveyId}`, {
         headers: {
           "content-type": "application/json",
           "x-api-key": apiKey,
@@ -98,7 +84,7 @@ test.describe("API Tests", () => {
     });
 
     await test.step("Updated Survey by ID from API", async () => {
-      const response = await request.put(`/api/v1/management/surveys/${surveyId}`, {
+      const response = await request.put(`${SURVEYS_API_URL}/${surveyId}`, {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -114,7 +100,7 @@ test.describe("API Tests", () => {
     });
 
     await test.step("Delete Survey by ID from API", async () => {
-      const response = await request.delete(`/api/v1/management/surveys/${surveyId}`, {
+      const response = await request.delete(`${SURVEYS_API_URL}/${surveyId}`, {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -124,7 +110,7 @@ test.describe("API Tests", () => {
       const responseBody = await response.json();
       expect(responseBody.data.name).toEqual("My updated Survey from API");
 
-      const responseSurvey = await request.get(`/api/v1/management/surveys/${surveyId}`, {
+      const responseSurvey = await request.get(`${SURVEYS_API_URL}/${surveyId}`, {
         headers: {
           "content-type": "application/json",
           "x-api-key": apiKey,

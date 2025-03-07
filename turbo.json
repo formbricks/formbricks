@@ -158,6 +158,7 @@
         "S3_FORCE_PATH_STYLE",
         "S3_REGION",
         "S3_SECRET_KEY",
+        "SAML_DATABASE_URL",
         "SENTRY_DSN",
         "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",
@@ -182,7 +183,8 @@
         "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
-        "UNSPLASH_ACCESS_KEY"
+        "UNSPLASH_ACCESS_KEY",
+        "UNKEY_ROOT_KEY"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

@@ -4,9 +4,9 @@ import { Headline } from "@/components/general/headline";
 import { HtmlBody } from "@/components/general/html-body";
 import { QuestionMedia } from "@/components/general/question-media";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
+import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 import { useState } from "react";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCTAQuestion, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 
@@ -23,6 +23,8 @@ interface CTAQuestionProps {
   setTtc: (ttc: TResponseTtc) => void;
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
+  isBackButtonHidden: boolean;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function CTAQuestion({
@@ -37,6 +39,8 @@ export function CTAQuestion({
   setTtc,
   autoFocusEnabled,
   currentQuestionId,
+  isBackButtonHidden,
+  onOpenExternalURL,
 }: CTAQuestionProps) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = question.imageUrl || question.videoUrl;
@@ -67,7 +71,11 @@ export function CTAQuestion({
             tabIndex={isCurrent ? 0 : -1}
             onClick={() => {
               if (question.buttonExternal && question.buttonUrl) {
-                window.open(question.buttonUrl, "_blank")?.focus();
+                if (onOpenExternalURL) {
+                  onOpenExternalURL(question.buttonUrl);
+                } else {
+                  window.open(question.buttonUrl, "_blank")?.focus();
+                }
               }
               const updatedTtcObj = getUpdatedTtc(ttc, question.id, performance.now() - startTime);
               setTtc(updatedTtcObj);
@@ -92,7 +100,7 @@ export function CTAQuestion({
             </button>
           )}
         </div>
-        {!isFirstQuestion && (
+        {!isFirstQuestion && !isBackButtonHidden && (
           <BackButton
             tabIndex={isCurrent ? 0 : -1}
             backButtonLabel={getLocalizedValue(question.backButtonLabel, languageCode)}

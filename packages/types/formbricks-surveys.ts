@@ -1,6 +1,6 @@
 import type { TJsEnvironmentStateSurvey, TJsFileUploadParams } from "./js";
 import type { TProjectStyling } from "./project";
-import type { TResponseData, TResponseUpdate } from "./responses";
+import type { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "./responses";
 import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 
@@ -12,7 +12,7 @@ export interface SurveyBaseProps {
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;
   getSetQuestionId?: (getSetQuestionId: (value: string) => void) => void;
   getSetResponseData?: (getSetResponseData: (value: TResponseData) => void) => void;
-  onDisplay?: () => void;
+  onDisplay?: () => Promise<void>;
   onResponse?: (response: TResponseUpdate) => void;
   onFinished?: () => void;
   onClose?: () => void;
@@ -27,7 +27,7 @@ export interface SurveyBaseProps {
   isCardBorderVisible?: boolean;
   startAtQuestionId?: string;
   clickOutside?: boolean;
-  hiddenFieldsRecord?: TResponseData;
+  hiddenFieldsRecord?: TResponseHiddenFieldValue;
   shouldResetQuestionId?: boolean;
   fullSizeCards?: boolean;
 }
@@ -40,4 +40,22 @@ export interface SurveyModalProps extends SurveyBaseProps {
   clickOutside: boolean;
   darkOverlay: boolean;
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+}
+
+export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
+  apiHost?: string;
+  environmentId?: string;
+  userId?: string;
+  onDisplayCreated?: () => void | Promise<void>;
+  onResponseCreated?: () => void | Promise<void>;
+  onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
+  mode?: "modal" | "inline";
+  containerId?: string;
+  clickOutside?: boolean;
+  darkOverlay?: boolean;
+  placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+  action?: string;
+  singleUseId?: string;
+  singleUseResponseId?: string;
 }

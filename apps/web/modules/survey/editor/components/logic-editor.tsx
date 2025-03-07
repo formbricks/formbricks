@@ -2,6 +2,7 @@
 
 import { LogicEditorActions } from "@/modules/survey/editor/components/logic-editor-actions";
 import { LogicEditorConditions } from "@/modules/survey/editor/components/logic-editor-conditions";
+import { getQuestionIconMap } from "@/modules/survey/lib/questions";
 import {
   Select,
   SelectContent,
@@ -13,7 +14,6 @@ import { useTranslate } from "@tolgee/react";
 import { ArrowRightIcon } from "lucide-react";
 import { ReactElement, useMemo } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { TSurvey, TSurveyLogic, TSurveyQuestion } from "@formbricks/types/surveys/types";
 
 interface LogicEditorProps {

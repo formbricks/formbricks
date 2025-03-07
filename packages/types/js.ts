@@ -35,6 +35,7 @@ export const ZJsEnvironmentStateSurvey = ZSurvey.innerType()
     displayPercentage: true,
     delay: true,
     projectOverwrites: true,
+    isBackButtonHidden: true,
   })
   .superRefine(ZSurvey._def.effect.type === "refinement" ? ZSurvey._def.effect.refinement : () => null);
 
@@ -83,6 +84,7 @@ export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),
   data: z.object({
     userId: z.string().nullable(),
+    contactId: z.string().nullable(),
     segments: z.array(ZId), // segment ids the person belongs to
     displays: z.array(
       z.object({

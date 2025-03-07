@@ -39,7 +39,18 @@ export const createUserFixture = (
 
 export type UserFixture = ReturnType<typeof createUserFixture>;
 
-export const createUsersFixture = (page: Page, workerInfo: TestInfo) => {
+export type UsersFixture = {
+  create: (params?: {
+    name?: string;
+    email?: string;
+    organizationName?: string;
+    projectName?: string;
+    withoutProject?: boolean;
+  }) => Promise<UserFixture>;
+  get: () => UserFixture[];
+};
+
+export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixture => {
   const store: { users: UserFixture[] } = {
     users: [],
   };

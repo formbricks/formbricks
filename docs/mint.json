@@ -47,7 +47,9 @@
             "xm-and-surveys/surveys/general-features/shareable-dashboards",
             "xm-and-surveys/surveys/general-features/schedule-start-end-dates",
             "xm-and-surveys/surveys/general-features/metadata",
-            "xm-and-surveys/surveys/general-features/variables"
+            "xm-and-surveys/surveys/general-features/variables",
+            "xm-and-surveys/surveys/general-features/hide-back-button",
+            "xm-and-surveys/surveys/general-features/email-followups"
           ]
         },
         {
@@ -89,33 +91,33 @@
               ]
             }
           ]
+        },
+        {
+          "group": "Question Types",
+          "icon": "question",
+          "pages": [
+            "xm-and-surveys/surveys/question-type/address",
+            "xm-and-surveys/surveys/question-type/consent",
+            "xm-and-surveys/surveys/question-type/contact-info",
+            "xm-and-surveys/surveys/question-type/date",
+            "xm-and-surveys/surveys/question-type/file-upload",
+            "xm-and-surveys/surveys/question-type/free-text",
+            "xm-and-surveys/surveys/question-type/matrix",
+            "xm-and-surveys/surveys/question-type/net-promoter-score",
+            "xm-and-surveys/surveys/question-type/ranking",
+            "xm-and-surveys/surveys/question-type/rating",
+            "xm-and-surveys/surveys/question-type/schedule-a-meeting",
+            "xm-and-surveys/surveys/question-type/select-multiple",
+            "xm-and-surveys/surveys/question-type/select-picture",
+            "xm-and-surveys/surveys/question-type/select-single",
+            "xm-and-surveys/surveys/question-type/statement-cta"
+          ]
         }
       ]
     },
     {
       "group": "Core Features",
       "pages": [
-        {
-          "group": "Question Types",
-          "icon": "question",
-          "pages": [
-            "xm-and-surveys/core-features/question-type/address",
-            "xm-and-surveys/core-features/question-type/consent",
-            "xm-and-surveys/core-features/question-type/contact-info",
-            "xm-and-surveys/core-features/question-type/date",
-            "xm-and-surveys/core-features/question-type/file-upload",
-            "xm-and-surveys/core-features/question-type/free-text",
-            "xm-and-surveys/core-features/question-type/matrix",
-            "xm-and-surveys/core-features/question-type/net-promoter-score",
-            "xm-and-surveys/core-features/question-type/ranking",
-            "xm-and-surveys/core-features/question-type/rating",
-            "xm-and-surveys/core-features/question-type/schedule-a-meeting",
-            "xm-and-surveys/core-features/question-type/select-multiple",
-            "xm-and-surveys/core-features/question-type/select-picture",
-            "xm-and-surveys/core-features/question-type/select-single",
-            "xm-and-surveys/core-features/question-type/statement-cta"
-          ]
-        },
         {
           "group": "Integrations",
           "icon": "bridge",
@@ -135,7 +137,8 @@
         },
         "xm-and-surveys/core-features/user-management",
         "xm-and-surveys/core-features/styling-theme",
-        "xm-and-surveys/core-features/email-customization"
+        "xm-and-surveys/core-features/email-customization",
+        "xm-and-surveys/core-features/test-environment"
       ]
     },
     {
@@ -245,7 +248,8 @@
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
         "self-hosting/setup/cluster-setup",
-        "self-hosting/setup/monitoring"
+        "self-hosting/setup/monitoring",
+        "self-hosting/setup/kubernetes"
       ]
     },
     {
@@ -253,6 +257,7 @@
       "pages": [
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
+        "self-hosting/configuration/smtp",
         {
           "group": "Auth & SSO",
           "icon": "lock",
@@ -284,8 +289,12 @@
       ]
     },
     {
-      "group": "API Documentation",
-      "pages": ["api-reference/introduction", "api-reference/rest-api"]
+      "group": "API v1 Documentation",
+      "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
+    },
+    {
+      "group": "API v2 Documentation (Draft)",
+      "pages": ["api-v2-reference/introduction"]
     }
   ],
   "redirects": [

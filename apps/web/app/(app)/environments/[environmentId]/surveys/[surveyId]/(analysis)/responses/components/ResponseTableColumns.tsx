@@ -1,6 +1,7 @@
 "use client";
 
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
+import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@/modules/survey/lib/questions";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
@@ -12,7 +13,6 @@ import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { processResponseData } from "@formbricks/lib/responses";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
-import { VARIABLES_ICON_MAP, getQuestionIconMap } from "@formbricks/lib/utils/questions";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
