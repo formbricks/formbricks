@@ -20,7 +20,26 @@ spec:
         releaseName: formbricks
         ignoreMissingValueFiles: true
         valuesObject:
-          certificateArn: '{{ .Values.formbricks.certificateArn }}'
+          ingress:
+            enabled: true
+            ingressClassName: alb
+            hosts:
+              - host: {{ .Values.formbricks.ingressHost }}
+                paths:
+                  - path: /
+                    pathType: "Prefix"
+                    serviceName: "formbricks"
+            annotations:
+              alb.ingress.kubernetes.io/scheme: internet-facing
+              alb.ingress.kubernetes.io/target-type: ip  # Ensure this is "ip" if using pod-based routing
+              alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+              alb.ingress.kubernetes.io/ssl-redirect: "443"
+              alb.ingress.kubernetes.io/certificate-arn: {{ .Values.formbricks.certificateArn }}
+              alb.ingress.kubernetes.io/healthcheck-path: "/health"
+              alb.ingress.kubernetes.io/group.name: formbricks
+              alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+
   destination:
     namespace: 'formbricks'
     name: '{{ .Values.clusterName }}'
