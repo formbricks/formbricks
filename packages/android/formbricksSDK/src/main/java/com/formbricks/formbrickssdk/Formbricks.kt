@@ -134,7 +134,7 @@ object Formbricks {
             return
         }
         Formbricks.language = language
-        UserManager.setLanguage("language")
+        UserManager.setLanguage(language)
     }
 
     /**
