@@ -21,17 +21,14 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { env } from "@formbricks/lib/env";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TUserLocale, ZUserName } from "@formbricks/types/user";
+import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
   name: ZUserName,
   email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(/^(?=.*[A-Z])(?=.*\d).*$/),
+  password: ZUserPassword,
 });
 
 const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;

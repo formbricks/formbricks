@@ -12,6 +12,7 @@ export const DEFAULT_PERSON_STATE_NO_USER_ID: TJsPersonState = {
   expiresAt: null,
   data: {
     userId: null,
+    contactId: null,
     segments: [],
     displays: [],
     responses: [],
@@ -71,6 +72,7 @@ export const fetchPersonState = async (
     expiresAt: new Date(new Date().getTime() + 1000 * 60 * 30), // 30 minutes
     data: {
       userId,
+      contactId: null,
       segments: [],
       displays: [],
       responses: [],
