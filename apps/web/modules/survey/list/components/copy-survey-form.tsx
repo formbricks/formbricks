@@ -42,14 +42,19 @@ export const CopySurveyForm = ({ defaultProjects, survey, onCancel, setOpen }: I
     try {
       filteredData.map(async (project) => {
         project.environments.map(async (environment) => {
-          await copySurveyToOtherEnvironmentAction({
+          const result = await copySurveyToOtherEnvironmentAction({
             environmentId: survey.environmentId,
             surveyId: survey.id,
             targetEnvironmentId: environment,
           });
+
+          if (result?.data) {
+            toast.success(t("environments.surveys.copy_survey_success"));
+          } else {
+            toast.error(t("environments.surveys.copy_survey_error"));
+          }
         });
       });
-      toast.success(t("environments.surveys.copy_survey_success"));
     } catch (error) {
       toast.error(t("environments.surveys.copy_survey_error"));
     } finally {
