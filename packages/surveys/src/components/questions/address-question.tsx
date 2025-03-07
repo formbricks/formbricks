@@ -1,8 +1,8 @@
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
-import { Label } from "@/components/general/Label";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
+import { Label } from "@/components/general/label";
 import { QuestionMedia } from "@/components/general/question-media";
 import { Subheader } from "@/components/general/subheader";
 import { ScrollableContainer } from "@/components/wrappers/scrollable-container";
