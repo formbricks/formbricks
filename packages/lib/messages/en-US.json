@@ -485,8 +485,6 @@
     "survey_response_finished_email_congrats": "Congrats, you received a new response to your survey! Someone just completed your survey: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Don't want to get these notifications?",
     "survey_response_finished_email_hey": "Hey \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "this form",
-    "survey_response_finished_email_turn_off_notifications": "Turn off notifications for",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Turn off notifications for all newly created forms",
     "survey_response_finished_email_turn_off_notifications_for_this_form": "Turn off notifications for this form",
     "survey_response_finished_email_view_more_responses": "View {responseCount} more responses",

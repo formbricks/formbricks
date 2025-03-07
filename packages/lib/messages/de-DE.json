@@ -485,8 +485,6 @@
     "survey_response_finished_email_congrats": "Glückwunsch, Du hast eine neue Antwort auf deine Umfrage {surveyName} erhalten!",
     "survey_response_finished_email_dont_want_notifications": "Möchtest Du diese Benachrichtigungen nicht erhalten?",
     "survey_response_finished_email_hey": "Hey \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "dieses Formular",
-    "survey_response_finished_email_turn_off_notifications": "Benachrichtigungen ausschalten für",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Benachrichtigungen für alle neu erstellten Formulare ausschalten",
     "survey_response_finished_email_turn_off_notifications_for_this_form": "Benachrichtigungen für dieses Formular ausschalten",
     "survey_response_finished_email_view_more_responses": "Zeige {responseCount} weitere Antworten",
