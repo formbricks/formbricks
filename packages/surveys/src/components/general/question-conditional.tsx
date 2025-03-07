@@ -13,7 +13,7 @@ import { OpenTextQuestion } from "@/components/questions/open-text-question";
 import { PictureSelectionQuestion } from "@/components/questions/picture-selection-question";
 import { RankingQuestion } from "@/components/questions/ranking-question";
 import { RatingQuestion } from "@/components/questions/rating-question";
-import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
+import { getLocalizedValue } from "@/lib/i18n";
 import { type TJsFileUploadParams } from "@formbricks/types/js";
 import { type TResponseData, type TResponseDataValue, type TResponseTtc } from "@formbricks/types/responses";
 import { type TUploadFileConfig } from "@formbricks/types/storage";
@@ -42,6 +42,7 @@ interface QuestionConditionalProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function QuestionConditional({
@@ -62,6 +63,7 @@ export function QuestionConditional({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  onOpenExternalURL,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
@@ -164,6 +166,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      onOpenExternalURL={onOpenExternalURL}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion

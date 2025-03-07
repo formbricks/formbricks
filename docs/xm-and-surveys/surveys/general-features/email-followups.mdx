@@ -1,0 +1,74 @@
+---
+title: "Email Follow-ups"
+description: "Follow-ups are a feature that allows you to send emails to your users on different survey events."
+icon: "envelope"
+---
+
+## Overview
+
+The email followup feature allows survey creators to automatically send customized emails to respondents based on their survey responses or when they reach specific survey endings. This feature is particularly useful for following up with respondents, sending thank you notes, or providing additional information.
+
+<Note>
+  Email followups is a paid feature. It is only available for users on paid plans or have an enterprise license.
+</Note>
+
+## Key Components
+
+### 1. Trigger Types
+
+There are two types of triggers for email followups:
+
+- **Response-based**: Triggered when a response is submitted
+- **Ending-based**: Triggered when respondents reach specific survey endings
+
+### 2. Email Configuration
+
+Each followup email can be configured with:
+
+- **Name**: A descriptive name for the followup
+- **To**: Email recipient (sourced from):
+  - Open text questions with email input type
+  - Contact info questions
+  - Hidden fields
+- **Reply-To**: One or more email addresses for replies
+- **Subject**: Email subject line
+- **Body**: HTML-formatted email content
+
+## Setup Process
+
+1. Navigate to the survey editor
+2. Access the `follow-ups` section
+
+![Followups tab](/images/xm-and-surveys/core-features/email-followups/followups-tab.webp)
+
+3. Click the "New follow-up" button to add a new followup
+4. Fill in the required information:
+
+   - Followup name
+   - Trigger type (response or endings)
+
+![Followup form](/images/xm-and-surveys/core-features/email-followups/followup-form.webp)
+
+5. **Configuring Recipients**:
+   The "To" field can be configured to use:
+
+   - Responses from email-type open text questions
+   - Responses from contact info questions
+   - Values from hidden fields
+
+6. **Configure the Reply-To**:
+
+   - Add one or more valid email addresses
+   - Addresses can be added by typing and pressing space or comma
+   - Invalid email addresses are automatically rejected
+
+![Followup recipient](/images/xm-and-surveys/core-features/email-followups/followup-recipient.webp)
+
+7. **Configuring the Email Content**:
+
+   - Subject
+   - Body: Supports basic HTML formatting (p, span, b, strong, i, em, a, br tags)
+
+![Followup content](/images/xm-and-surveys/core-features/email-followups/followup-content.webp)
+
+8. **Save and Activate**

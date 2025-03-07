@@ -141,6 +141,19 @@ export const ZJsRNWebViewOnMessageData = z.object({
   onDisplayCreated: z.boolean().nullish(),
   onResponseCreated: z.boolean().nullish(),
   onClose: z.boolean().nullish(),
+  onFilePick: z.boolean().nullish(),
+  fileUploadParams: z
+    .object({
+      allowedFileExtensions: z.string().nullish(),
+      allowMultipleFiles: z.boolean().nullish(),
+    })
+    .nullish(),
+  onOpenExternalURL: z.boolean().nullish(),
+  onOpenExternalURLParams: z
+    .object({
+      url: z.string(),
+    })
+    .nullish(),
 });
 
 export interface TUpdates {

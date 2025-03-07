@@ -7725,7 +7725,7 @@
           }
         },
         "summary": "Health Check",
-        "tags": ["default"]
+        "tags": ["Health"]
       }
     }
   },
