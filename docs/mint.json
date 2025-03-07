@@ -275,7 +275,8 @@
             "self-hosting/configuration/integrations/n8n",
             "self-hosting/configuration/integrations/notion",
             "self-hosting/configuration/integrations/slack",
-            "self-hosting/configuration/integrations/zapier"
+            "self-hosting/configuration/integrations/zapier",
+            "self-hosting/configuration/integrations/activepieces"
           ]
         }
       ]
