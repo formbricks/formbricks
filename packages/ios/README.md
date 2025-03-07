@@ -27,7 +27,7 @@ Replace `"click_demo_button"` with the desired action.
 
 # Swift Documentation
 
-You can generate developer documentation for the SDK by pressing **CTRL + Shift + Command + O** on macOS or by selecting **Product → Build Documentation** in Xcode.
+You can generate developer documentation for the SDK by pressing **Shift + Command + Option + D** on macOS or by selecting **Product → Build Documentation** in Xcode.
 
 ---
 
