@@ -1,9 +1,9 @@
 argocdNamespace: argocd
 argocdProject: default
 clusterName: in-cluster
-addons_repo_url: https://github.com/d3vb0ox/formbricks
-addons_repo_revision: main
-addons_repo_basepath: infra/bootstrap
+workloads_repo_url: https://github.com/d3vb0ox/formbricks
+workloads_target_revision: main
+workloads_repo_path: infra/bootstrap/charts/eks-workloads
 
 formbricks:
   enabled: true

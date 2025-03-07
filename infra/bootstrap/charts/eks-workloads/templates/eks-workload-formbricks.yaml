@@ -12,12 +12,9 @@ metadata:
 spec:
   project: {{ .Values.argocdProject | default "default" }}
   sources:
-    - repoURL: '{{ .Values.addons_repo_url }}'
-      targetRevision: '{{ .Values.addons_repo_revision }}'
-      ref: values
-    - repoURL: https://github.com/d3vb0ox/formbricks.git
-      targetRevision: '{{ .Values.addons_repo_revision }}'
-      path: helm-chart
+    - repoURL: '{{ .Values.workloads_repo_url }}'
+      targetRevision: '{{ .Values.workloads_target_revision }}'
+      path: '{{ .Values.workloads_repo_path }}'
       chart: formbricks
       helm:
         releaseName: formbricks
