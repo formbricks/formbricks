@@ -29,18 +29,8 @@ jobs:
         id: branch-name
         run: |
           # For PR merges, use the head ref from the pull request event
-          SOURCE_BRANCH="${{ github.head_ref }}"
-
-          # Only remove username prefix if needed
-          if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
-            PREFIX=${SOURCE_BRANCH%%/*}
-            if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
-              SOURCE_BRANCH=${SOURCE_BRANCH#*/}
-            fi
-          fi
-
-          echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
-          echo "Detected source branch: $SOURCE_BRANCH"
+          echo "SOURCE_BRANCH=${{ github.head_ref }}" >> $GITHUB_ENV
+          echo "Detected source branch: ${{ github.head_ref }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
