@@ -28,4 +28,3 @@ dependencies:
     version: 20.11.2
     repository: "oci://registry-1.docker.io/bitnamicharts"
     condition: redis.enabled
-
