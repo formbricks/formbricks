@@ -1,5 +1,6 @@
 import { BackButton } from "@/components/buttons/back-button";
 import { SubmitButton } from "@/components/buttons/submit-button";
+import { Label } from "@/components/general/Label";
 import { Headline } from "@/components/general/headline";
 import { Input } from "@/components/general/input";
 import { QuestionMedia } from "@/components/general/question-media";
@@ -56,27 +57,27 @@ export function ContactInfoQuestion({
     {
       id: "firstName",
       ...question.firstName,
-      placeholder: question.firstName.placeholder[languageCode],
+      label: question.firstName.placeholder[languageCode],
     },
     {
       id: "lastName",
       ...question.lastName,
-      placeholder: question.lastName.placeholder[languageCode],
+      label: question.lastName.placeholder[languageCode],
     },
     {
       id: "email",
       ...question.email,
-      placeholder: question.email.placeholder[languageCode],
+      label: question.email.placeholder[languageCode],
     },
     {
       id: "phone",
       ...question.phone,
-      placeholder: question.phone.placeholder[languageCode],
+      label: question.phone.placeholder[languageCode],
     },
     {
       id: "company",
       ...question.company,
-      placeholder: question.company.placeholder[languageCode],
+      label: question.company.placeholder[languageCode],
     },
   ];
 
@@ -157,19 +158,21 @@ export function ContactInfoQuestion({
 
               return (
                 field.show && (
-                  <Input
-                    ref={index === 0 ? contactInfoRef : null}
-                    key={field.id}
-                    placeholder={isFieldRequired() ? `${field.placeholder}*` : field.placeholder}
-                    required={isFieldRequired()}
-                    value={safeValue[index] || ""}
-                    className="fb-py-3"
-                    type={inputType}
-                    onChange={(e) => {
-                      handleChange(field.id, e.currentTarget.value);
-                    }}
-                    tabIndex={isCurrent ? 0 : -1}
-                  />
+                  <div className="fb-space-y-1">
+                    <Label text={isFieldRequired() ? `${field.label}*` : field.label} />
+                    <Input
+                      ref={index === 0 ? contactInfoRef : null}
+                      key={field.id}
+                      required={isFieldRequired()}
+                      value={safeValue[index] || ""}
+                      type={inputType}
+                      onChange={(e) => {
+                        handleChange(field.id, e.currentTarget.value);
+                      }}
+                      tabIndex={isCurrent ? 0 : -1}
+                      aria-label={field.label}
+                    />
+                  </div>
                 )
               );
             })}

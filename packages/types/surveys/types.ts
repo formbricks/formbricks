@@ -1168,7 +1168,7 @@ export const ZSurvey = z
           const multiLangIssueInPlaceholder =
             field.show &&
             validateQuestionLabels(
-              `Placeholder for field ${field.label}`,
+              `Label for field ${field.label}`,
               field.placeholder,
               languages,
               questionIndex,
@@ -1202,7 +1202,7 @@ export const ZSurvey = z
           const multiLangIssueInPlaceholder =
             field.show &&
             validateQuestionLabels(
-              `Placeholder for field ${field.label}`,
+              `Label for field ${field.label}`,
               field.placeholder,
               languages,
               questionIndex,
