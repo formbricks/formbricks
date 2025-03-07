@@ -60,9 +60,9 @@ deployment:
   # Environment variables passed to the app container
   env:
     EMAIL_VERIFICATION_DISABLED:
-      value: 1
+      value: "1"
     PASSWORD_RESET_DISABLED:
-      value: 1
+      value: "1"
   # SMTP_PASSWORD:
   #   valueFrom:
   #     secretKeyRef:
