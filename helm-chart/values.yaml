@@ -63,6 +63,8 @@ deployment:
       value: "1"
     PASSWORD_RESET_DISABLED:
       value: "1"
+    TEST:
+      value: test
   # SMTP_PASSWORD:
   #   valueFrom:
   #     secretKeyRef:
