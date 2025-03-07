@@ -1,0 +1,31 @@
+apiVersion: v2
+name: formbricks
+description: A Helm chart for Formbricks with PostgreSQL, Redis, Traefik, and cert-manager
+
+
+type: application
+
+# Helm chart Version
+version: 0.2.0
+
+keywords:
+  - formbricks
+  - postgresql
+  - redis
+
+home: https://formbricks.com/
+maintainers:
+  - name: Formbricks
+    email: info@formbricks.com
+
+
+dependencies:
+  - name: postgresql
+    version: "16.4.16"
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: postgresql.enabled
+  - name: redis
+    version: 20.11.2
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    condition: redis.enabled
+
