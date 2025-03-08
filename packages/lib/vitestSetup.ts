@@ -24,7 +24,6 @@ vi.mock("react", async () => {
 });
 
 vi.mock("@tolgee/react", () => ({
-  // Return a fake translation hook:
   useTranslate: () => {
     return {
       t: (key: string) => key,
@@ -33,7 +32,6 @@ vi.mock("@tolgee/react", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-  // Return a mock version of useRouter
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -49,10 +47,28 @@ vi.mock("server-only", () => {
   return {};
 });
 
-if (typeof URL.revokeObjectURL !== "function") {
-  URL.revokeObjectURL = () => {
-    // No-op stub: doesn't need to do anything in tests.
+vi.mock("@prisma/client", async () => {
+  const actual = await vi.importActual<typeof import("@prisma/client")>("@prisma/client");
+
+  return {
+    ...actual,
+    Prisma: actual.Prisma,
+    PrismaClient: class {
+      $connect() {
+        return Promise.resolve();
+      }
+      $disconnect() {
+        return Promise.resolve();
+      }
+      $extends() {
+        return this;
+      }
+    },
   };
+});
+
+if (typeof URL.revokeObjectURL !== "function") {
+  URL.revokeObjectURL = () => {};
 }
 
 if (typeof URL.createObjectURL !== "function") {
