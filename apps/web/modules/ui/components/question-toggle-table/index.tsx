@@ -81,7 +81,7 @@ export const QuestionToggleTable = ({
           </th>
           <th className="w-1/6 text-sm font-semibold">{t("common.show")}</th>
           <th className="w-1/6 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
-          <th className="text-sm font-semibold">{t("common.placeholder")}</th>
+          <th className="text-sm font-semibold">{t("common.label")}</th>
         </tr>
       </thead>
       <tbody>

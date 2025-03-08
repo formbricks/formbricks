@@ -205,22 +205,20 @@ test.describe("Survey Create & Submit Response without logic", async () => {
 
       // Address Question
       await expect(page.getByText(surveys.createAndSubmit.address.question)).toBeVisible();
-      await expect(
-        page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
-      ).toBeVisible();
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createAndSubmit.address.placeholder.addressLine1)
+        .getByLabel(surveys.createAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.city)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.city).fill("This is my city");
+      await expect(page.getByLabel(surveys.createAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-10").getByRole("button", { name: "Next" }).click();
 
       // Contact Info Question
       await expect(page.getByText(surveys.createAndSubmit.contactInfo.question)).toBeVisible();
-      await expect(page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
-      await page.getByPlaceholder(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
+      await expect(page.getByLabel(surveys.createAndSubmit.contactInfo.placeholder)).toBeVisible();
+      await page.getByLabel(surveys.createAndSubmit.contactInfo.placeholder).fill("John Doe");
       await page.locator("#questionCard-11").getByRole("button", { name: "Next" }).click();
 
       // Ranking Question
