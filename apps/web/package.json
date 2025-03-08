@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -11,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "dotenv -e ../../.env -- vitest run",
-    "test:coverage": "dotenv -e ../../.env -- vitest run --coverage"
+    "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
+    "generate-api-specs": "tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml",
+    "merge-client-endpoints": "tsx ./scripts/merge-client-endpoints.ts",
+    "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
   "dependencies": {
     "@ai-sdk/azure": "1.1.9",
@@ -64,9 +67,11 @@
     "@tailwindcss/forms": "0.5.9",
     "@tailwindcss/typography": "0.5.15",
     "@tanstack/react-table": "8.20.6",
+    "@testing-library/jest-dom": "6.6.3",
     "@tolgee/cli": "2.8.1",
     "@tolgee/format-icu": "6.0.1",
     "@tolgee/react": "6.0.1",
+    "@unkey/ratelimit": "0.5.5",
     "@vercel/functions": "1.5.2",
     "@vercel/og": "0.6.4",
     "@vercel/otel": "1.10.0",
@@ -122,14 +127,17 @@
     "tailwind-merge": "2.5.5",
     "tailwindcss": "3.4.16",
     "ua-parser-js": "2.0.0",
+    "uuid": "11.1.0",
     "webpack": "5.97.1",
     "xlsx": "0.18.5",
-    "zod": "3.24.1"
+    "zod": "3.24.1",
+    "zod-openapi": "4.2.3"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@neshca/cache-handler": "1.9.0",
+    "@testing-library/react": "16.2.0",
     "@types/bcryptjs": "2.4.6",
     "@types/heic-convert": "2.1.0",
     "@types/lodash": "4.17.13",
@@ -137,9 +145,11 @@
     "@types/nodemailer": "6.4.17",
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
+    "@types/testing-library__react": "10.2.0",
     "@vitest/coverage-v8": "2.1.8",
-    "vite": "6.0.9",
-    "vitest": "2.1.9",
+    "vite": "6.2.0",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "3.0.7",
     "vitest-mock-extended": "2.0.2"
   }
 }

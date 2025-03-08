@@ -380,7 +380,7 @@ export const getQuestionSummary = async (
 
           let hasValidAnswer = false;
 
-          if (Array.isArray(answer)) {
+          if (Array.isArray(answer) && question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti) {
             answer.forEach((value) => {
               if (value) {
                 totalSelectionCount++;
@@ -396,7 +396,10 @@ export const getQuestionSummary = async (
                 hasValidAnswer = true;
               }
             });
-          } else if (typeof answer === "string") {
+          } else if (
+            typeof answer === "string" &&
+            question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle
+          ) {
             if (answer) {
               totalSelectionCount++;
               if (questionChoices.includes(answer)) {

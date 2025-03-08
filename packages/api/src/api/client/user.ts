@@ -18,6 +18,7 @@ export class UserAPI {
           expiresAt: Date | null;
           data: {
             userId: string | null;
+            contactId: string | null;
             segments: string[];
             displays: { surveyId: string; createdAt: Date }[];
             responses: string[];
@@ -36,7 +37,7 @@ export class UserAPI {
       attributes[key] = String(userUpdateInput.attributes[key]);
     }
 
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/user`, "POST", {
+    return makeRequest(this.apiHost, `/api/v2/client/${this.environmentId}/user`, "POST", {
       userId: userUpdateInput.userId,
       attributes,
     });
