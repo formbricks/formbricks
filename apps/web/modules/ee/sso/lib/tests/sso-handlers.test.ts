@@ -1,7 +1,9 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import { Organization } from "@prisma/client";
 import type { Account } from "next-auth";
+import { ProviderType } from "next-auth/providers/index";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
@@ -9,7 +11,7 @@ import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser } from "@formbricks/types/user";
-import { handleSSOCallback } from "./sso-handlers";
+import { handleSSOCallback } from "../sso-handlers";
 
 // Mock all dependencies
 vi.mock("@/modules/auth/lib/brevo", () => ({
@@ -64,7 +66,19 @@ describe("handleSSOCallback", () => {
     id: "user-123",
     email: "test@example.com",
     name: "Test User",
-    notificationSettings: {},
+    notificationSettings: {
+      alert: {},
+      weeklySummary: {},
+    },
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    twoFactorEnabled: false,
+    emailVerified: new Date(),
+    imageUrl: null,
+    role: "other",
+    objective: null,
+    locale: "en-US",
+    identityProvider: "email",
   };
 
   const mockAccount: Account = {
@@ -79,7 +93,7 @@ describe("handleSSOCallback", () => {
     // Default mock implementations
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-    vi.mocked(findMatchingLocale).mockResolvedValue("en");
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
   });
 
   it("should return false if SSO is not enabled", async () => {
@@ -100,7 +114,7 @@ describe("handleSSOCallback", () => {
   });
 
   it("should return false if account type is not oauth", async () => {
-    const nonOauthAccount = { ...mockAccount, type: "credentials" };
+    const nonOauthAccount = { ...mockAccount, type: "credentials" as ProviderType };
 
     const result = await handleSSOCallback({ user: mockUser, account: nonOauthAccount });
 
@@ -169,7 +183,12 @@ describe("handleSSOCallback", () => {
     };
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(existingUser);
-    vi.mocked(getUserByEmail).mockResolvedValue({ id: "another-user-id" });
+    vi.mocked(getUserByEmail).mockResolvedValue({
+      id: "another-user-id",
+      email: "new-email@example.com",
+      emailVerified: new Date(),
+      locale: "en-US",
+    });
 
     await expect(handleSSOCallback({ user: mockUser, account: mockAccount })).rejects.toThrow(
       "Looks like you updated your email somewhere else. A user with this new email exists already."
@@ -178,7 +197,12 @@ describe("handleSSOCallback", () => {
 
   it("should return true if user with email already exists", async () => {
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
-    vi.mocked(getUserByEmail).mockResolvedValue({ id: "existing-user-id" });
+    vi.mocked(getUserByEmail).mockResolvedValue({
+      id: "existing-user-id",
+      email: "existing-email@example.com",
+      emailVerified: new Date(),
+      locale: "en-US",
+    });
 
     const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
 
@@ -195,7 +219,26 @@ describe("handleSSOCallback", () => {
     vi.mocked(getUserByEmail).mockResolvedValue(null);
     vi.mocked(createUser).mockResolvedValue(newUser);
     vi.mocked(getOrganization).mockResolvedValue(null);
-    vi.mocked(createOrganization).mockResolvedValue({ id: "org-123", name: "Test User's Organization" });
+    vi.mocked(createOrganization).mockResolvedValue({
+      id: "org-123",
+      name: "Test User's Organization",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: null,
+        plan: "free",
+        period: "monthly",
+        limits: {
+          monthly: {
+            responses: null,
+            miu: null,
+          },
+          projects: null,
+        },
+        periodStart: new Date(),
+      },
+      isAIEnabled: false,
+    });
 
     const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
 
@@ -203,10 +246,10 @@ describe("handleSSOCallback", () => {
     expect(createUser).toHaveBeenCalledWith({
       name: mockUser.name,
       email: mockUser.email,
-      emailVerified: expect.any(Date),
+      emailVerified: new Date(),
       identityProvider: mockAccount.provider.toLowerCase().replace("-", ""),
       identityProviderAccountId: mockAccount.providerAccountId,
-      locale: "en",
+      locale: "en-US",
     });
     expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
   });
@@ -214,15 +257,27 @@ describe("handleSSOCallback", () => {
   it("should create organization and membership for new user when DEFAULT_ORGANIZATION_ID is set", async () => {
     const newUser = {
       ...mockUser,
-      emailVerified: expect.any(Date),
+      emailVerified: new Date(),
     };
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(getUserByEmail).mockResolvedValue(null);
     vi.mocked(createUser).mockResolvedValue(newUser);
     vi.mocked(getOrganization).mockResolvedValue(null);
-    vi.mocked(createOrganization).mockResolvedValue({ id: "org-123", name: "Test User's Organization" });
-
+    vi.mocked(createOrganization).mockResolvedValue({
+      id: "org-123",
+      name: "Test User's Organization",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: null,
+        plan: "free",
+        period: "monthly",
+        limits: { monthly: { responses: null, miu: null }, projects: null },
+        periodStart: new Date(),
+      },
+      isAIEnabled: false,
+    });
     const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
 
     expect(result).toBe(true);
@@ -247,7 +302,20 @@ describe("handleSSOCallback", () => {
       ...mockUser,
       emailVerified: expect.any(Date),
     };
-    const existingOrg = { id: "org-123", name: "Existing Organization" };
+    const existingOrg = {
+      id: "org-123",
+      name: "Existing Organization",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: null,
+        plan: "free" as Organization["billing"]["plan"],
+        period: "monthly" as Organization["billing"]["period"],
+        limits: { monthly: { responses: null, miu: null }, projects: null },
+        periodStart: new Date(),
+      },
+      isAIEnabled: false,
+    };
 
     vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
     vi.mocked(getUserByEmail).mockResolvedValue(null);
@@ -271,7 +339,7 @@ describe("handleSSOCallback", () => {
       // These fields are expected by the OpenID handling code
       given_name: "John",
       family_name: "Doe",
-      name: undefined, // Remove the name so the code has to construct it from given_name and family_name
+      name: "",
     };
 
     const openIdAccount = {
@@ -286,8 +354,20 @@ describe("handleSSOCallback", () => {
       name: "John Doe", // The handler should construct this name
     });
     vi.mocked(getOrganization).mockResolvedValue(null);
-    vi.mocked(createOrganization).mockResolvedValue({ id: "org-123", name: "John Doe's Organization" });
-
+    vi.mocked(createOrganization).mockResolvedValue({
+      id: "org-123",
+      name: "John Doe's Organization",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      billing: {
+        stripeCustomerId: null,
+        plan: "free",
+        period: "monthly",
+        limits: { monthly: { responses: null, miu: null }, projects: null },
+        periodStart: new Date(),
+      },
+      isAIEnabled: false,
+    });
     const result = await handleSSOCallback({ user: openIdUser, account: openIdAccount });
 
     expect(result).toBe(true);
