@@ -80,7 +80,7 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       return true;
     }
 
-    let userName = "";
+    let userName = user.name;
 
     if (provider === "openid") {
       const oidcUser = user as TUser & TOidcNameFields;
@@ -91,8 +91,6 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       } else if (oidcUser.preferred_username) {
         userName = oidcUser.preferred_username;
       }
-    } else if (user.name) {
-      userName = user.name;
     }
 
     const userProfile = await createUser({
