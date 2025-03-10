@@ -9,7 +9,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";

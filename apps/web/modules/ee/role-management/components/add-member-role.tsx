@@ -10,7 +10,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
-import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { type Control, Controller } from "react-hook-form";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
