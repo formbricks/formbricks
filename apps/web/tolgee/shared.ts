@@ -20,6 +20,7 @@ export function TolgeeBase() {
         "de-DE": () => import("@formbricks/lib/messages/de-DE.json"),
         "fr-FR": () => import("@formbricks/lib/messages/fr-FR.json"),
         "pt-BR": () => import("@formbricks/lib/messages/pt-BR.json"),
+        "pt-PT": () => import("@formbricks/lib/messages/pt-PT.json"),
         "zh-Hant-TW": () => import("@formbricks/lib/messages/zh-Hant-TW.json"),
       },
     });
