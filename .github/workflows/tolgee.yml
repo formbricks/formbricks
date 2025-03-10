@@ -3,7 +3,7 @@ permissions:
   contents: read
 
 on:
-  pull_request:
+  pull_request_target:
     types: [closed]
     branches:
       - main
@@ -23,18 +23,16 @@ jobs:
       - name: Get source branch name
         id: branch-name
         run: |
-          # For PR merges, use the head ref from the pull request event
-          SOURCE_BRANCH="${{ github.head_ref }}"
+          RAW_BRANCH="${{ github.head_ref }}"
+          SOURCE_BRANCH=$(echo "$RAW_BRANCH" | sed 's/[^a-zA-Z0-9._\/-]//g')
 
-          # Only remove username prefix if needed
-          if [[ "$SOURCE_BRANCH" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]+/ ]]; then
-            PREFIX=${SOURCE_BRANCH%%/*}
-            if [[ ! "$PREFIX" =~ ^(feature|fix|bugfix|hotfix|release|chore|docs|test|refactor|style|perf|build|ci|revert)$ ]]; then
-              SOURCE_BRANCH=${SOURCE_BRANCH#*/}
-            fi
-          fi
 
-          echo "SOURCE_BRANCH=$SOURCE_BRANCH" >> $GITHUB_ENV
+          # Safely add to environment variables using GitHub's recommended method
+          # This prevents environment variable injection attacks
+          echo "SOURCE_BRANCH<<EOF" >> $GITHUB_ENV
+          echo "$SOURCE_BRANCH" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
           echo "Detected source branch: $SOURCE_BRANCH"
 
       - name: Setup Node.js
@@ -53,6 +51,7 @@ jobs:
             --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag production \
             --untag "draft:${SOURCE_BRANCH}"
+            --verbose
 
       - name: Tag unused production keys as Deprecated
         run: |
@@ -60,6 +59,7 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag production \
             --tag deprecated --untag production
+            --verbose
 
       - name: Tag unused draft:current-branch keys as Deprecated
         run: |
@@ -67,6 +67,7 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag deprecated --untag "draft:${SOURCE_BRANCH}"
+            --verbose
 
       - name: Sync with backup
         run: |
