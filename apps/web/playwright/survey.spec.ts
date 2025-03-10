@@ -864,21 +864,17 @@ test.describe("Testing Survey with advanced logic", async () => {
       // Address Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.address.question)).toBeVisible();
       await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+        page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
       ).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
+        .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.addressLine1)
         .fill("This is my Address");
-      await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
-      ).toBeVisible();
+      await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)).toBeVisible();
       await page
-        .getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.city)
+        .getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.city)
         .fill("This is my city");
-      await expect(
-        page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip)
-      ).toBeVisible();
-      await page.getByPlaceholder(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
+      await expect(page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip)).toBeVisible();
+      await page.getByLabel(surveys.createWithLogicAndSubmit.address.placeholder.zip).fill("12345");
       await page.locator("#questionCard-13").getByRole("button", { name: "Next" }).click();
 
       // loading spinner -> wait for it to disappear
