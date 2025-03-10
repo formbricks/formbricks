@@ -126,6 +126,12 @@ spec:
                 secretKeyRef:
                   name: {{ template "formbricks.name" . }}-app-secrets
                   key: ENTERPRISE_LICENSE_KEY
+            {{- else }}
+            - name: ENTERPRISE_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: ENTERPRISE_LICENSE_KEY
             {{- end }}
             - name: REDIS_URL
               valueFrom:

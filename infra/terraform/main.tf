@@ -116,21 +116,26 @@ module "vpc_vpc-endpoints" {
 ################################################################################
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
-  version = "14.12"
+  version = "16.4"
+}
+
+resource "random_password" "postgres" {
+  length  = 20
+  special = false
 }
 
 module "rds-aurora" {
   source  = "terraform-aws-modules/rds-aurora/aws"
   version = "9.12.0"
 
-  count = var.enable_rds_aurora ? 1 : 0
-
-  name              = "${local.name}-postgres"
-  engine            = data.aws_rds_engine_version.postgresql.engine
-  engine_mode       = "provisioned"
-  engine_version    = data.aws_rds_engine_version.postgresql.version
-  storage_encrypted = true
-  master_username   = "postgres"
+  name                        = "${local.name}-postgres"
+  engine                      = data.aws_rds_engine_version.postgresql.engine
+  engine_mode                 = "provisioned"
+  engine_version              = data.aws_rds_engine_version.postgresql.version
+  storage_encrypted           = true
+  master_username             = "formbricks"
+  master_password             = random_password.postgres.result
+  manage_master_user_password = false
 
   vpc_id               = module.vpc.vpc_id
   db_subnet_group_name = module.vpc.database_subnet_group_name
@@ -159,6 +164,60 @@ module "rds-aurora" {
 
   tags = local.tags
 
+}
+
+################################################################################
+# ElastiCache Module
+################################################################################
+resource "random_password" "valkey" {
+  length  = 20
+  special = false
+}
+
+module "elasticache" {
+  source  = "terraform-aws-modules/elasticache/aws"
+  version = "1.4.1"
+
+  replication_group_id = "${local.name}-valkey"
+
+  engine         = "valkey"
+  engine_version = "7.2"
+  node_type      = "cache.t4g.small"
+
+  transit_encryption_enabled = true
+  auth_token                 = random_password.valkey.result
+  maintenance_window         = "sun:05:00-sun:09:00"
+  apply_immediately          = true
+
+  # Security Group
+  vpc_id = module.vpc.vpc_id
+  security_group_rules = {
+    ingress_vpc = {
+      # Default type is `ingress`
+      # Default port is based on the default engine port
+      description = "VPC traffic"
+      cidr_ipv4   = module.vpc.vpc_cidr_block
+    }
+  }
+
+  # Subnet Group
+  subnet_group_name        = "${local.name}-valkey"
+  subnet_group_description = "${title(local.name)} subnet group"
+  subnet_ids               = module.vpc.database_subnets
+
+  # Parameter Group
+  create_parameter_group      = true
+  parameter_group_name        = "${local.name}-valkey"
+  parameter_group_family      = "valkey7"
+  parameter_group_description = "${title(local.name)} parameter group"
+  parameters = [
+    {
+      name  = "latency-tracking"
+      value = "yes"
+    }
+  ]
+
+  tags = local.tags
 }
 
 ################################################################################
@@ -418,7 +477,8 @@ module "eks_blueprints_addons" {
       EOT
     ]
   }
-  enable_external_dns = true
+  enable_external_dns            = true
+  external_dns_route53_zone_arns = [module.route53_zones.route53_zone_zone_arn[local.domain]]
   external_dns = {
     chart_version = "1.15.2"
   }
@@ -435,7 +495,54 @@ module "eks_blueprints_addons" {
     ]
   }
 
+  enable_external_secrets = true
+  external_secrets = {
+    chart_version = "0.14.3"
+  }
+
   tags = local.tags
+}
+
+
+module "iam_policy" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
+  version = "5.53.0"
+
+  name        = "formbricsk-policy"
+  path        = "/"
+  description = "Policy for fombricks app"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:*",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
+module "formkey-aws-access" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
+  version = "5.53.0"
+
+  role_name_prefix = "formbricks"
+
+  role_policy_arns = {
+    "formbricks" = module.iam_policy.arn
+  }
+
+  oidc_providers = {
+    eks = {
+      provider_arn               = module.eks.oidc_provider_arn
+      namespace_service_accounts = ["formbricks:*"]
+    }
+  }
 }
 
 
@@ -446,6 +553,10 @@ resource "helm_release" "formbricks" {
 
   values = [
     <<-EOT
+    postgresql:
+      enabled: false
+    redis:
+      enabled: false
     ingress:
       enabled: true
       ingressClassName: alb
@@ -464,10 +575,54 @@ resource "helm_release" "formbricks" {
         alb.ingress.kubernetes.io/healthcheck-path: "/health"
         alb.ingress.kubernetes.io/group.name: formbricks
         alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+    secret:
+      enabled: false
+    rbac:
+      enabled: true
+      serviceAccount:
+        enabled: true
+        name: formbricks
+        annotations:
+          eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
     deployment:
       env:
-        TESTT:
-          value: "test"
+        EMAIL_VERIFICATION_DISABLED:
+          value: "1"
+        PASSWORD_RESET_DISABLED:
+          value: "1"
+    externalSecret:
+      enabled: true  # Enable/disable ExternalSecrets
+      secretStore:
+        name: aws-secrets-manager
+        kind: ClusterSecretStore
+      refreshInterval: "1h"
+      files:
+        app-secrets:
+          data:
+            DATABASE_URL:
+              remoteRef:
+                key: "prod/formbricks/secrets"
+                property: DATABASE_URL
+            REDIS_URL:
+              remoteRef:
+                key: "prod/formbricks/secrets"
+                property: REDIS_URL
+            CRON_SECRET:
+              remoteRef:
+                key: "prod/formbricks/secrets"
+                property: CRON_SECRET
+            ENCRYPTION_KEY:
+              remoteRef:
+                key: "prod/formbricks/secrets"
+                property: ENCRYPTION_KEY
+            NEXTAUTH_SECRET:
+              remoteRef:
+                key: "prod/formbricks/secrets"
+                property: NEXTAUTH_SECRET
+            ENTERPRISE_LICENSE_KEY:
+              remoteRef:
+                key: "prod/formbricks/enterprise"
+                property: ENTERPRISE_LICENSE_KEY
     EOT
   ]
 }

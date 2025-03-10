@@ -59,12 +59,6 @@ deployment:
 
   # Environment variables passed to the app container
   env:
-    EMAIL_VERIFICATION_DISABLED:
-      value: "1"
-    PASSWORD_RESET_DISABLED:
-      value: "1"
-    TEST:
-      value: test
   # SMTP_PASSWORD:
   #   valueFrom:
   #     secretKeyRef:
@@ -213,45 +207,7 @@ externalSecret:
     name: aws-secrets-manager  # Secret store reference name
     kind: ClusterSecretStore  # Type of secret store
   refreshInterval: "1h"  # Frequency of secret sync
-  files:
-    redis:
-      data:
-        REDIS_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: REDIS_PASSWORD
-    postgres:
-      data:
-        POSTGRES_ADMIN_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: POSTGRES_ADMIN_PASSWORD
-        POSTGRES_USER_PASSWORD:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: POSTGRES_USER_PASSWORD
-    app-secrets:
-      data:
-        DATABASE_URL:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: DATABASE_URL
-        REDIS_URL:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: REDIS_URL
-        CRON_SECRET:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: CRON_SECRET
-        ENCRYPTION_KEY:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: ENCRYPTION_KEY
-        NEXTAUTH_SECRET:
-          remoteRef:
-            key: "prod/formbricks/secrets"
-            property: NEXTAUTH_SECRET
+  files: {}
 
 ##########################################################
 # Ingress Configuration

@@ -12,7 +12,7 @@ keywords:
   - postgresql
   - redis
 
-home: https://formbricks.com/
+home: https://formbricks.com/docs/self-hosting/setup/kubernetes
 maintainers:
   - name: Formbricks
     email: info@formbricks.com
