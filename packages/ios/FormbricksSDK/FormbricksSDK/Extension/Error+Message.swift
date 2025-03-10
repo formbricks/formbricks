@@ -1,3 +1,5 @@
+import Foundation
+
 extension Error {
     var message: String {
         if let error = self as? RuntimeError {

@@ -1,15 +1,22 @@
 import { getTranslate } from "@/tolgee/server";
 import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import dompurify from "isomorphic-dompurify";
-import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
+import React from "react";
+import { FB_LOGO_URL, IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL } from "@formbricks/lib/constants";
+
+const fbLogoUrl = FB_LOGO_URL;
+const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
 
 interface FollowUpEmailProps {
-  html: string;
-  logoUrl?: string;
+  readonly html: string;
+  readonly logoUrl?: string;
 }
 
 export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
+  console.log(t("emails.imprint"));
+  const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
+
   return (
     <Html>
       <Tailwind>
@@ -18,11 +25,15 @@ export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Prom
           style={{
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
-          {logoUrl && (
-            <Section>
+          <Section>
+            {isDefaultLogo ? (
+              <Link href={logoLink} target="_blank">
+                <Img alt="Logo" className="mx-auto w-80" src={fbLogoUrl} />
+              </Link>
+            ) : (
               <Img alt="Logo" className="mx-auto max-h-[100px] w-80 object-contain" src={logoUrl} />
-            </Section>
-          )}
+            )}
+          </Section>
           <Container className="mx-auto my-8 max-w-xl rounded-md bg-white p-4 text-left">
             <div
               dangerouslySetInnerHTML={{

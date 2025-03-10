@@ -1,4 +1,5 @@
 import { RenderSurvey } from "@/components/general/render-survey";
+import { FILE_PICK_EVENT } from "@/lib/constants";
 import { addCustomThemeToDom, addStylesToDom } from "@/lib/styles";
 import { h, render } from "preact";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -45,10 +46,17 @@ export const renderSurvey = (props: SurveyContainerProps) => {
 
 export const renderSurveyModal = renderSurvey;
 
+export const onFilePick = (files: { name: string; type: string; base64: string }[]) => {
+  const fileUploadEvent = new CustomEvent(FILE_PICK_EVENT, { detail: files });
+  window.dispatchEvent(fileUploadEvent);
+};
+
+// Initialize the global formbricksSurveys object if it doesn't exist
 if (typeof window !== "undefined") {
   window.formbricksSurveys = {
     renderSurveyInline,
     renderSurveyModal,
     renderSurvey,
+    onFilePick,
   };
 }
