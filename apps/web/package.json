@@ -109,6 +109,7 @@
     "papaparse": "5.4.1",
     "posthog-js": "1.200.2",
     "prismjs": "1.29.0",
+    "qrcode.react": "4.2.0",
     "react": "19.0.0",
     "react-colorful": "5.6.1",
     "react-confetti": "6.1.0",

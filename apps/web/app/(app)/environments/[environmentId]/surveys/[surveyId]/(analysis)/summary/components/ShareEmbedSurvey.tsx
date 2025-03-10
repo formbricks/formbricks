@@ -20,11 +20,12 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
 import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
+import { Qr } from "./shareEmbedModal/Qr";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
   open: boolean;
-  modalView: "start" | "embed" | "panel";
+  modalView: "start" | "embed" | "panel" | "qr";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   webAppUrl: string;
   user: TUser;
@@ -59,7 +60,7 @@ export const ShareEmbedSurvey = ({
   );
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
-  const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
+  const [showView, setShowView] = useState<"start" | "embed" | "panel" | "qr">("start");
   const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
 
   useEffect(() => {
@@ -148,6 +149,14 @@ export const ShareEmbedSurvey = ({
               </div>
             </div>
           </div>
+        ) : showView === "qr" ? (
+          <Qr
+            survey={survey}
+            surveyUrl={surveyUrl}
+            setSurveyUrl={setSurveyUrl}
+            webAppUrl={webAppUrl}
+            locale={user.locale}
+          />
         ) : showView === "embed" ? (
           <EmbedView
             handleInitialPageButton={handleInitialPageButton}

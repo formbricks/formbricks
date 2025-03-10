@@ -27,6 +27,7 @@ interface ModalState {
   embed: boolean;
   panel: boolean;
   dropdown: boolean;
+  qr: boolean;
 }
 
 export const SurveyAnalysisCTA = ({
@@ -46,6 +47,7 @@ export const SurveyAnalysisCTA = ({
     embed: false,
     panel: false,
     dropdown: false,
+    qr: false,
   });
 
   const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
@@ -97,6 +99,7 @@ export const SurveyAnalysisCTA = ({
 
   const shareEmbedViews = [
     { key: "share", modalView: "start" as const, setOpen: handleShareModalToggle },
+    { key: "qr", modalView: "qr" as const, setOpen: handleModalState("qr") },
     { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
@@ -111,8 +114,8 @@ export const SurveyAnalysisCTA = ({
     {
       icon: LinkIcon,
       tooltip: t("common.copy_link"),
-      onClick: handleCopyLink,
-      isVisible: survey.type === "link",
+      onClick: () => handleModalState("qr")(true),
+      isVisible: !isReadOnly,
     },
     {
       icon: Code2Icon,

@@ -1779,6 +1779,8 @@
         "publish_to_web_warning": "Você está prestes a divulgar esses resultados da pesquisa para o público.",
         "publish_to_web_warning_description": "Os resultados da sua pesquisa serão públicos. Qualquer pessoa fora da sua organização pode acessá-los se tiver o link.",
         "results_are_public": "Os resultados são públicos",
+        "scan_Qr_Code": "Escanear QR Code",
+
         "send_preview": "Enviar prévia",
         "send_to_panel": "Enviar para o painel",
         "setup_instructions": "Instruções de configuração",

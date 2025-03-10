@@ -1779,6 +1779,7 @@
         "publish_to_web_warning": "Du bist dabei, diese Umfrageergebnisse öffentlich zugänglich zu machen.",
         "publish_to_web_warning_description": "Deine Umfrageergebnisse werden öffentlich sein. Jeder außerhalb deiner Organisation kann darauf zugreifen, wenn er den Link hat.",
         "results_are_public": "Ergebnisse sind öffentlich",
+        "scan_Qr_Code": "QR-Code scannen",
         "send_preview": "Vorschau senden",
         "send_to_panel": "An das Panel senden",
         "setup_instructions": "Einrichtung",

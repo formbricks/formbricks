@@ -1779,6 +1779,8 @@
         "publish_to_web_warning": "您即將將這些問卷結果發布到公共領域。",
         "publish_to_web_warning_description": "您的問卷結果將會是公開的。任何組織外的人員都可以存取這些結果（如果他們有連結）。",
         "results_are_public": "結果是公開的",
+        "scan_Qr_Code": "掃描 QR 碼",
+
         "send_preview": "發送預覽",
         "send_to_panel": "發送到小組",
         "setup_instructions": "設定說明",
