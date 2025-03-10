@@ -171,11 +171,10 @@ export async function ResponseFinishedEmail({
                 {t("emails.survey_response_finished_email_dont_want_notifications")}
               </Text>
               <Text className="mb-0">
-                {t("emails.survey_response_finished_email_turn_off_notifications")}
                 <Link
                   className="text-black underline"
                   href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
-                  {t("emails.survey_response_finished_email_this_form")}
+                  {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">

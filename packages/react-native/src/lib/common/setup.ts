@@ -27,11 +27,38 @@ export const setIsSetup = (state: boolean): void => {
   isSetup = state;
 };
 
+export const migrateUserStateAddContactId = async (): Promise<{ changed: boolean }> => {
+  const existingConfigString = await AsyncStorage.getItem(RN_ASYNC_STORAGE_KEY);
+
+  if (existingConfigString) {
+    const existingConfig = JSON.parse(existingConfigString) as Partial<TConfig>;
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- data could be undefined
+    if (existingConfig.user?.data?.contactId) {
+      return { changed: false };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- data could be undefined
+    if (!existingConfig.user?.data?.contactId && existingConfig.user?.data?.userId) {
+      return { changed: true };
+    }
+  }
+
+  return { changed: false };
+};
+
 export const setup = async (
   configInput: TConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  const appConfig = RNConfig.getInstance();
+  let appConfig = RNConfig.getInstance();
   const logger = Logger.getInstance();
+
+  const { changed } = await migrateUserStateAddContactId();
+
+  if (changed) {
+    await appConfig.resetConfig();
+    appConfig = RNConfig.getInstance();
+  }
 
   if (isSetup) {
     logger.debug("Already set up, skipping setup.");

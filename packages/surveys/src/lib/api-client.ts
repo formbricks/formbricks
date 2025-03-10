@@ -16,15 +16,29 @@ export class ApiClient {
   }
 
   async createDisplay(
-    displayInput: Omit<TDisplayCreateInput, "environmentId">
+    displayInput: Omit<TDisplayCreateInput, "environmentId"> & { contactId?: string }
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/displays`, "POST", displayInput);
+    const fromV1 = !!displayInput.userId;
+
+    return makeRequest(
+      this.apiHost,
+      `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/displays`,
+      "POST",
+      displayInput
+    );
   }
 
   async createResponse(
-    responseInput: Omit<TResponseInput, "environmentId">
+    responseInput: Omit<TResponseInput, "environmentId"> & { contactId: string | null }
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
+    const fromV1 = !!responseInput.userId;
+
+    return makeRequest(
+      this.apiHost,
+      `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/responses`,
+      "POST",
+      responseInput
+    );
   }
 
   async updateResponse({

@@ -1,3 +1,5 @@
+import Foundation
+
 enum FormbricksSDKErrorType: Int {
     case sdkIsNotInitialized
     case sdkIsAlreadyInitialized

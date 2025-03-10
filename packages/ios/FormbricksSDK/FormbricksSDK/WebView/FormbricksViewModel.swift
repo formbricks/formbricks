@@ -94,7 +94,7 @@ private class WebViewData {
         data["languageCode"] = Formbricks.language
         data["apiHost"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
-        data["userId"] = UserManager.shared.userId
+        data["contactId"] = UserManager.shared.contactId
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false

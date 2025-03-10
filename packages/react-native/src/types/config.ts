@@ -53,6 +53,7 @@ export interface TUserState {
   expiresAt: Date | null;
   data: {
     userId: string | null;
+    contactId: string | null;
     segments: string[];
     displays: { surveyId: string; createdAt: Date }[];
     responses: string[];
