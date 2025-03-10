@@ -10,6 +10,10 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const generateInsightsForSurvey = (surveyId: string) => {
+  if (!CRON_SECRET) {
+    throw new Error("CRON_SECRET is not set");
+  }
+
   try {
     return fetch(`${WEBAPP_URL}/api/insights`, {
       method: "POST",
