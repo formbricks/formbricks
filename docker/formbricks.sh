@@ -224,6 +224,9 @@ EOT
     echo -n "Enter your SMTP configured Email ID: "
     read mail_from
 
+    echo -n "Enter your SMTP configured Email Name: "
+    read mail_from_name
+
     echo -n "Enter your SMTP Host URL: "
     read smtp_host
 
@@ -244,6 +247,7 @@ EOT
 
   else
     mail_from=""
+    mail_from_name=""
     smtp_host=""
     smtp_port=""
     smtp_user=""
@@ -270,6 +274,7 @@ EOT
 
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
+    sed -i "s|# MAIL_FROM_NAME:|MAIL_FROM_NAME: \"$mail_from_name\"|" docker-compose.yml
     sed -i "s|# SMTP_HOST:|SMTP_HOST: \"$smtp_host\"|" docker-compose.yml
     sed -i "s|# SMTP_PORT:|SMTP_PORT: \"$smtp_port\"|" docker-compose.yml
     sed -i "s|# SMTP_SECURE_ENABLED:|SMTP_SECURE_ENABLED: $smtp_secure_enabled|" docker-compose.yml
