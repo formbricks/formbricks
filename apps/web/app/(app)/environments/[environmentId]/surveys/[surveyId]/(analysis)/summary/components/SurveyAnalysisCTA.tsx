@@ -9,7 +9,6 @@ import { useTranslate } from "@tolgee/react";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -27,6 +26,7 @@ interface ModalState {
   embed: boolean;
   panel: boolean;
   dropdown: boolean;
+  qr: boolean;
 }
 
 export const SurveyAnalysisCTA = ({
@@ -46,6 +46,7 @@ export const SurveyAnalysisCTA = ({
     embed: false,
     panel: false,
     dropdown: false,
+    qr: false,
   });
 
   const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
@@ -70,19 +71,6 @@ export const SurveyAnalysisCTA = ({
     setModalState((prev) => ({ ...prev, share: open }));
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard
-      .writeText(surveyUrl)
-      .then(() => {
-        toast.success(t("common.copied_to_clipboard"));
-      })
-      .catch((err) => {
-        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
-        console.error(err);
-      });
-    setModalState((prev) => ({ ...prev, dropdown: false }));
-  };
-
   const getPreviewUrl = () => {
     const separator = surveyUrl.includes("?") ? "&" : "?";
     return `${surveyUrl}${separator}preview=true`;
@@ -97,6 +85,7 @@ export const SurveyAnalysisCTA = ({
 
   const shareEmbedViews = [
     { key: "share", modalView: "start" as const, setOpen: handleShareModalToggle },
+    { key: "qr", modalView: "qr" as const, setOpen: handleModalState("qr") },
     { key: "embed", modalView: "embed" as const, setOpen: handleModalState("embed") },
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
@@ -111,7 +100,7 @@ export const SurveyAnalysisCTA = ({
     {
       icon: LinkIcon,
       tooltip: t("common.copy_link"),
-      onClick: handleCopyLink,
+      onClick: () => handleModalState("qr")(true),
       isVisible: survey.type === "link",
     },
     {

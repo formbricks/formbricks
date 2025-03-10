@@ -1779,6 +1779,8 @@
         "publish_to_web_warning": "Está prestes a divulgar estes resultados do inquérito ao público.",
         "publish_to_web_warning_description": "Os resultados do seu inquérito serão públicos. Qualquer pessoa fora da sua organização pode aceder a eles se tiver o link.",
         "results_are_public": "Os resultados são públicos",
+        "scan_Qr_Code": "Digitalizar QR Code",
+
         "send_preview": "Enviar pré-visualização",
         "send_to_panel": "Enviar para painel",
         "setup_instructions": "Instruções de configuração",

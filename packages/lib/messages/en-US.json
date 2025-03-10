@@ -1779,6 +1779,7 @@
         "publish_to_web_warning": "You are about to release these survey results to the public.",
         "publish_to_web_warning_description": "Your survey results will be public. Anyone outside your organization can access them if they have the link.",
         "results_are_public": "Results are public",
+        "scan_Qr_Code": "Scan QR Code",
         "send_preview": "Send preview",
         "send_to_panel": "Send to panel",
         "setup_instructions": "Setup instructions",

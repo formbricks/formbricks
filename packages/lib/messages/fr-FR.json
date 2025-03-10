@@ -1779,6 +1779,8 @@
         "publish_to_web_warning": "Vous êtes sur le point de rendre ces résultats d'enquête publics.",
         "publish_to_web_warning_description": "Les résultats de votre enquête seront publics. Toute personne en dehors de votre organisation pourra y accéder si elle a le lien.",
         "results_are_public": "Les résultats sont publics.",
+        "scan_Qr_Code": "Scanner le QR Code",
+
         "send_preview": "Envoyer un aperçu",
         "send_to_panel": "Envoyer au panneau",
         "setup_instructions": "Instructions d'installation",
