@@ -590,6 +590,8 @@ resource "helm_release" "formbricks" {
           value: "1"
         PASSWORD_RESET_DISABLED:
           value: "1"
+      annotations:
+        deployed_at: ${timestamp()}
     externalSecret:
       enabled: true  # Enable/disable ExternalSecrets
       secretStore:

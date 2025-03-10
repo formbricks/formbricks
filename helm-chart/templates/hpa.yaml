@@ -1,4 +1,4 @@
-{{- if and .Values.autoscaling.enabled .Values.deployment.enabled }}
+{{- if .Values.autoscaling.enabled }}
 ---
 {{- if .Capabilities.APIVersions.Has "autoscaling/v2/HorizontalPodAutoscaler" }}
 apiVersion: autoscaling/v2
