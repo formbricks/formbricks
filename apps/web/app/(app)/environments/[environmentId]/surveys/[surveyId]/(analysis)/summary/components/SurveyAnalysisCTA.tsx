@@ -102,7 +102,7 @@ export const SurveyAnalysisCTA = ({
       icon: LinkIcon,
       tooltip: t("common.copy_link"),
       onClick: () => handleModalState("qr")(true),
-      isVisible: !isReadOnly,
+      isVisible: survey.type === "link",
     },
     {
       icon: Code2Icon,
