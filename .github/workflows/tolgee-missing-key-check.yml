@@ -35,5 +35,5 @@ jobs:
             echo "New keys found that may require translations:"
             exit 1
           else
-            echo "No new keys found."
+            echo "No new keys found. test"
           fi
