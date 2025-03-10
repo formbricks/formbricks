@@ -1,0 +1,375 @@
+{
+  "data": {
+    "data": {
+      "actionClasses": [
+        {
+          "id": "cm6ow6hht000isf0k39hbmi5f",
+          "key": "click_demo_button",
+          "name": "Clicked the demo button",
+          "noCodeConfig": null,
+          "type": "code"
+        }
+      ],
+      "project": {
+        "clickOutsideClose": true,
+        "darkOverlay": false,
+        "id": "cm6ovvfnv0003sf0k7zi8r3ac",
+        "inAppSurveyBranding": true,
+        "placement": "bottomRight",
+        "recontactDays": 7,
+        "styling": {
+          "allowStyleOverwrite": true,
+          "brandColor": {
+            "light": "#126dec"
+          }
+        }
+      },
+      "surveys": [
+        {
+          "autoClose": null,
+          "delay": 0,
+          "displayLimit": 1,
+          "displayOption": "displayMultiple",
+          "displayPercentage": 100,
+          "endings": [
+            {
+              "buttonLabel": {
+                "default": "Create your own Survey\u200c\u200c\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200c\u200d\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200d\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "buttonLink": "https://formbricks.com",
+              "headline": {
+                "default": "Thank you!\u200c\u200c\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200c\u200d\u200d\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200d\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "id": "ik26bumalvsg2hs0sz7kd0dh",
+              "subheader": {
+                "default": "We appreciate your feedback.\u200c\u200c\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200c\u200d\u200d\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "type": "endScreen"
+            }
+          ],
+          "hiddenFields": {
+            "enabled": true,
+            "fieldIds": []
+          },
+          "id": "cm6ovw6j7000gsf0kduf4oo4i",
+          "isBackButtonHidden": false,
+          "languages": [],
+          "name": "Start from scratch",
+          "projectOverwrites": null,
+          "questions": [
+            {
+              "allowMultipleFiles": true,
+              "allowedFileExtensions": ["jpeg", "jpg", "png"],
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "headline": {
+                "default": "Upload some file"
+              },
+              "id": "bak70kjkubxq66eup7i6l4lp",
+              "logic": [],
+              "required": false,
+              "subheader": {
+                "default": "Yeeeaaahh"
+              },
+              "type": "fileUpload"
+            },
+            {
+              "backButtonLabel": {
+                "default": "Back\u200c\u200c\u200d\u200d\u200c\u200c\u200c\u200d\u200c\u200c\u200c\u200d\u200d\u200c\u200c\u200d\u200c\u200c\u200c\u200c\u200d\u200d\u200c\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "buttonExternal": true,
+              "buttonLabel": {
+                "default": "Book interview\u200c\u200c\u200d\u200d\u200c\u200c\u200c\u200d\u200c\u200c\u200c\u200d\u200d\u200c\u200d\u200c\u200c\u200c\u200c\u200c\u200d\u200d\u200c\u200d\u200c\u200d\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "buttonUrl": "https://telex.hu",
+              "dismissButtonLabel": {
+                "default": "Skip\u200c\u200c\u200d\u200d\u200c\u200c\u200c\u200d\u200c\u200c\u200c\u200d\u200d\u200c\u200d\u200c\u200c\u200c\u200c\u200c\u200d\u200d\u200c\u200d\u200d\u200c\u200c\u200c\u200c\u200c\u200c\u200d\u200c\u200d\u200c\u200c"
+              },
+              "headline": {
+                "default": "Click something"
+              },
+              "html": {
+                "default": "<p class=\"fb-editor-paragraph\"><br></p><p class=\"fb-editor-paragraph\"><br></p><p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">yeah</span></p><p class=\"fb-editor-paragraph\"><br></p>"
+              },
+              "id": "zmjh52gfc92yo4ph2zru4nhn",
+              "required": true,
+              "type": "cta"
+            },
+            {
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "charLimit": {
+                "enabled": false
+              },
+              "headline": {
+                "default": "How are things going?"
+              },
+              "id": "ve69a3mrkqixhtom8y2mtd9q",
+              "inputType": "text",
+              "logic": [],
+              "longAnswer": true,
+              "placeholder": {
+                "default": "This is a placeholder. Type your answer though.."
+              },
+              "required": false,
+              "type": "openText"
+            },
+            {
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "headline": {
+                "default": "Rate this question"
+              },
+              "id": "qo5khwchqa7g34qzdwb7p6kr",
+              "isColorCodingEnabled": false,
+              "lowerLabel": {
+                "default": "Not good"
+              },
+              "range": 5,
+              "required": true,
+              "scale": "smiley",
+              "type": "rating",
+              "upperLabel": {
+                "default": "Very good"
+              }
+            },
+            {
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "choices": [
+                {
+                  "id": "wr01x35k5spyaz5x1d7vsa8g",
+                  "label": {
+                    "default": "One"
+                  }
+                },
+                {
+                  "id": "zvqn3rj26ph3krr1e4n8vn91",
+                  "label": {
+                    "default": "Kett\u0151"
+                  }
+                },
+                {
+                  "id": "f4e2xuspnajsz8kk7ctrc7sn",
+                  "label": {
+                    "default": "Tres"
+                  }
+                }
+              ],
+              "headline": {
+                "default": "Select something"
+              },
+              "id": "prdku49xb0gfpmipwc97scd4",
+              "required": true,
+              "shuffleOption": "none",
+              "type": "multipleChoiceMulti"
+            },
+            {
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "format": "M-d-y",
+              "headline": {
+                "default": "Select a date please"
+              },
+              "id": "yjape17lgfe7v74gbxwadj04",
+              "required": true,
+              "type": "date"
+            },
+            {
+              "addressLine1": {
+                "placeholder": {
+                  "default": "Address Line 1"
+                },
+                "required": false,
+                "show": true
+              },
+              "addressLine2": {
+                "placeholder": {
+                  "default": "Address Line 2"
+                },
+                "required": false,
+                "show": false
+              },
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "city": {
+                "placeholder": {
+                  "default": "City"
+                },
+                "required": false,
+                "show": true
+              },
+              "country": {
+                "placeholder": {
+                  "default": "Country"
+                },
+                "required": false,
+                "show": true
+              },
+              "headline": {
+                "default": "What is your address?"
+              },
+              "id": "z78kl00vherihw2oqv2loj2y",
+              "required": false,
+              "state": {
+                "placeholder": {
+                  "default": "State"
+                },
+                "required": false,
+                "show": true
+              },
+              "type": "address",
+              "zip": {
+                "placeholder": {
+                  "default": "Zip"
+                },
+                "required": false,
+                "show": true
+              }
+            },
+            {
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "headline": {
+                "default": "I dare you to check this!"
+              },
+              "html": {
+                "default": "<p class=\"fb-editor-paragraph\"><br></p><p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">I double dare you</span></p>"
+              },
+              "id": "qq30m24f14vhw356kqfzlrlr",
+              "label": {
+                "default": "Oookay"
+              },
+              "required": true,
+              "type": "consent"
+            },
+            {
+              "allowMulti": true,
+              "backButtonLabel": {
+                "default": "Back"
+              },
+              "buttonLabel": {
+                "default": "Next"
+              },
+              "choices": [
+                {
+                  "id": "m8uxhdlq4yerpzfykb6mfpeb",
+                  "imageUrl": "http://localhost:3000/storage/cm6ovvfoc000asf0k39wbzc8s/public/Screenshot%25202021-10-18%2520at%252011.35.15--fid--e7d90f81-56fb-4ed7-ad64-3ec869bc96d6.png"
+                },
+                {
+                  "id": "ayv30brvesfxrl7dmj2kig4u",
+                  "imageUrl": "http://localhost:3000/storage/cm6ovvfoc000asf0k39wbzc8s/public/Screenshot%25202022-11-22%2520at%252014.37.51--fid--5e4edd58-62b0-4df8-a096-e8e59b1bf080.png"
+                }
+              ],
+              "headline": {
+                "default": "Select a picture"
+              },
+              "id": "krehs9wlntwtjf9hlh8pp82w",
+              "required": true,
+              "type": "pictureSelection"
+            }
+          ],
+          "recontactDays": 0,
+          "segment": {
+            "createdAt": "2025-02-03T10:04:21.922Z",
+            "description": null,
+            "environmentId": "cm6ovvfoc000asf0k39wbzc8s",
+            "filters": [],
+            "id": "cm6ovw6jl000hsf0knn547w0y",
+            "isPrivate": true,
+            "surveys": ["cm6ovw6j7000gsf0kduf4oo4i"],
+            "title": "cm6ovw6j7000gsf0kduf4oo4i",
+            "updatedAt": "2025-02-03T10:04:21.922Z"
+          },
+          "showLanguageSwitch": null,
+          "status": "inProgress",
+          "styling": {
+            "background": {
+              "bg": "#fff",
+              "bgType": "color"
+            },
+            "brandColor": {
+              "light": "#60fa0d"
+            },
+            "cardArrangement": {
+              "appSurveys": "straight",
+              "linkSurveys": "straight"
+            },
+            "cardBackgroundColor": {
+              "light": "#ffffff"
+            },
+            "cardBorderColor": {
+              "light": "#f8fafc"
+            },
+            "cardShadowColor": {
+              "light": "#000000"
+            },
+            "inputBorderColor": {
+              "light": "#090e14"
+            },
+            "inputColor": {
+              "light": "#ffffff"
+            },
+            "isDarkModeEnabled": false,
+            "isLogoHidden": false,
+            "overwriteThemeStyling": true,
+            "questionColor": {
+              "light": "#3a09ff"
+            },
+            "roundness": 8
+          },
+          "triggers": [
+            {
+              "actionClass": {
+                "name": "Clicked the demo button"
+              }
+            }
+          ],
+          "type": "app",
+          "variables": [],
+          "welcomeCard": {
+            "buttonLabel": {
+              "default": "Next"
+            },
+            "enabled": false,
+            "fileUrl": "",
+            "headline": {
+              "default": "Welcome!"
+            },
+            "html": {
+              "default": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">Thanks for providing your feedback - let's go!</span></p>"
+            },
+            "showResponseCount": false,
+            "timeToFinish": false
+          }
+        }
+      ]
+    },
+    "expiresAt": "2035-03-06T10:33:38.647Z"
+  }
+}

@@ -129,10 +129,11 @@ export interface ApiErrorResponse {
     | "method_not_allowed"
     | "not_authenticated"
     | "forbidden"
-    | "network_error";
+    | "network_error"
+    | "too_many_requests";
   message: string;
   status: number;
-  url: URL;
+  url?: URL;
   details?: Record<string, string | string[] | number | number[] | boolean | boolean[]>;
   responseMessage?: string;
 }

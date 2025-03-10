@@ -14,6 +14,11 @@ export const isClientSideApiRoute = (url: string): boolean => {
   return regex.test(url);
 };
 
+export const isManagementApiRoute = (url: string): boolean => {
+  const regex = /^\/api\/v\d+\/management\//;
+  return regex.test(url);
+};
+
 export const isShareUrlRoute = (url: string): boolean => {
   const regex = /\/share\/[A-Za-z0-9]+\/(?:summary|responses)/;
   return regex.test(url);

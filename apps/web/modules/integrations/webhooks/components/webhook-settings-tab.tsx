@@ -21,14 +21,14 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 import { TWebhookInput } from "../types/webhooks";
 
-interface ActionSettingsTabProps {
+interface WebhookSettingsTabProps {
   webhook: Webhook;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: ActionSettingsTabProps) => {
+export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
   const { t } = useTranslate();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -219,7 +219,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: Ac
 
         <div className="flex justify-between border-t border-slate-200 py-6">
           <div>
-            {webhook.source === "user" && !isReadOnly && (
+            {!isReadOnly && (
               <Button
                 type="button"
                 variant="destructive"

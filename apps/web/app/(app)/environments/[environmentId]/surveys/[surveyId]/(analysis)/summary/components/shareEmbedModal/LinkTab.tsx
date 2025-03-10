@@ -18,11 +18,6 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
   const { t } = useTranslate();
   const docsLinks = [
     {
-      title: t("environments.surveys.summary.identify_users"),
-      description: t("environments.surveys.summary.identify_users_description"),
-      link: "https://formbricks.com/docs/link-surveys/user-identification",
-    },
-    {
       title: t("environments.surveys.summary.data_prefilling"),
       description: t("environments.surveys.summary.data_prefilling_description"),
       link: "https://formbricks.com/docs/link-surveys/data-prefilling",
