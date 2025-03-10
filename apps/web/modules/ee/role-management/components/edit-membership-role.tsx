@@ -9,7 +9,6 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { ChevronDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -79,10 +78,15 @@ export function EditMembershipRole({
   };
 
   const getMembershipRoles = () => {
-    const roles = isFormbricksCloud
-      ? Object.values(OrganizationRole)
-      : Object.keys(OrganizationRole).filter((role) => role !== "billing");
+    let roles: string[] = ["member"];
 
+    if (isOwner) {
+      roles.push("owner", "manager");
+
+      if (isFormbricksCloud) {
+        roles.push("billing");
+      }
+    }
     return roles;
   };
 

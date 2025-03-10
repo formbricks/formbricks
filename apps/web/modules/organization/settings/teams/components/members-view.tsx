@@ -8,7 +8,6 @@ import { getMembershipsByUserId } from "@/modules/organization/settings/teams/li
 import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -39,9 +38,6 @@ export const MembersView = async ({
 }: MembersViewProps) => {
   const t = await getTranslate();
 
-  const { isOwner, isManager } = getAccessFlags(membershipRole);
-  const isOwnerOrManager = isManager || isOwner;
-
   const userMemberships = await getMembershipsByUserId(currentUserId);
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
 
@@ -63,7 +59,7 @@ export const MembersView = async ({
       {membershipRole && (
         <OrganizationActions
           organization={organization}
-          isOwnerOrManager={isOwnerOrManager}
+          membershipRole={membershipRole}
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}
