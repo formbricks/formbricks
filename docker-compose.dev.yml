@@ -18,9 +18,11 @@ services:
 
   redis:
     image: redis:7.0.11
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"] # Use custom redis.conf file located in the root directory of the project
     ports:
       - 6379:6379
     volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf:ro
       - redis-data:/data
 
   minio:

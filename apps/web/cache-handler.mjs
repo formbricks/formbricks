@@ -49,12 +49,18 @@ CacheHandler.onCreation(async () => {
   let handler;
 
   if (client?.isReady) {
-    // Create the `redis-stack` Handler if the client is available and connected.
-    handler = await createRedisHandler({
+    const redisHandlerOptions = {
       client,
       keyPrefix: "fb:",
       timeoutMs: 1000,
-    });
+    };
+
+    if (process.env.REDIS_DEFAULT_TTL) {
+      redisHandlerOptions.ttl = Number(process.env.REDIS_DEFAULT_TTL);
+    }
+
+    // Create the `redis-stack` Handler if the client is available and connected.
+    handler = await createRedisHandler(redisHandlerOptions);
   } else {
     // Fallback to LRU handler if Redis client is not available.
     // The application will still work, but the cache will be in memory only and not shared.
