@@ -30,9 +30,8 @@ export const Qr = ({ survey, surveyUrl, setSurveyUrl, webAppUrl, locale }: QrPro
           <p className="mb-4 text-lg font-semibold text-gray-800">
             {t("environments.surveys.summary.scan_Qr_Code")}
           </p>
-          <div>
-            <QRCodeSVG value={surveyUrl} size={400} className="rounded-lg p-6 shadow-md shadow-sm" />
-          </div>
+
+          <QRCodeSVG value={surveyUrl} size={400} className="rounded-lg p-6 shadow-md shadow-sm" />
         </div>
       </div>
     </div>

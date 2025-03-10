@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -95,8 +96,8 @@ export const ShareEmbedSurvey = ({
       <DialogTitle className="sr-only" />
       <DialogContent className="w-full max-w-xl bg-white p-0 md:max-w-3xl lg:h-[700px] lg:max-w-5xl">
         {showView === "start" ? (
-          <div className="h-full max-w-full overflow-hidden">
-            <div className="flex h-[200px] w-full flex-col items-center justify-center space-y-6 p-8 text-center lg:h-2/5">
+          <div className="flex h-full max-w-full flex-col overflow-hidden">
+            <div className="flex w-full flex-1 flex-col items-center justify-center space-y-6 p-4 text-center">
               <DialogTitle>
                 <p className="pt-2 text-xl font-semibold text-slate-800">
                   {t("environments.surveys.summary.your_survey_is_public")} 🎉
@@ -110,8 +111,14 @@ export const ShareEmbedSurvey = ({
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
+              <div className="flex w-full max-w-sm flex-col items-center rounded-lg p-2">
+                <p className="text-lg font-semibold text-gray-800">
+                  {t("environments.surveys.summary.scan_Qr_Code")}
+                </p>
+                <QRCodeSVG value={surveyUrl} size={250} className="rounded-lg p-6 shadow-md shadow-sm" />
+              </div>
             </div>
-            <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
+            <div className="flex flex-1 flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8">
               <p className="-mt-8 text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
               <div className="grid grid-cols-4 gap-2">
                 <button
