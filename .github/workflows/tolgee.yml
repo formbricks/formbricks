@@ -51,6 +51,7 @@ jobs:
             --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag production \
             --untag "draft:${SOURCE_BRANCH}"
+            --verbose
 
       - name: Tag unused production keys as Deprecated
         run: |
@@ -58,6 +59,7 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag production \
             --tag deprecated --untag production
+            --verbose
 
       - name: Tag unused draft:current-branch keys as Deprecated
         run: |
@@ -65,6 +67,7 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag deprecated --untag "draft:${SOURCE_BRANCH}"
+            --verbose
 
       - name: Sync with backup
         run: |
