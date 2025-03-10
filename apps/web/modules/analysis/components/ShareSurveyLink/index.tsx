@@ -71,7 +71,7 @@ export const ShareSurveyLink = ({
   return (
     <div
       className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
-      <SurveyLinkDisplay surveyUrl={surveyUrl} />
+      <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
       <div className="mt-2 flex items-center justify-center space-x-2">
         <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
