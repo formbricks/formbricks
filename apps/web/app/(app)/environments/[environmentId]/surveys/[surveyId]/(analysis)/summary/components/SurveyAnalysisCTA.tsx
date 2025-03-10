@@ -72,19 +72,6 @@ export const SurveyAnalysisCTA = ({
     setModalState((prev) => ({ ...prev, share: open }));
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard
-      .writeText(surveyUrl)
-      .then(() => {
-        toast.success(t("common.copied_to_clipboard"));
-      })
-      .catch((err) => {
-        toast.error(t("environments.surveys.summary.failed_to_copy_link"));
-        console.error(err);
-      });
-    setModalState((prev) => ({ ...prev, dropdown: false }));
-  };
-
   const getPreviewUrl = () => {
     const separator = surveyUrl.includes("?") ? "&" : "?";
     return `${surveyUrl}${separator}preview=true`;
