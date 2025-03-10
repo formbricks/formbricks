@@ -7,7 +7,9 @@ Thank you for installing Formbricks! Here's how you can access and manage your d
 
 {{- if .Values.ingress.enabled }}
    Your application is accessible via the configured Ingress.
-   Access it at: **https://{{ .Values.ingress.host }}**
+   ```sh
+   kubectl get ingress {{ include "formbricks.name" . }} -n {{ .Release.Namespace }} -o jsonpath='{.items[*].spec.rules[*].host}' | tr ' ' '\n'
+   ```
    Ensure that your DNS points to the cluster's Ingress Controller.
 {{- else if contains "LoadBalancer" .Values.service.type }}
    Your application is exposed via a LoadBalancer.

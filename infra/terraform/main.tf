@@ -283,8 +283,8 @@ module "eks" {
       instance_types = ["t4g.small"]
 
       min_size     = 2
-      max_size     = 4
-      desired_size = 4
+      max_size     = 3
+      desired_size = 2
 
       labels = {
         CriticalAddonsOnly        = "true"
