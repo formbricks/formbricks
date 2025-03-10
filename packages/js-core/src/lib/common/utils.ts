@@ -1,4 +1,7 @@
-import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@formbricks/types/action-classes";
+import {
+  type TActionClassNoCodeConfig,
+  type TActionClassPageUrlRule,
+} from "@formbricks/types/action-classes";
 import type {
   TEnvironmentState,
   TEnvironmentStateActionClass,

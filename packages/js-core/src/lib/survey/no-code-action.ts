@@ -8,10 +8,6 @@ import { setIsSurveyRunning } from "@/lib/survey/widget";
 import { type TEnvironmentStateActionClass } from "@/types/config";
 import { type NetworkError, type Result, type ResultError, err, match, okVoid } from "@/types/error";
 
-const appConfig = Config.getInstance();
-const logger = Logger.getInstance();
-const timeoutStack = TimeoutStack.getInstance();
-
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
 
@@ -23,6 +19,10 @@ export const setIsHistoryPatched = (value: boolean): void => {
 };
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
+  const appConfig = Config.getInstance();
+  const logger = Logger.getInstance();
+  const timeoutStack = TimeoutStack.getInstance();
+
   logger.debug(`Checking page url: ${window.location.href}`);
   const actionClasses = appConfig.get().environment.data.actionClasses;
 
@@ -93,6 +93,8 @@ export const removePageUrlEventListeners = (): void => {
 let isClickEventListenerAdded = false;
 
 const checkClickMatch = (event: MouseEvent): void => {
+  const appConfig = Config.getInstance();
+
   const { environment } = appConfig.get();
 
   const { actionClasses = [] } = environment.data;
@@ -143,6 +145,8 @@ export const removeClickEventListener = (): void => {
 let isExitIntentListenerAdded = false;
 
 const checkExitIntent = async (e: MouseEvent): Promise<ResultError<NetworkError> | undefined> => {
+  const appConfig = Config.getInstance();
+
   const { environment } = appConfig.get();
   const { actionClasses = [] } = environment.data;
 
@@ -186,6 +190,8 @@ let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
 const checkScrollDepth = async (): Promise<Result<void, unknown>> => {
+  const appConfig = Config.getInstance();
+
   const scrollPosition = window.scrollY;
   const windowSize = window.innerHeight;
   const bodyHeight = document.documentElement.scrollHeight;

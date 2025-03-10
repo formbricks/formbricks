@@ -1,17 +1,25 @@
 // utils.test.ts
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type TActionClassPageUrlRule } from "@formbricks/types/action-classes";
 import { mockProjectId, mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
+  checkUrlMatch,
   diffInDays,
+  evaluateNoCodeConfigClick,
   filterSurveys,
   getDefaultLanguageCode,
+  getIsDebug,
   getLanguageCode,
   getStyling,
+  handleUrlFilters,
+  isNowExpired,
   shouldDisplayBasedOnPercentage,
+  wrapThrows,
   wrapThrowsAsync,
 } from "@/lib/common/utils";
 import type {
   TEnvironmentState,
+  TEnvironmentStateActionClass,
   TEnvironmentStateProject,
   TEnvironmentStateSurvey,
   TSurveyStyling,
@@ -43,6 +51,17 @@ describe("utils.ts", () => {
     test("0 if same day", () => {
       const date = new Date("2023-01-01");
       expect(diffInDays(date, date)).toBe(0);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // wrapThrows
+  // ---------------------------------------------------------------------------------
+  describe("wrapThrows()", () => {
+    test("returns ok on success", () => {
+      const fn = vi.fn(() => "success");
+      const wrapped = wrapThrows(fn);
+      expect(wrapped()).toEqual({ ok: true, data: "success" });
     });
   });
 
@@ -389,6 +408,281 @@ describe("utils.ts", () => {
 
       // restore
       mockedRandom.mockRestore();
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // isNowExpired
+  // ---------------------------------------------------------------------------------
+  describe("isNowExpired()", () => {
+    test("returns true if expiration date is in the past", () => {
+      const expirationDate = new Date(Date.now() - 1000);
+      expect(isNowExpired(expirationDate)).toBe(true);
+    });
+
+    test("returns false if expiration date is in the future", () => {
+      const expirationDate = new Date(Date.now() + 1000);
+      expect(isNowExpired(expirationDate)).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // checkUrlMatch
+  // ---------------------------------------------------------------------------------
+  describe("checkUrlMatch()", () => {
+    test("returns true if url matches", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/path";
+      const pageUrlRule = "exactMatch" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/other";
+      const pageUrlRule = "exactMatch" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+
+    test("returns true if url matches with startsWith rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com";
+      const pageUrlRule = "startsWith" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match with startsWith rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/other";
+      const pageUrlRule = "startsWith" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+
+    test("returns true if url matches with endsWith rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "path";
+      const pageUrlRule = "endsWith" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match with endsWith rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "other";
+      const pageUrlRule = "endsWith" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+
+    test("returns true if url matches with contains rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "path";
+      const pageUrlRule = "contains" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match with contains rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "other";
+      const pageUrlRule = "contains" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+
+    test("returns true if url matches with notMatch rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/other";
+      const pageUrlRule = "notMatch" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match with notMatch rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/path";
+      const pageUrlRule = "notMatch" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+
+    test("returns true if url matches with notContains rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "https://example.com/other";
+      const pageUrlRule = "notContains" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(true);
+    });
+
+    test("returns false if url does not match with notContains rule", () => {
+      const url = "https://example.com/path";
+      const pageUrlValue = "path";
+      const pageUrlRule = "notContains" as unknown as TActionClassPageUrlRule;
+
+      expect(checkUrlMatch(url, pageUrlValue, pageUrlRule)).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // handleUrlFilters
+  // ---------------------------------------------------------------------------------
+  describe("handleUrlFilters()", () => {
+    test("returns true if url matches with urlFilters", () => {
+      const urlFilters = [
+        {
+          value: "https://example.com/path",
+          rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      // mock window.location.href
+      vi.stubGlobal("window", {
+        location: {
+          href: "https://example.com/path",
+        },
+      });
+
+      const result = handleUrlFilters(urlFilters);
+      expect(result).toBe(true);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // evaluateNoCodeConfigClick
+  // ---------------------------------------------------------------------------------
+  describe("evaluateNoCodeConfigClick()", () => {
+    test("returns false if type is not click", () => {
+      const targetElement = document.createElement("div");
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc", // some valid cuid2 or placeholder
+        name: "Test Action",
+        type: "noCode", // or "code", but here we have noCode
+        key: null,
+        noCodeConfig: {
+          type: "pageView", // the mismatch
+          urlFilters: [],
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(targetElement, action);
+      expect(result).toBe(false);
+    });
+
+    test("returns false if innerHtml does not match", () => {
+      const targetElement = document.createElement("div");
+      targetElement.innerHTML = "Test";
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc", // some valid cuid2 or placeholder
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: {
+            innerHtml: "Testing",
+          },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(targetElement, action);
+      expect(result).toBe(false);
+    });
+
+    test("returns true if cssSelector matches", () => {
+      const targetElement = document.createElement("div");
+      const cssSelector = ".test";
+      targetElement.className = "test";
+
+      targetElement.matches = vi.fn(() => true);
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc", // some valid cuid2 or placeholder
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: {
+            cssSelector,
+          },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(targetElement, action);
+      expect(result).toBe(true);
+    });
+
+    test("returns false if cssSelector does not match", () => {
+      const targetElement = document.createElement("div");
+      const cssSelector = ".test";
+      targetElement.className = "other";
+
+      targetElement.matches = vi.fn(() => false);
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc", // some valid cuid2 or placeholder
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters: [],
+          elementSelector: { cssSelector },
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(targetElement, action);
+      expect(result).toBe(false);
+    });
+
+    test("returns false if urlFilters do not match", () => {
+      const targetElement = document.createElement("div");
+      const urlFilters = [
+        {
+          value: "https://example.com/path",
+          rule: "exactMatch" as unknown as TActionClassPageUrlRule,
+        },
+      ];
+
+      const action: TEnvironmentStateActionClass = {
+        id: "clabc123abc", // some valid cuid2 or placeholder
+        name: "Test Action",
+        type: "noCode",
+        key: null,
+        noCodeConfig: {
+          type: "click",
+          urlFilters,
+          elementSelector: {},
+        },
+      };
+
+      const result = evaluateNoCodeConfigClick(targetElement, action);
+      expect(result).toBe(false);
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
+  // getIsDebug
+  // ---------------------------------------------------------------------------------
+  describe("getIsDebug()", () => {
+    test("returns true if debug param is set", () => {
+      // mock window.location.search
+      vi.stubGlobal("window", {
+        location: {
+          search: "?formbricksDebug=true",
+        },
+      });
+
+      const result = getIsDebug();
+      expect(result).toBe(true);
     });
   });
 });

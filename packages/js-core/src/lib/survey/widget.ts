@@ -13,10 +13,6 @@ import {
 } from "@/lib/common/utils";
 import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
 
-const config = Config.getInstance();
-const logger = Logger.getInstance();
-const timeoutStack = TimeoutStack.getInstance();
-
 let isSurveyRunning = false;
 
 export const setIsSurveyRunning = (value: boolean): void => {
@@ -24,6 +20,8 @@ export const setIsSurveyRunning = (value: boolean): void => {
 };
 
 export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: string): Promise<void> => {
+  const logger = Logger.getInstance();
+
   // Check if the survey should be displayed based on displayPercentage
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
@@ -36,11 +34,15 @@ export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: st
   await renderWidget(survey, action);
 };
 
-const renderWidget = async (
+export const renderWidget = async (
   survey: TEnvironmentStateSurvey,
   action?: string,
   hiddenFields: TResponseHiddenFieldValue = {}
 ): Promise<void> => {
+  const logger = Logger.getInstance();
+  const config = Config.getInstance();
+  const timeoutStack = TimeoutStack.getInstance();
+
   if (isSurveyRunning) {
     logger.debug("A survey is already running. Skipping.");
     return;
@@ -145,6 +147,8 @@ const renderWidget = async (
 };
 
 export const closeSurvey = (): void => {
+  const config = Config.getInstance();
+
   // remove container element from DOM
   removeWidgetContainer();
   addWidgetContainer();
@@ -173,6 +177,8 @@ export const removeWidgetContainer = (): void => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<typeof window.formbricksSurveys> => {
+  const config = Config.getInstance();
+
   return new Promise((resolve, reject) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- We need to check if the formbricksSurveys object exists
     if (window.formbricksSurveys) {
