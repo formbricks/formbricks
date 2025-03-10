@@ -24,14 +24,32 @@ Here are the different access permissions, ranked from highest to lowest access
 3. Billing
 4. Member
 
+### Role Permissions and Privilege Escalation Prevention
+
+To prevent privilege escalation, the following rules apply:
+
+- **Owners** can:
+
+  - Invite users as owners, managers, or members
+  - Assign roles up to owner
+
+- **Managers** can:
+
+  - Invite users only as members
+  - Assign roles up to member only, not manager or owner
+
+- **Members** cannot:
+  - Invite users
+  - Assign roles
+
 ### Organisational level
 
 All users and their organization-level roles are listed in **Organization Settings > General**. Users can hold any of the following org-level roles:
 
-- **Owner** have full access to the organization, its data, and settings. Org Owners can perform Team Admin actions without needing to join the team.
-- **Manager** have full management access to all teams and projects. They can also manage the organization's membership. Org Managers can perform Team Admin actions without needing to join the team. They cannot change other organization settings.
-- **Billing** users can manage payment and compliance details in the organization.
-- **Member** can view most data in the organization and act in the projects they are members of. They cannot join projects on their own and need to be assigned.
+- **Owner** have full access to the organization, its data, and settings. Org Owners can perform Team Admin actions without needing to join the team.
+- **Manager** have full management access to all teams and projects. They can also manage the organization's membership (but can only invite or assign users as members). Org Managers can perform Team Admin actions without needing to join the team. They cannot change other organization settings.
+- **Billing** users can manage payment and compliance details in the organization.
+- **Member** can view most data in the organization and act in the projects they are members of. They cannot join projects on their own and need to be assigned.
 
 ### Permissions at project level
 
@@ -41,8 +59,8 @@ All users and their organization-level roles are listed in **Organization Settin
 
 ### Team-level Roles
 
-- **Team Contributors** can view and act on surveys and responses.
-- **Team Admins** have additional permissions to manage their team's membership and projects. These permissions are granted at the team-level, and don't apply to teams where they're not a Team Admin.
+- **Team Contributors** can view and act on surveys and responses.
+- **Team Admins** have additional permissions to manage their team's membership and projects. These permissions are granted at the team-level, and don't apply to teams where they're not a Team Admin.
 
 For more information on user roles & permissions, see below:
 
@@ -84,8 +102,8 @@ For more information on user roles & permissions, see below:
 | Create tags                      | ✅    | ✅      | ❌      | ✅\*   |
 | Update tags                      | ✅    | ✅      | ❌      | ✅\*   |
 | Delete tags                      | ✅    | ✅      | ❌      | ✅\*\* |
-| **Contacts**                       |       |         |         |        |
-| Delete contact                    | ✅    | ✅      | ❌      | ✅\*   |
+| **Contacts**                     |       |         |         |        |
+| Delete contact                   | ✅    | ✅      | ❌      | ✅\*   |
 | **Integrations**                 |       |         |         |        |
 | Manage integrations              | ✅    | ✅      | ❌      | ✅\*   |
 

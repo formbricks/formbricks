@@ -12,22 +12,38 @@ import {
 import { Muted, P } from "@/modules/ui/components/typography";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import type { Control } from "react-hook-form";
-import { Controller } from "react-hook-form";
+import { type Control, Controller } from "react-hook-form";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface AddMemberRoleProps {
   control: Control<{ name: string; email: string; role: TOrganizationRole; teamIds: string[] }>;
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
+  membershipRole?: TOrganizationRole;
 }
 
-export function AddMemberRole({ control, canDoRoleManagement, isFormbricksCloud }: AddMemberRoleProps) {
-  const roles = isFormbricksCloud
-    ? Object.values(OrganizationRole)
-    : Object.keys(OrganizationRole).filter((role) => role !== "billing");
+export function AddMemberRole({
+  control,
+  canDoRoleManagement,
+  isFormbricksCloud,
+  membershipRole,
+}: AddMemberRoleProps) {
+  const { isMember, isOwner } = getAccessFlags(membershipRole);
 
   const { t } = useTranslate();
+
+  if (isMember) return null;
+
+  let roles: string[] = ["member"];
+
+  if (isOwner) {
+    roles.push("owner", "manager");
+
+    if (isFormbricksCloud) {
+      roles.push("billing");
+    }
+  }
 
   const rolesDescription = {
     owner: t("environments.settings.teams.owner_role_description"),
