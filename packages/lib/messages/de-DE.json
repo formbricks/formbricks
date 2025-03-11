@@ -1776,6 +1776,8 @@
         "publish_to_web": "Im Web veröffentlichen",
         "publish_to_web_warning": "Du bist dabei, diese Umfrageergebnisse öffentlich zugänglich zu machen.",
         "publish_to_web_warning_description": "Deine Umfrageergebnisse werden öffentlich sein. Jeder außerhalb deiner Organisation kann darauf zugreifen, wenn er den Link hat.",
+        "quickstart_web_apps": "Schnellstart: Web-Apps",
+        "quickstart_web_apps_description": "Bitte folge der Schnellstartanleitung, um loszulegen:",
         "results_are_public": "Ergebnisse sind öffentlich",
         "send_preview": "Vorschau senden",
         "send_to_panel": "An das Panel senden",

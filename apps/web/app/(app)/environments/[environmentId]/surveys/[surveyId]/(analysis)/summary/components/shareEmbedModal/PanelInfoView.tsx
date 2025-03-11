@@ -85,8 +85,10 @@ export const PanelInfoView = ({ disableBack, handleInitialPageButton }: PanelInf
             </p>
           </div>
           <Button className="justify-center" asChild>
-            <Link href="https://formbricks.com/docs/link-surveys/market-research-panel" target="_blank">
-              {t("common.get_started")}
+            <Link
+              href="https://formbricks.com/docs/xm-and-surveys/surveys/link-surveys/market-research-panel"
+              target="_blank">
+              {t("common.learn_more")}
             </Link>
           </Button>
         </div>
