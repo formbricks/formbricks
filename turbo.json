@@ -184,7 +184,12 @@
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
-        "UNKEY_ROOT_KEY"
+        "UNKEY_ROOT_KEY",
+        "ENABLE_PROMETHEUS_METRICS",
+        "PROMETHEUS_EXPORTER_PORT",
+        "OTEL_SERVICE_NAME",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_HEADERS"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

@@ -286,7 +286,8 @@
       "pages": [
         "self-hosting/advanced/migration",
         "self-hosting/advanced/license",
-        "self-hosting/advanced/rate-limiting"
+        "self-hosting/advanced/rate-limiting",
+        "self-hosting/advanced/open-telemetry"
       ]
     },
     {
