@@ -66,7 +66,7 @@ export const SurveysPage = async ({
 
   logger.info({
     organizationId,
-    name: "SurveysPage",
+    name: "SurveysPage-log",
   });
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);

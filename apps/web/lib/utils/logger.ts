@@ -12,8 +12,18 @@ const getLogLevel = (): LevelWithSilentOrString => {
   return "info";
 };
 
+const levels = ["debug", "info", "warn", "error", "fatal"];
+
 const baseLoggerConfig: LoggerOptions = {
   level: getLogLevel(),
+  customLevels: {
+    debug: 20,
+    info: 30,
+    warn: 40,
+    error: 50,
+    fatal: 60,
+  },
+  useOnlyCustomLevels: true,
   timestamp: true,
   formatters: {
     level: (label) => {
@@ -46,10 +56,8 @@ const productionConfig: LoggerOptions = {
 
 const logger: Logger = IS_PRODUCTION ? pino(productionConfig) : pino(developmentConfig);
 
-const methods = ["info", "error", "warn", "debug", "fatal", "trace", "silent"];
-
-methods.forEach((method) => {
-  logger[method] = logger[method].bind(logger);
+levels.forEach((level) => {
+  logger[level] = logger[level].bind(logger);
 });
 
 const FormbricksLogger = {
