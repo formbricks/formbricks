@@ -11,7 +11,6 @@ export default function AppPage(): React.JSX.Element {
   const router = useRouter();
   const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
   const userAttributes = {
-    language: "de",
     "Attribute 1": "one",
     "Attribute 2": "two",
     "Attribute 3": "three",
