@@ -65,7 +65,7 @@ export const renderWidget = async (
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);
-      setIsSurveyRunning(true);
+      setIsSurveyRunning(false);
       return;
     }
     languageCode = displayLanguage;

@@ -50,21 +50,18 @@ const setAttributes = async (attributes: Record<string, string>): Promise<void> 
   await queue.wait();
 };
 
+const setLanguage = async (language: string): Promise<void> => {
+  queue.add(Attribute.setAttributes, true, { language });
+  await queue.wait();
+};
+
 const logout = async (): Promise<void> => {
   queue.add(User.logout, true);
   await queue.wait();
 };
 
-const track = async (
-  code: string
-  // properties?: TJsTrackProperties
-): Promise<void> => {
-  queue.add(
-    Action.trackCodeAction,
-    true,
-    code
-    // properties
-  );
+const track = async (code: string): Promise<void> => {
+  queue.add(Action.trackCodeAction, true, code);
   await queue.wait();
 };
 
@@ -78,6 +75,7 @@ const formbricks = {
   setEmail,
   setAttribute,
   setAttributes,
+  setLanguage,
   setUserId,
   track,
   logout,
