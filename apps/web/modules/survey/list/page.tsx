@@ -1,3 +1,4 @@
+import logger from "@/lib/utils/logger";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -62,6 +63,11 @@ export const SurveysPage = async ({
 
   const membershipRole = await getMembershipRoleByUserIdOrganizationId(session?.user.id, organizationId);
   const { isMember, isBilling } = getAccessFlags(membershipRole);
+
+  logger.info({
+    organizationId,
+    name: "SurveysPage",
+  });
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
   const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
