@@ -62,8 +62,20 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
       // reset the initialization state
       isInitializing = true;
 
-      const apiHost = (args[0] as { appUrl: string; environmentId: string }).appUrl;
-      const loadSDKResult = await loadFormbricksSDK(apiHost);
+      const argsTyped = args[0] as { appUrl?: string; environmentId?: string; apiHost?: string };
+      const appUrl = argsTyped.appUrl ?? argsTyped.apiHost;
+
+      if (!appUrl) {
+        console.error("🧱 Formbricks - Error: appUrl is required");
+        return;
+      }
+
+      if (!argsTyped.environmentId) {
+        console.error("🧱 Formbricks - Error: environmentId is required");
+        return;
+      }
+
+      const loadSDKResult = await loadFormbricksSDK(appUrl);
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {

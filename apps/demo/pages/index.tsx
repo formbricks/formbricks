@@ -43,8 +43,6 @@ export default function AppPage(): React.JSX.Element {
         void formbricks.init({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-          // userId,
-          // attributes: userInitAttributes,
         });
       }
 

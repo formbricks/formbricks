@@ -1,6 +1,5 @@
 /* eslint-disable import/no-default-export -- required for default export*/
 import { CommandQueue } from "@/lib/common/command-queue";
-import { Logger } from "@/lib/common/logger";
 import * as Setup from "@/lib/common/setup";
 import * as Action from "@/lib/survey/action";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
@@ -8,9 +7,6 @@ import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput } from "@/types/config";
 
-const logger = Logger.getInstance();
-
-logger.debug("Create command queue");
 const queue = new CommandQueue();
 
 const init = async (initConfig: TConfigInput): Promise<void> => {
@@ -19,11 +15,18 @@ const init = async (initConfig: TConfigInput): Promise<void> => {
   if (
     // @ts-expect-error -- userId and attributes were in the older type
     initConfig.userId ||
-    // @ts-expect-error -- userId and attributes were in the older type
-    initConfig.attributes
+    // @ts-expect-error -- attributes were in the older type
+    initConfig.attributes ||
+    // @ts-expect-error -- apiHost was in the older type
+    initConfig.apiHost
   ) {
-    logger.debug("Using legacy init");
-    queue.add(Setup.setup, false, initConfig);
+    // eslint-disable-next-line no-console -- legacy init
+    console.warn("🧱 Formbricks - Warning: Using legacy init");
+    queue.add(Setup.setup, false, {
+      ...initConfig,
+      // @ts-expect-error -- apiHost was in the older type
+      ...(initConfig.apiHost && { appUrl: initConfig.apiHost as string }),
+    } as unknown as TConfigInput);
   } else {
     queue.add(Setup.setup, false, initConfig);
     await queue.wait();
