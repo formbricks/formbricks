@@ -230,7 +230,9 @@ export const MultiLanguageCard: FC<MultiLanguageCardProps> = ({
                 description={t("environments.surveys.edit.upgrade_notice_description")}
                 buttons={[
                   {
-                    text: t("common.start_free_trial"),
+                    text: isFormbricksCloud
+                      ? t("common.start_free_trial")
+                      : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
                       : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",

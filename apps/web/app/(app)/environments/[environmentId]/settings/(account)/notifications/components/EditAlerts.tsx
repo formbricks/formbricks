@@ -27,7 +27,7 @@ export const EditAlerts = ({
   return (
     <>
       {memberships.map((membership) => (
-        <>
+        <div key={membership.organization.id}>
           <div className="mb-5 grid grid-cols-6 items-center space-x-3">
             <div className="col-span-3 flex items-center space-x-3">
               <UsersIcon className="h-6 w-7 text-slate-600" />
@@ -110,7 +110,7 @@ export const EditAlerts = ({
               </Link>
             </p>
           </div>
-        </>
+        </div>
       ))}
     </>
   );

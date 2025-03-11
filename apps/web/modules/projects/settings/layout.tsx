@@ -9,7 +9,7 @@ import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/ser
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 
 export const metadata: Metadata = {
-  title: "Config",
+  title: "Configuration",
 };
 
 export const ProjectSettingsLayout = async (props) => {

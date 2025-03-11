@@ -1,9 +1,6 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import {
-  getMultiLanguagePermission,
-  getRoleManagementPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { EditLanguage } from "@/modules/ee/multi-language-surveys/components/edit-language";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
@@ -12,7 +9,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { notFound } from "next/navigation";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -35,11 +32,6 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
   }
 
   const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-  if (!isMultiLanguageAllowed) {
-    notFound();
-  }
-
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   const session = await getServerSession(authOptions);
 
@@ -63,18 +55,20 @@ export const LanguagesPage = async (props: { params: Promise<{ environmentId: st
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
-        <ProjectConfigNavigation
-          environmentId={params.environmentId}
-          activeId="languages"
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          canDoRoleManagement={canDoRoleManagement}
-        />
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        <ProjectConfigNavigation environmentId={params.environmentId} activeId="languages" />
       </PageHeader>
       <SettingsCard
         title={t("environments.project.languages.multi_language_surveys")}
         description={t("environments.project.languages.multi_language_surveys_description")}>
-        <EditLanguage project={project} locale={user.locale} isReadOnly={isReadOnly} />
+        <EditLanguage
+          project={project}
+          locale={user.locale}
+          isReadOnly={isReadOnly}
+          isMultiLanguageAllowed={isMultiLanguageAllowed}
+          environmentId={params.environmentId}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        />
       </SettingsCard>
     </PageContentWrapper>
   );
