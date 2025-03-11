@@ -9,6 +9,7 @@ import {
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
 import { fetchEnvironmentState } from "@/lib/environment/state";
+import { checkPageUrl } from "@/lib/survey/no-code-action";
 import { addWidgetContainer, removeWidgetContainer, setIsSurveyRunning } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -315,6 +316,7 @@ export const setup = async (
   logger.debug("Set up complete");
 
   // check page url if set up after page load
+  void checkPageUrl();
   return okVoid();
 };
 

@@ -13,6 +13,6 @@ export class EnvironmentAPI {
   }
 
   async getState(): Promise<Result<TJsEnvironmentState, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/environment/`, "GET");
+    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/environment`, "GET");
   }
 }
