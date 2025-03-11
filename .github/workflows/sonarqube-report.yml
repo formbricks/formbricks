@@ -27,6 +27,10 @@ jobs:
           fetch-depth: 0
 
       # Download artifacts only for workflow_run events
+      - name: Create temporary directory for artifacts
+        if: ${{ github.event_name == 'workflow_run' }}
+        run: mkdir -p ${{ runner.temp }}/artifacts/
+
       - name: Download analysis package
         if: ${{ github.event_name == 'workflow_run' }}
         uses: actions/github-script@v7
@@ -50,14 +54,17 @@ jobs:
               archive_format: 'zip'
             })
             const fs = require('fs')
-            fs.writeFileSync('sonarqube-analysis.zip', Buffer.from(download.data))
+            const path = require('path')
+            const tempDir = process.env.RUNNER_TEMP
+            const artifactPath = path.join(tempDir, 'artifacts', 'sonarqube-analysis.zip')
+            fs.writeFileSync(artifactPath, Buffer.from(download.data))
 
       # Extract the analysis package
       - name: Extract analysis package
         if: ${{ github.event_name == 'workflow_run' }}
         run: |
-          unzip -q sonarqube-analysis.zip
-          tar -xzf sonarqube-analysis.tar.gz
+          unzip -q ${{ runner.temp }}/artifacts/sonarqube-analysis.zip -d ${{ runner.temp }}/artifacts/
+          tar -xzf ${{ runner.temp }}/artifacts/sonarqube-analysis.tar.gz -C ${{ runner.temp }}/artifacts/
 
       # For direct push to main or manual runs, set up environment and run tests
       - name: Setup Node.js 20.x
