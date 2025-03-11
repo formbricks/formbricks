@@ -1,5 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { FileIcon, FolderIcon, ImageIcon } from "lucide-react";
+import { logger } from "@formbricks/logger";
 import { InputCombobox } from "./index";
 
 const meta = {
@@ -41,7 +42,7 @@ export const Default: Story = {
     searchPlaceholder: "Search...",
     options: commonOptions,
     value: null,
-    onChangeValue: (value, option) => {},
+    onChangeValue: (value, option) => logger.debug({ value, option }, "onChangeValue"),
     clearable: true,
     withInput: false,
     allowMultiSelect: false,

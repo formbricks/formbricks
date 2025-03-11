@@ -19,9 +19,7 @@
     "clean": "rimraf .turbo node_modules coverage",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx,.json",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "test:dev": "vitest",
-    "test": "dotenv -e ../../.env -- vitest run"
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {

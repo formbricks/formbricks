@@ -11,6 +11,7 @@ import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 

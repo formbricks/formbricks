@@ -9,6 +9,7 @@ import { writeDataToSlack } from "@formbricks/lib/slack/service";
 import { getFormattedDateTimeString } from "@formbricks/lib/utils/datetime";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { truncateText } from "@formbricks/lib/utils/strings";
+import { logger } from "@formbricks/logger";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
