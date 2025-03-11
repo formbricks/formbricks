@@ -1,27 +1,20 @@
-name: SonarQube
+name: SonarQube Analysis
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-  pull_request_target: # Using pull_request_target to access secrets in fork PRs
+  pull_request:
     types: [opened, synchronize, reopened]
   merge_group:
 permissions:
   contents: read
 jobs:
-  sonarqube:
-    name: SonarQube
+  analyze:
+    name: Analyze
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
-          # For pull_request_target, we need to check out the PR head
-          ref: ${{ github.event_name == 'pull_request_target' && format('refs/pull/{0}/merge', github.event.pull_request.number) || '' }}
-          # Use GitHub's fetching instead of the action's unsafe code checkouts for PRs
-          repository: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name || github.repository }}
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Setup Node.js 20.x
         uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
@@ -34,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --config.platform=linux --config.architecture=x64
 
-      - name: create .env
+      - name: Create .env
         run: cp .env.example .env
 
       - name: Generate Random ENCRYPTION_KEY, CRON_SECRET & NEXTAUTH_SECRET and fill in .env
@@ -51,9 +44,48 @@ jobs:
           cd ../../
           # The Vitest coverage config is in your vite.config.mts
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@bfd4e558cda28cda6b5defafb9232d191be8c203
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL || 'https://sonarcloud.io' }}
+      - name: Prepare SonarQube scan info
+        id: sonarqube-prep
+        # We'll collect info about the PR without running the actual scan
+        run: |
+          echo "PR_NUMBER=${{ github.event.pull_request.number || 'main' }}" >> $GITHUB_OUTPUT
+          echo "PR_SOURCE=${{ github.event.pull_request.head.repo.full_name || github.repository }}" >> $GITHUB_OUTPUT
+          echo "PR_BRANCH=${{ github.event.pull_request.head.ref || github.ref_name }}" >> $GITHUB_OUTPUT
+          echo "PR_BASE=${{ github.event.pull_request.base.ref || '' }}" >> $GITHUB_OUTPUT
+
+      # Create analysis properties file
+      - name: Generate sonar-scanner properties
+        run: |
+          {
+            echo "sonar.projectKey=${{ github.repository_owner }}_formbricks"
+            echo "sonar.organization=${{ github.repository_owner }}-github"
+            
+            # If this is a PR, add PR specific properties
+            if [[ ! -z "${{ steps.sonarqube-prep.outputs.PR_NUMBER }}" && "${{ steps.sonarqube-prep.outputs.PR_NUMBER }}" != "main" ]]; then
+              echo "sonar.pullrequest.key=${{ steps.sonarqube-prep.outputs.PR_NUMBER }}"
+              echo "sonar.pullrequest.branch=${{ steps.sonarqube-prep.outputs.PR_BRANCH }}"
+              echo "sonar.pullrequest.base=${{ steps.sonarqube-prep.outputs.PR_BASE }}"
+            else
+              echo "sonar.branch.name=${{ github.ref_name }}"
+            fi
+          } > sonar-scanner.properties
+
+      # Prepare the project for analysis and save all necessary files
+      - name: Package project for SonarQube analysis
+        run: |
+          # Create a tar file containing all necessary files
+          tar -czf sonarqube-analysis.tar.gz \
+            --exclude=node_modules \
+            --exclude=.git \
+            sonar-scanner.properties \
+            sonar-project.properties \
+            apps/web/coverage \
+            $(find . -type f -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx")
+
+      # Upload the packaged project as an artifact
+      - name: Upload SonarQube analysis package
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-analysis
+          path: sonarqube-analysis.tar.gz
+          retention-days: 1
