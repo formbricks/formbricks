@@ -1,5 +1,4 @@
-import "server-only";
-import pino, { type LevelWithSilentOrString, type Logger, type LoggerOptions } from "pino";
+import Pino, { type LevelWithSilentOrString, type Logger, type LoggerOptions } from "pino";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
@@ -50,23 +49,23 @@ const productionConfig: LoggerOptions = {
   ...baseLoggerConfig,
 };
 
-const logger: Logger = IS_PRODUCTION ? pino(productionConfig) : pino(developmentConfig);
+const PinoLogger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
 
 levels.forEach((level) => {
-  logger[level] = logger[level].bind(logger);
+  PinoLogger[level] = PinoLogger[level].bind(PinoLogger);
 });
 
-const FormbricksLogger = {
-  ...logger,
+const logger = {
+  ...PinoLogger,
   withContext: (context: Record<string, unknown>) => {
-    return logger.child(context);
+    return PinoLogger.child(context);
   },
   request: (req: Request) => {
-    return logger.child({
+    return PinoLogger.child({
       method: req.method,
       url: req.url,
     });
   },
 };
 
-export default FormbricksLogger;
+export { logger };
