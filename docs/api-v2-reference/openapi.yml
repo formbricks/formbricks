@@ -321,26 +321,50 @@ paths:
                 - fileName
                 - fileType
               example:
-                surveyId: survey123
+                surveyId: cm7pr0x2y004o192zmit8cjvb
                 fileName: example.jpg
                 fileType: image/jpeg
       responses:
         "200":
-          description: OK - Returns the signed S3 URL and the local upload URL.
+          description: OK - Returns the signed URL, signing data, updated file name, and file URL.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  signedUrl:
-                    type: string
-                    description: Signed URL for uploading the file to S3.
-                  localUrl:
-                    type: string
-                    description: URL for uploading the file to local storage.
+                  data:
+                    type: object
+                    properties:
+                      signedUrl:
+                        type: string
+                        description: Signed URL for uploading the file to local storage.
+                      signingData:
+                        type: object
+                        properties:
+                          signature:
+                            type: string
+                            description: Signature for verifying the upload.
+                          timestamp:
+                            type: number
+                            description: Timestamp used in the signature.
+                          uuid:
+                            type: string
+                            description: Unique identifier for the signed upload.
+                      updatedFileName:
+                        type: string
+                        description: The updated file name after processing.
+                      fileUrl:
+                        type: string
+                        description: URL where the uploaded file can be accessed.
                 example:
-                  signedUrl: https://s3.example.com/upload/signature
-                  localUrl: https://app.formbricks.com/uploads/example.jpg
+                  data:
+                    signedUrl: "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/local"
+                    signingData:
+                      signature: "3e51c6f441e646a0c9a47fdcdd25eee9bfac26d5506461d811b9c55cbdd90914"
+                      timestamp: 1741693207760
+                      uuid: "f48bcb1aad904f574069a253388024af"
+                    updatedFileName: "halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg"
+                    fileUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/private/halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg"
         "400":
           description: Bad Request - One or more required fields are missing.
           content:
@@ -366,7 +390,7 @@ paths:
                 example:
                   error: Survey survey123 not found
       servers:
-        - url: https://app.formbricks.com/api/v2
+        - url: https://app.formbricks.com/api/v2/client
           description: Formbricks API Server
   /responses:
     get:
