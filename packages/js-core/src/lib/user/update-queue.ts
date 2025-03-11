@@ -117,7 +117,6 @@ export class UpdateQueue {
                 "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
               logger.error(errorMessage);
               this.clearUpdates();
-              throw new Error(errorMessage);
             }
 
             // Only send updates if we have a userId (either from updates or local storage)

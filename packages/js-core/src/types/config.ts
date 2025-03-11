@@ -1,7 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
 import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
-import { type TResponseUpdate } from "@/types/response";
-import { type TFileUploadParams } from "@/types/storage";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,
@@ -123,18 +121,6 @@ export interface TProjectStyling extends TBaseStyling {
 
 export interface TSurveyStyling extends TBaseStyling {
   overwriteThemeStyling?: boolean | null;
-}
-
-export interface TWebViewOnMessageData {
-  onFinished?: boolean | null;
-  onDisplay?: boolean | null;
-  onResponse?: boolean | null;
-  responseUpdate?: TResponseUpdate | null;
-  onRetry?: boolean | null;
-  onClose?: boolean | null;
-  onFileUpload?: boolean | null;
-  fileUploadParams?: TFileUploadParams | null;
-  uploadId?: string | null;
 }
 
 export interface TUpdates {
