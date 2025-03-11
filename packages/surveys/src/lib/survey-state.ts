@@ -4,6 +4,7 @@ export class SurveyState {
   responseId: string | null = null;
   displayId: string | null = null;
   userId: string | null = null;
+  contactId: string | null = null;
   surveyId: string;
   responseAcc: TResponseUpdate = { finished: false, data: {}, ttc: {}, variables: {} };
   singleUseId: string | null;
@@ -12,12 +13,14 @@ export class SurveyState {
     surveyId: string,
     singleUseId?: string | null,
     responseId?: string | null,
-    userId?: string | null
+    userId?: string | null,
+    contactId?: string | null
   ) {
     this.surveyId = surveyId;
     this.userId = userId ?? null;
     this.singleUseId = singleUseId ?? null;
     this.responseId = responseId ?? null;
+    this.contactId = contactId ?? null;
   }
 
   /**
@@ -36,7 +39,8 @@ export class SurveyState {
       this.surveyId,
       this.singleUseId ?? undefined,
       this.responseId ?? undefined,
-      this.userId ?? undefined
+      this.userId ?? undefined,
+      this.contactId ?? undefined
     );
     copyInstance.responseId = this.responseId;
     copyInstance.responseAcc = this.responseAcc;
@@ -65,6 +69,14 @@ export class SurveyState {
    */
   updateUserId(id: string) {
     this.userId = id;
+  }
+
+  /**
+   * Update the contact ID
+   * @param id - The contact ID
+   */
+  updateContactId(id: string) {
+    this.contactId = id;
   }
 
   /**

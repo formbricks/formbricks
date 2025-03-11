@@ -1,3 +1,5 @@
+import Foundation
+
 extension Calendar {
     /// Returns the number of days between two dates.
     func numberOfDaysBetween(_ from: Date, and to: Date) -> Int {

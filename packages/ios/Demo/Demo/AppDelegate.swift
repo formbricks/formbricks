@@ -4,7 +4,7 @@ import FormbricksSDK
 class AppDelegate: NSObject, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        let config = FormbricksConfig.Builder(appUrl: "http://localhost:3000", environmentId: "cm6ovvfoc000asf0k39wbzc8s")
+        let config = FormbricksConfig.Builder(appUrl: "[appUrl]", environmentId: "[environmentId]")
             .setLogLevel(.debug)
             .build()
         

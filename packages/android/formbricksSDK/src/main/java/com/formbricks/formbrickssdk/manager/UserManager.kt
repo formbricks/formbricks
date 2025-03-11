@@ -24,6 +24,7 @@ import java.util.TimerTask
 object UserManager {
     private const val FORMBROCKS_PERFS = "formbricks_prefs"
     private const val USER_ID_KEY = "userIdKey"
+    private const val CONTACT_ID_KEY = "contactIdKey"
     private const val SEGMENTS_KEY = "segmentsKey"
     private const val DISPLAYS_KEY = "displaysKey"
     private const val RESPONSES_KEY = "responsesKey"
@@ -32,12 +33,13 @@ object UserManager {
     private val prefManager by lazy { Formbricks.applicationContext.getSharedPreferences(FORMBROCKS_PERFS, Context.MODE_PRIVATE) }
 
     private var backingUserId: String? = null
+    private var backingContactId: String? = null
     private var backingSegments: List<String>? = null
     private var backingDisplays: List<Display>? = null
     private var backingResponses: List<String>? = null
     private var backingLastDisplayedAt: Date? = null
     private var backingExpiresAt: Date? = null
-    private val syncTimer = Timer()
+    internal val syncTimer = Timer()
 
     /**
      * Starts an update queue with the given user id.
@@ -87,6 +89,7 @@ object UserManager {
         newDisplays.add(Display(surveyId, lastDisplayedAt.dateString()))
         displays = newDisplays
         this.lastDisplayedAt = lastDisplayedAt
+        SurveyManager.filterSurveys()
     }
 
     /**
@@ -98,6 +101,7 @@ object UserManager {
         val newResponses = responses?.toMutableList() ?: mutableListOf()
         newResponses.add(surveyId)
         responses = newResponses
+        SurveyManager.filterSurveys()
     }
 
     /**
@@ -126,6 +130,7 @@ object UserManager {
             try {
                 val userResponse = FormbricksApi.postUser(id, attributes).getOrThrow()
                 userId = userResponse.data.state.data.userId
+                contactId = userResponse.data.state.data.contactId
                 segments = userResponse.data.state.data.segments
                 displays = userResponse.data.state.data.displays
                 responses = userResponse.data.state.data.responses
@@ -179,6 +184,13 @@ object UserManager {
         private set(value) {
             backingUserId = value
             prefManager.edit().putString(USER_ID_KEY, value).apply()
+        }
+
+    var contactId: String?
+        get() = backingContactId ?: prefManager.getString(CONTACT_ID_KEY, null).also { backingContactId = it }
+        private set(value) {
+            backingContactId = value
+            prefManager.edit().putString(CONTACT_ID_KEY, value).apply()
         }
 
     var segments: List<String>?

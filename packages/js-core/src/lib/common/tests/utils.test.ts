@@ -139,6 +139,7 @@ describe("utils.ts", () => {
         expiresAt: null,
         data: {
           userId: null,
+          contactId: null,
           segments: [],
           displays: [],
           responses: [],

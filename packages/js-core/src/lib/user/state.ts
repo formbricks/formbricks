@@ -7,6 +7,7 @@ export const DEFAULT_USER_STATE_NO_USER_ID: TUserState = {
   expiresAt: null,
   data: {
     userId: null,
+    contactId: null,
     segments: [],
     displays: [],
     responses: [],

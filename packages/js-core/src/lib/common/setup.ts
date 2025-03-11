@@ -75,7 +75,6 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
 export const setup = async (
   configInput: TConfigInput | TLegacyConfigInput
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
-  console.log("configInput", configInput);
   const isDebug = getIsDebug();
   const logger = Logger.getInstance();
 
@@ -93,7 +92,8 @@ export const setup = async (
 
     // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
     // otherwise, we just sync again!
-    if ("userId" in configInput && !configInput.userId && newState) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- user could be undefined
+    if (newState && !newState.user?.data?.userId) {
       config.update(newState);
     }
   }

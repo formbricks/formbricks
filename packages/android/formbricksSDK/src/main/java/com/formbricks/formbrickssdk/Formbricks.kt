@@ -23,7 +23,7 @@ object Formbricks {
     internal var language: String = "default"
     internal var loggingEnabled: Boolean = true
     private var fragmentManager: FragmentManager? = null
-    private var isInitialized = false
+    internal var isInitialized = false
 
     /**
      * Initializes the Formbricks SDK with the given [Context] config [FormbricksConfig].
@@ -134,7 +134,7 @@ object Formbricks {
             return
         }
         Formbricks.language = language
-        UserManager.addAttribute(language, "language")
+        UserManager.setLanguage(language)
     }
 
     /**

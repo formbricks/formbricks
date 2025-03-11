@@ -13,7 +13,7 @@ import kotlinx.serialization.json.jsonObject
 import retrofit2.Call
 import retrofit2.Retrofit
 
-class FormbricksApiService {
+open class FormbricksApiService {
 
     private lateinit var retrofit: Retrofit
 
@@ -23,7 +23,7 @@ class FormbricksApiService {
             .build()
     }
 
-    fun getEnvironmentStateObject(environmentId: String): Result<EnvironmentDataHolder> {
+    open fun getEnvironmentStateObject(environmentId: String): Result<EnvironmentDataHolder> {
         val result = execute {
             retrofit.create(FormbricksService::class.java)
                 .getEnvironmentState(environmentId)
@@ -36,7 +36,7 @@ class FormbricksApiService {
         return Result.success(data)
     }
 
-    fun postUser(environmentId: String, body: PostUserBody): Result<UserResponse> {
+    open fun postUser(environmentId: String, body: PostUserBody): Result<UserResponse> {
         return execute {
             retrofit.create(FormbricksService::class.java)
                 .postUser(environmentId, body)

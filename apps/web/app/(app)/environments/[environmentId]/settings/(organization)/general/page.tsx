@@ -12,7 +12,8 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import React from "react";
+import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -84,6 +85,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         environmentId={params.environmentId}
         isReadOnly={!isOwnerOrManager}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        fbLogoUrl={FB_LOGO_URL}
         user={user}
       />
       {isMultiOrgEnabled && (

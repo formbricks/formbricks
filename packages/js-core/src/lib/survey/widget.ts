@@ -82,7 +82,7 @@ export const renderWidget = async (
     formbricksSurveys.renderSurvey({
       apiHost: config.get().appUrl,
       environmentId: config.get().environmentId,
-      userId: config.get().user.data.userId ?? undefined,
+      contactId: config.get().user.data.contactId ?? undefined,
       action,
       // @ts-expect-error -- the types are not compatible because they come from different places (types package vs local types)
       survey,
