@@ -121,7 +121,7 @@ export const updateInsight = async (insightId: string, updates: Partial<Insight>
       }
     }
   } catch (error) {
-    console.error("Error in updateInsight:", error);
+    logger.warn(error, "Error in updateInsight");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

@@ -6,6 +6,7 @@ import { useTranslate } from "@tolgee/react";
 import { MoveVerticalIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
+import { logger } from "@formbricks/logger";
 import { SelectedRowSettings } from "./selected-row-settings";
 
 interface DataTableToolbarProps<T> {
@@ -50,7 +51,7 @@ export const DataTableToolbar = <T,>({
                     await refreshContacts();
                     toast.success(t("environments.contacts.contacts_table_refresh_success"));
                   } catch (err) {
-                    console.error(err);
+                    logger.warn(err);
                     toast.error(t("environments.contacts.contacts_table_refresh_error"));
                   }
                 }

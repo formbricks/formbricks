@@ -3,6 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
+import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { createDisplay } from "./lib/display";
 
@@ -48,7 +49,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error);
+      logger.warn({ error, url: request.url }, "Error creating display");
       return responses.internalServerErrorResponse(error.message);
     }
   }

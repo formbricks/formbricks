@@ -7,6 +7,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ValidationError } from "@formbricks/types/errors";
 
@@ -49,7 +50,7 @@ export const updateProjectBranding = async (
     return true;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      logger.warn(error.errors);
     }
     throw new ValidationError("Data validation of project failed");
   }

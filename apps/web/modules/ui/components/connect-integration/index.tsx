@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { getIntegrationDetails } from "./lib/utils";
 
@@ -33,7 +34,7 @@ export const ConnectIntegration = ({
       setIsConnecting(true);
       handleAuthorization();
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       setIsConnecting(false);
     }
   };

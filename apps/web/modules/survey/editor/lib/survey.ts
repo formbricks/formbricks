@@ -9,6 +9,7 @@ import { Prisma, Survey } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
@@ -118,7 +119,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
           updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
-          console.error(error);
+          logger.error(error);
           throw new Error("Error updating survey");
         }
       } else {
@@ -372,7 +373,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error);
       throw new DatabaseError(error.message);
     }
 

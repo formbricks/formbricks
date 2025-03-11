@@ -113,10 +113,14 @@ export const updateInsightAction = authenticatedActionClient
 
       return await updateInsight(parsedInput.insightId, parsedInput.data);
     } catch (error) {
-      console.error("Error updating insight:", {
-        insightId: parsedInput.insightId,
-        error,
-      });
+      logger.warn(
+        {
+          insightId: parsedInput.insightId,
+          error,
+        },
+        "Error updating insight"
+      );
+
       if (error instanceof Error) {
         throw new Error(`Failed to update insight: ${error.message}`);
       }

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
 import { TWebhookInput } from "../types/webhooks";
@@ -72,7 +73,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
         `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${err.message.length < 250 ? `${t("common.error")}:  ${err.message}` : t("environments.integrations.webhooks.please_check_console")}`,
         { className: err.message.length < 250 ? "break-all" : "" }
       );
-      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), err.message);
+      logger.warn(err, t("environments.integrations.webhooks.webhook_test_failed_due_to"));
       setEndpointAccessible(false);
       return false;
     }

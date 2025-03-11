@@ -5,6 +5,7 @@ import { InsightCategory } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 import { updateInsightAction } from "../actions";
 
 interface CategoryBadgeProps {
@@ -50,7 +51,7 @@ const CategoryBadge = ({ category, insightId, onCategoryChange }: CategoryBadgeP
       onCategoryChange?.(insightId, newCategory);
       toast.success(t("environments.experience.category_updated_successfully"));
     } catch (error) {
-      console.error(t("environments.experience.failed_to_update_category"), error);
+      logger.warn(error, t("environments.experience.failed_to_update_category"));
       toast.error(t("environments.experience.failed_to_update_category"));
     } finally {
       setIsUpdating(false);

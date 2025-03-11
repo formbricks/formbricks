@@ -5,6 +5,7 @@ import { handleSubscriptionDeleted } from "@/modules/ee/billing/api/lib/subscrip
 import Stripe from "stripe";
 import { STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
+import { logger } from "@formbricks/logger";
 
 const stripe = new Stripe(env.STRIPE_SECRET_KEY!, {
   apiVersion: STRIPE_API_VERSION,
@@ -19,7 +20,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    if (err! instanceof Error) console.error(err);
+    if (err! instanceof Error) logger.error(err);
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
 

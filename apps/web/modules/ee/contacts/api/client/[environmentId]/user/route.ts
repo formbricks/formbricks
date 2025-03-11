@@ -2,6 +2,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
+import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState, ZJsUserIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
@@ -82,11 +83,11 @@ export const POST = async (
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
-      console.error(err);
+      logger.warn({ err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
       return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
     }
   } catch (error) {
-    console.error(error);
+    logger.warn({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
 };

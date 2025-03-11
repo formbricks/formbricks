@@ -2,6 +2,7 @@ import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { getShortUrl } from "@formbricks/lib/shortUrl/service";
+import { logger } from "@formbricks/logger";
 import { TShortUrl, ZShortUrlId } from "@formbricks/types/short-url";
 
 export const generateMetadata = async (props): Promise<Metadata> => {
@@ -44,7 +45,7 @@ const Page = async (props) => {
   try {
     shortUrl = await getShortUrl(params.shortUrlId);
   } catch (error) {
-    console.error(error);
+    logger.warn(error);
     notFound();
   }
 

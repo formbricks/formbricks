@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as yaml from "yaml";
+import { logger } from "@formbricks/logger";
 
 // Define the v1 (now v2) client endpoints to be merged
 const v1ClientEndpoints = {
@@ -314,8 +315,8 @@ const updatedOpenapiContent = yaml.stringify(openapiDoc);
 // Write the updated content back to the openapi.yml file
 try {
   fs.writeFileSync(openapiFilePath, updatedOpenapiContent);
-  console.log("Merged v1 client endpoints into the generated v2 documentation.");
+  logger.info("Merged v1 client endpoints into the generated v2 documentation.");
 } catch (error) {
-  console.error("Error writing to OpenAPI file:", error);
+  logger.error("Error writing to OpenAPI file:", error);
   process.exit(1);
 }

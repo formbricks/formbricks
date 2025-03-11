@@ -41,7 +41,7 @@ export const Default: Story = {
     searchPlaceholder: "Search...",
     options: commonOptions,
     value: null,
-    onChangeValue: (value, option) => console.log("Selected:", value, option),
+    onChangeValue: (value, option) => {},
     clearable: true,
     withInput: false,
     allowMultiSelect: false,

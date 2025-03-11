@@ -2,6 +2,7 @@ import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
@@ -109,7 +110,7 @@ export const PUT = async (
     try {
       contactAttributeKeyUpdate = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON input: ${error}`);
+      logger.warn({ error, url: request.url }, "Error parsing JSON input");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

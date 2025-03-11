@@ -17,6 +17,7 @@ import {
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
@@ -102,7 +103,7 @@ export const sendVerificationEmail = async ({
       html,
     });
   } catch (error) {
-    console.error("Error in sendVerificationEmail:", error);
+    logger.warn("Error in sendVerificationEmail:", error);
     throw error; // Re-throw the error to maintain the original behavior
   }
 };

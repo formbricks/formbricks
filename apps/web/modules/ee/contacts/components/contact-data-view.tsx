@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import React from "react";
 import toast from "react-hot-toast";
+import { logger } from "@formbricks/logger";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { deleteContactAction, getContactsAction } from "../actions";
@@ -70,7 +71,7 @@ export const ContactDataView = ({
             setHasMore(false);
           }
         } catch (error) {
-          console.error("Error fetching people data:", error);
+          logger.warn(error, "Error fetching people data");
           toast.error("Error fetching people data. Please try again.");
         } finally {
           setIsDataLoaded(true);
@@ -110,7 +111,7 @@ export const ContactDataView = ({
           setHasMore(false);
         }
       } catch (error) {
-        console.error("Error fetching next page of contacts:", error);
+        logger.warn(error, "Error fetching next page of contacts");
       } finally {
         setLoadingNextPage(false);
       }

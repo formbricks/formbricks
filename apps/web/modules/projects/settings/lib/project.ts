@@ -11,6 +11,7 @@ import {
   deleteS3FilesByEnvironmentId,
 } from "@formbricks/lib/storage/service";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TProject, TProjectUpdateInput, ZProject, ZProjectUpdateInput } from "@formbricks/types/project";
@@ -79,7 +80,7 @@ export const updateProject = async (
     return project;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(JSON.stringify(error.errors, null, 2));
+      logger.error(error.errors);
     }
     throw new ValidationError("Data validation of project failed");
   }
@@ -174,7 +175,7 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
           await Promise.all(s3FilesPromises);
         } catch (err) {
           // fail silently because we don't want to throw an error if the files are not deleted
-          console.error(err);
+          logger.warn(err);
         }
       } else {
         const localFilesPromises = project.environments.map(async (environment) => {
@@ -185,7 +186,7 @@ export const deleteProject = async (projectId: string): Promise<TProject> => {
           await Promise.all(localFilesPromises);
         } catch (err) {
           // fail silently because we don't want to throw an error if the files are not deleted
-          console.error(err);
+          logger.warn(err);
         }
       }
 
