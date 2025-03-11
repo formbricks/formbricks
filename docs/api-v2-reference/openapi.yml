@@ -17,6 +17,8 @@ tags:
     description: Operations for managing contact attributes keys.
   - name: Management API > Surveys
     description: Operations for managing surveys.
+  - name: Client API > File Upload
+    description: Operations for uploading files.
 security:
   - apiKeyAuth: []
 paths:
@@ -280,6 +282,92 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2/client
           description: Formbricks Client
+  /{environmentId}/storage:
+    post:
+      summary: Upload Private File
+      description: >
+        API endpoint for uploading private files. Uploaded files are kept
+        private so that only users with access to the specified environment can
+        retrieve them. The endpoint validates the survey ID, file name, and file
+        type from the request body, and returns a signed URL for S3 uploads
+        along with a local upload URL.
+      tags:
+        - Client API > File Upload
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey associated with the file.
+                fileName:
+                  type: string
+                  description: The name of the file to be uploaded.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+              required:
+                - surveyId
+                - fileName
+                - fileType
+              example:
+                surveyId: survey123
+                fileName: example.jpg
+                fileType: image/jpeg
+      responses:
+        "200":
+          description: OK - Returns the signed S3 URL and the local upload URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  signedUrl:
+                    type: string
+                    description: Signed URL for uploading the file to S3.
+                  localUrl:
+                    type: string
+                    description: URL for uploading the file to local storage.
+                example:
+                  signedUrl: https://s3.example.com/upload/signature
+                  localUrl: https://app.formbricks.com/uploads/example.jpg
+        "400":
+          description: Bad Request - One or more required fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: fileName is required
+        "404":
+          description: Not Found - The specified survey or organization does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Survey survey123 not found
+      servers:
+        - url: https://app.formbricks.com/api/v2
+          description: Formbricks API Server
   /responses:
     get:
       operationId: getResponses
