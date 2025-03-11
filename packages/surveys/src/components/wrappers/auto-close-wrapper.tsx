@@ -1,23 +1,30 @@
 import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 import React from "preact/compat";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 
 interface AutoCloseProps {
   survey: TJsEnvironmentStateSurvey;
+  questionIdx: number;
   onClose?: () => void;
-  offset: number;
   children: React.ReactNode;
 }
 
-export function AutoCloseWrapper({ survey, onClose, children, offset }: AutoCloseProps) {
+export function AutoCloseWrapper({ survey, onClose, children, questionIdx }: AutoCloseProps) {
   const [countDownActive, setCountDownActive] = useState(true);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAppSurvey = survey.type === "app";
-  const showAutoCloseProgressBar = countDownActive && isAppSurvey && offset === 0;
+
+  const isFirstQuestion = useMemo(() => {
+    if (survey.welcomeCard.enabled) return questionIdx === -1;
+    return questionIdx === 0;
+  }, [questionIdx, survey.welcomeCard.enabled]);
+
+  const showAutoCloseProgressBar = countDownActive && isAppSurvey && isFirstQuestion;
 
   const startCountdown = () => {
     if (!survey.autoClose) return;
+    if (!isFirstQuestion) return;
 
     if (timeoutRef.current) {
       stopCountdown();
