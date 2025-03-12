@@ -9,8 +9,10 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import {
+  getOrganizationByEnvironmentId,
+  getOrganizationsWhereUserIsSingleOwner,
+} from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
@@ -71,7 +73,9 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                   description={t("environments.settings.profile.two_factor_authentication_description")}
                   buttons={[
                     {
-                      text: t("common.start_free_trial"),
+                      text: IS_FORMBRICKS_CLOUD
+                        ? t("common.start_free_trial")
+                        : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/environments/${params.environmentId}/settings/billing`
                         : "https://formbricks.com/upgrade-self-hosting-license",
