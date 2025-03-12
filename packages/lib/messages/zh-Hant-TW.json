@@ -310,7 +310,6 @@
     "remove": "移除",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
     "report_survey": "報告問卷",
-    "request_trial_license": "申請試用授權",
     "reset_to_default": "重設為預設值",
     "response": "回應",
     "responses": "回應",
@@ -1134,9 +1133,7 @@
         "resend_invitation_email": "重新發送邀請電子郵件",
         "share_invite_link": "分享邀請連結",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享此連結以讓您的組織成員加入您的組織：",
-        "test_email_sent_successfully": "測試電子郵件已成功發送",
-        "use_multi_language_surveys_with_a_higher_plan": "使用多語言問卷與更高方案",
-        "use_multi_language_surveys_with_a_higher_plan_description": "用不同語言調查您的用戶。"
+        "test_email_sent_successfully": "測試電子郵件已成功發送"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "自動訂閱新問卷",
@@ -1180,7 +1177,7 @@
         "remove_image": "移除圖片",
         "save_the_following_backup_codes_in_a_safe_place": "將下列備份碼儲存在安全的地方。",
         "scan_the_qr_code_below_with_your_authenticator_app": "使用您的驗證器應用程式掃描下方的 QR 碼。",
-        "security_description": "管理您的密碼和其他安全性設定，例如雙重驗證 (2FA)。",
+        "security_description": "管理您的密碼和其他安全性設定。",
         "two_factor_authentication": "雙重驗證",
         "two_factor_authentication_description": "在您的密碼被盜時，為您的帳戶新增額外的安全層。",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "已啟用雙重驗證。請輸入您驗證器應用程式中的六位數程式碼。",
