@@ -1,6 +1,5 @@
 import { BadgeSelect, TBadgeSelectOption } from "@/modules/ui/components/badge-select";
 import { useState } from "react";
-import { logger } from "@formbricks/logger";
 import { TDocument, TDocumentSentiment } from "@formbricks/types/documents";
 import { updateDocumentAction } from "./insight-sheet/actions";
 
@@ -41,7 +40,7 @@ const SentimentSelect = ({ sentiment, documentId }: SentimentSelectProps) => {
       });
       setCurrentSentiment(newSentiment); // Update the state with the new sentiment
     } catch (error) {
-      logger.error(error, "Failed to update document sentiment");
+      console.error("Failed to update document sentiment:", error);
     } finally {
       setIsUpdating(false);
     }

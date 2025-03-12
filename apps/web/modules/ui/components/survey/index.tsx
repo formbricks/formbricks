@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { logger } from "@formbricks/logger";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 
 const createContainerId = () => `formbricks-survey-container`;

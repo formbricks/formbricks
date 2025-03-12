@@ -1,6 +1,5 @@
 import { debounce } from "lodash";
 import { useState } from "react";
-import { logger } from "@formbricks/logger";
 
 interface AnimatedSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;
@@ -59,7 +58,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     try {
       type === "play" ? video.play() : video.pause();
     } catch (error) {
-      logger.error(error, "Error toggling playback");
+      console.error(error);
     }
   };
 

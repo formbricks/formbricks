@@ -18,7 +18,6 @@ import { useTranslate } from "@tolgee/react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import { logger } from "@formbricks/logger";
 import { TProject, ZProject } from "@formbricks/types/project";
 
 interface EditProjectNameProps {
@@ -68,7 +67,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
         toast.error(errorMessage);
       }
     } catch (err) {
-      logger.error(err, "Error updating project name");
+      console.error(err);
       toast.error(t("environments.project.general.error_saving_project_information"));
     }
   };

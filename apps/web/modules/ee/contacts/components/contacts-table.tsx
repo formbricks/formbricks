@@ -29,7 +29,6 @@ import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
-import { logger } from "@formbricks/logger";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";
 
@@ -84,7 +83,7 @@ export const ContactsTable = ({
       try {
         savedColumnOrderParsed = JSON.parse(savedColumnOrder);
       } catch (err) {
-        logger.error(err, "Error parsing column order");
+        console.error(err);
       }
     }
 
@@ -102,7 +101,7 @@ export const ContactsTable = ({
       try {
         savedColumnVisibilityParsed = JSON.parse(savedColumnVisibility);
       } catch (err) {
-        logger.error(err, "Error parsing column visibility");
+        console.error(err);
       }
     }
 
