@@ -1,20 +1,28 @@
-import Pino, { type LevelWithSilentOrString, type Logger, type LoggerOptions } from "pino";
+import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
+import { LOG_LEVELS, type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
-const getLogLevel = (): LevelWithSilentOrString => {
+const getLogLevel = (): TLogLevel => {
+  if (IS_PRODUCTION) return "warn";
+
   const envLogLevel = process.env.LOG_LEVEL;
 
-  if (envLogLevel) return envLogLevel;
+  let logLevel: TLogLevel = "info";
 
-  if (IS_PRODUCTION) return "warn";
-  return "info";
+  const logLevelResult = ZLogLevel.safeParse(envLogLevel);
+  if (logLevelResult.success) logLevel = logLevelResult.data;
+
+  return logLevel;
 };
-
-const levels = ["debug", "info", "warn", "error", "fatal"] as const;
 
 const baseLoggerConfig: LoggerOptions = {
   level: getLogLevel(),
+  serializers: {
+    err: stdSerializers.err,
+    req: stdSerializers.req,
+    res: stdSerializers.res,
+  },
   customLevels: {
     debug: 20,
     info: 30,
@@ -49,23 +57,43 @@ const productionConfig: LoggerOptions = {
   ...baseLoggerConfig,
 };
 
-const PinoLogger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
+const logger: Logger = IS_PRODUCTION ? Pino(productionConfig) : Pino(developmentConfig);
 
-levels.forEach((level) => {
-  PinoLogger[level] = PinoLogger[level].bind(PinoLogger);
+LOG_LEVELS.forEach((level) => {
+  logger[level] = logger[level].bind(logger);
 });
 
-const logger = {
-  ...PinoLogger,
-  withContext: (context: Record<string, unknown>) => {
-    return PinoLogger.child(context);
-  },
-  request: (req: Request) => {
-    return PinoLogger.child({
+const extendedLogger = {
+  ...logger,
+  withContext: (context: Record<string, unknown>) => logger.child(context),
+  request: (req: Request) =>
+    logger.child({
       method: req.method,
       url: req.url,
-    });
-  },
+    }),
 };
 
-export { logger };
+const handleShutdown = (event: string, err?: Error): void => {
+  if (err) {
+    logger.error(err, `Error during shutdown (${event})`);
+  }
+  logger.info({ event }, "Process is exiting");
+
+  logger.flush();
+  process.exit(err ? 1 : 0);
+};
+
+process.on("uncaughtException", (err) => {
+  handleShutdown("uncaughtException", err);
+});
+process.on("unhandledRejection", (err) => {
+  handleShutdown("unhandledRejection", err as Error);
+});
+process.on("SIGTERM", () => {
+  handleShutdown("SIGTERM");
+});
+process.on("SIGINT", () => {
+  handleShutdown("SIGINT");
+});
+
+export { extendedLogger as logger };

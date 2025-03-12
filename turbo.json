@@ -118,6 +118,7 @@
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_SECRET_KEY",
+        "LOG_LEVEL",
         "MAIL_FROM",
         "NEXT_PUBLIC_LAYER_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",

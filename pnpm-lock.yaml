@@ -877,6 +877,9 @@ importers:
       pino-pretty:
         specifier: ^10.0.0
         version: 10.3.1
+      zod:
+        specifier: 3.24.1
+        version: 3.24.1
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
