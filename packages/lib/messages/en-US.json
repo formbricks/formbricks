@@ -1776,6 +1776,8 @@
         "publish_to_web": "Publish to web",
         "publish_to_web_warning": "You are about to release these survey results to the public.",
         "publish_to_web_warning_description": "Your survey results will be public. Anyone outside your organization can access them if they have the link.",
+        "quickstart_mobile_apps": "Quickstart: Mobile apps",
+        "quickstart_mobile_apps_description": "To get started with surveys in mobile apps, please follow the Quickstart guide:",
         "quickstart_web_apps": "Quickstart: Web apps",
         "quickstart_web_apps_description": "Please follow the Quickstart guide to get started:",
         "results_are_public": "Results are public",
