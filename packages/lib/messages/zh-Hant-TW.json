@@ -310,7 +310,7 @@
     "remove": "移除",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
     "report_survey": "報告問卷",
-    "request_trial_license": "申請試用授權",
+    "request_trial_license": "請求試用授權",
     "reset_to_default": "重設為預設值",
     "response": "回應",
     "responses": "回應",
@@ -1135,7 +1135,7 @@
         "share_invite_link": "分享邀請連結",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享此連結以讓您的組織成員加入您的組織：",
         "test_email_sent_successfully": "測試電子郵件已成功發送",
-        "use_multi_language_surveys_with_a_higher_plan": "使用多語言問卷與更高方案",
+        "use_multi_language_surveys_with_a_higher_plan": "使用更高等級的方案使用多語言問卷",
         "use_multi_language_surveys_with_a_higher_plan_description": "用不同語言調查您的用戶。"
       },
       "notifications": {

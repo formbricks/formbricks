@@ -310,7 +310,7 @@
     "remove": "remover",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
     "report_survey": "Relatório de Pesquisa",
-    "request_trial_license": "Solicitar licença de teste",
+    "request_trial_license": "Pedir licença de teste",
     "reset_to_default": "Restaurar para o padrão",
     "response": "Resposta",
     "responses": "Respostas",
@@ -347,7 +347,7 @@
     "some_files_failed_to_upload": "Alguns arquivos falharam ao enviar",
     "something_went_wrong_please_try_again": "Algo deu errado. Tente novamente.",
     "sort_by": "Ordenar por",
-    "start_free_trial": "Iniciar teste grátis",
+    "start_free_trial": "Iniciar Teste Grátis",
     "status": "status",
     "step_by_step_manual": "Manual passo a passo",
     "styling": "estilização",
@@ -1135,7 +1135,7 @@
         "share_invite_link": "Compartilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Compartilhe esse link para que o membro da sua organização possa entrar na sua organização:",
         "test_email_sent_successfully": "E-mail de teste enviado com sucesso",
-        "use_multi_language_surveys_with_a_higher_plan": "Use pesquisas multilingues com um plano superior",
+        "use_multi_language_surveys_with_a_higher_plan": "Use pesquisas multilíngues com um plano superior",
         "use_multi_language_surveys_with_a_higher_plan_description": "Pesquise seus usuários em diferentes idiomas."
       },
       "notifications": {
