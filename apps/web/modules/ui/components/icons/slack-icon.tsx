@@ -8,8 +8,8 @@ export const SlackIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       {...props}>
       <rect width="3" height="8" x="13" y="2" rx="1.5" />
       <path d="M19 8.5V10h1.5A1.5 1.5 0 1 0 19 8.5" />
