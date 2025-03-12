@@ -108,6 +108,10 @@ const nextConfig = {
         },
       ],
     });
+    config.resolve.fallback = {
+      http: false, // Prevents Next.js from trying to bundle 'http'
+      https: false,
+    };
     return config;
   },
   async headers() {
