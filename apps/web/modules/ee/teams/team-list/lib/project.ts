@@ -33,7 +33,7 @@ export const getProjectsByOrganizationId = reactCache(
           }));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.warn(error);
+            logger.error(error, "Error fetching projects by organization id");
             throw new DatabaseError(error.message);
           }
 

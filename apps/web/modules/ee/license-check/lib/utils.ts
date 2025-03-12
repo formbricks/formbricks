@@ -104,7 +104,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
     }
     return previousResult;
   } catch (error) {
-    logger.warn("Error fetching license: ", error);
+    logger.error("Error fetching license: ", error);
     return null;
   }
 };
@@ -192,7 +192,7 @@ export const getEnterpriseLicense = async (): Promise<{
     }
 
     // Log error only after 72 hours
-    logger.warn("Error while checking license: The license check failed");
+    logger.error("Error while checking license: The license check failed");
 
     return {
       active: false,

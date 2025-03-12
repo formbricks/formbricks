@@ -90,6 +90,6 @@ export const sendSurveyFollowUps = async (
     .map((result) => `FollowUp ${result.followUpId} failed: ${result.error}`);
 
   if (errors.length > 0) {
-    logger.warn(errors, "Follow-up processing errors");
+    logger.error(errors, "Follow-up processing errors");
   }
 };

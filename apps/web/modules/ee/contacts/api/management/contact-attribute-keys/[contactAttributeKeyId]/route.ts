@@ -110,7 +110,7 @@ export const PUT = async (
     try {
       contactAttributeKeyUpdate = await request.json();
     } catch (error) {
-      logger.warn({ error, url: request.url }, "Error parsing JSON input");
+      logger.error({ error, url: request.url }, "Error parsing JSON input");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

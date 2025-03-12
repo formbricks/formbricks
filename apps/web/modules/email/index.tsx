@@ -104,7 +104,7 @@ export const sendVerificationEmail = async ({
       html,
     });
   } catch (error) {
-    logger.warn("Error in sendVerificationEmail:", error);
+    logger.error(error, "Error in sendVerificationEmail");
     throw error; // Re-throw the error to maintain the original behavior
   }
 };

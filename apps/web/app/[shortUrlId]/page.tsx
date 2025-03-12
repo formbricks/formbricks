@@ -45,7 +45,7 @@ const Page = async (props) => {
   try {
     shortUrl = await getShortUrl(params.shortUrlId);
   } catch (error) {
-    logger.warn(error);
+    logger.error(error, "Could not fetch short url");
     notFound();
   }
 

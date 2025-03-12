@@ -20,7 +20,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     event = stripe.webhooks.constructEvent(requestBody, stripeSignature, webhookSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "Unknown error";
-    if (err! instanceof Error) logger.error(err);
+    if (err! instanceof Error) logger.error(err, "Error in Stripe webhook handler");
     return { status: 400, message: `Webhook Error: ${errorMessage}` };
   }
 

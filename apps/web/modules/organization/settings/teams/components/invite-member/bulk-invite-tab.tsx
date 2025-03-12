@@ -10,7 +10,6 @@ import Link from "next/link";
 import Papa, { type ParseResult } from "papaparse";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { logger } from "@formbricks/logger";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface BulkInviteTabProps {
@@ -61,7 +60,7 @@ export const BulkInviteTab = ({
           ZInvitees.parse(members);
           onSubmit(members);
         } catch (err) {
-          logger.warn(err.message);
+          console.error(err.message);
           toast.error(t("environments.settings.general.please_check_csv_file"));
         }
         setOpen(false);

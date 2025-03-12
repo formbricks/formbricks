@@ -188,7 +188,10 @@ export const GET = async (
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    logger.warn({ error, url: request.url }, "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]");
+    logger.error(
+      { error, url: request.url },
+      "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]"
+    );
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

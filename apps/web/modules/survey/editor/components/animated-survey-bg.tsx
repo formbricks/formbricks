@@ -59,7 +59,7 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
     try {
       type === "play" ? video.play() : video.pause();
     } catch (error) {
-      logger.warn(error, "Error toggling playback");
+      logger.error(error, "Error toggling playback");
     }
   };
 

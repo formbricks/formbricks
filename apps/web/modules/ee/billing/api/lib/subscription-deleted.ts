@@ -8,7 +8,7 @@ export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
   if (!organizationId) {
-    logger.warn({ event, organizationId }, "No organizationId found in subscription");
+    logger.error({ event, organizationId }, "No organizationId found in subscription");
     return { status: 400, message: "skipping, no organizationId found" };
   }
 

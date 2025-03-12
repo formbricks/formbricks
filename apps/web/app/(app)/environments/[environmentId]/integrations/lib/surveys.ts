@@ -35,7 +35,7 @@ export const getSurveys = reactCache(
           return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error);
+            logger.error({ error }, "getSurveys: Could not fetch surveys");
             throw new DatabaseError(error.message);
           }
           throw error;

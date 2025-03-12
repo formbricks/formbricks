@@ -26,7 +26,7 @@ export const POST = async (request: Request) => {
     const inputValidation = ZGenerateInsightsInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
-      logger.warn(
+      logger.error(
         { error: inputValidation.error, url: request.url },
         "Error in POST /api/(internal)/insights"
       );

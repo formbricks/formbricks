@@ -119,7 +119,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
           updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
-          logger.error(error);
+          logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
         }
       } else {
@@ -373,7 +373,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error);
+      logger.error(error, "Error updating survey");
       throw new DatabaseError(error.message);
     }
 

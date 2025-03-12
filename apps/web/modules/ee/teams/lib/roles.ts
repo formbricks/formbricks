@@ -52,7 +52,7 @@ export const getProjectPermissionByUserId = reactCache(
           return highestPermission;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error);
+            logger.error(error, "Error fetching project permission by user id");
             throw new DatabaseError(error.message);
           }
 

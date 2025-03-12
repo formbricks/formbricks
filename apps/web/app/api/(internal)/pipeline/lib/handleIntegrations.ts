@@ -84,13 +84,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!googleResult.ok) {
-          logger.warn(googleResult.error, "Error in google sheets integration");
+          logger.error(googleResult.error, "Error in google sheets integration");
         }
         break;
       case "slack":
         const slackResult = await handleSlackIntegration(integration as TIntegrationSlack, data, survey);
         if (!slackResult.ok) {
-          logger.warn(slackResult.error, "Error in slack integration");
+          logger.error(slackResult.error, "Error in slack integration");
         }
         break;
       case "airtable":
@@ -100,13 +100,13 @@ export const handleIntegrations = async (
           survey
         );
         if (!airtableResult.ok) {
-          logger.warn(airtableResult.error, "Error in airtable integration");
+          logger.error(airtableResult.error, "Error in airtable integration");
         }
         break;
       case "notion":
         const notionResult = await handleNotionIntegration(integration as TIntegrationNotion, data, survey);
         if (!notionResult.ok) {
-          logger.warn(notionResult.error, "Error in notion integration");
+          logger.error(notionResult.error, "Error in notion integration");
         }
         break;
     }
@@ -419,7 +419,7 @@ const getValue = (colType: string, value: string | string[] | Date | number | Re
         return typeof value === "string" ? value : (value as string[]).join(", ");
     }
   } catch (error) {
-    logger.warn(error, "Payload build failed!");
+    logger.error(error, "Payload build failed!");
     throw new Error("Payload build failed!");
   }
 };

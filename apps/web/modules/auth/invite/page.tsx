@@ -132,7 +132,7 @@ export const InvitePage = async (props: InvitePageProps) => {
       </ContentLayout>
     );
   } catch (e) {
-    logger.warn(e);
+    logger.error(e, "Error in InvitePage");
     return (
       <ContentLayout
         headline={t("auth.invite.invite_not_found")}

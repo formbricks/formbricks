@@ -36,7 +36,7 @@ export const getProjectForEnvironmentState = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.warn(error, "Error getting project for environment state");
+            logger.error(error, "Error getting project for environment state");
             throw new DatabaseError(error.message);
           }
           throw error;

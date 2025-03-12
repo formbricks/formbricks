@@ -27,7 +27,7 @@ export const findAndDeleteUploadedFilesInResponse = async (
       }
       return deleteFile(environmentId, accessType as "private" | "public", fileName);
     } catch (error) {
-      logger.warn(`Failed to delete file ${fileUrl}:`, error);
+      logger.error({ error, fileUrl }, "Failed to delete file");
     }
   });
 

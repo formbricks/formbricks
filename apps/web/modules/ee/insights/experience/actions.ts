@@ -114,7 +114,7 @@ export const updateInsightAction = authenticatedActionClient
 
       return await updateInsight(parsedInput.insightId, parsedInput.data);
     } catch (error) {
-      logger.warn(
+      logger.error(
         {
           insightId: parsedInput.insightId,
           error,

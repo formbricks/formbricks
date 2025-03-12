@@ -34,7 +34,7 @@ export const ConnectIntegration = ({
       setIsConnecting(true);
       handleAuthorization();
     } catch (error) {
-      logger.error(error);
+      logger.error(error, "Error connecting integration");
       setIsConnecting(false);
     }
   };

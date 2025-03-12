@@ -68,7 +68,7 @@ export const deleteSurvey = async (surveyId: string) => {
     return deletedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.warn(error, "Error deleting survey");
+      logger.error({ error, surveyId }, "Error deleting survey");
       throw new DatabaseError(error.message);
     }
 

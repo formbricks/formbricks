@@ -20,7 +20,7 @@ export const getProject = reactCache(
           return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error);
+            logger.error(error, "Error fetching project");
             throw new DatabaseError(error.message);
           }
           throw error;

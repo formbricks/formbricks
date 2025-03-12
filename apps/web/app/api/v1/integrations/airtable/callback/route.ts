@@ -78,7 +78,7 @@ export const GET = async (req: NextRequest) => {
     await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
     return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
   } catch (error) {
-    logger.warn({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
+    logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
     responses.internalServerErrorResponse(error);
   }
   responses.badRequestResponse("unknown error occurred");

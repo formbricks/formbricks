@@ -53,7 +53,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ webhoo
     const webhook = await deleteWebhook(params.webhookId);
     return responses.successResponse(webhook);
   } catch (e) {
-    logger.warn({ error: e, url: request.url }, "Error deleting webhook");
+    logger.error({ error: e, url: request.url }, "Error deleting webhook");
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
 };

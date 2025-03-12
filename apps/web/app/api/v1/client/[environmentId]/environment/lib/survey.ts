@@ -81,7 +81,7 @@ export const getSurveysForEnvironmentState = reactCache(
           return surveysPrisma.map((survey) => transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.warn(error, "Error getting surveys for environment state");
+            logger.error(error, "Error getting surveys for environment state");
             throw new DatabaseError(error.message);
           }
           throw error;

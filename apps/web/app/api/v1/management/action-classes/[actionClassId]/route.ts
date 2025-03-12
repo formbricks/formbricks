@@ -55,7 +55,7 @@ export const PUT = async (
     try {
       actionClassUpdate = await request.json();
     } catch (error) {
-      logger.warn({ error, url: request.url }, "Error parsing JSON");
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

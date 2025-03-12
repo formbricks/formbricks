@@ -52,7 +52,7 @@ export const getMembershipByOrganizationId = reactCache(
           return members;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error);
+            logger.error(error, "Error fetching membership by organization id");
             throw new DatabaseError(error.message);
           }
 

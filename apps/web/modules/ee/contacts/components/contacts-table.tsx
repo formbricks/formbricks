@@ -84,7 +84,7 @@ export const ContactsTable = ({
       try {
         savedColumnOrderParsed = JSON.parse(savedColumnOrder);
       } catch (err) {
-        logger.warn(err);
+        logger.error(err, "Error parsing column order");
       }
     }
 
@@ -102,7 +102,7 @@ export const ContactsTable = ({
       try {
         savedColumnVisibilityParsed = JSON.parse(savedColumnVisibility);
       } catch (err) {
-        logger.warn(err);
+        logger.error(err, "Error parsing column visibility");
       }
     }
 

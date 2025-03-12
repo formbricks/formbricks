@@ -317,6 +317,6 @@ try {
   fs.writeFileSync(openapiFilePath, updatedOpenapiContent);
   logger.info("Merged v1 client endpoints into the generated v2 documentation.");
 } catch (error) {
-  logger.error("Error writing to OpenAPI file:", error);
+  logger.error(error, "Error writing to OpenAPI file");
   process.exit(1);
 }

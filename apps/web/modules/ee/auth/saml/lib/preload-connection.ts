@@ -69,6 +69,6 @@ export const preloadConnection = async (connectionController: ConnectionAPIContr
       });
     }
   } catch (error) {
-    logger.warn(error, "Error preloading connection");
+    logger.error(error, "Error preloading connection");
   }
 };

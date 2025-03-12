@@ -11,7 +11,7 @@ test.describe("API Tests for Responses", () => {
     try {
       ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
-      logger.error("Error during login and getting API key:", error);
+      logger.error(error, "Error during login and getting API key");
       throw error;
     }
 

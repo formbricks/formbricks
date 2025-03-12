@@ -83,11 +83,11 @@ export const POST = async (
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
-      logger.warn({ err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
+      logger.error({ err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
       return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
     }
   } catch (error) {
-    logger.warn({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
+    logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
 };

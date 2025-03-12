@@ -109,7 +109,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      logger.warn({ error, url: request.url }, "Error creating response");
+      logger.error({ error, url: request.url }, "Error creating response");
       return responses.internalServerErrorResponse(error.message);
     }
   }

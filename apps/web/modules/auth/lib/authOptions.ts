@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          logger.error(e);
+          logger.error(e, "Error in CredentialsProvider authorize");
           throw Error("Internal server error. Please try again later");
         }
         if (!user) {

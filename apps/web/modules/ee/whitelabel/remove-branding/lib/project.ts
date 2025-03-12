@@ -50,7 +50,7 @@ export const updateProjectBranding = async (
     return true;
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.warn(error.errors);
+      logger.error(error.errors, "Error updating project branding");
     }
     throw new ValidationError("Data validation of project failed");
   }

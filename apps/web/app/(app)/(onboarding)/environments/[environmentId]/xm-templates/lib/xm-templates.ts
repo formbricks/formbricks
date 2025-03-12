@@ -16,7 +16,7 @@ export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
       },
     };
   } catch (error) {
-    logger.warn(error, "getXMSurveyDefault");
+    logger.error(error, "Failed to create default XM survey template");
     throw error; // Re-throw after logging
   }
 };
@@ -446,7 +446,7 @@ export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
       enpsSurvey(t),
     ];
   } catch (error) {
-    logger.warn(error, "getXMTemplates");
+    logger.warn({ error }, "Unable to load XM templates, returning empty array");
     return []; // Return an empty array or handle as needed
   }
 };

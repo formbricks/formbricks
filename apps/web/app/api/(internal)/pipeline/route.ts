@@ -35,7 +35,10 @@ export const POST = async (request: Request) => {
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {
-    logger.warn({ error: inputValidation.error, url: request.url }, "Error in POST /api/(internal)/pipeline");
+    logger.error(
+      { error: inputValidation.error, url: request.url },
+      "Error in POST /api/(internal)/pipeline"
+    );
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
       transformErrorToDetails(inputValidation.error),
@@ -88,7 +91,7 @@ export const POST = async (request: Request) => {
         data: response,
       }),
     }).catch((error) => {
-      logger.warn({ error, url: request.url }, `Webhook call to ${webhook.url} failed:`);
+      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed:`);
     })
   );
 
@@ -101,7 +104,7 @@ export const POST = async (request: Request) => {
     ]);
 
     if (!survey) {
-      logger.warn({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
+      logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
       return new Response("Survey not found", { status: 404 });
     }
 
@@ -173,7 +176,7 @@ export const POST = async (request: Request) => {
 
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
-        logger.warn(
+        logger.error(
           { error, url: request.url, userEmail: user.email },
           `Failed to send email to ${user.email}:`
         );
@@ -192,7 +195,7 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        logger.warn({ error: result.reason, url: request.url }, "Promise rejected:");
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected:");
       }
     });
 

@@ -41,7 +41,7 @@ const SentimentSelect = ({ sentiment, documentId }: SentimentSelectProps) => {
       });
       setCurrentSentiment(newSentiment); // Update the state with the new sentiment
     } catch (error) {
-      logger.warn(error, "Failed to update document sentiment");
+      logger.error(error, "Failed to update document sentiment");
     } finally {
       setIsUpdating(false);
     }

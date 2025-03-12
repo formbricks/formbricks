@@ -81,7 +81,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
 
     return { success: false };
   } catch (error) {
-    logger.warn("Error generating insights for surveys:", error);
+    logger.error(error, "Error generating insights for surveys");
     throw error;
   }
 };

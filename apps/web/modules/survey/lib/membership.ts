@@ -31,7 +31,7 @@ export const getMembershipRoleByUserIdOrganizationId = reactCache(
           return membership.role;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error);
+            logger.error(error, "Error fetching membership role by user id and organization id");
             throw new DatabaseError(error.message);
           }
 

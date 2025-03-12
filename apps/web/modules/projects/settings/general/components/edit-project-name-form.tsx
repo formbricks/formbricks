@@ -68,7 +68,7 @@ export const EditProjectNameForm: React.FC<EditProjectNameProps> = ({ project, i
         toast.error(errorMessage);
       }
     } catch (err) {
-      logger.warn(err);
+      logger.error(err, "Error updating project name");
       toast.error(t("environments.project.general.error_saving_project_information"));
     }
   };

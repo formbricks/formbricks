@@ -49,7 +49,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      logger.warn({ error, url: request.url }, "Error creating display");
+      logger.error({ error, url: request.url }, "Error creating display");
       return responses.internalServerErrorResponse(error.message);
     }
   }

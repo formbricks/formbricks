@@ -28,7 +28,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   }
 
   if (!organizationId) {
-    logger.warn({ event, organizationId }, "No organizationId found in subscription");
+    logger.error({ event, organizationId }, "No organizationId found in subscription");
     return { status: 400, message: "skipping, no organizationId found" };
   }
 
@@ -61,7 +61,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.responses) > 0) {
     responses = parseInt(product.metadata.responses);
   } else {
-    logger.warn({ responses: product.metadata.responses }, "Invalid responses metadata in product");
+    logger.error({ responses: product.metadata.responses }, "Invalid responses metadata in product");
     throw new Error("Invalid responses metadata in product");
   }
 
@@ -70,7 +70,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.miu) > 0) {
     miu = parseInt(product.metadata.miu);
   } else {
-    logger.warn({ miu: product.metadata.miu }, "Invalid miu metadata in product");
+    logger.error({ miu: product.metadata.miu }, "Invalid miu metadata in product");
     throw new Error("Invalid miu metadata in product");
   }
 
@@ -79,7 +79,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.projects) > 0) {
     projects = parseInt(product.metadata.projects);
   } else {
-    logger.warn({ projects: product.metadata.projects }, "Invalid projects metadata in product");
+    logger.error({ projects: product.metadata.projects }, "Invalid projects metadata in product");
     throw new Error("Invalid projects metadata in product");
   }
 

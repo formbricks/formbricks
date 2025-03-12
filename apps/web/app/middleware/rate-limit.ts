@@ -29,7 +29,7 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
     }
     const tokenCountResponse = await fetch(`${REDIS_HTTP_URL}/INCR/${token}`);
     if (!tokenCountResponse.ok) {
-      logger.warn({ tokenCountResponse }, "Failed to increment token count in Redis");
+      logger.error({ tokenCountResponse }, "Failed to increment token count in Redis");
       return;
     }
 

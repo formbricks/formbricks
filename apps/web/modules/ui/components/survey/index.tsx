@@ -48,7 +48,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
         try {
           await loadSurveyScript();
         } catch (error) {
-          logger.error("Failed to load the surveys package: ", error);
+          console.error("Failed to load the surveys package: ", error);
         }
       } else {
         renderInline();

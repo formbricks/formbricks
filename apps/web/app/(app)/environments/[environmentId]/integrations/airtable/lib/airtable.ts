@@ -18,7 +18,8 @@ export const authorize = async (environmentId: string, apiHost: string): Promise
   });
 
   if (!res.ok) {
-    logger.warn(res.text);
+    const errorText = await res.text();
+    logger.error({ errorText }, "authorize: Could not fetch airtable config");
     throw new Error("Could not create response");
   }
   const resJSON = await res.json();
