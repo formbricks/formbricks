@@ -310,6 +310,7 @@
     "remove": "Remover",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
     "report_survey": "Relatório de Inquérito",
+    "request_trial_license": "Solicitar licença de teste",
     "reset_to_default": "Repor para o padrão",
     "response": "Resposta",
     "responses": "Respostas",
@@ -485,9 +486,8 @@
     "survey_response_finished_email_congrats": "Parabéns, recebeu uma nova resposta ao seu inquérito! Alguém acabou de completar o seu inquérito: {surveyName}",
     "survey_response_finished_email_dont_want_notifications": "Não quer receber estas notificações?",
     "survey_response_finished_email_hey": "Olá \uD83D\uDC4B",
-    "survey_response_finished_email_this_form": "este formulário",
-    "survey_response_finished_email_turn_off_notifications": "Desativar notificações para",
     "survey_response_finished_email_turn_off_notifications_for_all_new_forms": "Desativar notificações para todos os formulários recém-criados",
+    "survey_response_finished_email_turn_off_notifications_for_this_form": "Desativar notificações para este formulário",
     "survey_response_finished_email_view_more_responses": "Ver mais {responseCount} respostas",
     "survey_response_finished_email_view_survey_summary": "Ver resumo do inquérito",
     "verification_email_click_on_this_link": "Também pode clicar neste link:",
@@ -511,6 +511,13 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurar um novo inquérito",
     "weekly_summary_create_reminder_notification_body_text": "Gostaríamos de lhe enviar um Resumo Semanal, mas de momento não há inquéritos a decorrer para {projectName}.",
     "weekly_summary_email_subject": "{projectName} Informações do Utilizador - Última Semana por Formbricks"
+  },
+  "environment": {
+    "settings": {
+      "general": {
+        "use_multi_language_surveys_with_a_higher_plan_description": "Inquira os seus utilizadores em diferentes idiomas."
+      }
+    }
   },
   "environments": {
     "actions": {
@@ -1134,7 +1141,8 @@
         "resend_invitation_email": "Reenviar Email de Convite",
         "share_invite_link": "Partilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Partilhe este link para permitir que o membro da sua organização se junte à sua organização:",
-        "test_email_sent_successfully": "Email de teste enviado com sucesso"
+        "test_email_sent_successfully": "Email de teste enviado com sucesso",
+        "use_multi_language_surveys_with_a_higher_plan": "Use inquéritos multilingues com um plano superior"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Subscrever automaticamente a novos inquéritos",
@@ -1178,7 +1186,7 @@
         "remove_image": "Remover imagem",
         "save_the_following_backup_codes_in_a_safe_place": "Guarde os seguintes códigos de backup num local seguro.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Digitalize o código QR abaixo com a sua aplicação de autenticação.",
-        "security_description": "Gerir a sua palavra-passe e outras definições de segurança.",
+        "security_description": "Gerir a sua palavra-passe e outras definições de segurança, como a autenticação de dois fatores (2FA).",
         "two_factor_authentication": "Autenticação de dois fatores",
         "two_factor_authentication_description": "Adicione uma camada extra de segurança à sua conta caso a sua palavra-passe seja roubada.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autenticação de dois fatores ativada. Introduza o código de seis dígitos da sua aplicação de autenticação.",
@@ -1749,11 +1757,6 @@
         "how_to_create_a_panel_step_3_description": "Configure campos ocultos no seu inquérito Formbricks para rastrear qual participante forneceu qual resposta.",
         "how_to_create_a_panel_step_4": "Passo 4: Lançar o seu estudo",
         "how_to_create_a_panel_step_4_description": "Depois de tudo configurado, pode lançar o seu estudo. Dentro de algumas horas, receberá as primeiras respostas.",
-        "how_to_embed_a_survey_on_your_react_native_app": "Como incorporar um questionário na sua aplicação React Native",
-        "how_to_embed_a_survey_on_your_web_app": "Como incorporar um questionário na sua aplicação web",
-        "identify_users": "Identificar utilizadores",
-        "identify_users_and_set_attributes": "identificar utilizadores e definir atributos",
-        "identify_users_description": "Tem o endereço de email ou um userId? Adicione-o ao URL.",
         "impressions": "Impressões",
         "impressions_tooltip": "Número de vezes que o inquérito foi visualizado.",
         "includes_all": "Inclui tudo",
@@ -1768,7 +1771,6 @@
         "last_month": "Último mês",
         "last_quarter": "Último trimestre",
         "last_year": "Ano passado",
-        "learn_how_to": "Saiba como",
         "link_to_public_results_copied": "Link para resultados públicos copiado",
         "make_sure_the_survey_type_is_set_to": "Certifique-se de que o tipo de inquérito está definido para",
         "mobile_app": "Aplicação móvel",
@@ -1779,11 +1781,14 @@
         "publish_to_web": "Publicar na web",
         "publish_to_web_warning": "Está prestes a divulgar estes resultados do inquérito ao público.",
         "publish_to_web_warning_description": "Os resultados do seu inquérito serão públicos. Qualquer pessoa fora da sua organização pode aceder a eles se tiver o link.",
+        "quickstart_mobile_apps": "Início rápido: Aplicações móveis",
+        "quickstart_mobile_apps_description": "Para começar com inquéritos em aplicações móveis, por favor, siga o guia de início rápido:",
+        "quickstart_web_apps": "Início rápido: Aplicações web",
+        "quickstart_web_apps_description": "Por favor, siga o guia de início rápido para começar:",
         "results_are_public": "Os resultados são públicos",
         "send_preview": "Enviar pré-visualização",
         "send_to_panel": "Enviar para painel",
         "setup_instructions": "Instruções de configuração",
-        "setup_instructions_for_react_native_apps": "Instruções de configuração para aplicações React Native",
         "setup_integrations": "Configurar integrações",
         "share_results": "Partilhar resultados",
         "share_the_link": "Partilhar o link",
@@ -1802,10 +1807,7 @@
         "this_quarter": "Este trimestre",
         "this_year": "Este ano",
         "time_to_complete": "Tempo para Concluir",
-        "to_connect_your_app_with_formbricks": "para ligar a sua aplicação ao Formbricks",
-        "to_connect_your_web_app_with_formbricks": "para ligar a sua aplicação web ao Formbricks",
         "to_connect_your_website_with_formbricks": "para ligar o seu website ao Formbricks",
-        "to_run_highly_targeted_surveys": "para realizar inquéritos altamente direcionados.",
         "ttc_tooltip": "Tempo médio para concluir o inquérito.",
         "unknown_question_type": "Tipo de Pergunta Desconhecido",
         "unpublish_from_web": "Despublicar da web",
@@ -1815,7 +1817,6 @@
         "view_site": "Ver site",
         "waiting_for_response": "A aguardar uma resposta \uD83E\uDDD8‍♂️",
         "web_app": "Aplicação web",
-        "were_working_on_sdks_for_flutter_swift_and_kotlin": "Estamos a trabalhar em SDKs para Flutter, Swift e Kotlin.",
         "what_is_a_panel": "O que é um painel?",
         "what_is_a_panel_answer": "Um painel é um grupo de participantes selecionados com base em características como idade, profissão, género, etc.",
         "what_is_prolific": "O que é o Prolific?",
