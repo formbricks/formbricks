@@ -27,7 +27,10 @@ const nextConfig = {
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {},
+  experimental: {
+    instrumentationHook: true,
+    serverComponentsExternalPackages: ["@opentelemetry/instrumentation"],
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -108,6 +111,10 @@ const nextConfig = {
         },
       ],
     });
+    config.resolve.fallback = {
+      http: false, // Prevents Next.js from trying to bundle 'http'
+      https: false,
+    };
     return config;
   },
   async headers() {
