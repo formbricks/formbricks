@@ -512,13 +512,6 @@
     "weekly_summary_create_reminder_notification_body_text": "Wir würden dir gerne eine wöchentliche Zusammenfassung schicken, aber momentan laufen keine Umfragen für {projectName}.",
     "weekly_summary_email_subject": "{projectName} Nutzer-Insights – Letzte Woche von Formbricks"
   },
-  "environment": {
-    "settings": {
-      "general": {
-        "use_multi_language_surveys_with_a_higher_plan_description": "Befrage deine Nutzer in verschiedenen Sprachen."
-      }
-    }
-  },
   "environments": {
     "actions": {
       "action_copied_successfully": "Aktion erfolgreich kopiert",
@@ -1142,7 +1135,8 @@
         "share_invite_link": "Einladungslink teilen",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Teile diesen Link, damit dein Organisationsmitglied deiner Organisation beitreten kann:",
         "test_email_sent_successfully": "Test-E-Mail erfolgreich gesendet",
-        "use_multi_language_surveys_with_a_higher_plan": "Nutze mehrsprachige Umfragen mit einem höheren Plan"
+        "use_multi_language_surveys_with_a_higher_plan": "Nutze mehrsprachige Umfragen mit einem höheren Plan",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Befrage deine Nutzer in verschiedenen Sprachen."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Neue Umfragenbenachrichtigungen abonnieren",
