@@ -4,20 +4,44 @@ import { symmetricDecrypt, symmetricEncrypt } from "./crypto";
 import { env } from "./env";
 
 export const createToken = (userId: string, userEmail: string, options = {}): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
   const encryptedUserId = symmetricEncrypt(userId, env.ENCRYPTION_KEY);
   return jwt.sign({ id: encryptedUserId }, env.NEXTAUTH_SECRET + userEmail, options);
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
   const encryptedEmail = symmetricEncrypt(userEmail, env.ENCRYPTION_KEY);
   return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET + surveyId);
 };
 
 export const createEmailToken = (email: string): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  if (!env.NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
   const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
   return jwt.sign({ email: encryptedEmail }, env.NEXTAUTH_SECRET);
 };
 
 export const getEmailFromEmailToken = (token: string): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  if (!env.NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
   const payload = jwt.verify(token, env.NEXTAUTH_SECRET) as JwtPayload;
   try {
     // Try to decrypt first (for newer tokens)
@@ -30,6 +54,13 @@ export const getEmailFromEmailToken = (token: string): string => {
 };
 
 export const createInviteToken = (inviteId: string, email: string, options = {}): string => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  if (!env.NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
   const encryptedInviteId = symmetricEncrypt(inviteId, env.ENCRYPTION_KEY);
   const encryptedEmail = symmetricEncrypt(email, env.ENCRYPTION_KEY);
   return jwt.sign({ inviteId: encryptedInviteId, email: encryptedEmail }, env.NEXTAUTH_SECRET, options);
@@ -40,6 +71,9 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
     const { email } = jwt.verify(token, env.NEXTAUTH_SECRET + surveyId) as JwtPayload;
     try {
       // Try to decrypt first (for newer tokens)
+      if (!env.ENCRYPTION_KEY) {
+        throw new Error("ENCRYPTION_KEY is not set");
+      }
       const decryptedEmail = symmetricDecrypt(email, env.ENCRYPTION_KEY);
       return decryptedEmail;
     } catch {
@@ -52,6 +86,9 @@ export const verifyTokenForLinkSurvey = (token: string, surveyId: string): strin
 };
 
 export const verifyToken = async (token: string): Promise<JwtPayload> => {
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
   // First decode to get the ID
   const decoded = jwt.decode(token);
   const payload: JwtPayload = decoded as JwtPayload;
@@ -89,6 +126,10 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
 
 export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {
   try {
+    if (!env.ENCRYPTION_KEY) {
+      throw new Error("ENCRYPTION_KEY is not set");
+    }
+
     const decoded = jwt.decode(token);
     const payload: JwtPayload = decoded as JwtPayload;
 
