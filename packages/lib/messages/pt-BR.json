@@ -194,7 +194,6 @@
     "full_name": "Nome completo",
     "gathering_responses": "Recolhendo respostas",
     "general": "geral",
-    "get_started": "Começar",
     "go_back": "Voltar",
     "go_to_dashboard": "Ir para o Painel",
     "hidden": "Escondido",
@@ -310,6 +309,7 @@
     "remove": "remover",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
     "report_survey": "Relatório de Pesquisa",
+    "request_trial_license": "Pedir licença de teste",
     "reset_to_default": "Restaurar para o padrão",
     "response": "Resposta",
     "responses": "Respostas",
@@ -1133,7 +1133,9 @@
         "resend_invitation_email": "Reenviar E-mail de Convite",
         "share_invite_link": "Compartilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Compartilhe esse link para que o membro da sua organização possa entrar na sua organização:",
-        "test_email_sent_successfully": "E-mail de teste enviado com sucesso"
+        "test_email_sent_successfully": "E-mail de teste enviado com sucesso",
+        "use_multi_language_surveys_with_a_higher_plan": "Use pesquisas multilíngues com um plano superior",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Pesquise seus usuários em diferentes idiomas."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Inscrever-se automaticamente em novas pesquisas",
@@ -1177,7 +1179,7 @@
         "remove_image": "Remover imagem",
         "save_the_following_backup_codes_in_a_safe_place": "Guarde os seguintes códigos de backup em um lugar seguro.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Escaneie o código QR abaixo com seu app autenticador.",
-        "security_description": "Gerencie sua senha e outras configurações de segurança.",
+        "security_description": "Gerencie sua senha e outras configurações de segurança como a autenticação de dois fatores (2FA).",
         "two_factor_authentication": "Autenticação de dois fatores",
         "two_factor_authentication_description": "Adicione uma camada extra de segurança à sua conta caso sua senha seja roubada.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Autenticação de dois fatores ativada. Por favor, insira o código de seis dígitos do seu app autenticador.",

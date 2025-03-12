@@ -194,7 +194,6 @@
     "full_name": "Nom complet",
     "gathering_responses": "Collecte des réponses",
     "general": "Général",
-    "get_started": "Commencer",
     "go_back": "Retourner",
     "go_to_dashboard": "Aller au tableau de bord",
     "hidden": "Caché",
@@ -310,6 +309,7 @@
     "remove": "Retirer",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
     "report_survey": "Rapport d'enquête",
+    "request_trial_license": "Demander une licence d'essai",
     "reset_to_default": "Réinitialiser par défaut",
     "response": "Réponse",
     "responses": "Réponses",
@@ -1133,7 +1133,9 @@
         "resend_invitation_email": "Renvoyer l'e-mail d'invitation",
         "share_invite_link": "Partager le lien d'invitation",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Partagez ce lien pour permettre à un membre de votre organisation de rejoindre votre organisation :",
-        "test_email_sent_successfully": "E-mail de test envoyé avec succès"
+        "test_email_sent_successfully": "E-mail de test envoyé avec succès",
+        "use_multi_language_surveys_with_a_higher_plan": "Utilisez des sondages multilingues avec un plan supérieur",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Interrogez vos utilisateurs dans différentes langues."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "S'abonner automatiquement aux nouveaux sondages",
@@ -1177,7 +1179,7 @@
         "remove_image": "Supprimer l'image",
         "save_the_following_backup_codes_in_a_safe_place": "Enregistrez les codes de sauvegarde suivants dans un endroit sûr.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scannez le code QR ci-dessous avec votre application d'authentification.",
-        "security_description": "Gérez votre mot de passe et d'autres paramètres de sécurité.",
+        "security_description": "Gérez votre mot de passe et d'autres paramètres de sécurité comme l'authentification à deux facteurs (2FA).",
         "two_factor_authentication": "Authentification à deux facteurs",
         "two_factor_authentication_description": "Ajoutez une couche de sécurité supplémentaire à votre compte au cas où votre mot de passe serait volé.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Authentification à deux facteurs activée. Veuillez entrer le code à six chiffres de votre application d'authentification.",
