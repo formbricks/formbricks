@@ -12,12 +12,7 @@ import {
   processDetector,
 } from "@opentelemetry/resources";
 import { MeterProvider } from "@opentelemetry/sdk-metrics";
-import { config as dotenvConfig } from "dotenv";
-import { resolve } from "path";
 import { env } from "@formbricks/lib/env";
-
-// Load .env.local
-dotenvConfig({ path: resolve(process.cwd(), ".env.local") });
 
 const exporter = new PrometheusExporter({
   port: env.PROMETHEUS_EXPORTER_PORT ? parseInt(env.PROMETHEUS_EXPORTER_PORT) : 9464,
