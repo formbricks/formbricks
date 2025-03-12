@@ -14,10 +14,10 @@ export const FormbricksClient = ({ userId, email }: { userId: string; email: str
     if (formbricksEnabled && userId) {
       formbricks.init({
         environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
-        apiHost: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
-        userId,
+        appUrl: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       });
 
+      formbricks.setUserId(userId);
       formbricks.setEmail(email);
     }
   }, [userId, email]);

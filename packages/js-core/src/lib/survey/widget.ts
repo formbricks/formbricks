@@ -80,7 +80,7 @@ export const renderWidget = async (
 
   const timeoutId = setTimeout(() => {
     formbricksSurveys.renderSurvey({
-      apiHost: config.get().appUrl,
+      appUrl: config.get().appUrl,
       environmentId: config.get().environmentId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,

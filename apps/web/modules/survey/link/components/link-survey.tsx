@@ -170,7 +170,7 @@ export const LinkSurvey = ({
       PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
-        apiHost={!isPreview ? webAppUrl : undefined}
+        appUrl={!isPreview ? webAppUrl : undefined}
         environmentId={!isPreview ? survey.environmentId : undefined}
         survey={survey}
         styling={determineStyling()}

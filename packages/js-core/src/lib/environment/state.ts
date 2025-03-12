@@ -20,7 +20,7 @@ export const fetchEnvironmentState = async ({
   environmentId,
 }: TConfigInput): Promise<Result<TEnvironmentState, ApiErrorResponse>> => {
   const url = `${appUrl}/api/v1/client/${environmentId}/environment`;
-  const api = new FormbricksAPI({ apiHost: appUrl, environmentId });
+  const api = new FormbricksAPI({ appUrl, environmentId });
 
   try {
     const response = await api.client.environment.getState();
