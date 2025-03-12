@@ -10,10 +10,9 @@ const HTML_TEMPLATE = `<head>
       var e = document.getElementsByTagName("script")[0];
       e.parentNode.insertBefore(t, e),
         setTimeout(function () {
-          formbricks.init({
+          formbricks.setup({
             environmentId: "ENVIRONMENT_ID",
-            userId: "RANDOM_USER_ID",
-            apiHost: "http://localhost:3000",
+            appUrl: "http://localhost:3000",
           });
         }, 500);
     })();

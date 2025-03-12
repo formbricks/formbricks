@@ -53,7 +53,15 @@ const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
   // all of this should happen when not initialized:
   if (!isInitialized) {
-    if (prop === "init") {
+    // We need to still support init for backwards compatibility
+    // but we should log a warning that the init method is deprecated
+    if (prop === "setup" || prop === "init") {
+      if (prop === "init") {
+        console.warn(
+          "🧱 Formbricks - Warning: The init method is deprecated and will soon be removed. Please use setup instead."
+        );
+      }
+
       if (isInitializing) {
         console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
         return;
@@ -62,28 +70,39 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
       // reset the initialization state
       isInitializing = true;
 
-      const apiHost = (args[0] as { apiHost: string }).apiHost;
-      const loadSDKResult = await loadFormbricksSDK(apiHost);
+      const argsTyped = args[0] as { appUrl?: string; environmentId?: string; apiHost?: string };
+      const appUrl = argsTyped.appUrl ?? argsTyped.apiHost;
+
+      if (!appUrl) {
+        console.error("🧱 Formbricks - Error: appUrl is required");
+        return;
+      }
+
+      if (!argsTyped.environmentId) {
+        console.error("🧱 Formbricks - Error: environmentId is required");
+        return;
+      }
+
+      const loadSDKResult = await loadFormbricksSDK(appUrl);
 
       if (loadSDKResult.ok) {
         if (window.formbricks) {
+          const formbricksInstance = window.formbricks;
           // @ts-expect-error -- Required for dynamic function calls
-          void window.formbricks.init(...args);
+          void formbricksInstance.setup(...args);
 
           isInitializing = false;
           isInitialized = true;
 
           // process the queued functions
           for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
-            type FormbricksProp = keyof typeof window.formbricks;
-
-            if (typeof window.formbricks[functionProp as FormbricksProp] !== "function") {
+            if (typeof formbricksInstance[functionProp as keyof typeof formbricksInstance] !== "function") {
               console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
               continue;
             }
 
             // @ts-expect-error -- Required for dynamic function calls
-            (window.formbricks[functionProp] as unknown)(...functionArgs);
+            (formbricksInstance[functionProp] as unknown)(...functionArgs);
           }
         }
       }
@@ -95,11 +114,13 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
       functionsToProcess.push({ prop, args });
     }
   } else if (window.formbricks) {
-    type Formbricks = typeof window.formbricks;
+    // Access the default export for initialized state too
+    const formbricksInstance = window.formbricks;
+    type Formbricks = typeof formbricksInstance;
     type FunctionProp = keyof Formbricks;
     const functionPropTyped = prop as FunctionProp;
 
     // @ts-expect-error -- Required for dynamic function calls
-    await window.formbricks[functionPropTyped](...args);
+    await formbricksInstance[functionPropTyped](...args);
   }
 };

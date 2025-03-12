@@ -103,7 +103,6 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         originWhitelist={["*"]}
         source={{
           html: renderHtml({
-            apiHost: appConfig.get().appUrl,
             environmentId: appConfig.get().environmentId,
             contactId: appConfig.get().user.data.contactId ?? undefined,
             survey,

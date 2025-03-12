@@ -24,7 +24,7 @@ export const sendUpdatesToBackend = async ({
   >
 > => {
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;
-  const api = new FormbricksAPI({ apiHost: appUrl, environmentId });
+  const api = new FormbricksAPI({ appUrl, environmentId });
 
   try {
     const response = await api.client.user.createOrUpdate({

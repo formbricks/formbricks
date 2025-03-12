@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/api",
   "license": "MIT",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Formbricks-api is an api wrapper for the Formbricks client API",
   "keywords": [
     "Formbricks",

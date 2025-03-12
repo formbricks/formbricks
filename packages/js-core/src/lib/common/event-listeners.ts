@@ -1,7 +1,7 @@
 import {
   addEnvironmentStateExpiryCheckListener,
   clearEnvironmentStateExpiryCheckListener,
-} from "./environment-state";
+} from "@/lib/environment/state";
 import {
   addClickEventListener,
   addExitIntentListener,
@@ -11,14 +11,14 @@ import {
   removeExitIntentListener,
   removePageUrlEventListeners,
   removeScrollDepthListener,
-} from "./no-code-actions";
-import { addPersonStateExpiryCheckListener, clearPersonStateExpiryCheckListener } from "./person-state";
+} from "@/lib/survey/no-code-action";
+import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } from "@/lib/user/state";
 
 let areRemoveEventListenersAdded = false;
 
 export const addEventListeners = (): void => {
   addEnvironmentStateExpiryCheckListener();
-  addPersonStateExpiryCheckListener();
+  addUserStateExpiryCheckListener();
   addPageUrlEventListeners();
   addClickEventListener();
   addExitIntentListener();
@@ -29,7 +29,7 @@ export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
   window.addEventListener("beforeunload", () => {
     clearEnvironmentStateExpiryCheckListener();
-    clearPersonStateExpiryCheckListener();
+    clearUserStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -42,7 +42,7 @@ export const removeCleanupEventListeners = (): void => {
   if (!areRemoveEventListenersAdded) return;
   window.removeEventListener("beforeunload", () => {
     clearEnvironmentStateExpiryCheckListener();
-    clearPersonStateExpiryCheckListener();
+    clearUserStateExpiryCheckListener();
     removePageUrlEventListeners();
     removeClickEventListener();
     removeExitIntentListener();
@@ -53,7 +53,7 @@ export const removeCleanupEventListeners = (): void => {
 
 export const removeAllEventListeners = (): void => {
   clearEnvironmentStateExpiryCheckListener();
-  clearPersonStateExpiryCheckListener();
+  clearUserStateExpiryCheckListener();
   removePageUrlEventListeners();
   removeClickEventListener();
   removeExitIntentListener();

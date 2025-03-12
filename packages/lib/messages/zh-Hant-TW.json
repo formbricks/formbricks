@@ -829,6 +829,7 @@
         "want_to_learn_how_to_add_user_attributes": "想瞭解如何新增使用者屬性、自訂事件等嗎？",
         "you_also_need_to_pass_a": "您還需要傳遞",
         "you_are_done": "您已完成 \uD83C\uDF89",
+        "you_can_set_the_user_id_with": "您可以使用 user id 設定",
         "your_app_now_communicates_with_formbricks": "您的應用程式現在可與 Formbricks 通訊 - 自動傳送事件和載入問卷！"
       },
       "general": {

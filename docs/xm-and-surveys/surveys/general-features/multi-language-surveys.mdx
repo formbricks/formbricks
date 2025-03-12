@@ -28,16 +28,13 @@ How to deliver a specific language depends on the survey type (app or link surve
 
 ![Formbricks Home](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/survey-languages-from-home.webp)
 
-
 - Click on the **Edit languages** button, to add a new language to your survey
 
 ![Survey Language Settings](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/survey-languague-settings.webp)
 
-
 - Select the preferred language from the dropdown and assign an identifier Alias. Click the **Add language** button to add the language to your project.
 
 ![Add Multiple Languages to your Project](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/add-languages.webp)
-
 
 You can come back to this page anytime to add more languages or remove existing ones.
 
@@ -45,17 +42,13 @@ You can come back to this page anytime to add more languages or remove existing 
 
 ![Surveys Home](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/surveys-home.webp)
 
-
 - In the survey editor, scroll down to the **Multiple Languages** section at the bottom and enable the toggle next to it.
 
 ![Enable Multi-language for a survey](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/enable-multi-lang.webp)
 
 - Choose a **Default Language** for your survey.
 
-<Note>
-  Changing the default language will reset all the translations you have made
-  for the survey.
-</Note>
+<Note>Changing the default language will reset all the translations you have made for the survey.</Note>
 
 1. Now, add the languages from the dropdown that you want to support in your survey.
 
@@ -69,28 +62,24 @@ You can come back to this page anytime to add more languages or remove existing 
 
 ![Enable Multi-language for a survey](/images/xm-and-surveys/surveys/general-features/multi-language-surveys/translate-as-per-language.webp)
 
-
 1. Once you are done, click on the **Publish** button to save the survey.
 
 ## App Surveys Configuration
 
-1. When you initialise the Formbricks SDK for your user, you can pass a `language` attribute with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available.
+1. After you setup the Formbricks SDK for your user, you can call the `setLanguage` function with the language code. This can be either the ISO identifier or the Alias you set when creating the language. The `language` attribute makes sure that this user only sees surveys with a translation in this specific language available.
 
 ```js javascript
-Formbricks.init({
+Formbricks.setup({
   environmentId: "<environment-id>",
-  apiHost: "<api-host>",
-  userId: "<user_id>",
-  attributes: {
-    language: "de", // ISO identifier or Alias set when creating language
-  },
+  appUrl: "<app-url>",
 });
+
+Formbricks.setLanguage("de"); // ISO identifier or Alias set when creating language
 ```
 
 <Note>
-  If a user has a language assigned, a survey has multi-language activate and it
-  is missing a translation in the language of the user, the survey will not be
-  displayed.
+  If a user has a language assigned, a survey has multi-language activate and it is missing a translation in
+  the language of the user, the survey will not be displayed.
 </Note>
 
 1. That's it! Now, users with the language attribute set will see the survey in their preferred language. You can start collecting responses in multiple languages and filter them by language on the summary page.

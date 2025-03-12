@@ -829,6 +829,7 @@
         "want_to_learn_how_to_add_user_attributes": "Want to learn how to add user attributes, custom events and more?",
         "you_also_need_to_pass_a": "you also need to pass a",
         "you_are_done": "You're done \uD83C\uDF89",
+        "you_can_set_the_user_id_with": "you can set the user id with",
         "your_app_now_communicates_with_formbricks": "Your app now communicates with Formbricks - sending events, and loading surveys automatically!"
       },
       "general": {

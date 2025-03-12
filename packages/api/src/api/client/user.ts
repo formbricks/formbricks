@@ -3,11 +3,11 @@ import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class UserAPI {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor(apiHost: string, environmentId: string) {
-    this.apiHost = apiHost;
+  constructor(appUrl: string, environmentId: string) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
@@ -37,7 +37,7 @@ export class UserAPI {
       attributes[key] = String(userUpdateInput.attributes[key]);
     }
 
-    return makeRequest(this.apiHost, `/api/v2/client/${this.environmentId}/user`, "POST", {
+    return makeRequest(this.appUrl, `/api/v2/client/${this.environmentId}/user`, "POST", {
       userId: userUpdateInput.userId,
       attributes,
     });
