@@ -4,8 +4,6 @@ import { Logger } from "@/lib/common/logger";
 import { sendUpdates } from "@/lib/user/update";
 import type { TAttributes, TUpdates } from "@/types/config";
 
-const logger = Logger.getInstance();
-
 export class UpdateQueue {
   private static instance: UpdateQueue | null = null;
   private updates: TUpdates | null = null;
@@ -68,6 +66,7 @@ export class UpdateQueue {
   }
 
   public async processUpdates(): Promise<void> {
+    const logger = Logger.getInstance();
     if (!this.updates) {
       return;
     }

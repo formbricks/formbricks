@@ -65,6 +65,11 @@ vi.mock("@/lib/user/update", () => ({
   sendUpdatesToBackend: vi.fn(),
 }));
 
+// 8) Mock checkPageUrl
+vi.mock("@/lib/survey/no-code-action", () => ({
+  checkPageUrl: vi.fn(),
+}));
+
 describe("setup.ts", () => {
   let getInstanceConfigMock: MockInstance<() => Config>;
   let getInstanceLoggerMock: MockInstance<() => Logger>;
@@ -141,7 +146,7 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           environmentId: "env_123",
           appUrl: "https://my.url",
-          environment: { expiresAt: new Date(Date.now() - 5000) }, // environment expired
+          environment: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // environment expired
           user: {
             data: { userId: "user_abc" },
             expiresAt: new Date(Date.now() - 5000), // also expired
@@ -233,12 +238,13 @@ describe("setup.ts", () => {
         environment: {
           data: {
             surveys: [{ name: "SurveyA" }],
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- required for testing this object
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- mock
             expiresAt: expect.any(Date),
           },
         },
         filteredSurveys: [{ name: "SurveyA" }],
       });
+      expect(vi.mocked(await import("@/lib/survey/no-code-action")).checkPageUrl).toHaveBeenCalled();
     });
 
     test("calls handleErrorOnFirstSetup if environment fetch fails initially", async () => {
@@ -265,14 +271,14 @@ describe("setup.ts", () => {
         get: vi.fn().mockReturnValue({
           environmentId: "env_abc",
           appUrl: "https://test.app",
-          environment: {},
+          environment: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } }, // environment expired
           user: { data: {}, expiresAt: null },
           status: { value: "success", expiresAt: null },
         }),
         update: vi.fn(),
       };
 
-      getInstanceConfigMock.mockReturnValueOnce(mockConfig as unknown as Config);
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
 
       const result = await setup({ environmentId: "env_abc", appUrl: "https://test.app" });
       expect(result.ok).toBe(true);

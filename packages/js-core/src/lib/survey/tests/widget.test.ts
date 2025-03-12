@@ -110,6 +110,7 @@ describe("widget-file", () => {
         user: {
           data: {
             userId: "user_abc",
+            contactId: "contact_abc",
             displays: [],
             responses: [],
             lastDisplayAt: null,
@@ -143,9 +144,9 @@ describe("widget-file", () => {
     expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         survey: mockSurvey,
-        apiHost: "https://fake.app",
+        appUrl: "https://fake.app",
         environmentId: "env_123",
-        userId: "user_abc",
+        contactId: "contact_abc",
       })
     );
     vi.useRealTimers();

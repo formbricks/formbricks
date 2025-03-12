@@ -107,7 +107,7 @@ describe("sendUpdatesToBackend", () => {
     }
   });
 
-  test("throws error if network request fails", async () => {
+  test("returns error if network request fails", async () => {
     const mockUpdates: TUpdates = { userId: mockUserId, attributes: { plan: "premium" } };
 
     (FormbricksAPI as Mock).mockImplementation(() => ({
@@ -118,13 +118,17 @@ describe("sendUpdatesToBackend", () => {
       },
     }));
 
-    await expect(
-      sendUpdatesToBackend({
-        appUrl: mockAppUrl,
-        environmentId: mockEnvironmentId,
-        updates: mockUpdates,
-      })
-    ).rejects.toThrow("Network error");
+    const result = await sendUpdatesToBackend({
+      appUrl: mockAppUrl,
+      environmentId: mockEnvironmentId,
+      updates: mockUpdates,
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.error.code).toBe("network_error");
+    }
   });
 });
 

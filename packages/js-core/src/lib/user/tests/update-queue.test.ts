@@ -1,6 +1,7 @@
-import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
+import { type Mock, type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockAttributes, mockUserId1, mockUserId2 } from "@/lib/user/tests/__mocks__/update-queue.mock";
 import { Config } from "@/lib/common/config";
+import { Logger } from "@/lib/common/logger";
 import { sendUpdates } from "@/lib/user/update";
 import { UpdateQueue } from "@/lib/user/update-queue";
 
@@ -35,12 +36,19 @@ vi.mock("@/lib/user/update", () => ({
 
 describe("UpdateQueue", () => {
   let updateQueue: UpdateQueue;
+  let loggerMock: MockInstance<() => Logger>;
+
+  const mockLogger = {
+    debug: vi.fn(),
+    error: vi.fn(),
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset singleton instance
     (UpdateQueue as unknown as { instance: null }).instance = null;
     updateQueue = UpdateQueue.getInstance();
+    loggerMock = vi.spyOn(Logger, "getInstance");
   });
 
   test("getInstance returns singleton instance", () => {
@@ -145,7 +153,8 @@ describe("UpdateQueue", () => {
     expect(configUpdateMock).toHaveBeenCalled();
   });
 
-  test("processUpdates throws error when setting attributes without userId", async () => {
+  test("processUpdates logs error when setting attributes without userId", async () => {
+    loggerMock.mockReturnValue(mockLogger as unknown as Logger);
     (Config.getInstance as Mock).mockImplementation(() => ({
       get: vi.fn(() => ({
         user: { data: { userId: "" } },
@@ -153,8 +162,10 @@ describe("UpdateQueue", () => {
     }));
 
     updateQueue.updateAttributes({ name: mockAttributes.name });
-    await expect(updateQueue.processUpdates()).rejects.toThrow(
-      "Formbricks can't set attributes without a userId!"
+    await updateQueue.processUpdates();
+
+    expect(mockLogger.error).toHaveBeenCalledWith(
+      "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function"
     );
   });
 });
