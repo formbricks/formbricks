@@ -32,6 +32,7 @@ export function SurveyContainer({
   }, [isOpen]);
 
   useEffect(() => {
+    if (!isModal) return;
     if (!isCenter) return;
 
     const handleClickOutside = (e: MouseEvent) => {
@@ -49,7 +50,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, clickOutside, onClose, isCenter]);
+  }, [show, clickOutside, onClose, isCenter, isModal]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
