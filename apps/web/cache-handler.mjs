@@ -11,37 +11,39 @@ const createTimeoutPromise = (ms, rejectReason) => {
 CacheHandler.onCreation(async () => {
   let client;
 
-  try {
-    // Create a Redis client.
-    client = createClient({
-      url: process.env.REDIS_URL,
-    });
-
-    // Redis won't work without error handling.
-    client.on("error", () => {});
-  } catch (error) {
-    console.warn("Failed to create Redis client:", error);
-  }
-
-  if (client) {
+  if (process.env.REDIS_URL) {
     try {
-      // Wait for the client to connect with a timeout of 5000ms.
-      const connectPromise = client.connect();
-      const timeoutPromise = createTimeoutPromise(5000, "Redis connection timed out"); // 5000ms timeout
-      await Promise.race([connectPromise, timeoutPromise]);
-    } catch (error) {
-      console.warn("Failed to connect Redis client:", error);
+      // Create a Redis client.
+      client = createClient({
+        url: process.env.REDIS_URL,
+      });
 
-      console.warn("Disconnecting the Redis client...");
-      // Try to disconnect the client to stop it from reconnecting.
-      client
-        .disconnect()
-        .then(() => {
-          console.info("Redis client disconnected.");
-        })
-        .catch(() => {
-          console.warn("Failed to quit the Redis client after failing to connect.");
-        });
+      // Redis won't work without error handling.
+      client.on("error", () => {});
+    } catch (error) {
+      console.warn("Failed to create Redis client:", error);
+    }
+
+    if (client) {
+      try {
+        // Wait for the client to connect with a timeout of 5000ms.
+        const connectPromise = client.connect();
+        const timeoutPromise = createTimeoutPromise(5000, "Redis connection timed out"); // 5000ms timeout
+        await Promise.race([connectPromise, timeoutPromise]);
+      } catch (error) {
+        console.warn("Failed to connect Redis client:", error);
+
+        console.warn("Disconnecting the Redis client...");
+        // Try to disconnect the client to stop it from reconnecting.
+        client
+          .disconnect()
+          .then(() => {
+            console.info("Redis client disconnected.");
+          })
+          .catch(() => {
+            console.warn("Failed to quit the Redis client after failing to connect.");
+          });
+      }
     }
   }
 
