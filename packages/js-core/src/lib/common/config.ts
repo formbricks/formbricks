@@ -54,8 +54,9 @@ export class Config {
 
         // check if the config has expired
         if (
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environmentState
-          new Date(parsedConfig.environment?.expiresAt) <= new Date()
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environment
+          parsedConfig.environment?.expiresAt &&
+          new Date(parsedConfig.environment.expiresAt) <= new Date()
         ) {
           return err(new Error("Config in local storage has expired"));
         }

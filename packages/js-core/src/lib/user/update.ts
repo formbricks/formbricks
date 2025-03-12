@@ -4,7 +4,7 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
 import { type TUpdates, type TUserState } from "@/types/config";
-import { type ApiErrorResponse, type Result, err, ok, okVoid } from "@/types/error";
+import { type ApiErrorResponse, type Result, type ResultError, err, ok, okVoid } from "@/types/error";
 
 export const sendUpdatesToBackend = async ({
   appUrl,
@@ -24,9 +24,10 @@ export const sendUpdatesToBackend = async ({
   >
 > => {
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;
-  const api = new FormbricksAPI({ appUrl, environmentId });
 
   try {
+    const api = new FormbricksAPI({ appUrl, environmentId });
+
     const response = await api.client.user.createOrUpdate({
       userId: updates.userId,
       attributes: updates.attributes,
@@ -43,7 +44,7 @@ export const sendUpdatesToBackend = async ({
     }
 
     return ok(response.data);
-  } catch (e: unknown) {
+  } catch (e) {
     const errorTyped = e as { message?: string };
 
     const error = err({
@@ -54,8 +55,7 @@ export const sendUpdatesToBackend = async ({
       responseMessage: errorTyped.message ?? "Unknown error",
     });
 
-    // eslint-disable-next-line @typescript-eslint/only-throw-error -- error.error is an Error object
-    throw error.error;
+    return error as ResultError<ApiErrorResponse>;
   }
 };
 

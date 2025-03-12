@@ -38,7 +38,7 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
   const { userId } = appConfig.get().user.data;
 
   if (!userId) {
-    logger.debug("No userId is set, please use the setUserId function to set a userId first");
+    logger.error("No userId is set, please use the setUserId function to set a userId first");
     return okVoid();
   }
 
@@ -55,6 +55,8 @@ export const logout = async (): Promise<Result<void, NetworkError>> => {
     await setup(initParams);
     return okVoid();
   } catch (e) {
+    const errorTyped = e as { message?: string };
+    logger.error(`Failed to setup formbricks after logout: ${errorTyped.message ?? "Unknown error"}`);
     return err(e as NetworkError);
   }
 };
