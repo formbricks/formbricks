@@ -44,3 +44,15 @@ registerInstrumentations({
 });
 
 hostMetrics.start();
+
+process.on("SIGTERM", async () => {
+  try {
+    // Stop collecting metrics or flush them if needed
+    await meterProvider.shutdown();
+    // Possibly close other instrumentation resources
+  } catch (e) {
+    console.error("Error during graceful shutdown:", e);
+  } finally {
+    process.exit(0);
+  }
+});
