@@ -120,6 +120,8 @@ export function Survey({
     return null;
   }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
@@ -588,7 +590,12 @@ export function Survey({
     };
 
     return (
-      <AutoCloseWrapper survey={localSurvey} onClose={onClose} offset={offset}>
+      <AutoCloseWrapper
+        survey={localSurvey}
+        onClose={onClose}
+        questionIdx={questionIdx}
+        hasInteracted={hasInteracted}
+        setHasInteracted={setHasInteracted}>
         <div
           className={cn(
             "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
