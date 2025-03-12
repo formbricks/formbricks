@@ -8,17 +8,13 @@ import { usePathname } from "next/navigation";
 interface ProjectConfigNavigationProps {
   activeId: string;
   environmentId?: string;
-  isMultiLanguageAllowed?: boolean;
   loading?: boolean;
-  canDoRoleManagement?: boolean;
 }
 
 export const ProjectConfigNavigation = ({
   activeId,
   environmentId,
-  isMultiLanguageAllowed,
   loading,
-  canDoRoleManagement,
 }: ProjectConfigNavigationProps) => {
   const { t } = useTranslate();
   const pathname = usePathname();
@@ -43,7 +39,6 @@ export const ProjectConfigNavigation = ({
       label: t("common.survey_languages"),
       icon: <LanguagesIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/languages`,
-      hidden: !isMultiLanguageAllowed,
       current: pathname?.includes("/languages"),
     },
     {
@@ -70,8 +65,8 @@ export const ProjectConfigNavigation = ({
     {
       id: "teams",
       label: t("common.team_access"),
+      icon: <UsersIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/teams`,
-      hidden: !canDoRoleManagement,
       current: pathname?.includes("/teams"),
     },
   ];

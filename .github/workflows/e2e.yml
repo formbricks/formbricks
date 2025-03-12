@@ -89,7 +89,7 @@ jobs:
 
       - name: Run App
         run: |
-          NODE_ENV=test pnpm start --filter=@formbricks/web &
+          NODE_ENV=test pnpm start --filter=@formbricks/web | tee app.log 2>&1 &
           sleep 10  # Optional: gives some buffer for the app to start
           for attempt in {1..10}; do
             if [ $(curl -o /dev/null -s -w "%{http_code}" http://localhost:3000/health) -eq 200 ]; then
@@ -141,3 +141,13 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: app-logs
+          path: app.log
+
+      - name: Output App Logs
+        if: failure()
+        run: cat app.log

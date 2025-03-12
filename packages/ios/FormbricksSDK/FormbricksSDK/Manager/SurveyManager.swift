@@ -7,14 +7,14 @@ final class SurveyManager {
     private init() { }
     
     private static let environmentResponseObjectKey = "environmentResponseObjectKey"
-    private let service = FormbricksService()
+    internal var service = FormbricksService()
     private var backingEnvironmentResponse: EnvironmentResponse?
-    /// The view controller that will present the survey window.
-    private weak var viewController: UIViewController?
     /// Stores the surveys that are filtered based on the defined criteria, such as recontact days, display options etc.
-    private var filteredSurveys: [Survey] = []
+    internal  private(set) var filteredSurveys: [Survey] = []
     /// Stores is a survey is being shown or the show in delayed
-    private var isShowingSurvey: Bool = false
+    internal private(set) var isShowingSurvey: Bool = false
+    /// Store error state
+    internal private(set) var hasApiError: Bool = false
     
     /// Fills up the `filteredSurveys` array
     func filterSurveys() {
@@ -77,10 +77,12 @@ extension SurveyManager {
         service.getEnvironmentState { [weak self] result in
             switch result {
             case .success(let response):
+                self?.hasApiError = false
                 self?.environmentResponse = response
                 self?.startRefreshTimer(expiresAt: response.data.expiresAt)
                 self?.filterSurveys()
             case .failure:
+                self?.hasApiError = true
                 Formbricks.logger.error(FormbricksSDKError(type: .unableToRefreshEnvironment).message)
                 self?.startErrorTimer()
             }
@@ -103,8 +105,7 @@ extension SurveyManager {
     /// Dismisses the presented survey window.
     func dismissSurveyWebView() {
         isShowingSurvey = false
-        viewController?.dismiss(animated: true)
-        
+        PresentSurveyManager.shared.dismissView()
     }
     
     /// Dismisses the presented survey window after a delay.
@@ -121,19 +122,7 @@ private extension SurveyManager {
     /// The view controller is presented over the current context.
     func showSurvey(withId id: String) {
         if let environmentResponse = environmentResponse {
-            DispatchQueue.main.async {
-                if let window = UIApplication.safeKeyWindow {
-                    let view = FormbricksView(viewModel: FormbricksViewModel(environmentResponse: environmentResponse, surveyId: id))
-                    let vc = UIHostingController(rootView: view)
-                    vc.modalPresentationStyle = .overCurrentContext
-                    vc.view.backgroundColor = UIColor.gray.withAlphaComponent(0.6)
-                    if let presentationController = vc.presentationController as? UISheetPresentationController {
-                        presentationController.detents = [.large()]
-                    }
-                    self.viewController = vc
-                    window.rootViewController?.present(vc, animated: true, completion: nil)
-                }
-            }
+            PresentSurveyManager.shared.present(environmentResponse: environmentResponse, id: id)
         }
                     
     }
@@ -151,6 +140,10 @@ private extension SurveyManager {
     
     /// Refreshes the environment state after the given timeout.
     func refreshEnvironmentAfter(timeout: Double) {
+        guard timeout > 0 else {
+            return
+        }
+        
         DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
             Formbricks.logger.debug("Refreshing environment state.")
             self.refreshEnvironmentIfNeeded(force: true)

@@ -1,0 +1,15 @@
+{
+  "data": {
+    "state": {
+      "data": {
+        "contactId": "cm6ovw6jl000hsf0knn547xyz",
+        "displays": [],
+        "lastDisplayAt": null,
+        "responses": [],
+        "segments": ["cm6ovw6jl000hsf0knn547w0y"],
+        "userId": "6CCCE716-6783-4D0F-8344-9C7DFA43D8F7"
+      },
+      "expiresAt": "2035-03-06T10:59:32.359Z"
+    }
+  }
+}

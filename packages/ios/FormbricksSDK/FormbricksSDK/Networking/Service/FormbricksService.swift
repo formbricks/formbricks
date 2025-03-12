@@ -1,5 +1,5 @@
 /// FormbricksService is a service class that handles the network requests for Formbricks API.
-final class FormbricksService {
+class FormbricksService {
     
     // MARK: - Environment -
     /// Get the current environment state.

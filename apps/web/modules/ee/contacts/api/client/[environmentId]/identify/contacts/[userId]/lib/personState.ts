@@ -100,6 +100,7 @@ export const getPersonState = async ({
 
       // If the person exists, return the persons's state
       const userState: TJsPersonState["data"] = {
+        contactId: contact.id,
         userId,
         segments,
         displays:

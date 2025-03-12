@@ -1,6 +1,7 @@
 import { Button } from "@/modules/ui/components/button";
 import { KeyIcon } from "lucide-react";
 import Link from "next/link";
+import React from "react";
 
 export type ModalButton = {
   text: string;

@@ -64,7 +64,7 @@ import Network
           
      Example:
      ```swift
-     Formbricks.setUserId(with: "USER_ID_HERE")
+     Formbricks.setUserId("USER_ID_HERE")
      ```
      */
     @objc public static func setUserId(_ userId: String) {
@@ -128,7 +128,7 @@ import Network
         }
         
         Formbricks.language = language
-        UserManager.shared.add(attribute: language, forKey: "language")
+        UserManager.shared.set(language: language)
     }
     
     /**
