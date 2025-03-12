@@ -43,7 +43,7 @@ export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: Target
             description={t("environments.surveys.edit.unlock_targeting_description")}
             buttons={[
               {
-                text: t("common.start_free_trial"),
+                text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
                 href: isFormbricksCloud
                   ? `/environments/${environmentId}/settings/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",
