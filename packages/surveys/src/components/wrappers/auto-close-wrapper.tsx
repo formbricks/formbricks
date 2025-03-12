@@ -33,9 +33,7 @@ export function AutoCloseWrapper({
   const showAutoCloseProgressBar = countDownActive && isAppSurvey && isFirstQuestion && !hasInteracted;
 
   const startCountdown = () => {
-    if (!survey.autoClose) return;
-    if (!isFirstQuestion) return;
-    if (hasInteracted) return; // Don't start countdown if user has interacted
+    if (!survey.autoClose || !isFirstQuestion || hasInteracted) return;
 
     if (timeoutRef.current) {
       stopCountdown();
