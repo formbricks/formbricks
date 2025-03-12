@@ -296,7 +296,7 @@
     "product_not_found": "Product not found",
     "profile": "Profile",
     "project": "Project",
-    "project_configuration": "Project Configuration",
+    "project_configuration": "Project's Configuration",
     "project_id": "Project ID",
     "project_name": "Project Name",
     "project_not_found": "Project not found",
@@ -347,7 +347,7 @@
     "some_files_failed_to_upload": "Some files failed to upload",
     "something_went_wrong_please_try_again": "Something went wrong. Please try again.",
     "sort_by": "Sort by",
-    "start_free_trial": "Start free trial",
+    "start_free_trial": "Start Free Trial",
     "status": "Status",
     "step_by_step_manual": "Step by step manual",
     "styling": "Styling",
@@ -511,6 +511,13 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Setup a new survey",
     "weekly_summary_create_reminder_notification_body_text": "We'd love to send you a Weekly Summary, but currently there are no surveys running for {projectName}.",
     "weekly_summary_email_subject": "{projectName} User Insights - Last Week by Formbricks"
+  },
+  "environment": {
+    "settings": {
+      "general": {
+        "use_multi_language_surveys_with_a_higher_plan_description": "Survey your users in different languages."
+      }
+    }
   },
   "environments": {
     "actions": {
@@ -1135,8 +1142,7 @@
         "share_invite_link": "Share Invite Link",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Share this link to let your organization member join your organization:",
         "test_email_sent_successfully": "Test email sent successfully",
-        "use_multi_language_surveys_with_a_higher_plan": "Use multi-language surveys with a higher plan",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Survey your users in different languages."
+        "use_multi_language_surveys_with_a_higher_plan": "Use multi-language surveys with a higher plan"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Auto-subscribe to new surveys",

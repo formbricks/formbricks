@@ -310,7 +310,7 @@
     "remove": "Retirer",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
     "report_survey": "Rapport d'enquête",
-    "request_trial_license": "Demander licence d'essai",
+    "request_trial_license": "Demander une licence d'essai",
     "reset_to_default": "Réinitialiser par défaut",
     "response": "Réponse",
     "responses": "Réponses",
@@ -511,6 +511,13 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurer une nouvelle enquête",
     "weekly_summary_create_reminder_notification_body_text": "Nous aimerions vous envoyer un résumé hebdomadaire, mais actuellement, il n'y a pas d'enquêtes en cours pour {projectName}.",
     "weekly_summary_email_subject": "Aperçu des utilisateurs de {projectName} – La semaine dernière par Formbricks"
+  },
+  "environment": {
+    "settings": {
+      "general": {
+        "use_multi_language_surveys_with_a_higher_plan_description": "Interrogez vos utilisateurs dans différentes langues."
+      }
+    }
   },
   "environments": {
     "actions": {
@@ -1135,8 +1142,7 @@
         "share_invite_link": "Partager le lien d'invitation",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Partagez ce lien pour permettre à un membre de votre organisation de rejoindre votre organisation :",
         "test_email_sent_successfully": "E-mail de test envoyé avec succès",
-        "use_multi_language_surveys_with_a_higher_plan": "Utiliser des sondages multilingues avec un plan supérieur",
-        "use_multi_language_surveys_with_a_higher_plan_description": "Sondage vos utilisateurs dans différentes langues."
+        "use_multi_language_surveys_with_a_higher_plan": "Utilisez des sondages multilingues avec un plan supérieur"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "S'abonner automatiquement aux nouveaux sondages",
