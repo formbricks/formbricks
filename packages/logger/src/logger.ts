@@ -80,7 +80,6 @@ const handleShutdown = (event: string, err?: Error): void => {
   logger.info({ event }, "Process is exiting");
 
   logger.flush();
-  process.exit(err ? 1 : 0);
 };
 
 process.on("uncaughtException", (err) => {
