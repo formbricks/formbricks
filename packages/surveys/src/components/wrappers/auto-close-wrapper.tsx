@@ -8,10 +8,20 @@ interface AutoCloseProps {
   questionIdx: number;
   onClose?: () => void;
   children: React.ReactNode;
+  hasInteracted: boolean;
+  setHasInteracted: (hasInteracted: boolean) => void;
 }
 
-export function AutoCloseWrapper({ survey, onClose, children, questionIdx }: AutoCloseProps) {
+export function AutoCloseWrapper({
+  survey,
+  onClose,
+  children,
+  questionIdx,
+  hasInteracted,
+  setHasInteracted,
+}: AutoCloseProps) {
   const [countDownActive, setCountDownActive] = useState(true);
+
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAppSurvey = survey.type === "app";
 
@@ -20,11 +30,12 @@ export function AutoCloseWrapper({ survey, onClose, children, questionIdx }: Aut
     return questionIdx === 0;
   }, [questionIdx, survey.welcomeCard.enabled]);
 
-  const showAutoCloseProgressBar = countDownActive && isAppSurvey && isFirstQuestion;
+  const showAutoCloseProgressBar = countDownActive && isAppSurvey && isFirstQuestion && !hasInteracted;
 
   const startCountdown = () => {
     if (!survey.autoClose) return;
     if (!isFirstQuestion) return;
+    if (hasInteracted) return; // Don't start countdown if user has interacted
 
     if (timeoutRef.current) {
       stopCountdown();
@@ -38,6 +49,8 @@ export function AutoCloseWrapper({ survey, onClose, children, questionIdx }: Aut
 
   const stopCountdown = () => {
     setCountDownActive(false);
+    setHasInteracted(true); // Mark that user has interacted
+
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
