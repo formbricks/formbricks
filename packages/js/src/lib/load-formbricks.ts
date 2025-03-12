@@ -53,7 +53,15 @@ const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
   // all of this should happen when not initialized:
   if (!isInitialized) {
-    if (prop === "init") {
+    // We need to still support init for backwards compatibility
+    // but we should log a warning that the init method is deprecated
+    if (prop === "setup" || prop === "init") {
+      if (prop === "init") {
+        console.warn(
+          "🧱 Formbricks - Warning: The init method is deprecated and will soon be removed. Please use setup instead."
+        );
+      }
+
       if (isInitializing) {
         console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
         return;
@@ -81,7 +89,7 @@ export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): P
         if (window.formbricks) {
           const formbricksInstance = window.formbricks;
           // @ts-expect-error -- Required for dynamic function calls
-          void formbricksInstance.init(...args);
+          void formbricksInstance.setup(...args);
 
           isInitializing = false;
           isInitialized = true;

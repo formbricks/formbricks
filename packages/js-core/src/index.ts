@@ -9,26 +9,26 @@ import { type TConfigInput } from "@/types/config";
 
 const queue = new CommandQueue();
 
-const init = async (initConfig: TConfigInput): Promise<void> => {
+const setup = async (setupConfig: TConfigInput): Promise<void> => {
   // If the initConfig has a userId or attributes, we need to use the legacy init
 
   if (
     // @ts-expect-error -- userId and attributes were in the older type
-    initConfig.userId ||
+    setupConfig.userId ||
     // @ts-expect-error -- attributes were in the older type
-    initConfig.attributes ||
+    setupConfig.attributes ||
     // @ts-expect-error -- apiHost was in the older type
-    initConfig.apiHost
+    setupConfig.apiHost
   ) {
     // eslint-disable-next-line no-console -- legacy init
     console.warn("🧱 Formbricks - Warning: Using legacy init");
     queue.add(Setup.setup, false, {
-      ...initConfig,
+      ...setupConfig,
       // @ts-expect-error -- apiHost was in the older type
-      ...(initConfig.apiHost && { appUrl: initConfig.apiHost as string }),
+      ...(setupConfig.apiHost && { appUrl: setupConfig.apiHost as string }),
     } as unknown as TConfigInput);
   } else {
-    queue.add(Setup.setup, false, initConfig);
+    queue.add(Setup.setup, false, setupConfig);
     await queue.wait();
   }
 };
@@ -74,7 +74,7 @@ const registerRouteChange = async (): Promise<void> => {
 };
 
 const formbricks = {
-  init,
+  setup,
   setEmail,
   setAttribute,
   setAttributes,

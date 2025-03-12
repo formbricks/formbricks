@@ -39,7 +39,7 @@ export default function AppPage(): React.JSX.Element {
       addFormbricksDebugParam();
 
       if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-        void formbricks.init({
+        void formbricks.setup({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         });

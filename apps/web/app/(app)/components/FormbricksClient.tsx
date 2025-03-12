@@ -12,7 +12,7 @@ export const FormbricksClient = ({ userId, email }: { userId: string; email: str
 
   useEffect(() => {
     if (formbricksEnabled && userId) {
-      formbricks.init({
+      formbricks.setup({
         environmentId: env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID || "",
         appUrl: env.NEXT_PUBLIC_FORMBRICKS_API_HOST || "",
       });
