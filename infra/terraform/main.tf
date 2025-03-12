@@ -144,6 +144,7 @@ module "rds-aurora" {
       cidr_blocks = module.vpc.private_subnets_cidr_blocks
     }
   }
+  performance_insights_enabled = true
 
   apply_immediately   = true
   skip_final_snapshot = true
@@ -182,7 +183,7 @@ module "elasticache" {
 
   engine         = "valkey"
   engine_version = "7.2"
-  node_type      = "cache.t4g.small"
+  node_type      = "cache.m7g.large"
 
   transit_encryption_enabled = true
   auth_token                 = random_password.valkey.result
@@ -266,9 +267,6 @@ module "eks" {
       most_recent = true
     }
     vpc-cni = {
-      most_recent = true
-    }
-    metrics-server = {
       most_recent = true
     }
   }
@@ -468,6 +466,11 @@ module "eks_blueprints_addons" {
   cluster_version   = module.eks.cluster_version
   oidc_provider_arn = module.eks.oidc_provider_arn
 
+  enable_metrics_server = true
+  metrics_server = {
+    chart_version = "3.12.2"
+  }
+
   enable_aws_load_balancer_controller = true
   aws_load_balancer_controller = {
     chart_version = "1.10.0"
@@ -503,12 +506,24 @@ module "eks_blueprints_addons" {
   tags = local.tags
 }
 
+### Formbricks App
+module "s3-bucket" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "4.6.0"
+
+  bucket_prefix            = "formbricks-"
+  force_destroy            = true
+  control_object_ownership = true
+  object_ownership         = "BucketOwnerPreferred"
+
+}
+
 
 module "iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.53.0"
 
-  name        = "formbricsk-policy"
+  name_prefix = "formbricks-"
   path        = "/"
   description = "Policy for fombricks app"
 
@@ -520,7 +535,10 @@ module "iam_policy" {
         Action = [
           "s3:*",
         ]
-        Resource = "*"
+        Resource = [
+          module.s3-bucket.s3_bucket_arn,
+          "${module.s3-bucket.s3_bucket_arn}/*"
+        ]
       }
     ]
   })
@@ -531,11 +549,12 @@ module "formkey-aws-access" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
   version = "5.53.0"
 
-  role_name_prefix = "formbricks"
+  role_name_prefix = "formbricks-"
 
   role_policy_arns = {
     "formbricks" = module.iam_policy.arn
   }
+  assume_role_condition_test = "StringLike"
 
   oidc_providers = {
     eks = {
@@ -547,9 +566,10 @@ module "formkey-aws-access" {
 
 
 resource "helm_release" "formbricks" {
-  name      = "formbricks"
-  namespace = "formbricks"
-  chart     = "${path.module}/../../helm-chart"
+  name        = "formbricks"
+  namespace   = "formbricks"
+  chart       = "${path.module}/../../helm-chart"
+  max_history = 5
 
   values = [
     <<-EOT
@@ -586,10 +606,14 @@ resource "helm_release" "formbricks" {
           eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
     deployment:
       env:
-        EMAIL_VERIFICATION_DISABLED:
+        S3_BUCKET_NAME:
+          value: ${module.s3-bucket.s3_bucket_id}
+        RATE_LIMITING_DISABLED:
           value: "1"
-        PASSWORD_RESET_DISABLED:
-          value: "1"
+      envFrom:
+        app-parameters:
+          type: secret
+          nameSuffix: app-parameters
       annotations:
         deployed_at: ${timestamp()}
     externalSecret:
@@ -599,6 +623,12 @@ resource "helm_release" "formbricks" {
         kind: ClusterSecretStore
       refreshInterval: "1h"
       files:
+        app-parameters:
+          dataFrom:
+            key: "/prod/formbricks/env"
+          secretStore:
+            name: aws-parameter-store
+            kind: ClusterSecretStore
         app-secrets:
           data:
             DATABASE_URL:
@@ -628,3 +658,5 @@ resource "helm_release" "formbricks" {
     EOT
   ]
 }
+
+# secrets password/keys

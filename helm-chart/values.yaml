@@ -80,7 +80,7 @@ deployment:
   # Application container image
   image:
     repository: "ghcr.io/formbricks/formbricks"
-    tag: "v3.2.0"
+    tag: "v3.3.1"
     digest: ""  # If set, digest takes precedence over the tag
     pullPolicy: IfNotPresent
 

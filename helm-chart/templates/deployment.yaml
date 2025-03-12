@@ -162,7 +162,10 @@ spec:
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
     {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | indent 10 }}
             {{- end }}
-
+          {{- if .Values.deployment.resources }}
+          resources:
+              {{- toYaml .Values.deployment.resources | nindent 12 }}
+          {{- end }}
           {{- with .Values.deployment.probes }}
           {{- if .livenessProbe }}
           livenessProbe:
