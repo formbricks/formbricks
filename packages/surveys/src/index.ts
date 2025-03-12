@@ -32,7 +32,7 @@ export const renderSurvey = (props: SurveyContainerProps) => {
       throw new Error(`renderSurvey: Element with id ${containerId} not found.`);
     }
 
-    const { placement, darkOverlay, onClose, ...surveyInlineProps } = props;
+    const { placement, darkOverlay, onClose, clickOutside, ...surveyInlineProps } = props;
 
     render(h(RenderSurvey, surveyInlineProps), element);
   } else {

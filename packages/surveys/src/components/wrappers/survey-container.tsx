@@ -32,7 +32,7 @@ export function SurveyContainer({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isCenter && !isModal) return;
+    if (!isCenter) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -77,6 +77,7 @@ export function SurveyContainer({
       </div>
     );
   }
+
   return (
     <div id="fbjs" className="fb-formbricks-form">
       <div
