@@ -34,10 +34,9 @@ export const OnboardingSetupInstructions = ({
   const htmlSnippetForAppSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-      var apiHost = "${webAppUrl}";
+      var appUrl = "${webAppUrl}";
       var environmentId = "${environmentId}";
-      var userId = "testUser";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -45,9 +44,9 @@ export const OnboardingSetupInstructions = ({
   const htmlSnippetForWebsiteSurveys = `<!-- START Formbricks Surveys -->
   <script type="text/javascript">
   !function(){
-    var apiHost = "${webAppUrl}";
+    var appUrl = "${webAppUrl}";
     var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl })},500)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -56,10 +55,9 @@ export const OnboardingSetupInstructions = ({
   import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "${environmentId}",
-      apiHost: "${webAppUrl}",
-      userId: "testUser",
+      appUrl: "${webAppUrl}",
     });
   }
   
@@ -75,9 +73,9 @@ export const OnboardingSetupInstructions = ({
   import formbricks from "@formbricks/js";
   
   if (typeof window !== "undefined") {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "${environmentId}",
-      apiHost: "${webAppUrl}",
+      appUrl: "${webAppUrl}",
     });
   }
   
