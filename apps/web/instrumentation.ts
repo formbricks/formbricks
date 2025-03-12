@@ -8,7 +8,7 @@ import { env } from "@formbricks/lib/env";
 
 export async function register() {
   // Set up Prometheus metrics exporter if configured
-  if (env.ENABLE_PROMETHEUS_METRICS === "1" && process.env.NEXT_RUNTIME === "nodejs") {
+  if (env.PROMETHEUS_ENABLED === "1" && process.env.NEXT_RUNTIME === "nodejs") {
     try {
       // Create a Prometheus exporter
       const prometheusExporter = new PrometheusExporter({
@@ -57,11 +57,23 @@ export async function register() {
           surveyResponseCounter,
           surveyCompletionTime,
         };
+
+        // Add the meterProvider to global so it can be shut down later
+        (global as any).__FORMBRICKS_METER_PROVIDER = meterProvider;
       }
 
-      // Generate some test metrics immediately
-      requestCounter.add(1, { method: "GET", path: "/test" });
-      surveyResponseCounter.add(1, { surveyType: "nps" });
+      // Set up process exit handlers to ensure metrics are flushed before shutdown
+      process.on("SIGTERM", async () => {
+        console.log("SIGTERM received, shutting down OpenTelemetry metrics...");
+        await shutdownMetrics();
+        process.exit(0);
+      });
+
+      process.on("SIGINT", async () => {
+        console.log("SIGINT received, shutting down OpenTelemetry metrics...");
+        await shutdownMetrics();
+        process.exit(0);
+      });
     } catch (error) {
       console.error("Failed to initialize Prometheus metrics exporter:", error);
     }
@@ -75,7 +87,14 @@ export async function register() {
       },
       traceExporter: new OTLPTraceExporter({
         url: env.OTEL_EXPORTER_OTLP_ENDPOINT,
-        headers: env.OTEL_EXPORTER_OTLP_HEADERS ? JSON.parse(env.OTEL_EXPORTER_OTLP_HEADERS) : undefined,
+        headers: (() => {
+          try {
+            return env.OTEL_EXPORTER_OTLP_HEADERS ? JSON.parse(env.OTEL_EXPORTER_OTLP_HEADERS) : undefined;
+          } catch (error) {
+            console.error("Failed to parse OTEL_EXPORTER_OTLP_HEADERS:", error);
+            return undefined;
+          }
+        })(),
       }),
     });
   }
@@ -86,5 +105,19 @@ export async function register() {
 
   if (process.env.NEXT_RUNTIME === "edge") {
     await import("./sentry.edge.config");
+  }
+}
+
+// Gracefully shuts down the metrics pipeline, ensuring all data is flushed
+async function shutdownMetrics(): Promise<void> {
+  if (typeof global !== "undefined" && (global as any).__FORMBRICKS_METER_PROVIDER) {
+    try {
+      const meterProvider = (global as any).__FORMBRICKS_METER_PROVIDER as MeterProvider;
+      console.log("Shutting down OpenTelemetry MeterProvider...");
+      await meterProvider.shutdown();
+      console.log("OpenTelemetry MeterProvider shut down successfully");
+    } catch (error) {
+      console.error("Error shutting down OpenTelemetry MeterProvider:", error);
+    }
   }
 }

@@ -106,7 +106,7 @@ export const env = createEnv({
     OTEL_SERVICE_NAME: z.string().optional(),
     OTEL_EXPORTER_OTLP_ENDPOINT: z.string().optional(),
     OTEL_EXPORTER_OTLP_HEADERS: z.string().optional(),
-    ENABLE_PROMETHEUS_METRICS: z.enum(["1", "0"]).optional(),
+    PROMETHEUS_ENABLED: z.enum(["1", "0"]).optional(),
   },
 
   /*
@@ -226,7 +226,7 @@ export const env = createEnv({
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
     UNKEY_ROOT_KEY: process.env.UNKEY_ROOT_KEY,
     NODE_ENV: process.env.NODE_ENV,
-    ENABLE_PROMETHEUS_METRICS: process.env.ENABLE_PROMETHEUS_METRICS,
+    PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
     OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
     OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,

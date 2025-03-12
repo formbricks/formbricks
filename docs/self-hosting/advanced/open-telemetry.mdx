@@ -1,5 +1,6 @@
 ---
-title: OpenTelemetry Setup for Formbricks
+title: OpenTelemetry Setup
+icon: chart-line
 ---
 
 This document explains how to set up and use OpenTelemetry in the Formbricks project.
@@ -29,7 +30,7 @@ OTEL_EXPORTER_OTLP_HEADERS={"header1":"value1","header2":"value2"} (optional)
 Formbricks can expose metrics in Prometheus format. To enable this, set the following environment variables:
 
 ```
-ENABLE_PROMETHEUS_METRICS=1
+PROMETHEUS_ENABLED=1
 PROMETHEUS_EXPORTER_PORT=9464 (optional, defaults to 9464)
 ```
 
@@ -149,7 +150,7 @@ If you're not seeing traces in your backend:
 
 If you're not seeing metrics in Prometheus:
 
-1. Ensure `ENABLE_PROMETHEUS_METRICS=true` is set
+1. Ensure `PROMETHEUS_ENABLED=true` is set
 2. Check that the Prometheus server is running and configured to scrape from the correct endpoint
 3. Verify that the metrics endpoint is accessible at `http://localhost:9464/metrics`
 
