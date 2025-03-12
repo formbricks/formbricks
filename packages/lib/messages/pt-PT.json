@@ -512,13 +512,6 @@
     "weekly_summary_create_reminder_notification_body_text": "Gostaríamos de lhe enviar um Resumo Semanal, mas de momento não há inquéritos a decorrer para {projectName}.",
     "weekly_summary_email_subject": "{projectName} Informações do Utilizador - Última Semana por Formbricks"
   },
-  "environment": {
-    "settings": {
-      "general": {
-        "use_multi_language_surveys_with_a_higher_plan_description": "Inquira os seus utilizadores em diferentes idiomas."
-      }
-    }
-  },
   "environments": {
     "actions": {
       "action_copied_successfully": "Ação copiada com sucesso",
@@ -1142,7 +1135,8 @@
         "share_invite_link": "Partilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Partilhe este link para permitir que o membro da sua organização se junte à sua organização:",
         "test_email_sent_successfully": "Email de teste enviado com sucesso",
-        "use_multi_language_surveys_with_a_higher_plan": "Use inquéritos multilingues com um plano superior"
+        "use_multi_language_surveys_with_a_higher_plan": "Use inquéritos multilingues com um plano superior",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Inquira os seus utilizadores em diferentes idiomas."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Subscrever automaticamente a novos inquéritos",
