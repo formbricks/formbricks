@@ -27,44 +27,6 @@ import { v4 as uuidv4 } from "uuid";
 import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
-// Function to track metrics
-const trackMetrics = (request: NextRequest, response: NextResponse | Response, startTime: number) => {
-  if (typeof global === "undefined" || !(global as any).__FORMBRICKS_METRICS) {
-    return;
-  }
-
-  const metrics = (global as any).__FORMBRICKS_METRICS;
-  const duration = (Date.now() - startTime) / 1000; // Convert to seconds
-  const status = response instanceof NextResponse ? response.status : 200;
-  const labels = {
-    method: request.method,
-    path: request.nextUrl.pathname,
-    status: status.toString(),
-  };
-
-  // Record request count
-  if (metrics.requestCounter) {
-    metrics.requestCounter.add(1, labels);
-  }
-
-  // Record request duration
-  if (metrics.requestDuration) {
-    metrics.requestDuration.record(duration, labels);
-  }
-
-  // If it's a survey response, track that too
-  if (
-    request.nextUrl.pathname.includes("/api/v1/client/") &&
-    request.nextUrl.pathname.includes("/responses") &&
-    request.method === "POST" &&
-    metrics.surveyResponseCounter
-  ) {
-    metrics.surveyResponseCounter.add(1, {
-      path: request.nextUrl.pathname,
-    });
-  }
-};
-
 const enforceHttps = (request: NextRequest): Response | null => {
   const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
   if (IS_PRODUCTION && !E2E_TESTING && forwardedProto !== "https") {
@@ -117,8 +79,6 @@ const applyRateLimiting = (request: NextRequest, ip: string) => {
 };
 
 export const middleware = async (originalRequest: NextRequest) => {
-  const startTime = Date.now();
-
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {
     headers: new Headers(originalRequest.headers),
@@ -133,27 +93,15 @@ export const middleware = async (originalRequest: NextRequest) => {
     },
   });
 
-  // Skip metrics for the metrics endpoint itself to avoid circular reporting
-  if (request.nextUrl.pathname !== "/metrics") {
-    // Track metrics for this request
-    trackMetrics(request, nextResponseWithCustomHeader, startTime);
-  }
-
   // Enforce HTTPS for management endpoints
   if (isManagementApiRoute(request.nextUrl.pathname)) {
     const httpsResponse = enforceHttps(request);
-    if (httpsResponse) {
-      trackMetrics(request, httpsResponse, startTime);
-      return httpsResponse;
-    }
+    if (httpsResponse) return httpsResponse;
   }
 
   // Handle authentication
   const authResponse = await handleAuth(request);
-  if (authResponse) {
-    trackMetrics(request, authResponse, startTime);
-    return authResponse;
-  }
+  if (authResponse) return authResponse;
 
   if (!IS_PRODUCTION || RATE_LIMITING_DISABLED) {
     return nextResponseWithCustomHeader;
@@ -174,9 +122,7 @@ export const middleware = async (originalRequest: NextRequest) => {
         details: [{ field: "", issue: "Too many requests. Please try again later." }],
       };
       logApiError(request, apiError);
-      const errorResponse = NextResponse.json(apiError, { status: 429 });
-      trackMetrics(request, errorResponse, startTime);
-      return errorResponse;
+      return NextResponse.json(apiError, { status: 429 });
     }
   }
 

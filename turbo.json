@@ -186,10 +186,7 @@
         "UNSPLASH_ACCESS_KEY",
         "UNKEY_ROOT_KEY",
         "PROMETHEUS_ENABLED",
-        "PROMETHEUS_EXPORTER_PORT",
-        "OTEL_SERVICE_NAME",
-        "OTEL_EXPORTER_OTLP_ENDPOINT",
-        "OTEL_EXPORTER_OTLP_HEADERS"
+        "PROMETHEUS_EXPORTER_PORT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

@@ -27,7 +27,10 @@ const nextConfig = {
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {},
+  experimental: {
+    instrumentationHook: true,
+    serverComponentsExternalPackages: ["@opentelemetry/instrumentation"],
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
