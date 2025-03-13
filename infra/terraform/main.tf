@@ -619,7 +619,7 @@ resource "helm_release" "formbricks" {
       envFrom:
         app-parameters:
           type: secret
-          nameSuffix: app-parameters
+          nameSuffix: {RELEASE.name}-app-parameters
       annotations:
         deployed_at: ${timestamp()}
     externalSecret:
