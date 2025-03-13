@@ -170,14 +170,14 @@ export const LinkSurvey = ({
       PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
-        apiHost={!isPreview ? webAppUrl : undefined}
-        environmentId={!isPreview ? survey.environmentId : undefined}
+        apiHost={webAppUrl}
+        environmentId={survey.environmentId}
+        isPreviewMode={isPreview}
         survey={survey}
         styling={determineStyling()}
         languageCode={languageCode}
         isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
-        onFileUpload={isPreview ? async (file) => `https://formbricks.com/${file.name}` : undefined}
         // eslint-disable-next-line jsx-a11y/no-autofocus -- need it as focus behaviour is different in normal surveys and survey preview
         autoFocus={autoFocus}
         prefillResponseData={prefillValue}
