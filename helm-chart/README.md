@@ -1,10 +1,10 @@
 # formbricks
 
-![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 3.3.1](https://img.shields.io/badge/Version-3.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: v3.3.1](https://img.shields.io/badge/AppVersion-v3.3.1-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Redis
 
-**Homepage:** <https://formbricks.com/>
+**Homepage:** <https://formbricks.com/docs/self-hosting/setup/kubernetes>
 
 ## Maintainers
 
@@ -48,18 +48,20 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | deployment.command | list | `[]` |  |
 | deployment.containerSecurityContext.readOnlyRootFilesystem | bool | `true` |  |
 | deployment.containerSecurityContext.runAsNonRoot | bool | `true` |  |
-| deployment.env.TEST.value | string | `"test"` |  |
-| deployment.envFrom.app-secrets.nameSuffix | string | `"app-secrets"` |  |
-| deployment.envFrom.app-secrets.type | string | `"secret"` |  |
+| deployment.env.EMAIL_VERIFICATION_DISABLED.value | string | `"1"` |  |
+| deployment.env.PASSWORD_RESET_DISABLED.value | string | `"1"` |  |
+| deployment.envFrom | string | `nil` |  |
 | deployment.image.digest | string | `""` |  |
 | deployment.image.pullPolicy | string | `"IfNotPresent"` |  |
 | deployment.image.repository | string | `"ghcr.io/formbricks/formbricks"` |  |
-| deployment.image.tag | string | `"v3.2.0"` |  |
 | deployment.imagePullSecrets | string | `""` |  |
 | deployment.nodeSelector | object | `{}` |  |
 | deployment.ports.http.containerPort | int | `3000` |  |
 | deployment.ports.http.exposed | bool | `true` |  |
 | deployment.ports.http.protocol | string | `"TCP"` |  |
+| deployment.ports.metrics.containerPort | int | `9464` |  |
+| deployment.ports.metrics.exposed | bool | `true` |  |
+| deployment.ports.metrics.protocol | string | `"TCP"` |  |
 | deployment.probes.livenessProbe.failureThreshold | int | `5` |  |
 | deployment.probes.livenessProbe.httpGet.path | string | `"/health"` |  |
 | deployment.probes.livenessProbe.httpGet.port | int | `3000` |  |
@@ -79,32 +81,18 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | deployment.probes.startupProbe.tcpSocket.port | int | `3000` |  |
 | deployment.reloadOnChange | bool | `false` |  |
 | deployment.replicas | int | `1` |  |
-| deployment.resources.limits.memory | string | `"1Gi"` |  |
-| deployment.resources.requests.cpu | string | `"500m"` |  |
-| deployment.resources.requests.memory | string | `"512Mi"` |  |
+| deployment.resources.limits.memory | string | `"2Gi"` |  |
+| deployment.resources.requests.cpu | string | `"1"` |  |
+| deployment.resources.requests.memory | string | `"1Gi"` |  |
 | deployment.revisionHistoryLimit | int | `2` |  |
 | deployment.securityContext | object | `{}` |  |
 | deployment.strategy.type | string | `"RollingUpdate"` |  |
 | deployment.tolerations | list | `[]` |  |
 | deployment.topologySpreadConstraints | list | `[]` |  |
+| enterprise.enabled | bool | `false` |  |
 | enterprise.licenseKey | string | `""` |  |
 | externalSecret.enabled | bool | `false` |  |
-| externalSecret.files.app-secrets.data.CRON_SECRET.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.app-secrets.data.CRON_SECRET.remoteRef.property | string | `"CRON_SECRET"` |  |
-| externalSecret.files.app-secrets.data.DATABASE_URL.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.app-secrets.data.DATABASE_URL.remoteRef.property | string | `"DATABASE_URL"` |  |
-| externalSecret.files.app-secrets.data.ENCRYPTION_KEY.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.app-secrets.data.ENCRYPTION_KEY.remoteRef.property | string | `"ENCRYPTION_KEY"` |  |
-| externalSecret.files.app-secrets.data.NEXTAUTH_SECRET.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.app-secrets.data.NEXTAUTH_SECRET.remoteRef.property | string | `"NEXTAUTH_SECRET"` |  |
-| externalSecret.files.app-secrets.data.REDIS_URL.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.app-secrets.data.REDIS_URL.remoteRef.property | string | `"REDIS_URL"` |  |
-| externalSecret.files.postgres.data.POSTGRES_ADMIN_PASSWORD.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.postgres.data.POSTGRES_ADMIN_PASSWORD.remoteRef.property | string | `"POSTGRES_ADMIN_PASSWORD"` |  |
-| externalSecret.files.postgres.data.POSTGRES_USER_PASSWORD.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.postgres.data.POSTGRES_USER_PASSWORD.remoteRef.property | string | `"POSTGRES_USER_PASSWORD"` |  |
-| externalSecret.files.redis.data.REDIS_PASSWORD.remoteRef.key | string | `"prod/formbricks/secrets"` |  |
-| externalSecret.files.redis.data.REDIS_PASSWORD.remoteRef.property | string | `"REDIS_PASSWORD"` |  |
+| externalSecret.files | object | `{}` |  |
 | externalSecret.refreshInterval | string | `"1h"` |  |
 | externalSecret.secretStore.kind | string | `"ClusterSecretStore"` |  |
 | externalSecret.secretStore.name | string | `"aws-secrets-manager"` |  |
@@ -118,7 +106,7 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | nameOverride | string | `""` |  |
 | partOfOverride | string | `""` |  |
 | postgresql.auth.database | string | `"formbricks"` |  |
-| postgresql.auth.existingSecret | string | `"formbricks-postgres"` |  |
+| postgresql.auth.existingSecret | string | `"formbricks-app-secrets"` |  |
 | postgresql.auth.secretKeys.adminPasswordKey | string | `"POSTGRES_ADMIN_PASSWORD"` |  |
 | postgresql.auth.secretKeys.userPasswordKey | string | `"POSTGRES_USER_PASSWORD"` |  |
 | postgresql.auth.username | string | `"formbricks"` |  |
@@ -131,6 +119,7 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | postgresql.primary.containerSecurityContext.enabled | bool | `true` |  |
 | postgresql.primary.containerSecurityContext.readOnlyRootFilesystem | bool | `false` |  |
 | postgresql.primary.containerSecurityContext.runAsUser | int | `1001` |  |
+| postgresql.primary.networkPolicy.enabled | bool | `false` |  |
 | postgresql.primary.persistence.enabled | bool | `true` |  |
 | postgresql.primary.persistence.size | string | `"10Gi"` |  |
 | postgresql.primary.podSecurityContext.enabled | bool | `true` |  |
@@ -143,18 +132,25 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | rbac.serviceAccount.name | string | `""` |  |
 | redis.architecture | string | `"standalone"` |  |
 | redis.auth.enabled | bool | `true` |  |
-| redis.auth.existingSecret | string | `"formbricks-redis"` |  |
+| redis.auth.existingSecret | string | `"formbricks-app-secrets"` |  |
 | redis.auth.existingSecretPasswordKey | string | `"REDIS_PASSWORD"` |  |
 | redis.enabled | bool | `true` |  |
 | redis.externalRedisUrl | string | `""` |  |
 | redis.fullnameOverride | string | `"formbricks-redis"` |  |
 | redis.master.persistence.enabled | bool | `true` |  |
+| redis.networkPolicy.enabled | bool | `false` |  |
 | secret.enabled | bool | `true` |  |
 | service.additionalLabels | object | `{}` |  |
 | service.annotations | object | `{}` |  |
 | service.enabled | bool | `true` |  |
 | service.ports | list | `[]` |  |
 | service.type | string | `"ClusterIP"` |  |
+| serviceMonitor.additionalLabels | string | `nil` |  |
+| serviceMonitor.annotations | string | `nil` |  |
+| serviceMonitor.enabled | bool | `true` |  |
+| serviceMonitor.endpoints[0].interval | string | `"5s"` |  |
+| serviceMonitor.endpoints[0].path | string | `"/metrics"` |  |
+| serviceMonitor.endpoints[0].port | string | `"metrics"` |  |
 
 ----------------------------------------------
 Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)
