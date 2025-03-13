@@ -37,7 +37,7 @@ export const OnboardingSetupInstructions = ({
       var apiHost = "${webAppUrl}";
       var environmentId = "${environmentId}";
       var userId = "testUser";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;
@@ -47,7 +47,7 @@ export const OnboardingSetupInstructions = ({
   !function(){
     var apiHost = "${webAppUrl}";
     var environmentId = "${environmentId}";
-      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})},500)}();
+      var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost})};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
   </script>
   <!-- END Formbricks Surveys -->
   `;

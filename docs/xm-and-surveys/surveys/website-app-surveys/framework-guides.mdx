@@ -50,7 +50,7 @@ All you need to do is copy a `<script>` tag to your HTML head:
     var apiHost = "https://app.formbricks.com";
     var environmentId = "<your-environment-id>";
     var userId = "<your-user-id>"; //optional
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs",t.onload=function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```

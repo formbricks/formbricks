@@ -7,15 +7,15 @@ const HTML_TEMPLATE = `<head>
     !(function () {
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
-      var e = document.getElementsByTagName("script")[0];
-      e.parentNode.insertBefore(t, e),
-        setTimeout(function () {
-          formbricks.init({
+      t.onload = function () {
+        formbricks.init({
             environmentId: "ENVIRONMENT_ID",
             userId: "RANDOM_USER_ID",
             apiHost: "http://localhost:3000",
-          });
-        }, 500);
+        });
+      };
+      var e = document.getElementsByTagName("script")[0];
+      e.parentNode.insertBefore(t, e);
     })();
   </script>
 </head>
