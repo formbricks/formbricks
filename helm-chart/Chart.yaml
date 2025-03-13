@@ -5,8 +5,8 @@ description: A Helm chart for Formbricks with PostgreSQL, Redis
 type: application
 
 # Helm chart Version
-version: 3.3.1
-appVersion: v3.3.1
+version: 3.4.0
+appVersion: v3.4.0
 
 keywords:
   - formbricks
@@ -17,7 +17,6 @@ home: https://formbricks.com/docs/self-hosting/setup/kubernetes
 maintainers:
   - name: Formbricks
     email: info@formbricks.com
-
 
 dependencies:
   - name: postgresql
