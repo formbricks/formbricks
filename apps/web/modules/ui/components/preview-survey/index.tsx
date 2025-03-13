@@ -289,6 +289,7 @@ export const PreviewSurvey = ({
                   </div>
                   <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
+                      isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={project.linkSurveyBranding}
                       onFileUpload={onFileUpload}
@@ -368,6 +369,7 @@ export const PreviewSurvey = ({
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={survey}
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
@@ -395,6 +397,7 @@ export const PreviewSurvey = ({
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
+                    isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={project.linkSurveyBranding}
                     isRedirectDisabled={true}
