@@ -120,13 +120,13 @@ spec:
           {{- end }}
           {{- end }}
           env:
-            {{- if and (.Values.enterprise.licenseKey) (ne .Values.enterprise.licenseKey "") }}
+            {{- if and (.Values.enterprise.enabled) (ne .Values.enterprise.licenseKey "") }}
             - name: ENTERPRISE_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ template "formbricks.name" . }}-app-secrets
                   key: ENTERPRISE_LICENSE_KEY
-            {{- else }}
+            {{- else if  and (.Values.enterprise.enabled) (eq .Values.enterprise.licenseKey "") }}
             - name: ENTERPRISE_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

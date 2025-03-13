@@ -1,9 +1,11 @@
-NOTES:
-Thank you for installing Formbricks! Here's how you can access and manage your deployment:
 
+
+{{ .Release.Name | camelcase }} with {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }} has been deployed successfully on {{ template "formbricks.namespace" .}} namespace !
+
+Here's how you can access and manage your deployment:
 ---
 
-## 1. Accessing Your Application:
+Accessing Your Application:
 
 {{- if .Values.ingress.enabled }}
    Your application is accessible via the configured Ingress.
@@ -28,14 +30,14 @@ Thank you for installing Formbricks! Here's how you can access and manage your d
    Your application is running inside the cluster (ClusterIP service type).
    To access it locally, run:
    ```sh
-   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "formbricks.name" . }} 8080:{{ .Values.service.port }}
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "formbricks.name" . }} 3000
    ```
-   Then visit: **http://localhost:8080**
+   Then visit: **http://localhost:3000**
 {{- end }}
 
 ---
 
-## 2. Database (PostgreSQL) Access:
+Database (PostgreSQL) Access:
 
 {{- if .Values.postgresql.enabled }}
    PostgreSQL is deployed within your cluster.
@@ -58,7 +60,7 @@ Thank you for installing Formbricks! Here's how you can access and manage your d
 
 ---
 
-## 3. Redis Access:
+Redis Access:
 
 {{- if .Values.redis.enabled }}
    Redis is deployed within your cluster.
@@ -81,12 +83,14 @@ Thank you for installing Formbricks! Here's how you can access and manage your d
 
 ---
 
-## 4. Environment Variables:
+Environment Variables:
 The following environment variables have been automatically generated:
 
 - `NEXTAUTH_SECRET`: A random 32-character string
 - `ENCRYPTION_KEY`: A random 32-character string
 - `CRON_SECRET`: A random 32-character string
+- 'EMAIL_VERIFICATION_DISABLED': 1 # By Default email verification is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
+- 'PASSWORD_RESET_DISABLED': 1 # By Default password reset is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
 
 Retrieve them using:
 ```sh
@@ -97,7 +101,7 @@ kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.n
 
 ---
 
-## 5. Scaling:
+Scaling:
 
 {{- if .Values.autoscaling.enabled }}
    Horizontal Pod Autoscaling (HPA) is enabled.
@@ -118,7 +122,7 @@ kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.n
 
 ---
 
-## 6. External Secrets:
+External Secrets:
 {{- if .Values.externalSecret.enabled }}
    External secrets are enabled.
    Ensure that your `SecretStore` or `ClusterSecretStore` is configured properly.
@@ -129,26 +133,28 @@ kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.n
    ```sh
    kubectl get externalsecrets -n {{ .Release.Namespace }}
    ```
+{{- else }}
+   External secrets are **not enabled**.
 {{- end }}
 
 ---
 
-## 7. Persistence:
+Persistence:
 
 {{- if .Values.postgresql.enabled }}
    PostgreSQL data is persisted with `{{ .Values.postgresql.primary.persistence.size }}` storage.
 {{- end }}
 {{- if .Values.redis.enabled }}
-   Redis data **is not persisted** (persistence is disabled).
+   Redis data is persisted with `{{ .Values.redis.master.persistence.size }}` storage..
 {{- end }}
 
 ---
 
-## 8. Formbricks Documentation and Support:
+Formbricks Documentation and Support:
 
 For more information, advanced configurations, and support, visit:
-- **Official Website**: [https://formbricks.com](https://formbricks.com)
-- **Documentation**: [https://formbricks.com/docs](https://formbricks.com/docs)
+- **Official Website**: https://formbricks.com
+- **Documentation**: https://formbricks.com/docs
 
 For troubleshooting, refer to the documentation or community support.
 

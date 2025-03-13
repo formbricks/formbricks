@@ -607,7 +607,6 @@ resource "helm_release" "formbricks" {
     serviceMonitor:
       enabled: true
     deployment:
-
       image:
         repository: "ghcr.io/formbricks/formbricks-experimental"
         tag: "open-telemetry-for-prometheus"
