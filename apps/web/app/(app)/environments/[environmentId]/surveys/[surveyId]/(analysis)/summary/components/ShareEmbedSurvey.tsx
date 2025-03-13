@@ -1,5 +1,6 @@
 "use client";
 
+import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/getQRCodeOptions";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -97,43 +98,18 @@ export const ShareEmbedSurvey = ({
 
   useEffect(() => {
     qrInstance.current = new QRCodeStyling({
-      width: 500,
-      height: 500,
-      type: "canvas",
+      ...getQRCodeOptions(500, 500),
       data: surveyUrl,
-      margin: 0,
-      qrOptions: {
-        typeNumber: 3,
-        mode: "Byte",
-        errorCorrectionLevel: "L",
-      },
-      imageOptions: {
-        saveAsBlob: true,
-        hideBackgroundDots: false,
-        imageSize: 0,
-        margin: 0,
-      },
-      dotsOptions: {
-        type: "extra-rounded",
-        color: "#000000",
-        roundSize: true,
-      },
-      backgroundOptions: {
-        color: "#ffffff",
-      },
-      cornersSquareOptions: {
-        type: "dot",
-        color: "#000000",
-      },
-      cornersDotOptions: {
-        type: "dot",
-        color: "#000000",
-      },
     });
 
     if (qrCodeRef.current) {
       qrInstance.current.append(qrCodeRef.current);
     }
+    return () => {
+      if (qrCodeRef.current) {
+        qrCodeRef.current.innerHTML = "";
+      }
+    };
   }, [surveyUrl]);
 
   const downloadQRCode = () => {

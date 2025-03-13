@@ -1,10 +1,11 @@
 "use client";
 
+import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/getQRCodeOptions";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import QRCodeStyling, { Options } from "qr-code-styling";
+import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -16,41 +17,6 @@ interface LinkTabProps {
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
 }
-
-const getQRCodeOptions = (width: number, height: number): Options => ({
-  width,
-  height,
-  type: "svg",
-  data: "",
-  margin: 0,
-  qrOptions: {
-    typeNumber: 3,
-    mode: "Byte",
-    errorCorrectionLevel: "L",
-  },
-  imageOptions: {
-    saveAsBlob: true,
-    hideBackgroundDots: false,
-    imageSize: 0,
-    margin: 0,
-  },
-  dotsOptions: {
-    type: "extra-rounded",
-    color: "#000000",
-    roundSize: true,
-  },
-  backgroundOptions: {
-    color: "#ffffff",
-  },
-  cornersSquareOptions: {
-    type: "dot",
-    color: "#000000",
-  },
-  cornersDotOptions: {
-    type: "dot",
-    color: "#000000",
-  },
-});
 
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
