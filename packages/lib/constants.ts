@@ -15,6 +15,8 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
+export const FB_LOGO_URL =
+  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
 
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
@@ -212,7 +214,7 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"];
 
 // Billing constants
 
@@ -253,6 +255,8 @@ export const BILLING_LIMITS = {
     MIU: 30000,
   },
 } as const;
+
+export const AI_AZURE_LLM_RESSOURCE_NAME = env.AI_AZURE_LLM_RESSOURCE_NAME;
 
 export const IS_AI_CONFIGURED = Boolean(
   env.AI_AZURE_EMBEDDINGS_API_KEY &&

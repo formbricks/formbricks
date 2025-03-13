@@ -28,7 +28,7 @@ export const GeneralSettingsLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (

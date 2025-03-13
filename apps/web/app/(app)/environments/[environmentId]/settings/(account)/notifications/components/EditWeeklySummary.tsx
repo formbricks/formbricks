@@ -18,7 +18,7 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
   return (
     <>
       {memberships.map((membership) => (
-        <>
+        <div key={membership.organization.id}>
           <div className="mb-5 flex items-center space-x-3 text-sm font-medium">
             <UsersIcon className="h-6 w-7 text-slate-600" />
 
@@ -52,7 +52,7 @@ export const EditWeeklySummary = ({ memberships, user, environmentId }: EditAler
               </Link>
             </p>
           </div>
-        </>
+        </div>
       ))}
     </>
   );

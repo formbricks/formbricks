@@ -54,6 +54,7 @@ packages/lib/uploads
 apps/web/public/js
 packages/database/migrations
 branch.json
+.vercel
 
 # Terraform
 infra/terraform/.terraform/

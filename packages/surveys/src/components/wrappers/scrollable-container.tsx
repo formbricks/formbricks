@@ -50,7 +50,7 @@ export function ScrollableContainer({ children }: ScrollableContainerProps) {
           scrollbarGutter: "stable both-edges",
           maxHeight: isSurveyPreview ? "40dvh" : "60dvh",
         }}
-        className={cn("fb-overflow-auto fb-px-4 fb-pb-1 fb-bg-survey-bg")}>
+        className={cn("fb-overflow-auto fb-px-4 fb-pb-6 fb-bg-survey-bg")}>
         {children}
       </div>
       {!isAtBottom && (

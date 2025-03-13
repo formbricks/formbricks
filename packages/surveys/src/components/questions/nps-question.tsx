@@ -156,7 +156,7 @@ export function NPSQuestion({
       </ScrollableContainer>
       <div className="fb-flex fb-flex-row-reverse fb-w-full fb-justify-between fb-px-6 fb-py-4">
         {question.required ? (
-          <></>
+          <div></div>
         ) : (
           <SubmitButton
             tabIndex={isCurrent ? 0 : -1}
