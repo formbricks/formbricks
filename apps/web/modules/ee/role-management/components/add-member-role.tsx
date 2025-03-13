@@ -11,6 +11,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
+import React, { useMemo } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
@@ -32,17 +33,19 @@ export function AddMemberRole({
 
   const { t } = useTranslate();
 
-  if (isMember) return null;
+  const roles = useMemo(() => {
+    let rolesArray = ["member"];
 
-  let roles: string[] = ["member"];
-
-  if (isOwner) {
-    roles.push("owner", "manager");
-
-    if (isFormbricksCloud) {
-      roles.push("billing");
+    if (isOwner) {
+      rolesArray.push("owner", "manager");
+      if (isFormbricksCloud) {
+        rolesArray.push("billing");
+      }
     }
-  }
+    return rolesArray;
+  }, [isOwner, isFormbricksCloud]);
+
+  if (isMember) return null;
 
   const rolesDescription = {
     owner: t("environments.settings.teams.owner_role_description"),
@@ -59,7 +62,7 @@ export function AddMemberRole({
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue="owner"
+            defaultValue="member"
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);

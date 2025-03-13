@@ -62,7 +62,7 @@ export const updateInviteAction = authenticatedActionClient
     }
 
     if (currentUserMembership.role === "manager" && parsedInput.data.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only assign users to the member role");
+      throw new OperationNotAllowedError("Managers can only invite members");
     }
 
     await checkRoleManagementPermission(parsedInput.organizationId);
