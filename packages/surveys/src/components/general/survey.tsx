@@ -183,7 +183,8 @@ export function Survey({
 
   const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
     if (isPreviewMode) {
-      return file.name;
+      // return mock url since an url is required for the preview
+      return `https://example.com/${file.name}`;
     }
 
     if (!apiClient) {
