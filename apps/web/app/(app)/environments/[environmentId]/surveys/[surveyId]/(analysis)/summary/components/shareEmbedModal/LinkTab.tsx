@@ -7,6 +7,7 @@ import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -38,9 +39,13 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
   }, [surveyUrl]);
 
   const downloadQRCode = () => {
-    const instance = new QRCodeStyling(getQRCodeOptions(500, 500));
-    instance.update({ data: surveyUrl });
-    instance.download({ name: "survey-qr", extension: "png" });
+    try {
+      const instance = new QRCodeStyling(getQRCodeOptions(500, 500));
+      instance.update({ data: surveyUrl });
+      instance.download({ name: "survey-qr", extension: "png" });
+    } catch (error) {
+      toast.error(t("common.error"));
+    }
   };
 
   const docsLinks = [

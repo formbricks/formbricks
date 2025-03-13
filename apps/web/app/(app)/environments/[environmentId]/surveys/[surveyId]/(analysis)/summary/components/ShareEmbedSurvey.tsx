@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useMemo, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -93,8 +94,8 @@ export const ShareEmbedSurvey = ({
     setOpen(false);
   };
 
-  const qrCodeRef = useRef<any>(null);
-  const qrInstance = useRef<any>(null);
+  const qrCodeRef = useRef<HTMLDivElement>(null);
+  const qrInstance = useRef<QRCodeStyling | null>(null);
 
   useEffect(() => {
     qrInstance.current = new QRCodeStyling({
@@ -113,8 +114,12 @@ export const ShareEmbedSurvey = ({
   }, [surveyUrl]);
 
   const downloadQRCode = () => {
-    if (qrInstance.current) {
-      qrInstance.current.download({ name: "survey-qr", extension: "png" });
+    try {
+      if (qrInstance.current) {
+        qrInstance.current.download({ name: "survey-qr", extension: "png" });
+      }
+    } catch (error) {
+      toast.error(t("common.error"));
     }
   };
 
