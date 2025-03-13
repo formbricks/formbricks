@@ -265,6 +265,7 @@ export const PreviewSurvey = ({
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
+                    isPreviewMode={true}
                     survey={survey}
                     isBrandingEnabled={project.inAppSurveyBranding}
                     isRedirectDisabled={true}
