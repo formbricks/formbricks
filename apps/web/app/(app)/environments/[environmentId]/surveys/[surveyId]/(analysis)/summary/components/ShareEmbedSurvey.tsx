@@ -163,7 +163,13 @@ export const ShareEmbedSurvey = ({
                   setSurveyUrl={setSurveyUrl}
                   locale={user.locale}
                 />
-                <Button variant="secondary" size={"icon"} onClick={downloadQRCode} className="-mb-2">
+                <Button
+                  variant="secondary"
+                  title={t("environments.surveys.summary.download_qr_code")}
+                  aria-label={t("environments.surveys.summary.download_qr_code")}
+                  size={"icon"}
+                  onClick={downloadQRCode}
+                  className="-mb-2">
                   <QrCode style={{ width: "24px", height: "24px" }} />
                 </Button>
                 <div ref={qrCodeRef} className="hidden" />

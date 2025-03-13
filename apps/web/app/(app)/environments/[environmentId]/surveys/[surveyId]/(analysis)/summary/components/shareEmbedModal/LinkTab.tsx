@@ -129,9 +129,11 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
           <div className="relative flex w-full items-center justify-start gap-2 rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800">
             <div ref={qrDivRef} />
             <div className="flex flex-col justify-start gap-2">
-              <p className="text-center font-semibold text-slate-700">{t("Share the QR Code")}</p>
+              <p className="text-center font-semibold text-slate-700">
+                {t("environments.surveys.summary.share_the_qr_code")}
+              </p>
               <Button variant="secondary" onClick={downloadQRCode}>
-                {t("Download")}
+                {t("common.download")}
               </Button>
             </div>
           </div>
