@@ -47,7 +47,7 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, response.error);
       }
 
-      return responses.successResponse({ data: response.data });
+      return responses.successResponse(response);
     },
   });
 
@@ -88,7 +88,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         return handleApiError(request, response.error);
       }
 
-      return responses.successResponse({ data: response.data });
+      return responses.successResponse(response);
     },
   });
 
@@ -130,6 +130,6 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, response.error);
       }
 
-      return responses.successResponse({ data: response.data });
+      return responses.successResponse(response);
     },
   });

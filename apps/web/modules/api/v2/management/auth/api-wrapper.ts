@@ -43,7 +43,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 }): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication.ok) throw authentication.error;
+    if (!authentication.ok) throw err(authentication.error);
 
     let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
@@ -53,7 +53,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 
       if (!bodyResult.success) {
         throw err({
-          type: "forbidden",
+          type: "bad_request",
           details: formatZodError(bodyResult.error),
         });
       }
@@ -75,7 +75,6 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 
     if (schemas?.params) {
       const paramsObject = (await externalParams) || {};
-      console.log("paramsObject: ", paramsObject);
       const paramsResult = schemas.params.safeParse(paramsObject);
       if (!paramsResult.success) {
         throw err({
@@ -101,6 +100,6 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
       request,
     });
   } catch (err) {
-    return handleApiError(request, err);
+    return handleApiError(request, err.error);
   }
 };

@@ -40,7 +40,14 @@ export const createResponse = async (
   } = responseInput;
 
   try {
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    let ttc = {};
+    if (initialTtc) {
+      if (finished) {
+        ttc = calculateTtcTotal(initialTtc);
+      } else {
+        ttc = initialTtc;
+      }
+    }
 
     const prismaData: Prisma.ResponseCreateInput = {
       survey: {
@@ -66,11 +73,11 @@ export const createResponse = async (
       return err(organizationIdResult.error);
     }
 
-    const organizationResult = await getOrganizationBilling(organizationIdResult.data);
-    if (!organizationResult.ok) {
-      return err(organizationResult.error);
+    const billing = await getOrganizationBilling(organizationIdResult.data);
+    if (!billing.ok) {
+      return err(billing.error);
     }
-    const organization = organizationResult.data;
+    const billingData = billing.data;
 
     const response = await prisma.response.create({
       data: prismaData,
@@ -94,12 +101,12 @@ export const createResponse = async (
       }
 
       const responsesCount = responsesCountResult.data;
-      const responsesLimit = organization.billing.limits.monthly.responses;
+      const responsesLimit = billingData.limits?.monthly.responses;
 
       if (responsesLimit && responsesCount >= responsesLimit) {
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
+            plan: billingData.plan,
             limits: {
               projects: null,
               monthly: {

@@ -2,6 +2,7 @@ import { response, responseId, responseInput, survey } from "./__mocks__/respons
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { deleteDisplay } from "../display";
 import { deleteResponse, getResponse, updateResponse } from "../response";
@@ -154,7 +155,7 @@ describe("Response Lib", () => {
     test("handle prisma client error code P2025", async () => {
       vi.mocked(prisma.response.delete).mockRejectedValue(
         new PrismaClientKnownRequestError("Response not found", {
-          code: "P2025",
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",
@@ -192,7 +193,7 @@ describe("Response Lib", () => {
     test("return a not_found error when the response is not found", async () => {
       vi.mocked(prisma.response.update).mockRejectedValue(
         new PrismaClientKnownRequestError("Response not found", {
-          code: "P2025",
+          code: PrismaErrorType.RelatedRecordDoesNotExist,
           clientVersion: "1.0.0",
           meta: {
             cause: "Response not found",
