@@ -2,7 +2,7 @@
 
 ![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
-A Helm chart for Formbricks with PostgreSQL, Redis, Traefik, and cert-manager
+A Helm chart for Formbricks with PostgreSQL, Redis
 
 **Homepage:** <https://formbricks.com/>
 
