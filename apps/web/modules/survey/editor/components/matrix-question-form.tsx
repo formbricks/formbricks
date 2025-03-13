@@ -100,6 +100,11 @@ export const MatrixQuestionForm = ({
       label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
+    exceptLastTwo: {
+      id: "exceptLastTwo",
+      label: t("environments.surveys.edit.randomize_all_except_last_two"),
+      show: true,
+    },
   };
   /// Auto animate
   const [parent] = useAutoAnimate();

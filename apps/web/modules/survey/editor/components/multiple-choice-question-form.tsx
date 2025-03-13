@@ -70,6 +70,11 @@ export const MultipleChoiceQuestionForm = ({
       label: t("environments.surveys.edit.randomize_all_except_last"),
       show: true,
     },
+    exceptLastTwo: {
+      id: "exceptLastTwo",
+      label: t("environments.surveys.edit.randomize_all_except_last_two"),
+      show: true,
+    },
   };
 
   const updateChoice = (choiceIdx: number, updatedAttributes: { label: TI18nString }) => {
