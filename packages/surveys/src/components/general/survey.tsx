@@ -182,6 +182,10 @@ export function Survey({
   };
 
   const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
+    if (isPreviewMode) {
+      return file.name;
+    }
+
     if (!apiClient) {
       throw new Error("apiClient not initialized");
     }
@@ -622,7 +626,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={apiHost && environmentId ? onFileUploadApi : onFileUpload!}
+              onFileUpload={onFileUpload ?? onFileUploadApi}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
