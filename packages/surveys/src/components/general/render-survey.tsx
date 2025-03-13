@@ -26,6 +26,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
       {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
+        clickOutside={props.placement === "center" ? props.clickOutside : true}
         onClose={close}
         onFinished={() => {
           props.onFinished?.();
