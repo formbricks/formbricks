@@ -185,7 +185,9 @@
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
-        "UNKEY_ROOT_KEY"
+        "UNKEY_ROOT_KEY",
+        "PROMETHEUS_ENABLED",
+        "PROMETHEUS_EXPORTER_PORT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

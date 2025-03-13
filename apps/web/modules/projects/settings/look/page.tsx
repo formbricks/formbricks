@@ -1,10 +1,6 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import {
-  getMultiLanguagePermission,
-  getRoleManagementPermission,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
+import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
@@ -51,18 +47,10 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
 
   const isReadOnly = isMember && !hasManageAccess;
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
-        <ProjectConfigNavigation
-          environmentId={params.environmentId}
-          activeId="look"
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          canDoRoleManagement={canDoRoleManagement}
-        />
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        <ProjectConfigNavigation environmentId={params.environmentId} activeId="look" />
       </PageHeader>
       <SettingsCard
         title={t("environments.project.look.theme")}
