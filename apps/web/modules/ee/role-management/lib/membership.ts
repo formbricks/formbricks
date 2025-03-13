@@ -3,6 +3,7 @@ import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -91,7 +92,10 @@ export const updateMembership = async (
 
     return membership;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("Membership", `userId: ${userId}, organizationId: ${organizationId}`);
     }
 

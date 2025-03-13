@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { userCache } from "@formbricks/lib/user/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
@@ -32,7 +33,10 @@ export const updateUser = async (id: string, data: TUserUpdateInput) => {
 
     return updatedUser;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("User", id);
     }
     throw error;
@@ -129,7 +133,10 @@ export const createUser = async (data: TUserCreateInput) => {
 
     return user;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
       throw new InvalidInputError("User with this email already exists");
     }
 

@@ -202,6 +202,8 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
     "Cache-Control": cache,
   };
 
+  console.log("response -----");
+
   return Response.json(
     {
       data,

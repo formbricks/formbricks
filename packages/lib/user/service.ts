@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
@@ -111,7 +112,10 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
 
     return updatedUser;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("User", personId);
     }
     throw error; // Re-throw any other errors

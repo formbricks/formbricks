@@ -20,6 +20,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
@@ -149,7 +150,7 @@ beforeEach(() => {
 //     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
 //       const mockErrorMessage = "Mock error message";
 //       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-//         code: "P2002",
+//         code: PrismaErrorType.UniqueConstraintViolation,
 //         clientVersion: "0.0.1",
 //       });
 
@@ -181,7 +182,7 @@ describe("Tests for getResponsesBySingleUseId", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -219,7 +220,7 @@ describe("Tests for getResponse service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -332,7 +333,7 @@ describe("Tests for getResponse service", () => {
 //     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
 //       const mockErrorMessage = "Mock error message";
 //       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-//         code: "P2002",
+//         code: PrismaErrorType.UniqueConstraintViolation,
 //         clientVersion: "0.0.1",
 //       });
 
@@ -370,7 +371,7 @@ describe("Tests for getSurveySummary service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -432,7 +433,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
@@ -444,7 +445,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -480,7 +481,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -531,7 +532,7 @@ describe("Tests for updateResponse Service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -565,7 +566,7 @@ describe("Tests for deleteResponse service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 

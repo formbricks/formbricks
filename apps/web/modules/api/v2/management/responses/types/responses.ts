@@ -39,21 +39,16 @@ export const ZResponseInput = ZResponse.pick({
   variables: true,
   ttc: true,
   meta: true,
-})
-  .partial({
-    displayId: true,
-    singleUseId: true,
-    endingId: true,
-    language: true,
-    variables: true,
-    ttc: true,
-    meta: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .openapi({
-    ref: "responseCreate",
-    description: "A response to create",
-  });
+}).partial({
+  displayId: true,
+  singleUseId: true,
+  endingId: true,
+  language: true,
+  variables: true,
+  ttc: true,
+  meta: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 export type TResponseInput = z.infer<typeof ZResponseInput>;

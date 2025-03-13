@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { PrismaErrorType } from "@formbricks/database/src/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurvey, getSurveyCount, getSurveys, getSurveysByActionClassId, updateSurvey } from "../service";
 import {
@@ -183,7 +184,7 @@ describe("Tests for getSurvey", () => {
     it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockRejectedValue(errToThrow);
@@ -246,7 +247,7 @@ describe("Tests for getSurveys", () => {
     it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -289,7 +290,7 @@ describe("Tests for updateSurvey", () => {
     it("should throw a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
