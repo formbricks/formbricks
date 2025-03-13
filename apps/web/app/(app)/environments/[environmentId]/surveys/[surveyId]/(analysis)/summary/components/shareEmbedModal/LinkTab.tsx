@@ -1,8 +1,11 @@
 "use client";
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
+import QRCodeStyling, { Options } from "qr-code-styling";
+import { useEffect, useRef } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -14,8 +17,66 @@ interface LinkTabProps {
   locale: TUserLocale;
 }
 
+const getQRCodeOptions = (width: number, height: number): Options => ({
+  width,
+  height,
+  type: "svg",
+  data: "",
+  margin: 0,
+  qrOptions: {
+    typeNumber: 3,
+    mode: "Byte",
+    errorCorrectionLevel: "L",
+  },
+  imageOptions: {
+    saveAsBlob: true,
+    hideBackgroundDots: false,
+    imageSize: 0,
+    margin: 0,
+  },
+  dotsOptions: {
+    type: "extra-rounded",
+    color: "#000000",
+    roundSize: true,
+  },
+  backgroundOptions: {
+    color: "#ffffff",
+  },
+  cornersSquareOptions: {
+    type: "dot",
+    color: "#000000",
+  },
+  cornersDotOptions: {
+    type: "dot",
+    color: "#000000",
+  },
+});
+
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
+  const qrInstance = useRef<QRCodeStyling | null>(null);
+  const qrDivRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (qrDivRef.current && !qrInstance.current) {
+      qrInstance.current = new QRCodeStyling(getQRCodeOptions(65, 65));
+      qrInstance.current.update({ data: surveyUrl });
+      qrInstance.current.append(qrDivRef.current);
+    } else if (qrInstance.current) {
+      qrInstance.current.update({ data: surveyUrl });
+    }
+
+    return () => {
+      qrDivRef.current && (qrDivRef.current.innerHTML = "");
+    };
+  }, [surveyUrl]);
+
+  const downloadQRCode = () => {
+    const instance = new QRCodeStyling(getQRCodeOptions(500, 500));
+    instance.update({ data: surveyUrl });
+    instance.download({ name: "survey-qr", extension: "png" });
+  };
+
   const docsLinks = [
     {
       title: t("environments.surveys.summary.data_prefilling"),
@@ -48,6 +109,7 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
           locale={locale}
         />
       </div>
+
       <div className="flex flex-wrap justify-between gap-2">
         <p className="pt-2 font-semibold text-slate-700">
           {t("environments.surveys.summary.you_can_do_a_lot_more_with_links_surveys")} 💡
@@ -63,6 +125,16 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
               <p className="text-slate-500 hover:text-slate-700">{tip.description}</p>
             </Link>
           ))}
+
+          <div className="relative flex w-full items-center justify-start gap-2 rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800">
+            <div ref={qrDivRef} />
+            <div className="flex flex-col justify-start gap-2">
+              <p className="text-center font-semibold text-slate-700">{t("Share the QR Code")}</p>
+              <Button variant="secondary" onClick={downloadQRCode}>
+                {t("Download")}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

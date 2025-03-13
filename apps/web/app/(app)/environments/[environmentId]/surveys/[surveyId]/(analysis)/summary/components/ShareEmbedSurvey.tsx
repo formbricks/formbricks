@@ -2,6 +2,7 @@
 
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Badge } from "@/modules/ui/components/badge";
+import { Button } from "@/modules/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import {
@@ -10,12 +11,14 @@ import {
   Code2Icon,
   LinkIcon,
   MailIcon,
+  QrCode,
   SmartphoneIcon,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import QRCodeStyling from "qr-code-styling";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -89,6 +92,56 @@ export const ShareEmbedSurvey = ({
     setOpen(false);
   };
 
+  const qrCodeRef = useRef<any>(null);
+  const qrInstance = useRef<any>(null);
+
+  useEffect(() => {
+    qrInstance.current = new QRCodeStyling({
+      width: 500,
+      height: 500,
+      type: "canvas",
+      data: surveyUrl,
+      margin: 0,
+      qrOptions: {
+        typeNumber: 3,
+        mode: "Byte",
+        errorCorrectionLevel: "L",
+      },
+      imageOptions: {
+        saveAsBlob: true,
+        hideBackgroundDots: false,
+        imageSize: 0,
+        margin: 0,
+      },
+      dotsOptions: {
+        type: "extra-rounded",
+        color: "#000000",
+        roundSize: true,
+      },
+      backgroundOptions: {
+        color: "#ffffff",
+      },
+      cornersSquareOptions: {
+        type: "dot",
+        color: "#000000",
+      },
+      cornersDotOptions: {
+        type: "dot",
+        color: "#000000",
+      },
+    });
+
+    if (qrCodeRef.current) {
+      qrInstance.current.append(qrCodeRef.current);
+    }
+  }, [surveyUrl]);
+
+  const downloadQRCode = () => {
+    if (qrInstance.current) {
+      qrInstance.current.download({ name: "survey-qr", extension: "png" });
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTitle className="sr-only" />
@@ -102,13 +155,19 @@ export const ShareEmbedSurvey = ({
                 </p>
               </DialogTitle>
               <DialogDescription className="hidden" />
-              <ShareSurveyLink
-                survey={survey}
-                webAppUrl={webAppUrl}
-                surveyUrl={surveyUrl}
-                setSurveyUrl={setSurveyUrl}
-                locale={user.locale}
-              />
+              <div className="flex items-center justify-center gap-2">
+                <ShareSurveyLink
+                  survey={survey}
+                  webAppUrl={webAppUrl}
+                  surveyUrl={surveyUrl}
+                  setSurveyUrl={setSurveyUrl}
+                  locale={user.locale}
+                />
+                <Button variant="secondary" size={"icon"} onClick={downloadQRCode} className="-mb-2">
+                  <QrCode style={{ width: "24px", height: "24px" }} />
+                </Button>
+                <div ref={qrCodeRef} className="hidden" />
+              </div>
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
               <p className="-mt-8 text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>
