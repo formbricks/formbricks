@@ -570,7 +570,7 @@ export const ZSurveyConsentQuestion = ZSurveyQuestionBase.extend({
 
 export type TSurveyConsentQuestion = z.infer<typeof ZSurveyConsentQuestion>;
 
-export const ZShuffleOption = z.enum(["none", "all", "exceptLast"]);
+export const ZShuffleOption = z.enum(["none", "all", "exceptLast", "exceptLastTwo"]);
 
 export type TShuffleOption = z.infer<typeof ZShuffleOption>;
 

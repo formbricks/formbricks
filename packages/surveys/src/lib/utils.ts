@@ -34,6 +34,12 @@ export const getShuffledRowIndices = (n: number, shuffleOption: TShuffleOption):
       shuffle(array);
       array.push(lastElement);
     }
+  } else if (shuffleOption === "exceptLastTwo") {
+    if (array.length >= 2) {
+      const lastTwo = array.splice(array.length - 2, 2);
+      shuffle(array);
+      array.push(...lastTwo);
+    }
   }
   return array;
 };
@@ -56,6 +62,20 @@ export const getShuffledChoicesIds = (
     if (lastElement) {
       shuffle(shuffledChoices);
       shuffledChoices.push(lastElement);
+    }
+  } else if (shuffleOption === "exceptLastTwo") {
+    if (otherOption) {
+      if (shuffledChoices.length >= 1) {
+        // Keep the last element fixed (the one before "other")
+        const lastElement = shuffledChoices.pop();
+        shuffle(shuffledChoices);
+        if (lastElement) shuffledChoices.push(lastElement);
+      }
+    } else if (shuffledChoices.length >= 2) {
+      // No "other" option, keep last two elements fixed
+      const lastTwo = shuffledChoices.splice(shuffledChoices.length - 2, 2);
+      shuffle(shuffledChoices);
+      shuffledChoices.push(...lastTwo);
     }
   }
 

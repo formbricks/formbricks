@@ -25,6 +25,7 @@ interface ShuffleOptionsTypes {
   none?: ShuffleOptionType;
   all?: ShuffleOptionType;
   exceptLast?: ShuffleOptionType;
+  exceptLastTwo?: ShuffleOptionType;
 }
 
 interface ShuffleOptionSelectProps {
