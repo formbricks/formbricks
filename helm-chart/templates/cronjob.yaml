@@ -1,0 +1,102 @@
+{{- if (.Values.cronJob).enabled }}
+{{- range $name, $job := .Values.cronJob.jobs }}
+---
+apiVersion: {{ if $.Capabilities.APIVersions.Has "batch/v1/CronJob" }}batch/v1{{ else }}batch/v1beta1{{ end }}
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  labels:
+    # Standard labels for tracking CronJobs
+    {{- include "formbricks.labels" $ | nindent 4 }}
+
+    # Additional labels if specified
+    {{- if $job.additionalLabels }}
+    {{- toYaml $job.additionalLabels | indent 4 }}
+    {{- end }}
+
+  # Additional annotations if specified
+  {{- if $job.annotations }}
+  annotations:
+    {{- toYaml $job.annotations | indent 4 }}
+  {{- end }}
+
+spec:
+  # Define the execution schedule for the job
+  schedule: {{ $job.schedule | quote }}
+
+  # Kubernetes 1.27+ supports time zones for CronJobs
+  {{- if ge (int $.Capabilities.KubeVersion.Minor) 27 }}
+  {{- if $job.timeZone }}
+  timeZone: {{ $job.timeZone }}
+  {{- end }}
+  {{- end }}
+
+  # Define job retention policies
+  {{- if $job.successfulJobsHistoryLimit }}
+  successfulJobsHistoryLimit: {{ $job.successfulJobsHistoryLimit }}
+  {{- end }}
+  {{- if $job.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ $job.failedJobsHistoryLimit }}
+  {{- end }}
+
+  # Define concurrency policy
+  {{- if $job.concurrencyPolicy }}
+  concurrencyPolicy: {{ $job.concurrencyPolicy }}
+  {{- end }}
+
+  jobTemplate:
+    spec:
+      {{- with $job.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      {{- if not (kindIs "invalid" $job.backoffLimit) }}
+      backoffLimit: {{ $job.backoffLimit }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "formbricks.labels" $ | nindent 12 }}
+
+          # Additional pod-level labels
+          {{- with $job.additionalPodLabels }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          # Additional annotations
+          {{- with $job.additionalPodAnnotations }}
+          annotations: {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+        spec:
+          # Define the service account if RBAC is enabled
+          {{- if $.Values.rbac.enabled }}
+          serviceAccountName: {{ template "formbricks.name" $ }}
+          {{- end }}
+
+          # Define the job container
+          containers:
+          - name: {{ $name }}
+            image: "{{ required "Image repository is undefined" $job.image.repository }}:{{ $job.image.tag | default "latest" }}"
+            imagePullPolicy: {{ $job.image.imagePullPolicy | default "IfNotPresent" }}
+
+            # Environment variables from values
+            {{- with $job.env }}
+            env:
+            {{- range $key, $value := $job.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- end }}
+
+            # Define command and arguments if specified
+            {{- with $job.command }}
+            command: {{- toYaml . | indent 14 }}
+            {{- end }}
+
+            {{- with $job.args }}
+            args: {{- toYaml . | indent 14 }}
+            {{- end }}
+
+          restartPolicy: {{ $job.restartPolicy | default "OnFailure" }}
+{{- end }}
+{{- end }}

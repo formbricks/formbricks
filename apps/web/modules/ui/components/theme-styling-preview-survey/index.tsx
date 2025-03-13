@@ -162,6 +162,7 @@ export const ThemeStylingPreviewSurvey = ({
               borderRadius={project.styling.roundness ?? 8}>
               <Fragment key={surveyFormKey}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={{ ...survey, type: "app" }}
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
@@ -187,6 +188,7 @@ export const ThemeStylingPreviewSurvey = ({
                 key={surveyFormKey}
                 className={`${project.logo?.url && !project.styling.isLogoHidden && !isFullScreenPreview ? "mt-12" : ""} z-0 w-full max-w-md rounded-lg p-4`}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={{ ...survey, type: "link" }}
                   isBrandingEnabled={project.linkSurveyBranding}
                   isRedirectDisabled={true}

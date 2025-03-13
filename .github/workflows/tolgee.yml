@@ -15,8 +15,13 @@ jobs:
     if: github.event.pull_request.merged == true
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0 # This ensures we get the full git history
 
@@ -36,7 +41,7 @@ jobs:
           echo "Detected source branch: $SOURCE_BRANCH"
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with:
           node-version: 18 # Ensure compatibility with your project
 
@@ -51,7 +56,6 @@ jobs:
             --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag production \
             --untag "draft:${SOURCE_BRANCH}"
-            --verbose
 
       - name: Tag unused production keys as Deprecated
         run: |
@@ -59,7 +63,6 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag production \
             --tag deprecated --untag production
-            --verbose
 
       - name: Tag unused draft:current-branch keys as Deprecated
         run: |
@@ -67,7 +70,6 @@ jobs:
             --api-key ${{ secrets.TOLGEE_API_KEY }} \
             --filter-not-extracted --filter-tag "draft:${SOURCE_BRANCH}" \
             --tag deprecated --untag "draft:${SOURCE_BRANCH}"
-            --verbose
 
       - name: Sync with backup
         run: |
@@ -78,7 +80,7 @@ jobs:
             --yes
 
       - name: Upload backup as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         with:
           name: tolgee-backup-${{ github.sha }}
           path: ./tolgee-backup
