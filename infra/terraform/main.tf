@@ -447,7 +447,7 @@ resource "kubernetes_manifest" "node_pool" {
         }
       }
       limits = {
-        cpu = 10
+        cpu = 100
       }
       disruption = {
         consolidationPolicy = "WhenEmpty"
@@ -604,7 +604,14 @@ resource "helm_release" "formbricks" {
         name: formbricks
         annotations:
           eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
+    serviceMonitor:
+      enabled: true
     deployment:
+
+      image:
+        repository: "ghcr.io/formbricks/formbricks-experimental"
+        tag: "open-telemetry-for-prometheus"
+        pullPolicy: Always
       env:
         S3_BUCKET_NAME:
           value: ${module.s3-bucket.s3_bucket_id}

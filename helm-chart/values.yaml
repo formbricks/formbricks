@@ -115,10 +115,10 @@ deployment:
   # Resource requests and limits
   resources:
     limits:
-      memory: 1Gi
+      memory: 2Gi
     requests:
-      memory: 512Mi
-      cpu: 500m
+      memory: 1Gi
+      cpu: "1"
 
   # Container security context
   containerSecurityContext:
@@ -138,6 +138,10 @@ deployment:
   ports:
     http:
       containerPort: 3000
+      protocol: TCP
+      exposed: true
+    metrics:
+      containerPort: 9464
       protocol: TCP
       exposed: true
 
@@ -241,6 +245,26 @@ redis:
   master:
     persistence:
       enabled: true
+
+##########################################################
+# Service Monitor to collect Prometheus metrices
+##########################################################
+serviceMonitor:
+  enabled: true
+
+  # Additional labels
+  additionalLabels:
+  # key: value
+
+  # Additional annotations
+  annotations:
+  # key: value
+
+  # List of the endpoints of service from which prometheus will scrape data
+  endpoints:
+    - interval: 5s
+      path: /metrics
+      port: metrics
 
 ##########################################################
 # PostgreSQL Configuration
