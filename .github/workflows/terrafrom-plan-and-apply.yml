@@ -35,52 +35,51 @@ jobs:
         continue-on-error: true
         working-directory: infra/terraform
 
-      - name: Post Format
-        if: always() && github.ref != 'refs/heads/main' && (steps.fmt.outcome == 'success' || steps.fmt.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
-        with:
-          commenter_type: fmt
-          commenter_input: ${{ format('{0}{1}', steps.fmt.outputs.stdout, steps.fmt.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.fmt.outputs.exitcode }}
+#      - name: Post Format
+#        if: always() && github.ref != 'refs/heads/main' && (steps.fmt.outcome == 'success' || steps.fmt.outcome == 'failure')
+#        uses: robburger/terraform-pr-commenter@v1
+#        with:
+#          commenter_type: fmt
+#          commenter_input: ${{ format('{0}{1}', steps.fmt.outputs.stdout, steps.fmt.outputs.stderr) }}
+#          commenter_exitcode: ${{ steps.fmt.outputs.exitcode }}
 
       - name: Terraform Init
         id: init
         run: terraform init
         working-directory: infra/terraform
 
-      - name: Post Init
-        if: always() && github.ref != 'refs/heads/main' && (steps.init.outcome == 'success' || steps.init.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
-        with:
-          commenter_type: init
-          commenter_input: ${{ format('{0}{1}', steps.init.outputs.stdout, steps.init.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.init.outputs.exitcode }}
+#      - name: Post Init
+#        if: always() && github.ref != 'refs/heads/main' && (steps.init.outcome == 'success' || steps.init.outcome == 'failure')
+#        uses: robburger/terraform-pr-commenter@v1
+#        with:
+#          commenter_type: init
+#          commenter_input: ${{ format('{0}{1}', steps.init.outputs.stdout, steps.init.outputs.stderr) }}
+#          commenter_exitcode: ${{ steps.init.outputs.exitcode }}
 
       - name: Terraform Validate
         id: validate
         run: terraform validate
         working-directory: infra/terraform
 
-      - name: Post Validate
-        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
-        with:
-          commenter_type: validate
-          commenter_input: ${{ format('{0}{1}', steps.validate.outputs.stdout, steps.validate.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.validate.outputs.exitcode }}
+#      - name: Post Validate
+#        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
+#        uses: robburger/terraform-pr-commenter@v1
+#        with:
+#          commenter_type: validate
+#          commenter_input: ${{ format('{0}{1}', steps.validate.outputs.stdout, steps.validate.outputs.stderr) }}
+#          commenter_exitcode: ${{ steps.validate.outputs.exitcode }}
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -out workspace.plan
+        run: terraform plan -out .planfile
         working-directory: infra/terraform
 
-      - name: Post Plan
-        if: always() && github.ref != 'refs/heads/main' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
-        uses: robburger/terraform-pr-commenter@v1
+      - name: Post PR comment
+        uses: borchero/terraform-plan-comment@v2
+        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
         with:
-          commenter_type: plan
-          commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
-          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          planfile: .planfile
 
       - name: Terraform Apply
         id: apply
