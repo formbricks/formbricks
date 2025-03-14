@@ -54,9 +54,9 @@ deployment:
 
   # Environment variables from ConfigMaps or Secrets
   envFrom:
-    app-secrets:
-      type: secret
-      nameSuffix: app-secrets
+    # app-secrets:
+    #   type: secret
+    #   nameSuffix: app-secrets
 
   # Environment variables passed to the app container
   env:

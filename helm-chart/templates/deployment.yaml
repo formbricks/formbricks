@@ -122,10 +122,7 @@ spec:
           env:
             {{- if and (.Values.enterprise.enabled) (ne .Values.enterprise.licenseKey "") }}
             - name: ENTERPRISE_LICENSE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: ENTERPRISE_LICENSE_KEY
+              value: {{ .Values.enterprise.licenseKey | quote }}
             {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}

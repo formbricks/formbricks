@@ -276,7 +276,7 @@ module "eks" {
       principal_arn = tolist(data.aws_iam_roles.administrator.arns)[0]
       policy_associations = {
         Admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type = "cluster"
           }
@@ -287,7 +287,7 @@ module "eks" {
       principal_arn = tolist(data.aws_iam_roles.github.arns)[0]
       policy_associations = {
         Admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
           access_scope = {
             type = "cluster"
           }
@@ -655,6 +655,9 @@ resource "helm_release" "formbricks" {
       app-env:
         type: secret
         nameSuffix: app-env
+      app-secrets:
+        type: secret
+        nameSuffix: app-secrets
     annotations:
       deployed_at: ${timestamp()}
   externalSecret:
