@@ -78,7 +78,7 @@ jobs:
         uses: borchero/terraform-plan-comment@v2
         if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           planfile: .planfile
           working-directory: "infra/terraform"
 
