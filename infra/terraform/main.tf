@@ -271,6 +271,16 @@ module "eks" {
     }
   }
 
+  kms_key_administrators = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
+  kms_key_users = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
   access_entries = {
     administrator = {
       principal_arn = tolist(data.aws_iam_roles.administrator.arns)[0]
