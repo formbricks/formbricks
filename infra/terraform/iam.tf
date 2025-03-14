@@ -23,7 +23,7 @@ module "iam_github_oidc_role" {
     "repo:formbricks/*:*",
   ]
   policies = {
-    Administrator = "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+    Administrator = "arn:aws:iam::aws:policy/AdministratorAccess"
   }
 
   tags = local.tags

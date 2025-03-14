@@ -352,6 +352,11 @@ resource "helm_release" "karpenter_crds" {
       serviceNamespace: ${local.karpenter_namespace}
     EOT
   ]
+  lifecycle {
+    ignore_changes = [
+      repository_password,
+    ]
+  }
 }
 
 resource "helm_release" "karpenter" {
@@ -375,6 +380,11 @@ resource "helm_release" "karpenter" {
       interruptionQueue: ${module.karpenter.queue_name}
     EOT
   ]
+  lifecycle {
+    ignore_changes = [
+      repository_password,
+    ]
+  }
 }
 
 resource "kubernetes_manifest" "ec2_node_class" {
@@ -572,96 +582,70 @@ resource "helm_release" "formbricks" {
   max_history = 5
 
   values = [
-    <<-EOT
-    postgresql:
-      enabled: false
-    redis:
-      enabled: false
-    ingress:
+  <<-EOT
+  postgresql:
+    enabled: false
+  redis:
+    enabled: false
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hosts:
+      - host: "app.${local.domain}"
+        paths:
+          - path: /
+            pathType: "Prefix"
+            serviceName: "formbricks"
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
+      alb.ingress.kubernetes.io/healthcheck-path: "/health"
+      alb.ingress.kubernetes.io/group.name: formbricks
+      alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  secret:
+    enabled: false
+  rbac:
+    enabled: true
+    serviceAccount:
       enabled: true
-      ingressClassName: alb
-      hosts:
-        - host: "app.${local.domain}"
-          paths:
-            - path: /
-              pathType: "Prefix"
-              serviceName: "formbricks"
+      name: formbricks
       annotations:
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/target-type: ip
-        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-        alb.ingress.kubernetes.io/ssl-redirect: "443"
-        alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
-        alb.ingress.kubernetes.io/healthcheck-path: "/health"
-        alb.ingress.kubernetes.io/group.name: formbricks
-        alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    secret:
-      enabled: false
-    rbac:
-      enabled: true
-      serviceAccount:
-        enabled: true
-        name: formbricks
-        annotations:
-          eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
-    serviceMonitor:
-      enabled: true
-    deployment:
-      image:
-        repository: "ghcr.io/formbricks/formbricks-experimental"
-        tag: "open-telemetry-for-prometheus"
-        pullPolicy: Always
-      env:
-        S3_BUCKET_NAME:
-          value: ${module.s3-bucket.s3_bucket_id}
-        RATE_LIMITING_DISABLED:
-          value: "1"
-      envFrom:
-        app-parameters:
-          type: secret
-          nameSuffix: {RELEASE.name}-app-parameters
-        app-env:
-          type: secret
-          nameSuffix: {RELEASE.name}-app-env
-      annotations:
-        deployed_at: ${timestamp()}
-    externalSecret:
-      enabled: true  # Enable/disable ExternalSecrets
-      secretStore:
-        name: aws-secrets-manager
-        kind: ClusterSecretStore
-      refreshInterval: "1h"
-      files:
-        app-env:
-          dataFrom:
-            key: "/prod/formbricks/environment"
-        app-secrets:
-          data:
-            DATABASE_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: DATABASE_URL
-            REDIS_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: REDIS_URL
-            CRON_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: CRON_SECRET
-            ENCRYPTION_KEY:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: ENCRYPTION_KEY
-            NEXTAUTH_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: NEXTAUTH_SECRET
-            ENTERPRISE_LICENSE_KEY:
-              remoteRef:
-                key: "prod/formbricks/enterprise"
-                property: ENTERPRISE_LICENSE_KEY
-    EOT
+        eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
+  serviceMonitor:
+    enabled: true
+  deployment:
+    image:
+      repository: "ghcr.io/formbricks/formbricks-experimental"
+      tag: "open-telemetry-for-prometheus"
+      pullPolicy: Always
+    env:
+      S3_BUCKET_NAME:
+        value: ${module.s3-bucket.s3_bucket_id}
+      RATE_LIMITING_DISABLED:
+        value: "1"
+    envFrom:
+      app-env:
+        type: secret
+        nameSuffix: app-env
+    annotations:
+      deployed_at: ${timestamp()}
+  externalSecret:
+    enabled: true  # Enable/disable ExternalSecrets
+    secretStore:
+      name: aws-secrets-manager
+      kind: ClusterSecretStore
+    refreshInterval: "1h"
+    files:
+      app-env:
+        dataFrom:
+          key: "prod/formbricks/environment"
+      app-secrets:
+        dataFrom:
+          key: "prod/formbricks/secrets"
+  EOT
   ]
 }
 
