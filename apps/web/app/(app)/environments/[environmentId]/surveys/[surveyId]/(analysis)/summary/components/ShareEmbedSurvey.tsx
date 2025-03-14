@@ -102,15 +102,13 @@ export const ShareEmbedSurvey = ({
                 </p>
               </DialogTitle>
               <DialogDescription className="hidden" />
-              <div className="flex items-center justify-center gap-2">
-                <ShareSurveyLink
-                  survey={survey}
-                  webAppUrl={webAppUrl}
-                  surveyUrl={surveyUrl}
-                  setSurveyUrl={setSurveyUrl}
-                  locale={user.locale}
-                />
-              </div>
+              <ShareSurveyLink
+                survey={survey}
+                webAppUrl={webAppUrl}
+                surveyUrl={surveyUrl}
+                setSurveyUrl={setSurveyUrl}
+                locale={user.locale}
+              />
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">
               <p className="-mt-8 text-sm text-slate-500">{t("environments.surveys.summary.whats_next")}</p>

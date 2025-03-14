@@ -1,6 +1,6 @@
 "use client";
 
-import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/getQRCodeOptions";
+import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
