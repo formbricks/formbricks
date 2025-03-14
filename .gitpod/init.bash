@@ -1,6 +1,6 @@
 #!/bin/bash
 
-images=($(yq eval '.services.*.image' packages/database/docker-compose.yml))
+images=($(yq eval '.services.*.image' docker-compose.dev.yml))
 
 pull_image() {
   docker pull "$1"

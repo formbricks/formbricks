@@ -2,6 +2,7 @@
 // workaround for https://github.com/vercel/next.js/issues/51613
 // copied from https://github.com/vercel/next.js/issues/51613#issuecomment-1892644565
 import { unstable_cache } from "next/cache";
+import { env } from "process";
 import { parse, stringify } from "superjson";
 
 export { revalidateTag } from "next/cache";
@@ -15,6 +16,10 @@ export const cache = <T, P extends unknown[]>(
     const result = await fn(...(params as P));
     return stringify(result);
   };
+
+  if (env.REDIS_DEFAULT_TTL) {
+    opts = { ...opts, revalidate: Number(env.REDIS_DEFAULT_TTL) };
+  }
 
   const cachedFn = unstable_cache(wrap, keys, opts);
 
