@@ -10,6 +10,9 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#setup": {
+      "dependsOn": ["db:up"]
+    },
     "@formbricks/demo#go": {
       "cache": false,
       "dependsOn": ["@formbricks/js#build"],
@@ -223,6 +226,10 @@
     },
     "db:start": {
       "cache": false
+    },
+    "db:up": {
+      "cache": false,
+      "outputs": []
     },
     "dev": {
       "cache": false,

@@ -11,7 +11,7 @@ const createTimeoutPromise = (ms, rejectReason) => {
 CacheHandler.onCreation(async () => {
   let client;
 
-  if (process.env.REDIS_URL && process.env.ENTERPRISE_LICENSE_KEY) {
+  if (process.env.REDIS_URL) {
     try {
       // Create a Redis client.
       client = createClient({
@@ -45,8 +45,6 @@ CacheHandler.onCreation(async () => {
           });
       }
     }
-  } else if (process.env.REDIS_URL) {
-    console.log("Redis clustering requires an Enterprise License. Falling back to LRU cache.");
   }
 
   /** @type {import("@neshca/cache-handler").Handler | null} */
