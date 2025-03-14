@@ -47,6 +47,7 @@ export const env = createEnv({
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INTERCOM_SECRET_KEY: z.string().optional(),
+    INTERCOM_APP_ID: z.string().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     MAIL_FROM: z.string().email().optional(),
     MAIL_FROM_NAME: z.string().optional(),
