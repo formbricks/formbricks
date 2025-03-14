@@ -4,6 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { TResponse, ZResponseUpdateInput } from "@formbricks/types/responses";
 
 const fetchAndValidateResponse = async (authentication: any, responseId: string): Promise<TResponse> => {
@@ -77,7 +78,7 @@ export const PUT = async (
     try {
       responseUpdate = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

@@ -3,6 +3,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { AsyncParser } from "@json2csv/node";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 
 export const POST = async (request: NextRequest) => {
   const session = await getServerSession(authOptions);
@@ -28,7 +29,7 @@ export const POST = async (request: NextRequest) => {
   try {
     csv = await parser.parse(json).promise();
   } catch (err) {
-    console.error(err);
+    logger.error({ error: err, url: request.url }, "Failed to convert to CSV");
     throw new Error("Failed to convert to CSV");
   }
 

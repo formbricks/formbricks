@@ -1,6 +1,7 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { type LimitOptions, Ratelimit, type RatelimitResponse } from "@unkey/ratelimit";
 import { MANAGEMENT_API_RATE_LIMIT, RATE_LIMITING_DISABLED, UNKEY_ROOT_KEY } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 import { Result, err, okVoid } from "@formbricks/types/error-handlers";
 
 export type RateLimitHelper = {
@@ -18,7 +19,7 @@ let warningDisplayed = false;
 /** Prevent flooding the logs while testing/building */
 function logOnce(message: string) {
   if (warningDisplayed) return;
-  console.warn(message);
+  logger.warn(message);
   warningDisplayed = true;
 }
 

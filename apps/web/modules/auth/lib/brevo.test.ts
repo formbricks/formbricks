@@ -1,6 +1,7 @@
 import { Response } from "node-fetch";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { createBrevoCustomer } from "./brevo";
 
 vi.mock("@formbricks/lib/constants", () => ({
@@ -35,17 +36,17 @@ describe("createBrevoCustomer", () => {
   });
 
   it("should log an error if fetch fails", async () => {
-    const consoleSpy = vi.spyOn(console, "error");
+    const loggerSpy = vi.spyOn(logger, "error");
 
     vi.mocked(global.fetch).mockRejectedValueOnce(new Error("Fetch failed"));
 
     await createBrevoCustomer({ id: "123", email: "test@example.com" });
 
-    expect(consoleSpy).toHaveBeenCalledWith("Error sending user to Brevo:", expect.any(Error));
+    expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error sending user to Brevo");
   });
 
   it("should log the error response if fetch status is not 200", async () => {
-    const consoleSpy = vi.spyOn(console, "error");
+    const loggerSpy = vi.spyOn(logger, "error");
 
     vi.mocked(global.fetch).mockResolvedValueOnce(
       new Response("Bad Request", { status: 400, statusText: "Bad Request" })
@@ -53,6 +54,6 @@ describe("createBrevoCustomer", () => {
 
     await createBrevoCustomer({ id: "123", email: "test@example.com" });
 
-    expect(consoleSpy).toHaveBeenCalledWith("Error sending user to Brevo:", "Bad Request");
+    expect(loggerSpy).toHaveBeenCalledWith({ errorText: "Bad Request" }, "Error sending user to Brevo");
   });
 });

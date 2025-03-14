@@ -5,6 +5,7 @@ import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 
@@ -41,7 +42,7 @@ export const POST = async (request: Request): Promise<Response> => {
     try {
       surveyInput = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

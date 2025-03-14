@@ -3,6 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { environmentCache } from "@formbricks/lib/environment/cache";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsSyncInput } from "@formbricks/types/js";
 
@@ -11,7 +12,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const GET = async (
-  _: NextRequest,
+  request: NextRequest,
   props: {
     params: Promise<{
       environmentId: string;
@@ -58,11 +59,14 @@ export const GET = async (
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
-      console.error(err);
+      logger.error(
+        { error: err, url: request.url },
+        "Error in GET /api/v1/client/[environmentId]/environment"
+      );
       return responses.internalServerErrorResponse(err.message, true);
     }
   } catch (error) {
-    console.error(error);
+    logger.error({ error, url: request.url }, "Error in GET /api/v1/client/[environmentId]/environment");
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

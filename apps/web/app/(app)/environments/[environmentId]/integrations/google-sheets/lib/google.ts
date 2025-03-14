@@ -1,3 +1,5 @@
+import { logger } from "@formbricks/logger";
+
 export const authorize = async (environmentId: string, apiHost: string): Promise<string> => {
   const res = await fetch(`${apiHost}/api/google-sheet`, {
     method: "GET",
@@ -5,7 +7,8 @@ export const authorize = async (environmentId: string, apiHost: string): Promise
   });
 
   if (!res.ok) {
-    console.error(res.text);
+    const errorText = await res.text();
+    logger.error({ errorText }, "authorize: Could not fetch google sheet config");
     throw new Error("Could not create response");
   }
   const resJSON = await res.json();

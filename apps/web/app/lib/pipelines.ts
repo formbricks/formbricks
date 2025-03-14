@@ -1,5 +1,6 @@
 import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { CRON_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 
 export const sendToPipeline = async ({ event, surveyId, environmentId, response }: TPipelineInput) => {
   return fetch(`${WEBAPP_URL}/api/pipeline`, {
@@ -15,6 +16,6 @@ export const sendToPipeline = async ({ event, surveyId, environmentId, response 
       response,
     }),
   }).catch((error) => {
-    console.error(`Error sending event to pipeline: ${error}`);
+    logger.error(error, "Error sending event to pipeline");
   });
 };

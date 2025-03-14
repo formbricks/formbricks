@@ -2,6 +2,7 @@ import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/ut
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
+import { logger } from "@formbricks/logger";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 
 export const signUpAndLogin = async (
@@ -96,7 +97,7 @@ export const uploadFileForFileUploadQuestion = async (page: Page) => {
       },
     ]);
   } catch (error) {
-    console.error("Error uploading files:", error);
+    logger.error(error, "Error uploading files");
   }
 };
 

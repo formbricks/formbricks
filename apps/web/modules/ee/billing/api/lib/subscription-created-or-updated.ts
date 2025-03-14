@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { PROJECT_FEATURE_KEYS, STRIPE_API_VERSION } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TOrganizationBillingPeriod,
@@ -27,7 +28,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   }
 
   if (!organizationId) {
-    console.error("No organizationId found in subscription");
+    logger.error({ event, organizationId }, "No organizationId found in subscription");
     return { status: 400, message: "skipping, no organizationId found" };
   }
 
@@ -60,7 +61,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.responses) > 0) {
     responses = parseInt(product.metadata.responses);
   } else {
-    console.error("Invalid responses metadata in product: ", product.metadata.responses);
+    logger.error({ responses: product.metadata.responses }, "Invalid responses metadata in product");
     throw new Error("Invalid responses metadata in product");
   }
 
@@ -69,7 +70,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.miu) > 0) {
     miu = parseInt(product.metadata.miu);
   } else {
-    console.error("Invalid miu metadata in product: ", product.metadata.miu);
+    logger.error({ miu: product.metadata.miu }, "Invalid miu metadata in product");
     throw new Error("Invalid miu metadata in product");
   }
 
@@ -78,7 +79,7 @@ export const handleSubscriptionCreatedOrUpdated = async (event: Stripe.Event) =>
   } else if (parseInt(product.metadata.projects) > 0) {
     projects = parseInt(product.metadata.projects);
   } else {
-    console.error("Invalid projects metadata in product: ", product.metadata.projects);
+    logger.error({ projects: product.metadata.projects }, "Invalid projects metadata in product");
     throw new Error("Invalid projects metadata in product");
   }
 

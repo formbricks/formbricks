@@ -14,8 +14,6 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
 }): Promise<Response> => {
-  const startTime = Date.now();
-
   const response = await apiWrapper({
     request,
     schemas,
@@ -23,10 +21,9 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
     rateLimit,
     handler,
   });
-
-  const duration = Date.now() - startTime;
-
-  logApiRequest(request, response.status, duration);
+  if (response.ok) {
+    logApiRequest(request, response.status);
+  }
 
   return response;
 };

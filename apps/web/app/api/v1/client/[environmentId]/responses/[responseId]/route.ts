@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
@@ -45,7 +46,10 @@ export const PUT = async (
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      console.error(error);
+      logger.error(
+        { error, url: request.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
       return responses.internalServerErrorResponse(error.message);
     }
   }
@@ -59,7 +63,10 @@ export const PUT = async (
       return responses.badRequestResponse(error.message);
     }
     if (error instanceof DatabaseError) {
-      console.error(error);
+      logger.error(
+        { error, url: request.url },
+        "Error in PUT /api/v1/client/[environmentId]/responses/[responseId]"
+      );
       return responses.internalServerErrorResponse(error.message);
     }
   }

@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
@@ -107,7 +108,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message);
     } else {
-      console.error(error);
+      logger.error({ error, url: request.url }, "Error creating response");
       return responses.internalServerErrorResponse(error.message);
     }
   }

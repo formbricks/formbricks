@@ -11,6 +11,7 @@ import { cache } from "@formbricks/lib/cache";
 import { INSIGHTS_PER_PAGE } from "@formbricks/lib/constants";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
@@ -121,7 +122,7 @@ export const updateInsight = async (insightId: string, updates: Partial<Insight>
       }
     }
   } catch (error) {
-    console.error("Error in updateInsight:", error);
+    logger.error(error, "Error in updateInsight");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

@@ -8,6 +8,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { membershipCache } from "@formbricks/lib/membership/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 
@@ -51,7 +52,7 @@ export const getProjectPermissionByUserId = reactCache(
           return highestPermission;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error fetching project permission by user id");
             throw new DatabaseError(error.message);
           }
 

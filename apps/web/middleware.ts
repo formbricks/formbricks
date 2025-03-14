@@ -85,6 +85,7 @@ export const middleware = async (originalRequest: NextRequest) => {
   });
 
   request.headers.set("x-request-id", uuidv4());
+  request.headers.set("x-start-time", Date.now().toString());
 
   // Create a new NextResponse object to forward the new request with headers
   const nextResponseWithCustomHeader = NextResponse.next({

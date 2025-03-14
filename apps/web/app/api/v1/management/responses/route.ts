@@ -4,6 +4,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
 import { getResponses, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { createResponse } from "./lib/response";
@@ -45,7 +46,7 @@ export const POST = async (request: Request): Promise<Response> => {
     try {
       jsonInput = await request.json();
     } catch (err) {
-      console.error(`Error parsing JSON input: ${err}`);
+      logger.error({ error: err, url: request.url }, "Error parsing JSON input");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 
@@ -92,7 +93,7 @@ export const POST = async (request: Request): Promise<Response> => {
       if (error instanceof InvalidInputError) {
         return responses.badRequestResponse(error.message);
       } else {
-        console.error(error);
+        logger.error({ error, url: request.url }, "Error in POST /api/v1/management/responses");
         return responses.internalServerErrorResponse(error.message);
       }
     }

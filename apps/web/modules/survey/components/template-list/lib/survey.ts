@@ -11,6 +11,7 @@ import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
@@ -177,7 +178,7 @@ export const createSurvey = async (
     return transformedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error creating survey");
       throw new DatabaseError(error.message);
     }
     throw error;

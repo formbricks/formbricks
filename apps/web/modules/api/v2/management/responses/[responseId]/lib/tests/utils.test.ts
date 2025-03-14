@@ -1,8 +1,15 @@
 import { environmentId, fileUploadQuestion, openTextQuestion, responseData } from "./__mocks__/utils.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { deleteFile } from "@formbricks/lib/storage/service";
+import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
 import { findAndDeleteUploadedFilesInResponse } from "../utils";
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("@formbricks/lib/storage/service", () => ({
   deleteFile: vi.fn(),
@@ -37,15 +44,15 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
       [fileUploadQuestion.id]: [invalidFileUrl],
     };
 
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const loggerSpy = vi.spyOn(logger, "error");
 
     const result = await findAndDeleteUploadedFilesInResponse(responseData, [fileUploadQuestion]);
 
     expect(deleteFile).not.toHaveBeenCalled();
-    expect(consoleErrorSpy).toHaveBeenCalled();
+    expect(loggerSpy).toHaveBeenCalled();
     expect(result).toEqual(okVoid());
 
-    consoleErrorSpy.mockRestore();
+    loggerSpy.mockRestore();
   });
 
   test("process multiple file URLs", async () => {

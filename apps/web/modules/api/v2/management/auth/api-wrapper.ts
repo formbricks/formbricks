@@ -75,7 +75,6 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 
     if (schemas?.params) {
       const paramsObject = (await externalParams) || {};
-      console.log("paramsObject: ", paramsObject);
       const paramsResult = schemas.params.safeParse(paramsObject);
       if (!paramsResult.success) {
         throw err({

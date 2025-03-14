@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { updateAttributes } from "@/modules/ee/contacts/lib/attributes";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsContactsUpdateAttributeInput } from "@formbricks/types/js";
 import { getContactByUserIdWithAttributes } from "./lib/contact";
@@ -89,7 +90,7 @@ export const PUT = async (
       true
     );
   } catch (err) {
-    console.error(err);
+    logger.error({ err, url: req.url }, "Error updating attributes");
     if (err.statusCode === 403) {
       return responses.forbiddenResponse(err.message || "Forbidden", true, { ignore: true });
     }
