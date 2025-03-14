@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      TF_IN_AUTOMATION: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
