@@ -3,18 +3,21 @@
 import Intercom from "@intercom/messenger-js-sdk";
 import { createHmac } from "crypto";
 import { useCallback, useEffect } from "react";
-import { env } from "@formbricks/lib/env";
 import { TUser } from "@formbricks/types/user";
-
-const intercomAppId = env.NEXT_PUBLIC_INTERCOM_APP_ID;
 
 interface IntercomClientProps {
   isIntercomConfigured: boolean;
   intercomSecretKey?: string;
   user?: TUser | null;
+  intercomAppId?: string;
 }
 
-export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }: IntercomClientProps) => {
+export const IntercomClient = ({
+  user,
+  intercomSecretKey,
+  isIntercomConfigured,
+  intercomAppId,
+}: IntercomClientProps) => {
   const initializeIntercom = useCallback(() => {
     let initParams = {};
 
@@ -35,11 +38,21 @@ export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }
       app_id: intercomAppId!,
       ...initParams,
     });
-  }, [user, intercomSecretKey]);
+  }, [user, intercomSecretKey, intercomAppId]);
 
   useEffect(() => {
     try {
-      if (isIntercomConfigured) initializeIntercom();
+      if (isIntercomConfigured) {
+        if (!intercomAppId) {
+          throw new Error("Intercom app ID is required");
+        }
+
+        if (!intercomSecretKey) {
+          throw new Error("Intercom secret key is required");
+        }
+
+        initializeIntercom();
+      }
 
       return () => {
         // Shutdown Intercom when component unmounts
@@ -50,7 +63,7 @@ export const IntercomClient = ({ user, intercomSecretKey, isIntercomConfigured }
     } catch (error) {
       console.error("Failed to initialize Intercom:", error);
     }
-  }, [isIntercomConfigured, initializeIntercom]);
+  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomSecretKey]);
 
   return null;
 };
