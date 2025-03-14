@@ -5,11 +5,7 @@ import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
 
-interface SurveyQRCodeProps {
-  surveyUrl: string;
-}
-
-export const SurveyQRCode = ({ surveyUrl }: SurveyQRCodeProps) => {
+export const useSurveyQRCode = (surveyUrl: string) => {
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<QRCodeStyling | null>(null);
 

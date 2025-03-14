@@ -1,6 +1,6 @@
 "use client";
 
-import { SurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/survey-qr-code";
+import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
@@ -19,7 +19,7 @@ interface LinkTabProps {
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
 
-  const { qrCodeRef, downloadQRCode } = SurveyQRCode({ surveyUrl });
+  const { qrCodeRef, downloadQRCode } = useSurveyQRCode(surveyUrl);
 
   const docsLinks = [
     {
