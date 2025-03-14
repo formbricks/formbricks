@@ -249,7 +249,7 @@ module "eks" {
   cluster_name    = "${local.name}-eks"
   cluster_version = "1.32"
 
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
   cluster_endpoint_public_access           = true
 
   cluster_addons = {
@@ -268,6 +268,31 @@ module "eks" {
     }
     vpc-cni = {
       most_recent = true
+    }
+  }
+
+  access_entries = {
+    administrator = {
+      principal_arn = tolist(data.aws_iam_roles.administrator.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    github = {
+      principal_arn = tolist(data.aws_iam_roles.github.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
     }
   }
 
@@ -582,7 +607,7 @@ resource "helm_release" "formbricks" {
   max_history = 5
 
   values = [
-  <<-EOT
+    <<-EOT
   postgresql:
     enabled: false
   redis:
