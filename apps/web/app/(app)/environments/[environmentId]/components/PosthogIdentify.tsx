@@ -3,11 +3,8 @@
 import type { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
 import { useEffect } from "react";
-import { env } from "@formbricks/lib/env";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-
-const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
 
 interface PosthogIdentifyProps {
   session: Session;
@@ -16,6 +13,7 @@ interface PosthogIdentifyProps {
   organizationId?: string;
   organizationName?: string;
   organizationBilling?: TOrganizationBilling;
+  isPosthogEnabled: boolean;
 }
 
 export const PosthogIdentify = ({
@@ -25,11 +23,12 @@ export const PosthogIdentify = ({
   organizationId,
   organizationName,
   organizationBilling,
+  isPosthogEnabled,
 }: PosthogIdentifyProps) => {
   const posthog = usePostHog();
 
   useEffect(() => {
-    if (posthogEnabled && session.user && posthog) {
+    if (isPosthogEnabled && session.user && posthog) {
       posthog.identify(session.user.id, {
         name: user.name,
         email: user.email,
@@ -59,6 +58,7 @@ export const PosthogIdentify = ({
     user.email,
     user.role,
     user.objective,
+    isPosthogEnabled,
   ]);
 
   return null;

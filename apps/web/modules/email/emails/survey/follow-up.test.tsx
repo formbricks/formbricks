@@ -1,8 +1,8 @@
 import { getTranslate } from "@/tolgee/server";
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { DefaultParamType, TFnType, TranslationKey } from "@tolgee/react/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FollowUpEmail } from "./follow-up";
 
 vi.mock("@formbricks/lib/constants", () => ({
@@ -27,6 +27,10 @@ describe("FollowUpEmail", () => {
     vi.mocked(getTranslate).mockResolvedValue(
       ((key: string) => key) as TFnType<DefaultParamType, string, TranslationKey>
     );
+  });
+
+  afterEach(() => {
+    cleanup();
   });
 
   it("renders the default logo if no custom logo is provided", async () => {
