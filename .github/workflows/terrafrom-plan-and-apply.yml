@@ -79,7 +79,8 @@ jobs:
         if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          planfile: infra/terraform/.planfile
+          planfile: .planfile
+          working-directory: "infra/terraform"
 
       - name: Terraform Apply
         id: apply
