@@ -620,6 +620,9 @@ resource "helm_release" "formbricks" {
         app-parameters:
           type: secret
           nameSuffix: {RELEASE.name}-app-parameters
+        app-env:
+          type: secret
+          nameSuffix: {RELEASE.name}-app-env
       annotations:
         deployed_at: ${timestamp()}
     externalSecret:
@@ -629,12 +632,9 @@ resource "helm_release" "formbricks" {
         kind: ClusterSecretStore
       refreshInterval: "1h"
       files:
-        app-parameters:
+        app-env:
           dataFrom:
-            key: "/prod/formbricks/env"
-          secretStore:
-            name: aws-parameter-store
-            kind: ClusterSecretStore
+            key: "/prod/formbricks/environment"
         app-secrets:
           data:
             DATABASE_URL:
