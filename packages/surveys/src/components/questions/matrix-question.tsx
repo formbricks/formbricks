@@ -144,10 +144,12 @@ export function MatrixQuestion({
               </thead>
               <tbody>
                 {questionRows.map((row, rowIndex) => (
-                  <tr key={`row-${rowIndex.toString()}`} className={rowIndex % 2 === 0 ? "bg-input-bg" : ""}>
+                  <tr
+                    key={`row-${rowIndex.toString()}`}
+                    className={rowIndex % 2 === 0 ? "fb-bg-input-bg" : ""}>
                     <th
                       scope="row"
-                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2"
+                      className="fb-text-heading fb-rounded-l-custom fb-max-w-40 fb-break-words fb-pr-4 fb-pl-2 fb-py-2 fb-text-left fb-min-w-[20%] fb-font-semibold"
                       dir="auto">
                       {getLocalizedValue(row, languageCode)}
                     </th>

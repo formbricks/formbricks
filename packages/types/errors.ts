@@ -121,16 +121,16 @@ export type { NetworkError, ForbiddenError };
 
 export interface ApiErrorResponse {
   code:
-  | "not_found"
-  | "gone"
-  | "bad_request"
-  | "internal_server_error"
-  | "unauthorized"
-  | "method_not_allowed"
-  | "not_authenticated"
-  | "forbidden"
-  | "network_error"
-  | "too_many_requests";
+    | "not_found"
+    | "gone"
+    | "bad_request"
+    | "internal_server_error"
+    | "unauthorized"
+    | "method_not_allowed"
+    | "not_authenticated"
+    | "forbidden"
+    | "network_error"
+    | "too_many_requests";
   message: string;
   status: number;
   url?: URL;

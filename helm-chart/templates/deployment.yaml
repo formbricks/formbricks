@@ -1,34 +1,182 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "formbricks.fullname" . }}
+  name: {{ include "formbricks.name" . }}
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
+    {{- if .Values.deployment.additionalLabels }}
+    {{- toYaml .Values.deployment.additionalLabels | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.deployment.annotations .Values.deployment.reloadOnChange }}
+  annotations:
+    {{- if .Values.deployment.annotations }}
+    {{- toYaml .Values.deployment.annotations | nindent 4 }}
+    {{- end }}
+  {{- end }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  {{- if .Values.deployment.replicas }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
   selector:
     matchLabels:
       {{- include "formbricks.selectorLabels" . | nindent 6 }}
+  {{- if .Values.deployment.strategy }}
+  strategy:
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+  {{- end }}
+  {{- if not (kindIs "invalid" .Values.deployment.revisionHistoryLimit) }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  {{- end }}
   template:
     metadata:
       labels:
         {{- include "formbricks.selectorLabels" . | nindent 8 }}
+        {{- if .Values.deployment.additionalPodLabels }}
+        {{- toYaml .Values.deployment.additionalPodLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.deployment.disableIstioInject }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
+      {{- if .Values.deployment.additionalPodAnnotations }}
+      annotations:
+        {{- toYaml .Values.deployment.additionalPodAnnotations | nindent 8 }}
+      {{- end }}
     spec:
+      {{- if .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml .Values.deployment.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml .Values.deployment.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml .Values.deployment.topologySpreadConstraints | nindent 10 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.hostNetwork }}
+      hostNetwork: true
+      {{- end }}
+      {{- if .Values.rbac.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.rbac.serviceAccount.name | default (include "formbricks.name" .) }}
+      {{- end }}
+      {{- if .Values.deployment.securityContext }}
+      securityContext:
+        {{ toYaml .Values.deployment.securityContext | indent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: {{ template "formbricks.name" . }}
+          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- if .Values.deployment.command }}
+          command:
+            {{- toYaml .Values.deployment.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.args }}
+          args:
+            {{- toYaml .Values.deployment.args | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.ports }}
           ports:
-            - name: http
-              containerPort: 3000
-              protocol: TCP
-          envFrom:
-            - secretRef:
-                name: {{ include "formbricks.fullname" . }}-secrets
-          env:
-            {{- range $key, $value := .Values.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- range $name, $config := .Values.deployment.ports }}
+            - name: {{ $name | quote }}
+              containerPort: {{ $config.containerPort | default $config.port }}
+              protocol: {{ $config.protocol | default "TCP" | quote }}
             {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.envFrom }}
+          envFrom:
+          {{- range $value := .Values.deployment.envFrom }}
+          {{- if (eq .type "configmap") }}
+          - configMapRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- if (eq .type "secret") }}
+          - secretRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          env:
+            {{- if and (.Values.enterprise.enabled) (ne .Values.enterprise.licenseKey "") }}
+            - name: ENTERPRISE_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: ENTERPRISE_LICENSE_KEY
+            {{- else if  and (.Values.enterprise.enabled) (eq .Values.enterprise.licenseKey "") }}
+            - name: ENTERPRISE_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: ENTERPRISE_LICENSE_KEY
+            {{- end }}
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: REDIS_URL
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: DATABASE_URL
+            - name: CRON_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: CRON_SECRET
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "formbricks.name" . }}-app-secrets
+                  key: ENCRYPTION_KEY
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                  secretKeyRef:
+                    name: {{ template "formbricks.name" . }}-app-secrets
+                    key: NEXTAUTH_SECRET
+            {{- range $key, $value := .Values.deployment.env }}
+            - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
+    {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | indent 10 }}
+            {{- end }}
+          {{- if .Values.deployment.resources }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+              {{- toYaml .Values.deployment.resources | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.probes }}
+          {{- if .livenessProbe }}
+          livenessProbe:
+            {{- toYaml .livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .readinessProbe }}
+          readinessProbe:
+            {{- toYaml .readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .startupProbe }}
+          startupProbe:
+            {{- toYaml .startupProbe | nindent 12 }}
+          {{- end }}
+          {{- end }}
