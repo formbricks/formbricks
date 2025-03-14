@@ -101,7 +101,7 @@ describe("IntercomClient", () => {
       <IntercomClient
         isIntercomConfigured={true}
         intercomAppId="my-app-id"
-        // no user prop here
+        intercomSecretKey="my-secret-key"
       />
     );
 
@@ -124,7 +124,9 @@ describe("IntercomClient", () => {
   });
 
   it("shuts down Intercom on unmount", () => {
-    const { unmount } = render(<IntercomClient isIntercomConfigured={true} intercomAppId="my-app-id" />);
+    const { unmount } = render(
+      <IntercomClient isIntercomConfigured={true} intercomAppId="my-app-id" intercomSecretKey="secret-key" />
+    );
 
     // Reset call count; we only care about the shutdown after unmount
     mockWindowIntercom.mockClear();
@@ -145,12 +147,54 @@ describe("IntercomClient", () => {
     });
 
     // Render the component with isIntercomConfigured=true so it tries to initialize
-    render(<IntercomClient isIntercomConfigured={true} intercomAppId="my-app-id" />);
+    render(
+      <IntercomClient
+        isIntercomConfigured={true}
+        intercomAppId="my-app-id"
+        intercomSecretKey="my-secret-key"
+      />
+    );
 
     // Verify that console.error was called with the correct message
     expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to initialize Intercom:", expect.any(Error));
 
     // Clean up the spy
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("logs an error if isIntercomConfigured is true but no intercomAppId is provided", () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <IntercomClient
+        isIntercomConfigured={true}
+        // missing intercomAppId
+        intercomSecretKey="some-secret"
+      />
+    );
+
+    // We expect a caught error: "Intercom app ID is required"
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to initialize Intercom:", expect.any(Error));
+    const [, caughtError] = consoleErrorSpy.mock.calls[0];
+    expect((caughtError as Error).message).toBe("Intercom app ID is required");
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("logs an error if isIntercomConfigured is true but no intercomSecretKey is provided", () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(
+      <IntercomClient
+        isIntercomConfigured={true}
+        intercomAppId="some-app-id"
+        // missing intercomSecretKey
+      />
+    );
+
+    // We expect a caught error: "Intercom secret key is required"
+    expect(consoleErrorSpy).toHaveBeenCalledWith("Failed to initialize Intercom:", expect.any(Error));
+    const [, caughtError] = consoleErrorSpy.mock.calls[0];
+    expect((caughtError as Error).message).toBe("Intercom secret key is required");
     consoleErrorSpy.mockRestore();
   });
 });

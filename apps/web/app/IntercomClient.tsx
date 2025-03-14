@@ -9,7 +9,7 @@ interface IntercomClientProps {
   isIntercomConfigured: boolean;
   intercomSecretKey?: string;
   user?: TUser | null;
-  intercomAppId: string;
+  intercomAppId?: string;
 }
 
 export const IntercomClient = ({
@@ -35,14 +35,24 @@ export const IntercomClient = ({
     }
 
     Intercom({
-      app_id: intercomAppId,
+      app_id: intercomAppId!,
       ...initParams,
     });
   }, [user, intercomSecretKey, intercomAppId]);
 
   useEffect(() => {
     try {
-      if (isIntercomConfigured) initializeIntercom();
+      if (isIntercomConfigured) {
+        if (!intercomAppId) {
+          throw new Error("Intercom app ID is required");
+        }
+
+        if (!intercomSecretKey) {
+          throw new Error("Intercom secret key is required");
+        }
+
+        initializeIntercom();
+      }
 
       return () => {
         // Shutdown Intercom when component unmounts
@@ -53,7 +63,7 @@ export const IntercomClient = ({
     } catch (error) {
       console.error("Failed to initialize Intercom:", error);
     }
-  }, [isIntercomConfigured, initializeIntercom]);
+  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomSecretKey]);
 
   return null;
 };
