@@ -1,9 +1,7 @@
 "use client";
 
-import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/getQRCodeOptions";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Badge } from "@/modules/ui/components/badge";
-import { Button } from "@/modules/ui/components/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/modules/ui/components/dialog";
 import { useTranslate } from "@tolgee/react";
 import {
@@ -12,15 +10,12 @@ import {
   Code2Icon,
   LinkIcon,
   MailIcon,
-  QrCode,
   SmartphoneIcon,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import QRCodeStyling from "qr-code-styling";
-import { useEffect, useMemo, useRef, useState } from "react";
-import toast from "react-hot-toast";
+import { useEffect, useMemo, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -94,35 +89,6 @@ export const ShareEmbedSurvey = ({
     setOpen(false);
   };
 
-  const qrCodeRef = useRef<HTMLDivElement>(null);
-  const qrInstance = useRef<QRCodeStyling | null>(null);
-
-  useEffect(() => {
-    qrInstance.current = new QRCodeStyling({
-      ...getQRCodeOptions(500, 500),
-      data: surveyUrl,
-    });
-
-    if (qrCodeRef.current) {
-      qrInstance.current.append(qrCodeRef.current);
-    }
-    return () => {
-      if (qrCodeRef.current) {
-        qrCodeRef.current.innerHTML = "";
-      }
-    };
-  }, [surveyUrl]);
-
-  const downloadQRCode = () => {
-    try {
-      if (qrInstance.current) {
-        qrInstance.current.download({ name: "survey-qr", extension: "png" });
-      }
-    } catch (error) {
-      toast.error(t("common.error"));
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTitle className="sr-only" />
@@ -144,16 +110,6 @@ export const ShareEmbedSurvey = ({
                   setSurveyUrl={setSurveyUrl}
                   locale={user.locale}
                 />
-                <Button
-                  variant="secondary"
-                  title={t("environments.surveys.summary.download_qr_code")}
-                  aria-label={t("environments.surveys.summary.download_qr_code")}
-                  size={"icon"}
-                  onClick={downloadQRCode}
-                  className="-mb-2">
-                  <QrCode style={{ width: "24px", height: "24px" }} />
-                </Button>
-                <div ref={qrCodeRef} className="hidden" />
               </div>
             </div>
             <div className="flex h-[300px] flex-col items-center justify-center gap-8 rounded-b-lg bg-slate-50 px-8 lg:h-3/5">

@@ -1,13 +1,10 @@
 "use client";
 
-import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/getQRCodeOptions";
+import { SurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/survey-qr-code";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import QRCodeStyling from "qr-code-styling";
-import { useEffect, useRef } from "react";
-import toast from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 
@@ -21,32 +18,8 @@ interface LinkTabProps {
 
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
-  const qrInstance = useRef<QRCodeStyling | null>(null);
-  const qrDivRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (qrDivRef.current && !qrInstance.current) {
-      qrInstance.current = new QRCodeStyling(getQRCodeOptions(65, 65));
-      qrInstance.current.update({ data: surveyUrl });
-      qrInstance.current.append(qrDivRef.current);
-    } else if (qrInstance.current) {
-      qrInstance.current.update({ data: surveyUrl });
-    }
-
-    return () => {
-      qrDivRef.current && (qrDivRef.current.innerHTML = "");
-    };
-  }, [surveyUrl]);
-
-  const downloadQRCode = () => {
-    try {
-      const instance = new QRCodeStyling(getQRCodeOptions(500, 500));
-      instance.update({ data: surveyUrl });
-      instance.download({ name: "survey-qr", extension: "png" });
-    } catch (error) {
-      toast.error(t("common.error"));
-    }
-  };
+  const { qrCodeRef, downloadQRCode } = SurveyQRCode({ surveyUrl });
 
   const docsLinks = [
     {
@@ -98,7 +71,7 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
           ))}
 
           <div className="relative flex w-full items-center justify-start gap-2 rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800">
-            <div ref={qrDivRef} />
+            <div ref={qrCodeRef} />
             <div className="flex flex-col justify-start gap-2">
               <p className="text-center font-semibold text-slate-700">
                 {t("environments.surveys.summary.share_the_qr_code")}
