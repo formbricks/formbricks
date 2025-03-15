@@ -94,8 +94,12 @@ spec:
               protocol: {{ $config.protocol | default "TCP" | quote }}
             {{- end }}
           {{- end }}
-          {{- if .Values.deployment.envFrom }}
+          {{- if or .Values.deployment.envFrom (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
           envFrom:
+          {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          - secretRef:
+              name: {{ template "formbricks.name" . }}-app-secrets
+          {{- end }}
           {{- range $value := .Values.deployment.envFrom }}
           {{- if (eq .type "configmap") }}
           - configMapRef:
