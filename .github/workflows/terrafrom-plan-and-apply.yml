@@ -81,6 +81,7 @@ jobs:
           token: ${{ github.token }}
           planfile: .planfile
           working-directory: "infra/terraform"
+          skip-comment: true
 
       - name: Terraform Apply
         id: apply
