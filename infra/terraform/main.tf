@@ -387,11 +387,6 @@ resource "helm_release" "karpenter_crds" {
       serviceNamespace: ${local.karpenter_namespace}
     EOT
   ]
-  lifecycle {
-    ignore_changes = [
-      repository_password,
-    ]
-  }
 }
 
 resource "helm_release" "karpenter" {
@@ -415,11 +410,6 @@ resource "helm_release" "karpenter" {
       interruptionQueue: ${module.karpenter.queue_name}
     EOT
   ]
-  lifecycle {
-    ignore_changes = [
-      repository_password,
-    ]
-  }
 }
 
 resource "kubernetes_manifest" "ec2_node_class" {
