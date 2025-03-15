@@ -1,0 +1,43 @@
+name: Publish Helm Chart
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract release version
+        run: echo "VERSION=${{ github.event.release.tag_name }}" >> $GITHUB_ENV
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: latest
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Install YQ
+        uses: dcarbone/install-yq-action@v1.3.1
+
+      - name: Update Chart.yaml with new version
+        run: |
+          yq -i ".version = \"${VERSION#v}\"" helm-chart/Chart.yaml
+          yq -i ".appVersion = \"${VERSION}\"" helm-chart/Chart.yaml
+
+      - name: Package Helm chart
+        run: |
+          helm package ./helm-chart
+
+      - name: Push Helm chart to GitHub Container Registry
+        run: |
+          helm push formbricks-${VERSION#v}.tgz oci://ghcr.io/formbricks/helm-charts

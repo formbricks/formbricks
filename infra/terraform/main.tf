@@ -249,7 +249,7 @@ module "eks" {
   cluster_name    = "${local.name}-eks"
   cluster_version = "1.32"
 
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
   cluster_endpoint_public_access           = true
 
   cluster_addons = {
@@ -268,6 +268,41 @@ module "eks" {
     }
     vpc-cni = {
       most_recent = true
+    }
+  }
+
+  kms_key_administrators = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
+  kms_key_users = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
+  access_entries = {
+    administrator = {
+      principal_arn = tolist(data.aws_iam_roles.administrator.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    github = {
+      principal_arn = tolist(data.aws_iam_roles.github.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
     }
   }
 
@@ -573,95 +608,69 @@ resource "helm_release" "formbricks" {
 
   values = [
     <<-EOT
-    postgresql:
-      enabled: false
-    redis:
-      enabled: false
-    ingress:
+  postgresql:
+    enabled: false
+  redis:
+    enabled: false
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hosts:
+      - host: "app.${local.domain}"
+        paths:
+          - path: /
+            pathType: "Prefix"
+            serviceName: "formbricks"
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
+      alb.ingress.kubernetes.io/healthcheck-path: "/health"
+      alb.ingress.kubernetes.io/group.name: formbricks
+      alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  secret:
+    enabled: false
+  rbac:
+    enabled: true
+    serviceAccount:
       enabled: true
-      ingressClassName: alb
-      hosts:
-        - host: "app.${local.domain}"
-          paths:
-            - path: /
-              pathType: "Prefix"
-              serviceName: "formbricks"
+      name: formbricks
       annotations:
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/target-type: ip
-        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-        alb.ingress.kubernetes.io/ssl-redirect: "443"
-        alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
-        alb.ingress.kubernetes.io/healthcheck-path: "/health"
-        alb.ingress.kubernetes.io/group.name: formbricks
-        alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    secret:
-      enabled: false
-    rbac:
-      enabled: true
-      serviceAccount:
-        enabled: true
-        name: formbricks
-        annotations:
-          eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
-    serviceMonitor:
-      enabled: true
-    deployment:
-      image:
-        repository: "ghcr.io/formbricks/formbricks-experimental"
-        tag: "open-telemetry-for-prometheus"
-        pullPolicy: Always
-      env:
-        S3_BUCKET_NAME:
-          value: ${module.s3-bucket.s3_bucket_id}
-        RATE_LIMITING_DISABLED:
-          value: "1"
-      envFrom:
-        app-parameters:
-          type: secret
-          nameSuffix: {RELEASE.name}-app-parameters
-      annotations:
-        deployed_at: ${timestamp()}
-    externalSecret:
-      enabled: true  # Enable/disable ExternalSecrets
-      secretStore:
-        name: aws-secrets-manager
-        kind: ClusterSecretStore
-      refreshInterval: "1h"
-      files:
-        app-parameters:
-          dataFrom:
-            key: "/prod/formbricks/env"
-          secretStore:
-            name: aws-parameter-store
-            kind: ClusterSecretStore
-        app-secrets:
-          data:
-            DATABASE_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: DATABASE_URL
-            REDIS_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: REDIS_URL
-            CRON_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: CRON_SECRET
-            ENCRYPTION_KEY:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: ENCRYPTION_KEY
-            NEXTAUTH_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: NEXTAUTH_SECRET
-            ENTERPRISE_LICENSE_KEY:
-              remoteRef:
-                key: "prod/formbricks/enterprise"
-                property: ENTERPRISE_LICENSE_KEY
-    EOT
+        eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
+  serviceMonitor:
+    enabled: true
+  deployment:
+    image:
+      repository: "ghcr.io/formbricks/formbricks-experimental"
+      tag: "open-telemetry-for-prometheus"
+      pullPolicy: Always
+    env:
+      S3_BUCKET_NAME:
+        value: ${module.s3-bucket.s3_bucket_id}
+      RATE_LIMITING_DISABLED:
+        value: "1"
+    envFrom:
+      app-env:
+        type: secret
+        nameSuffix: app-env
+    annotations:
+      deployed_at: ${timestamp()}
+  externalSecret:
+    enabled: true  # Enable/disable ExternalSecrets
+    secretStore:
+      name: aws-secrets-manager
+      kind: ClusterSecretStore
+    refreshInterval: "1h"
+    files:
+      app-env:
+        dataFrom:
+          key: "prod/formbricks/environment"
+      app-secrets:
+        dataFrom:
+          key: "prod/formbricks/secrets"
+  EOT
   ]
 }
 

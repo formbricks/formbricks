@@ -1,10 +1,6 @@
 {{- if .Values.autoscaling.enabled }}
 ---
-{{- if .Capabilities.APIVersions.Has "autoscaling/v2/HorizontalPodAutoscaler" }}
 apiVersion: autoscaling/v2
-{{- else }}
-apiVersion: autoscaling/v2beta2
-{{- end }}
 kind: HorizontalPodAutoscaler
 metadata:
   name: {{ template "formbricks.name" . }}
