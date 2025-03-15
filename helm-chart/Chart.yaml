@@ -5,8 +5,7 @@ description: A Helm chart for Formbricks with PostgreSQL, Redis
 type: application
 
 # Helm chart Version
-version: 3.4.0
-appVersion: v3.4.0
+version: 0.0.0-dev
 
 keywords:
   - formbricks
