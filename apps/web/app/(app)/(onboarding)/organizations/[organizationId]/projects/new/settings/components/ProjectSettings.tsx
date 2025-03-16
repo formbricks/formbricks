@@ -231,6 +231,7 @@ export const ProjectSettings = ({
         <p className="text-sm text-slate-400">{t("common.preview")}</p>
         <div className="z-0 h-3/4 w-3/4">
           <SurveyInline
+            isPreviewMode={true}
             survey={previewSurvey(projectName || "my Product", t)}
             styling={{ brandColor: { light: brandColor } }}
             isBrandingEnabled={false}

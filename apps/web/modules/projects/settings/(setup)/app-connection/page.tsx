@@ -1,9 +1,5 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import {
-  getMultiLanguagePermission,
-  getRoleManagementPermission,
-} from "@/modules/ee/license-check/lib/utils";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -31,18 +27,10 @@ export const AppConnectionPage = async (props) => {
     throw new Error(t("common.organization_not_found"));
   }
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
-        <ProjectConfigNavigation
-          environmentId={params.environmentId}
-          activeId="app-connection"
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          canDoRoleManagement={canDoRoleManagement}
-        />
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        <ProjectConfigNavigation environmentId={params.environmentId} activeId="app-connection" />
       </PageHeader>
       <div className="space-y-4">
         <EnvironmentNotice environmentId={params.environmentId} subPageUrl="/project/app-connection" />
