@@ -243,7 +243,6 @@ export const SurveyEditor = ({
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
-            onFileUpload={async (file) => file.name}
           />
         </aside>
       </div>

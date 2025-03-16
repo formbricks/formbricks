@@ -1,97 +1,161 @@
-NOTES:
-Thank you for installing Formbricks! Here's how you can access and manage your deployment:
 
-1. Accessing Your Application:
-{{- if .Values.traefik.enabled }}
-   Traefik is enabled for ingress routing.
-   Your application should be available at: https://{{ .Values.hostname }}
-   Note: Ensure your DNS is properly configured to point to your cluster's IP.
-{{- else if contains "ClusterIP" .Values.service.type }}
-   Your application is running inside the cluster with ClusterIP service type.
-   To access it locally, run the following command:
-   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "formbricks.fullname" . }} 8080:{{ .Values.service.port }}
-   Then visit http://localhost:8080 in your browser.
+
+{{ .Release.Name | camelcase }} with {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }} has been deployed successfully on {{ template "formbricks.namespace" .}} namespace !
+
+Here's how you can access and manage your deployment:
+---
+
+Accessing Your Application:
+
+{{- if .Values.ingress.enabled }}
+   Your application is accessible via the configured Ingress.
+   ```sh
+   kubectl get ingress {{ include "formbricks.name" . }} -n {{ .Release.Namespace }} -o jsonpath='{.items[*].spec.rules[*].host}' | tr ' ' '\n'
+   ```
+   Ensure that your DNS points to the cluster's Ingress Controller.
+{{- else if contains "LoadBalancer" .Values.service.type }}
+   Your application is exposed via a LoadBalancer.
+   Run the following to get the external IP:
+   ```sh
+   kubectl get svc {{ include "formbricks.name" . }} -n {{ .Release.Namespace }}
+   ```
+{{- else if contains "NodePort" .Values.service.type }}
+   Your application is accessible via NodePort.
+   Run the following to get the assigned port:
+   ```sh
+   kubectl get svc {{ include "formbricks.name" . }} -n {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}"
+   ```
+   Then access the service at: `http://<NodeIP>:<NodePort>`
+{{- else }}
+   Your application is running inside the cluster (ClusterIP service type).
+   To access it locally, run:
+   ```sh
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "formbricks.name" . }} 3000
+   ```
+   Then visit: **http://localhost:3000**
 {{- end }}
 
-2. Database (PostgreSQL) Access:
+---
+
+Database (PostgreSQL) Access:
+
 {{- if .Values.postgresql.enabled }}
    PostgreSQL is deployed within your cluster.
-   To get the PostgreSQL password, run:
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ .Release.Name }}-postgresql -o jsonpath="{.data.postgres-password}" | base64 --decode
-   
-   Database connection details:
-   - Host: {{ .Release.Name }}-postgresql
-   - Port: 5432
-   - Database: {{ .Values.postgresql.auth.database }}
-   - Username: {{ .Values.postgresql.auth.username }}
-{{- else if .Values.postgresql.externalUrl }}
+   Retrieve the password using:
+   ```sh
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.POSTGRES_USER_PASSWORD}" | base64 --decode
+   ```
+   Connection details:
+   - **Host**: `{{ include "formbricks.name" . }}-postgresql`
+   - **Port**: `5432`
+   - **Database**: `{{ .Values.postgresql.auth.database }}`
+   - **Username**: `{{ .Values.postgresql.auth.username }}`
+{{- else if .Values.postgresql.externalDatabaseUrl }}
    You're using an external PostgreSQL database.
-   Connection URL: {{ .Values.postgresql.externalUrl }}
+   Connection URL:
+   ```sh
+   echo "{{ .Values.postgresql.externalDatabaseUrl }}"
+   ```
 {{- end }}
 
-3. Redis Access:
+---
+
+Redis Access:
+
 {{- if .Values.redis.enabled }}
    Redis is deployed within your cluster.
-   To get the Redis password, run:
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ .Release.Name }}-redis -o jsonpath="{.data.redis-password}" | base64 --decode
-   
-   Redis connection details:
-   - Host: {{ .Release.Name }}-redis-master
-   - Port: 6379
-{{- else if .Values.redis.externalUrl }}
+   Retrieve the password using:
+   ```sh
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.REDIS_PASSWORD}" | base64 --decode
+   ```
+   Connection details:
+   - **Host**: `{{ include "formbricks.name" . }}-redis-master`
+   - **Port**: `6379`
+{{- else if .Values.redis.externalRedisUrl }}
    You're using an external Redis instance.
-   Connection URL: {{ .Values.redis.externalUrl }}
+   Connection URL:
+   ```sh
+   echo "{{ .Values.redis.externalRedisUrl }}"
+   ```
 {{- else }}
-   Redis is not enabled in your current configuration.
+   Redis is not enabled in this deployment.
 {{- end }}
 
-4. Environment Variables:
-   The following environment variables have been automatically generated:
-   - NEXTAUTH_SECRET: A random 32-character string
-   - ENCRYPTION_KEY: A random 32-character string
-   - CRON_SECRET: A random 32-character string
+---
 
-   To view these secrets, run:
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.fullname" . }}-secrets -o jsonpath="{.data.NEXTAUTH_SECRET}" | base64 --decode
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.fullname" . }}-secrets -o jsonpath="{.data.ENCRYPTION_KEY}" | base64 --decode
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.fullname" . }}-secrets -o jsonpath="{.data.CRON_SECRET}" | base64 --decode
+Environment Variables:
+The following environment variables have been automatically generated:
 
-5. Scaling:
+- `NEXTAUTH_SECRET`: A random 32-character string
+- `ENCRYPTION_KEY`: A random 32-character string
+- `CRON_SECRET`: A random 32-character string
+- 'EMAIL_VERIFICATION_DISABLED': 1 # By Default email verification is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
+- 'PASSWORD_RESET_DISABLED': 1 # By Default password reset is disabled, configure SMTP settings to enable(https://formbricks.com/docs/self-hosting/configuration/smtp)
+
+Retrieve them using:
+```sh
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.NEXTAUTH_SECRET}" | base64 --decode
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.ENCRYPTION_KEY}" | base64 --decode
+kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.CRON_SECRET}" | base64 --decode
+```
+
+---
+
+Scaling:
+
 {{- if .Values.autoscaling.enabled }}
-   Horizontal Pod Autoscaling is enabled.
-   - Minimum replicas: {{ .Values.autoscaling.minReplicas }}
-   - Maximum replicas: {{ .Values.autoscaling.maxReplicas }}
-   - Target CPU utilization: {{ .Values.autoscaling.metrics.averageUtilization }}%
-   
-   To check the current status of the HPA, run:
-   kubectl get hpa -n {{ .Release.Namespace }} {{ include "formbricks.fullname" . }}
+   Horizontal Pod Autoscaling (HPA) is enabled.
+   - **Min Replicas**: `{{ .Values.autoscaling.minReplicas }}`
+   - **Max Replicas**: `{{ .Values.autoscaling.maxReplicas }}`
+
+   Check HPA status:
+   ```sh
+   kubectl get hpa -n {{ .Release.Namespace }} {{ include "formbricks.name" . }}
+   ```
 {{- else }}
-   Horizontal Pod Autoscaling is not enabled. Your deployment has a fixed number of {{ .Values.replicaCount }} replicas.
-   To scale manually, use:
-   kubectl scale deployment -n {{ .Release.Namespace }} {{ include "formbricks.fullname" . }} --replicas=<desired_number>
+   HPA is **not enabled**. Your deployment has a fixed number of `{{ .Values.replicaCount }}` replicas.
+   Manually scale using:
+   ```sh
+   kubectl scale deployment -n {{ .Release.Namespace }} {{ include "formbricks.name" . }} --replicas=<desired_number>
+   ```
 {{- end }}
 
-6. Persistence:
-   - PostgreSQL data is persisted with a {{ .Values.postgresql.primary.persistence.size }} storage.
+---
+
+External Secrets:
+{{- if .Values.externalSecret.enabled }}
+   External secrets are enabled.
+   Ensure that your `SecretStore` or `ClusterSecretStore` is configured properly.
+   - Secret Store Name: `{{ .Values.externalSecret.secretStore.name }}`
+   - Refresh Interval: `{{ .Values.externalSecret.refreshInterval }}`
+
+   Verify the external secret:
+   ```sh
+   kubectl get externalsecrets -n {{ .Release.Namespace }}
+   ```
+{{- else }}
+   External secrets are **not enabled**.
+{{- end }}
+
+---
+
+Persistence:
+
+{{- if .Values.postgresql.enabled }}
+   PostgreSQL data is persisted with `{{ .Values.postgresql.primary.persistence.size }}` storage.
+{{- end }}
 {{- if .Values.redis.enabled }}
-   - Redis data is not persisted (persistence is disabled).
+   Redis data is persisted with `{{ .Values.redis.master.persistence.size }}` storage..
 {{- end }}
 
-7. Traefik Configuration:
-{{- if .Values.traefik.enabled }}
-   Traefik is configured with the following settings:
-   - TLS enabled with Let's Encrypt
-   - HTTP to HTTPS redirect enabled
-   - ACME challenge type: HTTP
-   - Entrypoints: web (80) and websecure (443)
-{{- else }}
-   Traefik is not enabled in your current configuration.
-{{- end }}
+---
 
-8. Formbricks Documentation and Support:
-   For more information, advanced configuration options, and support, please visit:
-   - Official Formbricks website: https://formbricks.com
-   - Documentation: https://formbricks.com/docs
+Formbricks Documentation and Support:
 
-If you encounter any issues or have questions, please refer to the Formbricks documentation 
-or reach out to the Formbricks community for support.
+For more information, advanced configurations, and support, visit:
+- **Official Website**: https://formbricks.com
+- **Documentation**: https://formbricks.com/docs
+
+For troubleshooting, refer to the documentation or community support.
+
+---
