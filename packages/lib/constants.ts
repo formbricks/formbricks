@@ -83,6 +83,7 @@ export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
+export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
@@ -214,7 +215,7 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"];
 
 // Billing constants
 

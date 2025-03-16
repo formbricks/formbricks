@@ -23,11 +23,14 @@ const nextConfig = {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
   i18n: {
-    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW"],
+    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {},
+  experimental: {
+    instrumentationHook: true,
+    serverComponentsExternalPackages: ["@opentelemetry/instrumentation"],
+  },
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -108,6 +111,10 @@ const nextConfig = {
         },
       ],
     });
+    config.resolve.fallback = {
+      http: false, // Prevents Next.js from trying to bundle 'http'
+      https: false,
+    };
     return config;
   },
   async headers() {
