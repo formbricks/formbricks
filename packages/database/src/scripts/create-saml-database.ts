@@ -35,7 +35,7 @@ const createSamlDatabase = async (): Promise<void> => {
 
     logger.info(`Database '${dbName}' created successfully.`);
   } catch (error) {
-    logger.error(error, `Error creating database '${dbName}':`);
+    logger.error(error, `Error creating database '${dbName}'`);
     return;
   } finally {
     await prisma.$disconnect();

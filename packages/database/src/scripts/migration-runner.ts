@@ -99,7 +99,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
       );
     } catch (error) {
       // Record migration failure
-      logger.error(error, `Data migration ${migration.name} failed:`);
+      logger.error(error, `Data migration ${migration.name} failed`);
       // Mark migration as failed
       await prisma.$queryRaw`
         INSERT INTO "DataMigration" (id, name, status)
@@ -159,7 +159,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
       await execAsync("pnpm prisma migrate deploy");
       logger.info(`Successfully applied schema migration: ${migration.name}`);
     } catch (err) {
-      logger.error(err, `Schema migration ${migration.name} failed:`);
+      logger.error(err, `Schema migration ${migration.name} failed`);
       throw err;
     }
   }
@@ -285,7 +285,7 @@ async function isSchemaMigrationApplied(migrationName: string, prismaClient: Pri
        `;
     return applied.length > 0;
   } catch (error: unknown) {
-    logger.error(error, `Failed to check migration status:`);
+    logger.error(error, `Failed to check migration status`);
     throw new Error(`Could not verify migration status: ${error as string}`);
   }
 }

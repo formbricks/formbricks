@@ -571,7 +571,7 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
 
       return deleteFile(environmentId, accessType as "private" | "public", fileName);
     } catch (error) {
-      logger.error(error, `Failed to delete file ${fileUrl}:`);
+      logger.error(error, `Failed to delete file ${fileUrl}`);
     }
   });
 
