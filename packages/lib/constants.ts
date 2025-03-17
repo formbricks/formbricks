@@ -200,7 +200,7 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
-export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL;
+export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL ? Number(env.REDIS_DEFAULT_TTL) : 86400; // 1 day
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
