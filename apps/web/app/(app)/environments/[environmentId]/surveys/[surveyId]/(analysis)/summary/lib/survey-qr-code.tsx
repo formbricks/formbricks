@@ -10,15 +10,21 @@ export const useSurveyQRCode = (surveyUrl: string) => {
   const qrInstance = useRef<QRCodeStyling | null>(null);
 
   useEffect(() => {
-    if (!qrInstance.current) {
-      qrInstance.current = new QRCodeStyling(getQRCodeOptions(65, 65));
-    }
+    try {
+      if (!qrInstance.current) {
+        qrInstance.current = new QRCodeStyling(getQRCodeOptions(70, 70));
+      }
 
-    qrInstance.current.update({ data: surveyUrl });
+      if (surveyUrl && qrInstance.current) {
+        qrInstance.current.update({ data: surveyUrl });
 
-    if (qrCodeRef.current) {
-      qrCodeRef.current.innerHTML = "";
-      qrInstance.current.append(qrCodeRef.current);
+        if (qrCodeRef.current) {
+          qrCodeRef.current.innerHTML = "";
+          qrInstance.current.append(qrCodeRef.current);
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to generate QR code.");
     }
   }, [surveyUrl]);
 
@@ -28,7 +34,7 @@ export const useSurveyQRCode = (surveyUrl: string) => {
       downloadInstance.update({ data: surveyUrl });
       downloadInstance.download({ name: "survey-qr", extension: "png" });
     } catch (error) {
-      toast.error("Error downloading QR code");
+      toast.error("Failed to download QR code.");
     }
   };
 

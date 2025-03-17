@@ -7,7 +7,7 @@ export const getQRCodeOptions = (width: number, height: number): Options => ({
   data: "",
   margin: 0,
   qrOptions: {
-    typeNumber: 3,
+    typeNumber: 0,
     mode: "Byte",
     errorCorrectionLevel: "L",
   },
