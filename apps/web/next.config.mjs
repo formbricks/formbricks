@@ -29,7 +29,7 @@ const nextConfig = {
   },
   experimental: {
     instrumentationHook: true,
-    serverComponentsExternalPackages: ["@opentelemetry/instrumentation"],
+    serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "pino", "pino-pretty"],
   },
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
