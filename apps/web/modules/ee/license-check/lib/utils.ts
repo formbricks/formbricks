@@ -104,7 +104,7 @@ const fetchLicenseForE2ETesting = async (): Promise<{
     }
     return previousResult;
   } catch (error) {
-    logger.error("Error fetching license: ", error);
+    logger.error(error, "Error fetching license");
     return null;
   }
 };
@@ -255,7 +255,7 @@ export const fetchLicense = reactCache(
 
           return null;
         } catch (error) {
-          logger.error(`Error while checking license: ${error}`);
+          logger.error(error, "Error while checking license");
           return null;
         }
       },

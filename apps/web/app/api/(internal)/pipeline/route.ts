@@ -178,7 +178,7 @@ export const POST = async (request: Request) => {
       sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
         logger.error(
           { error, url: request.url, userEmail: user.email },
-          `Failed to send email to ${user.email}:`
+          `Failed to send email to ${user.email}`
         );
       })
     );

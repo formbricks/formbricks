@@ -26,7 +26,7 @@ export const actionClient = createSafeActionClient({
     }
 
     // eslint-disable-next-line no-console -- This error needs to be logged for debugging server-side errors
-    logger.error(e, "SERVER ERROR: ");
+    logger.error(e, "SERVER ERROR");
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },
 });
