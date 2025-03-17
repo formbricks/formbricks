@@ -1,23 +1,45 @@
-{{- if .Values.traefik.enabled  -}}
-apiVersion: traefik.io/v1alpha1
-kind: IngressRoute
+{{- if (.Values.ingress).enabled -}}
+{{- $applicationNameTpl := include "formbricks.name" . -}}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: {{ include "formbricks.fullname" . }}
+  name: {{ template "formbricks.name" . }}
+  namespace: {{ include "formbricks.namespace" . }}
   labels:
-    {{- include "formbricks.labels" . | nindent 4 }}
-  {{- with .Values.traefik.ingressRoute.annotations }}
-  annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    - match: Host(`{{ .Values.hostname }}`)
-      kind: Rule
-      services:
-        - name: {{ include "formbricks.fullname" . }}
-          port: {{ .Values.service.port }}
-  tls:
-    certResolver: letsencrypt
+  {{- include "formbricks.labels" $ | nindent 4 }}
+{{- if .Values.ingress.additionalLabels }}
+{{ toYaml .Values.ingress.additionalLabels | indent 4 }}
 {{- end }}
+{{- if .Values.ingress.annotations }}
+  annotations:
+{{ toYaml .Values.ingress.annotations | indent 4 }}
+{{- end }}
+spec:
+{{- if .Values.ingress.ingressClassName }}
+  ingressClassName: {{ .Values.ingress.ingressClassName }}
+{{- end}}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    - host: {{ tpl .host $ }}
+      http:
+        paths:
+        {{- if .paths }}
+        {{- range .paths }}
+        - path: {{ .path }}
+          pathType: {{ default "ImplementationSpecific" (.pathType) }}
+          backend:
+            service:
+              name: {{ default $applicationNameTpl (.serviceName) }}
+              port:
+                name: {{ default "http" (.servicePort) }}
+        {{- end }}
+        {{- else }}
+        {{ fail "Specify paths for ingress host, check values.yaml" }}
+        {{- end }}
+    {{- end -}}
+  {{- if .Values.ingress.tls }}
+  tls:
+{{ include "formbricks.tplvalues.render" (dict "value" .Values.ingress.tls "context" $) | indent 3 }}
+  {{- end -}}
+{{- end -}}

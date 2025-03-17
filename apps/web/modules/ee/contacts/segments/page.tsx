@@ -100,7 +100,7 @@ export const SegmentsPage = async ({
             description={t("environments.segments.unlock_segments_description")}
             buttons={[
               {
-                text: t("common.start_free_trial"),
+                text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/environments/${params.environmentId}/settings/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",

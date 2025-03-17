@@ -1,8 +1,4 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import {
-  getMultiLanguagePermission,
-  getRoleManagementPermission,
-} from "@/modules/ee/license-check/lib/utils";
 import { AccessView } from "@/modules/ee/teams/project-teams/components/access-view";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -37,9 +33,6 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const { isOwner, isManager } = getAccessFlags(currentUserMembership?.role);
 
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organization.billing.plan);
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
-
   const teams = await getTeamsByProjectId(project.id);
 
   if (!teams) {
@@ -50,13 +43,8 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
-        <ProjectConfigNavigation
-          environmentId={params.environmentId}
-          activeId="teams"
-          isMultiLanguageAllowed={isMultiLanguageAllowed}
-          canDoRoleManagement={canDoRoleManagement}
-        />
+      <PageHeader pageTitle={t("common.project_configuration")}>
+        <ProjectConfigNavigation environmentId={params.environmentId} activeId="teams" />
       </PageHeader>
       <AccessView environmentId={params.environmentId} teams={teams} isOwnerOrManager={isOwnerOrManager} />
     </PageContentWrapper>

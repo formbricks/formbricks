@@ -10,7 +10,7 @@ export const TagsLoading = () => {
   const { t } = useTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="tags" />
       </PageHeader>
       <SettingsCard

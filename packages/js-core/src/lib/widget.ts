@@ -74,6 +74,7 @@ const renderWidget = async (
       setIsSurveyRunning(true);
       return;
     }
+
     languageCode = displayLanguage;
   }
 

@@ -6,6 +6,7 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
   DEBUG,
   MAIL_FROM,
+  MAIL_FROM_NAME,
   SMTP_AUTHENTICATED,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -69,12 +70,13 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
     } as SMTPTransport.Options);
 
     const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
+      from: `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
     await transporter.sendMail({ ...emailDefaults, ...emailData });
 
     return true;
   } catch (error) {
+    console.error("Error in sendEmail:", error);
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
 };

@@ -36,6 +36,36 @@ export function FileInput({
   const [isUploading, setIsUploading] = useState(false);
   const [parent] = useAutoAnimate();
 
+  // Helper function to filter duplicate files
+  const filterDuplicateFiles = <T extends { name: string }>(
+    files: T[],
+    checkAgainstSelected: boolean = true
+  ): {
+    filteredFiles: T[];
+    duplicateFiles: T[];
+  } => {
+    const existingFileNames = fileUrls ? fileUrls.map(getOriginalFileNameFromUrl) : [];
+
+    const duplicateFiles = files.filter(
+      (file) =>
+        existingFileNames.includes(file.name) ||
+        (checkAgainstSelected && selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+    );
+
+    const filteredFiles = files.filter(
+      (file) =>
+        !existingFileNames.includes(file.name) &&
+        (!checkAgainstSelected || !selectedFiles.some((selectedFile) => selectedFile.name === file.name))
+    );
+
+    if (duplicateFiles.length > 0) {
+      const duplicateNames = duplicateFiles.map((file) => file.name).join(", ");
+      alert(`The following files are already uploaded: ${duplicateNames}. Duplicate files are not allowed.`);
+    }
+
+    return { filteredFiles, duplicateFiles };
+  };
+
   // Listen for the native file-upload event dispatched via window.formbricksSurveys.onFilePick
   useEffect(() => {
     const handleNativeFileUpload = async (
@@ -47,7 +77,7 @@ export function FileInput({
         setIsUploading(true);
 
         // Filter out files that exceed the maximum size
-        const filteredFiles: typeof filesFromNative = [];
+        let filteredFiles: typeof filesFromNative = [];
         const rejectedFiles: string[] = [];
 
         if (maxSizeInMB) {
@@ -66,6 +96,10 @@ export function FileInput({
           // If no size limit is specified, use all files
           filteredFiles.push(...filesFromNative);
         }
+
+        // Check for duplicate files - native uploads don't need to check against selectedFiles
+        const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(filteredFiles, false);
+        filteredFiles = nonDuplicateFiles;
 
         // Display alert for rejected files
         if (rejectedFiles.length > 0) {
@@ -113,7 +147,7 @@ export function FileInput({
   };
 
   const handleFileSelection = async (files: FileList) => {
-    const fileArray = Array.from(files);
+    let fileArray = Array.from(files);
 
     if (!allowMultipleFiles && fileArray.length > 1) {
       alert("Only one file can be uploaded at a time.");
@@ -125,8 +159,17 @@ export function FileInput({
       return;
     }
 
+    // Check for duplicate files
+    const { filteredFiles: nonDuplicateFiles } = filterDuplicateFiles(fileArray);
+
+    if (nonDuplicateFiles.length === 0) {
+      return; // No non-duplicate files to process
+    }
+
+    fileArray = nonDuplicateFiles;
+
     // filter out files that are not allowed
-    const validFiles = Array.from(files).filter((file) => {
+    const validFiles = fileArray.filter((file) => {
       const fileExtension = file.type.substring(file.type.lastIndexOf("/") + 1) as TAllowedFileExtension;
       if (allowedFileExtensions) {
         return allowedFileExtensions.includes(fileExtension);

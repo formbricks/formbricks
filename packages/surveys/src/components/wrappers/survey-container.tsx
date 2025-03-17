@@ -32,7 +32,8 @@ export function SurveyContainer({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isCenter && !isModal) return;
+    if (!isModal) return;
+    if (!isCenter) return;
 
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -49,7 +50,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, clickOutside, onClose, isCenter]);
+  }, [show, clickOutside, onClose, isCenter, isModal]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -77,6 +78,7 @@ export function SurveyContainer({
       </div>
     );
   }
+
   return (
     <div id="fbjs" className="fb-formbricks-form">
       <div
