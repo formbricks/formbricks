@@ -18,7 +18,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["@aws-sdk", "pino", "pino-pretty"],
+  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
@@ -27,10 +27,7 @@ const nextConfig = {
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {
-    instrumentationHook: true,
-    serverComponentsExternalPackages: ["@opentelemetry/instrumentation", "pino", "pino-pretty"],
-  },
+  experimental: {},
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
