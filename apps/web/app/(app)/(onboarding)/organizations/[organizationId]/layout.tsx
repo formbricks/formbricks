@@ -4,7 +4,6 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import React from "react";
 import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
 import { canUserAccessOrganization } from "@formbricks/lib/organization/auth";
 import { getOrganization } from "@formbricks/lib/organization/service";
