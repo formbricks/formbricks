@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClientWrapper } from "./IntercomClientWrapper";
@@ -11,7 +10,7 @@ vi.mock("@formbricks/lib/constants", () => ({
 }));
 
 // Mock the crypto createHmac function to return a fake hash.
-// Vite global setup doens't work here due to Intercom probably using crypto themselves.
+// Vite global setup doesn't work here due to Intercom probably using crypto themselves.
 vi.mock("crypto", () => ({
   default: {
     createHmac: vi.fn(() => ({
@@ -55,7 +54,7 @@ describe("IntercomClientWrapper", () => {
     const intercomClientEl = screen.getByTestId("mock-intercom-client");
     expect(intercomClientEl).toBeInTheDocument();
 
-    const props = JSON.parse(intercomClientEl.getAttribute("data-props") || "{}");
+    const props = JSON.parse(intercomClientEl.getAttribute("data-props") ?? "{}");
 
     expect(props.intercomUserHash).toBeUndefined();
     expect(props.intercomAppId).toBe("mock-intercom-app-id");

@@ -20,7 +20,7 @@ export const IntercomClient = ({
   const initializeIntercom = useCallback(() => {
     let initParams = {};
 
-    if (user) {
+    if (user && intercomUserHash) {
       const { id, name, email, createdAt } = user;
 
       initParams = {
@@ -45,7 +45,7 @@ export const IntercomClient = ({
           throw new Error("Intercom app ID is required");
         }
 
-        if (!intercomUserHash) {
+        if (user && !intercomUserHash) {
           throw new Error("Intercom user hash is required");
         }
 
@@ -61,7 +61,7 @@ export const IntercomClient = ({
     } catch (error) {
       console.error("Failed to initialize Intercom:", error);
     }
-  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomUserHash]);
+  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomUserHash, user]);
 
   return null;
 };

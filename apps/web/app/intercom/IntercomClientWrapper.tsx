@@ -1,5 +1,4 @@
 import { createHmac } from "crypto";
-import React from "react";
 import { INTERCOM_APP_ID, INTERCOM_SECRET_KEY, IS_INTERCOM_CONFIGURED } from "@formbricks/lib/constants";
 import type { TUser } from "@formbricks/types/user";
 import { IntercomClient } from "./IntercomClient";

@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { getServerSession } from "next-auth";
-import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUser } from "@formbricks/types/user";

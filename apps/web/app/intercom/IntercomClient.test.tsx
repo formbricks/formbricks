@@ -1,7 +1,6 @@
 import Intercom from "@intercom/messenger-js-sdk";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
-import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClient } from "./IntercomClient";
@@ -161,13 +160,19 @@ describe("IntercomClient", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  it("logs an error if isIntercomConfigured is true but no intercomSecretKey is provided", () => {
+  it("logs an error if isIntercomConfigured is true but no intercomUserHash is provided", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const testUser = {
+      id: "test-id",
+      name: "Test User",
+      email: "test@example.com",
+    } as TUser;
 
     render(
       <IntercomClient
         isIntercomConfigured={true}
         intercomAppId="some-app-id"
+        user={testUser}
         // missing intercomUserHash
       />
     );
