@@ -5,7 +5,7 @@ import * as Action from "@/lib/survey/action";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
-import { type TConfigInput } from "@/types/config";
+import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
 
 const queue = new CommandQueue();
 
@@ -74,6 +74,8 @@ const registerRouteChange = async (): Promise<void> => {
 };
 
 const formbricks = {
+  /** @deprecated Use setup() instead. This method will be removed in a future version */
+  init: (initConfig: TLegacyConfigInput) => setup(initConfig as unknown as TConfigInput),
   setup,
   setEmail,
   setAttribute,

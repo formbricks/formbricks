@@ -18,7 +18,6 @@ import {
   type TConfigInput,
   type TEnvironmentState,
   type TLegacyConfig,
-  type TLegacyConfigInput,
   type TUserState,
 } from "@/types/config";
 import {
@@ -74,7 +73,7 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
 };
 
 export const setup = async (
-  configInput: TConfigInput | TLegacyConfigInput
+  configInput: TConfigInput | (TConfigInput & { userId: string; attributes: Record<string, string> })
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
   const isDebug = getIsDebug();
   const logger = Logger.getInstance();

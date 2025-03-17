@@ -128,10 +128,12 @@ export interface TUpdates {
   attributes?: TAttributes;
 }
 
-export type TLegacyConfigInput = TConfigInput & {
+export interface TLegacyConfigInput {
+  apiHost: string;
+  environmentId: string;
   userId?: string;
   attributes?: Record<string, string>;
-};
+}
 
 export type TLegacyConfig = TConfig & {
   apiHost?: string;
