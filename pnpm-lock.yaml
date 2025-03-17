@@ -914,6 +914,9 @@ importers:
       vite:
         specifier: ^6.2.0
         version: 6.2.0(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
+      vite-plugin-dts:
+        specifier: 4.3.0
+        version: 4.3.0(@types/node@22.10.2)(rollup@4.34.8)(typescript@5.7.2)(vite@6.2.0(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0))
 
   packages/react-native:
     dependencies:
@@ -29473,6 +29476,25 @@ snapshots:
       typescript: 5.7.2
     optionalDependencies:
       vite: 6.0.9(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
+    transitivePeerDependencies:
+      - '@types/node'
+      - rollup
+      - supports-color
+
+  vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.34.8)(typescript@5.7.2)(vite@6.2.0(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)):
+    dependencies:
+      '@microsoft/api-extractor': 7.49.1(@types/node@22.10.2)
+      '@rollup/pluginutils': 5.1.4(rollup@4.34.8)
+      '@volar/typescript': 2.4.11
+      '@vue/language-core': 2.1.6(typescript@5.7.2)
+      compare-versions: 6.1.1
+      debug: 4.4.0
+      kolorist: 1.8.0
+      local-pkg: 0.5.1
+      magic-string: 0.30.17
+      typescript: 5.7.2
+    optionalDependencies:
+      vite: 6.2.0(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.2)(yaml@2.7.0)
     transitivePeerDependencies:
       - '@types/node'
       - rollup

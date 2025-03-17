@@ -223,6 +223,7 @@
     },
     "db:setup": {
       "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
       "outputs": []
     },
     "db:start": {

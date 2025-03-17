@@ -2,6 +2,7 @@
   "name": "@formbricks/database",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "main": "./src/index.ts",
   "files": [
     "src"
@@ -23,6 +24,7 @@
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {
+    "@formbricks/logger": "workspace:*",
     "@prisma/client": "6.0.1",
     "@prisma/extension-accelerate": "1.2.1",
     "dotenv-cli": "7.4.4",
@@ -30,7 +32,6 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/logger": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "prisma": "6.0.1",

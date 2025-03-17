@@ -6,6 +6,13 @@
   "homepage": "https://formbricks.com",
   "license": "MIT",
   "description": "Logger for Formbricks",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -19,7 +26,8 @@
     "clean": "rimraf .turbo node_modules coverage",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json"
+    "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
+    "build": "vite build"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
@@ -30,8 +38,7 @@
   "devDependencies": {
     "vite": "^6.2.0",
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/eslint-config": "workspace:*"
-  },
-  "main": "./src/index.ts",
-  "types": "./src/index.ts"
+    "@formbricks/eslint-config": "workspace:*",
+    "vite-plugin-dts": "4.3.0"
+  }
 }
