@@ -262,7 +262,9 @@
           "group": "Auth & SSO",
           "icon": "lock",
           "pages": [
-            "self-hosting/configuration/auth-sso/oauth",
+            "self-hosting/configuration/auth-sso/open-id-connect",
+            "self-hosting/configuration/auth-sso/azure-ad-oauth",
+            "self-hosting/configuration/auth-sso/google-oauth",
             "self-hosting/configuration/auth-sso/saml-sso"
           ]
         },
