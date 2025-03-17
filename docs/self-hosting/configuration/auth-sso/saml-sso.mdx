@@ -1,7 +1,7 @@
 ---
 title: "SAML SSO"
 icon: "user-shield"
-description: "How to set up SAML SSO for Formbricks"
+description: "Configure SAML Single Sign-On (SSO) for secure enterprise authentication with your Formbricks instance."
 ---
 
 <Note>You require an Enterprise License along with a SAML SSO add-on to avail this feature.</Note>
@@ -12,7 +12,7 @@ Formbricks supports SAML Single Sign-On (SSO) to enable secure, centralized auth
 
 To learn more about SAML Jackson, please refer to the [BoxyHQ SAML Jackson documentation](https://boxyhq.com/docs/jackson/deploy).
 
-## How SAML Works in Formbricks
+## How SAML works in Formbricks
 
 SAML (Security Assertion Markup Language) is an XML-based standard for exchanging authentication and authorization data between an Identity Provider (IdP) and Formbricks. Here's how the integration works with BoxyHQ Jackson embedded into the flow:
 
@@ -37,7 +37,7 @@ SAML (Security Assertion Markup Language) is an XML-based standard for exchangin
 7. **Access Granted:**  
    Formbricks logs the user in using the verified information.
 
-## SAML Authentication Flow Sequence Diagram
+## SAML Auth Flow Sequence Diagram
 
 Below is a sequence diagram illustrating the complete SAML authentication flow with BoxyHQ Jackson integrated:
 
@@ -67,12 +67,31 @@ sequenceDiagram
 
 To configure SAML SSO in Formbricks, follow these steps:
 
-1. **Database Setup:** Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgres://postgres:postgres@postgres:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=disable` parameter.
-2. **IdP Application:** Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
-3. **User Provisioning:** Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
-4. **Metadata:** Keep the XML metadata from your IdP handy for the next step.
-5. **Metadata Setup:** Create a file called `connection.xml` in your self-hosted Formbricks instance's `formbricks/saml-connection` directory and paste the XML metadata from your IdP into it. Please create the directory if it doesn't exist. Your metadata file should start with a tag like this: `<?xml version="1.0" encoding="UTF-8"?><...>` or `<md:EntityDescriptor entityID="...">`. Please remove any extra text from the metadata.
-6. **Restart Formbricks:** Restart Formbricks to apply the changes. You can do this by running `docker compose down` and then `docker compose up -d`.
+<Steps>
+  <Step title="Database Setup">
+    Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgres://postgres:postgres@postgres:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=disable` parameter.
+  </Step>
+
+  <Step title="IdP Application">
+    Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
+  </Step>
+
+  <Step title="User Provisioning">
+    Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
+  </Step>
+
+  <Step title="Metadata">
+    Keep the XML metadata from your IdP handy for the next step.
+  </Step>
+
+  <Step title="Metadata Setup">
+    Create a file called `connection.xml` in your self-hosted Formbricks instance's `formbricks/saml-connection` directory and paste the XML metadata from your IdP into it. Please create the directory if it doesn't exist. Your metadata file should start with a tag like this: `<?xml version="1.0" encoding="UTF-8"?><...>` or `<md:EntityDescriptor entityID="...">`. Please remove any extra text from the metadata.
+  </Step>
+
+  <Step title="Restart Formbricks">
+    Restart Formbricks to apply the changes. You can do this by running `docker compose down` and then `docker compose up -d`.
+  </Step>
+</Steps>
 
 <Note>
   We don't support multiple SAML connections yet. You can only have one SAML connection at a time. If you
