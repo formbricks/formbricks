@@ -91,7 +91,7 @@ export const POST = async (request: Request) => {
         data: response,
       }),
     }).catch((error) => {
-      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed:`);
+      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
     })
   );
 
