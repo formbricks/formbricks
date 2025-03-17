@@ -103,6 +103,17 @@ export const sendUpdates = async ({
   } catch (e) {
     console.error("error in sending updates: ", e);
 
+    if ("code" in (e as ApiErrorResponse)) {
+      const errorTyped = e as ApiErrorResponse;
+      return err({
+        code: errorTyped.code,
+        message: errorTyped.message,
+        status: errorTyped.status,
+        url: new URL(url),
+        responseMessage: errorTyped.responseMessage,
+      });
+    }
+
     return err({
       code: "network_error",
       message: "Error sending updates",

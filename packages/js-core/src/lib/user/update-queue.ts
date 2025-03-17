@@ -130,7 +130,9 @@ export class UpdateQueue {
               if (result.ok) {
                 logger.debug("Updates sent successfully");
               } else {
-                logger.error("Failed to send updates");
+                logger.error(
+                  `Failed to send updates: ${result.error.responseMessage ?? result.error.message}`
+                );
               }
             }
           }

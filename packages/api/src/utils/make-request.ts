@@ -28,7 +28,7 @@ export const makeRequest = async <T>(
   if (!response.ok) {
     const errorResponse = json as ApiErrorResponse;
     return err({
-      code: errorResponse.code === "forbidden" ? "forbidden" : "network_error",
+      code: errorResponse.code,
       status: response.status,
       message: errorResponse.message || "Something went wrong",
       url,

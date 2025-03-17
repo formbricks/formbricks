@@ -33,3 +33,45 @@ export interface SurveyBaseProps {
 export interface SurveyInlineProps extends SurveyBaseProps {
   containerId: string;
 }
+
+export type TActionClassPageUrlRule =
+  | "exactMatch"
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "notMatch"
+  | "notContains";
+
+export type TActionClassNoCodeConfig =
+  | {
+      type: "click";
+      urlFilters: {
+        value: string;
+        rule: TActionClassPageUrlRule;
+      }[];
+      elementSelector: {
+        cssSelector?: string | undefined;
+        innerHtml?: string | undefined;
+      };
+    }
+  | {
+      type: "pageView";
+      urlFilters: {
+        value: string;
+        rule: TActionClassPageUrlRule;
+      }[];
+    }
+  | {
+      type: "exitIntent";
+      urlFilters: {
+        value: string;
+        rule: TActionClassPageUrlRule;
+      }[];
+    }
+  | {
+      type: "fiftyPercentScroll";
+      urlFilters: {
+        value: string;
+        rule: TActionClassPageUrlRule;
+      }[];
+    };

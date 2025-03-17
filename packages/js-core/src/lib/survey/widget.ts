@@ -1,6 +1,4 @@
 /* eslint-disable no-console -- Required for error logging */
-import { type TJsPersonState } from "@formbricks/types/js";
-import { type TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID } from "@/lib/common/constants";
 import { Logger } from "@/lib/common/logger";
@@ -34,11 +32,7 @@ export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: st
   await renderWidget(survey, action);
 };
 
-export const renderWidget = async (
-  survey: TEnvironmentStateSurvey,
-  action?: string,
-  hiddenFields: TResponseHiddenFieldValue = {}
-): Promise<void> => {
+export const renderWidget = async (survey: TEnvironmentStateSurvey, action?: string): Promise<void> => {
   const logger = Logger.getInstance();
   const config = Config.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
@@ -119,7 +113,7 @@ export const renderWidget = async (
       },
       onResponseCreated: () => {
         const responses = config.get().user.data.responses;
-        const newPersonState: TJsPersonState = {
+        const newPersonState: TUserState = {
           ...config.get().user,
           data: {
             ...config.get().user.data,
@@ -137,7 +131,6 @@ export const renderWidget = async (
         });
       },
       onClose: closeSurvey,
-      hiddenFieldsRecord: hiddenFields,
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
   }, survey.delay * 1000);
