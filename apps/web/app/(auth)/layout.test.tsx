@@ -1,6 +1,5 @@
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
-import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import AppLayout from "../(auth)/layout";
 
@@ -11,8 +10,8 @@ vi.mock("@formbricks/lib/constants", () => ({
   INTERCOM_APP_ID: "mock-intercom-app-id",
 }));
 
-vi.mock("@/app/IntercomClient", () => ({
-  IntercomClient: () => <div data-testid="mock-intercom" />,
+vi.mock("@/app/intercom/IntercomClientWrapper", () => ({
+  IntercomClientWrapper: () => <div data-testid="mock-intercom-wrapper" />,
 }));
 vi.mock("@/modules/ui/components/no-mobile-overlay", () => ({
   NoMobileOverlay: () => <div data-testid="mock-no-mobile-overlay" />,
@@ -29,7 +28,7 @@ describe("(auth) AppLayout", () => {
     render(appLayoutElement);
 
     expect(screen.getByTestId("mock-no-mobile-overlay")).toBeInTheDocument();
-    expect(screen.getByTestId("mock-intercom")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-intercom-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toHaveTextContent(childContentText);
   });
 });

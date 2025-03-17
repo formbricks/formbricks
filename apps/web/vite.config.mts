@@ -1,6 +1,7 @@
 // vitest.config.ts
 import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -33,8 +34,8 @@ export default defineConfig({
         "modules/ee/sso/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
-        "app/IntercomClient.tsx",
         "app/layout.tsx",
+        "app/intercom/*.tsx",
       ],
       exclude: [
         "**/.next/**",
@@ -48,5 +49,5 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [tsconfigPaths()],
+  plugins: [tsconfigPaths(), react()],
 });

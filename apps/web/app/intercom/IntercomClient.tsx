@@ -1,33 +1,31 @@
 "use client";
 
 import Intercom from "@intercom/messenger-js-sdk";
-import { createHmac } from "crypto";
 import { useCallback, useEffect } from "react";
 import { TUser } from "@formbricks/types/user";
 
 interface IntercomClientProps {
   isIntercomConfigured: boolean;
-  intercomSecretKey?: string;
+  intercomUserHash?: string;
   user?: TUser | null;
   intercomAppId?: string;
 }
 
 export const IntercomClient = ({
   user,
-  intercomSecretKey,
+  intercomUserHash,
   isIntercomConfigured,
   intercomAppId,
 }: IntercomClientProps) => {
   const initializeIntercom = useCallback(() => {
     let initParams = {};
 
-    if (user) {
+    if (user && intercomUserHash) {
       const { id, name, email, createdAt } = user;
-      const hash = createHmac("sha256", intercomSecretKey!).update(user?.id).digest("hex");
 
       initParams = {
         user_id: id,
-        user_hash: hash,
+        user_hash: intercomUserHash,
         name,
         email,
         created_at: createdAt ? Math.floor(createdAt.getTime() / 1000) : undefined,
@@ -38,7 +36,7 @@ export const IntercomClient = ({
       app_id: intercomAppId!,
       ...initParams,
     });
-  }, [user, intercomSecretKey, intercomAppId]);
+  }, [user, intercomUserHash, intercomAppId]);
 
   useEffect(() => {
     try {
@@ -47,8 +45,8 @@ export const IntercomClient = ({
           throw new Error("Intercom app ID is required");
         }
 
-        if (!intercomSecretKey) {
-          throw new Error("Intercom secret key is required");
+        if (user && !intercomUserHash) {
+          throw new Error("Intercom user hash is required");
         }
 
         initializeIntercom();
@@ -63,7 +61,7 @@ export const IntercomClient = ({
     } catch (error) {
       console.error("Failed to initialize Intercom:", error);
     }
-  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomSecretKey]);
+  }, [isIntercomConfigured, initializeIntercom, intercomAppId, intercomUserHash, user]);
 
   return null;
 };
