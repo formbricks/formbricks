@@ -23,7 +23,7 @@ enterprise:
 deployment:
   # Deployment strategy configuration
   strategy:
-    type: RollingUpdate  # Type of deployment strategy (RollingUpdate/Recreate)
+    type: RollingUpdate # Type of deployment strategy (RollingUpdate/Recreate)
     # rollingUpdate:
     #   maxSurge: 25%
     #   maxUnavailable: 25%
@@ -64,6 +64,7 @@ deployment:
       value: "1"
     PASSWORD_RESET_DISABLED:
       value: "1"
+    DOCKER_CRON_ENABLED: "0" # Disable Docker cron jobs when using Kubernetes CronJobs
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
@@ -80,7 +81,7 @@ deployment:
   # Application container image
   image:
     repository: "ghcr.io/formbricks/formbricks"
-    digest: ""  # If set, digest takes precedence over the tag
+    digest: "" # If set, digest takes precedence over the tag
     pullPolicy: IfNotPresent
 
   # Health probes configuration
@@ -148,11 +149,11 @@ deployment:
 # Horizontal Pod Autoscaler (HPA)
 ##########################################################
 autoscaling:
-  enabled: true  # Enable/disable HPA
-  additionalLabels: {}  # Additional labels for the HPA resource
-  annotations: {}  # Annotations for HPA
-  minReplicas: 1  # Minimum number of replicas
-  maxReplicas: 10  # Maximum number of replicas
+  enabled: true # Enable/disable HPA
+  additionalLabels: {} # Additional labels for the HPA resource
+  annotations: {} # Annotations for HPA
+  minReplicas: 1 # Minimum number of replicas
+  maxReplicas: 10 # Maximum number of replicas
   metrics:
     - type: Resource
       resource:
@@ -171,29 +172,29 @@ autoscaling:
 # Service Configuration
 ##########################################################
 service:
-  enabled: true  # Enable/disable Kubernetes Service
-  additionalLabels: {}  # Additional labels for Service
-  annotations: {}  # Annotations for Service
-  type: ClusterIP  # Service type (ClusterIP, NodePort, LoadBalancer)
-  ports: []  # Additional ports
+  enabled: true # Enable/disable Kubernetes Service
+  additionalLabels: {} # Additional labels for Service
+  annotations: {} # Annotations for Service
+  type: ClusterIP # Service type (ClusterIP, NodePort, LoadBalancer)
+  ports: [] # Additional ports
 
 ##########################################################
 # Role-Based Access Control (RBAC)
 ##########################################################
 rbac:
-  enabled: false  # Enable/disable RBAC
+  enabled: false # Enable/disable RBAC
   serviceAccount:
-    enabled: false  # Enable/disable ServiceAccount
-    name: ""  # Custom ServiceAccount name
-    additionalLabels: {}  # Additional labels
-    annotations: {}  # Annotations
+    enabled: false # Enable/disable ServiceAccount
+    name: "" # Custom ServiceAccount name
+    additionalLabels: {} # Additional labels
+    annotations: {} # Annotations
 
 ##########################################################
 # Cron Job Configuration
 ##########################################################
 cronJob:
-  enabled: false  # Enable/disable CronJobs
-  jobs: {}  # Define cron jobs
+  enabled: false # Enable/disable CronJobs
+  jobs: {} # Define cron jobs
 
 ##########################################################
 # Kubernetes Secret Configuration (Quick Start)
@@ -205,33 +206,32 @@ secret:
 # External Secrets Configuration
 ##########################################################
 externalSecret:
-  enabled: false  # Enable/disable ExternalSecrets
+  enabled: false # Enable/disable ExternalSecrets
   secretStore:
-    name: aws-secrets-manager  # Secret store reference name
-    kind: ClusterSecretStore  # Type of secret store
-  refreshInterval: "1h"  # Frequency of secret sync
+    name: aws-secrets-manager # Secret store reference name
+    kind: ClusterSecretStore # Type of secret store
+  refreshInterval: "1h" # Frequency of secret sync
   files: {}
 
 ##########################################################
 # Ingress Configuration
 ##########################################################
 ingress:
-  enabled: false  # Enable/disable Ingress
-  ingressClassName: alb  # Specify the Ingress class
+  enabled: false # Enable/disable Ingress
+  ingressClassName: alb # Specify the Ingress class
   hosts:
     - host: k8s.formbricks.com
       paths:
         - path: /
           pathType: "Prefix"
           serviceName: "formbricks"
-  annotations: {}  # Ingress annotations
-
+  annotations: {} # Ingress annotations
 
 ##########################################################
 # Redis Configuration
 ##########################################################
 redis:
-  enabled: true  # Enable/disable Redis
+  enabled: true # Enable/disable Redis
   externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
   architecture: standalone
@@ -269,7 +269,7 @@ serviceMonitor:
 # PostgreSQL Configuration
 ##########################################################
 postgresql:
-  enabled: true  # Enable/disable PostgreSQL
+  enabled: true # Enable/disable PostgreSQL
   externalDatabaseUrl: ""
   global:
     security:
