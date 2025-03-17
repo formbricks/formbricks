@@ -647,10 +647,6 @@ resource "helm_release" "formbricks" {
         value: ${module.s3-bucket.s3_bucket_id}
       RATE_LIMITING_DISABLED:
         value: "1"
-      EMAIL_VERIFICATION_DISABLED:
-        value: "0"
-      PASSWORD_RESET_DISABLED:
-        value: "0"
     envFrom:
       app-env:
         type: secret
