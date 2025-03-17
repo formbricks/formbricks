@@ -651,11 +651,6 @@ resource "helm_release" "formbricks" {
         value: "0"
       PASSWORD_RESET_DISABLED:
         value: "0"
-      ENTERPRISE_LICENSE_KEY:
-        valueFrom:
-          secretKeyRef:
-            name: formbricks-enterpreise-license-key
-            key: "ENTERPRISE_LICENSE_KEY"
     envFrom:
       app-env:
         type: secret
