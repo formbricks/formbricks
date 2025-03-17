@@ -8,6 +8,7 @@ export const authenticateRequest = async (
   request: Request
 ): Promise<Result<TAuthenticationApiKey, ApiErrorResponseV2>> => {
   const apiKey = request.headers.get("x-api-key");
+
   if (apiKey) {
     const environmentIdResult = await getEnvironmentIdFromApiKey(apiKey);
     if (!environmentIdResult.ok) {
