@@ -64,6 +64,8 @@ deployment:
       value: "1"
     PASSWORD_RESET_DISABLED:
       value: "1"
+    DOCKER_CRON_ENABLED:
+      value: "0"
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
