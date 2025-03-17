@@ -119,6 +119,7 @@
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_SECRET_KEY",
         "MAIL_FROM",
+        "MAIL_FROM_NAME",
         "NEXT_PUBLIC_LAYER_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
@@ -184,7 +185,9 @@
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
-        "UNKEY_ROOT_KEY"
+        "UNKEY_ROOT_KEY",
+        "PROMETHEUS_ENABLED",
+        "PROMETHEUS_EXPORTER_PORT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

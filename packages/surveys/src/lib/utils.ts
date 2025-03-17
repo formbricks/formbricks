@@ -45,22 +45,23 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+
   const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
-  } else if (shuffleOption === "exceptLast") {
-    if (otherOption) {
+  }
+  if (shuffleOption === "exceptLast") {
+    const lastElement = shuffledChoices.pop();
+    if (lastElement) {
       shuffle(shuffledChoices);
-    } else {
-      const lastElement = shuffledChoices.pop();
-      if (lastElement) {
-        shuffle(shuffledChoices);
-        shuffledChoices.push(lastElement);
-      }
+      shuffledChoices.push(lastElement);
     }
   }
-  if (otherOption) shuffledChoices.push(otherOption);
+
+  if (otherOption) {
+    shuffledChoices.push(otherOption);
+  }
 
   return shuffledChoices.map((choice) => choice.id);
 };

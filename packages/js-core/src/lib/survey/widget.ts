@@ -68,6 +68,7 @@ export const renderWidget = async (
       setIsSurveyRunning(false);
       return;
     }
+
     languageCode = displayLanguage;
   }
 
