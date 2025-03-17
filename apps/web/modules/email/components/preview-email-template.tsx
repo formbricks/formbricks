@@ -51,37 +51,12 @@ export async function PreviewEmailTemplate({
   styling,
   t,
 }: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
-  const hiddenFieldIds = survey.hiddenFields.fieldIds;
   const url = `${surveyUrl}?preview=true`;
-  const hiddenFieldResponseMap = {};
-
-  // Extract query parameters from URL
-  const queryString = url.split("?")[1];
-  if (queryString) {
-    const queryParams = queryString.split("&");
-    queryParams.forEach((param) => {
-      const [key, value] = param.split("=");
-      if (hiddenFieldIds?.includes(key)) {
-        hiddenFieldResponseMap[key] = value;
-      }
-    });
-  }
-
-  const urlWithPrefilling = `${surveyUrl}?${Object.entries(hiddenFieldResponseMap)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("&")}`;
+  const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
-  const headline = parseRecallInfo(
-    getLocalizedValue(firstQuestion.headline, defaultLanguageCode),
-    hiddenFieldResponseMap,
-    {}
-  );
-  const subheader = parseRecallInfo(
-    getLocalizedValue(firstQuestion.subheader, defaultLanguageCode),
-    hiddenFieldResponseMap,
-    {}
-  );
+  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode), {}, {});
+  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode), {}, {});
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
