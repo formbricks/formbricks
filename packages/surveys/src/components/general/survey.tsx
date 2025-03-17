@@ -36,6 +36,7 @@ interface VariableStackEntry {
 export function Survey({
   apiHost,
   environmentId,
+  isPreviewMode = false,
   userId,
   contactId,
   mode,
@@ -120,6 +121,8 @@ export function Survey({
     return null;
   }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   const [localSurvey, setlocalSurvey] = useState<TJsEnvironmentStateSurvey>(survey);
   const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
 
@@ -148,7 +151,6 @@ export function Survey({
     return localSurvey.questions[0]?.id;
   });
   const [showError, setShowError] = useState(false);
-  // flag state to store whether response processing has been completed or not, we ignore this check for survey editor preview and link survey preview where getSetIsResponseSendingFinished is undefined
   const [isResponseSendingFinished, setIsResponseSendingFinished] = useState(
     !getSetIsResponseSendingFinished
   );
@@ -180,6 +182,11 @@ export function Survey({
   };
 
   const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
+    if (isPreviewMode) {
+      // return mock url since an url is required for the preview
+      return `https://example.com/${file.name}`;
+    }
+
     if (!apiClient) {
       throw new Error("apiClient not initialized");
     }
@@ -204,6 +211,17 @@ export function Survey({
   }, [questionId]);
 
   const createDisplay = useCallback(async () => {
+    // Skip display creation in preview mode but still trigger the onDisplayCreated callback
+    if (isPreviewMode) {
+      if (onDisplayCreated) {
+        onDisplayCreated();
+      }
+      if (onDisplay) {
+        onDisplay();
+      }
+      return;
+    }
+
     if (apiClient && surveyState && responseQueue) {
       try {
         const display = await apiClient.createDisplay({
@@ -227,7 +245,17 @@ export function Survey({
         console.error("error creating display: ", err);
       }
     }
-  }, [apiClient, surveyState, responseQueue, survey.id, userId, contactId, onDisplayCreated]);
+  }, [
+    apiClient,
+    surveyState,
+    responseQueue,
+    survey.id,
+    userId,
+    contactId,
+    onDisplayCreated,
+    isPreviewMode,
+    onDisplay,
+  ]);
 
   useEffect(() => {
     // call onDisplay when component is mounted
@@ -383,6 +411,32 @@ export function Survey({
 
   const onResponseCreateOrUpdate = useCallback(
     (responseUpdate: TResponseUpdate) => {
+      // Always trigger the onResponse callback even in preview mode
+      if (!apiHost || !environmentId) {
+        onResponse?.({
+          data: responseUpdate.data,
+          ttc: responseUpdate.ttc,
+          finished: responseUpdate.finished,
+          variables: responseUpdate.variables,
+          language: responseUpdate.language,
+          endingId: responseUpdate.endingId,
+        });
+        return;
+      }
+
+      // Skip response creation in preview mode but still trigger the onResponseCreated callback
+      if (isPreviewMode) {
+        if (onResponseCreated) {
+          onResponseCreated();
+        }
+
+        // When in preview mode, set isResponseSendingFinished to true if the response is finished
+        if (responseUpdate.finished) {
+          setIsResponseSendingFinished(true);
+        }
+        return;
+      }
+
       if (surveyState && responseQueue) {
         if (contactId) {
           surveyState.updateContactId(contactId);
@@ -413,7 +467,20 @@ export function Survey({
         }
       }
     },
-    [surveyState, responseQueue, contactId, userId, survey, action, hiddenFieldsRecord, onResponseCreated]
+    [
+      apiHost,
+      environmentId,
+      isPreviewMode,
+      surveyState,
+      responseQueue,
+      contactId,
+      userId,
+      survey,
+      action,
+      hiddenFieldsRecord,
+      onResponseCreated,
+      onResponse,
+    ]
   );
 
   useEffect(() => {
@@ -444,25 +511,14 @@ export function Survey({
     onChange(surveyResponseData);
     onChangeVariables(calculatedVariables);
 
-    if (apiHost && environmentId) {
-      onResponseCreateOrUpdate({
-        data: surveyResponseData,
-        ttc: responsettc,
-        finished,
-        variables: calculatedVariables,
-        language: selectedLanguage,
-        endingId,
-      });
-    } else {
-      onResponse?.({
-        data: surveyResponseData,
-        ttc: responsettc,
-        finished,
-        variables: calculatedVariables,
-        language: selectedLanguage,
-        endingId,
-      });
-    }
+    onResponseCreateOrUpdate({
+      data: surveyResponseData,
+      ttc: responsettc,
+      finished,
+      variables: calculatedVariables,
+      language: selectedLanguage,
+      endingId,
+    });
 
     if (nextQuestionId) {
       setQuestionId(nextQuestionId);
@@ -571,7 +627,7 @@ export function Survey({
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
-              onFileUpload={apiHost && environmentId ? onFileUploadApi : onFileUpload!}
+              onFileUpload={onFileUpload ?? onFileUploadApi}
               isFirstQuestion={question.id === localSurvey.questions[0]?.id}
               skipPrefilled={skipPrefilled}
               prefilledQuestionValue={getQuestionPrefillData(question.id, offset)}
@@ -588,7 +644,12 @@ export function Survey({
     };
 
     return (
-      <AutoCloseWrapper survey={localSurvey} onClose={onClose} offset={offset}>
+      <AutoCloseWrapper
+        survey={localSurvey}
+        onClose={onClose}
+        questionIdx={questionIdx}
+        hasInteracted={hasInteracted}
+        setHasInteracted={setHasInteracted}>
         <div
           className={cn(
             "fb-no-scrollbar fb-bg-survey-bg fb-flex fb-h-full fb-w-full fb-flex-col fb-justify-between fb-overflow-hidden fb-transition-all fb-duration-1000 fb-ease-in-out",
@@ -614,7 +675,7 @@ export function Survey({
           </div>
           <div className="fb-space-y-4">
             {isBrandingEnabled ? <FormbricksBranding /> : null}
-            {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : null}
+            {showProgressBar ? <ProgressBar survey={localSurvey} questionId={questionId} /> : <div></div>}
           </div>
         </div>
       </AutoCloseWrapper>

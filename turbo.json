@@ -10,6 +10,9 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#setup": {
+      "dependsOn": ["db:up"]
+    },
     "@formbricks/demo#go": {
       "cache": false,
       "dependsOn": ["@formbricks/js#build"],
@@ -119,6 +122,7 @@
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_SECRET_KEY",
         "MAIL_FROM",
+        "MAIL_FROM_NAME",
         "NEXT_PUBLIC_LAYER_API_KEY",
         "NEXT_PUBLIC_DOCSEARCH_APP_ID",
         "NEXT_PUBLIC_DOCSEARCH_API_KEY",
@@ -185,7 +189,9 @@
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
-        "UNKEY_ROOT_KEY"
+        "UNKEY_ROOT_KEY",
+        "PROMETHEUS_ENABLED",
+        "PROMETHEUS_EXPORTER_PORT"
       ],
       "outputs": ["dist/**", ".next/**"]
     },
@@ -221,6 +227,10 @@
     },
     "db:start": {
       "cache": false
+    },
+    "db:up": {
+      "cache": false,
+      "outputs": []
     },
     "dev": {
       "cache": false,
