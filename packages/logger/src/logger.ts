@@ -82,17 +82,30 @@ const handleShutdown = (event: string, err?: Error): void => {
   logger.flush();
 };
 
-process.on("uncaughtException", (err) => {
-  handleShutdown("uncaughtException", err);
-});
-process.on("unhandledRejection", (err) => {
-  handleShutdown("unhandledRejection", err as Error);
-});
-process.on("SIGTERM", () => {
-  handleShutdown("SIGTERM");
-});
-process.on("SIGINT", () => {
-  handleShutdown("SIGINT");
-});
+// Create a separate function for attaching Node.js process handlers
+const attachNodeProcessHandlers = (): void => {
+  process.on("uncaughtException", (err) => {
+    handleShutdown("uncaughtException", err);
+  });
+  process.on("unhandledRejection", (err) => {
+    handleShutdown("unhandledRejection", err as Error);
+  });
+  process.on("SIGTERM", () => {
+    handleShutdown("SIGTERM");
+  });
+  process.on("SIGINT", () => {
+    handleShutdown("SIGINT");
+  });
+};
+
+// Only attach process event handlers in Node.js environment, not in Edge Runtime
+// Using typeof window check to differentiate between browser/edge and Node.js environments
+if (typeof window === "undefined" && typeof process !== "undefined") {
+  try {
+    attachNodeProcessHandlers();
+  } catch (e) {
+    logger.error(e, "Error attaching process event handlers");
+  }
+}
 
 export { extendedLogger as logger };
