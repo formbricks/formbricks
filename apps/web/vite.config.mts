@@ -36,6 +36,7 @@ export default defineConfig({
         "app/(app)/layout.tsx",
         "app/layout.tsx",
         "app/intercom/*.tsx",
+        "app/sentry/*.tsx",
       ],
       exclude: [
         "**/.next/**",

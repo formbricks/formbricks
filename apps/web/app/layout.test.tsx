@@ -29,6 +29,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
+  SENTRY_DNS: "mock-sentry-dsn",
 }));
 
 vi.mock("@/tolgee/language", () => ({
@@ -69,6 +70,15 @@ vi.mock("@/tolgee/client", () => ({
   ),
 }));
 
+vi.mock("@/app/sentry/SentryProvider", () => ({
+  SentryProvider: ({ children, sentryDns }: { children: React.ReactNode; sentryDns?: string }) => (
+    <div data-testid="sentry-provider">
+      SentryProvider: {sentryDns}
+      {children}
+    </div>
+  ),
+}));
+
 describe("RootLayout", () => {
   beforeEach(() => {
     cleanup();
@@ -97,6 +107,7 @@ describe("RootLayout", () => {
     expect(screen.getByTestId("speed-insights")).toBeInTheDocument();
     expect(screen.getByTestId("ph-provider")).toBeInTheDocument();
     expect(screen.getByTestId("tolgee-next-provider")).toBeInTheDocument();
+    expect(screen.getByTestId("sentry-provider")).toBeInTheDocument();
     expect(screen.getByTestId("child")).toHaveTextContent("Child Content");
   });
 });

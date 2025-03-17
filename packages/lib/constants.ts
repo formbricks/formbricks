@@ -284,6 +284,6 @@ export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 
-export const SENTRY_DSN = env.SENTRY_DSN;
+export const SENTRY_DNS = env.SENTRY_DNS;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";

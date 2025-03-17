@@ -163,7 +163,7 @@
         "S3_REGION",
         "S3_SECRET_KEY",
         "SAML_DATABASE_URL",
-        "SENTRY_DSN",
+        "SENTRY_DNS",
         "SIGNUP_DISABLED",
         "SLACK_CLIENT_ID",
         "SLACK_CLIENT_SECRET",

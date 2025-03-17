@@ -3,20 +3,16 @@
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
-export default function SentryProvider({ children }: { children: React.ReactNode }) {
+interface SentryProviderProps {
+  children: React.ReactNode;
+  sentryDns?: string;
+}
+
+export const SentryProvider = ({ children, sentryDns }: SentryProviderProps) => {
   useEffect(() => {
-    // Shutdown any existing Sentry instance
-    if (typeof window !== "undefined" && (window as any).__SENTRY__ && (window as any).__SENTRY__.hub) {
-      console.log("Shutting down existing Sentry client");
-      Sentry.close();
-    }
-
-    // Check for DSN at runtime
-    const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-
-    if (dsn) {
+    if (sentryDns) {
       Sentry.init({
-        dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+        dsn: sentryDns,
 
         // Adjust this value in production, or use tracesSampler for greater control
         tracesSampleRate: 1,
@@ -51,13 +47,7 @@ export default function SentryProvider({ children }: { children: React.ReactNode
         },
       });
     }
-
-    // Clean up when component unmounts
-    return () => {
-      // Optional: close Sentry if needed
-      // Sentry.close();
-    };
   }, []);
 
   return <>{children}</>;
-}
+};

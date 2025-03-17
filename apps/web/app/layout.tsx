@@ -1,3 +1,4 @@
+import { SentryProvider } from "@/app/sentry/SentryProvider";
 import { PHProvider } from "@/modules/ui/components/post-hog-client";
 import { TolgeeNextProvider } from "@/tolgee/client";
 import { getLocale } from "@/tolgee/language";
@@ -6,9 +7,8 @@ import { TolgeeStaticData } from "@tolgee/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import React from "react";
-import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
+import { IS_POSTHOG_CONFIGURED, SENTRY_DNS } from "@formbricks/lib/constants";
 import "../modules/ui/globals.css";
-import SentryProvider from "./components/SentryProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -28,7 +28,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
         {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
-        <SentryProvider>
+        <SentryProvider sentryDns={SENTRY_DNS}>
           <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
             <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
               {children}
