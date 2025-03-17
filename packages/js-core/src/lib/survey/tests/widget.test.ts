@@ -3,14 +3,7 @@ import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
-import {
-  addWidgetContainer,
-  closeSurvey,
-  removeWidgetContainer,
-  renderWidget,
-  setIsSurveyRunning,
-  triggerSurvey,
-} from "@/lib/survey/widget";
+import * as widget from "@/lib/survey/widget";
 import { type TEnvironmentStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/common/config", () => ({
@@ -72,14 +65,14 @@ describe("widget-file", () => {
   });
 
   test("setIsSurveyRunning toggles internal state (covered by usage in other tests)", () => {
-    setIsSurveyRunning(true);
+    widget.setIsSurveyRunning(true);
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {
     getInstanceLoggerMock.mockReturnValue(mockLogger as unknown as Logger);
     (shouldDisplayBasedOnPercentage as Mock).mockReturnValueOnce(false);
 
-    await triggerSurvey(mockSurvey);
+    await widget.triggerSurvey(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey display of "${mockSurvey.name}" skipped based on displayPercentage.`
@@ -89,7 +82,9 @@ describe("widget-file", () => {
   test("triggerSurvey calls renderWidget if displayPercentage is not an issue", async () => {
     (shouldDisplayBasedOnPercentage as Mock).mockReturnValueOnce(true);
 
-    await triggerSurvey(mockSurvey);
+    await widget.triggerSurvey(mockSurvey);
+
+    expect(mockLogger.debug).toHaveBeenCalledWith("A survey is already running. Skipping.");
   });
 
   test("renderWidget sets isSurveyRunning, handles delay, loads formbricksSurveys, and calls .renderSurvey", async () => {
@@ -124,7 +119,7 @@ describe("widget-file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
 
     (filterSurveys as Mock).mockReturnValue([]);
-    setIsSurveyRunning(false);
+    widget.setIsSurveyRunning(false);
 
     // @ts-expect-error -- mock window.formbricksSurveys
     window.formbricksSurveys = {
@@ -133,7 +128,7 @@ describe("widget-file", () => {
 
     vi.useFakeTimers();
 
-    await renderWidget(mockSurvey);
+    await widget.renderWidget(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Delaying survey "${mockSurvey.name}" by ${mockSurvey.delay.toString()} seconds.`
@@ -153,8 +148,8 @@ describe("widget-file", () => {
   });
 
   test("renderWidget short-circuits if isSurveyRunning is already true", async () => {
-    setIsSurveyRunning(true);
-    await renderWidget(mockSurvey);
+    widget.setIsSurveyRunning(true);
+    await widget.renderWidget(mockSurvey);
     expect(mockLogger.debug).toHaveBeenCalledWith("A survey is already running. Skipping.");
   });
 
@@ -194,10 +189,10 @@ describe("widget-file", () => {
       languages: [{ language: { code: "en" } }, { language: { code: "fr" } }],
     };
 
-    setIsSurveyRunning(false);
+    widget.setIsSurveyRunning(false);
     (getLanguageCode as Mock).mockReturnValueOnce(undefined); // means "not available"
 
-    await renderWidget(mockSurveyNoDelay as unknown as TEnvironmentStateSurvey);
+    await widget.renderWidget(mockSurveyNoDelay as unknown as TEnvironmentStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey "${mockSurvey.name}" is not available in specified language.`
@@ -235,7 +230,7 @@ describe("widget-file", () => {
     getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
 
     document.body.innerHTML = `<div id="formbricks-container"></div>`;
-    closeSurvey();
+    widget.closeSurvey();
     expect(document.getElementById("formbricks-container")).toBeFalsy();
 
     expect(mockConfigValue.update).toHaveBeenCalled();
@@ -243,14 +238,14 @@ describe("widget-file", () => {
 
   test("addWidgetContainer creates #formbricks-container in DOM", () => {
     expect(document.getElementById("formbricks-container")).toBeFalsy();
-    addWidgetContainer();
+    widget.addWidgetContainer();
     const el = document.getElementById("formbricks-container");
     expect(el).not.toBeNull();
   });
 
   test("removeWidgetContainer removes #formbricks-container if it exists", () => {
     document.body.innerHTML = `<div id="formbricks-container"></div>`;
-    removeWidgetContainer();
+    widget.removeWidgetContainer();
     expect(document.getElementById("formbricks-container")).toBeFalsy();
   });
 });
