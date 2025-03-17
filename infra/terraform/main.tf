@@ -32,11 +32,6 @@ module "route53_zones" {
   }
 }
 
-output "route53_ns_records" {
-  value = module.route53_zones.route53_zone_name_servers
-}
-
-
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "5.1.1"
@@ -641,6 +636,7 @@ resource "helm_release" "formbricks" {
         eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
   serviceMonitor:
     enabled: true
+  reloadOnChange: true
   deployment:
     image:
       repository: "ghcr.io/formbricks/formbricks-experimental"
@@ -651,18 +647,27 @@ resource "helm_release" "formbricks" {
         value: ${module.s3-bucket.s3_bucket_id}
       RATE_LIMITING_DISABLED:
         value: "1"
+      EMAIL_VERIFICATION_DISABLED:
+        value: "0"
+      PASSWORD_RESET_DISABLED:
+        value: "0"
+      ENTERPRISE_LICENSE_KEY:
+        valueFrom:
+          secretKeyRef:
+            name: formbricks-enterpreise-license-key
+            key: "ENTERPRISE_LICENSE_KEY"
     envFrom:
       app-env:
         type: secret
         nameSuffix: app-env
     annotations:
-      deployed_at: ${timestamp()}
+      last_updated_at: ${timestamp()}
   externalSecret:
     enabled: true  # Enable/disable ExternalSecrets
     secretStore:
       name: aws-secrets-manager
       kind: ClusterSecretStore
-    refreshInterval: "1h"
+    refreshInterval: "1m"
     files:
       app-env:
         dataFrom:
@@ -670,6 +675,72 @@ resource "helm_release" "formbricks" {
       app-secrets:
         dataFrom:
           key: "prod/formbricks/secrets"
+  cronJob:
+    enabled: true
+    jobs:
+      survey-status:
+        schedule: "0 0 * * *"
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/survey-status"'
+      weekely-summary:
+        schedule: "0 8 * * 1"
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/weekly-summary"'
+      ping:
+        schedule: "0 9 * * *"
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/ping"'
   EOT
   ]
 }

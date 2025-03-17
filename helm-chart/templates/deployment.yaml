@@ -13,6 +13,9 @@ metadata:
     {{- if .Values.deployment.annotations }}
     {{- toYaml .Values.deployment.annotations | nindent 4 }}
     {{- end }}
+  {{- if .Values.deployment.reloadOnChange }}
+    reloader.stakater.com/auto: "true"
+  {{- end }}
   {{- end }}
 spec:
   {{- if .Values.deployment.replicas }}
@@ -124,13 +127,13 @@ spec:
           {{- end }}
           {{- end }}
           env:
-            {{- if and (.Values.enterprise.enabled) (ne .Values.enterprise.licenseKey "") }}
-            - name: ENTERPRISE_LICENSE_KEY
-              value: {{ .Values.enterprise.licenseKey | quote }}
-            {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
-    {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | indent 10 }}
+              {{- if kindIs "string" $value }}
+              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
+              {{- else }}
+              {{- toYaml $value | nindent 14 }}
+              {{- end }}
             {{- end }}
           {{- if .Values.deployment.resources }}
           resources:
