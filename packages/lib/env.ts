@@ -47,6 +47,7 @@ export const env = createEnv({
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INTERCOM_SECRET_KEY: z.string().optional(),
+    INTERCOM_APP_ID: z.string().optional(),
     IS_FORMBRICKS_CLOUD: z.enum(["1", "0"]).optional(),
     MAIL_FROM: z.string().email().optional(),
     MAIL_FROM_NAME: z.string().optional(),
@@ -62,6 +63,8 @@ export const env = createEnv({
     REDIS_URL: z.string().optional(),
     REDIS_HTTP_URL: z.string().optional(),
     PASSWORD_RESET_DISABLED: z.enum(["1", "0"]).optional(),
+    POSTHOG_API_HOST: z.string().optional(),
+    POSTHOG_API_KEY: z.string().optional(),
     PRIVACY_URL: z
       .string()
       .url()
@@ -121,9 +124,6 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-    NEXT_PUBLIC_POSTHOG_API_KEY: z.string().optional(),
-    NEXT_PUBLIC_POSTHOG_API_HOST: z.string().optional(),
-    NEXT_PUBLIC_INTERCOM_APP_ID: z.string().optional(),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
   },
   /*
@@ -179,12 +179,12 @@ export const env = createEnv({
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
-    NEXT_PUBLIC_POSTHOG_API_HOST: process.env.NEXT_PUBLIC_POSTHOG_API_HOST,
-    NEXT_PUBLIC_POSTHOG_API_KEY: process.env.NEXT_PUBLIC_POSTHOG_API_KEY,
     SENTRY_DSN: process.env.SENTRY_DSN,
+    POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
+    POSTHOG_API_HOST: process.env.POSTHOG_API_HOST,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
-    NEXT_PUBLIC_INTERCOM_APP_ID: process.env.NEXT_PUBLIC_INTERCOM_APP_ID,
+    INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,
     OIDC_CLIENT_ID: process.env.OIDC_CLIENT_ID,

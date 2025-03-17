@@ -3,38 +3,54 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { PostHogProvider } from "posthog-js/react";
-import { type JSX, useEffect } from "react";
-import { env } from "@formbricks/lib/env";
+import React, { type JSX, useEffect } from "react";
 
-const posthogEnabled = env.NEXT_PUBLIC_POSTHOG_API_KEY && env.NEXT_PUBLIC_POSTHOG_API_HOST;
-
-if (typeof window !== "undefined") {
-  if (posthogEnabled) {
-    posthog.init(env.NEXT_PUBLIC_POSTHOG_API_KEY!, {
-      api_host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
-    });
-  }
+interface PostHogPageviewProps {
+  posthogEnabled: boolean;
+  postHogApiHost?: string;
+  postHogApiKey?: string;
 }
 
-export const PostHogPageview = (): JSX.Element => {
+export const PostHogPageview = ({
+  posthogEnabled,
+  postHogApiHost,
+  postHogApiKey,
+}: PostHogPageviewProps): JSX.Element => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (posthogEnabled && pathname) {
-      let url = window.origin + pathname;
-      if (searchParams && searchParams.toString()) {
-        url = url + `?${searchParams.toString()}`;
+    if (!posthogEnabled) return;
+    try {
+      if (!postHogApiHost) {
+        throw new Error("Posthog API host is required");
       }
-      posthog.capture("$pageview", {
-        $current_url: url,
-      });
+      if (!postHogApiKey) {
+        throw new Error("Posthog key is required");
+      }
+      posthog.init(postHogApiKey, { api_host: postHogApiHost });
+    } catch (error) {
+      console.error("Failed to initialize PostHog:", error);
     }
-  }, [pathname, searchParams]);
+  });
+
+  useEffect(() => {
+    if (!posthogEnabled) return;
+    let url = window.origin + pathname;
+    if (searchParams?.toString()) {
+      url += `?${searchParams.toString()}`;
+    }
+    posthog.capture("$pageview", { $current_url: url });
+  }, [pathname, searchParams, posthogEnabled]);
 
   return <></>;
 };
 
-export const PHProvider = ({ children }: { children: React.ReactNode }) => {
+interface PHPProviderProps {
+  children: React.ReactNode;
+  posthogEnabled: boolean;
+}
+
+export const PHProvider = ({ children, posthogEnabled }: PHPProviderProps) => {
   return posthogEnabled ? <PostHogProvider client={posthog}>{children}</PostHogProvider> : children;
 };

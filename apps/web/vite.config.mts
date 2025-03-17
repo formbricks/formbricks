@@ -1,6 +1,7 @@
 // vitest.config.ts
 import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -24,8 +25,17 @@ export default defineConfig({
         "modules/ee/whitelabel/email-customization/components/*.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
+        "modules/ui/components/post-hog-client/*.tsx",
+        "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
+        "app/(app)/environments/**/components/PosthogIdentify.tsx",
+        "app/(app)/(onboarding)/organizations/**/layout.tsx",
+        "app/(app)/(survey-editor)/environments/**/layout.tsx",
         "modules/ee/sso/lib/**/*.ts",
+        "app/(auth)/layout.tsx",
+        "app/(app)/layout.tsx",
+        "app/layout.tsx",
+        "app/intercom/*.tsx",
       ],
       exclude: [
         "**/.next/**",
@@ -39,5 +49,5 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [tsconfigPaths()],
+  plugins: [tsconfigPaths(), react()],
 });

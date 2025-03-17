@@ -5,6 +5,8 @@ import { getTolgee } from "@/tolgee/server";
 import { TolgeeStaticData } from "@tolgee/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
+import React from "react";
+import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
 import "../modules/ui/globals.css";
 import SentryProvider from "./components/SentryProvider";
 
@@ -24,10 +26,10 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
 
   return (
     <html lang={locale} translate="no">
-      {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
       <body className="flex h-dvh flex-col transition-all ease-in-out">
+        {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
         <SentryProvider>
-          <PHProvider>
+          <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
             <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
               {children}
             </TolgeeNextProvider>
