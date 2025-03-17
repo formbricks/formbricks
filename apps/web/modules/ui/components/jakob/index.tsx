@@ -4,13 +4,13 @@ import { AlertCircle, AlertTriangle, CheckCircle, CheckCircle2Icon, Info, Termin
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
-// Define variant icons
+// Define variant icons - now using cloneElement to ensure consistent sizing
 const variantIcons = {
-  default: <Terminal className="h-4 w-4" />,
-  error: <AlertCircle className="h-4 w-4 text-red-600" />,
-  warning: <AlertTriangle className="h-4 w-4 text-amber-600" />,
-  info: <Info className="h-4 w-4 text-blue-600" />,
-  success: <CheckCircle2Icon className="h-4 w-4 text-green-600" />,
+  default: null,
+  error: <AlertCircle className="text-red-600" />,
+  warning: <AlertTriangle className="text-amber-600" />,
+  info: <Info className="text-blue-600" />,
+  success: <CheckCircle2Icon className="text-green-600" />,
 };
 
 // Define alert styles with variants
@@ -63,94 +63,182 @@ const getButtonStyles = (variant: string, size: string) => {
   };
 };
 
-// Component props
-type AlertJakobProps = React.HTMLAttributes<HTMLDivElement> &
-  VariantProps<typeof alertVariants> & {
-    icon?: React.ReactNode;
-    button?: React.ReactElement;
-  };
+// Enhanced interface for AlertJakob props
+interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
+  /** Custom icon to override the default variant icon */
+  icon?: React.ReactNode;
+  /** Function to call when the icon is clicked */
+  onIconClick?: (e: React.MouseEvent) => void;
+  /** Title content for the alert */
+  title?: React.ReactNode;
+  /** Description content for the alert */
+  description?: React.ReactNode;
+  /** Button element or props for the alert action */
+  button?:
+    | React.ReactElement
+    | {
+        label: string;
+        onClick: (e: React.MouseEvent) => void;
+        loading?: boolean;
+        disabled?: boolean;
+        className?: string;
+        variant?: string;
+      };
+  /** Whether to allow children to be passed alongside structured props */
+  allowChildren?: boolean;
+}
 
 const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
-  ({ className, variant = "default", size = "default", icon, button, children, ...props }, ref) => {
-    // Get the icon based on variant or use provided icon
-    const renderIcon = icon === undefined ? variantIcons[variant as keyof typeof variantIcons] : icon;
+  (
+    {
+      className,
+      variant = "default",
+      size = "default",
+      icon,
+      title,
+      description,
+      button,
+      onIconClick,
+      children,
+      allowChildren = false,
+      ...props
+    },
+    ref
+  ) => {
+    // Get the icon based on variant or use provided icon, and ensure consistent sizing
+    let renderIcon = null;
 
-    // For small size, we want to extract the title and description separately for layout
+    if (icon !== null) {
+      if (icon === undefined && variantIcons[variant as keyof typeof variantIcons]) {
+        // Use variant icon with consistent sizing
+        const variantIcon = variantIcons[variant as keyof typeof variantIcons];
+        renderIcon = variantIcon
+          ? React.cloneElement(variantIcon, {
+              className: cn("h-4 w-4", variantIcon.props.className),
+            })
+          : null;
+      } else if (React.isValidElement(icon)) {
+        // Apply consistent sizing to custom icon unless it explicitly has size classes
+        const iconProps = icon.props || {};
+        const hasExplicitSize =
+          iconProps.className && (iconProps.className.includes("h-") || iconProps.className.includes("w-"));
+
+        renderIcon = hasExplicitSize
+          ? icon
+          : React.cloneElement(icon, {
+              className: cn("h-4 w-4", iconProps.className),
+            });
+      }
+    }
+
+    // Process children if they're provided alongside structured props
     const childrenArray = React.Children.toArray(children);
-    let title: React.ReactNode | null = null;
-    let description: React.ReactNode | null = null;
+    let extractedTitle: React.ReactNode = title;
+    let extractedDescription: React.ReactNode = description;
     let otherContent: React.ReactNode[] = [];
 
-    // Organize children by type
-    childrenArray.forEach((child) => {
-      if (React.isValidElement(child)) {
-        if (child.type === AlertTitle) {
-          title = child;
-        } else if (child.type === AlertDescription && size !== "small") {
-          description = child;
-        } else if (child.type === AlertDescription && size === "small") {
-          description = React.cloneElement(child, {
-            className: cn("truncate", child.props.className),
-          });
+    // Process children for backward compatibility
+    if (allowChildren && children) {
+      childrenArray.forEach((child) => {
+        if (React.isValidElement(child)) {
+          if (child.type === AlertTitle && !extractedTitle) {
+            extractedTitle = child.props.children;
+          } else if (child.type === AlertDescription && !extractedDescription) {
+            extractedDescription = child.props.children;
+          } else {
+            otherContent.push(child);
+          }
         } else {
           otherContent.push(child);
         }
-      } else {
-        otherContent.push(child);
-      }
-    });
+      });
+    }
+
+    // Handle button creation from either React element or props object
+    const buttonElement = React.isValidElement(button) ? (
+      button
+    ) : button ? (
+      <AlertButton
+        onClick={button.onClick}
+        loading={button.loading}
+        disabled={button.disabled}
+        className={button.className}
+        variant={button.variant}>
+        {button.label}
+      </AlertButton>
+    ) : undefined;
 
     const buttonStyles = getButtonStyles(variant || "default", size || "default");
+
+    // Create structured content
+    const titleElement = extractedTitle ? <AlertTitle>{extractedTitle}</AlertTitle> : null;
+    const descriptionElement = extractedDescription ? (
+      size === "small" ? (
+        <AlertDescription className="truncate">{extractedDescription}</AlertDescription>
+      ) : (
+        <AlertDescription>{extractedDescription}</AlertDescription>
+      )
+    ) : null;
 
     return (
       <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
         {size === "default" ? (
           <div className="flex">
             <div className="flex flex-grow items-start gap-2">
-              {/* Icon section */}
-              {renderIcon && <div className="mt-0.5 flex-shrink-0">{renderIcon}</div>}
+              {/* Icon section with optional click handler */}
+              {renderIcon && (
+                <div
+                  className={cn("mt-0.5 flex-shrink-0", onIconClick && "cursor-pointer")}
+                  onClick={onIconClick}>
+                  {renderIcon}
+                </div>
+              )}
 
               {/* Content section */}
               <div className="space-y-0.5">
-                {title}
-                {description}
-                {otherContent}
+                {titleElement}
+                {descriptionElement}
+                {allowChildren && otherContent}
               </div>
             </div>
 
-            {/* Button section for default size - as a column */}
-            {button && (
+            {/* Button section for default size */}
+            {buttonElement && (
               <div className="ml-4 flex-shrink-0 self-end">
-                {React.cloneElement(button, {
-                  variant: buttonStyles.variant ?? button.props?.variant,
-                  className: cn(button.props?.className, buttonStyles.className),
+                {React.cloneElement(buttonElement, {
+                  variant: buttonStyles.variant ?? buttonElement.props?.variant,
+                  className: cn(buttonElement.props?.className, buttonStyles.className),
                 })}
               </div>
             )}
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            {/* Icon section */}
-            {renderIcon && <div className="flex-shrink-0">{renderIcon}</div>}
+            {/* Icon section with optional click handler */}
+            {renderIcon && (
+              <div className={cn("flex-shrink-0", onIconClick && "cursor-pointer")} onClick={onIconClick}>
+                {renderIcon}
+              </div>
+            )}
 
             {/* Content section for small size - horizontal layout with truncation */}
             <div className="flex min-w-0 flex-1 items-baseline space-x-1">
-              {title &&
-                React.cloneElement(title as React.ReactElement, {
-                  className: cn("truncate", (title as React.ReactElement).props.className),
+              {titleElement &&
+                React.cloneElement(titleElement as React.ReactElement, {
+                  className: cn("truncate", (titleElement as React.ReactElement).props.className),
                 })}
-              {description && (
-                <div className="hidden truncate text-sm opacity-80 sm:block">{description}</div>
+              {descriptionElement && (
+                <div className="hidden truncate text-sm opacity-80 sm:block">{descriptionElement}</div>
               )}
-              {otherContent}
+              {allowChildren && otherContent}
             </div>
 
             {/* Button section for small size */}
-            {button && (
+            {buttonElement && (
               <div className="flex-shrink-0">
-                {React.cloneElement(button, {
-                  variant: buttonStyles.variant ?? button.props?.variant,
-                  className: cn(button.props?.className, buttonStyles.className),
+                {React.cloneElement(buttonElement, {
+                  variant: buttonStyles.variant ?? buttonElement.props?.variant,
+                  className: cn(buttonElement.props?.className, buttonStyles.className),
                 })}
               </div>
             )}
