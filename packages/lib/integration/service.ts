@@ -56,7 +56,7 @@ export const createOrUpdateIntegration = async (
     return integration;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error creating or updating integration:");
+      logger.error(error, "Error creating or updating integration");
       throw new DatabaseError(error.message);
     }
     throw error;

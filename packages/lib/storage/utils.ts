@@ -18,7 +18,7 @@ export const getOriginalFileNameFromUrl = (fileURL: string) => {
     const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
     return fileName;
   } catch (error) {
-    logger.error(error, "Error parsing file URL:");
+    logger.error(error, "Error parsing file URL");
   }
 };
 
@@ -30,6 +30,6 @@ export const getFileNameWithIdFromUrl = (fileURL: string) => {
 
     return fileNameFromURL ? decodeURIComponent(fileNameFromURL || "") : "";
   } catch (error) {
-    logger.error(error, "Error parsing file URL:");
+    logger.error(error, "Error parsing file URL");
   }
 };

@@ -195,7 +195,7 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        logger.error({ error: result.reason, url: request.url }, "Promise rejected:");
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
 
@@ -247,7 +247,7 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled(webhookPromises);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        logger.error({ error: result.reason, url: request.url }, "Promise rejected:");
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
   }

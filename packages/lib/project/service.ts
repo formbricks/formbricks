@@ -146,7 +146,7 @@ export const getProjectByEnvironmentId = reactCache(
           return projectPrisma;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting project by environment id:");
+            logger.error(error, "Error getting project by environment id");
             throw new DatabaseError(error.message);
           }
           throw error;

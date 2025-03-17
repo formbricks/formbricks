@@ -32,7 +32,7 @@ export const capturePosthogEnvironmentEvent = async (
     });
     await client.shutdown();
   } catch (error) {
-    logger.error(error, "error sending posthog event:");
+    logger.error(error, "error sending posthog event");
   }
 };
 
@@ -51,7 +51,7 @@ export const sendPlanLimitsReachedEventToPosthogWeekly = (
         });
         return "success";
       } catch (error) {
-        logger.error(error, "error sending plan limits reached event to posthog weekly:");
+        logger.error(error, "error sending plan limits reached event to posthog weekly");
         throw error;
       }
     },

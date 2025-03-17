@@ -32,7 +32,7 @@ export const getMembershipByUserIdOrganizationId = reactCache(
           return membership;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting membership by user id and organization id:");
+            logger.error(error, "Error getting membership by user id and organization id");
             throw new DatabaseError(error.message);
           }
 

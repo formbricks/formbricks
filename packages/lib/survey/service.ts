@@ -199,7 +199,7 @@ export const getSurvey = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting survey:");
+            logger.error(error, "Error getting survey");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -242,7 +242,7 @@ export const getSurveysByActionClassId = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting surveys by action class id:");
+            logger.error(error, "Error getting surveys by action class id");
             throw new DatabaseError(error.message);
           }
 
@@ -287,7 +287,7 @@ export const getSurveys = reactCache(
           return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting surveys:");
+            logger.error(error, "Error getting surveys");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -315,7 +315,7 @@ export const getSurveyCount = reactCache(
           return surveyCount;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting survey count:");
+            logger.error(error, "Error getting survey count");
             throw new DatabaseError(error.message);
           }
 
@@ -891,7 +891,7 @@ export const getSurveyIdByResultShareKey = reactCache(
           return survey.id;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting survey id by result share key:");
+            logger.error(error, "Error getting survey id by result share key");
             throw new DatabaseError(error.message);
           }
 

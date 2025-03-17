@@ -113,7 +113,7 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
       email: decryptedEmail,
     };
   } catch (error) {
-    logger.error(error, "Error verifying invite token:");
+    logger.error(error, "Error verifying invite token");
     throw new Error("Invalid or expired invite token");
   }
 };

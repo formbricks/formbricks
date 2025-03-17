@@ -99,7 +99,7 @@ export const getOrganizationByEnvironmentId = reactCache(
           return organization;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting organization by environment id:");
+            logger.error(error, "Error getting organization by environment id");
             throw new DatabaseError(error.message);
           }
 

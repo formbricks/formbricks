@@ -108,6 +108,6 @@ export const ${migrationName}: MigrationScript = {
 }
 
 createMigration().catch((error: unknown) => {
-  logger.fatal(error, "An error occurred while creating the migration:");
+  logger.fatal(error, "An error occurred while creating the migration");
   process.exit(1);
 });

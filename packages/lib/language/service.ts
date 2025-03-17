@@ -41,7 +41,7 @@ export const getLanguage = async (languageId: string): Promise<TLanguage & { pro
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting language:");
+      logger.error(error, "Error getting language");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -79,7 +79,7 @@ export const createLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error creating language:");
+      logger.error(error, "Error creating language");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -107,7 +107,7 @@ export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string
     return surveyNames;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error getting surveys using given language:");
+      logger.error(error, "Error getting surveys using given language");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -137,7 +137,7 @@ export const deleteLanguage = async (languageId: string, projectId: string): Pro
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error deleting language:");
+      logger.error(error, "Error deleting language");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -182,7 +182,7 @@ export const updateLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error updating language:");
+      logger.error(error, "Error updating language");
       throw new DatabaseError(error.message);
     }
     throw error;

@@ -98,6 +98,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  logger.fatal(error, "Migration creation failed:");
+  logger.fatal(error, "Migration creation failed");
   process.exit(1);
 });

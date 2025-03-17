@@ -38,7 +38,7 @@ export const getEnvironment = reactCache(
           return environment;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            logger.error(error, "Error getting environment:");
+            logger.error(error, "Error getting environment");
             throw new DatabaseError(error.message);
           }
 
@@ -88,7 +88,7 @@ export const getEnvironments = reactCache(
           return environments;
         } catch (error) {
           if (error instanceof z.ZodError) {
-            logger.error(error, "Error getting environments:");
+            logger.error(error, "Error getting environments");
           }
           throw new ValidationError("Data validation of environments array failed");
         }

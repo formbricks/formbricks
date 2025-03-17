@@ -52,7 +52,7 @@ process.on("SIGTERM", async () => {
     await meterProvider.shutdown();
     // Possibly close other instrumentation resources
   } catch (e) {
-    logger.error(e, "Error during graceful shutdown:");
+    logger.error(e, "Error during graceful shutdown");
   } finally {
     process.exit(0);
   }

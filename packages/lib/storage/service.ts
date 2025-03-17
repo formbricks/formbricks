@@ -65,7 +65,7 @@ export const testS3BucketAccess = async () => {
 
     return true;
   } catch (error) {
-    logger.error(error, "Failed to access S3 bucket:");
+    logger.error(error, "Failed to access S3 bucket");
     throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };
