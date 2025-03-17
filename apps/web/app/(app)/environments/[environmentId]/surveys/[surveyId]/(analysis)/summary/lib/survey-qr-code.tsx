@@ -24,7 +24,7 @@ export const useSurveyQRCode = (surveyUrl: string) => {
         }
       }
     } catch (error) {
-      toast.error("Failed to generate QR code.");
+      toast.error("Failed to generate QR code. ");
     }
   }, [surveyUrl]);
 
