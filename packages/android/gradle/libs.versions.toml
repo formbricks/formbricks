@@ -27,8 +27,6 @@ lifecycleViewmodelKtx = "2.8.7"
 fragmentKtx = "1.8.5"
 databindingCommon = "8.8.0"
 
-timber = "5.0.1"
-
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -53,7 +51,6 @@ retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", ve
 retrofit-converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit" }
 okhttp3-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp3" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
-timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-legacy-support-v4 = { group = "androidx.legacy", name = "legacy-support-v4", version.ref = "legacySupportV4" }
