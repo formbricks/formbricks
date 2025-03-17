@@ -18,6 +18,7 @@ import { cn } from "@formbricks/lib/cn";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { isLight, mixColor } from "@formbricks/lib/utils/colors";
+import { parseRecallInfo } from "@formbricks/lib/utils/recall";
 import { type TSurvey, TSurveyQuestionTypeEnum, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
@@ -50,11 +51,37 @@ export async function PreviewEmailTemplate({
   styling,
   t,
 }: PreviewEmailTemplateProps): Promise<React.JSX.Element> {
+  const hiddenFieldIds = survey.hiddenFields.fieldIds;
   const url = `${surveyUrl}?preview=true`;
-  const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
+  const hiddenFieldResponseMap = {};
+
+  // Extract query parameters from URL
+  const queryString = url.split("?")[1];
+  if (queryString) {
+    const queryParams = queryString.split("&");
+    queryParams.forEach((param) => {
+      const [key, value] = param.split("=");
+      if (hiddenFieldIds?.includes(key)) {
+        hiddenFieldResponseMap[key] = value;
+      }
+    });
+  }
+
+  const urlWithPrefilling = `${surveyUrl}?${Object.entries(hiddenFieldResponseMap)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&")}`;
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
-
+  const headline = parseRecallInfo(
+    getLocalizedValue(firstQuestion.headline, defaultLanguageCode),
+    hiddenFieldResponseMap,
+    {}
+  );
+  const subheader = parseRecallInfo(
+    getLocalizedValue(firstQuestion.subheader, defaultLanguageCode),
+    hiddenFieldResponseMap,
+    {}
+  );
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
@@ -62,11 +89,9 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">{subheader}</Text>
           <Section className="border-input-border-color rounded-custom mt-4 block h-20 w-full border border-solid bg-slate-50" />
           <EmailFooter />
         </EmailTemplateWrapper>
@@ -74,9 +99,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.Consent:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
           <Container className="text-question-color m-0 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
@@ -116,10 +139,10 @@ export async function PreviewEmailTemplate({
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full justify-center">
             <Text className="text-question-color m-0 block w-full text-base font-semibold leading-6">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+              {headline}
             </Text>
             <Text className="text-question-color m-0 block w-full p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+              {subheader}
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section
@@ -171,9 +194,7 @@ export async function PreviewEmailTemplate({
     case TSurveyQuestionTypeEnum.CTA:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
-          <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block text-base font-semibold leading-6">{headline}</Text>
           <Container className="text-question-color ml-0 mt-2 text-sm font-normal leading-6">
             <div
               className="m-0 p-0"
@@ -208,10 +229,10 @@ export async function PreviewEmailTemplate({
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full">
             <Text className="text-question-color m-0 block text-base font-semibold leading-6">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+              {headline}
             </Text>
             <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+              {subheader}
             </Text>
             <Container className="mx-0 mt-4 w-full items-center justify-center">
               <Section className="w-full overflow-hidden">
@@ -278,10 +299,10 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
           <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            {subheader}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
@@ -299,10 +320,10 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
           <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            {subheader}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
@@ -320,10 +341,10 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
           <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            {subheader}
           </Text>
           <Container className="mx-0 max-w-none">
             {firstQuestion.choices.map((choice) => (
@@ -342,10 +363,10 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
           <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+            {subheader}
           </Text>
           <Section className="mx-0">
             {firstQuestion.choices.map((choice) =>
@@ -374,10 +395,10 @@ export async function PreviewEmailTemplate({
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Container>
             <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+              {headline}
             </Text>
             <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-              {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
+              {subheader}
             </Text>
             <EmailButton
               className={cn(
@@ -394,11 +415,9 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">{subheader}</Text>
           <Section className="border-input-border-color bg-input-color rounded-custom mt-4 flex h-12 w-full items-center justify-center border border-solid">
             <CalendarDaysIcon className="text-question-color inline h-4 w-4" />
             <Text className="text-question-color inline text-sm font-medium">
@@ -412,10 +431,10 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, "default")}
+            {headline}
           </Text>
           <Text className="text-question-color m-0 mb-2 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, "default")}
+            {subheader}
           </Text>
           <Container className="mx-0">
             <Section className="w-full table-auto">
@@ -461,11 +480,9 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">{subheader}</Text>
           {["First Name", "Last Name", "Email", "Phone", "Company"].map((label) => (
             <Section
               className="border-input-border-color bg-input-color rounded-custom mt-4 block h-10 w-full border border-solid py-2 pl-2 text-slate-400"
@@ -481,11 +498,9 @@ export async function PreviewEmailTemplate({
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Text className="text-question-color m-0 mr-8 block p-0 text-base font-semibold leading-6">
-            {getLocalizedValue(firstQuestion.headline, defaultLanguageCode)}
+            {headline}
           </Text>
-          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">
-            {getLocalizedValue(firstQuestion.subheader, defaultLanguageCode)}
-          </Text>
+          <Text className="text-question-color m-0 block p-0 text-sm font-normal leading-6">{subheader}</Text>
           <Section className="border-input-border-color rounded-custom mt-4 flex h-24 w-full items-center justify-center border border-dashed bg-slate-50">
             <Container className="mx-auto flex items-center text-center">
               <UploadIcon className="mt-6 inline h-5 w-5 text-slate-400" />
