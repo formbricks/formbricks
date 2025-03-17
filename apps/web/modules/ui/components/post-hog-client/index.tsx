@@ -32,7 +32,7 @@ export const PostHogPageview = ({
     } catch (error) {
       console.error("Failed to initialize PostHog:", error);
     }
-  });
+  }, []);
 
   useEffect(() => {
     if (!posthogEnabled) return;
