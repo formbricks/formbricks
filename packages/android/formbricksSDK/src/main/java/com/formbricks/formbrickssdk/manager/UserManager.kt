@@ -7,13 +7,13 @@ import com.formbricks.formbrickssdk.extensions.dateString
 import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.extensions.lastDisplayAt
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.user.Display
 import com.formbricks.formbrickssdk.network.queue.UpdateQueue
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
@@ -140,7 +140,7 @@ object UserManager {
                 SurveyManager.filterSurveys()
                 startSyncTimer()
             } catch (e: Exception) {
-                Timber.tag("SurveyManager").e(e, "Unable to post survey response.")
+                Logger.e("Unable to post survey response.")
             }
         }
     }

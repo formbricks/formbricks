@@ -25,7 +25,7 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val config = FormbricksConfig.Builder("[API_HOST]","[ENVIRONMENT_ID]")
+        val config = FormbricksConfig.Builder("http://192.168.0.12:3000","cm6ovvfoc000asf0k39wbzc8s")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
         Formbricks.setup(this, config.build())
