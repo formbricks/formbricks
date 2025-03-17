@@ -28,7 +28,7 @@ export default defineConfig({
         "modules/ee/sso/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
-        "app/IntercomClient.tsx",
+        "app/intercom/*.tsx",
       ],
       exclude: [
         "**/.next/**",

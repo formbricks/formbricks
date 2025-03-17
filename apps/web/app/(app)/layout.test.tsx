@@ -39,8 +39,8 @@ vi.mock("@formbricks/lib/constants", () => ({
 vi.mock("@/app/(app)/components/FormbricksClient", () => ({
   FormbricksClient: () => <div data-testid="formbricks-client" />,
 }));
-vi.mock("@/app/IntercomClient", () => ({
-  IntercomClient: () => <div data-testid="intercom-client" />,
+vi.mock("@/app/intercom/IntercomClientWrapper", () => ({
+  IntercomClientWrapper: () => <div data-testid="mock-intercom-wrapper" />,
 }));
 vi.mock("@/modules/ui/components/no-mobile-overlay", () => ({
   NoMobileOverlay: () => <div data-testid="no-mobile-overlay" />,
@@ -74,7 +74,7 @@ describe("(app) AppLayout", () => {
     expect(screen.getByTestId("no-mobile-overlay")).toBeInTheDocument();
     expect(screen.getByTestId("ph-pageview")).toBeInTheDocument();
     expect(screen.getByTestId("ph-provider")).toBeInTheDocument();
-    expect(screen.getByTestId("intercom-client")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-intercom-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("toaster-client")).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toHaveTextContent("Hello from children");
     expect(screen.getByTestId("formbricks-client")).toBeInTheDocument();

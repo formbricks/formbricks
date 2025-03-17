@@ -1,12 +1,11 @@
 import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
-import { IntercomClient } from "@/app/IntercomClient";
+import { IntercomClientWrapper } from "@/app/intercom/IntercomClientWrapper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { NoMobileOverlay } from "@/modules/ui/components/no-mobile-overlay";
 import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-client";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import React, { Suspense } from "react";
-import { INTERCOM_APP_ID, INTERCOM_SECRET_KEY, IS_INTERCOM_CONFIGURED } from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
 
 const AppLayout = async ({ children }) => {
@@ -22,12 +21,7 @@ const AppLayout = async ({ children }) => {
       <PHProvider>
         <>
           {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
-          <IntercomClient
-            isIntercomConfigured={IS_INTERCOM_CONFIGURED}
-            intercomSecretKey={INTERCOM_SECRET_KEY}
-            user={user}
-            intercomAppId={INTERCOM_APP_ID}
-          />
+          <IntercomClientWrapper user={user} />
           <ToasterClient />
           {children}
         </>
