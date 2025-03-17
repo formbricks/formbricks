@@ -13,6 +13,7 @@ import {
 } from "@opentelemetry/resources";
 import { MeterProvider } from "@opentelemetry/sdk-metrics";
 import { env } from "@formbricks/lib/env";
+import { logger } from "@formbricks/logger";
 
 const exporter = new PrometheusExporter({
   port: env.PROMETHEUS_EXPORTER_PORT ? parseInt(env.PROMETHEUS_EXPORTER_PORT) : 9464,
@@ -51,7 +52,7 @@ process.on("SIGTERM", async () => {
     await meterProvider.shutdown();
     // Possibly close other instrumentation resources
   } catch (e) {
-    console.error("Error during graceful shutdown:", e);
+    logger.error(e, "Error during graceful shutdown:");
   } finally {
     process.exit(0);
   }

@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { promisify } from "node:util";
+import { logger } from "@formbricks/logger";
 import { applyMigrations } from "./migration-runner";
 
 const execAsync = promisify(exec);
@@ -15,11 +16,11 @@ function promptForMigrationName(): Promise<string> {
   return new Promise((resolve) => {
     rl.question("Enter the name of the migration (please use spaces): ", (name) => {
       if (!name.trim()) {
-        console.error("Migration name cannot be empty.");
+        logger.fatal("Migration name cannot be empty.");
         process.exit(1);
       }
       if (/[^a-zA-Z0-9\s]/.test(name)) {
-        console.error(
+        logger.fatal(
           "Migration name contains invalid characters. Only letters, numbers, and spaces are allowed."
         );
         process.exit(1);
@@ -47,7 +48,7 @@ async function main(): Promise<void> {
 
   // Create migration
   await execAsync(`pnpm prisma migrate dev --name "${migrationName}" --create-only`);
-  console.log(`Migration created: ${migrationName}`);
+  logger.info(`Migration created: ${migrationName}`);
 
   // Find the newly created migration
   const migrationToCopy = await fs
@@ -89,7 +90,7 @@ async function main(): Promise<void> {
   try {
     await applyMigrations();
   } catch (err) {
-    console.error("Error applying migrations: ", err);
+    logger.fatal(err, "Error applying migrations: ");
     // delete the created migration directories:
     await fs.rm(destPath, { recursive: true, force: true });
     process.exit(1);
@@ -97,6 +98,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  console.error("Migration creation failed:", error);
+  logger.fatal(error, "Migration creation failed:");
   process.exit(1);
 });

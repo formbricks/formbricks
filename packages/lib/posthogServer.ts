@@ -1,4 +1,5 @@
 import { PostHog } from "posthog-node";
+import { logger } from "@formbricks/logger";
 import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
 import { cache } from "./cache";
 import { IS_PRODUCTION } from "./constants";
@@ -31,7 +32,7 @@ export const capturePosthogEnvironmentEvent = async (
     });
     await client.shutdown();
   } catch (error) {
-    console.error("error sending posthog event:", error);
+    logger.error(error, "error sending posthog event:");
   }
 };
 
@@ -50,7 +51,7 @@ export const sendPlanLimitsReachedEventToPosthogWeekly = (
         });
         return "success";
       } catch (error) {
-        console.error(error);
+        logger.error(error, "error sending plan limits reached event to posthog weekly:");
         throw error;
       }
     },

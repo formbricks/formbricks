@@ -13,6 +13,7 @@ import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import path, { join } from "path";
+import { logger } from "@formbricks/logger";
 import { TAccessType } from "@formbricks/types/storage";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -64,7 +65,7 @@ export const testS3BucketAccess = async () => {
 
     return true;
   } catch (error) {
-    console.error(`Failed to access S3 bucket: ${error}`);
+    logger.error(error, "Failed to access S3 bucket:");
     throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };

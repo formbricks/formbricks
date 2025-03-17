@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 
 const createSamlDatabase = async (): Promise<void> => {
   const samlDatabaseUrl = process.env.SAML_DATABASE_URL;
@@ -32,9 +33,9 @@ const createSamlDatabase = async (): Promise<void> => {
 
     await prisma.$executeRawUnsafe(`CREATE DATABASE "${dbName}"`);
 
-    console.log(`Database '${dbName}' created successfully.`);
+    logger.info(`Database '${dbName}' created successfully.`);
   } catch (error) {
-    console.error(`Error creating database '${dbName}':`, error);
+    logger.error(error, `Error creating database '${dbName}':`);
     return;
   } finally {
     await prisma.$disconnect();
@@ -46,5 +47,5 @@ createSamlDatabase()
     process.exit(0);
   })
   .catch((error: unknown) => {
-    console.error("Error creating SAML database:", error);
+    logger.error(error, "Error creating SAML database:");
   });

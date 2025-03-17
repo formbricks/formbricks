@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import {
@@ -40,7 +41,7 @@ export const getLanguage = async (languageId: string): Promise<TLanguage & { pro
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error getting language:");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -78,7 +79,7 @@ export const createLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error creating language:");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -106,7 +107,7 @@ export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string
     return surveyNames;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error getting surveys using given language:");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -136,7 +137,7 @@ export const deleteLanguage = async (languageId: string, projectId: string): Pro
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error deleting language:");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -181,7 +182,7 @@ export const updateLanguage = async (
     return language;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error updating language:");
       throw new DatabaseError(error.message);
     }
     throw error;

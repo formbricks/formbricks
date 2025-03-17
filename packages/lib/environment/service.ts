@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import type {
   TEnvironment,
@@ -37,7 +38,7 @@ export const getEnvironment = reactCache(
           return environment;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting environment:");
             throw new DatabaseError(error.message);
           }
 
@@ -87,7 +88,7 @@ export const getEnvironments = reactCache(
           return environments;
         } catch (error) {
           if (error instanceof z.ZodError) {
-            console.error(JSON.stringify(error.errors, null, 2));
+            logger.error(error, "Error getting environments:");
           }
           throw new ValidationError("Data validation of environments array failed");
         }
