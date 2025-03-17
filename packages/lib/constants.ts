@@ -279,3 +279,7 @@ export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KE
 export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
+
+export const SENTRY_DSN = env.SENTRY_DSN;
+
+export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";

@@ -6,6 +6,7 @@ import { TolgeeStaticData } from "@tolgee/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Metadata } from "next";
 import "../modules/ui/globals.css";
+import SentryProvider from "./components/SentryProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -25,11 +26,13 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
     <html lang={locale} translate="no">
       {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
       <body className="flex h-dvh flex-col transition-all ease-in-out">
-        <PHProvider>
-          <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
-            {children}
-          </TolgeeNextProvider>
-        </PHProvider>
+        <SentryProvider>
+          <PHProvider>
+            <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
+              {children}
+            </TolgeeNextProvider>
+          </PHProvider>
+        </SentryProvider>
       </body>
     </html>
   );
