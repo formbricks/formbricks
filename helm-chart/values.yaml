@@ -297,4 +297,3 @@ postgresql:
       enabled: true
       runAsUser: 1001
       readOnlyRootFilesystem: false
-      
