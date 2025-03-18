@@ -77,6 +77,13 @@ export const UploadContactsCSVButton = ({
           return;
         }
 
+        if (!parsedRecords.data.length) {
+          setErrror(
+            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
+          );
+          return;
+        }
+
         setCSVResponse(parsedRecords.data);
       } catch (error) {
         console.error("Error parsing CSV:", error);
