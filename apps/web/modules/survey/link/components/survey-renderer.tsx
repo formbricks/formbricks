@@ -39,7 +39,7 @@ export const renderSurvey = async ({
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
-  if (survey.status === "draft") {
+  if (survey.status === "draft" || survey.type !== "link") {
     notFound();
   }
 
@@ -116,6 +116,7 @@ export const renderSurvey = async ({
         isEmbed={isEmbed}
         locale={locale}
         isPreview={isPreview}
+        contactId={contactId}
       />
     );
   }

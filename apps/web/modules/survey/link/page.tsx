@@ -43,10 +43,6 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   const survey = await getSurvey(params.surveyId);
   const suId = searchParams.suId;
 
-  if (!survey || survey.type !== "link") {
-    notFound();
-  }
-
   const isSingleUseSurvey = survey?.singleUse?.enabled;
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 

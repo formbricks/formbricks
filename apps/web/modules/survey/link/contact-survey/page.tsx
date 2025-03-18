@@ -23,7 +23,14 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
   const { jwt } = await props.params;
   try {
     // Verify and decode the JWT token
-    const { surveyId } = verifyContactSurveyToken(jwt);
+    const result = verifyContactSurveyToken(jwt);
+    if (!result.ok) {
+      return {
+        title: "Survey",
+        description: "Complete this survey",
+      };
+    }
+    const { surveyId } = result.data;
     return getBasicSurveyMetadata(surveyId);
   } catch (error) {
     // If the token is invalid, we'll return generic metadata
@@ -37,23 +44,20 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
 export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const { searchParams, params } = props;
   const { jwt } = await params;
+  const { preview } = await searchParams;
 
-  let surveyId, contactId;
-  try {
-    // Verify and decode the JWT token
-    const decoded = verifyContactSurveyToken(jwt);
-    surveyId = decoded.surveyId;
-    contactId = decoded.contactId;
-  } catch (error) {
+  const result = verifyContactSurveyToken(jwt);
+  if (!result.ok) {
     return <SurveyInactive status="link invalid" />;
   }
+  const { surveyId, contactId } = result.data;
 
   const existingResponse = await getExistingContactResponse(surveyId, contactId);
   if (existingResponse) {
     return <SurveyInactive status="response submitted" />;
   }
 
-  const isPreview = (await searchParams).preview === "true";
+  const isPreview = preview === "true";
   const survey = await getSurvey(surveyId);
 
   if (!survey) {

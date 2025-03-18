@@ -25,6 +25,7 @@ interface PinScreenProps {
   isEmbed: boolean;
   locale: string;
   isPreview: boolean;
+  contactId?: string;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
@@ -43,6 +44,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isEmbed,
     locale,
     isPreview,
+    contactId,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -125,6 +127,7 @@ export const PinScreen = (props: PinScreenProps) => {
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       locale={locale}
       isPreview={isPreview}
+      contactId={contactId}
     />
   );
 };

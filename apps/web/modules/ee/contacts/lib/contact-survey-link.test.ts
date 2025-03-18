@@ -71,7 +71,10 @@ describe("Contact Survey Link", () => {
       );
 
       // Verify the returned URL
-      expect(result).toBe(`${WEBAPP_URL}/c/${mockToken}`);
+      expect(result).toEqual({
+        ok: true,
+        data: `${WEBAPP_URL}/c/${mockToken}`,
+      });
     });
 
     it("adds expiration to the token when expirationDays is provided", () => {
@@ -97,11 +100,17 @@ describe("Contact Survey Link", () => {
         ENCRYPTION_KEY: undefined,
         WEBAPP_URL: "https://test.formbricks.com",
       }));
-      // Re‑import the module so it picks up the new mock
+      // Re‑import the modules so they pick up the new mock
       const { getContactSurveyLink } = await import("./contact-survey-link");
-      expect(() => getContactSurveyLink(mockContactId, mockSurveyId)).toThrow(
-        "Encryption key not found - cannot create personalized survey link"
-      );
+
+      const result = getContactSurveyLink(mockContactId, mockSurveyId);
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "internal_server_error",
+          message: "Encryption key not found - cannot create personalized survey link",
+        },
+      });
     });
   });
 
@@ -114,8 +123,11 @@ describe("Contact Survey Link", () => {
 
       // Check the decrypted result
       expect(result).toEqual({
-        contactId: mockContactId,
-        surveyId: mockSurveyId,
+        ok: true,
+        data: {
+          contactId: mockContactId,
+          surveyId: mockSurveyId,
+        },
       });
     });
 
@@ -124,9 +136,15 @@ describe("Contact Survey Link", () => {
         throw new Error("Token verification failed");
       });
 
-      expect(() => contactSurveyLink.verifyContactSurveyToken(mockToken)).toThrow(
-        "Invalid or expired survey token"
-      );
+      const result = contactSurveyLink.verifyContactSurveyToken(mockToken);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "bad_request",
+          message: "Invalid or expired survey token",
+          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+        });
+      }
     });
 
     it("throws an error when token has invalid format", () => {
@@ -139,9 +157,15 @@ describe("Contact Survey Link", () => {
       // Suppress console.error for this test
       vi.spyOn(console, "error").mockImplementation(() => {});
 
-      expect(() => contactSurveyLink.verifyContactSurveyToken(mockToken)).toThrow(
-        "Invalid or expired survey token"
-      );
+      const result = contactSurveyLink.verifyContactSurveyToken(mockToken);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "bad_request",
+          message: "Invalid or expired survey token",
+          details: [{ field: "token", issue: "Invalid or expired survey token" }],
+        });
+      }
     });
 
     it("throws an error when ENCRYPTION_KEY is not available", async () => {
@@ -151,9 +175,14 @@ describe("Contact Survey Link", () => {
         WEBAPP_URL: "https://test.formbricks.com",
       }));
       const { verifyContactSurveyToken } = await import("./contact-survey-link");
-      expect(() => verifyContactSurveyToken(mockToken)).toThrow(
-        "Encryption key not found - cannot verify survey token"
-      );
+      const result = verifyContactSurveyToken(mockToken);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toEqual({
+          type: "internal_server_error",
+          message: "Encryption key not found - cannot verify survey token",
+        });
+      }
     });
   });
 });

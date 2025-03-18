@@ -97,7 +97,7 @@ export const getExistingContactResponse = reactCache(
       },
       [`link-surveys-getExisitingContactResponse-${surveyId}-${contactId}`],
       {
-        tags: [responseCache.tag.bySurveyId(surveyId)],
+        tags: [responseCache.tag.bySurveyId(surveyId), responseCache.tag.byContactId(contactId)],
       }
     )()
 );

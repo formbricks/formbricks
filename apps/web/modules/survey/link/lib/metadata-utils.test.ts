@@ -72,8 +72,6 @@ describe("Metadata Utils", () => {
     const mockEnvironmentId = "env-456";
 
     it("returns default metadata when survey is not found", async () => {
-      vi.mocked(getSurvey).mockResolvedValue(null);
-
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);

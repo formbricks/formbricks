@@ -1,15 +1,20 @@
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import jwt from "jsonwebtoken";
 import { ENCRYPTION_KEY, WEBAPP_URL } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
 export const getContactSurveyLink = (
   contactId: string,
   surveyId: string,
   expirationDays?: number
-): string => {
+): Result<string, ApiErrorResponseV2> => {
   if (!ENCRYPTION_KEY) {
-    throw new Error("Encryption key not found - cannot create personalized survey link");
+    return err({
+      type: "internal_server_error",
+      message: "Encryption key not found - cannot create personalized survey link",
+    });
   }
 
   // Encrypt the contact and survey IDs
@@ -36,13 +41,18 @@ export const getContactSurveyLink = (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return `${WEBAPP_URL}/c/${token}`;
+  return ok(`${WEBAPP_URL}/c/${token}`);
 };
 
 // Validates and decrypts a contact survey JWT token
-export const verifyContactSurveyToken = (token: string): { contactId: string; surveyId: string } => {
+export const verifyContactSurveyToken = (
+  token: string
+): Result<{ contactId: string; surveyId: string }, ApiErrorResponseV2> => {
   if (!ENCRYPTION_KEY) {
-    throw new Error("Encryption key not found - cannot verify survey token");
+    return err({
+      type: "internal_server_error",
+      message: "Encryption key not found - cannot verify survey token",
+    });
   }
 
   try {
@@ -50,19 +60,23 @@ export const verifyContactSurveyToken = (token: string): { contactId: string; su
     const decoded = jwt.verify(token, ENCRYPTION_KEY) as { contactId: string; surveyId: string };
 
     if (!decoded || !decoded.contactId || !decoded.surveyId) {
-      throw new Error("Invalid token format");
+      throw err("Invalid token format");
     }
 
     // Decrypt the contact and survey IDs
     const contactId = symmetricDecrypt(decoded.contactId, ENCRYPTION_KEY);
     const surveyId = symmetricDecrypt(decoded.surveyId, ENCRYPTION_KEY);
 
-    return {
+    return ok({
       contactId,
       surveyId,
-    };
+    });
   } catch (error) {
     console.error("Error verifying contact survey token:", error);
-    throw new Error("Invalid or expired survey token");
+    return err({
+      type: "bad_request",
+      message: "Invalid or expired survey token",
+      details: [{ field: "token", issue: "Invalid or expired survey token" }],
+    });
   }
 };

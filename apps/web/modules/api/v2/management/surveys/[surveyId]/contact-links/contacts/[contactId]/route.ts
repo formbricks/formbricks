@@ -3,9 +3,11 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getContact } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/contacts";
+import { getResponse } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/response";
+import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/surveys";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 
 const ZContactLinkParams = z.object({
@@ -50,62 +52,48 @@ export const GET = async (
         return handleApiError(request, checkAuthorizationResult.error);
       }
 
-      const survey = await prisma.survey.findUnique({
-        where: {
-          id: params.surveyId,
-          environmentId,
-        },
-        select: {
-          type: true,
-        },
-      });
+      const survey = await getSurvey(params.surveyId);
 
       if (!survey) {
         return handleApiError(request, {
           type: "not_found",
-          details: [{ field: "surveyId", issue: "not_found" }],
+          details: [{ field: "surveyId", issue: "Not found" }],
         });
       }
 
       if (survey.type !== "link") {
         return handleApiError(request, {
           type: "bad_request",
-          details: [{ field: "surveyId", issue: "not_a_link_survey" }],
+          details: [{ field: "surveyId", issue: "Not a link survey" }],
         });
       }
 
       // Check if contact exists and belongs to the environment
-      const contact = await prisma.contact.findUnique({
-        where: {
-          id: params.contactId,
-          environmentId,
-        },
-      });
+      const contact = await getContact(params.contactId, environmentId);
 
       if (!contact) {
         return handleApiError(request, {
           type: "not_found",
-          details: [{ field: "contactId", issue: "not_found" }],
+          details: [{ field: "contactId", issue: "Not found" }],
         });
       }
 
       // Check if contact has already responded to this survey
-      const existingResponse = await prisma.response.findFirst({
-        where: {
-          surveyId: params.surveyId,
-          contactId: params.contactId,
-        },
-      });
+      const existingResponse = await getResponse(params.contactId, params.surveyId);
 
       if (existingResponse) {
         return handleApiError(request, {
           type: "bad_request",
-          details: [{ field: "contactId", issue: "already_responded" }],
+          details: [{ field: "contactId", issue: "Already responded" }],
         });
       }
 
-      const surveyUrl = getContactSurveyLink(params.contactId, params.surveyId, 7);
+      const surveyUrlResult = getContactSurveyLink(params.contactId, params.surveyId, 7);
 
-      return responses.successResponse({ data: { surveyUrl } });
+      if (!surveyUrlResult.ok) {
+        return handleApiError(request, surveyUrlResult.error);
+      }
+
+      return responses.successResponse({ data: { surveyUrl: surveyUrlResult.data } });
     },
   });
