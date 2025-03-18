@@ -75,7 +75,7 @@ export const PinScreen = (props: PinScreenProps) => {
       if (isValidPin) {
         setLoading(true);
         const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
-        if (response?.data) {
+        if (response?.data?.survey) {
           setSurvey(response.data.survey);
         } else {
           const errorMessage = getFormattedErrorMessage(response);

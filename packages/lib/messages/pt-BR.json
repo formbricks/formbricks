@@ -1899,6 +1899,7 @@
     "preview_survey_questions": "Visualizar perguntas da pesquisa.",
     "question_preview": "Prévia da Pergunta",
     "response_already_received": "Já recebemos uma resposta para este endereço de email.",
+    "response_submitted": "Já existe uma resposta vinculada a esta pesquisa e contato",
     "survey_already_answered_heading": "A pesquisa já foi respondida.",
     "survey_already_answered_subheading": "Você só pode usar esse link uma vez.",
     "survey_sent_to": "Pesquisa enviada para {email}",

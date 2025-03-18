@@ -44,12 +44,12 @@ describe("Contact Survey Link", () => {
       return value;
     });
 
-    vi.mocked(jwt.sign).mockReturnValue(mockToken);
+    vi.mocked(jwt.sign).mockReturnValue(mockToken as any);
 
     vi.mocked(jwt.verify).mockReturnValue({
       contactId: mockEncryptedContactId,
       surveyId: mockEncryptedSurveyId,
-    });
+    } as any);
   });
 
   describe("getContactSurveyLink", () => {
@@ -89,23 +89,19 @@ describe("Contact Survey Link", () => {
       );
     });
 
-    it("throws an error when ENCRYPTION_KEY is not available", () => {
-      // Mock the module temporarily to simulate missing ENCRYPTION_KEY
-      const originalEncryptionKey = ENCRYPTION_KEY;
-      Object.defineProperty(require("@formbricks/lib/constants"), "ENCRYPTION_KEY", {
-        value: undefined,
-        configurable: true,
-      });
-
-      expect(() => contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId)).toThrow(
+    it("throws an error when ENCRYPTION_KEY is not available", async () => {
+      // Reset modules so the new mock is used by the module under test
+      vi.resetModules();
+      // Re‑mock constants to simulate missing ENCRYPTION_KEY
+      vi.doMock("@formbricks/lib/constants", () => ({
+        ENCRYPTION_KEY: undefined,
+        WEBAPP_URL: "https://test.formbricks.com",
+      }));
+      // Re‑import the module so it picks up the new mock
+      const { getContactSurveyLink } = await import("./contact-survey-link");
+      expect(() => getContactSurveyLink(mockContactId, mockSurveyId)).toThrow(
         "Encryption key not found - cannot create personalized survey link"
       );
-
-      // Reset the ENCRYPTION_KEY back to its original value
-      Object.defineProperty(require("@formbricks/lib/constants"), "ENCRYPTION_KEY", {
-        value: originalEncryptionKey,
-        configurable: true,
-      });
     });
   });
 
@@ -138,7 +134,7 @@ describe("Contact Survey Link", () => {
       vi.mocked(jwt.verify).mockReturnValue({
         // Missing surveyId
         contactId: mockEncryptedContactId,
-      });
+      } as any);
 
       // Suppress console.error for this test
       vi.spyOn(console, "error").mockImplementation(() => {});
@@ -148,23 +144,16 @@ describe("Contact Survey Link", () => {
       );
     });
 
-    it("throws an error when ENCRYPTION_KEY is not available", () => {
-      // Mock the module temporarily to simulate missing ENCRYPTION_KEY
-      const originalEncryptionKey = ENCRYPTION_KEY;
-      Object.defineProperty(require("@formbricks/lib/constants"), "ENCRYPTION_KEY", {
-        value: undefined,
-        configurable: true,
-      });
-
-      expect(() => contactSurveyLink.verifyContactSurveyToken(mockToken)).toThrow(
+    it("throws an error when ENCRYPTION_KEY is not available", async () => {
+      vi.resetModules();
+      vi.doMock("@formbricks/lib/constants", () => ({
+        ENCRYPTION_KEY: undefined,
+        WEBAPP_URL: "https://test.formbricks.com",
+      }));
+      const { verifyContactSurveyToken } = await import("./contact-survey-link");
+      expect(() => verifyContactSurveyToken(mockToken)).toThrow(
         "Encryption key not found - cannot verify survey token"
       );
-
-      // Reset the ENCRYPTION_KEY back to its original value
-      Object.defineProperty(require("@formbricks/lib/constants"), "ENCRYPTION_KEY", {
-        value: originalEncryptionKey,
-        configurable: true,
-      });
     });
   });
 });

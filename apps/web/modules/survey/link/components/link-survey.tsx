@@ -30,6 +30,7 @@ interface LinkSurveyProps {
   IS_FORMBRICKS_CLOUD: boolean;
   locale: string;
   isPreview: boolean;
+  contactId?: string;
 }
 
 export const LinkSurvey = ({
@@ -48,6 +49,7 @@ export const LinkSurvey = ({
   IS_FORMBRICKS_CLOUD,
   locale,
   isPreview,
+  contactId,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -198,6 +200,7 @@ export const LinkSurvey = ({
         singleUseId={singleUseId}
         singleUseResponseId={responseId}
         getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
+        contactId={contactId}
       />
     </LinkSurveyWrapper>
   );

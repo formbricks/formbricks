@@ -122,7 +122,7 @@ export const getOrganizationBilling = reactCache(
 );
 
 export const getSurvey = reactCache(
-  async (surveyId: string): Promise<TSurvey> =>
+  async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
         const survey = await prisma.survey.findUnique({

@@ -69,7 +69,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     singleUseId = validatedSingleUseId ?? suId;
   }
 
-  let singleUseResponse = undefined;
+  let singleUseResponse;
   if (isSingleUseSurvey) {
     try {
       singleUseResponse = singleUseId

@@ -1899,6 +1899,7 @@
     "preview_survey_questions": "Vorschau der Fragen.",
     "question_preview": "Vorschau der Frage",
     "response_already_received": "Wir haben bereits eine Antwort für diese E-Mail-Adresse erhalten.",
+    "response_submitted": "Eine Antwort, die mit dieser Umfrage und diesem Kontakt verknüpft ist, existiert bereits",
     "survey_already_answered_heading": "Die Umfrage wurde bereits beantwortet.",
     "survey_already_answered_subheading": "Du kannst diesen Link nur einmal verwenden.",
     "survey_sent_to": "Umfrage an {email} gesendet",

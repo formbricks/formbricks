@@ -110,7 +110,7 @@ describe("Metadata Utils", () => {
       expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
       expect(getProjectByEnvironmentId).toHaveBeenCalledWith(mockEnvironmentId);
       expect(result).toEqual({
-        title: "Welcome Headline | Survey",
+        title: "Welcome Headline | Formbricks",
         description: "Welcome Description",
         survey: mockSurvey,
       });
@@ -132,7 +132,7 @@ describe("Metadata Utils", () => {
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
       expect(result).toEqual({
-        title: "Test Survey | Survey",
+        title: "Test Survey | Formbricks",
         description: "Complete this survey",
         survey: mockSurvey,
       });

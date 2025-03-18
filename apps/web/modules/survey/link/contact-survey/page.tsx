@@ -2,24 +2,25 @@ import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-surv
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
+import { getExisitingContactResponse } from "@/modules/survey/link/lib/response";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getMetadataForContactSurvey } from "./metadata";
 
 interface ContactSurveyPageProps {
-  params: {
+  params: Promise<{
     jwt: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     verify?: string;
     lang?: string;
     embed?: string;
     preview?: string;
-  };
+  }>;
 }
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
-  const { jwt } = props.params;
+  const { jwt } = await props.params;
   try {
     // Verify and decode the JWT token
     const { surveyId } = verifyContactSurveyToken(jwt);
@@ -35,7 +36,8 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
 
 export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const { searchParams, params } = props;
-  const { jwt } = params;
+  const { jwt } = await params;
+
   let surveyId, contactId;
   try {
     // Verify and decode the JWT token
@@ -46,7 +48,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     return <SurveyInactive status="link invalid" />;
   }
 
-  const isPreview = searchParams.preview === "true";
+  const existingResponse = await getExisitingContactResponse(surveyId, contactId);
+  if (existingResponse) {
+    return <SurveyInactive status="response submitted" />;
+  }
+
+  const isPreview = (await searchParams).preview === "true";
   const survey = await getSurvey(surveyId);
 
   if (!survey) {
@@ -55,7 +62,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   return renderSurvey({
     survey,
-    searchParams,
+    searchParams: await searchParams,
     contactId,
     isPreview,
   });
