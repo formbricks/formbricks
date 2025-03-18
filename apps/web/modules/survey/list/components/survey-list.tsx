@@ -19,7 +19,7 @@ import { SurveyLoading } from "./survey-loading";
 interface SurveysListProps {
   environmentId: string;
   isReadOnly: boolean;
-  surveyUrl: string;
+  surveyDomain: string;
   userId: string;
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
@@ -37,7 +37,7 @@ export const initialFilters: TSurveyFilters = {
 export const SurveysList = ({
   environmentId,
   isReadOnly,
-  surveyUrl,
+  surveyDomain,
   userId,
   surveysPerPage: surveysLimit,
   currentProjectChannel,
@@ -156,7 +156,7 @@ export const SurveysList = ({
                   survey={survey}
                   environmentId={environmentId}
                   isReadOnly={isReadOnly}
-                  surveyUrl={surveyUrl}
+                  surveyDomain={surveyDomain}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
                   locale={locale}

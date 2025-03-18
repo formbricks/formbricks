@@ -22,7 +22,7 @@ interface LinkSurveyWrapperProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
-  surveyUrl: string;
+  surveyDomain: string;
   isBrandingEnabled: boolean;
 }
 
@@ -39,7 +39,7 @@ export const LinkSurveyWrapper = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
-  surveyUrl,
+  surveyDomain,
   isBrandingEnabled,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
@@ -96,7 +96,7 @@ export const LinkSurveyWrapper = ({
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyLink={surveyUrl + "/s/" + surveyId}
+          surveyLink={surveyDomain + "/s/" + surveyId}
         />
       </div>
     );

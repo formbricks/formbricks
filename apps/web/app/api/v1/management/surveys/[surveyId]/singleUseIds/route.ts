@@ -37,9 +37,10 @@ export const GET = async (
 
     const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
 
+    const surveyDomain = getSurveyDomain();
     // map single use ids to survey links
     const surveyLinks = singleUseIds.map(
-      (singleUseId) => `${getSurveyDomain()}/s/${survey.id}?suId=${singleUseId}`
+      (singleUseId) => `${surveyDomain}/s/${survey.id}?suId=${singleUseId}`
     );
 
     return responses.successResponse(surveyLinks);

@@ -20,7 +20,7 @@ interface LinkSurveyProps {
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
-  surveyUrl: string;
+  surveyDomain: string;
   webAppUrl: string;
   responseCount?: number;
   verifiedEmail?: string;
@@ -39,7 +39,7 @@ export const LinkSurvey = ({
   emailVerificationStatus,
   singleUseId,
   singleUseResponse,
-  surveyUrl,
+  surveyDomain,
   webAppUrl,
   responseCount,
   verifiedEmail,
@@ -166,7 +166,7 @@ export const LinkSurvey = ({
       handleResetSurvey={handleResetSurvey}
       determineStyling={determineStyling}
       isEmbed={isEmbed}
-      surveyUrl={surveyUrl}
+      surveyDomain={surveyDomain}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}

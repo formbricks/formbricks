@@ -35,7 +35,7 @@ import { CopySurveyModal } from "./copy-survey-modal";
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  surveyUrl: string;
+  surveyDomain: string;
   singleUseId?: string;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
@@ -46,7 +46,7 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  surveyUrl,
+  surveyDomain,
   singleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
@@ -60,7 +60,7 @@ export const SurveyDropDownMenu = ({
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
 
-  const surveyLink = useMemo(() => surveyUrl + "/s/" + survey.id, [survey.id, surveyUrl]);
+  const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);

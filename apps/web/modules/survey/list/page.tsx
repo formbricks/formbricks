@@ -101,7 +101,7 @@ export const SurveysPage = async ({
           <SurveysList
             environmentId={environment.id}
             isReadOnly={isReadOnly}
-            surveyUrl={getSurveyDomain()}
+            surveyDomain={getSurveyDomain()}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
             currentProjectChannel={currentProjectChannel}

@@ -73,7 +73,7 @@ x-environment: &environment
     # DOCKER_CRON_ENABLED: 1
 
     # Set the below to your Survey Domain(default is WEBAPP_URL)
-    # SURVEY_DOMAIN:
+    # SURVEY_URL:
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 

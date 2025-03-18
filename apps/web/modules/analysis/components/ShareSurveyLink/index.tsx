@@ -7,7 +7,6 @@ import { useTranslate } from "@tolgee/react";
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageDropdown } from "./components/LanguageDropdown";
@@ -25,7 +24,7 @@ export const ShareSurveyLink = ({ survey, surveyUrl, setSurveyUrl, locale }: Sha
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
-    let url = `${getSurveyDomain()}/s/${survey.id}`;
+    let url = surveyUrl;
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {

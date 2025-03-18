@@ -19,6 +19,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -90,7 +91,13 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
       <PageHeader
         pageTitle={survey.name}
         cta={
-          <SurveyAnalysisCTA environment={environment} survey={survey} isReadOnly={isReadOnly} user={user} />
+          <SurveyAnalysisCTA
+            environment={environment}
+            survey={survey}
+            isReadOnly={isReadOnly}
+            user={user}
+            surveyDomain={getSurveyDomain()}
+          />
         }>
         {isAIEnabled && shouldGenerateInsights && (
           <EnableInsightsBanner

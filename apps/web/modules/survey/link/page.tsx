@@ -148,7 +148,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
-  const surveyUrl = getSurveyDomain();
+  const surveyDomain = getSurveyDomain();
 
   if (isSurveyPinProtected) {
     return (
@@ -158,7 +158,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-        surveyUrl={surveyUrl}
+        surveyDomain={surveyDomain}
         webAppUrl={WEBAPP_URL}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
@@ -179,7 +179,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
-      surveyUrl={surveyUrl}
+      surveyDomain={surveyDomain}
       webAppUrl={WEBAPP_URL}
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
