@@ -107,3 +107,21 @@ export const ZContactCSVAttributeMap = z.record(z.string(), z.string()).superRef
   }
 });
 export type TContactCSVAttributeMap = z.infer<typeof ZContactCSVAttributeMap>;
+
+export const ZContactBulkUploadRequest = z.object({
+  contacts: z.array(
+    z.object({
+      attributes: z.array(
+        z.object({
+          attributeKey: z.object({
+            key: z.string(),
+            name: z.string(),
+          }),
+          value: z.string(),
+        })
+      ),
+    })
+  ),
+});
+
+export type TContactBulkUploadRequest = z.infer<typeof ZContactBulkUploadRequest>;
