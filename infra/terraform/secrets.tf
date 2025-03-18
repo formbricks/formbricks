@@ -3,10 +3,6 @@ resource "aws_secretsmanager_secret" "formbricks_app_secrets" {
   name = "prod/formbricks/secrets"
 }
 
-#output "valkey_endpoint" {
-#  value = module.valkey_serverless.serverless_cache_endpoint
-#}
-
 resource "aws_secretsmanager_secret_version" "formbricks_app_secrets" {
   secret_id = aws_secretsmanager_secret.formbricks_app_secrets.id
   secret_string = jsonencode({
