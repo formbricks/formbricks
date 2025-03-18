@@ -52,6 +52,7 @@ vi.mock("next/navigation", async () => {
     }),
     notFound: vi.fn(),
     redirect: vi.fn(),
+    useSearchParams: () => new URLSearchParams(""),
   };
 });
 

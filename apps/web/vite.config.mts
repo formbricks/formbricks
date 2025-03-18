@@ -1,4 +1,3 @@
-// vitest.config.ts
 import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
@@ -8,7 +7,6 @@ export default defineConfig({
   test: {
     environment: "node",
     environmentMatchGlobs: [
-      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
       ["**/*.test.tsx", "jsdom"],
     ],
     exclude: ["playwright/**", "node_modules/**"],
@@ -21,8 +19,11 @@ export default defineConfig({
       include: [
         "modules/api/v2/**/*.ts",
         "modules/auth/lib/**/*.ts",
+        "modules/auth/signup/components/signup-form.tsx",
+        "modules/auth/signup/page.tsx",
         "modules/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
+        "modules/ee/sso/lib/**/*.ts",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "modules/ui/components/post-hog-client/*.tsx",
@@ -31,7 +32,6 @@ export default defineConfig({
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
         "app/(app)/(onboarding)/organizations/**/layout.tsx",
         "app/(app)/(survey-editor)/environments/**/layout.tsx",
-        "modules/ee/sso/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
