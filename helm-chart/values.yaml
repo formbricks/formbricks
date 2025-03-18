@@ -60,11 +60,8 @@ deployment:
 
   # Environment variables passed to the app container
   env:
-    EMAIL_VERIFICATION_DISABLED:
-      value: "1"
-    PASSWORD_RESET_DISABLED:
-      value: "1"
-    DOCKER_CRON_ENABLED: "0" # Disable Docker cron jobs when using Kubernetes CronJobs
+    DOCKER_CRON_ENABLED:
+      value: "0"
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []

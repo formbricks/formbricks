@@ -12,7 +12,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -29,6 +29,24 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+
+    packaging {
+        resources {
+            excludes += "META-INF/library_release.kotlin_module"
+            excludes += "classes.dex"
+            excludes += "**.**"
+            pickFirsts += "**/DataBinderMapperImpl.java"
+            pickFirsts += "**/DataBinderMapperImpl.class"
+            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.java"
+            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.class"
+        }
+    }
+    viewBinding {
+        enable = true
+    }
+    dataBinding {
+        enable = true
     }
     buildFeatures {
         dataBinding = true
@@ -64,8 +82,6 @@ dependencies {
     implementation(libs.okhttp3.logging.interceptor)
 
     implementation(libs.material)
-
-    implementation(libs.timber)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.legacy.support.v4)

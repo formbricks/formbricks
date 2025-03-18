@@ -6,14 +6,12 @@ import android.app.Dialog
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
 import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
@@ -25,16 +23,14 @@ import androidx.fragment.app.viewModels
 import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.R
 import com.formbricks.formbrickssdk.databinding.FragmentFormbricksBinding
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.google.gson.JsonObject
-import kotlinx.serialization.json.JsonArray
-import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import java.time.Instant
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
@@ -58,7 +54,8 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                     dismiss()
                 }
 
-            }, Date.from(Instant.now().plusSeconds(CLOSING_TIMEOUT_IN_SECONDS)))
+            }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
+            )
         }
 
         override fun onDisplayCreated() {
@@ -158,7 +155,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
-                        Timber.tag("Javascript message").d(log)
+                        Logger.d(log)
                     }
                     return super.onConsoleMessage(consoleMessage)
                 }
@@ -229,4 +226,3 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         private const val CLOSING_TIMEOUT_IN_SECONDS = 5L
     }
 }
-
