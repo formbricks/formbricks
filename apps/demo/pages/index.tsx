@@ -333,6 +333,25 @@ export default function AppPage(): React.JSX.Element {
               </p>
             </div>
           </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                onClick={() => {
+                  void formbricks.logout();
+                }}>
+                Logout
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button logs out the user and syncs the local state with Formbricks. (Only works if a
+                userId is set)
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
