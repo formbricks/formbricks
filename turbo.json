@@ -157,6 +157,7 @@
         "RATE_LIMITING_DISABLED",
         "REDIS_HTTP_URL",
         "REDIS_URL",
+        "REDIS_DEFAULT_TTL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_ENDPOINT_URL",
