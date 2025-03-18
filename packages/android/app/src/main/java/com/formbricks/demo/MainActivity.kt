@@ -15,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val config = FormbricksConfig.Builder("http://192.168.0.12:3000","cm8ebrmrx0009sfrno2kebu62")
+        val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
             .setLoggingEnabled(true)
             .setFragmentManager(supportFragmentManager)
         Formbricks.setup(this, config.build())

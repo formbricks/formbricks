@@ -27,7 +27,7 @@ lifecycleViewmodelKtx = "2.8.7"
 fragmentKtx = "1.8.5"
 databindingCommon = "8.8.0"
 activity = "1.10.1"
-constraintlayout = "2.2.1"
+constraintlayout = "2.1.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
