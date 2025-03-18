@@ -87,9 +87,6 @@ export const setup = async (
 
   const { changed, newState } = migrateLocalStorage();
 
-  console.log("changed", changed);
-  console.log("newState", newState);
-
   if (changed) {
     config.resetConfig();
     config = Config.getInstance();
@@ -98,7 +95,6 @@ export const setup = async (
     // otherwise, we just sync again!
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- user could be undefined
     if (newState && !newState.user?.data?.userId) {
-      console.log("updating config with new state");
       config.update(newState);
     }
   }
@@ -158,8 +154,6 @@ export const setup = async (
 
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
-
-  console.log("existingConfig", existingConfig);
 
   if (
     existingConfig?.environment &&
