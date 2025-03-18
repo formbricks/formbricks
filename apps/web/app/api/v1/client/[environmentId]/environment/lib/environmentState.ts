@@ -90,7 +90,7 @@ export const getEnvironmentState = async (
             },
           });
         } catch (err) {
-          logger.warn(err, "Error sending plan limits reached event to Posthog");
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
 

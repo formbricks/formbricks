@@ -446,7 +446,7 @@ export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
       enpsSurvey(t),
     ];
   } catch (error) {
-    logger.warn({ error }, "Unable to load XM templates, returning empty array");
+    logger.error(error, "Unable to load XM templates, returning empty array");
     return []; // Return an empty array or handle as needed
   }
 };

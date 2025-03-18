@@ -26,10 +26,7 @@ export const POST = async (request: Request) => {
     const inputValidation = ZGenerateInsightsInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
-      logger.error(
-        { error: inputValidation.error, url: request.url },
-        "Error in POST /api/(internal)/insights"
-      );
+      logger.error({ error: inputValidation.error, url: request.url }, "Error in POST /api/insights");
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
         transformErrorToDetails(inputValidation.error),

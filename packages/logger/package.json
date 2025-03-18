@@ -6,13 +6,7 @@
   "homepage": "https://formbricks.com",
   "license": "MIT",
   "description": "Logger for Formbricks",
-  "files": [
-    "dist"
-  ],
-  "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js"
-  },
+  "main": "./src/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"

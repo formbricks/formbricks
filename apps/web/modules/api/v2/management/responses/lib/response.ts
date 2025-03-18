@@ -111,7 +111,7 @@ export const createResponse = async (
           });
         } catch (err) {
           // Log error but do not throw it
-          logger.warn(err, "Error sending plan limits reached event to Posthog");
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }
