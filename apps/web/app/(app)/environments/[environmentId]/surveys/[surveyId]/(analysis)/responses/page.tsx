@@ -83,13 +83,7 @@ const Page = async (props) => {
       <PageHeader
         pageTitle={survey.name}
         cta={
-          <SurveyAnalysisCTA
-            environment={environment}
-            survey={survey}
-            isReadOnly={isReadOnly}
-            webAppUrl={WEBAPP_URL}
-            user={user}
-          />
+          <SurveyAnalysisCTA environment={environment} survey={survey} isReadOnly={isReadOnly} user={user} />
         }>
         {isAIEnabled && shouldGenerateInsights && (
           <EnableInsightsBanner

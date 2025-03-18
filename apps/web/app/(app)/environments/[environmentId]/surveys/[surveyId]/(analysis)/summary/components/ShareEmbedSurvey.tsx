@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { EmbedView } from "./shareEmbedModal/EmbedView";
@@ -26,18 +27,10 @@ interface ShareEmbedSurveyProps {
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  webAppUrl: string;
   user: TUser;
 }
 
-export const ShareEmbedSurvey = ({
-  survey,
-  open,
-  modalView,
-  setOpen,
-  webAppUrl,
-  user,
-}: ShareEmbedSurveyProps) => {
+export const ShareEmbedSurvey = ({ survey, open, modalView, setOpen, user }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
@@ -60,7 +53,7 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
+  const [surveyUrl, setSurveyUrl] = useState(getSurveyDomain() + "/s/" + survey.id);
 
   useEffect(() => {
     if (survey.type !== "link") {
@@ -104,7 +97,6 @@ export const ShareEmbedSurvey = ({
               <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
-                webAppUrl={webAppUrl}
                 surveyUrl={surveyUrl}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
@@ -160,7 +152,6 @@ export const ShareEmbedSurvey = ({
             email={email}
             surveyUrl={surveyUrl}
             setSurveyUrl={setSurveyUrl}
-            webAppUrl={webAppUrl}
             locale={user.locale}
           />
         ) : showView === "panel" ? (

@@ -17,7 +17,8 @@ import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
@@ -100,7 +101,7 @@ export const SurveysPage = async ({
           <SurveysList
             environmentId={environment.id}
             isReadOnly={isReadOnly}
-            WEBAPP_URL={WEBAPP_URL}
+            surveyUrl={getSurveyDomain()}
             userId={session.user.id}
             surveysPerPage={SURVEYS_PER_PAGE}
             currentProjectChannel={currentProjectChannel}

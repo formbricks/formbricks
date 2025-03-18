@@ -7,6 +7,7 @@ import { useTranslate } from "@tolgee/react";
 import { Copy, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { LanguageDropdown } from "./components/LanguageDropdown";
@@ -14,24 +15,17 @@ import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
-  webAppUrl: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
 }
 
-export const ShareSurveyLink = ({
-  survey,
-  webAppUrl,
-  surveyUrl,
-  setSurveyUrl,
-  locale,
-}: ShareSurveyLinkProps) => {
+export const ShareSurveyLink = ({ survey, surveyUrl, setSurveyUrl, locale }: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
-    let url = `${webAppUrl}/s/${survey.id}`;
+    let url = `${getSurveyDomain()}/s/${survey.id}`;
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
@@ -57,7 +51,7 @@ export const ShareSurveyLink = ({
     }
 
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language]);
+  }, [survey, language]);
 
   const generateNewSingleUseLink = () => {
     getUrl();

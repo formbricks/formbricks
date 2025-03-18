@@ -10,6 +10,7 @@ import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "l
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
@@ -18,7 +19,6 @@ interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
   isReadOnly: boolean;
-  webAppUrl: string;
   user: TUser;
 }
 
@@ -29,13 +29,7 @@ interface ModalState {
   dropdown: boolean;
 }
 
-export const SurveyAnalysisCTA = ({
-  survey,
-  environment,
-  isReadOnly,
-  webAppUrl,
-  user,
-}: SurveyAnalysisCTAProps) => {
+export const SurveyAnalysisCTA = ({ survey, environment, isReadOnly, user }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -48,7 +42,7 @@ export const SurveyAnalysisCTA = ({
     dropdown: false,
   });
 
-  const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
+  const surveyUrl = useMemo(() => `${getSurveyDomain()}/s/${survey.id}`, [survey.id]);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -168,7 +162,6 @@ export const SurveyAnalysisCTA = ({
               survey={survey}
               open={modalState[key as keyof ModalState]}
               setOpen={setOpen}
-              webAppUrl={webAppUrl}
               user={user}
               modalView={modalView}
             />

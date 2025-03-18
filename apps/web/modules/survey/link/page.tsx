@@ -15,6 +15,7 @@ import { Response } from "@prisma/client";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ZId } from "@formbricks/types/common";
 
@@ -147,6 +148,8 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
 
+  const surveyUrl = getSurveyDomain();
+
   if (isSurveyPinProtected) {
     return (
       <PinScreen
@@ -155,6 +158,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={isSingleUseSurvey ? singleUseId : undefined}
         singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+        surveyUrl={surveyUrl}
         webAppUrl={WEBAPP_URL}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
@@ -175,6 +179,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={isSingleUseSurvey ? singleUseId : undefined}
       singleUseResponse={singleUseResponse ? singleUseResponse : undefined}
+      surveyUrl={surveyUrl}
       webAppUrl={WEBAPP_URL}
       responseCount={survey.welcomeCard.showResponseCount ? responseCount : undefined}
       verifiedEmail={verifiedEmail}
