@@ -7,11 +7,11 @@ import { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storag
 
 // Simple API client using fetch
 export class ApiClient {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor({ apiHost, environmentId }: { apiHost: string; environmentId: string }) {
-    this.apiHost = apiHost;
+  constructor({ appUrl, environmentId }: { appUrl: string; environmentId: string }) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
@@ -21,7 +21,7 @@ export class ApiClient {
     const fromV1 = !!displayInput.userId;
 
     return makeRequest(
-      this.apiHost,
+      this.appUrl,
       `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/displays`,
       "POST",
       displayInput
@@ -34,7 +34,7 @@ export class ApiClient {
     const fromV1 = !!responseInput.userId;
 
     return makeRequest(
-      this.apiHost,
+      this.appUrl,
       `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/responses`,
       "POST",
       responseInput
@@ -50,7 +50,7 @@ export class ApiClient {
     variables,
     language,
   }: TResponseUpdateInput & { responseId: string }): Promise<Result<object, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
+    return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       endingId,
       data,
@@ -79,7 +79,7 @@ export class ApiClient {
       surveyId,
     };
 
-    const response = await fetch(`${this.apiHost}/api/v1/client/${this.environmentId}/storage`, {
+    const response = await fetch(`${this.appUrl}/api/v1/client/${this.environmentId}/storage`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -136,7 +136,7 @@ export class ApiClient {
 
     let uploadResponse: Response = {} as Response;
 
-    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.apiHost);
+    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.appUrl);
 
     try {
       uploadResponse = await fetch(signedUrlCopy, {

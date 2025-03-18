@@ -1,11 +1,20 @@
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { InlineConfig, UserConfig, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
+interface VitestConfigExport extends UserConfig {
+  test: InlineConfig;
+}
+
 const config = () => {
   return defineConfig({
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src"),
+      },
+    },
     define: {
       "import.meta.env.VERSION": JSON.stringify(webPackageJson.version),
     },
@@ -26,7 +35,7 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        bundledPackages: ["@formbricks/api", "@formbricks/types"],
+        bundledPackages: ["@formbricks/api"],
       }),
       copyCompiledAssetsPlugin({
         filename: "formbricks",
@@ -34,7 +43,15 @@ const config = () => {
         skipDirectoryCheck: true, // Skip checking for subdirectories that might not exist
       }),
     ],
-  });
+    test: {
+      setupFiles: ["./vitest.setup.ts"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+        include: ["src/lib/**/*.ts"],
+      },
+    },
+  } as VitestConfigExport);
 };
 
 export default config;

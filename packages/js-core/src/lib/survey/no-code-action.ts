@@ -1,16 +1,12 @@
-import { type TJsEnvironmentStateActionClass } from "@formbricks/types/js";
-import { trackNoCodeAction } from "./actions";
-import { Config } from "./config";
-import { ErrorHandler, type NetworkError, type Result, type ResultError, err, match, okVoid } from "./errors";
-import { Logger } from "./logger";
-import { TimeoutStack } from "./timeout-stack";
-import { evaluateNoCodeConfigClick, handleUrlFilters } from "./utils";
-import { setIsSurveyRunning } from "./widget";
-
-const appConfig = Config.getInstance();
-const logger = Logger.getInstance();
-const errorHandler = ErrorHandler.getInstance();
-const timeoutStack = TimeoutStack.getInstance();
+/* eslint-disable no-console -- required for logging */
+import { Config } from "@/lib/common/config";
+import { Logger } from "@/lib/common/logger";
+import { TimeoutStack } from "@/lib/common/timeout-stack";
+import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
+import { trackNoCodeAction } from "@/lib/survey/action";
+import { setIsSurveyRunning } from "@/lib/survey/widget";
+import { type TEnvironmentStateActionClass } from "@/types/config";
+import { type NetworkError, type Result, type ResultError, err, match, okVoid } from "@/types/error";
 
 // Event types for various listeners
 const events = ["hashchange", "popstate", "pushstate", "replacestate", "load"];
@@ -23,8 +19,12 @@ export const setIsHistoryPatched = (value: boolean): void => {
 };
 
 export const checkPageUrl = async (): Promise<Result<void, NetworkError>> => {
+  const appConfig = Config.getInstance();
+  const logger = Logger.getInstance();
+  const timeoutStack = TimeoutStack.getInstance();
+
   logger.debug(`Checking page url: ${window.location.href}`);
-  const actionClasses = appConfig.get().environmentState.data.actionClasses;
+  const actionClasses = appConfig.get().environment.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "pageView"
@@ -93,9 +93,11 @@ export const removePageUrlEventListeners = (): void => {
 let isClickEventListenerAdded = false;
 
 const checkClickMatch = (event: MouseEvent): void => {
-  const { environmentState } = appConfig.get();
+  const appConfig = Config.getInstance();
 
-  const { actionClasses = [] } = environmentState.data;
+  const { environment } = appConfig.get();
+
+  const { actionClasses = [] } = environment.data;
 
   const noCodeClickActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "click"
@@ -103,7 +105,7 @@ const checkClickMatch = (event: MouseEvent): void => {
 
   const targetElement = event.target as HTMLElement;
 
-  noCodeClickActionClasses.forEach((action: TJsEnvironmentStateActionClass) => {
+  noCodeClickActionClasses.forEach((action: TEnvironmentStateActionClass) => {
     if (evaluateNoCodeConfigClick(targetElement, action)) {
       trackNoCodeAction(action.name)
         .then((res) => {
@@ -111,12 +113,13 @@ const checkClickMatch = (event: MouseEvent): void => {
             res,
             (_value: unknown) => undefined,
             (actionError: unknown) => {
-              errorHandler.handle(actionError);
+              // errorHandler.handle(actionError);
+              console.error(actionError);
             }
           );
         })
         .catch((error: unknown) => {
-          errorHandler.handle(error);
+          console.error(error);
         });
     }
   });
@@ -142,8 +145,10 @@ export const removeClickEventListener = (): void => {
 let isExitIntentListenerAdded = false;
 
 const checkExitIntent = async (e: MouseEvent): Promise<ResultError<NetworkError> | undefined> => {
-  const { environmentState } = appConfig.get();
-  const { actionClasses = [] } = environmentState.data;
+  const appConfig = Config.getInstance();
+
+  const { environment } = appConfig.get();
+  const { actionClasses = [] } = environment.data;
 
   const noCodeExitIntentActionClasses = actionClasses.filter(
     (action) => action.type === "noCode" && action.noCodeConfig?.type === "exitIntent"
@@ -185,6 +190,8 @@ let scrollDepthListenerAdded = false;
 let scrollDepthTriggered = false;
 
 const checkScrollDepth = async (): Promise<Result<void, unknown>> => {
+  const appConfig = Config.getInstance();
+
   const scrollPosition = window.scrollY;
   const windowSize = window.innerHeight;
   const bodyHeight = document.documentElement.scrollHeight;
@@ -196,8 +203,8 @@ const checkScrollDepth = async (): Promise<Result<void, unknown>> => {
   if (!scrollDepthTriggered && scrollPosition / (bodyHeight - windowSize) >= 0.5) {
     scrollDepthTriggered = true;
 
-    const { environmentState } = appConfig.get();
-    const { actionClasses = [] } = environmentState.data;
+    const { environment } = appConfig.get();
+    const { actionClasses = [] } = environment.data;
 
     const noCodefiftyPercentScrollActionClasses = actionClasses.filter(
       (action) => action.type === "noCode" && action.noCodeConfig?.type === "fiftyPercentScroll"

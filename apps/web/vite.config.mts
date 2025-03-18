@@ -40,6 +40,7 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
+        "**/*.tsx", // Exclude tsx files
       ],
     },
   },

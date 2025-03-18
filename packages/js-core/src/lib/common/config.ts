@@ -1,16 +1,17 @@
-import { type TJsConfig, type TJsConfigUpdateInput } from "@formbricks/types/js";
-import { JS_LOCAL_STORAGE_KEY } from "./constants";
-import { type Result, err, ok, wrapThrows } from "./errors";
+import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
+import { wrapThrows } from "@/lib/common/utils";
+import type { TConfig, TConfigUpdateInput } from "@/types/config";
+import { type Result, err, ok } from "@/types/error";
 
 export class Config {
-  private static instance: Config | undefined;
-  private config: TJsConfig | null = null;
+  private static instance: Config | null = null;
+  private config: TConfig | null = null;
 
   private constructor() {
     const savedConfig = this.loadFromLocalStorage();
 
     if (savedConfig.ok) {
-      this.config = savedConfig.value;
+      this.config = savedConfig.data;
     }
   }
 
@@ -18,10 +19,11 @@ export class Config {
     if (!Config.instance) {
       Config.instance = new Config();
     }
+
     return Config.instance;
   }
 
-  public update(newConfig: TJsConfigUpdateInput): void {
+  public update(newConfig: TConfigUpdateInput): void {
     this.config = {
       ...this.config,
       ...newConfig,
@@ -34,26 +36,27 @@ export class Config {
     void this.saveToStorage();
   }
 
-  public get(): TJsConfig {
+  public get(): TConfig {
     if (!this.config) {
       throw new Error("config is null, maybe the init function was not called?");
     }
     return this.config;
   }
 
-  public loadFromLocalStorage(): Result<TJsConfig> {
+  public loadFromLocalStorage(): Result<TConfig> {
     if (typeof window !== "undefined") {
       const savedConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
       if (savedConfig) {
         // TODO: validate config
         // This is a hack to get around the fact that we don't have a proper
         // way to validate the config yet.
-        const parsedConfig = JSON.parse(savedConfig) as TJsConfig;
+        const parsedConfig = JSON.parse(savedConfig) as TConfig;
 
         // check if the config has expired
         if (
-          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environmentState
-          new Date(parsedConfig.environmentState?.expiresAt) <= new Date()
+          // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- In case of an error, we don't have environment
+          parsedConfig.environment?.expiresAt &&
+          new Date(parsedConfig.environment.expiresAt) <= new Date()
         ) {
           return err(new Error("Config in local storage has expired"));
         }
