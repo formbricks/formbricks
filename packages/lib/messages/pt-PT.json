@@ -1797,6 +1797,7 @@
         "starts": "Começa",
         "starts_tooltip": "Número de vezes que o inquérito foi iniciado.",
         "static_iframe": "Estático (iframe)",
+        "survey_qr": "QR_do_inquérito",
         "survey_results_are_public": "Os resultados do seu inquérito são públicos!",
         "survey_results_are_shared_with_anyone_who_has_the_link": "Os resultados do seu inquérito são partilhados com qualquer pessoa que tenha o link. Os resultados não serão indexados pelos motores de busca.",
         "this_month": "Este mês",

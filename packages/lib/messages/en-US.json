@@ -1797,6 +1797,7 @@
         "starts": "Starts",
         "starts_tooltip": "Number of times the survey has been started.",
         "static_iframe": "Static (iframe)",
+        "survey_qr": "Survey_QR",
         "survey_results_are_public": "Your survey results are public!",
         "survey_results_are_shared_with_anyone_who_has_the_link": "Your survey results are shared with anyone who has the link. The results will not be indexed by search engines.",
         "this_month": "This month",

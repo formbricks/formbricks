@@ -1797,6 +1797,7 @@
         "starts": "Startet",
         "starts_tooltip": "So oft wurde die Umfrage gestartet.",
         "static_iframe": "Statisch (iframe)",
+        "survey_qr": "Umfrage_QR",
         "survey_results_are_public": "Deine Umfrageergebnisse sind öffentlich",
         "survey_results_are_shared_with_anyone_who_has_the_link": "Deine Umfrageergebnisse stehen allen zur Verfügung, die den Link haben. Die Ergebnisse werden nicht von Suchmaschinen indexiert.",
         "this_month": "Dieser Monat",

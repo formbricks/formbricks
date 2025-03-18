@@ -1797,6 +1797,7 @@
         "starts": "Commence",
         "starts_tooltip": "Nombre de fois que l'enquête a été commencée.",
         "static_iframe": "Statique (iframe)",
+        "survey_qr": "QR_du_sondage",
         "survey_results_are_public": "Les résultats de votre enquête sont publics !",
         "survey_results_are_shared_with_anyone_who_has_the_link": "Les résultats de votre enquête sont partagés avec quiconque possède le lien. Les résultats ne seront pas indexés par les moteurs de recherche.",
         "this_month": "Ce mois-ci",

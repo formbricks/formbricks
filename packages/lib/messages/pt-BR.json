@@ -1797,6 +1797,7 @@
         "starts": "começa",
         "starts_tooltip": "Número de vezes que a pesquisa foi iniciada.",
         "static_iframe": "Estático (iframe)",
+        "survey_qr": "QR_da_pesquisa",
         "survey_results_are_public": "Os resultados da sua pesquisa são públicos!",
         "survey_results_are_shared_with_anyone_who_has_the_link": "Os resultados da sua pesquisa são compartilhados com quem tiver o link. Os resultados não serão indexados por motores de busca.",
         "this_month": "Este mês",

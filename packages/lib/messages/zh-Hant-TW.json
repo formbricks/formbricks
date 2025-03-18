@@ -1797,6 +1797,7 @@
         "starts": "開始次數",
         "starts_tooltip": "問卷已開始的次數。",
         "static_iframe": "靜態 (iframe)",
+        "survey_qr": "調查_QR",
         "survey_results_are_public": "您的問卷結果是公開的！",
         "survey_results_are_shared_with_anyone_who_has_the_link": "您的問卷結果與任何擁有連結的人員分享。這些結果將不會被搜尋引擎編入索引。",
         "this_month": "本月",
