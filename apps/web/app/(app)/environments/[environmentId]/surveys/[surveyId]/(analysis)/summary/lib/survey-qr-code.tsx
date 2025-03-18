@@ -1,6 +1,7 @@
 "use client";
 
 import { getQRCodeOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/get-qr-code-options";
+import { useTranslate } from "@tolgee/react";
 import QRCodeStyling from "qr-code-styling";
 import { useEffect, useRef } from "react";
 import { toast } from "react-hot-toast";
@@ -8,6 +9,7 @@ import { toast } from "react-hot-toast";
 export const useSurveyQRCode = (surveyUrl: string) => {
   const qrCodeRef = useRef<HTMLDivElement>(null);
   const qrInstance = useRef<QRCodeStyling | null>(null);
+  const { t } = useTranslate();
 
   useEffect(() => {
     try {
@@ -24,7 +26,7 @@ export const useSurveyQRCode = (surveyUrl: string) => {
         }
       }
     } catch (error) {
-      toast.error("Failed to generate QR code. ");
+      toast.error(t("environments.surveys.summary.failed_to_generate_qr_code"));
     }
   }, [surveyUrl]);
 
@@ -34,7 +36,7 @@ export const useSurveyQRCode = (surveyUrl: string) => {
       downloadInstance.update({ data: surveyUrl });
       downloadInstance.download({ name: "survey-qr", extension: "png" });
     } catch (error) {
-      toast.error("Failed to download QR code.");
+      toast.error(t("environments.surveys.summary.failed_to_generate_qr_code"));
     }
   };
 

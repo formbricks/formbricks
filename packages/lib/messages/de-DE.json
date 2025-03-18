@@ -1737,6 +1737,7 @@
         "enable_ai_insights_banner_title": "Bereit, KI-Insights zu testen?",
         "enable_ai_insights_banner_tooltip": "Das sind ganz schön viele Freitextantworten! Kontaktiere uns bitte unter hola@formbricks.com, um Insights für diese Umfrage zu erhalten.",
         "failed_to_copy_link": "Kopieren des Links fehlgeschlagen",
+        "failed_to_generate_qr_code": "Fehler beim Generieren des QR-Codes.",
         "filter_added_successfully": "Filter erfolgreich hinzugefügt",
         "filter_updated_successfully": "Filter erfolgreich aktualisiert",
         "formbricks_email_survey_preview": "Formbricks E-Mail-Umfrage Vorschau",

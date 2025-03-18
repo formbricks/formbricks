@@ -94,8 +94,8 @@ export const ShareSurveyLink = ({
         </Button>
         <Button
           variant="secondary"
-          title="Copy survey link to clipboard"
-          aria-label="Copy survey link to clipboard"
+          title={t("environments.surveys.copy_survey_link_to_clipboard")}
+          aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
             toast.success(t("common.copied_to_clipboard"));

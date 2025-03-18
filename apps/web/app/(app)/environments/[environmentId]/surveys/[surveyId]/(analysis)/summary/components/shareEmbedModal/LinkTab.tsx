@@ -1,8 +1,6 @@
 "use client";
 
-import { useSurveyQRCode } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/survey-qr-code";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -18,8 +16,6 @@ interface LinkTabProps {
 
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
-
-  const { qrCodeRef, downloadQRCode } = useSurveyQRCode(surveyUrl);
 
   const docsLinks = [
     {
@@ -69,18 +65,6 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
               <p className="text-slate-500 hover:text-slate-700">{tip.description}</p>
             </Link>
           ))}
-
-          <div className="relative flex w-full items-center justify-start gap-2 rounded-md border border-slate-100 bg-white px-6 py-4 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-800">
-            <div ref={qrCodeRef} />
-            <div className="flex flex-col justify-start gap-2">
-              <p className="text-center font-semibold text-slate-700">
-                {t("environments.surveys.summary.share_the_qr_code")}
-              </p>
-              <Button variant="secondary" onClick={downloadQRCode}>
-                {t("common.download")}
-              </Button>
-            </div>
-          </div>
         </div>
       </div>
     </div>

@@ -1737,6 +1737,7 @@
         "enable_ai_insights_banner_title": "準備好測試 AI 洞察了嗎？",
         "enable_ai_insights_banner_tooltip": "請透過 hola@formbricks.com 與我們聯絡，以產生此問卷的洞察",
         "failed_to_copy_link": "無法複製連結",
+        "failed_to_generate_qr_code": "無法生成 QR 碼。",
         "filter_added_successfully": "篩選器已成功新增",
         "filter_updated_successfully": "篩選器已成功更新",
         "formbricks_email_survey_preview": "Formbricks 電子郵件問卷預覽",

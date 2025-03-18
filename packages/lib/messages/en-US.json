@@ -1737,6 +1737,7 @@
         "enable_ai_insights_banner_title": "Ready to test AI insights?",
         "enable_ai_insights_banner_tooltip": "Kindly contact us at hola@formbricks.com to generate insights for this survey",
         "failed_to_copy_link": "Failed to copy link",
+        "failed_to_generate_qr_code": "Failed to generate QR code.",
         "filter_added_successfully": "Filter added successfully",
         "filter_updated_successfully": "Filter updated successfully",
         "formbricks_email_survey_preview": "Formbricks Email Survey Preview",
