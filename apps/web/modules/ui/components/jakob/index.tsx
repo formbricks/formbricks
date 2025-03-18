@@ -1,6 +1,6 @@
 import { Button } from "@/modules/ui/components/button";
 import { VariantProps, cva } from "class-variance-authority";
-import { AlertCircle, AlertTriangle, CheckCircle, CheckCircle2Icon, Info, Terminal } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
@@ -65,15 +65,10 @@ const getButtonStyles = (variant: string, size: string) => {
 
 // Enhanced interface for AlertJakob props
 interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
-  /** Custom icon to override the default variant icon */
   icon?: React.ReactNode;
-  /** Function to call when the icon is clicked */
   onIconClick?: (e: React.MouseEvent) => void;
-  /** Title content for the alert */
   title?: React.ReactNode;
-  /** Description content for the alert */
   description?: React.ReactNode;
-  /** Button element or props for the alert action */
   button?:
     | React.ReactElement
     | {
@@ -84,7 +79,6 @@ interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantP
         className?: string;
         variant?: string;
       };
-  /** Whether to allow children to be passed alongside structured props */
   allowChildren?: boolean;
 }
 

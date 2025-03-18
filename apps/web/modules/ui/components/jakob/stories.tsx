@@ -1,6 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { LightbulbIcon } from "lucide-react";
-import { AlertButton, AlertDescription, AlertJakob, AlertTitle } from "./index";
+import { AlertJakob } from "./index";
 
 const meta: Meta<typeof AlertJakob> = {
   title: "UI/AlertJakob",
