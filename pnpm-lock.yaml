@@ -733,10 +733,6 @@ importers:
         version: 3.24.1
 
   packages/js:
-    dependencies:
-      zod:
-        specifier: 3.x
-        version: 3.24.2
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -747,9 +743,6 @@ importers:
       '@formbricks/js-core':
         specifier: workspace:*
         version: link:../js-core
-      '@formbricks/types':
-        specifier: workspace:*
-        version: link:../types
       terser:
         specifier: 5.37.0
         version: 5.37.0

@@ -1,7 +1,7 @@
 {
   "name": "@formbricks/js",
   "license": "MIT",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.2",
   "description": "Formbricks-js allows you to connect your index to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",
   "repository": {
@@ -43,12 +43,8 @@
     "@formbricks/js-core": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@formbricks/types": "workspace:*",
     "terser": "5.37.0",
     "vite": "6.0.9",
     "vite-plugin-dts": "4.3.0"
-  },
-  "peerDependencies": {
-    "zod": "3.x"
   }
 }

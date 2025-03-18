@@ -2,7 +2,8 @@
   eslint-disable no-console --
   * Required for logging errors
 */
-import { type Result } from "@formbricks/types/error-handlers";
+
+type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 
 let isInitializing = false;
 let isInitialized = false;
@@ -41,7 +42,9 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
   }
   return { ok: true, data: undefined };
 };
+
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
+
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
   // all of this should happen when not initialized:
   if (!isInitialized) {
