@@ -1756,6 +1756,7 @@
         "impressions_tooltip": "Number of times the survey has been viewed.",
         "includes_all": "Includes all",
         "includes_either": "Includes either",
+        "inconsistent_response_data": "Edited while public",
         "insights_disabled": "Insights disabled",
         "install_widget": "Install Formbricks Widget",
         "is_equal_to": "Is equal to",

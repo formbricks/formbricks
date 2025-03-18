@@ -7,6 +7,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { AlertJakob } from "@/modules/ui/components/jakob";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -89,6 +90,18 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     <PageContentWrapper>
       <PageHeader
         pageTitle={survey.name}
+        // pageTitle="Hello There There There There There There There There "
+        pageTitleAddon={
+          <AlertJakob
+            variant="info"
+            size="small"
+            title={t("environments.surveys.summary.inconsistent_response_data")}
+            className="w-fit"
+            // button={{
+            //   label: t("common.learn_more")
+            // }}
+          />
+        }
         cta={
           <SurveyAnalysisCTA
             environment={environment}
@@ -112,6 +125,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
           initialTotalResponseCount={totalResponseCount}
         />
       </PageHeader>
+
       <SummaryPage
         environment={environment}
         survey={survey}

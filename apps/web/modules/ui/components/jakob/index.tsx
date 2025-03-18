@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/modules/ui/components/button";
 import { VariantProps, cva } from "class-variance-authority";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
@@ -82,6 +84,21 @@ interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantP
       };
   allowChildren?: boolean;
 }
+
+// Add new ButtonWrapper component
+const ButtonWrapper = ({
+  buttonStyles,
+  children,
+}: {
+  buttonStyles: { variant?: string; size?: string; className?: string };
+  children: React.ReactElement;
+}) => {
+  return React.cloneElement(children, {
+    variant: buttonStyles.variant ?? children.props.variant,
+    size: buttonStyles.size ?? children.props.size,
+    className: cn(children.props.className, buttonStyles.className),
+  });
+};
 
 const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
   (
@@ -200,11 +217,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
             {/* Button section for default size */}
             {buttonElement && (
               <div className="ml-4 flex-shrink-0 self-end">
-                {React.cloneElement(buttonElement, {
-                  variant: buttonStyles.variant ?? buttonElement.props?.variant,
-                  size: buttonStyles.size ?? buttonElement.props?.size,
-                  className: cn(buttonElement.props?.className, buttonStyles.className),
-                })}
+                <ButtonWrapper buttonStyles={buttonStyles}>{buttonElement}</ButtonWrapper>
               </div>
             )}
           </div>
@@ -232,11 +245,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
             {/* Button section for small size */}
             {buttonElement && (
               <div className="flex-shrink-0">
-                {React.cloneElement(buttonElement, {
-                  variant: buttonStyles.variant ?? buttonElement.props?.variant,
-                  size: buttonStyles.size ?? buttonElement.props?.size,
-                  className: cn(buttonElement.props?.className, buttonStyles.className),
-                })}
+                <ButtonWrapper buttonStyles={buttonStyles}>{buttonElement}</ButtonWrapper>
               </div>
             )}
           </div>
