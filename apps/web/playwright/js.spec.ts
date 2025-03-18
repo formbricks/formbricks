@@ -10,7 +10,7 @@ const HTML_TEMPLATE = `<head>
       var e = document.getElementsByTagName("script")[0];
       t.onload = function(){
         if (window.formbricks) {
-          window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId});
+          window.formbricks.init({environmentId: "ENVIRONMENT_ID", apiHost: "http://localhost:3000", userId: "RANDOM_USER_ID"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
         }
