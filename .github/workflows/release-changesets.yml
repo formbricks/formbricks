@@ -7,9 +7,9 @@ on:
   #    - main
 
 permissions:
-  contents: write
-  pull-requests: write
-  packages: write
+  contents: read
+  id-token: write
+  actions: read
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
@@ -22,6 +22,12 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
+      id-token: write
+      actions: read
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}

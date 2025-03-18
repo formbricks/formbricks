@@ -10,12 +10,15 @@ on:
         description: "Version name"
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  pull-requests: read
 
 jobs:
   prepare_release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
 
     steps:
       - name: Harden the runner (Audit all outbound calls)

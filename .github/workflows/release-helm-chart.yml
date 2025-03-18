@@ -11,9 +11,6 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
-      contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
@@ -47,5 +44,7 @@ jobs:
           helm package ./helm-chart
 
       - name: Push Helm chart to GitHub Container Registry
+        permissions:
+          packages: write
         run: |
           helm push formbricks-${VERSION#v}.tgz oci://ghcr.io/formbricks/helm-charts

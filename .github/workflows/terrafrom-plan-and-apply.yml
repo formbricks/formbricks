@@ -1,4 +1,4 @@
-name: 'Terraform'
+name: "Terraform"
 
 on:
   workflow_dispatch:
@@ -9,13 +9,14 @@ on:
     branches:
       - main
 
-permissions:
-  id-token: write
-  contents: write
+permissions: read-all
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
@@ -71,4 +72,3 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform apply .planfile
         working-directory: "infra/terraform"
-

@@ -18,16 +18,20 @@ env:
   TELEMETRY_DISABLED: 1
 
 permissions:
-  id-token: write
   contents: read
+  id-token: write
   actions: read
-  checks: write
 
 jobs:
   build:
     name: Run E2E Tests
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      checks: write
+      id-token: write
+      actions: read
     services:
       postgres:
         image: pgvector/pgvector:pg17
