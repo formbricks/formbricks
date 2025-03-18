@@ -1,49 +1,40 @@
 {{- if (.Values.cronJob).enabled }}
 {{- range $name, $job := .Values.cronJob.jobs }}
 ---
-apiVersion: {{ if $.Capabilities.APIVersions.Has "batch/v1/CronJob" }}batch/v1{{ else }}batch/v1beta1{{ end }}
+{{ if $.Capabilities.APIVersions.Has "batch/v1/CronJob" -}}
+apiVersion: batch/v1
+{{- else -}}
+apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
-  name: {{ $name }}
   labels:
-    # Standard labels for tracking CronJobs
-    {{- include "formbricks.labels" $ | nindent 4 }}
-
-    # Additional labels if specified
-    {{- if $job.additionalLabels }}
-    {{- toYaml $job.additionalLabels | indent 4 }}
-    {{- end }}
-
-  # Additional annotations if specified
-  {{- if $job.annotations }}
+  {{- include "formbricks.labels" $ | nindent 4 }}
+{{- if $job.additionalLabels }}
+{{ $job.additionalLabels | indent 4 }}
+{{- end }}
+{{- if $job.annotations }}
   annotations:
-    {{- toYaml $job.annotations | indent 4 }}
-  {{- end }}
-
+{{ $job.annotations | indent 4 }}
+{{- end }}
+  name: {{ $name }}
+  namespace: {{ template "formbricks.namespace" $ }}
 spec:
-  # Define the execution schedule for the job
   schedule: {{ $job.schedule | quote }}
-
-  # Kubernetes 1.27+ supports time zones for CronJobs
-  {{- if ge (int $.Capabilities.KubeVersion.Minor) 27 }}
-  {{- if $job.timeZone }}
+{{- if ge (int $.Capabilities.KubeVersion.Minor) 27  }}
+{{- if $job.timeZone }}
   timeZone: {{ $job.timeZone }}
-  {{- end }}
-  {{- end }}
-
-  # Define job retention policies
-  {{- if $job.successfulJobsHistoryLimit }}
+{{ end }}
+{{- end }}
+{{- if $job.successfulJobsHistoryLimit }}
   successfulJobsHistoryLimit: {{ $job.successfulJobsHistoryLimit }}
-  {{- end }}
-  {{- if $job.failedJobsHistoryLimit }}
-  failedJobsHistoryLimit: {{ $job.failedJobsHistoryLimit }}
-  {{- end }}
-
-  # Define concurrency policy
-  {{- if $job.concurrencyPolicy }}
+{{ end }}
+{{- if $job.concurrencyPolicy }}
   concurrencyPolicy: {{ $job.concurrencyPolicy }}
-  {{- end }}
-
+{{ end }}
+{{- if $job.failedJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ $job.failedJobsHistoryLimit }}
+{{ end }}
   jobTemplate:
     spec:
       {{- with $job.activeDeadlineSeconds }}
@@ -55,48 +46,101 @@ spec:
       template:
         metadata:
           labels:
-            {{- include "formbricks.labels" $ | nindent 12 }}
-
-          # Additional pod-level labels
+          {{- include "formbricks.labels" $ | nindent 12 }}
           {{- with $job.additionalPodLabels }}
           {{- toYaml . | nindent 12 }}
           {{- end }}
-
-          # Additional annotations
           {{- with $job.additionalPodAnnotations }}
-          annotations: {{- toYaml . | nindent 12 }}
+          annotations: {{ toYaml . | nindent 12 }}
           {{- end }}
-
         spec:
-          # Define the service account if RBAC is enabled
           {{- if $.Values.rbac.enabled }}
+          {{- if $.Values.rbac.serviceAccount.name }}
+          serviceAccountName: {{ $.Values.rbac.serviceAccount.name }}
+            {{- else }}
           serviceAccountName: {{ template "formbricks.name" $ }}
           {{- end }}
-
-          # Define the job container
+          {{- end }}
           containers:
-          - name: {{ $name }}
-            image: "{{ required "Image repository is undefined" $job.image.repository }}:{{ $job.image.tag | default "latest" }}"
-            imagePullPolicy: {{ $job.image.imagePullPolicy | default "IfNotPresent" }}
-
-            # Environment variables from values
+            - name: {{ $name }}
+            {{- $image := required (print "Undefined image repo for container '" $name "'") $job.image.repository }}
+            {{- with $job.image.tag    }} {{- $image = print $image ":" . }} {{- end }}
+            {{- with $job.image.digest }} {{- $image = print $image "@" . }} {{- end }}
+              image: {{ $image }}
+            {{- if $job.image.imagePullPolicy }}
+              imagePullPolicy: {{ $job.image.imagePullPolicy }}
+            {{ end }}
             {{- with $job.env }}
-            env:
+              env:
             {{- range $key, $value := $job.env }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+              - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
+                {{- if kindIs "string" $value }}
+                value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
+                {{- else }}
+                {{- toYaml $value | nindent 16 }}
+                {{- end }}
             {{- end }}
             {{- end }}
-
-            # Define command and arguments if specified
-            {{- with $job.command }}
-            command: {{- toYaml . | indent 14 }}
+            {{- with $job.envFrom }}
+              envFrom:
+              {{ toYaml . | indent 12 }}
             {{- end }}
-
+            {{- if $job.command }}
+              command: {{ $job.command }}
+            {{- end }}
             {{- with $job.args }}
-            args: {{- toYaml . | indent 14 }}
+              args:
+              {{- range . }}
+                - {{ . | quote }}
+              {{- end }}
+              {{- end }}
+            {{- with $job.resources }}
+              resources:
+              {{ toYaml . | indent 14 }}
             {{- end }}
-
-          restartPolicy: {{ $job.restartPolicy | default "OnFailure" }}
+            {{- with $job.volumeMounts }}
+              volumeMounts:
+{{ toYaml . | indent 12 }}
+            {{- end }}
+            {{- with $job.securityContext }}
+              securityContext: {{ toYaml . | nindent 14 }}
+            {{- end }}
+          {{- with $job.nodeSelector }}
+          nodeSelector:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $job.affinity }}
+          affinity:
+{{ toYaml . | indent 12 }}
+          {{- end }}
+          {{- with $job.priorityClassName }}
+          priorityClassName: {{ . }}
+          {{- end }}
+          {{- with $job.tolerations }}
+          tolerations: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with $job.topologySpreadConstraints }}
+          topologySpreadConstraints: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if $job.restartPolicy }}
+          restartPolicy: {{ $job.restartPolicy }}
+          {{ else }}
+          restartPolicy: OnFailure
+          {{ end }}
+          {{- with $job.imagePullSecrets }}
+          imagePullSecrets:
+{{ toYaml . | indent 12 }}
+          {{ end }}
+          {{- if $job.dnsConfig }}
+          dnsConfig:
+{{ toYaml $job.dnsConfig | indent 12 }}
+              {{- end }}
+          {{- if $job.dnsPolicy }}
+          dnsPolicy: {{ $job.dnsPolicy }}
+          {{- end }}
+          {{- with $job.volumes }}
+          volumes:
+{{ toYaml . | indent 12 }}
+          {{- end }}
 {{- end }}
 {{- end }}

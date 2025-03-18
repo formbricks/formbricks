@@ -13,6 +13,9 @@ metadata:
     {{- if .Values.deployment.annotations }}
     {{- toYaml .Values.deployment.annotations | nindent 4 }}
     {{- end }}
+  {{- if .Values.deployment.reloadOnChange }}
+    reloader.stakater.com/auto: "true"
+  {{- end }}
   {{- end }}
 spec:
   {{- if .Values.deployment.replicas }}
@@ -94,8 +97,12 @@ spec:
               protocol: {{ $config.protocol | default "TCP" | quote }}
             {{- end }}
           {{- end }}
-          {{- if .Values.deployment.envFrom }}
+          {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
           envFrom:
+          {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          - secretRef:
+              name: {{ template "formbricks.name" . }}-app-secrets
+          {{- end }}
           {{- range $value := .Values.deployment.envFrom }}
           {{- if (eq .type "configmap") }}
           - configMapRef:
@@ -120,47 +127,13 @@ spec:
           {{- end }}
           {{- end }}
           env:
-            {{- if and (.Values.enterprise.enabled) (ne .Values.enterprise.licenseKey "") }}
-            - name: ENTERPRISE_LICENSE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: ENTERPRISE_LICENSE_KEY
-            {{- else if  and (.Values.enterprise.enabled) (eq .Values.enterprise.licenseKey "") }}
-            - name: ENTERPRISE_LICENSE_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: ENTERPRISE_LICENSE_KEY
-            {{- end }}
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: REDIS_URL
-            - name: DATABASE_URL
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: DATABASE_URL
-            - name: CRON_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: CRON_SECRET
-            - name: ENCRYPTION_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "formbricks.name" . }}-app-secrets
-                  key: ENCRYPTION_KEY
-            - name: NEXTAUTH_SECRET
-              valueFrom:
-                  secretKeyRef:
-                    name: {{ template "formbricks.name" . }}-app-secrets
-                    key: NEXTAUTH_SECRET
             {{- range $key, $value := .Values.deployment.env }}
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
-    {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | indent 10 }}
+              {{- if kindIs "string" $value }}
+              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
+              {{- else }}
+              {{- toYaml $value | nindent 14 }}
+              {{- end }}
             {{- end }}
           {{- if .Values.deployment.resources }}
           resources:

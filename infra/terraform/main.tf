@@ -32,11 +32,6 @@ module "route53_zones" {
   }
 }
 
-output "route53_ns_records" {
-  value = module.route53_zones.route53_zone_name_servers
-}
-
-
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "5.1.1"
@@ -112,116 +107,6 @@ module "vpc_vpc-endpoints" {
 }
 
 ################################################################################
-# PostgreSQL Serverless v2
-################################################################################
-data "aws_rds_engine_version" "postgresql" {
-  engine  = "aurora-postgresql"
-  version = "16.4"
-}
-
-resource "random_password" "postgres" {
-  length  = 20
-  special = false
-}
-
-module "rds-aurora" {
-  source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "9.12.0"
-
-  name                        = "${local.name}-postgres"
-  engine                      = data.aws_rds_engine_version.postgresql.engine
-  engine_mode                 = "provisioned"
-  engine_version              = data.aws_rds_engine_version.postgresql.version
-  storage_encrypted           = true
-  master_username             = "formbricks"
-  master_password             = random_password.postgres.result
-  manage_master_user_password = false
-
-  vpc_id               = module.vpc.vpc_id
-  db_subnet_group_name = module.vpc.database_subnet_group_name
-  security_group_rules = {
-    vpc_ingress = {
-      cidr_blocks = module.vpc.private_subnets_cidr_blocks
-    }
-  }
-  performance_insights_enabled = true
-
-  apply_immediately   = true
-  skip_final_snapshot = true
-
-  enable_http_endpoint = true
-
-  serverlessv2_scaling_configuration = {
-    min_capacity             = 0
-    max_capacity             = 10
-    seconds_until_auto_pause = 3600
-  }
-
-  instance_class = "db.serverless"
-
-  instances = {
-    one = {}
-  }
-
-  tags = local.tags
-
-}
-
-################################################################################
-# ElastiCache Module
-################################################################################
-resource "random_password" "valkey" {
-  length  = 20
-  special = false
-}
-
-module "elasticache" {
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "1.4.1"
-
-  replication_group_id = "${local.name}-valkey"
-
-  engine         = "valkey"
-  engine_version = "7.2"
-  node_type      = "cache.m7g.large"
-
-  transit_encryption_enabled = true
-  auth_token                 = random_password.valkey.result
-  maintenance_window         = "sun:05:00-sun:09:00"
-  apply_immediately          = true
-
-  # Security Group
-  vpc_id = module.vpc.vpc_id
-  security_group_rules = {
-    ingress_vpc = {
-      # Default type is `ingress`
-      # Default port is based on the default engine port
-      description = "VPC traffic"
-      cidr_ipv4   = module.vpc.vpc_cidr_block
-    }
-  }
-
-  # Subnet Group
-  subnet_group_name        = "${local.name}-valkey"
-  subnet_group_description = "${title(local.name)} subnet group"
-  subnet_ids               = module.vpc.database_subnets
-
-  # Parameter Group
-  create_parameter_group      = true
-  parameter_group_name        = "${local.name}-valkey"
-  parameter_group_family      = "valkey7"
-  parameter_group_description = "${title(local.name)} parameter group"
-  parameters = [
-    {
-      name  = "latency-tracking"
-      value = "yes"
-    }
-  ]
-
-  tags = local.tags
-}
-
-################################################################################
 # EKS Module
 ################################################################################
 module "ebs_csi_driver_irsa" {
@@ -249,7 +134,7 @@ module "eks" {
   cluster_name    = "${local.name}-eks"
   cluster_version = "1.32"
 
-  enable_cluster_creator_admin_permissions = true
+  enable_cluster_creator_admin_permissions = false
   cluster_endpoint_public_access           = true
 
   cluster_addons = {
@@ -268,6 +153,41 @@ module "eks" {
     }
     vpc-cni = {
       most_recent = true
+    }
+  }
+
+  kms_key_administrators = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
+  kms_key_users = [
+    tolist(data.aws_iam_roles.github.arns)[0],
+    tolist(data.aws_iam_roles.administrator.arns)[0]
+  ]
+
+  access_entries = {
+    administrator = {
+      principal_arn = tolist(data.aws_iam_roles.administrator.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
+    }
+    github = {
+      principal_arn = tolist(data.aws_iam_roles.github.arns)[0]
+      policy_associations = {
+        Admin = {
+          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+          access_scope = {
+            type = "cluster"
+          }
+        }
+      }
     }
   }
 
@@ -573,95 +493,139 @@ resource "helm_release" "formbricks" {
 
   values = [
     <<-EOT
-    postgresql:
-      enabled: false
-    redis:
-      enabled: false
-    ingress:
+  postgresql:
+    enabled: false
+  redis:
+    enabled: false
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hosts:
+      - host: "app.${local.domain}"
+        paths:
+          - path: /
+            pathType: "Prefix"
+            serviceName: "formbricks"
+    annotations:
+      alb.ingress.kubernetes.io/scheme: internet-facing
+      alb.ingress.kubernetes.io/target-type: ip
+      alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+      alb.ingress.kubernetes.io/ssl-redirect: "443"
+      alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
+      alb.ingress.kubernetes.io/healthcheck-path: "/health"
+      alb.ingress.kubernetes.io/group.name: formbricks
+      alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  secret:
+    enabled: false
+  rbac:
+    enabled: true
+    serviceAccount:
       enabled: true
-      ingressClassName: alb
-      hosts:
-        - host: "app.${local.domain}"
-          paths:
-            - path: /
-              pathType: "Prefix"
-              serviceName: "formbricks"
+      name: formbricks
       annotations:
-        alb.ingress.kubernetes.io/scheme: internet-facing
-        alb.ingress.kubernetes.io/target-type: ip
-        alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-        alb.ingress.kubernetes.io/ssl-redirect: "443"
-        alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
-        alb.ingress.kubernetes.io/healthcheck-path: "/health"
-        alb.ingress.kubernetes.io/group.name: formbricks
-        alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
-    secret:
-      enabled: false
-    rbac:
-      enabled: true
-      serviceAccount:
-        enabled: true
-        name: formbricks
-        annotations:
-          eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
-    serviceMonitor:
-      enabled: true
-    deployment:
-      image:
-        repository: "ghcr.io/formbricks/formbricks-experimental"
-        tag: "open-telemetry-for-prometheus"
-        pullPolicy: Always
-      env:
-        S3_BUCKET_NAME:
-          value: ${module.s3-bucket.s3_bucket_id}
-        RATE_LIMITING_DISABLED:
-          value: "1"
-      envFrom:
-        app-parameters:
-          type: secret
-          nameSuffix: {RELEASE.name}-app-parameters
-      annotations:
-        deployed_at: ${timestamp()}
-    externalSecret:
-      enabled: true  # Enable/disable ExternalSecrets
-      secretStore:
-        name: aws-secrets-manager
-        kind: ClusterSecretStore
-      refreshInterval: "1h"
-      files:
-        app-parameters:
-          dataFrom:
-            key: "/prod/formbricks/env"
-          secretStore:
-            name: aws-parameter-store
-            kind: ClusterSecretStore
-        app-secrets:
-          data:
-            DATABASE_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: DATABASE_URL
-            REDIS_URL:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: REDIS_URL
-            CRON_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: CRON_SECRET
-            ENCRYPTION_KEY:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: ENCRYPTION_KEY
-            NEXTAUTH_SECRET:
-              remoteRef:
-                key: "prod/formbricks/secrets"
-                property: NEXTAUTH_SECRET
-            ENTERPRISE_LICENSE_KEY:
-              remoteRef:
-                key: "prod/formbricks/enterprise"
-                property: ENTERPRISE_LICENSE_KEY
-    EOT
+        eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
+  serviceMonitor:
+    enabled: true
+  reloadOnChange: true
+  deployment:
+    image:
+      repository: "ghcr.io/formbricks/formbricks-experimental"
+      tag: "open-telemetry-for-prometheus"
+      pullPolicy: Always
+    env:
+      S3_BUCKET_NAME:
+        value: ${module.s3-bucket.s3_bucket_id}
+      RATE_LIMITING_DISABLED:
+        value: "1"
+    envFrom:
+      app-env:
+        type: secret
+        nameSuffix: app-env
+    annotations:
+      last_updated_at: ${timestamp()}
+  externalSecret:
+    enabled: true  # Enable/disable ExternalSecrets
+    secretStore:
+      name: aws-secrets-manager
+      kind: ClusterSecretStore
+    refreshInterval: "1m"
+    files:
+      app-env:
+        dataFrom:
+          key: "prod/formbricks/environment"
+      app-secrets:
+        dataFrom:
+          key: "prod/formbricks/secrets"
+  cronJob:
+    enabled: true
+    jobs:
+      survey-status:
+        schedule: "0 0 * * *"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/survey-status"'
+      weekely-summary:
+        schedule: "0 8 * * 1"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/weekly-summary"'
+      ping:
+        schedule: "0 9 * * *"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/ping"'
+  EOT
   ]
 }
 

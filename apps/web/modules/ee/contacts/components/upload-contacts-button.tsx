@@ -77,6 +77,13 @@ export const UploadContactsCSVButton = ({
           return;
         }
 
+        if (!parsedRecords.data.length) {
+          setErrror(
+            "The uploaded CSV file does not contain any valid contacts, please see the sample CSV file for the correct format."
+          );
+          return;
+        }
+
         setCSVResponse(parsedRecords.data);
       } catch (error) {
         console.error("Error parsing CSV:", error);
@@ -360,13 +367,11 @@ export const UploadContactsCSVButton = ({
               )}
             </div>
             {!csvResponse.length && (
-              <p>
-                <a
-                  onClick={handleDownloadExampleCSV}
-                  className="cursor-pointer text-right text-sm text-slate-500">
-                  {t("environments.contacts.upload_contacts_modal_download_example_csv")}{" "}
-                </a>
-              </p>
+              <div className="flex justify-start">
+                <Button onClick={handleDownloadExampleCSV} variant="secondary">
+                  {t("environments.contacts.upload_contacts_modal_download_example_csv")}
+                </Button>
+              </div>
             )}
           </div>
 
