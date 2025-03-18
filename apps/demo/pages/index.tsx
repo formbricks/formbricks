@@ -155,7 +155,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sends a{" "}
                 <a
-                  href="https://formbricks.com/docs/actions/no-code"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500"
                   target="_blank">
@@ -163,7 +163,7 @@ export default function AppPage(): React.JSX.Element {
                 </a>{" "}
                 as long as you created it beforehand in the Formbricks App.{" "}
                 <a
-                  href="https://formbricks.com/docs/actions/no-code"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions"
                   rel="noopener noreferrer"
                   target="_blank"
                   className="underline dark:text-blue-500">
@@ -172,6 +172,7 @@ export default function AppPage(): React.JSX.Element {
               </p>
             </div>
           </div>
+
           <div className="p-6">
             <div>
               <button
@@ -187,7 +188,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
@@ -212,7 +213,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
@@ -237,7 +238,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
@@ -263,13 +264,72 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
                   user attributes
                 </a>{" "}
                 to &apos;one&apos;, &apos;two&apos;, &apos;three&apos;.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  void formbricks.setLanguage("de");
+                }}
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+                Set Language to &apos;de&apos;
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button sets the{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/general-features/multi-language-surveys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline dark:text-blue-500">
+                  language
+                </a>{" "}
+                to &apos;de&apos;.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                onClick={() => {
+                  void formbricks.track("code");
+                }}>
+                Code Action
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button sends a{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions"
+                  rel="noopener noreferrer"
+                  className="underline dark:text-blue-500"
+                  target="_blank">
+                  Code Action
+                </a>{" "}
+                as long as you created it beforehand in the Formbricks App.{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="underline dark:text-blue-500">
+                  Here are instructions on how to do it.
+                </a>
               </p>
             </div>
           </div>
