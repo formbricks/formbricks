@@ -202,13 +202,6 @@ export const generateResponseTableColumns = (
               {t("environments.surveys.responses.how_to_identify_users")}
               <Link
                 className="underline underline-offset-2 hover:text-slate-900"
-                href="https://formbricks.com/docs/link-surveys/user-identification"
-                target="_blank">
-                {t("common.link_surveys")}
-              </Link>{" "}
-              or{" "}
-              <Link
-                className="underline underline-offset-2 hover:text-slate-900"
                 href="https://formbricks.com/docs/app-surveys/user-identification"
                 target="_blank">
                 {t("common.app_survey")}

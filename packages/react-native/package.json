@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/react-native",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "license": "MIT",
   "description": "Formbricks React Native SDK allows you to connect your app to Formbricks, display surveys and trigger events.",
   "homepage": "https://formbricks.com",

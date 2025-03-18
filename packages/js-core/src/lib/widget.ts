@@ -74,6 +74,7 @@ const renderWidget = async (
       setIsSurveyRunning(true);
       return;
     }
+
     languageCode = displayLanguage;
   }
 
@@ -88,7 +89,7 @@ const renderWidget = async (
     formbricksSurveys.renderSurvey({
       apiHost: config.get().apiHost,
       environmentId: config.get().environmentId,
-      userId: config.get().personState.data.userId ?? undefined,
+      contactId: config.get().personState.data.contactId ?? undefined,
       action,
       survey,
       isBrandingEnabled,

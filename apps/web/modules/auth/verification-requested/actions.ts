@@ -5,9 +5,10 @@ import { getUserByEmail } from "@/modules/auth/lib/user";
 import { sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ZUserEmail } from "@formbricks/types/user";
 
 const ZResendVerificationEmailAction = z.object({
-  email: z.string().max(255).email({ message: "Invalid email" }),
+  email: ZUserEmail,
 });
 
 export const resendVerificationEmailAction = actionClient

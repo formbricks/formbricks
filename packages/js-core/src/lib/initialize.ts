@@ -4,11 +4,7 @@ import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type TJsConfig, type TJsConfigInput } from "@formbricks/types/js";
 import { updateAttributes } from "./attributes";
 import { Config } from "./config";
-import {
-  JS_LOCAL_STORAGE_KEY,
-  LEGACY_JS_APP_LOCAL_STORAGE_KEY,
-  LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY,
-} from "./constants";
+import { JS_LOCAL_STORAGE_KEY } from "./constants";
 import { fetchEnvironmentState } from "./environment-state";
 import {
   ErrorHandler,
@@ -34,105 +30,21 @@ export const setIsInitialized = (value: boolean): void => {
   isInitialized = value;
 };
 
-const migrateLocalStorage = (): { changed: boolean; newState?: TJsConfig } => {
-  const oldWebsiteConfig = localStorage.getItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-  const oldAppConfig = localStorage.getItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
+// If the js sdk is being used with user identification but there is no contactId, we can just resync
+export const migrateUserStateAddContactId = (): { changed: boolean } => {
+  const existingConfigString = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
 
-  if (oldWebsiteConfig) {
-    localStorage.removeItem(LEGACY_JS_WEBSITE_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldWebsiteConfig) as Partial<{
-      environmentId: string;
-      apiHost: string;
-      environmentState: TJsConfig["environmentState"];
-      personState: TJsConfig["personState"];
-      filteredSurveys: TJsConfig["filteredSurveys"];
-    }>;
+  if (existingConfigString) {
+    const existingConfig = JSON.parse(existingConfigString) as Partial<TJsConfig>;
 
-    if (
-      parsedOldConfig.environmentId &&
-      parsedOldConfig.apiHost &&
-      parsedOldConfig.environmentState &&
-      parsedOldConfig.personState &&
-      parsedOldConfig.filteredSurveys
-    ) {
-      const newLocalStorageConfig = { ...parsedOldConfig };
-
-      return {
-        changed: true,
-        newState: newLocalStorageConfig as TJsConfig,
-      };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- data could be undefined
+    if (existingConfig.personState?.data?.contactId) {
+      return { changed: false };
     }
-  }
 
-  if (oldAppConfig) {
-    localStorage.removeItem(LEGACY_JS_APP_LOCAL_STORAGE_KEY);
-    const parsedOldConfig = JSON.parse(oldAppConfig) as Partial<{
-      environmentId: string;
-      apiHost: string;
-      environmentState: TJsConfig["environmentState"];
-      personState: TJsConfig["personState"];
-      filteredSurveys: TJsConfig["filteredSurveys"];
-    }>;
-
-    if (
-      parsedOldConfig.environmentId &&
-      parsedOldConfig.apiHost &&
-      parsedOldConfig.environmentState &&
-      parsedOldConfig.personState &&
-      parsedOldConfig.filteredSurveys
-    ) {
-      return {
-        changed: true,
-      };
-    }
-  }
-
-  return {
-    changed: false,
-  };
-};
-
-const migrateProductToProject = (): { changed: boolean; newState?: TJsConfig } => {
-  const existingConfig = localStorage.getItem(JS_LOCAL_STORAGE_KEY);
-
-  if (existingConfig) {
-    const parsedConfig = JSON.parse(existingConfig) as TJsConfig;
-
-    // @ts-expect-error - product is not in the type
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- environmentState could be undefined in an error state
-    if (parsedConfig.environmentState?.data?.product) {
-      const { environmentState: _, filteredSurveys, ...restConfig } = parsedConfig;
-
-      const fixedFilteredSurveys = filteredSurveys.map((survey) => {
-        // @ts-expect-error - productOverwrites is not in the type
-        const { productOverwrites, ...rest } = survey;
-        return {
-          ...rest,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- productOverwrites is not in the type
-          projectOverwrites: productOverwrites,
-        };
-      });
-
-      // @ts-expect-error - product is not in the type
-      const { product, ...rest } = parsedConfig.environmentState.data;
-
-      const newLocalStorageConfig = {
-        ...restConfig,
-        environmentState: {
-          ...parsedConfig.environmentState,
-          data: {
-            ...rest,
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- product is not in the type
-            project: product,
-          },
-        },
-        filteredSurveys: fixedFilteredSurveys,
-      };
-
-      return {
-        changed: true,
-        newState: newLocalStorageConfig,
-      };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- data could be undefined
+    if (!existingConfig.personState?.data?.contactId && existingConfig.personState?.data?.userId) {
+      return { changed: true };
     }
   }
 
@@ -149,28 +61,11 @@ export const initialize = async (
 
   let config = Config.getInstance();
 
-  const { changed, newState } = migrateLocalStorage();
+  const { changed } = migrateUserStateAddContactId();
 
   if (changed) {
     config.resetConfig();
     config = Config.getInstance();
-
-    // If the js sdk is being used for non identified users, and we have a new state to update to after migrating, we update the state
-    // otherwise, we just sync again!
-    if (!configInput.userId && newState) {
-      config.update(newState);
-    }
-  }
-
-  const { changed: migrated, newState: updatedLocalState } = migrateProductToProject();
-
-  if (migrated) {
-    config.resetConfig();
-    config = Config.getInstance();
-
-    if (updatedLocalState) {
-      config.update(updatedLocalState);
-    }
   }
 
   if (isInitialized) {

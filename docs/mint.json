@@ -262,7 +262,9 @@
           "group": "Auth & SSO",
           "icon": "lock",
           "pages": [
-            "self-hosting/configuration/auth-sso/oauth",
+            "self-hosting/configuration/auth-sso/open-id-connect",
+            "self-hosting/configuration/auth-sso/azure-ad-oauth",
+            "self-hosting/configuration/auth-sso/google-oauth",
             "self-hosting/configuration/auth-sso/saml-sso"
           ]
         },
@@ -275,7 +277,8 @@
             "self-hosting/configuration/integrations/n8n",
             "self-hosting/configuration/integrations/notion",
             "self-hosting/configuration/integrations/slack",
-            "self-hosting/configuration/integrations/zapier"
+            "self-hosting/configuration/integrations/zapier",
+            "self-hosting/configuration/integrations/activepieces"
           ]
         }
       ]
@@ -289,8 +292,12 @@
       ]
     },
     {
-      "group": "API Documentation",
+      "group": "API v1 Documentation",
       "pages": ["api-reference/rest-api", "api-reference/generate-key", "api-reference/test-key"]
+    },
+    {
+      "group": "API v2 Documentation (Draft)",
+      "pages": ["api-v2-reference/introduction"]
     }
   ],
   "redirects": [

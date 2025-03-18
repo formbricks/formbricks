@@ -42,6 +42,7 @@ interface QuestionConditionalProps {
   autoFocusEnabled: boolean;
   currentQuestionId: TSurveyQuestionId;
   isBackButtonHidden: boolean;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
 }
 
 export function QuestionConditional({
@@ -62,6 +63,7 @@ export function QuestionConditional({
   autoFocusEnabled,
   currentQuestionId,
   isBackButtonHidden,
+  onOpenExternalURL,
 }: QuestionConditionalProps) {
   const getResponseValueForRankingQuestion = (
     value: string[],
@@ -164,6 +166,7 @@ export function QuestionConditional({
       autoFocusEnabled={autoFocusEnabled}
       currentQuestionId={currentQuestionId}
       isBackButtonHidden={isBackButtonHidden}
+      onOpenExternalURL={onOpenExternalURL}
     />
   ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
     <RatingQuestion

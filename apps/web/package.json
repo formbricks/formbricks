@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -11,7 +11,10 @@
     "start": "next start",
     "lint": "next lint",
     "test": "dotenv -e ../../.env -- vitest run",
-    "test:coverage": "dotenv -e ../../.env -- vitest run --coverage"
+    "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
+    "generate-api-specs": "tsx ./modules/api/v2/openapi-document.ts > ../../docs/api-v2-reference/openapi.yml",
+    "merge-client-endpoints": "tsx ./scripts/merge-client-endpoints.ts",
+    "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
   "dependencies": {
     "@ai-sdk/azure": "1.1.9",
@@ -38,8 +41,13 @@
     "@lexical/rich-text": "0.21.0",
     "@lexical/table": "0.21.0",
     "@opentelemetry/api-logs": "0.56.0",
+    "@opentelemetry/exporter-prometheus": "0.57.2",
+    "@opentelemetry/host-metrics": "0.35.5",
     "@opentelemetry/instrumentation": "0.56.0",
+    "@opentelemetry/instrumentation-http": "0.57.2",
+    "@opentelemetry/instrumentation-runtime-node": "0.12.2",
     "@opentelemetry/sdk-logs": "0.56.0",
+    "@opentelemetry/sdk-metrics": "1.30.1",
     "@paralleldrive/cuid2": "2.2.2",
     "@prisma/client": "6.0.1",
     "@radix-ui/react-accordion": "1.2.2",
@@ -64,9 +72,11 @@
     "@tailwindcss/forms": "0.5.9",
     "@tailwindcss/typography": "0.5.15",
     "@tanstack/react-table": "8.20.6",
+    "@testing-library/jest-dom": "6.6.3",
     "@tolgee/cli": "2.8.1",
     "@tolgee/format-icu": "6.0.1",
     "@tolgee/react": "6.0.1",
+    "@unkey/ratelimit": "0.5.5",
     "@vercel/functions": "1.5.2",
     "@vercel/og": "0.6.4",
     "@vercel/otel": "1.10.0",
@@ -99,11 +109,12 @@
     "next-safe-action": "7.10.2",
     "node-fetch": "3.3.2",
     "nodemailer": "6.9.16",
+    "opentelemetry": "0.1.0",
     "optional": "0.1.4",
     "otplib": "12.0.1",
     "papaparse": "5.4.1",
     "posthog-js": "1.200.2",
-    "prismjs": "1.29.0",
+    "prismjs": "1.30.0",
     "react": "19.0.0",
     "react-colorful": "5.6.1",
     "react-confetti": "6.1.0",
@@ -122,14 +133,17 @@
     "tailwind-merge": "2.5.5",
     "tailwindcss": "3.4.16",
     "ua-parser-js": "2.0.0",
+    "uuid": "11.1.0",
     "webpack": "5.97.1",
     "xlsx": "0.18.5",
-    "zod": "3.24.1"
+    "zod": "3.24.1",
+    "zod-openapi": "4.2.3"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@neshca/cache-handler": "1.9.0",
+    "@testing-library/react": "16.2.0",
     "@types/bcryptjs": "2.4.6",
     "@types/heic-convert": "2.1.0",
     "@types/lodash": "4.17.13",
@@ -137,9 +151,11 @@
     "@types/nodemailer": "6.4.17",
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
+    "@types/testing-library__react": "10.2.0",
     "@vitest/coverage-v8": "2.1.8",
-    "vite": "6.0.9",
-    "vitest": "2.1.9",
+    "vite": "6.2.0",
+    "vite-tsconfig-paths": "5.1.4",
+    "vitest": "3.0.7",
     "vitest-mock-extended": "2.0.2"
   }
 }
