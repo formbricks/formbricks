@@ -1,0 +1,2 @@
+-keep class com.formbricks.formbrickssdk.DataBinderMapperImpl { *; }
+-keep class com.formbricks.formbrickssdk.Formbricks { *; }

@@ -1,25 +1,41 @@
 "use server";
 
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getServerSession } from "next-auth";
-import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { z } from "zod";
 import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
-import { AuthorizationError } from "@formbricks/types/errors";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { ZIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
-export async function getSpreadsheetNameByIdAction(
-  googleSheetIntegration: TIntegrationGoogleSheets,
-  environmentId: string,
-  spreadsheetId: string
-) {
-  const session = await getServerSession(authOptions);
-  if (!session) throw new AuthorizationError("Not authorized");
+const ZGetSpreadsheetNameByIdAction = z.object({
+  googleSheetIntegration: ZIntegrationGoogleSheets,
+  environmentId: z.string(),
+  spreadsheetId: z.string(),
+});
 
-  const isAuthorized = await hasUserEnvironmentAccess(session.user.id, environmentId);
-  if (!isAuthorized) throw new AuthorizationError("Not authorized");
-  const integrationData = structuredClone(googleSheetIntegration);
-  integrationData.config.data.forEach((data) => {
-    data.createdAt = new Date(data.createdAt);
+export const getSpreadsheetNameByIdAction = authenticatedActionClient
+  .schema(ZGetSpreadsheetNameByIdAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    const integrationData = structuredClone(parsedInput.googleSheetIntegration);
+    integrationData.config.data.forEach((data) => {
+      data.createdAt = new Date(data.createdAt);
+    });
+
+    return await getSpreadsheetNameById(integrationData, parsedInput.spreadsheetId);
   });
-  return await getSpreadsheetNameById(integrationData, spreadsheetId);
-}

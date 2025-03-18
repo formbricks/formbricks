@@ -1,0 +1,69 @@
+name: 'Terraform'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: "eu-central-1"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+        working-directory: infra/terraform
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: infra/terraform
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+        working-directory: infra/terraform
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out .planfile
+        working-directory: infra/terraform
+
+      - name: Post PR comment
+        uses: borchero/terraform-plan-comment@v2
+        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
+        with:
+          token: ${{ github.token }}
+          planfile: .planfile
+          working-directory: "infra/terraform"
+          skip-comment: true
+
+      - name: Terraform Apply
+        id: apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply .planfile
+        working-directory: "infra/terraform"
+

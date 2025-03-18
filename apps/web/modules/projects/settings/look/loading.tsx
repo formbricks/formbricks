@@ -24,7 +24,7 @@ export const ProjectLookSettingsLoading = () => {
   const { t } = useTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.configuration")}>
+      <PageHeader pageTitle={t("common.project_configuration")}>
         <ProjectConfigNavigation activeId="look" loading />
       </PageHeader>
       <SettingsCard
