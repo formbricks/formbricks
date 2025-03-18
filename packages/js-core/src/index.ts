@@ -1,6 +1,7 @@
 /* eslint-disable import/no-default-export -- required for default export*/
 import { CommandQueue } from "@/lib/common/command-queue";
 import * as Setup from "@/lib/common/setup";
+import { getIsDebug } from "@/lib/common/utils";
 import * as Action from "@/lib/survey/action";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
@@ -20,8 +21,11 @@ const setup = async (setupConfig: TConfigInput): Promise<void> => {
     // @ts-expect-error -- apiHost was in the older type
     setupConfig.apiHost
   ) {
-    // eslint-disable-next-line no-console -- legacy init
-    console.warn("🧱 Formbricks - Warning: Using legacy init");
+    const isDebug = getIsDebug();
+    if (isDebug) {
+      // eslint-disable-next-line no-console -- legacy init
+      console.warn("🧱 Formbricks - Warning: Using legacy init");
+    }
     queue.add(Setup.setup, false, {
       ...setupConfig,
       // @ts-expect-error -- apiHost was in the older type
