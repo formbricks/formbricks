@@ -137,6 +137,8 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         behavior.isFitToContents = false
         behavior.setState(BottomSheetBehavior.STATE_EXPANDED)
 
+        dialog?.setCancelable(false)
+
         dialog?.window?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
