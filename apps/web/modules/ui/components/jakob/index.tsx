@@ -14,7 +14,7 @@ const variantIcons = {
 };
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-xl border", {
+const alertVariants = cva("relative w-full rounded-md border", {
   variants: {
     variant: {
       default: "text-foreground border-border",
@@ -54,6 +54,7 @@ const getButtonStyles = (variant: string, size: string) => {
 
   return {
     variant: size === "small" ? "link" : variant === "default" ? "secondary" : undefined,
+    size: size === "small" ? "sm" : "default",
     className:
       size === "small" && variant !== "default"
         ? variantTextColors[variant as keyof typeof variantTextColors]
@@ -201,6 +202,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
               <div className="ml-4 flex-shrink-0 self-end">
                 {React.cloneElement(buttonElement, {
                   variant: buttonStyles.variant ?? buttonElement.props?.variant,
+                  size: buttonStyles.size ?? buttonElement.props?.size,
                   className: cn(buttonElement.props?.className, buttonStyles.className),
                 })}
               </div>
@@ -216,7 +218,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
             )}
 
             {/* Content section for small size - horizontal layout with truncation */}
-            <div className="flex min-w-0 flex-1 items-baseline space-x-1">
+            <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
               {titleElement &&
                 React.cloneElement(titleElement as React.ReactElement, {
                   className: cn("truncate", (titleElement as React.ReactElement).props.className),
@@ -232,6 +234,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
               <div className="flex-shrink-0">
                 {React.cloneElement(buttonElement, {
                   variant: buttonStyles.variant ?? buttonElement.props?.variant,
+                  size: buttonStyles.size ?? buttonElement.props?.size,
                   className: cn(buttonElement.props?.className, buttonStyles.className),
                 })}
               </div>
