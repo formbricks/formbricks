@@ -37,6 +37,11 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+    "@formbricks/js-core#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "persistent": true
+    },
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/api#build"]
     },
@@ -46,7 +51,7 @@
     },
     "@formbricks/react-native#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build"],
       "persistent": true
     },
     "@formbricks/react-native#lint": {
