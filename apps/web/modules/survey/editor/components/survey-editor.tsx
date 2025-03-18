@@ -187,6 +187,7 @@ export const SurveyEditor = ({
               plan={plan}
               isCxMode={isCxMode}
               locale={locale}
+              responseCount={responseCount}
             />
           )}
 
