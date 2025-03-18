@@ -44,11 +44,12 @@ const migrateLocalStorage = (): { changed: boolean; newState?: TConfig } => {
 
     // Check if we need to migrate (if it has environmentState, it's old format)
     if (parsedConfig.environmentState) {
-      const { environmentState, personState, attributes, ...rest } = parsedConfig;
+      const { apiHost, environmentState, personState, attributes, ...rest } = parsedConfig;
 
       // Create new config structure
       const newLocalStorageConfig: TConfig = {
         ...rest,
+        ...(apiHost && { appUrl: apiHost }),
         environment: environmentState,
         ...(personState && {
           user: {
@@ -86,6 +87,9 @@ export const setup = async (
 
   const { changed, newState } = migrateLocalStorage();
 
+  console.log("changed", changed);
+  console.log("newState", newState);
+
   if (changed) {
     config.resetConfig();
     config = Config.getInstance();
@@ -94,6 +98,7 @@ export const setup = async (
     // otherwise, we just sync again!
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- user could be undefined
     if (newState && !newState.user?.data?.userId) {
+      console.log("updating config with new state");
       config.update(newState);
     }
   }
@@ -153,6 +158,8 @@ export const setup = async (
 
   logger.debug("Adding widget container to DOM");
   addWidgetContainer();
+
+  console.log("existingConfig", existingConfig);
 
   if (
     existingConfig?.environment &&
