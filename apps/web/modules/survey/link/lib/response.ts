@@ -70,7 +70,7 @@ export const getResponseBySingleUseId = reactCache(
     )()
 );
 
-export const getExisitingContactResponse = reactCache(
+export const getExistingContactResponse = reactCache(
   async (surveyId: string, contactId: string): Promise<Pick<Response, "id" | "finished"> | null> =>
     cache(
       async () => {

@@ -2,14 +2,7 @@ import jwt from "jsonwebtoken";
 import { ENCRYPTION_KEY, WEBAPP_URL } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 
-/**
- * Creates an encrypted personalized survey link for a contact
- *
- * @param contactId The ID of the contact
- * @param surveyId The ID of the survey
- * @param expirationDays Optional number of days until the link expires (no expiration if not specified)
- * @returns A personalized survey URL with an encrypted JWT token
- */
+// Creates an encrypted personalized survey link for a contact
 export const getContactSurveyLink = (
   contactId: string,
   surveyId: string,
@@ -46,12 +39,7 @@ export const getContactSurveyLink = (
   return `${WEBAPP_URL}/c/${token}`;
 };
 
-/**
- * Validates and decrypts a contact survey JWT token
- *
- * @param token The JWT token to verify
- * @returns The decoded contact and survey IDs
- */
+// Validates and decrypts a contact survey JWT token
 export const verifyContactSurveyToken = (token: string): { contactId: string; surveyId: string } => {
   if (!ENCRYPTION_KEY) {
     throw new Error("Encryption key not found - cannot verify survey token");

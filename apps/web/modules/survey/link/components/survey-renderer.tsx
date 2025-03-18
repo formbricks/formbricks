@@ -88,7 +88,7 @@ export const renderSurvey = async ({
           surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
         );
       });
-      if (selectedLanguage?.default || !selectedLanguage?.enabled) {
+      if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
         return "default";
       }
       return selectedLanguage.language.code;

@@ -2,10 +2,10 @@ import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-surv
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExisitingContactResponse } from "@/modules/survey/link/lib/response";
+import { getBasicSurveyMetadata } from "@/modules/survey/link/lib/metadata-utils";
+import { getExistingContactResponse } from "@/modules/survey/link/lib/response";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getMetadataForContactSurvey } from "./metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -24,7 +24,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
   try {
     // Verify and decode the JWT token
     const { surveyId } = verifyContactSurveyToken(jwt);
-    return getMetadataForContactSurvey(surveyId);
+    return getBasicSurveyMetadata(surveyId);
   } catch (error) {
     // If the token is invalid, we'll return generic metadata
     return {
@@ -48,7 +48,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     return <SurveyInactive status="link invalid" />;
   }
 
-  const existingResponse = await getExisitingContactResponse(surveyId, contactId);
+  const existingResponse = await getExistingContactResponse(surveyId, contactId);
   if (existingResponse) {
     return <SurveyInactive status="response submitted" />;
   }

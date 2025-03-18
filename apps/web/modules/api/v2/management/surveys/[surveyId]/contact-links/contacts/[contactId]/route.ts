@@ -50,10 +50,35 @@ export const GET = async (
         return handleApiError(request, checkAuthorizationResult.error);
       }
 
+      const survey = await prisma.survey.findUnique({
+        where: {
+          id: params.surveyId,
+          environmentId,
+        },
+        select: {
+          type: true,
+        },
+      });
+
+      if (!survey) {
+        return handleApiError(request, {
+          type: "not_found",
+          details: [{ field: "surveyId", issue: "not_found" }],
+        });
+      }
+
+      if (survey.type !== "link") {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "surveyId", issue: "not_a_link_survey" }],
+        });
+      }
+
       // Check if contact exists and belongs to the environment
       const contact = await prisma.contact.findUnique({
         where: {
           id: params.contactId,
+          environmentId,
         },
       });
 
@@ -61,13 +86,6 @@ export const GET = async (
         return handleApiError(request, {
           type: "not_found",
           details: [{ field: "contactId", issue: "not_found" }],
-        });
-      }
-
-      if (contact.environmentId !== environmentId) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [{ field: "contactId", issue: "invalid_environment" }],
         });
       }
 
