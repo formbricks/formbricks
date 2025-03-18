@@ -97,7 +97,7 @@ spec:
               protocol: {{ $config.protocol | default "TCP" | quote }}
             {{- end }}
           {{- end }}
-          {{- if or .Values.deployment.envFrom (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
           envFrom:
           {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
           - secretRef:
