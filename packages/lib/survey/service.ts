@@ -187,16 +187,19 @@ export const getSurvey = reactCache(
   async (surveyId: string): Promise<TSurvey | null> =>
     cache(
       async () => {
+        logger.debug({ surveyId }, "getSurvey: Fetching survey");
         validateInputs([surveyId, ZId]);
 
         let surveyPrisma;
         try {
+          logger.debug({ surveyId }, "getSurvey: Executing database query");
           surveyPrisma = await prisma.survey.findUnique({
             where: {
               id: surveyId,
             },
             select: selectSurvey,
           });
+          logger.debug({ surveyId, found: !!surveyPrisma }, "getSurvey: Database query completed");
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             logger.error(error, "Error getting survey");
@@ -206,9 +209,11 @@ export const getSurvey = reactCache(
         }
 
         if (!surveyPrisma) {
+          logger.debug({ surveyId }, "getSurvey: Survey not found");
           return null;
         }
 
+        logger.debug({ surveyId }, "getSurvey: Transforming survey data");
         return transformPrismaSurvey<TSurvey>(surveyPrisma);
       },
       [`getSurvey-${surveyId}`],
