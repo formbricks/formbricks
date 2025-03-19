@@ -142,10 +142,6 @@
       ]
     },
     {
-      "group": "Enterprise Features",
-      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
-    },
-    {
       "group": "XM",
       "pages": [
         {
