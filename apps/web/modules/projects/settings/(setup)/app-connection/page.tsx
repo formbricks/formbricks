@@ -1,5 +1,6 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
@@ -8,24 +9,12 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
-import { getEnvironment } from "@formbricks/lib/environment/service";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 export const AppConnectionPage = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
-  const [environment, organization] = await Promise.all([
-    getEnvironment(params.environmentId),
-    getOrganizationByEnvironmentId(params.environmentId),
-  ]);
 
-  if (!environment) {
-    throw new Error(t("common.environment_not_found"));
-  }
-
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
+  const { environment } = await getEnvironmentAuth(params.environmentId);
 
   return (
     <PageContentWrapper>

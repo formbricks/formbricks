@@ -1,18 +1,14 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import {
-  getOrganizationByEnvironmentId,
-  getOrganizationsWhereUserIsSingleOwner,
-} from "@formbricks/lib/organization/service";
+import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
@@ -25,20 +21,16 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
   const { environmentId } = params;
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
 
-  const organization = await getOrganizationByEnvironmentId(environmentId);
-
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
+  const { session } = await getEnvironmentAuth(params.environmentId);
 
   const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(session.user.id);
 
-  const user = session && session.user ? await getUser(session.user.id) : null;
+  const user = session?.user ? await getUser(session.user.id) : null;
+
+  if (!user) {
+    throw new Error(t("common.user_not_found"));
+  }
 
   return (
     <PageContentWrapper>

@@ -49,6 +49,11 @@ const EnvLayout = async (props: {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
+
+  if (!membership) {
+    throw new Error(t("common.membership_not_found"));
+  }
+
   if (!membership) return notFound();
 
   return (
