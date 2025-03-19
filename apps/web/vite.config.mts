@@ -1,7 +1,7 @@
 // vitest.config.ts
+import react from "@vitejs/plugin-react";
 import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
-import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -30,15 +30,19 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
+        "app/lib/**/*.ts",
+        "app/api/(internal)/insights/lib/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
+        "**/*.test.*",
         "**/*.spec.*",
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
+        "**/*.tsx", // Exclude tsx files
       ],
     },
   },
