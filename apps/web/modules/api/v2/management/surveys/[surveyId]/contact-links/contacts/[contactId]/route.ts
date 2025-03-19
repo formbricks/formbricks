@@ -93,13 +93,7 @@ export const GET = async (
       // Check if contact has already responded to this survey
       const existingResponseResult = await getResponse(params.contactId, params.surveyId);
 
-      if (!existingResponseResult.ok) {
-        return handleApiError(request, existingResponseResult.error);
-      }
-
-      const existingResponse = existingResponseResult.data;
-
-      if (existingResponse) {
+      if (existingResponseResult.ok) {
         return handleApiError(request, {
           type: "bad_request",
           details: [{ field: "contactId", issue: "Already responded" }],
