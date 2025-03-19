@@ -116,7 +116,7 @@
       ]
     },
     {
-      "group": "Core Features",
+      "group": "Platform Features",
       "pages": [
         {
           "group": "Integrations",
@@ -243,8 +243,8 @@
       "pages": [
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
-        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/monitoring",
+        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/kubernetes"
       ]
     },
