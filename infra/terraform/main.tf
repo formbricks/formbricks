@@ -32,11 +32,6 @@ module "route53_zones" {
   }
 }
 
-output "route53_ns_records" {
-  value = module.route53_zones.route53_zone_name_servers
-}
-
-
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "5.1.1"
@@ -107,116 +102,6 @@ module "vpc_vpc-endpoints" {
       tags = { Name = "s3-vpc-endpoint" }
     }
   }
-
-  tags = local.tags
-}
-
-################################################################################
-# PostgreSQL Serverless v2
-################################################################################
-data "aws_rds_engine_version" "postgresql" {
-  engine  = "aurora-postgresql"
-  version = "16.4"
-}
-
-resource "random_password" "postgres" {
-  length  = 20
-  special = false
-}
-
-module "rds-aurora" {
-  source  = "terraform-aws-modules/rds-aurora/aws"
-  version = "9.12.0"
-
-  name                        = "${local.name}-postgres"
-  engine                      = data.aws_rds_engine_version.postgresql.engine
-  engine_mode                 = "provisioned"
-  engine_version              = data.aws_rds_engine_version.postgresql.version
-  storage_encrypted           = true
-  master_username             = "formbricks"
-  master_password             = random_password.postgres.result
-  manage_master_user_password = false
-
-  vpc_id               = module.vpc.vpc_id
-  db_subnet_group_name = module.vpc.database_subnet_group_name
-  security_group_rules = {
-    vpc_ingress = {
-      cidr_blocks = module.vpc.private_subnets_cidr_blocks
-    }
-  }
-  performance_insights_enabled = true
-
-  apply_immediately   = true
-  skip_final_snapshot = true
-
-  enable_http_endpoint = true
-
-  serverlessv2_scaling_configuration = {
-    min_capacity             = 0
-    max_capacity             = 10
-    seconds_until_auto_pause = 3600
-  }
-
-  instance_class = "db.serverless"
-
-  instances = {
-    one = {}
-  }
-
-  tags = local.tags
-
-}
-
-################################################################################
-# ElastiCache Module
-################################################################################
-resource "random_password" "valkey" {
-  length  = 20
-  special = false
-}
-
-module "elasticache" {
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "1.4.1"
-
-  replication_group_id = "${local.name}-valkey"
-
-  engine         = "valkey"
-  engine_version = "7.2"
-  node_type      = "cache.m7g.large"
-
-  transit_encryption_enabled = true
-  auth_token                 = random_password.valkey.result
-  maintenance_window         = "sun:05:00-sun:09:00"
-  apply_immediately          = true
-
-  # Security Group
-  vpc_id = module.vpc.vpc_id
-  security_group_rules = {
-    ingress_vpc = {
-      # Default type is `ingress`
-      # Default port is based on the default engine port
-      description = "VPC traffic"
-      cidr_ipv4   = module.vpc.vpc_cidr_block
-    }
-  }
-
-  # Subnet Group
-  subnet_group_name        = "${local.name}-valkey"
-  subnet_group_description = "${title(local.name)} subnet group"
-  subnet_ids               = module.vpc.database_subnets
-
-  # Parameter Group
-  create_parameter_group      = true
-  parameter_group_name        = "${local.name}-valkey"
-  parameter_group_family      = "valkey7"
-  parameter_group_description = "${title(local.name)} parameter group"
-  parameters = [
-    {
-      name  = "latency-tracking"
-      value = "yes"
-    }
-  ]
 
   tags = local.tags
 }
@@ -572,13 +457,14 @@ module "iam_policy" {
         ]
         Resource = [
           module.s3-bucket.s3_bucket_arn,
-          "${module.s3-bucket.s3_bucket_arn}/*"
+          "${module.s3-bucket.s3_bucket_arn}/*",
+          "arn:aws:s3:::formbricks-cloud-uploads",
+          "arn:aws:s3:::formbricks-cloud-uploads/*"
         ]
       }
     ]
   })
 }
-
 
 module "formkey-aws-access" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
@@ -641,6 +527,7 @@ resource "helm_release" "formbricks" {
         eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
   serviceMonitor:
     enabled: true
+  reloadOnChange: true
   deployment:
     image:
       repository: "ghcr.io/formbricks/formbricks-experimental"
@@ -656,13 +543,13 @@ resource "helm_release" "formbricks" {
         type: secret
         nameSuffix: app-env
     annotations:
-      deployed_at: ${timestamp()}
+      last_updated_at: ${timestamp()}
   externalSecret:
     enabled: true  # Enable/disable ExternalSecrets
     secretStore:
       name: aws-secrets-manager
       kind: ClusterSecretStore
-    refreshInterval: "1h"
+    refreshInterval: "1m"
     files:
       app-env:
         dataFrom:
@@ -670,6 +557,75 @@ resource "helm_release" "formbricks" {
       app-secrets:
         dataFrom:
           key: "prod/formbricks/secrets"
+  cronJob:
+    enabled: true
+    jobs:
+      survey-status:
+        schedule: "0 0 * * *"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/survey-status"'
+      weekely-summary:
+        schedule: "0 8 * * 1"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/weekly-summary"'
+      ping:
+        schedule: "0 9 * * *"
+        successfulJobsHistoryLimit: 0
+        env:
+          CRON_SECRET:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "CRON_SECRET"
+          WEBAPP_URL:
+            valueFrom:
+              secretKeyRef:
+                name: "formbricks-app-env"
+                key: "WEBAPP_URL"
+        image:
+          repository: curlimages/curl
+          tag: latest
+          imagePullPolicy: IfNotPresent
+        args:
+          - "/bin/sh"
+          - "-c"
+          - 'curl -X POST -H "content-type: application/json" -H "x-api-key: $CRON_SECRET" "$WEBAPP_URL/api/cron/ping"'
   EOT
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/web",
-  "version": "3.4.0",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -115,6 +115,7 @@
     "papaparse": "5.4.1",
     "posthog-js": "1.200.2",
     "prismjs": "1.30.0",
+    "qr-code-styling": "1.9.1",
     "react": "19.0.0",
     "react-colorful": "5.6.1",
     "react-confetti": "6.1.0",
