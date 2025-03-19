@@ -18,8 +18,8 @@ interface SurveyAnalysisCTAProps {
   survey: TSurvey;
   environment: TEnvironment;
   isReadOnly: boolean;
-  webAppUrl: string;
   user: TUser;
+  surveyDomain: string;
 }
 
 interface ModalState {
@@ -33,8 +33,8 @@ export const SurveyAnalysisCTA = ({
   survey,
   environment,
   isReadOnly,
-  webAppUrl,
   user,
+  surveyDomain,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
@@ -48,7 +48,7 @@ export const SurveyAnalysisCTA = ({
     dropdown: false,
   });
 
-  const surveyUrl = useMemo(() => `${webAppUrl}/s/${survey.id}`, [survey.id, webAppUrl]);
+  const surveyUrl = useMemo(() => `${surveyDomain}/s/${survey.id}`, [survey.id, surveyDomain]);
 
   const widgetSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -168,9 +168,9 @@ export const SurveyAnalysisCTA = ({
               survey={survey}
               open={modalState[key as keyof ModalState]}
               setOpen={setOpen}
-              webAppUrl={webAppUrl}
               user={user}
               modalView={modalView}
+              surveyDomain={surveyDomain}
             />
           ))}
           <SuccessMessage environment={environment} survey={survey} />

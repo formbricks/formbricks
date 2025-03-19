@@ -16,6 +16,7 @@ import {
   SMTP_USER,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
@@ -93,8 +94,8 @@ export const sendVerificationEmail = async ({
     const token = createToken(id, email, {
       expiresIn: "1d",
     });
-    const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-    const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
+    const verifyLink = `${getSurveyDomain()}/auth/verify?token=${encodeURIComponent(token)}`;
+    const verificationRequestLink = `${getSurveyDomain()}/auth/verification-requested?token=${encodeURIComponent(token)}`;
 
     const html = await render(await VerificationEmail({ verificationRequestLink, verifyLink }));
 
@@ -118,7 +119,7 @@ export const sendForgotPasswordEmail = async (user: {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${getSurveyDomain()}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
   const html = await render(await ForgotPasswordEmail({ verifyLink }));
   return await sendEmail({
     to: user.email,
@@ -150,7 +151,7 @@ export const sendInviteMemberEmail = async (
   });
   const t = await getTranslate();
 
-  const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${getSurveyDomain()}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
     const html = await render(
@@ -269,9 +270,9 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const t = await getTranslate();
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
     }
-    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+    return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
   const surveyLink = getSurveyLink();
 

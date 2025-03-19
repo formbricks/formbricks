@@ -1,7 +1,7 @@
 import { getSurveyMetadata } from "@/modules/survey/link/lib/survey";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { WEBAPP_URL } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 
 export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metadata> => {
@@ -18,7 +18,7 @@ export const getMetadataForLinkSurvey = async (surveyId: string): Promise<Metada
 
   return {
     title: survey.name,
-    metadataBase: new URL(WEBAPP_URL),
+    metadataBase: new URL(getSurveyDomain()),
     openGraph: {
       title: survey.name,
       description: "Thanks a lot for your time 🙏",
