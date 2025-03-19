@@ -236,7 +236,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             {/* Content section for small size - horizontal layout with truncation */}
             <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
               {titleElement &&
-                React.cloneElement(titleElement as React.ReactElement, {
+                React.cloneElement(titleElement as React.ReactElement<{ className?: string }>, {
                   className: cn(
                     "truncate",
                     (titleElement as React.ReactElement<{ className?: string }>).props?.className || ""
