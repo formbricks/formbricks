@@ -2,11 +2,10 @@ import Pino, { type Logger, type LoggerOptions, stdSerializers } from "pino";
 import { LOG_LEVELS, type TLogLevel, ZLogLevel } from "../types/logger";
 
 const IS_PRODUCTION = !process.env.NODE_ENV || process.env.NODE_ENV === "production";
-
 const getLogLevel = (): TLogLevel => {
-  if (IS_PRODUCTION) return "warn";
-
   let logLevel: TLogLevel = "info";
+
+  if (IS_PRODUCTION) logLevel = "warn";
 
   const envLogLevel = process.env.LOG_LEVEL;
 
