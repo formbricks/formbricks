@@ -21,7 +21,8 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "build": "vite build"
+    "build": "vite build",
+    "test": "vitest"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
@@ -32,6 +33,7 @@
   "devDependencies": {
     "vite": "^6.2.0",
     "@formbricks/config-typescript": "workspace:*",
+    "vitest": "3.0.7",
     "@formbricks/eslint-config": "workspace:*",
     "vite-plugin-dts": "4.3.0"
   }

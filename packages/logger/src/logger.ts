@@ -6,9 +6,9 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const getLogLevel = (): TLogLevel => {
   if (IS_PRODUCTION) return "warn";
 
-  const envLogLevel = process.env.LOG_LEVEL;
-
   let logLevel: TLogLevel = "info";
+
+  const envLogLevel = process.env.LOG_LEVEL;
 
   const logLevelResult = ZLogLevel.safeParse(envLogLevel);
   if (logLevelResult.success) logLevel = logLevelResult.data;
