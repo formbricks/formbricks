@@ -21,8 +21,8 @@ export async function LinkSurveyEmail({
     <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
         <Heading>{t("emails.verification_email_hey")}</Heading>
-        <Text>{t("emails.verification_email_thanks")}</Text>
-        <Text>{t("emails.verification_email_to_fill_survey")}</Text>
+        <Text className="font-normal">{t("emails.verification_email_thanks")}</Text>
+        <Text className="font-normal">{t("emails.verification_email_to_fill_survey")}</Text>
         <EmailButton href={surveyLink} label={t("emails.verification_email_take_survey")} />
         <Text className="text-xs text-slate-400">
           {t("emails.verification_email_survey_name")}: {surveyName}

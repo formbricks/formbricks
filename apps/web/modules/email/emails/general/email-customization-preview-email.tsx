@@ -17,7 +17,7 @@ export async function EmailCustomizationPreviewEmail({
     <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
         <Heading>{t("emails.email_customization_preview_email_heading", { userName })}</Heading>
-        <Text>{t("emails.email_customization_preview_email_text")}</Text>
+        <Text className="font-normal">{t("emails.email_customization_preview_email_text")}</Text>
       </Container>
     </EmailTemplate>
   );
