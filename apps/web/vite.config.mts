@@ -35,6 +35,7 @@ export default defineConfig({
       ],
       exclude: [
         "**/.next/**",
+        "**/*.test.*",
         "**/*.spec.*",
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
