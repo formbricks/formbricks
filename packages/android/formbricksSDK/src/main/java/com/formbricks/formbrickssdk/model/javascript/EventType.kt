@@ -8,4 +8,5 @@ enum class EventType {
     @SerializedName("onDisplayCreated") ON_DISPLAY_CREATED,
     @SerializedName("onResponseCreated") ON_RESPONSE_CREATED,
     @SerializedName("onFilePick") ON_FILE_PICK,
+    @SerializedName("onSurveyLibraryLoadError") ON_SURVEY_LIBRARY_LOAD_ERROR
 }

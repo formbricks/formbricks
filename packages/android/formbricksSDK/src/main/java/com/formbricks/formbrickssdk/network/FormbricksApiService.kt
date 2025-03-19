@@ -28,10 +28,10 @@ open class FormbricksApiService {
             retrofit.create(FormbricksService::class.java)
                 .getEnvironmentState(environmentId)
         }
-
+        val json = Json { ignoreUnknownKeys = true }
         val resultMap = result.getOrThrow()
         val resultJson = mapToJsonElement(resultMap).jsonObject
-        val environmentResponse = Json.decodeFromJsonElement<EnvironmentResponse>(resultJson)
+        val environmentResponse = json.decodeFromJsonElement<EnvironmentResponse>(resultJson)
         val data = EnvironmentDataHolder(environmentResponse.data, resultMap)
         return Result.success(data)
     }
@@ -49,6 +49,7 @@ open class FormbricksApiService {
             val body = call.body()
             if (body == null) {
                 Result.failure(RuntimeException("Invalid response"))
+
             } else {
                 Result.success(body)
             }

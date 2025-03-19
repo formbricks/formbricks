@@ -1,7 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
-import { TOidcNameFields } from "@/modules/auth/types/auth";
+import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
@@ -90,6 +90,15 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
         userName = `${oidcUser.given_name} ${oidcUser.family_name}`;
       } else if (oidcUser.preferred_username) {
         userName = oidcUser.preferred_username;
+      }
+    }
+
+    if (provider === "saml") {
+      const samlUser = user as TUser & TSamlNameFields;
+      if (samlUser.name) {
+        userName = samlUser.name;
+      } else if (samlUser.firstName || samlUser.lastName) {
+        userName = `${samlUser.firstName} ${samlUser.lastName}`;
       }
     }
 

@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
+    "jsx": "preserve",
+    "jsxImportSource": "react",
     "paths": {
       "@/*": ["./*"],
       "@prisma/client/*": ["@formbricks/database/client/*"]

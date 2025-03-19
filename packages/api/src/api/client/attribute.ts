@@ -4,11 +4,11 @@ import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class AttributeAPI {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor(apiHost: string, environmentId: string) {
-    this.apiHost = apiHost;
+  constructor(appUrl: string, environmentId: string) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
@@ -22,7 +22,7 @@ export class AttributeAPI {
     }
 
     return makeRequest(
-      this.apiHost,
+      this.appUrl,
       `/api/v1/client/${this.environmentId}/contacts/${attributeUpdateInput.userId}/attributes`,
       "PUT",
       { attributes }
