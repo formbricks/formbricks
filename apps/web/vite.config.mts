@@ -33,11 +33,9 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
-        "modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
-        "**/*.test.*",
         "**/*.spec.*",
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files

@@ -35,7 +35,9 @@ describe("getSurvey", () => {
         type: true,
       },
     });
-    expect(result).toEqual(mockSurvey);
+    if (result.ok) {
+      expect(result.data).toEqual(mockSurvey);
+    }
   });
 
   test("returns null when survey not found", async () => {
@@ -44,6 +46,16 @@ describe("getSurvey", () => {
     const result = await getSurvey(mockSurveyId);
 
     expect(prisma.survey.findUnique).toHaveBeenCalled();
-    expect(result).toBeNull();
+    if (!result.ok) {
+      expect(result.error).toEqual({
+        details: [
+          {
+            field: "survey",
+            issue: "not found",
+          },
+        ],
+        type: "not_found",
+      });
+    }
   });
 });

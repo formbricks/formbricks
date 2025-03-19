@@ -35,7 +35,9 @@ describe("getResponse", () => {
         id: true,
       },
     });
-    expect(result).toEqual(mockResponse);
+    if (result.ok) {
+      expect(result.data).toEqual(mockResponse);
+    }
   });
 
   test("returns null when response not found", async () => {
@@ -44,6 +46,16 @@ describe("getResponse", () => {
     const result = await getResponse(mockContactId, mockSurveyId);
 
     expect(prisma.response.findFirst).toHaveBeenCalled();
-    expect(result).toBeNull();
+    if (!result.ok) {
+      expect(result.error).toEqual({
+        details: [
+          {
+            field: "response",
+            issue: "not found",
+          },
+        ],
+        type: "not_found",
+      });
+    }
   });
 });

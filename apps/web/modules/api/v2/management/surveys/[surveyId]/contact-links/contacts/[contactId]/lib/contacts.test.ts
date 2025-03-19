@@ -35,7 +35,9 @@ describe("getContact", () => {
         id: true,
       },
     });
-    expect(result).toEqual(mockContact);
+    if (result.ok) {
+      expect(result.data).toEqual(mockContact);
+    }
   });
 
   test("returns null when contact not found", async () => {
@@ -44,6 +46,16 @@ describe("getContact", () => {
     const result = await getContact(mockContactId, mockEnvironmentId);
 
     expect(prisma.contact.findUnique).toHaveBeenCalled();
-    expect(result).toBeNull();
+    if (!result.ok) {
+      expect(result.error).toEqual({
+        details: [
+          {
+            field: "contact",
+            issue: "not found",
+          },
+        ],
+        type: "not_found",
+      });
+    }
   });
 });
