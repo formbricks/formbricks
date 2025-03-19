@@ -78,9 +78,9 @@ module "observability_grafana_iam_policy" {
         Resource = "*"
       },
       {
-        Sid    = "AllowReadingResourceMetricsFromPerformanceInsights"
-        Effect = "Allow"
-        Action = "pi:GetResourceMetrics"
+        Sid      = "AllowReadingResourceMetricsFromPerformanceInsights"
+        Effect   = "Allow"
+        Action   = "pi:GetResourceMetrics"
         Resource = "*"
       },
       {
@@ -107,9 +107,9 @@ module "observability_grafana_iam_policy" {
         Resource = "*"
       },
       {
-        Sid    = "AllowReadingResourcesForTags"
-        Effect = "Allow"
-        Action = "tag:GetResources"
+        Sid      = "AllowReadingResourcesForTags"
+        Effect   = "Allow"
+        Action   = "tag:GetResources"
         Resource = "*"
       }
     ]
