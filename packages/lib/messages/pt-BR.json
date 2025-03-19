@@ -804,7 +804,6 @@
         "formbricks_sdk_connected": "O SDK do Formbricks está conectado",
         "formbricks_sdk_not_connected": "O SDK do Formbricks ainda não está conectado.",
         "formbricks_sdk_not_connected_description": "Conecte seu site ou app com o Formbricks",
-        "function": "função",
         "have_a_problem": "Tá com problema?",
         "how_to_setup": "Como configurar",
         "how_to_setup_description": "Siga esses passos para configurar o widget do Formbricks no seu app.",
@@ -824,10 +823,8 @@
         "step_3": "Passo 3: Modo de depuração",
         "switch_on_the_debug_mode_by_appending": "Ative o modo de depuração adicionando",
         "tag_of_your_app": "etiqueta do seu app",
-        "to_the": "pro",
         "to_the_url_where_you_load_the": "para a URL onde você carrega o",
         "want_to_learn_how_to_add_user_attributes": "Quer aprender como adicionar atributos de usuário, eventos personalizados e mais?",
-        "you_also_need_to_pass_a": "você também precisa passar um",
         "you_are_done": "Você terminou \uD83C\uDF89",
         "you_can_set_the_user_id_with": "você pode definir o id do usuário com",
         "your_app_now_communicates_with_formbricks": "Seu app agora se comunica com o Formbricks - enviando eventos e carregando pesquisas automaticamente!"
