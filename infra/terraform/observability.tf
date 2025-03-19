@@ -12,7 +12,7 @@ module "observability_loki_iam_policy" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-policy"
   version = "5.53.0"
 
-  name_prefix = "formbricks-observability-"
+  name_prefix = "loki-"
   path        = "/"
   description = "Policy for fombricks observability apps"
 
