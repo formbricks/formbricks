@@ -1,6 +1,10 @@
 import { resolve } from "node:path";
-import { type UserConfig, defineConfig } from "vite";
+import { type InlineConfig, type UserConfig, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+
+interface VitestConfigExport extends UserConfig {
+  test: InlineConfig;
+}
 
 const config = (): UserConfig => {
   return defineConfig({
@@ -41,7 +45,7 @@ const config = (): UserConfig => {
         include: ["src/lib/**/*.ts"],
       },
     },
-  });
+  } as VitestConfigExport);
 };
 
 export default config;

@@ -3,12 +3,12 @@ import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { type ApiResponse, type ApiSuccessResponse } from "../types";
 
 export const makeRequest = async <T>(
-  apiHost: string,
+  appUrl: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: unknown
 ): Promise<Result<T, ApiErrorResponse>> => {
-  const url = new URL(apiHost + endpoint);
+  const url = new URL(appUrl + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
 
   const res = await wrapThrowsAsync(fetch)(url.toString(), {
@@ -28,7 +28,7 @@ export const makeRequest = async <T>(
   if (!response.ok) {
     const errorResponse = json as ApiErrorResponse;
     return err({
-      code: errorResponse.code === "forbidden" ? "forbidden" : "network_error",
+      code: errorResponse.code,
       status: response.status,
       message: errorResponse.message || "Something went wrong",
       url,
