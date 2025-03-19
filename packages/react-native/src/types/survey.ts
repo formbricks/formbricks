@@ -38,7 +38,7 @@ export interface SurveyInlineProps extends SurveyBaseProps {
 }
 
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
-  apiHost?: string;
+  appUrl?: string;
   environmentId?: string;
   userId?: string;
   contactId?: string;

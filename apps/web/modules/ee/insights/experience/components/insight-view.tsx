@@ -42,17 +42,8 @@ export const InsightView = ({
   const [currentInsight, setCurrentInsight] = useState<TInsightWithDocumentCount | null>(null);
   const [activeTab, setActiveTab] = useState<string>("featureRequest");
 
-  const handleFeedback = (feedback: "positive" | "negative") => {
-    formbricks.track("AI Insight Feedback", {
-      hiddenFields: {
-        feedbackSentiment: feedback,
-        insightId: currentInsight?.id,
-        insightTitle: currentInsight?.title,
-        insightDescription: currentInsight?.description,
-        insightCategory: currentInsight?.category,
-        environmentId: currentInsight?.environmentId,
-      },
-    });
+  const handleFeedback = (_feedback: "positive" | "negative") => {
+    formbricks.track("AI Insight Feedback");
   };
 
   const insightsFilter: TInsightFilterCriteria = useMemo(

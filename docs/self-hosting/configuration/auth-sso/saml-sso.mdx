@@ -1,5 +1,5 @@
 ---
-title: "SAML SSO - Self-hosted"
+title: "SAML SSO"
 icon: "user-shield"
 description: "Configure SAML Single Sign-On (SSO) for secure enterprise authentication with your Formbricks instance."
 ---
@@ -71,7 +71,7 @@ To configure SAML SSO in Formbricks, follow these steps:
   <Step title="Database Setup">
     Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgres://postgres:postgres@postgres:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=disable` parameter.
   </Step>
-
+  
   <Step title="IdP Application">
     Create a SAML application in your IdP by following your provider's instructions([SAML Setup](/development/guides/auth-and-provision/setup-saml-with-identity-providers))
   </Step>
@@ -79,7 +79,7 @@ To configure SAML SSO in Formbricks, follow these steps:
   <Step title="User Provisioning">
     Provision users in your IdP and configure access to the IdP SAML app for all your users (who need access to Formbricks).
   </Step>
-
+    
   <Step title="Metadata">
     Keep the XML metadata from your IdP handy for the next step.
   </Step>

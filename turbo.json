@@ -37,7 +37,15 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+    "@formbricks/js-core#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "persistent": true
+    },
     "@formbricks/js-core#lint": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/js-core#test": {
       "dependsOn": ["@formbricks/api#build"]
     },
     "@formbricks/react-native#build": {
@@ -46,7 +54,7 @@
     },
     "@formbricks/react-native#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build"],
       "persistent": true
     },
     "@formbricks/react-native#lint": {
@@ -121,6 +129,7 @@
         "IMPRINT_ADDRESS",
         "INVITE_DISABLED",
         "IS_FORMBRICKS_CLOUD",
+        "INTERCOM_APP_ID",
         "INTERCOM_SECRET_KEY",
         "LOG_LEVEL",
         "MAIL_FROM",
@@ -136,7 +145,6 @@
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
         "NEXT_PUBLIC_POSTHOG_API_HOST",
-        "NEXT_PUBLIC_INTERCOM_APP_ID",
         "NEXT_PUBLIC_POSTHOG_API_KEY",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
