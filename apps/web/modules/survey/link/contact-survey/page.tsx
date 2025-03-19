@@ -42,9 +42,11 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
 };
 
 export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
-  const { searchParams, params } = props;
-  const { jwt } = await params;
-  const { preview } = await searchParams;
+  const searchParams = await props.searchParams;
+  const params = await props.params;
+
+  const { jwt } = params;
+  const { preview } = searchParams;
 
   const result = verifyContactSurveyToken(jwt);
   if (!result.ok) {
@@ -66,7 +68,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   return renderSurvey({
     survey,
-    searchParams: await searchParams,
+    searchParams,
     contactId,
     isPreview,
   });
