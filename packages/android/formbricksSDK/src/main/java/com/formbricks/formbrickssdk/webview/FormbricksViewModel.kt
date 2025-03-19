@@ -110,6 +110,7 @@ class FormbricksViewModel : ViewModel() {
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    FormbricksJavascript.message(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);
