@@ -20,6 +20,7 @@ export default defineConfig({
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: [
         "modules/api/v2/**/*.ts",
+        "modules/api/v2/**/*.tsx",
         "modules/auth/lib/**/*.ts",
         "modules/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
@@ -32,6 +33,7 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
+        "modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
