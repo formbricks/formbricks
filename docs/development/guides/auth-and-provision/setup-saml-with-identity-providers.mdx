@@ -21,15 +21,41 @@ This guide explains the settings you need to use to configure SAML with your Ide
 
 **Assertion Encryption:** Unencrypted
 
+**NameID Format:** EmailAddress
+
+**Application username:** email
+
 **Mapping Attributes / Attribute Statements:**
 
-- [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier) -> id
+- Name claim:
 
-- [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress) -> email
+  If your IdP has a `name` claim, set the following claims to populate the name field:
 
-- [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname) -> firstName
+  | Name | Name Format | Value     |
+  | ---- | ----------- | --------- |
+  | name | Basic       | user.name |
 
-- [http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname](http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname) -> lastName
+  Many IdPs do not have a `name` claim. If not, you can use different claims to populate the name field. The order of precedence is `name` -> **other options** -> `email`.
+
+  **Other options:**
+
+  | Name      | Name Format | Value                     |
+  | --------- | ----------- | ------------------------- |
+  | firstName | Basic       | **FIRST_NAME_EQUIVALENT** |
+  | lastName  | Basic       | **LAST_NAME_EQUIVALENT**  |
+
+  Refer to the table below for the different claims you can use for each IdP.
+
+  | IdP                           | FIRST_NAME_EQUIVALENT            | LAST_NAME_EQUIVALENT             |
+  | ----------------------------- | -------------------------------- | -------------------------------- |
+  | Okta                          | user.firstName                   | user.lastName                    |
+  | Microsoft Entra ID (Azure AD) | user.givenName                   | user.surname                     |
+  | Google Workspace              | user.given_name / user.firstName | user.family_name / user.lastName |
+  | OneLogin                      | user.FirstName / user.first_name | user.LastName / user.last_name   |
+  | Auth0                         | user.given_name                  | user.family_name                 |
+  | JumpCloud                     | user.firstname                   | user.lastname                    |
+
+  Above provided claims may differ based on your configuration and the IdP you are using. Please refer to the documentation of your IdP for the correct claims.
 
 ### SAML With Okta
 
