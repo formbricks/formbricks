@@ -55,8 +55,8 @@ export async function PreviewEmailTemplate({
   const urlWithPrefilling = `${surveyUrl}?preview=true&skipPrefilled=true&`;
   const defaultLanguageCode = "default";
   const firstQuestion = survey.questions[0];
-  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode), {}, {});
-  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode), {}, {});
+  const headline = parseRecallInfo(getLocalizedValue(firstQuestion.headline, defaultLanguageCode));
+  const subheader = parseRecallInfo(getLocalizedValue(firstQuestion.subheader, defaultLanguageCode));
   const brandColor = styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
 
   switch (firstQuestion.type) {
