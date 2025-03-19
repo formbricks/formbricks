@@ -457,13 +457,14 @@ module "iam_policy" {
         ]
         Resource = [
           module.s3-bucket.s3_bucket_arn,
-          "${module.s3-bucket.s3_bucket_arn}/*"
+          "${module.s3-bucket.s3_bucket_arn}/*",
+          "arn:aws:s3:::formbricks-cloud-uploads",
+          "arn:aws:s3:::formbricks-cloud-uploads/*"
         ]
       }
     ]
   })
 }
-
 
 module "formkey-aws-access" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts-eks"
