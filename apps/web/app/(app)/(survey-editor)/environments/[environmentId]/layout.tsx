@@ -7,7 +7,12 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
+import {
+  FORMBRICKS_API_HOST,
+  FORMBRICKS_ENVIRONMENT_ID,
+  IS_FORMBRICKS_ENABLED,
+  IS_POSTHOG_CONFIGURED,
+} from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -58,7 +63,13 @@ const SurveyEditorEnvironmentLayout = async (props) => {
         organizationBilling={organization.billing}
         isPosthogEnabled={IS_POSTHOG_CONFIGURED}
       />
-      <FormbricksClient userId={user.id} email={user.email} />
+      <FormbricksClient
+        userId={user.id}
+        email={user.email}
+        formbricksApiHost={FORMBRICKS_API_HOST}
+        formbricksEnvironmentId={FORMBRICKS_ENVIRONMENT_ID}
+        formbricksEnabled={IS_FORMBRICKS_ENABLED}
+      />
       <ToasterClient />
       <div className="flex h-screen flex-col">
         <DevEnvironmentBanner environment={environment} />

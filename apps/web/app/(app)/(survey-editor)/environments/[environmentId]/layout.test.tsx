@@ -37,6 +37,9 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
+  FORMBRICKS_API_HOST: "mock-formbricks-api-host",
+  FORMBRICKS_ENVIRONMENT_ID: "mock-formbricks-environment-id",
+  IS_FORMBRICKS_ENABLED: true,
 }));
 
 vi.mock("next-auth", () => ({

@@ -47,6 +47,8 @@ export const SentryProvider = ({ children, sentryDns }: SentryProviderProps) => 
         },
       });
     }
+    // We only want to run this once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <>{children}</>;

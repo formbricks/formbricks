@@ -30,6 +30,12 @@ export const env = createEnv({
     ENCRYPTION_KEY: z.string().length(64).or(z.string().length(32)),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
     FORMBRICKS_ENCRYPTION_KEY: z.string().length(24).or(z.string().length(0)).optional(),
+    FORMBRICKS_API_HOST: z
+      .string()
+      .url()
+      .optional()
+      .or(z.string().refine((str) => str === "")),
+    FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     GITHUB_ID: z.string().optional(),
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
@@ -113,20 +119,6 @@ export const env = createEnv({
   },
 
   /*
-   * Environment variables available on the client (and server).
-   *
-   * 💡 You'll get type errors if these are not prefixed with NEXT_PUBLIC_.
-   */
-  client: {
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: z
-      .string()
-      .url()
-      .optional()
-      .or(z.string().refine((str) => str === "")),
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
-    NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-  },
-  /*
    * Due to how Next.js bundles environment variables on Edge and Client,
    * we need to manually destructure them to make sure all are included in bundle.
    *
@@ -159,6 +151,8 @@ export const env = createEnv({
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
     FORMBRICKS_ENCRYPTION_KEY: process.env.FORMBRICKS_ENCRYPTION_KEY,
+    FORMBRICKS_API_HOST: process.env.FORMBRICKS_API_HOST,
+    FORMBRICKS_ENVIRONMENT_ID: process.env.FORMBRICKS_ENVIRONMENT_ID,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
@@ -176,9 +170,6 @@ export const env = createEnv({
     MAIL_FROM: process.env.MAIL_FROM,
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-    NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
     SENTRY_DNS: process.env.SENTRY_DNS,
     POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
     POSTHOG_API_HOST: process.env.POSTHOG_API_HOST,

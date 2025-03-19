@@ -32,6 +32,7 @@ export default defineConfig({
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
         "app/(app)/(onboarding)/organizations/**/layout.tsx",
         "app/(app)/(survey-editor)/environments/**/layout.tsx",
+        "app/(app)/components/FormbricksClient.tsx",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",

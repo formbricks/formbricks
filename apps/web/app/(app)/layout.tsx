@@ -6,7 +6,14 @@ import { PHProvider, PostHogPageview } from "@/modules/ui/components/post-hog-cl
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getServerSession } from "next-auth";
 import { Suspense } from "react";
-import { IS_POSTHOG_CONFIGURED, POSTHOG_API_HOST, POSTHOG_API_KEY } from "@formbricks/lib/constants";
+import {
+  FORMBRICKS_API_HOST,
+  FORMBRICKS_ENVIRONMENT_ID,
+  IS_FORMBRICKS_ENABLED,
+  IS_POSTHOG_CONFIGURED,
+  POSTHOG_API_HOST,
+  POSTHOG_API_KEY,
+} from "@formbricks/lib/constants";
 import { getUser } from "@formbricks/lib/user/service";
 
 const AppLayout = async ({ children }) => {
@@ -25,7 +32,15 @@ const AppLayout = async ({ children }) => {
       </Suspense>
       <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
         <>
-          {user ? <FormbricksClient userId={user.id} email={user.email} /> : null}
+          {user ? (
+            <FormbricksClient
+              userId={user.id}
+              email={user.email}
+              formbricksApiHost={FORMBRICKS_API_HOST}
+              formbricksEnvironmentId={FORMBRICKS_ENVIRONMENT_ID}
+              formbricksEnabled={IS_FORMBRICKS_ENABLED}
+            />
+          ) : null}
           <IntercomClientWrapper user={user} />
           <ToasterClient />
           {children}

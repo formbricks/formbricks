@@ -5,7 +5,12 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
+import {
+  FORMBRICKS_API_HOST,
+  FORMBRICKS_ENVIRONMENT_ID,
+  IS_FORMBRICKS_ENABLED,
+  IS_POSTHOG_CONFIGURED,
+} from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -64,7 +69,13 @@ const EnvLayout = async (props: {
         organizationBilling={organization.billing}
         isPosthogEnabled={IS_POSTHOG_CONFIGURED}
       />
-      <FormbricksClient userId={user.id} email={user.email} />
+      <FormbricksClient
+        userId={user.id}
+        email={user.email}
+        formbricksApiHost={FORMBRICKS_API_HOST}
+        formbricksEnvironmentId={FORMBRICKS_ENVIRONMENT_ID}
+        formbricksEnabled={IS_FORMBRICKS_ENABLED}
+      />
       <ToasterClient />
       <EnvironmentStorageHandler environmentId={params.environmentId} />
       <EnvironmentLayout environmentId={params.environmentId} session={session}>
