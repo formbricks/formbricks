@@ -26,6 +26,8 @@ export default defineConfig({
         "modules/email/emails/survey/follow-up.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
         "modules/ee/sso/lib/**/*.ts",
+        "modules/ee/contacts/lib/**/*.ts",
+        "modules/survey/link/lib/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
