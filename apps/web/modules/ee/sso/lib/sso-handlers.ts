@@ -1,7 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
-import { TOidcNameFields } from "@/modules/auth/types/auth";
+import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
