@@ -4,17 +4,17 @@ import { type ApiErrorResponse } from "@formbricks/types/errors";
 import { makeRequest } from "../../utils/make-request";
 
 export class DisplayAPI {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor(baseUrl: string, environmentId: string) {
-    this.apiHost = baseUrl;
+  constructor(appUrl: string, environmentId: string) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
   async create(
     displayInput: Omit<TDisplayCreateInput, "environmentId">
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/displays`, "POST", displayInput);
+    return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/displays`, "POST", displayInput);
   }
 }

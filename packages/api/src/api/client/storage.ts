@@ -2,11 +2,11 @@
 import type { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
 
 export class StorageAPI {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor(apiHost: string, environmentId: string) {
-    this.apiHost = apiHost;
+  constructor(appUrl: string, environmentId: string) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
@@ -29,7 +29,7 @@ export class StorageAPI {
       surveyId,
     };
 
-    const response = await fetch(`${this.apiHost}/api/v1/client/${this.environmentId}/storage`, {
+    const response = await fetch(`${this.appUrl}/api/v1/client/${this.environmentId}/storage`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -86,7 +86,7 @@ export class StorageAPI {
 
     let uploadResponse: Response = {} as Response;
 
-    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.apiHost);
+    const signedUrlCopy = signedUrl.replace("http://localhost:3000", this.appUrl);
 
     try {
       uploadResponse = await fetch(signedUrlCopy, {
