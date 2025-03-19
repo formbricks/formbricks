@@ -804,7 +804,6 @@
         "formbricks_sdk_connected": "Le SDK Formbricks est connecté",
         "formbricks_sdk_not_connected": "Le SDK Formbricks n'est pas encore connecté.",
         "formbricks_sdk_not_connected_description": "Connectez votre site web ou votre application à Formbricks.",
-        "function": "fonction",
         "have_a_problem": "Vous avez un problème ?",
         "how_to_setup": "Comment configurer",
         "how_to_setup_description": "Suivez ces étapes pour configurer le widget Formbricks dans votre application.",
@@ -824,10 +823,8 @@
         "step_3": "Étape 3 : Mode débogage",
         "switch_on_the_debug_mode_by_appending": "Activez le mode débogage en ajoutant",
         "tag_of_your_app": "étiquette de votre application",
-        "to_the": "au",
         "to_the_url_where_you_load_the": "vers l'URL où vous chargez le",
         "want_to_learn_how_to_add_user_attributes": "Vous voulez apprendre à ajouter des attributs utilisateur, des événements personnalisés et plus encore ?",
-        "you_also_need_to_pass_a": "vous devez également passer un",
         "you_are_done": "Vous avez terminé \uD83C\uDF89",
         "you_can_set_the_user_id_with": "vous pouvez définir l'ID utilisateur avec",
         "your_app_now_communicates_with_formbricks": "Votre application communique désormais avec Formbricks - envoyant des événements et chargeant des enquêtes automatiquement !"
