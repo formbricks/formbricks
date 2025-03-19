@@ -1,10 +1,10 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { LightbulbIcon } from "lucide-react";
-import { Alert } from "./index";
+import { AlertJakob } from "./index";
 
-const meta: Meta<typeof Alert> = {
-  title: "UI/Alert",
-  component: Alert,
+const meta: Meta<typeof AlertJakob> = {
+  title: "UI/AlertJakob",
+  component: AlertJakob,
   tags: ["autodocs"],
   argTypes: {
     variant: {
@@ -34,7 +34,7 @@ const meta: Meta<typeof Alert> = {
 
 export default meta;
 
-type Story = StoryObj<typeof Alert>;
+type Story = StoryObj<typeof AlertJakob>;
 
 // Basic example with structured props
 export const Default: Story = {

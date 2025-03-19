@@ -66,10 +66,8 @@ const getButtonStyles = (variant: string, size: string) => {
   };
 };
 
-// Enhanced interface for Alert props
-interface AlertProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
-    VariantProps<typeof alertVariants> {
+// Enhanced interface for AlertJakob props
+interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
   icon?: React.ReactNode;
   onIconClick?: (e: React.MouseEvent) => void;
   title?: React.ReactNode;
@@ -93,7 +91,7 @@ const ButtonWrapper = ({
   children,
 }: {
   buttonStyles: { variant?: string; size?: string; className?: string };
-  children: React.ReactElement<{ variant?: string; size?: string; className?: string }>;
+  children: React.ReactElement;
 }) => {
   return React.cloneElement(children, {
     variant: buttonStyles.variant ?? children.props.variant,
@@ -102,7 +100,7 @@ const ButtonWrapper = ({
   });
 };
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
+const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
   (
     {
       className,
@@ -114,13 +112,13 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       button,
       onIconClick,
       children,
-      allowChildren = true, // updated default to true
+      allowChildren = false,
       ...props
     },
     ref
   ) => {
     // Get the icon based on variant or use provided icon, and ensure consistent sizing
-    let renderIcon: React.ReactNode = null;
+    let renderIcon = null;
 
     if (icon !== null) {
       if (icon === undefined && variantIcons[variant as keyof typeof variantIcons]) {
@@ -128,18 +126,18 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         const variantIcon = variantIcons[variant as keyof typeof variantIcons];
         renderIcon = variantIcon
           ? React.cloneElement(variantIcon, {
-              className: cn("h-4 w-4", (variantIcon.props as Partial<{ className: string }>)?.className),
+              className: cn("h-4 w-4", variantIcon.props.className),
             })
           : null;
       } else if (React.isValidElement(icon)) {
         // Apply consistent sizing to custom icon unless it explicitly has size classes
-        const iconProps: { className?: string } = icon.props || {};
+        const iconProps = icon.props || {};
         const hasExplicitSize =
           iconProps.className && (iconProps.className.includes("h-") || iconProps.className.includes("w-"));
 
         renderIcon = hasExplicitSize
           ? icon
-          : React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
+          : React.cloneElement(icon, {
               className: cn("h-4 w-4", iconProps.className),
             });
       }
@@ -155,11 +153,10 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     if (allowChildren && children) {
       childrenArray.forEach((child) => {
         if (React.isValidElement(child)) {
-          const element = child as React.ReactElement<{ children?: React.ReactNode }>;
-          if (element.type === AlertTitle && !extractedTitle) {
-            extractedTitle = element.props.children;
-          } else if (element.type === AlertDescription && !extractedDescription) {
-            extractedDescription = element.props.children;
+          if (child.type === AlertTitle && !extractedTitle) {
+            extractedTitle = child.props.children;
+          } else if (child.type === AlertDescription && !extractedDescription) {
+            extractedDescription = child.props.children;
           } else {
             otherContent.push(child);
           }
@@ -168,9 +165,6 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         }
       });
     }
-
-    // Compute condition: true if only a title or only a description is provided
-    const singleText = (extractedTitle ? 1 : 0) + (extractedDescription ? 1 : 0) === 1;
 
     // Handle button creation from either React element or props object
     const buttonElement = React.isValidElement(button) ? (
@@ -202,22 +196,18 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
         {size === "default" ? (
           <div className="flex">
-            <div className="flex flex-grow items-center gap-2">
+            <div className="flex flex-grow items-start gap-2">
               {/* Icon section with optional click handler */}
               {renderIcon && (
                 <div
-                  className={cn(
-                    singleText ? "self-center" : "mt-0.5 self-start",
-                    "flex-shrink-0",
-                    onIconClick && "cursor-pointer"
-                  )}
+                  className={cn("mt-0.5 flex-shrink-0", onIconClick && "cursor-pointer")}
                   onClick={onIconClick}>
                   {renderIcon}
                 </div>
               )}
 
               {/* Content section */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 {titleElement}
                 {descriptionElement}
                 {allowChildren && otherContent}
@@ -243,11 +233,8 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             {/* Content section for small size - horizontal layout with truncation */}
             <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
               {titleElement &&
-                React.cloneElement(titleElement as React.ReactElement<{ className?: string }>, {
-                  className: cn(
-                    "truncate",
-                    (titleElement as React.ReactElement<{ className?: string }>).props?.className || ""
-                  ),
+                React.cloneElement(titleElement as React.ReactElement, {
+                  className: cn("truncate", (titleElement as React.ReactElement).props.className),
                 })}
               {descriptionElement && (
                 <div className="hidden truncate text-sm opacity-80 sm:block">{descriptionElement}</div>
@@ -267,7 +254,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     );
   }
 );
-Alert.displayName = "Alert";
+AlertJakob.displayName = "AlertJakob";
 
 // AlertTitle component
 const AlertTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
@@ -292,27 +279,12 @@ AlertDescription.displayName = "AlertDescription";
 // AlertButton component
 const AlertButton = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string }
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }
 >(({ className, loading, children, ...props }, ref) => (
-  <Button
-    ref={ref}
-    className={cn("shrink-0", className)}
-    disabled={loading || props.disabled}
-    {...props}
-    variant={
-      props.variant as
-        | "default"
-        | "link"
-        | "secondary"
-        | "destructive"
-        | "outline"
-        | "ghost"
-        | null
-        | undefined
-    }>
+  <Button ref={ref} className={cn("shrink-0", className)} disabled={loading || props.disabled} {...props}>
     {loading ? "Loading..." : children}
   </Button>
 ));
 AlertButton.displayName = "AlertButton";
 
-export { Alert, AlertDescription, AlertTitle, AlertButton };
+export { AlertJakob, AlertDescription, AlertTitle, AlertButton };

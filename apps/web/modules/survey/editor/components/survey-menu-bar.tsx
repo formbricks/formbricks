@@ -5,11 +5,11 @@ import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { AlertJakob } from "@/modules/ui/components/jakob";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
-import { AlertTriangleIcon, ArrowLeftIcon, SettingsIcon } from "lucide-react";
+import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -63,7 +63,9 @@ export const SurveyMenuBar = ({
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const cautionText = t("environments.surveys.edit.caution_text");
+  const cautionButton = t("common.learn_more");
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -328,30 +330,26 @@ export const SurveyMenuBar = ({
             className="h-8 w-72 border-white py-0 hover:border-slate-200"
           />
         </div>
-        {responseCount > 0 && (
-          <div className="flex items-center rounded-lg border border-amber-200 bg-amber-100 p-1.5 text-amber-800 shadow-sm lg:mx-auto">
-            <TooltipProvider delayDuration={50}>
-              <Tooltip>
-                <TooltipTrigger>
-                  <AlertTriangleIcon className="h-5 w-5 text-amber-400" />
-                </TooltipTrigger>
-                <TooltipContent side={"top"} className="lg:hidden">
-                  <p className="py-2 text-center text-xs text-slate-500 dark:text-slate-400">{cautionText}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <p className="hidden text-ellipsis whitespace-nowrap pl-1.5 text-xs md:text-sm lg:block">
-              {cautionText}
-            </p>
-          </div>
-        )}
-        <div className="mt-3 flex sm:ml-4 sm:mt-0">
+
+        <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
+          {responseCount > 0 && (
+            <div>
+              <AlertJakob
+                variant="warning"
+                size="small"
+                title={cautionText}
+                button={{
+                  label: cautionButton,
+                  onClick: () => setIsCautionDialogOpen(true), //alert("Learn more")
+                }}></AlertJakob>
+            </div>
+          )}
           {!isCxMode && (
             <Button
               disabled={disableSave}
               variant="secondary"
               size="sm"
-              className="mr-3"
+              // className="mr-3"
               loading={isSurveySaving}
               onClick={() => handleSurveySave()}
               type="submit">
@@ -406,6 +404,15 @@ export const SurveyMenuBar = ({
             router.back();
           }}
           onConfirm={() => handleSaveAndGoBack()}
+        />
+        <AlertDialog
+          headerText={t("environments.surveys.edit.caution_dialog_title")}
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          mainText={t("environments.surveys.edit.caution_dialog_body")}
+          confirmBtnLabel={t("common.close")}
+          onConfirm={() => setIsCautionDialogOpen(false)}
+          onDecline={() => setIsCautionDialogOpen(false)}
         />
       </div>
     </>

@@ -19,6 +19,7 @@ import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
+import { AlertJakob } from "@/modules/ui/components/jakob";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
@@ -59,6 +60,8 @@ interface QuestionCardProps {
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
+  responseCount: number;
+  onAlertTrigger: () => void;
 }
 
 export const QuestionCard = ({
@@ -80,6 +83,8 @@ export const QuestionCard = ({
   isFormbricksCloud,
   isCxMode,
   locale,
+  responseCount,
+  onAlertTrigger,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -257,6 +262,27 @@ export const QuestionCard = ({
           </div>
         </Collapsible.CollapsibleTrigger>
         <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${open && "pb-4"}`}>
+          {responseCount > 0 &&
+          [
+            TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+            TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+            TSurveyQuestionTypeEnum.PictureSelection,
+            TSurveyQuestionTypeEnum.Ranking,
+            TSurveyQuestionTypeEnum.NPS,
+            TSurveyQuestionTypeEnum.Ranking,
+            TSurveyQuestionTypeEnum.Matrix,
+            TSurveyQuestionTypeEnum.CTA,
+          ].includes(question.type) ? (
+            <AlertJakob
+              variant="warning"
+              size="small"
+              title={t("environments.surveys.edit.caution_text")}
+              button={{
+                label: t("common.learn_more"),
+                onClick: () => onAlertTrigger(),
+              }}
+              className="mb-4 mt-3"></AlertJakob>
+          ) : null}
           {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm
               localSurvey={localSurvey}
