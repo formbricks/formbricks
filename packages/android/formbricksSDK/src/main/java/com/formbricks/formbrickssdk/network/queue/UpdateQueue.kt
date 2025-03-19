@@ -1,7 +1,7 @@
 package com.formbricks.formbrickssdk.network.queue
 
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.UserManager
-import timber.log.Timber
 import java.util.*
 import kotlin.concurrent.timer
 
@@ -57,11 +57,11 @@ class UpdateQueue private constructor() {
     private fun commit() {
         val currentUserId = userId
         if (currentUserId == null) {
-            Timber.d("Error: User ID is not set yet")
+            Logger.d("Error: User ID is not set yet")
             return
         }
 
-        Timber.d("UpdateQueue - commit() called on UpdateQueue with $currentUserId and $attributes")
+        Logger.d("UpdateQueue - commit() called on UpdateQueue with $currentUserId and $attributes")
         UserManager.syncUser(currentUserId, attributes)
     }
 
