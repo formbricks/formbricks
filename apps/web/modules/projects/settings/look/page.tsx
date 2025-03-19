@@ -4,6 +4,7 @@ import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/co
 import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
+import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -16,7 +17,13 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, project, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+
+  const project = await getProjectByEnvironmentId(params.environmentId);
+
+  if (!project) {
+    throw new Error("Project not found");
+  }
 
   const canRemoveBranding = await getWhiteLabelPermission(organization.billing.plan);
 
