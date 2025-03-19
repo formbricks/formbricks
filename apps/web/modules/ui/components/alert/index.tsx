@@ -93,7 +93,7 @@ const ButtonWrapper = ({
   children,
 }: {
   buttonStyles: { variant?: string; size?: string; className?: string };
-  children: React.ReactElement;
+  children: React.ReactElement<{ variant?: string; size?: string; className?: string }>;
 }) => {
   return React.cloneElement(children, {
     variant: buttonStyles.variant ?? children.props.variant,
@@ -120,7 +120,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     ref
   ) => {
     // Get the icon based on variant or use provided icon, and ensure consistent sizing
-    let renderIcon = null;
+    let renderIcon: React.ReactNode = null;
 
     if (icon !== null) {
       if (icon === undefined && variantIcons[variant as keyof typeof variantIcons]) {
@@ -128,18 +128,18 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         const variantIcon = variantIcons[variant as keyof typeof variantIcons];
         renderIcon = variantIcon
           ? React.cloneElement(variantIcon, {
-              className: cn("h-4 w-4", variantIcon.props.className),
+              className: cn("h-4 w-4", (variantIcon.props as Partial<{ className: string }>)?.className),
             })
           : null;
       } else if (React.isValidElement(icon)) {
         // Apply consistent sizing to custom icon unless it explicitly has size classes
-        const iconProps = icon.props || {};
+        const iconProps: { className?: string } = icon.props || {};
         const hasExplicitSize =
           iconProps.className && (iconProps.className.includes("h-") || iconProps.className.includes("w-"));
 
         renderIcon = hasExplicitSize
           ? icon
-          : React.cloneElement(icon, {
+          : React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
               className: cn("h-4 w-4", iconProps.className),
             });
       }
@@ -155,10 +155,11 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
     if (allowChildren && children) {
       childrenArray.forEach((child) => {
         if (React.isValidElement(child)) {
-          if (child.type === AlertTitle && !extractedTitle) {
-            extractedTitle = child.props.children;
-          } else if (child.type === AlertDescription && !extractedDescription) {
-            extractedDescription = child.props.children;
+          const element = child as React.ReactElement<{ children?: React.ReactNode }>;
+          if (element.type === AlertTitle && !extractedTitle) {
+            extractedTitle = element.props.children;
+          } else if (element.type === AlertDescription && !extractedDescription) {
+            extractedDescription = element.props.children;
           } else {
             otherContent.push(child);
           }
@@ -236,7 +237,10 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
               {titleElement &&
                 React.cloneElement(titleElement as React.ReactElement, {
-                  className: cn("truncate", (titleElement as React.ReactElement).props.className),
+                  className: cn(
+                    "truncate",
+                    (titleElement as React.ReactElement<{ className?: string }>).props?.className || ""
+                  ),
                 })}
               {descriptionElement && (
                 <div className="hidden truncate text-sm opacity-80 sm:block">{descriptionElement}</div>
@@ -281,9 +285,24 @@ AlertDescription.displayName = "AlertDescription";
 // AlertButton component
 const AlertButton = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean }
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string }
 >(({ className, loading, children, ...props }, ref) => (
-  <Button ref={ref} className={cn("shrink-0", className)} disabled={loading || props.disabled} {...props}>
+  <Button
+    ref={ref}
+    className={cn("shrink-0", className)}
+    disabled={loading || props.disabled}
+    {...props}
+    variant={
+      props.variant as
+        | "default"
+        | "link"
+        | "secondary"
+        | "destructive"
+        | "outline"
+        | "ghost"
+        | null
+        | undefined
+    }>
     {loading ? "Loading..." : children}
   </Button>
 ));
