@@ -17,6 +17,8 @@ tags:
     description: Operations for managing contact attributes keys.
   - name: Management API > Surveys
     description: Operations for managing surveys.
+  - name: Management API > Storage
+    description: Operations for managing storage.
   - name: Client API > File Upload
     description: Operations for uploading files.
 security:
@@ -1316,6 +1318,228 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/survey"
+  /api/v2/management/storage:
+    post:
+      summary: Upload Public File
+      description: >
+        API endpoint for uploading public files. Uploaded files are public and accessible by anyone.
+        This endpoint requires authentication. It accepts a JSON body with fileName, fileType, environmentId,
+        and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading
+        the file to S3 along with a local upload URL.
+      tags:
+        - Management API > Storage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+                  description: The name of the file to be uploaded.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+                environmentId:
+                  type: string
+                  description: The ID of the environment.
+                allowedFileExtensions:
+                  type: array
+                  items:
+                    type: string
+                  description: Optional. List of allowed file extensions.
+              required:
+                - fileName
+                - fileType
+                - environmentId
+            example:
+              fileName: "profile.png"
+              fileType: "image/png"
+              environmentId: "env123"
+              allowedFileExtensions: ["png", "jpg", "jpeg"]
+      responses:
+        "200":
+          description: OK - Returns the signed URL, updated file name, and file URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signedUrl:
+                        type: string
+                        description: Signed URL for uploading the file to S3.
+                      localUrl:
+                        type: string
+                        description: URL for uploading the file to local storage.
+                      updatedFileName:
+                        type: string
+                        description: The updated file name after processing.
+                      fileUrl:
+                        type: string
+                        description: URL where the uploaded file can be accessed.
+              example:
+                data:
+                  signedUrl: "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/public"
+                  localUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile.png"
+                  updatedFileName: "profile--fid--abc123.png"
+                  fileUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile--fid--abc123.png"
+        "400":
+          description: Bad Request - Missing required fields or invalid file extension.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "fileName is required"
+        "401":
+          description: Unauthorized - Authentication failed or user not logged in.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "Not authenticated"
+        "403":
+          description: Forbidden - User does not have access to the specified environment.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "User does not have access to environment env123"
+  /api/v2/management/storage/local:
+    put:
+      summary: Upload Public File to Local Storage
+      description: >
+        Management API endpoint for uploading public files to local storage. This endpoint requires authentication.
+        File metadata is provided via headers (X-File-Type, X-File-Name, X-Environment-ID, X-Signature, X-UUID, X-Timestamp)
+        and the file is provided as a multipart/form-data file field named "file". The "Content-Type" header must be set to a valid MIME type.
+      tags:
+        - Management API > Storage
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: header
+          name: X-File-Type
+          required: true
+          schema:
+            type: string
+          description: "MIME type of the file. Must be a valid MIME type."
+        - in: header
+          name: X-File-Name
+          required: true
+          schema:
+            type: string
+          description: "URI encoded file name."
+        - in: header
+          name: X-Environment-ID
+          required: true
+          schema:
+            type: string
+          description: "ID of the environment."
+        - in: header
+          name: X-Signature
+          required: true
+          schema:
+            type: string
+          description: "Signature for verifying the request."
+        - in: header
+          name: X-UUID
+          required: true
+          schema:
+            type: string
+          description: "Unique identifier for the signed upload."
+        - in: header
+          name: X-Timestamp
+          required: true
+          schema:
+            type: string
+          description: "Timestamp used for the signature."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "The file to be uploaded as a valid file object (buffer)."
+              required:
+                - file
+      responses:
+        "200":
+          description: OK - File uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        description: Success message.
+                example:
+                  data:
+                    message: "File uploaded successfully"
+        "400":
+          description: Bad Request - Missing required fields, invalid header values, or file issues.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "fileType is required"
+        "401":
+          description: Unauthorized - Authentication failed, invalid signature, or user not authorized.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "Not authenticated"
+        "500":
+          description: Internal Server Error - File upload failed due to server error.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+              example:
+                error: "File upload failed"
+      servers:
+        - url: https://app.formbricks.com/api/v2
+          description: Formbricks API Server
 components:
   securitySchemes:
     apiKeyAuth:
