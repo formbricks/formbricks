@@ -37,16 +37,23 @@ vi.mock("@tolgee/react", () => ({
 
 // mock next/router navigation
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-    refresh: vi.fn(),
-  }),
-}));
+vi.mock("next/navigation", async () => {
+  const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
+
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      prefetch: vi.fn(),
+      refresh: vi.fn(),
+    }),
+    notFound: vi.fn(),
+    redirect: vi.fn(),
+  };
+});
 
 // mock server-only
 vi.mock("server-only", () => {

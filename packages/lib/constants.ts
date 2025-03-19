@@ -271,8 +271,11 @@ export const IS_AI_CONFIGURED = Boolean(
 
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
 export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
-
 export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+
+export const POSTHOG_API_KEY = env.POSTHOG_API_KEY;
+export const POSTHOG_API_HOST = env.POSTHOG_API_HOST;
+export const IS_POSTHOG_CONFIGURED = Boolean(POSTHOG_API_KEY && POSTHOG_API_HOST);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 
@@ -281,3 +284,7 @@ export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KE
 export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
+
+export const SENTRY_DNS = env.SENTRY_DNS;
+
+export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";
