@@ -93,6 +93,15 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       }
     }
 
+    if (provider === "saml") {
+      const samlUser = user as TUser & TSamlNameFields;
+      if (samlUser.name) {
+        userName = samlUser.name;
+      } else if (samlUser.firstName || samlUser.lastName) {
+        userName = `${samlUser.firstName} ${samlUser.lastName}`;
+      }
+    }
+
     const userProfile = await createUser({
       name:
         userName ||
