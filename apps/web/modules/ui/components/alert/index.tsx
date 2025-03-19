@@ -114,7 +114,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       button,
       onIconClick,
       children,
-      allowChildren = false,
+      allowChildren = true, // updated default to true
       ...props
     },
     ref
@@ -169,6 +169,9 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       });
     }
 
+    // Compute condition: true if only a title or only a description is provided
+    const singleText = (extractedTitle ? 1 : 0) + (extractedDescription ? 1 : 0) === 1;
+
     // Handle button creation from either React element or props object
     const buttonElement = React.isValidElement(button) ? (
       button
@@ -199,18 +202,22 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
       <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
         {size === "default" ? (
           <div className="flex">
-            <div className="flex flex-grow items-start gap-2">
+            <div className="flex flex-grow items-center gap-2">
               {/* Icon section with optional click handler */}
               {renderIcon && (
                 <div
-                  className={cn("mt-0.5 flex-shrink-0", onIconClick && "cursor-pointer")}
+                  className={cn(
+                    singleText ? "self-center" : "mt-0.5 self-start",
+                    "flex-shrink-0",
+                    onIconClick && "cursor-pointer"
+                  )}
                   onClick={onIconClick}>
                   {renderIcon}
                 </div>
               )}
 
               {/* Content section */}
-              <div className="space-y-0.5">
+              <div className="space-y-1">
                 {titleElement}
                 {descriptionElement}
                 {allowChildren && otherContent}
