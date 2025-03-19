@@ -4,17 +4,7 @@ description: "Deploy the new Helm chart on a Kubernetes cluster using Helm."
 icon: "circle-nodes"
 ---
 
-<Note>
-  Deployment with helm charts are part of [Enterprise Plan](/self-hosting/advanced/license).
-</Note>
-
-# **🚀 Kubernetes Deployment Guide**
-
-This guide explains how to deploy the **Formbricks Helm Chart** on a Kubernetes cluster using Helm. It provides configuration options for **internal** and **external** databases, caching services, and secrets management.
-
----
-
-## **📌 Prerequisites**
+## Prerequisites
 Ensure you have the following before proceeding:
 
 - A running Kubernetes cluster (EKS, GKE, AKS, Minikube, etc.)
@@ -26,32 +16,37 @@ Ensure you have the following before proceeding:
 
 ---
 
-## **1️⃣ Installation Steps**
+## 1. Installation Steps
 
-### **🔹 Step 1: Clone the Helm Chart**
+<Steps>
+<Step title="Clone the Helm Chart">
 ```sh
 git clone https://github.com/formbricks/formbricks
 cd helm-chart
 ```
+</Step>
 
-### **🔹 Step 2: Install with Default Configuration**
+<Step title="Install with Default Configuration">
 ```sh
 helm install formbricks ./ -n formbricks --create-namespace
 ```
 By default:
-- PostgreSQL and Redis **are deployed within the cluster**.
-- Secrets **are dynamically generated** and stored as Kubernetes Secrets.
+- PostgreSQL and Redis are deployed within the cluster.
+- Secrets are dynamically generated and stored as Kubernetes Secrets.
+</Step>
 
-### **🔹 Step 3: Install with an Enterprise License**
+<Step title="Install with an Enterprise License">
 ```sh
 helm install formbricks ./ -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
 ```
+</Step>
+</Steps>
 
 ---
 
-## **2️⃣ Configuring Secrets**
+## 2. Configuring Secrets
 
-### **🔹 Using Kubernetes Secrets (Default)**
+### Using Kubernetes Secrets (Default)
 By default, **secrets are stored as Kubernetes Secrets**.
 The chart automatically generates **random values** for required secrets.
 
@@ -63,7 +58,7 @@ secret:
 
 ---
 
-### **🔹 Using External Secrets (AWS Secrets Manager, Vault, etc.)**
+### Using External Secrets (AWS Secrets Manager, Vault, etc.)
 To use an **external secrets manager**, enable `externalSecret` in `values.yaml`:
 ```yaml
 secret:
@@ -107,7 +102,7 @@ externalSecret:
             key: "prod/formbricks/secrets"
             property: ENCRYPTION_KEY
 ```
-📌 **Ensure ExternalSecrets Operator is installed:**
+**Ensure ExternalSecrets Operator is installed:**
 [https://external-secrets.io/latest/](https://external-secrets.io/latest/)
 
 Install with:
@@ -117,9 +112,9 @@ helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 
 ---
 
-## **3️⃣ Configuring PostgreSQL and Redis**
+## 3. Configuring PostgreSQL and Redis
 
-### **🔹 Using Managed PostgreSQL and Redis**
+### Using Managed PostgreSQL and Redis
 For production, we recommend using **managed database and cache services**.
 
 Modify `values.yaml`:
@@ -139,7 +134,7 @@ helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 
 ---
 
-### **🔹 Using In-Cluster PostgreSQL and Redis (Default)**
+### Using In-Cluster PostgreSQL and Redis (Default)
 By default, PostgreSQL and Redis are **deployed inside the cluster**.
 To **ensure in-cluster deployment**, use:
 
@@ -157,25 +152,25 @@ helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 
 ---
 
-## **4️⃣ Upgrading the Deployment**
+## 4. Upgrading the Deployment
 To apply changes:
 ```sh
 helm upgrade formbricks ./ -n formbricks
 ```
 
-### **🔹 Scaling Resources**
+### Scaling Resources
 ```sh
 helm upgrade formbricks ./ -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
 ```
 
-### **🔹 Enabling Autoscaling**
+### Enabling Autoscaling
 ```sh
 helm upgrade formbricks ./ -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
 ```
 
 ---
 
-## **5️⃣ Key Configuration Values**
+## 5. Key Configuration Values
 
 | Field                         | Description                          | Default Value |
 |--------------------------------|--------------------------------------|--------------|
@@ -189,17 +184,17 @@ helm upgrade formbricks ./ -n formbricks   --set autoscaling.enabled=true   --se
 | `redis.externalRedisUrl`      | External Redis URL                   | `""`         |
 | `externalSecret.enabled`      | Enable external secrets manager      | `false`      |
 
-📌 **Refer to the Helm chart repository for full configuration options.**
+**Refer to the Helm chart repository for full configuration options.**
 
 ---
 
-## **6️⃣ Uninstalling the Deployment**
+## 6. Uninstalling the Deployment
 To remove the deployment:
 ```sh
 helm uninstall formbricks -n formbricks
 ```
 
-### **Removing Persistent Volumes (PVCs)**
+### Removing Persistent Volumes (PVCs)
 By default, **PVCs are not deleted** with Helm.
 To manually remove them:
 ```sh
@@ -213,9 +208,9 @@ kubectl delete namespace formbricks
 
 ---
 
-## **📢 Additional Notes**
+## Additional Notes
 - **Ingress Setup:** If using an ingress controller, make sure to configure `ingress.enabled: true` in `values.yaml`.
 - **Environment Variables:** Pass custom environment variables via `envFrom` in `values.yaml`.
 - **Backup Strategy:** Ensure you have a backup policy for PostgreSQL if running in-cluster.
 
-🚀 **Your Formbricks deployment is now ready!** 🚀
+**Your Formbricks deployment is now ready!**
