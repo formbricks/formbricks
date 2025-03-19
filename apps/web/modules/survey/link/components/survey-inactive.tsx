@@ -10,7 +10,7 @@ export const SurveyInactive = async ({
   status,
   surveyClosedMessage,
 }: {
-  status: "paused" | "completed" | "link invalid" | "scheduled";
+  status: "paused" | "completed" | "link invalid" | "scheduled" | "response submitted";
   surveyClosedMessage?: TSurveyClosedMessage | null;
 }) => {
   const t = await getTranslate();
@@ -18,12 +18,14 @@ export const SurveyInactive = async ({
     paused: <PauseCircleIcon className="h-20 w-20" />,
     completed: <CheckCircle2Icon className="h-20 w-20" />,
     "link invalid": <HelpCircleIcon className="h-20 w-20" />,
+    "response submitted": <CheckCircle2Icon className="h-20 w-20" />,
   };
 
   const descriptions = {
     paused: t("s.paused"),
     completed: t("s.completed"),
     "link invalid": t("s.link_invalid"),
+    "response submitted": t("s.response_submitted"),
   };
 
   return (
@@ -41,11 +43,13 @@ export const SurveyInactive = async ({
             ? surveyClosedMessage.subheading
             : descriptions[status]}
         </p>
-        {!(status === "completed" && surveyClosedMessage) && status !== "link invalid" && (
-          <Button className="mt-2" asChild>
-            <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
-          </Button>
-        )}
+        {!(status === "completed" && surveyClosedMessage) &&
+          status !== "link invalid" &&
+          status !== "response submitted" && (
+            <Button className="mt-2" asChild>
+              <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>
+            </Button>
+          )}
       </div>
       <div>
         <Link href="https://formbricks.com">

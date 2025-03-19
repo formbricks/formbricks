@@ -69,3 +69,35 @@ export const getResponseBySingleUseId = reactCache(
       }
     )()
 );
+
+export const getExistingContactResponse = reactCache(
+  async (surveyId: string, contactId: string): Promise<Pick<Response, "id" | "finished"> | null> =>
+    cache(
+      async () => {
+        try {
+          const response = await prisma.response.findFirst({
+            where: {
+              surveyId,
+              contactId,
+            },
+            select: {
+              id: true,
+              finished: true,
+            },
+          });
+
+          return response;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            throw new DatabaseError(error.message);
+          }
+
+          throw error;
+        }
+      },
+      [`link-surveys-getExisitingContactResponse-${surveyId}-${contactId}`],
+      {
+        tags: [responseCache.tag.bySurveyId(surveyId), responseCache.tag.byContactId(contactId)],
+      }
+    )()
+);
