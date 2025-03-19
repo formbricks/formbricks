@@ -53,7 +53,8 @@ RUN touch apps/web/.env
 # Install the dependencies
 RUN pnpm install
 
-# Build the project
+# Build the project and logger
+RUN pnpm --filter @formbricks/logger build
 RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
@@ -86,6 +87,15 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json 
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
 
+# Set up logger package structure properly for CommonJS/ESM compatibility
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/package.json ./packages/logger/package.json
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/logger/dist
+
+# Create a node_modules directory for the database package
+RUN mkdir -p ./packages/database/node_modules/@formbricks
+# Symlink the logger package for proper Node.js module resolution
+RUN ln -s ../../../../packages/logger ./packages/database/node_modules/@formbricks/logger
+
 # Copy Prisma-specific generated files
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
@@ -93,9 +103,10 @@ COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_mod
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Copy only @paralleldrive/cuid2 and @noble/hashes
+# Copy required dependencies
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
 
 RUN npm install -g tsx typescript prisma
 

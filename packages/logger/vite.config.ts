@@ -1,27 +1,26 @@
 import { resolve } from "node:path";
-import { type UserConfig, defineConfig } from "vite";
-import dts from "vite-plugin-dts";
+import { defineConfig } from "vite";
 
-const config = (): UserConfig => {
-  return defineConfig({
-    resolve: {
-      alias: {
-        "@": resolve(__dirname, "src"),
+export default defineConfig({
+  build: {
+    lib: {
+      entry: resolve(__dirname, "src/index.ts"),
+      name: "formbricksLogger",
+      fileName: "index",
+      formats: ["es", "cjs"],
+    },
+    rollupOptions: {
+      external: ["pino", "pino-pretty", "zod"],
+      output: {
+        exports: "named",
+        globals: {
+          pino: "pino",
+          "pino-pretty": "pinoPretty",
+          zod: "zod",
+        },
       },
     },
-    build: {
-      emptyOutDir: false,
-      minify: "terser",
-      sourcemap: true,
-      lib: {
-        entry: resolve(__dirname, "src/index.ts"),
-        name: "formbricksLogger",
-        formats: ["es", "cjs"],
-        fileName: "index",
-      },
-    },
-    plugins: [dts({ rollupTypes: true })],
-  });
-};
-
-export default config;
+    sourcemap: true,
+    emptyOutDir: false,
+  },
+});

@@ -6,7 +6,8 @@
   "homepage": "https://formbricks.com",
   "license": "MIT",
   "description": "Logger for Formbricks",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -17,11 +18,11 @@
     "logging"
   ],
   "scripts": {
-    "clean": "rimraf .turbo node_modules coverage",
+    "clean": "rimraf .turbo node_modules coverage dist",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "build": "vite build",
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
     "test": "vitest"
   },
   "author": "Formbricks <hola@formbricks.com>",
