@@ -52,7 +52,13 @@ export const GET = async (
         return handleApiError(request, checkAuthorizationResult.error);
       }
 
-      const survey = await getSurvey(params.surveyId);
+      const surveyResult = await getSurvey(params.surveyId);
+
+      if (!surveyResult.ok) {
+        return handleApiError(request, surveyResult.error);
+      }
+
+      const survey = surveyResult.data;
 
       if (!survey) {
         return handleApiError(request, {
@@ -69,7 +75,13 @@ export const GET = async (
       }
 
       // Check if contact exists and belongs to the environment
-      const contact = await getContact(params.contactId, environmentId);
+      const contactResult = await getContact(params.contactId, environmentId);
+
+      if (!contactResult.ok) {
+        return handleApiError(request, contactResult.error);
+      }
+
+      const contact = contactResult.data;
 
       if (!contact) {
         return handleApiError(request, {
@@ -79,7 +91,13 @@ export const GET = async (
       }
 
       // Check if contact has already responded to this survey
-      const existingResponse = await getResponse(params.contactId, params.surveyId);
+      const existingResponseResult = await getResponse(params.contactId, params.surveyId);
+
+      if (!existingResponseResult.ok) {
+        return handleApiError(request, existingResponseResult.error);
+      }
+
+      const existingResponse = existingResponseResult.data;
 
       if (existingResponse) {
         return handleApiError(request, {
