@@ -48,7 +48,7 @@ module "observability_loki_iam_role" {
   oidc_providers = {
     eks = {
       provider_arn               = module.eks.oidc_provider_arn
-      namespace_service_accounts = ["monitoring:*loki*"]
+      namespace_service_accounts = ["monitoring:loki"]
     }
   }
 }
