@@ -66,8 +66,10 @@ const getButtonStyles = (variant: string, size: string) => {
   };
 };
 
-// Enhanced interface for AlertJakob props
-interface AlertJakobProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof alertVariants> {
+// Enhanced interface for Alert props
+interface AlertProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
+    VariantProps<typeof alertVariants> {
   icon?: React.ReactNode;
   onIconClick?: (e: React.MouseEvent) => void;
   title?: React.ReactNode;
@@ -100,7 +102,7 @@ const ButtonWrapper = ({
   });
 };
 
-const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   (
     {
       className,
@@ -254,7 +256,7 @@ const AlertJakob = React.forwardRef<HTMLDivElement, AlertJakobProps>(
     );
   }
 );
-AlertJakob.displayName = "AlertJakob";
+Alert.displayName = "Alert";
 
 // AlertTitle component
 const AlertTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
@@ -287,4 +289,4 @@ const AlertButton = React.forwardRef<
 ));
 AlertButton.displayName = "AlertButton";
 
-export { AlertJakob, AlertDescription, AlertTitle, AlertButton };
+export { Alert, AlertDescription, AlertTitle, AlertButton };
