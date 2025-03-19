@@ -81,9 +81,6 @@
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
     },
-    "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/js#build"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
