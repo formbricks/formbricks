@@ -3,6 +3,8 @@ import { responses } from "@/modules/api/v2/lib/response";
 import { authenticateRequest } from "@/modules/api/v2/management/auth/authenticate-request";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { createId } from "@paralleldrive/cuid2";
+import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -234,43 +236,115 @@ export const PUT = async (request: NextRequest) => {
     await prisma.$transaction(async (tx) => {
       // Create new contacts (one-by-one with nested writes)
       // Note: prisma.contact.createMany does not support nested writes.
-      for (const contact of contactsToCreate) {
-        await tx.contact.create({
-          data: {
-            environmentId,
-            // You can set other Contact fields here if needed
-            attributes: {
-              create: contact.attributes.map((attr) => ({
-                value: attr.value,
-                // Connect to an existing attributeKey via its id
-                attributeKey: { connect: { id: attributeKeyMap[attr.attributeKey.key] } },
-              })),
-            },
-          },
+
+      // for (const contact of contactsToCreate) {
+      // await tx.contact.create({
+      //   data: {
+      //     environmentId,
+      //     // You can set other Contact fields here if needed
+      //     attributes: {
+      //       create: contact.attributes.map((attr) => ({
+      //         value: attr.value,
+      //         // Connect to an existing attributeKey via its id
+      //         attributeKey: { connect: { id: attributeKeyMap[attr.attributeKey.key] } },
+      //       })),
+      //     },
+      //   },
+      // });
+      // }
+
+      if (contactsToCreate.length > 0) {
+        const newContacts = contactsToCreate.map(() => ({
+          id: createId(),
+          environmentId,
+        }));
+
+        await tx.contact.createMany({
+          data: newContacts,
         });
+
+        // Build attribute records using the same pre-generated contact id
+        const newAttributes = contactsToCreate.flatMap((contact, idx) =>
+          contact.attributes.map((attr) => ({
+            id: createId(), // generate id for attribute
+            contactId: newContacts[idx].id, // use your pre-computed id
+            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+            value: attr.value,
+            created_at: new Date(),
+            updated_at: new Date(),
+          }))
+        );
+
+        // Use a raw query to perform a bulk insert with an ON CONFLICT clause if you need upsert logic.
+        await tx.$executeRaw`
+          INSERT INTO "ContactAttribute" (
+            "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
+          )
+          SELECT 
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.id)}]`}),
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.created_at)}]`}),
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.updated_at)}]`}),
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.contactId)}]`}),
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.value)}]`}),
+            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.attributeKeyId)}]`})
+          ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
+            "value" = EXCLUDED."value",
+            "updated_at" = EXCLUDED."updated_at"
+        `;
       }
 
       // For contacts that exist, upsert each attribute individually.
       // This leverages the unique constraint on (contactId, attributeKeyId).
-      for (const contact of contactsToUpdate) {
-        for (const attr of contact.attributes) {
-          await tx.contactAttribute.upsert({
-            where: {
-              contactId_attributeKeyId: {
-                contactId: contact.contactId,
-                attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-              },
-            },
-            update: {
-              value: attr.value,
-            },
-            create: {
-              contactId: contact.contactId,
-              attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-              value: attr.value,
-            },
-          });
-        }
+      // for (const contact of contactsToUpdate) {
+      //   for (const attr of contact.attributes) {
+      //     await tx.contactAttribute.upsert({
+      //       where: {
+      //         contactId_attributeKeyId: {
+      //           contactId: contact.contactId,
+      //           attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+      //         },
+      //       },
+      //       update: {
+      //         value: attr.value,
+      //       },
+      //       create: {
+      //         contactId: contact.contactId,
+      //         attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+      //         value: attr.value,
+      //       },
+      //     });
+      //   }
+      // }
+
+      if (contactsToUpdate.length > 0) {
+        // Build an array for update attributes from contactsToUpdate
+        const updateAttributes = contactsToUpdate.flatMap((contact) =>
+          contact.attributes.map((attr) => ({
+            id: createId(), // Generate a new id for insertion (will be ignored if a conflict occurs)
+            contactId: contact.contactId,
+            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+            value: attr.value,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }))
+        );
+
+        // Execute a single raw SQL query to upsert these attributes in bulk
+        await tx.$executeRaw`
+          INSERT INTO "ContactAttribute" (
+            "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
+          )
+          SELECT 
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.id)}]`}),
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.createdAt)}]`}),
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.updatedAt)}]`}),
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.contactId)}]`}),
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.value)}]`}),
+            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.attributeKeyId)}]`})
+          ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
+            "value" = EXCLUDED."value",
+            "updated_at" = EXCLUDED."updated_at"
+        `;
       }
     });
 
