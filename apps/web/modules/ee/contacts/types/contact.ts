@@ -109,19 +109,34 @@ export const ZContactCSVAttributeMap = z.record(z.string(), z.string()).superRef
 export type TContactCSVAttributeMap = z.infer<typeof ZContactCSVAttributeMap>;
 
 export const ZContactBulkUploadRequest = z.object({
-  contacts: z.array(
-    z.object({
-      attributes: z.array(
-        z.object({
-          attributeKey: z.object({
-            key: z.string(),
-            name: z.string(),
-          }),
-          value: z.string(),
-        })
-      ),
-    })
-  ),
+  contacts: z
+    .array(
+      z.object({
+        attributes: z.array(
+          z.object({
+            attributeKey: z.object({
+              key: z.string(),
+              name: z.string(),
+            }),
+            value: z.string(),
+          })
+        ),
+      })
+    )
+    .max(1000, { message: "Maximum 1000 contacts allowed at a time." })
+    .superRefine((contacts, ctx) => {
+      // every contact must have an email attribute
+
+      for (const contact of contacts) {
+        const email = contact.attributes.find((attr) => attr.attributeKey.key === "email");
+        if (!email) {
+          return ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Missing email attribute for one or more contacts",
+          });
+        }
+      }
+    }),
 });
 
 export type TContactBulkUploadRequest = z.infer<typeof ZContactBulkUploadRequest>;

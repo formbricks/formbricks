@@ -35,9 +35,73 @@ export const PUT = async (request: NextRequest) => {
     const { contacts } = parsedInput.data;
     const { environmentId } = authentication.data;
 
-    // 1. Get unique emails and all attribute keys used
     const emailKey = "email";
-    const emails = contacts
+
+    const seenEmails = new Set<string>();
+    const duplicateEmails = new Set<string>();
+
+    for (const contact of contacts) {
+      const email = contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value;
+
+      if (email) {
+        if (seenEmails.has(email)) {
+          duplicateEmails.add(email);
+        } else {
+          seenEmails.add(email);
+        }
+      }
+    }
+
+    // Filter out any contacts that have a duplicate email.
+    // All contacts with an email that appears more than once will be excluded.
+    const filteredContactsByEmail = contacts.filter((contact) => {
+      const email = contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value;
+      return email && !duplicateEmails.has(email);
+    });
+
+    if (filteredContactsByEmail.length === 0) {
+      return responses.badRequestResponse({
+        details: [
+          { field: "contacts", issue: "No valid contacts to process after filtering duplicate emails" },
+        ],
+      });
+    }
+
+    // duplicate userIds
+    const seenUserIds = new Set<string>();
+    const duplicateUserIds = new Set<string>();
+
+    for (const contact of filteredContactsByEmail) {
+      const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
+
+      if (userId) {
+        if (seenUserIds.has(userId)) {
+          duplicateUserIds.add(userId);
+        } else {
+          seenUserIds.add(userId);
+        }
+      }
+    }
+
+    // userIds need to be unique, so we get rid of all the contacts with duplicate userIds
+    const filteredContacts = filteredContactsByEmail.filter((contact) => {
+      const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
+      if (userId) {
+        return !duplicateUserIds.has(userId);
+      }
+
+      return true;
+    });
+
+    if (filteredContacts.length === 0) {
+      return responses.badRequestResponse({
+        details: [
+          { field: "contacts", issue: "No valid contacts to process after filtering duplicate userIds" },
+        ],
+      });
+    }
+
+    const emails = filteredContacts
       .map((contact) => contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value)
       .filter((email): email is string => Boolean(email));
 
@@ -58,7 +122,7 @@ export const PUT = async (request: NextRequest) => {
 
     // Get unique attribute keys from the payload
     const keys = Array.from(
-      new Set(contacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
+      new Set(filteredContacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
     );
 
     // 2. Fetch attribute key records for these keys in this environment
@@ -76,7 +140,7 @@ export const PUT = async (request: NextRequest) => {
 
     // 2a. Check for missing attribute keys and create them if needed.
     const missingKeysMap = new Map<string, { key: string; name: string }>();
-    contacts.forEach((contact) => {
+    filteredContacts.forEach((contact) => {
       contact.attributes.forEach((attr) => {
         // If the attribute key from the payload is not found, add it.
         if (!attributeKeyMap[attr.attributeKey.key]) {
@@ -105,6 +169,7 @@ export const PUT = async (request: NextRequest) => {
         },
         select: { key: true, id: true },
       });
+
       newAttributeKeys.forEach((attrKey) => {
         attributeKeyMap[attrKey.key] = attrKey.id;
       });
@@ -153,7 +218,7 @@ export const PUT = async (request: NextRequest) => {
       }[];
     }[] = [];
 
-    for (const contact of contacts) {
+    for (const contact of filteredContacts) {
       const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
       if (emailAttr && contactMap.has(emailAttr.value)) {
         contactsToUpdate.push({
@@ -212,6 +277,9 @@ export const PUT = async (request: NextRequest) => {
     return responses.successResponse({
       data: {
         message: "Contacts bulk upload successful",
+        duplicateEmails: Array.from(duplicateEmails),
+        duplicateUserIds: Array.from(duplicateUserIds),
+        processedContacts: filteredContacts.length,
       },
     });
   } catch (error) {
