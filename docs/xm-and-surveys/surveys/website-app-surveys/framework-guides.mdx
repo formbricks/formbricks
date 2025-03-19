@@ -1,5 +1,6 @@
 ---
 title: "Framework Guides"
+description: "Easily add the Formbricks App Survey SDK to your app with guides for different frameworks."
 icon: "book"
 ---
 
@@ -16,14 +17,12 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
 </Card>
 
 <Card title="Next.js" icon="react" href="#nextjs">
-  [Natively add us to your Next.js project, with support for both App and Pages
-  project
+  [Natively add us to your Next.js project, with support for both App and Pages project
   structure.](https://formbricks.com/docs/app-surveys/framework-guides#next-js)
 </Card>
 
 <Card title="Vue.js" icon="vuejs" href="#vue-js">
-  Learn how to use Formbricks' React Native SDK to integrate your surveys into
-  React Native applications.
+  Learn how to use Formbricks' React Native SDK to integrate your surveys into React Native applications.
 </Card>
 
   <Card title="React Native" icon="react" color="lightblue" href="#react-native">
@@ -47,10 +46,9 @@ All you need to do is copy a `<script>` tag to your HTML head:
 <!-- START Formbricks Surveys -->
 <script type="text/javascript">
 !function(){
-    var apiHost = "https://app.formbricks.com";
+    var appUrl = "https://app.formbricks.com";
     var environmentId = "<your-environment-id>";
-    var userId = "<your-user-id>"; //optional
-    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=apiHost+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.init({environmentId: environmentId, apiHost: apiHost, userId: userId})},500)}();
+    var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -60,7 +58,7 @@ All you need to do is copy a `<script>` tag to your HTML head:
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -88,10 +86,9 @@ Update your `App.js/ts` file to initialize Formbricks.
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -107,7 +104,7 @@ export default App;
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -147,10 +144,9 @@ export default function FormbricksProvider() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    formbricks.init({
+    formbricks.setup({
       environmentId: "<environment-id>",
-      apiHost: "<api-host>",
-      userId: "<user-id>", //optional
+      appUrl: "<app-url>",
     });
   }, []);
 
@@ -192,10 +188,9 @@ import { useEffect } from "react";
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -220,7 +215,7 @@ export default function App({ Component, pageProps }: AppProps) {
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
 
@@ -246,10 +241,9 @@ yarn add @formbricks/js
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "<environment-id>",
-    apiHost: "<api-host>",
-    userId: "<user-id>", //optional
+    appUrl: "<app-url>",
   });
 }
 
@@ -278,7 +272,7 @@ router.afterEach((to, from) => {
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
 
@@ -306,8 +300,7 @@ import Formbricks from "@formbricks/react-native";
 
 const config = {
   environmentId: "<environment-id>",
-  apiHost: "<api-host>",
-  userId: "<user-id>", // optional
+  appUrl: "<app-url>",
 };
 
 export default function App() {
@@ -325,7 +318,7 @@ export default function App() {
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
 | environment-id | string | Formbricks Environment ID.             |
-| api-host       | string | URL of the hosted Formbricks instance. |
+| app-url        | string | URL of the hosted Formbricks instance. |
 
 ## Validate your setup
 

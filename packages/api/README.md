@@ -18,7 +18,7 @@ npm install @formbricks/api
 import { FormbricksAPI } from "@formbricks/api";
 
 const api = new FormbricksAPI({
-  apiHost: `https://app.formbricks.com`, // If you have self-hosted Formbricks, change this to your self hosted instance's URL
+  appUrl: `https://app.formbricks.com`, // If you have self-hosted Formbricks, change this to your self hosted instance's URL
   environmentId: "<environment-id>", // Replace this with your Formbricks environment ID
 });
 ```

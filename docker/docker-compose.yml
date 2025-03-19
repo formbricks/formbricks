@@ -69,6 +69,9 @@ x-environment: &environment
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
 
+    # Set the below to 0 to disable cron jobs
+    # DOCKER_CRON_ENABLED: 1
+
     ################################################### OPTIONAL (STORAGE) ###################################################
 
     # Set the below to set a custom Upload Directory
@@ -157,6 +160,8 @@ x-environment: &environment
 
     # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
     # REDIS_URL:
+    # REDIS_DEFAULT_TTL:
+
 
     # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
     # REDIS_HTTP_URL:

@@ -131,6 +131,7 @@ Configure Redis by adding the following environment variables to your instances:
 
 ```sh env
 REDIS_URL=redis://your-redis-host:6379
+REDIS_DEFAULT_TTL=86400
 REDIS_HTTP_URL=http://your-redis-host:8000
 ```
 
@@ -160,6 +161,19 @@ When using S3 in a cluster setup, ensure that:
 - The bucket has appropriate CORS settings configured
 - IAM roles/users have sufficient permissions for read/write operations
 
+## Disabling Docker Cron Jobs
+
+When running Formbricks in a cluster setup, you should disable the built-in cron jobs in the Docker image to prevent them from running on multiple instances simultaneously. Instead, you should set up cron jobs in your orchestration system (like Kubernetes) to run on a single instance or as separate jobs.
+
+To disable the Docker cron jobs, set the following environment variable:
+
+```sh env
+# Disable Docker cron jobs (0 = disabled, 1 = enabled)
+DOCKER_CRON_ENABLED=0
+```
+
+This will prevent the cron jobs from starting in the Docker container while still allowing all other Formbricks functionality to work normally.
+
 ## Kubernetes Setup
 
 Formbricks provides an official Helm chart for deploying the entire cluster stack on Kubernetes. The Helm chart is available in the [Formbricks GitHub repository](https://github.com/formbricks/formbricks/tree/main/helm-chart).
@@ -167,6 +181,7 @@ Formbricks provides an official Helm chart for deploying the entire cluster stac
 ### Features of the Helm Chart
 
 The Helm chart provides a complete deployment solution that includes:
+
 - Formbricks application with configurable replicas
 - PostgreSQL database (with optional HA configuration)
 - Redis cluster for caching
@@ -176,12 +191,14 @@ The Helm chart provides a complete deployment solution that includes:
 ### Installation Steps
 
 1. Add the Formbricks Helm repository:
+
 ```sh
 helm repo add formbricks https://raw.githubusercontent.com/formbricks/formbricks/main/helm-chart
 helm repo update
 ```
 
 2. Install the chart:
+
 ```sh
 helm install formbricks formbricks/formbricks
 ```
@@ -189,6 +206,7 @@ helm install formbricks formbricks/formbricks
 ### Configuration Options
 
 The Helm chart can be customized using a `values.yaml` file to configure:
+
 - Number of Formbricks replicas
 - Resource limits and requests
 - Database configuration
