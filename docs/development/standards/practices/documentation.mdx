@@ -21,7 +21,6 @@ We use Mintlify to maintain our documentation. You can find more information abo
    - Document parameters, return types, and potential side effects
    - Example:
 
-   
 ```typescript
 /**
 Creates a new user and initializes their preferences
@@ -31,26 +30,23 @@ Creates a new user and initializes their preferences
 @throws {ValidationError} If name is invalid
 */
 async function createUser(name: string, options: UserOptions): Promise<User> {
-// implementation
+  // implementation
 }
-
 ```
-
 
 2. **TypeScript Ignore Comments**
    - When using `@ts-ignore` or `@ts-expect-error`, always include a comment explaining why
    - Example:
 
-
 ```typescript
 // @ts-expect-error -- Required for dynamic function calls
-void window.formbricks.init(...args);
+void window.formbricks.setup(...args);
 ```
-
 
 ### API Documentation
 
 1. **API Endpoints**
+
    - All new API endpoints must be documented in the OpenAPI specification
    - Include request/response schemas, authentication requirements, and examples
    - Document both Client API and Management API endpoints
@@ -63,11 +59,12 @@ void window.formbricks.init(...args);
 
 ### Feature Documentation
 
-   - All new features must include a feature documentation file
-   - Document the feature's purpose, usage, and implementation details
-   - Include code examples and best practices
+- All new features must include a feature documentation file
+- Document the feature's purpose, usage, and implementation details
+- Include code examples and best practices
 
 ## Working with Mintlify
+
 We use Mintlify to write our documentation.
 
 ### File Structure
@@ -83,7 +80,6 @@ description: "Brief description of the content"
 icon: "appropriate-icon"
 ---
 ```
-
 
 2. **Navigation**
    - Add new pages to the appropriate section in `docs/mint.json`
@@ -104,8 +100,8 @@ Important information goes here
 </Note>
 ```
 
-
 2. **Media and Assets**
+
    - Store images in the appropriate `/images` subdirectory
    - Use descriptive alt text for all images
    - Optimize images for web delivery

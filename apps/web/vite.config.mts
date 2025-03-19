@@ -1,4 +1,5 @@
 // vitest.config.ts
+import react from "@vitejs/plugin-react";
 import { loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
@@ -28,6 +29,9 @@ export default defineConfig({
         "modules/ee/sso/lib/**/*.ts",
         "modules/ee/contacts/lib/**/*.ts",
         "modules/survey/link/lib/**/*.ts",
+        "app/(auth)/layout.tsx",
+        "app/(app)/layout.tsx",
+        "app/intercom/*.tsx",
       ],
       exclude: [
         "**/.next/**",
@@ -38,8 +42,9 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
+        "**/*.tsx", // Exclude tsx files
       ],
     },
   },
-  plugins: [tsconfigPaths()],
+  plugins: [tsconfigPaths(), react()],
 });

@@ -1,5 +1,4 @@
 import { TContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
-import React from "react";
 
 interface CsvTableProps {
   data: TContactCSVUploadResponse;

@@ -2,7 +2,6 @@
 
 import { Badge } from "@/modules/ui/components/badge";
 import { useTranslate } from "@tolgee/react";
-import React from "react";
 import { cn } from "@formbricks/lib/cn";
 
 export const SettingsCard = ({
