@@ -32,22 +32,6 @@ module "route53_zones" {
   }
 }
 
-module "acm" {
-  source  = "terraform-aws-modules/acm/aws"
-  version = "5.1.1"
-
-  domain_name = local.domain
-  zone_id     = module.route53_zones.route53_zone_zone_id[local.domain]
-
-  subject_alternative_names = [
-    "*.${local.domain}",
-  ]
-
-  validation_method = "DNS"
-
-  tags = local.tags
-}
-
 ################################################################################
 # VPC
 ################################################################################
@@ -140,6 +124,7 @@ module "eks" {
   cluster_addons = {
     coredns = {
       most_recent = true
+
     }
     eks-pod-identity-agent = {
       most_recent = true
@@ -489,7 +474,9 @@ module "formkey-aws-access" {
 resource "helm_release" "formbricks" {
   name        = "formbricks"
   namespace   = "formbricks"
-  chart       = "${path.module}/../../helm-chart"
+  repository  = "oci://ghcr.io/formbricks/helm-charts"
+  chart       = "formbricks"
+  version     = "3.5.0"
   max_history = 5
 
   values = [
@@ -512,7 +499,7 @@ resource "helm_release" "formbricks" {
       alb.ingress.kubernetes.io/target-type: ip
       alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
       alb.ingress.kubernetes.io/ssl-redirect: "443"
-      alb.ingress.kubernetes.io/certificate-arn: ${module.acm.acm_certificate_arn}
+      alb.ingress.kubernetes.io/certificate-arn: ${data.aws_acm_certificate.formbricks.arn}
       alb.ingress.kubernetes.io/healthcheck-path: "/health"
       alb.ingress.kubernetes.io/group.name: formbricks
       alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
@@ -529,13 +516,11 @@ resource "helm_release" "formbricks" {
     enabled: true
   reloadOnChange: true
   deployment:
-    image:
-      repository: "ghcr.io/formbricks/formbricks-experimental"
-      tag: "open-telemetry-for-prometheus"
-      pullPolicy: Always
+    nodeSelector:
+      karpenter.sh/capacity-type: "on-demand"
     env:
       S3_BUCKET_NAME:
-        value: ${module.s3-bucket.s3_bucket_id}
+        value: "formbricks-20250311043609595200000002"
       RATE_LIMITING_DISABLED:
         value: "1"
     envFrom:
