@@ -1,13 +1,10 @@
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getTranslate } from "@/tolgee/server";
 import { redirect } from "next/navigation";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 
 const EnvironmentPage = async (props) => {
   const params = await props.params;
-  const t = await getTranslate();
-
   const { session, organization } = await getEnvironmentAuth(params.environmentId);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
