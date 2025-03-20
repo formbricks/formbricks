@@ -80,6 +80,7 @@ export const ShareSurveyLink = ({
         <Button
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
+          disabled={!surveyUrl}
           onClick={() => {
             let previewUrl = surveyUrl;
             if (previewUrl.includes("?")) {
@@ -93,6 +94,7 @@ export const ShareSurveyLink = ({
           <SquareArrowOutUpRight />
         </Button>
         <Button
+          disabled={!surveyUrl}
           variant="secondary"
           title={t("environments.surveys.copy_survey_link_to_clipboard")}
           aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
@@ -108,11 +110,13 @@ export const ShareSurveyLink = ({
           title={t("environments.surveys.summary.download_qr_code")}
           aria-label={t("environments.surveys.summary.download_qr_code")}
           size={"icon"}
+          disabled={!surveyUrl}
           onClick={downloadQRCode}>
           <QrCode style={{ width: "24px", height: "24px" }} />
         </Button>
         {survey.singleUse?.enabled && (
           <Button
+            disabled={!surveyUrl}
             title="Regenerate single use survey link"
             aria-label="Regenerate single use survey link"
             onClick={generateNewSingleUseLink}>

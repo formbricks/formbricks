@@ -4,4 +4,5 @@ enum EventType: String, Codable {
     case onDisplayCreated = "onDisplayCreated"
     case onResponseCreated = "onResponseCreated"
     case onOpenExternalURL = "onOpenExternalURL"
+    case onSurveyLibraryLoadError = "onSurveyLibraryLoadError"
 }
