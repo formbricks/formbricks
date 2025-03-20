@@ -107,7 +107,7 @@ COPY /docker/cronjobs /app/docker/cronjobs
 # Copy required dependencies
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
-# COPY --from=installer /app/node_modules/zod ./node_modules/zod
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
 
 # log the contents of the database node_modules
 RUN ls -la ./packages/database/node_modules/@formbricks/logger
