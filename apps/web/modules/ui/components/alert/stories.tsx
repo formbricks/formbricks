@@ -6,28 +6,86 @@ const meta: Meta<typeof Alert> = {
   title: "UI/Alert",
   component: Alert,
   tags: ["autodocs"],
+  parameters: {
+    controls: {
+      sort: "requiredFirst",
+      exclude: [],
+    },
+  },
   argTypes: {
     variant: {
       control: "select",
       options: ["default", "error", "warning", "info", "success"],
       description: "Style variant of the alert",
+      table: {
+        category: "Appearance",
+        type: { summary: "string" },
+      },
+      order: 1,
     },
     size: {
       control: "select",
       options: ["default", "small"],
       description: "Size of the alert component",
+      table: {
+        category: "Appearance",
+        type: { summary: "string" },
+      },
+      order: 2,
+    },
+    icon: {
+      control: "object",
+      description: "Custom icon component",
+      table: {
+        category: "Content",
+        type: { summary: "ReactNode" },
+      },
+      order: 3,
     },
     title: {
       control: "text",
       description: "Title text for the alert",
+      table: {
+        category: "Content",
+        type: { summary: "string" },
+      },
+      order: 4,
     },
     description: {
       control: "text",
       description: "Description text for the alert",
+      table: {
+        category: "Content",
+        type: { summary: "string" },
+      },
+      order: 5,
     },
     button: {
       control: "object",
       description: "Button configuration",
+      table: {
+        category: "Actions",
+        type: { summary: "object" },
+      },
+      order: 6,
+    },
+    onClick: {
+      action: "clicked",
+      description: "Click handler function",
+      table: {
+        category: "Actions",
+        type: { summary: "function" },
+      },
+      order: 7,
+    },
+    allowChildren: {
+      control: "boolean",
+      description: "Whether to allow child components",
+      table: {
+        category: "Content",
+        type: { summary: "boolean" },
+      },
+      order: 8,
     },
   },
 };
