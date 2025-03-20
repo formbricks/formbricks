@@ -40,13 +40,15 @@ export const SetupInstructions = ({ environmentId, webAppUrl }: SetupInstruction
             <CodeBlock language="sh">yarn add @formbricks/js</CodeBlock>
             <h4>{t("environments.project.app-connection.step_2")}</h4>
             <p>{t("environments.project.app-connection.step_2_description")}</p>
-            <CodeBlock language="js">{`import formbricks from "@formbricks/js";
+            <CodeBlock language="js">
+              {`import formbricks from "@formbricks/js";
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "${environmentId}", 
-    apiHost: "${webAppUrl}",
+    appUrl: "${webAppUrl}",
   });
-}`}</CodeBlock>
+}`}
+            </CodeBlock>
             <ul className="list-disc text-sm">
               <li>
                 <span className="font-semibold">environmentId :</span>{" "}
@@ -55,21 +57,20 @@ if (typeof window !== "undefined") {
                 })}
               </li>
               <li>
-                <span className="font-semibold">apiHost:</span>{" "}
+                <span className="font-semibold">appUrl:</span>{" "}
                 {t("environments.project.app-connection.api_host_description")}
               </li>
             </ul>
             <span className="text-sm text-slate-600">
-              {t("environments.project.app-connection.if_you_are_planning_to")}
+              {t("environments.project.app-connection.if_you_are_planning_to")}{" "}
               <Link
                 href="https://formbricks.com//docs/app-surveys/user-identification"
                 target="blank"
                 className="underline">
                 {t("environments.project.app-connection.identifying_your_users")}
               </Link>{" "}
-              {t("environments.project.app-connection.you_also_need_to_pass_a")}{" "}
-              <span className="font-semibold">userId</span> {t("environments.project.app-connection.to_the")}{" "}
-              <span className="font-semibold">init</span> {t("environments.project.app-connection.function")}.
+              {t("environments.project.app-connection.you_can_set_the_user_id_with")}{" "}
+              <span className="font-semibold">formbricks.setUserId(userId)</span>
             </span>
             <h4>{t("environments.project.app-connection.step_3")}</h4>
             <p>
@@ -128,7 +129,7 @@ if (typeof window !== "undefined") {
             </p>
             <CodeBlock language="js">{`<!-- START Formbricks Surveys -->
 <script type="text/javascript">
-!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.init({environmentId:"${environmentId}",apiHost:"${window.location.protocol}//${window.location.host}"}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
+!function(){var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src="${webAppUrl}/js/formbricks.umd.cjs",t.onload=function(){window.formbricks?window.formbricks.init({environmentId:"${environmentId}",appUrl:"${window.location.protocol}//${window.location.host}"}):console.error("Formbricks library failed to load properly. The formbricks object is not available.");};var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e)}();
 </script>
 <!-- END Formbricks Surveys -->`}</CodeBlock>
             <h4>Step 2: Debug mode</h4>

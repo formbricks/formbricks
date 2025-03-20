@@ -27,7 +27,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TContactTableData } from "../types/contact";
 import { generateContactTableColumns } from "./contact-table-column";

@@ -99,6 +99,10 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
                 if let message = try? JSONDecoder().decode(OpenExternalUrlMessage.self, from: data), let url = URL(string:  message.onOpenExternalURLParams.url) {
                     UIApplication.shared.open(url)
                 }
+                
+            /// Happens when the survey library fails to load.
+            case .onSurveyLibraryLoadError:
+                SurveyManager.shared.dismissSurveyWebView()
             }
             
         } else {
@@ -140,7 +144,8 @@ private extension SurveyWebView {
         console.debug = function() { log("📘", "debug", arguments); originalDebug.apply(null, arguments) }
     
         window.addEventListener("error", function(e) {
-           log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
+            window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
+            log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
         })
     """
     }

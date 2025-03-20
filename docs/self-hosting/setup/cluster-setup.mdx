@@ -1,13 +1,8 @@
 ---
 title: "Cluster Setup"
-description: "How to set up Formbricks in a cluster"
+description: "How to set up Formbricks in a High-Availability Cluster"
 icon: "circle-nodes"
 ---
-
-<Note>
-  Running Formbricks in a multi-instance cluster configuration is an Enterprise Edition feature and requires
-  an enterprise license key.
-</Note>
 
 ## Overview
 
@@ -131,6 +126,7 @@ Configure Redis by adding the following environment variables to your instances:
 
 ```sh env
 REDIS_URL=redis://your-redis-host:6379
+REDIS_DEFAULT_TTL=86400
 REDIS_HTTP_URL=http://your-redis-host:8000
 ```
 

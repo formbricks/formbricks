@@ -6,18 +6,18 @@ import { makeRequest } from "../../utils/make-request";
 type TResponseUpdateInputWithResponseId = TResponseUpdateInput & { responseId: string };
 
 export class ResponseAPI {
-  private apiHost: string;
+  private appUrl: string;
   private environmentId: string;
 
-  constructor(apiHost: string, environmentId: string) {
-    this.apiHost = apiHost;
+  constructor(appUrl: string, environmentId: string) {
+    this.appUrl = appUrl;
     this.environmentId = environmentId;
   }
 
   async create(
     responseInput: Omit<TResponseInput, "environmentId">
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
+    return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/responses`, "POST", responseInput);
   }
 
   async update({
@@ -29,7 +29,7 @@ export class ResponseAPI {
     variables,
     language,
   }: TResponseUpdateInputWithResponseId): Promise<Result<object, ApiErrorResponse>> {
-    return makeRequest(this.apiHost, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
+    return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
       finished,
       endingId,
       data,
