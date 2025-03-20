@@ -1,5 +1,6 @@
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
+import { getTranslate } from "@/tolgee/server";
 import { redirect } from "next/navigation";
 import { TProjectConfigChannel, TProjectConfigIndustry } from "@formbricks/types/project";
 import { TTemplateRole } from "@formbricks/types/templates";
@@ -18,6 +19,7 @@ interface SurveyTemplateProps {
 
 export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const searchParams = await props.searchParams;
+  const t = await getTranslate();
   const params = await props.params;
   const environmentId = params.environmentId;
 
@@ -26,7 +28,7 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   const project = await getProjectByEnvironmentId(environmentId);
 
   if (!project) {
-    throw new Error("Project not found");
+    throw new Error(t("common.project_not_found"));
   }
 
   if (isReadOnly) {

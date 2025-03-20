@@ -31,7 +31,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     return notFound();
   }
 
-  const [survey] = await Promise.all([getSurvey(params.surveyId)]);
+  const survey = await getSurvey(params.surveyId);
 
   if (!survey) {
     throw new Error(t("common.survey_not_found"));

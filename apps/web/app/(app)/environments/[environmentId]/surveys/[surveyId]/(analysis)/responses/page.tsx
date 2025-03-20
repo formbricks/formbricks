@@ -25,7 +25,7 @@ const Page = async (props) => {
 
   const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
-  const [survey] = await Promise.all([getSurvey(params.surveyId)]);
+  const survey = await getSurvey(params.surveyId);
 
   if (!survey) {
     throw new Error(t("common.survey_not_found"));
