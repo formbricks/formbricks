@@ -25,6 +25,7 @@ export default defineConfig({
         "modules/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
         "modules/ee/role-management/components/*.tsx",
+        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",

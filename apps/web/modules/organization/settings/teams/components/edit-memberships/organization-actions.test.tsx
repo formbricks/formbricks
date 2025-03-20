@@ -235,39 +235,15 @@ describe("OrganizationActions Component", () => {
     });
   });
 
-  // test("handles multiple member invites with success and failure", async () => {
-  //   // Mock the InviteMemberModal with multiple invites
-  //   vi.mocked(vi.importActual("@/modules/organization/settings/teams/components/invite-member/invite-member-modal")).InviteMemberModal.mockImplementationOnce(({ open, setOpen, onSubmit }) => {
-  //     if (!open) return null;
-  //     return (
-  //       <div data-testid="invite-member-modal">
-  //         <button
-  //           data-testid="invite-multiple-submit-btn"
-  //           onClick={() => onSubmit([
-  //             { email: "success1@example.com", name: "Success 1", role: "admin", teamIds: [] },
-  //             { email: "success2@example.com", name: "Success 2", role: "member", teamIds: [] },
-  //             { email: "failed@example.com", name: "Failed User", role: "member", teamIds: [] },
-  //           ])}>
-  //           Submit Multiple
-  //         </button>
-  //       </div>
-  //     );
-  //   });
+  test("cannot leave organization when only one organization is present", () => {
+    render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
+    expect(screen.queryByText("environments.settings.general.leave_organization")).not.toBeInTheDocument();
+  });
 
-  //   // Mock the inviteUserAction to succeed for some and fail for others
-  //   vi.mocked(inviteUserAction)
-  //     .mockResolvedValueOnce({ data: { id: "invite-1" } })
-  //     .mockResolvedValueOnce({ data: { id: "invite-2" } })
-  //     .mockResolvedValueOnce({ error: "Failed to invite user" });
-
-  //   render(<OrganizationActions {...defaultProps} membershipRole="owner" />);
-  //   fireEvent.click(screen.getByText("environments.settings.teams.invite_member"));
-  //   fireEvent.click(screen.getByTestId("invite-multiple-submit-btn"));
-
-  //   await waitFor(() => {
-  //     expect(inviteUserAction).toHaveBeenCalledTimes(3);
-  //     expect(toast.success).toHaveBeenCalledWith("2 environments.settings.general.member_invited_successfully");
-  //     expect(toast.error).toHaveBeenCalledWith("1 environments.settings.general.invites_failed");
-  //   });
-  // });
+  test("show cannot leave organization when only one organization is present", () => {
+    render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
+    expect(
+      screen.getByText("environments.settings.general.cannot_leave_only_organization")
+    ).toBeInTheDocument();
+  });
 });
