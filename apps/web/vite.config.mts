@@ -35,6 +35,7 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
+        "modules/ee/role-management/*.ts",
       ],
       exclude: [
         "**/.next/**",
