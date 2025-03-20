@@ -109,9 +109,6 @@ COPY /docker/cronjobs /app/docker/cronjobs
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 
-# log the contents of the database node_modules
-RUN ls -la ./packages/database/node_modules/@formbricks/logger
-
 RUN npm install -g tsx typescript prisma
 
 EXPOSE 3000
