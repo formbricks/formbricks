@@ -54,6 +54,7 @@ RUN touch apps/web/.env
 RUN pnpm install
 
 # Build the project and logger
+RUN pnpm --filter @formbricks/logger build
 RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
@@ -85,8 +86,15 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
-COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
+
+# Set up logger package structure properly for CommonJS/ESM compatibility
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/package.json ./packages/logger/package.json
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/logger/dist
+
+# Create a node_modules directory for the database package
+RUN mkdir -p ./packages/database/node_modules/@formbricks
+# Symlink the logger package for proper Node.js module resolution
+RUN ln -s ../../../../packages/logger ./packages/database/node_modules/@formbricks/logger
 
 # Copy Prisma-specific generated files
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
@@ -104,7 +112,6 @@ RUN npm install -g tsx typescript prisma
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
-ENV NODE_ENV="production"
 # USER nextjs
 
 # Prepare volume for uploads
