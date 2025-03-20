@@ -9,6 +9,10 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
     return cuid;
   }
 
+  if (!env.ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
   const encryptedCuid = symmetricEncrypt(cuid, env.ENCRYPTION_KEY);
   return encryptedCuid;
 };
@@ -27,6 +31,10 @@ export const generateSurveySingleUseIds = (count: number, isEncrypted: boolean):
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
   try {
     let decryptedCuid: string | null = null;
+
+    if (!env.ENCRYPTION_KEY) {
+      throw new Error("ENCRYPTION_KEY is not set");
+    }
 
     if (surveySingleUseId.length === 64) {
       if (!env.FORMBRICKS_ENCRYPTION_KEY) {

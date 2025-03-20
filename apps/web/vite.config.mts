@@ -33,6 +33,8 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
+        "app/lib/**/*.ts",
+        "app/api/(internal)/insights/lib/**/*.ts",
       ],
       exclude: [
         "**/.next/**",
