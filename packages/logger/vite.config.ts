@@ -1,5 +1,6 @@
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
+import { PluginOption, defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 export default defineConfig({
   build: {
@@ -23,4 +24,9 @@ export default defineConfig({
     sourcemap: true,
     emptyOutDir: false,
   },
+  plugins: [
+    dts({
+      rollupTypes: true,
+    }) as PluginOption,
+  ],
 });
