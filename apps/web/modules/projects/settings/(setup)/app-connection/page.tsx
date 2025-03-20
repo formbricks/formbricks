@@ -1,6 +1,6 @@
 import { WidgetStatusIndicator } from "@/app/(app)/environments/[environmentId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { EnvironmentIdField } from "@/modules/projects/settings/(setup)/components/environment-id-field";
 import { SetupInstructions } from "@/modules/projects/settings/(setup)/components/setup-instructions";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";

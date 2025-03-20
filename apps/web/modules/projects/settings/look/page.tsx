@@ -1,7 +1,7 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
 import { BrandingSettingsCard } from "@/modules/ee/whitelabel/remove-branding/components/branding-settings-card";
-import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
 import { EditLogo } from "@/modules/projects/settings/look/components/edit-logo";
 import { getProjectByEnvironmentId } from "@/modules/projects/settings/look/lib/project";

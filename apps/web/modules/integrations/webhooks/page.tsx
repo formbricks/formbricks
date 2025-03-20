@@ -1,4 +1,4 @@
-import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
 import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook-table";

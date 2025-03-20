@@ -3,7 +3,7 @@ import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attri
 import { SegmentTable } from "@/modules/ee/contacts/segments/components/segment-table";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getEnvironmentAuth } from "@/modules/environments/lib/fetcher";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
