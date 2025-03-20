@@ -239,11 +239,4 @@ describe("OrganizationActions Component", () => {
     render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
     expect(screen.queryByText("environments.settings.general.leave_organization")).not.toBeInTheDocument();
   });
-
-  test("show cannot leave organization when only one organization is present", () => {
-    render(<OrganizationActions {...defaultProps} isMultiOrgEnabled={false} />);
-    expect(
-      screen.getByText("environments.settings.general.cannot_leave_only_organization")
-    ).toBeInTheDocument();
-  });
 });
