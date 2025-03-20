@@ -1,4 +1,4 @@
-import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -230,7 +230,7 @@ export const parseRecallInfo = (
     }
 
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-    let value;
+    let value: TResponseDataValue | undefined;
 
     // First check if it matches a variable
     if (variables && variableIds.includes(recallItemId)) {
