@@ -105,7 +105,7 @@ export const ResponseNotes = ({
         !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
         !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
-          ? "-right-5 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
+          ? "-right-2 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
             ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
             : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
