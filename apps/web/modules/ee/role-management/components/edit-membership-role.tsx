@@ -99,7 +99,8 @@ export function EditMembershipRole({
             disabled={disableRole}
             loading={loading}
             size="sm"
-            variant="secondary">
+            variant="secondary"
+            role="button-role">
             <span className="ml-1">{capitalizeFirstLetter(memberRole)}</span>
             <ChevronDownIcon className="h-4 w-4" />
           </Button>
@@ -123,5 +124,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" text={capitalizeFirstLetter(memberRole)} />;
+  return <Badge size="tiny" type="gray" role="badge-role" text={capitalizeFirstLetter(memberRole)} />;
 }
