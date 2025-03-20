@@ -10,8 +10,14 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
+    },
+    "@formbricks/database#test": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/demo#go": {
       "cache": false,
