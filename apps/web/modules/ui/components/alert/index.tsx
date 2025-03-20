@@ -37,8 +37,8 @@ const alertVariants = cva("relative w-full rounded-md border", {
       success: "text-green-800 border-green-600/50",
     },
     size: {
-      default: "py-3 px-4",
-      small: "pl-3",
+      default: "py-3 px-4 text-sm",
+      small: "pl-3 text-xs",
     },
   },
   defaultVariants: {
@@ -47,23 +47,6 @@ const alertVariants = cva("relative w-full rounded-md border", {
   },
 });
 
-// const alertIconVariants = cva("w-4 h-4", {
-//   variants: {
-//     variant: {
-//       default: null,
-//       error: <AlertCircle className="text-red-600" />,
-//       warning: <AlertTriangle className="text-amber-600" />,
-//       info: <Info className="text-blue-600" />,
-//       success: <CheckCircle2Icon className="text-green-600" />,
-//     },
-//     size: {
-//       default: "w-4 h-4"
-//     }
-//   },
-//   defaultVariants: {
-//     variant: "default",
-//   },
-// });
 const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
   default: null,
   error: <AlertCircle className="h-4 w-4 text-red-600" />,
@@ -72,7 +55,7 @@ const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "succ
   success: <CheckCircle2Icon className="h-4 w-4 text-green-600" />,
 };
 
-const alertButtonVariants = cva("secondary shadow-none", {
+const alertButtonVariants = cva("shadow-none", {
   variants: {
     variant: {
       default: "secondary",
@@ -81,13 +64,14 @@ const alertButtonVariants = cva("secondary shadow-none", {
       info: "bg-blue-50 text-blue-800 hover:bg-blue-100",
       success: "bg-green-50 text-green-800 hover:bg-green-100",
     },
-    // size: {
-    //   default: "secondary",
-    //   small: "link hover:bg-transparent",
-    // },
+    size: {
+      default: "secondary",
+      small: "bg-transparent hover:bg-transparent",
+    },
   },
   defaultVariants: {
     variant: "default",
+    size: "default",
   },
 });
 
@@ -109,15 +93,6 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ) => {
     const renderIcon = icon ? icon : alertVariantIcons[variant];
 
-    const textElement =
-      title || description || children ? (
-        <div className="flex flex-col gap-0.5">
-          {title && <AlertTitle>{title}</AlertTitle>}
-          {description && <AlertDescription>{description}</AlertDescription>}
-          {children && allowChildren && <div>{children}</div>}
-        </div>
-      ) : undefined;
-
     const buttonElement = React.isValidElement(button) ? (
       button
     ) : button ? (
@@ -125,10 +100,9 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
         onClick={button.onClick}
         loading={button.loading}
         disabled={button.disabled}
-        className={alertButtonVariants({ variant })}
         variant={size === "small" ? "link" : "secondary"}
-        // variant={"secondary"}
-      >
+        size={size === "small" ? "sm" : "lg"}
+        className={alertButtonVariants({ variant, size })}>
         {button.label}
       </AlertButton>
     ) : undefined;
@@ -152,12 +126,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             </div>
 
             {/* Button section for default size */}
-            {buttonElement && (
-              <div className="ml-4 flex-shrink-0 self-end">
-                {buttonElement}
-                {/* <ButtonWrapper buttonStyles={buttonStyles}>{buttonElement}</ButtonWrapper> */}
-              </div>
-            )}
+            {buttonElement && <div className="ml-4 flex-shrink-0 self-end">{buttonElement}</div>}
           </div>
         ) : (
           <div className="flex items-center gap-2">
@@ -165,7 +134,7 @@ const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
             {renderIcon && <div className={cn("flex-shrink-0")}>{renderIcon}</div>}
 
             {/* Content section for small size - horizontal layout with truncation */}
-            <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
+            <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-1 pr-3">
               {title && <AlertTitle>{title}</AlertTitle>}
               {description && <AlertDescription>{description}</AlertDescription>}
             </div>
@@ -193,7 +162,7 @@ AlertTitle.displayName = "AlertTitle";
 // AlertDescription component
 const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
   ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={cn("text-sm", className)} {...props}>
+    <div ref={ref} className={cn("text-sm leading-none", className)} {...props}>
       {children}
     </div>
   )
@@ -203,14 +172,15 @@ AlertDescription.displayName = "AlertDescription";
 // AlertButton component
 const AlertButton = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string }
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string; size?: string }
 >(({ className, loading, children, ...props }, ref) => (
   <Button
     ref={ref}
     className={cn("shrink-0", className)}
     disabled={loading || props.disabled}
     {...props}
-    variant={props.variant as "default" | "link" | "secondary" | "destructive" | "outline" | "ghost" | null}>
+    variant={props.variant as "default" | "link" | "secondary" | "destructive" | "outline" | "ghost" | null}
+    size={props.size as "default" | "sm" | "lg" | "icon" | null}>
     {loading ? "Loading..." : children}
   </Button>
 ));
