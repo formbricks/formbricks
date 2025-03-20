@@ -1,15 +1,15 @@
 plugins {
     id("com.android.library")
-    kotlin("android")
-    kotlin("kapt")
-    kotlin("plugin.serialization") version "2.1.0"
+    id("kotlin-android")
+    id("kotlin-kapt")
+    kotlin("plugin.serialization") version "1.7.20"
     id("org.jetbrains.dokka") version "1.9.10"
     id("jacoco")
 }
 
 android {
     namespace = "com.formbricks.formbrickssdk"
-    compileSdk = 35
+    compileSdk = 34
 
     defaultConfig {
         minSdk = 24
@@ -19,9 +19,6 @@ android {
     }
 
     buildTypes {
-        getByName("debug") {
-            enableAndroidTestCoverage = true
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -29,24 +26,6 @@ android {
                 "proguard-rules.pro"
             )
         }
-    }
-
-    packaging {
-        resources {
-            excludes += "META-INF/library_release.kotlin_module"
-            excludes += "classes.dex"
-            excludes += "**.**"
-            pickFirsts += "**/DataBinderMapperImpl.java"
-            pickFirsts += "**/DataBinderMapperImpl.class"
-            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.java"
-            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.class"
-        }
-    }
-    viewBinding {
-        enable = true
-    }
-    dataBinding {
-        enable = true
     }
     buildFeatures {
         dataBinding = true
@@ -58,6 +37,29 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+
+    packagingOptions {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/ASL2.0",
+                "META-INF/*.kotlin_module",
+                "classes.dex"
+            )
+            pickFirsts += setOf(
+                "**/DataBinderMapperImpl.class",
+                "**/DataBinderMapperImpl.java",
+                "**/formbrickssdk/DataBinderMapperImpl.java",
+                "**/formbrickssdk/DataBinderMapperImpl.class"
+            )
+        }
     }
 }
 
@@ -94,4 +96,5 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(project(":formbricksSDK"))
+    implementation(enforcedPlatform("org.jetbrains.kotlin:kotlin-bom:1.7.20"))
 }
