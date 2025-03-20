@@ -20,7 +20,7 @@ export async function InviteEmail({
   return (
     <EmailTemplate t={t}>
       <Container>
-        <Heading>
+        <Heading className="text-xl">
           {t("emails.invite_email_heading", { inviteeName })} {inviteeName}
         </Heading>
         <Text className="font-normal">

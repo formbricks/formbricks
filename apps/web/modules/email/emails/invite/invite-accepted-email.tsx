@@ -17,7 +17,7 @@ export async function InviteAcceptedEmail({
   return (
     <EmailTemplate t={t}>
       <Container>
-        <Heading>
+        <Heading className="text-xl">
           {t("emails.invite_accepted_email_heading", { inviterName })} {inviterName}
         </Heading>
         <Text className="font-normal">

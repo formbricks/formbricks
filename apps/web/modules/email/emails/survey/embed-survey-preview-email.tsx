@@ -18,7 +18,7 @@ export async function EmbedSurveyPreviewEmail({
   return (
     <EmailTemplate logoUrl={logoUrl} t={t}>
       <Container>
-        <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
+        <Heading className="text-xl">{t("emails.embed_survey_preview_email_heading")}</Heading>
         <Text className="font-normal">{t("emails.embed_survey_preview_email_text")}</Text>
         <Text className="text-sm font-normal">
           <b>{t("emails.embed_survey_preview_email_didnt_request")}</b>{" "}
