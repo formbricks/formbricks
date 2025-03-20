@@ -188,15 +188,37 @@ export const PUT = async (request: NextRequest) => {
           },
         },
       },
-      include: { attributes: { include: { attributeKey: true } } },
+      select: {
+        attributes: {
+          select: {
+            attributeKey: { select: { key: true } },
+            createdAt: true,
+            id: true,
+            value: true,
+          },
+        },
+        id: true,
+      },
     });
 
     // Build a map from email to contact id (if the email attribute exists)
-    const contactMap = new Map<string, string>();
+    const contactMap = new Map<
+      string,
+      { contactId: string; attributes: { id: string; attributeKey: { key: string }; createdAt: Date }[] }
+    >();
+
     existingContacts.forEach((contact) => {
       const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
+
       if (emailAttr) {
-        contactMap.set(emailAttr.value, contact.id);
+        contactMap.set(emailAttr.value, {
+          contactId: contact.id,
+          attributes: contact.attributes.map((attr) => ({
+            id: attr.id,
+            attributeKey: { key: attr.attributeKey.key },
+            createdAt: attr.createdAt,
+          })),
+        });
       }
     });
 
@@ -204,6 +226,8 @@ export const PUT = async (request: NextRequest) => {
     const contactsToUpdate: {
       contactId: string;
       attributes: {
+        id: string;
+        createdAt: Date;
         value: string;
         attributeKey: {
           key: string;
@@ -222,10 +246,32 @@ export const PUT = async (request: NextRequest) => {
 
     for (const contact of filteredContacts) {
       const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
+
       if (emailAttr && contactMap.has(emailAttr.value)) {
         contactsToUpdate.push({
-          contactId: contactMap.get(emailAttr.value)!,
-          attributes: contact.attributes,
+          contactId: contactMap.get(emailAttr.value)!.contactId,
+          attributes: contact.attributes.map((attr) => {
+            const existingAttr = contactMap
+              .get(emailAttr.value)!
+              .attributes.find((a) => a.attributeKey.key === attr.attributeKey.key);
+
+            if (!existingAttr) {
+              // Should never happen, just to be safe and satisfy typescript
+              return {
+                id: createId(),
+                createdAt: new Date(),
+                value: attr.value,
+                attributeKey: attr.attributeKey,
+              };
+            }
+
+            return {
+              id: existingAttr.id,
+              createdAt: existingAttr.createdAt,
+              value: attr.value,
+              attributeKey: attr.attributeKey,
+            };
+          }),
         });
       } else {
         contactsToCreate.push(contact);
@@ -253,45 +299,58 @@ export const PUT = async (request: NextRequest) => {
       // });
       // }
 
-      if (contactsToCreate.length > 0) {
-        const newContacts = contactsToCreate.map(() => ({
-          id: createId(),
-          environmentId,
-        }));
+      // if (contactsToCreate.length > 0) {
+      const newContacts = contactsToCreate.map(() => ({
+        id: createId(),
+        environmentId,
+      }));
 
-        await tx.contact.createMany({
-          data: newContacts,
-        });
+      await tx.contact.createMany({
+        data: newContacts,
+      });
 
-        // Build attribute records using the same pre-generated contact id
-        const newAttributes = contactsToCreate.flatMap((contact, idx) =>
-          contact.attributes.map((attr) => ({
-            id: createId(), // generate id for attribute
-            contactId: newContacts[idx].id, // use your pre-computed id
-            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-            value: attr.value,
-            created_at: new Date(),
-            updated_at: new Date(),
-          }))
-        );
+      // Build attribute records using the same pre-generated contact id
+      const attributesToCreate = contactsToCreate.flatMap((contact, idx) =>
+        contact.attributes.map((attr) => ({
+          id: createId(), // generate id for attribute
+          contactId: newContacts[idx].id, // use your pre-computed id
+          attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+          value: attr.value,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+      );
 
-        // Use a raw query to perform a bulk insert with an ON CONFLICT clause if you need upsert logic.
-        await tx.$executeRaw`
+      const attributesToUpdate = contactsToUpdate.flatMap((contact) =>
+        contact.attributes.map((attr) => ({
+          id: attr.id,
+          contactId: contact.contactId,
+          attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+          value: attr.value,
+          createdAt: attr.createdAt,
+          updatedAt: new Date(),
+        }))
+      );
+
+      const attributesToUpsert = [...attributesToCreate, ...attributesToUpdate];
+
+      // Use a raw query to perform a bulk insert with an ON CONFLICT clause if you need upsert logic.
+      await tx.$executeRaw`
           INSERT INTO "ContactAttribute" (
             "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
           )
           SELECT 
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.id)}]`}),
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.created_at)}]`}),
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.updated_at)}]`}),
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.contactId)}]`}),
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.value)}]`}),
-            unnest(${Prisma.sql`ARRAY[${newAttributes.map((a) => a.attributeKeyId)}]`})
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.id)}]`}),
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.createdAt)}]`}),
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.updatedAt)}]`}),
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.contactId)}]`}),
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.value)}]`}),
+            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.attributeKeyId)}]`})
           ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
             "value" = EXCLUDED."value",
             "updated_at" = EXCLUDED."updated_at"
         `;
-      }
+      // }
 
       // For contacts that exist, upsert each attribute individually.
       // This leverages the unique constraint on (contactId, attributeKeyId).
@@ -316,36 +375,36 @@ export const PUT = async (request: NextRequest) => {
       //   }
       // }
 
-      if (contactsToUpdate.length > 0) {
-        // Build an array for update attributes from contactsToUpdate
-        const updateAttributes = contactsToUpdate.flatMap((contact) =>
-          contact.attributes.map((attr) => ({
-            id: createId(), // Generate a new id for insertion (will be ignored if a conflict occurs)
-            contactId: contact.contactId,
-            attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-            value: attr.value,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }))
-        );
+      // if (contactsToUpdate.length > 0) {
+      //   // Build an array for update attributes from contactsToUpdate
+      //   const updateAttributes = contactsToUpdate.flatMap((contact) =>
+      //     contact.attributes.map((attr) => ({
+      //       id: createId(), // Generate a new id for insertion (will be ignored if a conflict occurs)
+      //       contactId: contact.contactId,
+      //       attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+      //       value: attr.value,
+      //       createdAt: new Date(),
+      //       updatedAt: new Date(),
+      //     }))
+      //   );
 
-        // Execute a single raw SQL query to upsert these attributes in bulk
-        await tx.$executeRaw`
-          INSERT INTO "ContactAttribute" (
-            "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
-          )
-          SELECT 
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.id)}]`}),
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.createdAt)}]`}),
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.updatedAt)}]`}),
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.contactId)}]`}),
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.value)}]`}),
-            unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.attributeKeyId)}]`})
-          ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
-            "value" = EXCLUDED."value",
-            "updated_at" = EXCLUDED."updated_at"
-        `;
-      }
+      //   // Execute a single raw SQL query to upsert these attributes in bulk
+      //   await tx.$executeRaw`
+      //     INSERT INTO "ContactAttribute" (
+      //       "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
+      //     )
+      //     SELECT
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.id)}]`}),
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.createdAt)}]`}),
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.updatedAt)}]`}),
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.contactId)}]`}),
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.value)}]`}),
+      //       unnest(${Prisma.sql`ARRAY[${updateAttributes.map((a) => a.attributeKeyId)}]`})
+      //     ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
+      //       "value" = EXCLUDED."value",
+      //       "updated_at" = EXCLUDED."updated_at"
+      //   `;
+      // }
     });
 
     return responses.successResponse({
