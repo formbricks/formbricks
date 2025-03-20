@@ -22,7 +22,7 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build": "tsc && vite build",
     "test": "vitest"
   },
   "author": "Formbricks <hola@formbricks.com>",
