@@ -108,21 +108,27 @@ export const ZContactCSVAttributeMap = z.record(z.string(), z.string()).superRef
 });
 export type TContactCSVAttributeMap = z.infer<typeof ZContactCSVAttributeMap>;
 
+export const ZContactBulkUploadAttributeKey = z.object({
+  key: z.string(),
+  name: z.string(),
+});
+
+export type TContactBulkUploadAttributeKey = z.infer<typeof ZContactBulkUploadAttributeKey>;
+
+export const ZContactBulkUploadAttribute = z.object({
+  attributeKey: ZContactBulkUploadAttributeKey,
+  value: z.string(),
+});
+
+export const ZContactBulkUploadContact = z.object({
+  attributes: z.array(ZContactBulkUploadAttribute),
+});
+
+export type TContactBulkUploadContact = z.infer<typeof ZContactBulkUploadContact>;
+
 export const ZContactBulkUploadRequest = z.object({
   contacts: z
-    .array(
-      z.object({
-        attributes: z.array(
-          z.object({
-            attributeKey: z.object({
-              key: z.string(),
-              name: z.string(),
-            }),
-            value: z.string(),
-          })
-        ),
-      })
-    )
+    .array(ZContactBulkUploadContact)
     .max(1000, { message: "Maximum 1000 contacts allowed at a time." })
     .superRefine((contacts, ctx) => {
       // every contact must have an email attribute
