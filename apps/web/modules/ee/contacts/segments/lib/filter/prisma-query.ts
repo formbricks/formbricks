@@ -3,11 +3,12 @@ import { Prisma } from "@prisma/client";
 import {
   TBaseFilters,
   TSegmentAttributeFilter,
-  TSegmentConnector,
   TSegmentDeviceFilter,
   TSegmentFilter,
   TSegmentPersonFilter,
+  TSegmentSegmentFilter,
 } from "@formbricks/types/segment";
+import { getSegment } from "../segments";
 
 // Type for the result of the segment filter to prisma query generation
 export type SegmentFilterQueryResult = {
@@ -151,10 +152,23 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
   return baseQuery;
 };
 
+const buildSegmentFilterWhereClause = async (
+  filter: TSegmentSegmentFilter
+): Promise<Prisma.ContactWhereInput> => {
+  const { root } = filter;
+  const { segmentId } = root;
+
+  const segment = await getSegment(segmentId);
+
+  // ! TODO: Handle errors
+
+  return processFilters(segment.filters);
+};
+
 /**
  * Recursively processes a segment filter or group and returns a Prisma where clause
  */
-const processSingleFilter = (filter: TSegmentFilter): Prisma.ContactWhereInput => {
+const processSingleFilter = async (filter: TSegmentFilter): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
   switch (root.type) {
@@ -165,80 +179,67 @@ const processSingleFilter = (filter: TSegmentFilter): Prisma.ContactWhereInput =
     // Implement other filter types as needed (segment, device)
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter);
+    case "segment":
+      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter);
     default:
       return {};
   }
 };
 
 /**
- * Combines multiple where clauses with the specified connector
- */
-const combineWhereClauses = (
-  whereClauses: Prisma.ContactWhereInput[],
-  connector: TSegmentConnector
-): Prisma.ContactWhereInput => {
-  if (whereClauses.length === 0) return {};
-  if (whereClauses.length === 1) return whereClauses[0];
-
-  // For 'AND' connector, combine with AND
-  if (connector === "and") {
-    return {
-      AND: whereClauses,
-    };
-  }
-
-  // For 'OR' connector or null (default to OR), combine with OR
-  return {
-    OR: whereClauses,
-  };
-};
-
-/**
  * Recursively processes filters and returns a combined Prisma where clause
  */
-const processFilters = (filters: TBaseFilters): Prisma.ContactWhereInput => {
+const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
 
-  const whereClauses: Prisma.ContactWhereInput[] = [];
-  let currentConnector: TSegmentConnector = null;
+  const query: { AND: Prisma.ContactWhereInput[]; OR: Prisma.ContactWhereInput[] } = {
+    AND: [],
+    OR: [],
+  };
 
   for (let i = 0; i < filters.length; i++) {
     const { resource, connector } = filters[i];
-
-    // Update the connector for the next filter
-    if (i === 0) {
-      // For the first filter, store its connector for combining subsequent filters
-      currentConnector = connector;
-    }
+    let whereClause: Prisma.ContactWhereInput;
 
     // Process the resource based on its type
     if (isResourceFilter(resource)) {
       // If it's a single filter, process it directly
-      whereClauses.push(processSingleFilter(resource));
+      whereClause = await processSingleFilter(resource);
     } else {
       // If it's a group of filters, process it recursively
-      whereClauses.push(processFilters(resource));
+      whereClause = await processFilters(resource);
+    }
+
+    if (filters.length === 1) query.AND = [whereClause];
+    else {
+      if (i === 0) {
+        if (filters[1].connector === "and") query.AND.push(whereClause);
+        else query.OR.push(whereClause);
+      } else {
+        let currConnector = connector;
+        if (currConnector === "and") query.AND.push(whereClause);
+        else query.OR.push(whereClause);
+      }
     }
   }
 
-  // Combine all where clauses with the appropriate connector
-  return combineWhereClauses(whereClauses, currentConnector);
+  return query;
 };
 
 /**
  * Transforms a segment filter into a Prisma query for contacts
  */
-export const segmentFilterToPrismaQuery = (
+export const segmentFilterToPrismaQuery = async (
   filters: TBaseFilters,
   environmentId: string
-): SegmentFilterQueryResult => {
+): Promise<SegmentFilterQueryResult> => {
   // Base where clause to ensure contacts belong to the specified environment
   const baseWhereClause: Prisma.ContactWhereInput = {
     environmentId,
   };
 
   // Process filters into a Prisma where clause
-  const filtersWhereClause = processFilters(filters);
+  const filtersWhereClause = await processFilters(filters);
 
   // Combine the base where clause with the filters where clause
   const whereClause: Prisma.ContactWhereInput = {

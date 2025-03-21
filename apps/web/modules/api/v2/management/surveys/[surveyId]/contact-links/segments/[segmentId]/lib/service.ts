@@ -7,10 +7,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 type ContactWithAttributes = {
   id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-};
+} & Record<string, string>;
 
 type GetSegmentContactsResponseData = {
   data: Array<ContactWithAttributes>;
@@ -63,7 +60,7 @@ export const getContactsInSegment = async (
 
     console.log("segment", JSON.stringify(segment, null, 2));
     // 5. Convert segment filters to a Prisma query
-    const { whereClause } = segmentFilterToPrismaQuery(segment.filters, segment.environmentId);
+    const { whereClause } = await segmentFilterToPrismaQuery(segment.filters, segment.environmentId);
 
     console.log("whereClause", JSON.stringify(whereClause, null, 2));
     // 6. Get total count of contacts in the segment for pagination metadata
@@ -97,18 +94,13 @@ export const getContactsInSegment = async (
     // 8. Transform contact data to the desired format
     const contactsWithAttributes = contacts.map((contact) => {
       // Find email, firstName, lastName attributes
-      const firstName =
-        contact.attributes.find((attr) => attr.attributeKey.key === "firstName")?.value || null;
-
-      const lastName = contact.attributes.find((attr) => attr.attributeKey.key === "lastName")?.value || null;
-
-      const email = contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value || null;
 
       return {
         id: contact.id,
-        firstName,
-        lastName,
-        email,
+        ...contact.attributes.reduce((acc, attr) => {
+          acc[attr.attributeKey.key] = attr.value;
+          return acc;
+        }, {}),
       };
     });
 
@@ -126,6 +118,3 @@ export const getContactsInSegment = async (
     });
   }
 };
-
-// api/v2/management/surveys/cm8fqkwxw0000w2ttv1v7835l/contact-links/segments/cm8fqm70v0002w2ttn8reuc53
-// [{"id": "miti5bbl32idr3wg3ud4cjpf", "resource": {"id": "deljnfmx8quf0cjpm3swduvk", "root": {"type": "attribute", "contactAttributeKey": "email"}, "value": "example", "qualifier": {"operator": "contains"}}, "connector": null}]
