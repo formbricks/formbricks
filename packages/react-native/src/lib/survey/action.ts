@@ -65,7 +65,11 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
  */
 export const track = async (
   code: string
-): Promise<Result<void, NetworkError> | Result<void, InvalidCodeError>> => {
+): Promise<
+  | Result<void, NetworkError>
+  | Result<void, InvalidCodeError>
+  | Result<void, { code: "error"; message: string }>
+> => {
   try {
     const appConfig = RNConfig.getInstance();
 
@@ -100,8 +104,7 @@ export const track = async (
     return trackAction(actionClass.name, code);
   } catch (error) {
     return err({
-      code: "invalid_code",
-      status: 500,
+      code: "error",
       message: "Error tracking action",
     });
   }
