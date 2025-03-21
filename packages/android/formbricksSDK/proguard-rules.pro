@@ -19,9 +19,6 @@
 -keep class !androidx.legacy.**,!com.google.android.**,!androidx.** { *; }
 -keep class android.support.v4.app.** { *; }
 
-
-
-
 # Retrofit
 -dontwarn okio.**
 -keep class com.squareup.okhttp.** { *; }
@@ -33,3 +30,7 @@
 -keepclasseswithmembers class * {
     @retrofit.http.* <methods>;
 }
+
+-keep class com.formbricks.formbrickssdk.DataBinderMapperImpl { *; }
+-keep class com.formbricks.formbrickssdk.Formbricks { *; }
+-keep class com.formbricks.formbrickssdk.helper.FormbricksConfig { *; }

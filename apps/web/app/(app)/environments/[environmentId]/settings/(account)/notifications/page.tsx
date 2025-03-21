@@ -157,6 +157,10 @@ const Page = async (props) => {
     throw new Error(t("common.user_not_found"));
   }
 
+  if (!memberships) {
+    throw new Error(t("common.membership_not_found"));
+  }
+
   if (user?.notificationSettings) {
     user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
   }

@@ -9,6 +9,12 @@ declare const window: Window;
 export default function AppPage(): React.JSX.Element {
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
+  const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+  const userAttributes = {
+    "Attribute 1": "one",
+    "Attribute 2": "two",
+    "Attribute 3": "three",
+  };
 
   useEffect(() => {
     if (darkMode) {
@@ -33,18 +39,9 @@ export default function AppPage(): React.JSX.Element {
       addFormbricksDebugParam();
 
       if (process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID && process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST) {
-        const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-        const userInitAttributes = {
-          language: "de",
-          "Init Attribute 1": "eight",
-          "Init Attribute 2": "two",
-        };
-
-        void formbricks.init({
+        void formbricks.setup({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-          apiHost: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-          userId,
-          attributes: userInitAttributes,
+          appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         });
       }
 
@@ -126,19 +123,19 @@ export default function AppPage(): React.JSX.Element {
         <div className="md:grid md:grid-cols-3">
           <div className="col-span-3 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">
             <h3 className="text-lg font-semibold dark:text-white">
-              Reset person / pull data from Formbricks app
+              Set a user ID / pull data from Formbricks app
             </h3>
             <p className="text-slate-700 dark:text-slate-300">
-              On formbricks.reset() the local state will <strong>be deleted</strong> and formbricks gets{" "}
-              <strong>reinitialized</strong>.
+              On formbricks.setUserId() the user state will <strong>be fetched from Formbricks</strong> and
+              the local state gets <strong>updated with the user state</strong>.
             </p>
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               type="button"
               onClick={() => {
-                void formbricks.reset();
+                void formbricks.setUserId(userId);
               }}>
-              Reset
+              Set user ID
             </button>
             <p className="text-xs text-slate-700 dark:text-slate-300">
               If you made a change in Formbricks app and it does not seem to work, hit &apos;Reset&apos; and
@@ -158,7 +155,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sends a{" "}
                 <a
-                  href="https://formbricks.com/docs/actions/no-code"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500"
                   target="_blank">
@@ -166,7 +163,7 @@ export default function AppPage(): React.JSX.Element {
                 </a>{" "}
                 as long as you created it beforehand in the Formbricks App.{" "}
                 <a
-                  href="https://formbricks.com/docs/actions/no-code"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-no-code-actions"
                   rel="noopener noreferrer"
                   target="_blank"
                   className="underline dark:text-blue-500">
@@ -175,6 +172,7 @@ export default function AppPage(): React.JSX.Element {
               </p>
             </div>
           </div>
+
           <div className="p-6">
             <div>
               <button
@@ -190,7 +188,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
@@ -215,7 +213,7 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/custom-attributes"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
@@ -240,13 +238,117 @@ export default function AppPage(): React.JSX.Element {
               <p className="text-xs text-slate-700 dark:text-slate-300">
                 This button sets the{" "}
                 <a
-                  href="https://formbricks.com/docs/attributes/identify-users"
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="underline dark:text-blue-500">
                   user email
                 </a>{" "}
                 &apos;test@web.com&apos;
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  void formbricks.setAttributes(userAttributes);
+                }}
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+                Set Multiple Attributes
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button sets the{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/user-identification#setting-custom-user-attributes"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline dark:text-blue-500">
+                  user attributes
+                </a>{" "}
+                to &apos;one&apos;, &apos;two&apos;, &apos;three&apos;.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  void formbricks.setLanguage("de");
+                }}
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+                Set Language to &apos;de&apos;
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button sets the{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/general-features/multi-language-surveys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline dark:text-blue-500">
+                  language
+                </a>{" "}
+                to &apos;de&apos;.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                onClick={() => {
+                  void formbricks.track("code");
+                }}>
+                Code Action
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button sends a{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions"
+                  rel="noopener noreferrer"
+                  className="underline dark:text-blue-500"
+                  target="_blank">
+                  Code Action
+                </a>{" "}
+                as long as you created it beforehand in the Formbricks App.{" "}
+                <a
+                  href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions#setting-up-code-actions"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  className="underline dark:text-blue-500">
+                  Here are instructions on how to do it.
+                </a>
+              </p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div>
+              <button
+                type="button"
+                className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                onClick={() => {
+                  void formbricks.logout();
+                }}>
+                Logout
+              </button>
+            </div>
+            <div>
+              <p className="text-xs text-slate-700 dark:text-slate-300">
+                This button logs out the user and syncs the local state with Formbricks. (Only works if a
+                userId is set)
               </p>
             </div>
           </div>

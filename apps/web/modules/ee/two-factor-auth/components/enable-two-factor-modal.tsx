@@ -6,7 +6,7 @@ import { EnterCode } from "@/modules/ee/two-factor-auth/components/enter-code";
 import { ScanQRCode } from "@/modules/ee/two-factor-auth/components/scan-qr-code";
 import { Modal } from "@/modules/ui/components/modal";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
 export type EnableTwoFactorModalStep = "confirmPassword" | "scanQRCode" | "enterCode" | "backupCodes";
 

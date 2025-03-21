@@ -3,7 +3,6 @@
 import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 import { useTranslate } from "@tolgee/react";
-import React from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface TwoFactorProps {

@@ -18,6 +18,7 @@ services:
 
   redis:
     image: redis:7.0.11
+    command: "redis-server"
     ports:
       - 6379:6379
     volumes:
