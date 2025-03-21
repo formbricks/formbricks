@@ -5,9 +5,10 @@ interface BadgeProps {
   type: "warning" | "success" | "error" | "gray";
   size: "tiny" | "normal" | "large";
   className?: string;
+  role?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => {
+export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role }) => {
   const bgColor = {
     warning: "bg-amber-100",
     success: "bg-emerald-100",
@@ -39,6 +40,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className }) => 
 
   return (
     <span
+      role={role}
       className={cn(
         "inline-flex cursor-default items-center rounded-full border font-medium",
         bgColor[type],

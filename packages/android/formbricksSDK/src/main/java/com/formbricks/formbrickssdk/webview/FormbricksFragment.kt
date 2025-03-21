@@ -75,6 +75,9 @@ class FormbricksFragment : BottomSheetDialogFragment() {
             resultLauncher.launch(intent)
         }
 
+        override fun onSurveyLibraryLoadError() {
+            dismiss()
+        }
     })
 
     var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -156,6 +159,9 @@ class FormbricksFragment : BottomSheetDialogFragment() {
             it.webChromeClient = object : WebChromeClient() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
+                        if (cm.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                            dismiss()
+                        }
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
                         Logger.d(log)
                     }

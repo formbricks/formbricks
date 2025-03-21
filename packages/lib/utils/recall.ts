@@ -1,4 +1,4 @@
-import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
+import { TResponseData, TResponseDataValue, TResponseVariables } from "@formbricks/types/responses";
 import { TI18nString, TSurvey, TSurveyQuestion, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { structuredClone } from "../pollyfills/structuredClone";
@@ -215,62 +215,51 @@ export const parseRecallInfo = (
 ) => {
   let modifiedText = text;
   const questionIds = responseData ? Object.keys(responseData) : [];
+  const variableIds = variables ? Object.keys(variables) : [];
 
-  const variableIds = Object.keys(variables || {});
+  // Process all recall patterns regardless of whether we have matching data
+  while (modifiedText.includes("#recall:")) {
+    const recallInfo = extractRecallInfo(modifiedText);
+    if (!recallInfo) break; // Exit the loop if no recall info is found
 
-  if (variables && variableIds.length > 0) {
-    variableIds.forEach((variableId) => {
-      const recallPattern = `#recall:`;
-      while (modifiedText.includes(recallPattern)) {
-        const recallInfo = extractRecallInfo(modifiedText, variableId);
-        if (!recallInfo) break; // Exit the loop if no recall info is found
+    const recallItemId = extractId(recallInfo);
+    if (!recallItemId) {
+      // If no ID could be extracted, just remove the recall tag
+      modifiedText = modifiedText.replace(recallInfo, "");
+      continue;
+    }
 
-        const recallItemId = extractId(recallInfo);
-        if (!recallItemId) continue; // Skip to the next iteration if no ID could be extracted
+    const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+    let value: TResponseDataValue | undefined;
 
-        const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
+    // First check if it matches a variable
+    if (variables && variableIds.includes(recallItemId)) {
+      value = variables[recallItemId];
+    }
+    // Then check if it matches response data
+    else if (responseData && questionIds.includes(recallItemId)) {
+      value = responseData[recallItemId];
 
-        let value = variables[variableId] || fallback;
-        value = value.toString();
-
-        if (withSlash) {
-          modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
-        } else {
-          modifiedText = modifiedText.replace(recallInfo, value);
-        }
-      }
-    });
-  }
-
-  if (responseData && questionIds.length > 0) {
-    while (modifiedText.includes("recall:")) {
-      const recallInfo = extractRecallInfo(modifiedText);
-      if (!recallInfo) break; // Exit the loop if no recall info is found
-
-      const recallItemId = extractId(recallInfo);
-      if (!recallItemId) return modifiedText; // Return the text if no ID could be extracted
-
-      const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-      let value;
-
-      // Fetching value from responseData based on recallItemId
-      if (responseData[recallItemId]) {
-        value = (responseData[recallItemId] as string) ?? fallback;
-      }
-      // Additional value formatting if it exists
+      // Apply formatting for special value types
       if (value) {
-        if (isValidDateString(value)) {
-          value = formatDateWithOrdinal(new Date(value));
+        if (isValidDateString(value as string)) {
+          value = formatDateWithOrdinal(new Date(value as string));
         } else if (Array.isArray(value)) {
-          value = value.filter((item) => item).join(", "); // Filters out empty values and joins with a comma
+          value = value.filter((item) => item).join(", ");
         }
       }
+    }
 
-      if (withSlash) {
-        modifiedText = modifiedText.replace(recallInfo, "#/" + (value ?? fallback) + "\\#");
-      } else {
-        modifiedText = modifiedText.replace(recallInfo, value ?? fallback);
-      }
+    // If no value was found, use the fallback
+    if (value === undefined || value === null || value === "") {
+      value = fallback;
+    }
+
+    // Replace the recall tag with the value
+    if (withSlash) {
+      modifiedText = modifiedText.replace(recallInfo, "#/" + value + "\\#");
+    } else {
+      modifiedText = modifiedText.replace(recallInfo, value as string);
     }
   }
 
