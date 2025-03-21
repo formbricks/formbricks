@@ -1,51 +1,42 @@
 import { Button } from "@/modules/ui/components/button";
 import { VariantProps, cva } from "class-variance-authority";
+import { content } from "googleapis/build/src/apis/content";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
-// Enhanced interface for Alert props
-interface AlertProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
-    VariantProps<typeof alertVariants> {
-  variant?: "default" | "error" | "warning" | "info" | "success";
-  size?: "default" | "small";
-  icon?: React.ReactNode;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  button?:
-    | React.ReactElement
-    | {
-        label: string;
-        onClick: (e: React.MouseEvent) => void;
-        loading?: boolean;
-        disabled?: boolean;
-        className?: string;
-        variant?: string;
-      };
-  allowChildren?: boolean;
-}
+// Create a context to share Alert's variant and size with child components
+const AlertContext = React.createContext<{
+  variant: "default" | "error" | "warning" | "info" | "success";
+  size: "default" | "small";
+}>({
+  variant: "default",
+  size: "default",
+});
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-md border", {
-  variants: {
-    variant: {
-      default: "text-foreground border-border",
-      error: "text-red-800 border-red-600/50",
-      warning: "text-amber-800 border-amber-600/50",
-      info: "text-blue-800 border-blue-600/50",
-      success: "text-green-800 border-green-600/50",
+const alertVariants = cva(
+  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
+  {
+    variants: {
+      variant: {
+        default: "text-foreground border-border 80",
+        error: "text-error-foreground border-error/50 ",
+        warning: "text-warning-foreground border-warning/50",
+        info: "text-info-foreground border-info/50",
+        success: "text-success-foreground border-success/50",
+      },
+      size: {
+        default: "py-3 px-4 text-sm",
+        small: "pl-3 text-xs",
+      },
     },
-    size: {
-      default: "py-3 px-4 text-sm",
-      small: "pl-3 text-xs",
+    defaultVariants: {
+      variant: "default",
+      size: "default",
     },
-  },
-  defaultVariants: {
-    variant: "default",
-    size: "default",
-  },
-});
+  }
+);
 
 const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
   default: null,
@@ -59,14 +50,14 @@ const alertButtonVariants = cva("shadow-none", {
   variants: {
     variant: {
       default: "secondary",
-      error: "bg-red-50 text-red-800 hover:bg-red-100",
-      warning: "bg-amber-50 text-amber-800 hover:bg-amber-100",
-      info: "bg-blue-50 text-blue-800 hover:bg-blue-100",
-      success: "bg-green-50 text-green-800 hover:bg-green-100",
+      error: "bg-error-background text-error-foreground hover:bg-error-background-muted",
+      warning: "bg-warning-background text-warning-foreground hover:bg-warning-background-muted",
+      info: "bg-info-background text-info-foreground hover:bg-info-background-muted",
+      success: "bg-success-background text-success-foreground hover:bg-success-background-muted",
     },
     size: {
-      default: "secondary",
-      small: "bg-transparent hover:bg-transparent",
+      default: "secondary lg",
+      small: "sm bg-transparent hover:bg-transparent",
     },
   },
   defaultVariants: {
@@ -75,96 +66,95 @@ const alertButtonVariants = cva("shadow-none", {
   },
 });
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  (
-    {
-      className,
-      variant = "default",
-      size = "default",
-      icon,
-      title,
-      description,
-      button,
-      children,
-      allowChildren = true,
-      ...props
-    },
-    ref
-  ) => {
-    const renderIcon = icon ? icon : alertVariantIcons[variant];
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant = "default", size = "default", children, ...props }, ref) => {
+  // Separate children into icon, content, and button for layout
+  let iconElement: React.ReactNode = null;
+  let contentElements: React.ReactNode[] = [];
+  let buttonElement: React.ReactNode = null;
 
-    const buttonElement = React.isValidElement(button) ? (
-      button
-    ) : button ? (
-      <AlertButton
-        onClick={button.onClick}
-        loading={button.loading}
-        disabled={button.disabled}
-        variant={size === "small" ? "link" : "secondary"}
-        size={size === "small" ? "sm" : "lg"}
-        className={alertButtonVariants({ variant, size })}>
-        {button.label}
-      </AlertButton>
-    ) : undefined;
+  // Process children to identify different parts
+  React.Children.forEach(children, (child) => {
+    if (!React.isValidElement(child)) {
+      contentElements.push(child); // Non-element children go into content
+      return;
+    }
 
-    return (
+    const displayName = (child.type as any).displayName || "";
+    if (displayName === "AlertButton") {
+      buttonElement = child;
+    } else if (typeof child.type !== "string" && !["AlertTitle", "AlertDescription"].includes(displayName)) {
+      iconElement = React.cloneElement(child as React.ReactElement<any>, {
+        className: cn("h-4 w-4", (child as React.ReactElement<any>).props.className || ""),
+      });
+
+      iconElement = !iconElement && variant ? alertVariantIcons[variant] : null;
+    } else {
+      // All other elements go into content
+      contentElements.push(child);
+    }
+  });
+
+  return (
+    <AlertContext.Provider value={{ variant, size }}>
       <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
-        {size === "default" && title && description ? (
-          <div className="flex">
-            <div className="flex flex-grow items-center gap-2">
-              {/* Icon section with optional click handler */}
-              {renderIcon && <div className="mt-1 flex-shrink-0 self-start">{renderIcon}</div>}
+        {/* Small size layout - row-based with vertical centering */}
+        {size === "small" && (
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Icon */}
+            {iconElement && <div className="flex-shrink-0">{iconElement}</div>}
 
-              {/* Content section */}
-              <div className="items-baseline space-y-1">
-                <div className="flex flex-col gap-0.5">
-                  {title && <AlertTitle>{title}</AlertTitle>}
-                  {description && <AlertDescription>{description}</AlertDescription>}
-                  {children && allowChildren && <div>{children}</div>}
-                </div>
-              </div>
-            </div>
+            {/* Content area */}
+            <div className="flex min-w-0 flex-grow flex-wrap items-baseline gap-2">{contentElements}</div>
 
-            {/* Button section for default size */}
-            {buttonElement && <div className="ml-4 flex-shrink-0 self-end">{buttonElement}</div>}
+            {/* Button */}
+            {buttonElement}
           </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            {/* Icon section with optional click handler */}
-            {renderIcon && <div className={cn("flex-shrink-0")}>{renderIcon}</div>}
+        )}
 
-            {/* Content section for small size - horizontal layout with truncation */}
-            <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-1 pr-3">
-              {title && <AlertTitle>{title}</AlertTitle>}
-              {description && <AlertDescription>{description}</AlertDescription>}
+        {/* Default size layout - stacked with absolute icon */}
+        {size === "default" && (
+          <div className="relative">
+            {/* Main content with proper padding when icon is present */}
+            <div
+              className={cn(
+                "flex flex-col",
+                iconElement ? "pl-6" : "" // Add padding when icon is present
+              )}>
+              <div className="flex flex-col">
+                {/* Icon - absolutely positioned */}
+                {iconElement && <div className="absolute left-0 top-0 mt-3.5">{iconElement}</div>}
+
+                {/* Title and description stacked */}
+                <div className="flex-grow">{contentElements}</div>
+              </div>
+
+              {/* Button at bottom right */}
+              {buttonElement && <div className="mt-2 flex justify-end">{buttonElement}</div>}
             </div>
-
-            {/* Button section for small size */}
-            {buttonElement && <div className="flex-shrink-0 self-end">{buttonElement}</div>}
           </div>
         )}
       </div>
-    );
-  }
-);
+    </AlertContext.Provider>
+  );
+});
 Alert.displayName = "Alert";
 
-// AlertTitle component
-const AlertTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, children, ...props }, ref) => (
-    <h5 ref={ref} className={cn("text-sm font-medium leading-none", className)} {...props}>
-      {children}
-    </h5>
+// Hook to use the alert context
+const useAlertContext = () => React.useContext(AlertContext);
+
+const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => (
+    <h5 ref={ref} className={cn("mb-1 font-medium leading-none tracking-tight", className)} {...props} />
   )
 );
 AlertTitle.displayName = "AlertTitle";
 
-// AlertDescription component
 const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={cn("text-sm leading-none", className)} {...props}>
-      {children}
-    </div>
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn("[&_p]:leading-relaxed", className)} {...props} />
   )
 );
 AlertDescription.displayName = "AlertDescription";
@@ -172,18 +162,50 @@ AlertDescription.displayName = "AlertDescription";
 // AlertButton component
 const AlertButton = React.forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string; size?: string }
->(({ className, loading, children, ...props }, ref) => (
-  <Button
-    ref={ref}
-    className={cn("shrink-0", className)}
-    disabled={loading || props.disabled}
-    {...props}
-    variant={props.variant as "default" | "link" | "secondary" | "destructive" | "outline" | "ghost" | null}
-    size={props.size as "default" | "sm" | "lg" | "icon" | null}>
-    {loading ? "Loading..." : children}
-  </Button>
-));
+  React.ButtonHTMLAttributes<HTMLButtonElement> & {
+    loading?: boolean;
+    variant?: string;
+    size?: string;
+    onClick?: (e: React.MouseEvent) => void;
+  }
+>(({ className, loading, children, variant: buttonVariant, size: buttonSize, ...props }, ref) => {
+  const { variant, size } = useAlertContext();
+
+  // Get button styling based on alert context
+  const alertButtonStyle = alertButtonVariants({
+    variant,
+    size,
+  });
+
+  const finalButtonSize = (buttonSize || (size === "small" ? "sm" : "default")) as
+    | "default"
+    | "sm"
+    | "lg"
+    | "icon"
+    | null;
+  const finalButtonVariant = (buttonVariant || (size === "small" ? "link" : "secondary")) as
+    | "default"
+    | "link"
+    | "secondary"
+    | "destructive"
+    | "outline"
+    | "ghost"
+    | null;
+
+  return (
+    <div className="ml-auto mt-auto flex-shrink-0 self-end">
+      <Button
+        ref={ref}
+        className={cn(alertButtonStyle, className)}
+        disabled={loading || props.disabled}
+        variant={finalButtonVariant}
+        size={finalButtonSize}
+        {...props}>
+        {loading ? "Loading..." : children}
+      </Button>
+    </div>
+  );
+});
 AlertButton.displayName = "AlertButton";
 
 export { Alert, AlertDescription, AlertTitle, AlertButton };
