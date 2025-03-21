@@ -20,6 +20,7 @@ interface InviteMemberModalProps {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  membershipRole?: TOrganizationRole;
 }
 
 export const InviteMemberModal = ({
@@ -30,6 +31,7 @@ export const InviteMemberModal = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  membershipRole,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -44,6 +46,7 @@ export const InviteMemberModal = ({
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         teams={teams}
+        membershipRole={membershipRole}
       />
     ),
     bulk: (

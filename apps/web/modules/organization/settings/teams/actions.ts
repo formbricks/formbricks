@@ -160,7 +160,6 @@ export const resendInviteAction = authenticatedActionClient
     });
 
     const invite = await getInvite(parsedInput.inviteId);
-
     const updatedInvite = await resendInvite(parsedInput.inviteId);
     await sendInviteMemberEmail(
       parsedInput.inviteId,
@@ -191,6 +190,14 @@ export const inviteUserAction = authenticatedActionClient
       throw new ValidationError("Billing role is not allowed");
     }
 
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(
+      ctx.user.id,
+      parsedInput.organizationId
+    );
+    if (!currentUserMembership) {
+      throw new AuthenticationError("User not a member of this organization");
+    }
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: parsedInput.organizationId,
@@ -201,6 +208,10 @@ export const inviteUserAction = authenticatedActionClient
         },
       ],
     });
+
+    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
+      throw new OperationNotAllowedError("Managers can only invite users as members");
+    }
 
     if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
       await checkRoleManagementPermission(parsedInput.organizationId);

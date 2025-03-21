@@ -24,6 +24,8 @@ export default defineConfig({
         "modules/auth/lib/**/*.ts",
         "modules/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
+        "modules/ee/role-management/components/*.tsx",
+        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
@@ -33,6 +35,8 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/intercom/*.tsx",
+        "modules/ee/role-management/*.ts",
+        "modules/organization/settings/teams/actions.ts",
       ],
       exclude: [
         "**/.next/**",
@@ -42,7 +46,6 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
-        "**/*.tsx", // Exclude tsx files
       ],
     },
   },
