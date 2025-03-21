@@ -21,14 +21,18 @@ tags:
     description: Operations for managing storage.
   - name: Client API > File Upload
     description: Operations for uploading files.
-security:
-  - apiKeyAuth: []
+
 paths:
-  /responses/{responseId}:
+  /{environmentId}/responses/{responseId}:
     put:
       description: Update an existing response for example when you want to mark a
         response as finished or you want to change an existing response's value.
       parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
         - in: path
           name: responseId
           required: true
@@ -522,6 +526,8 @@ paths:
           description: Formbricks API Server
   /responses:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getResponses
       summary: Get responses
       description: Gets responses from the database.
@@ -587,6 +593,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/response"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createResponse
       summary: Create a response
       description: Creates a response in the database.
@@ -608,6 +616,8 @@ paths:
                 $ref: "#/components/schemas/response"
   /responses/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getResponse
       summary: Get a response
       description: Gets a response from the database.
@@ -628,6 +638,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/response"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateResponse
       summary: Update a response
       description: Updates a response in the database.
@@ -731,6 +743,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/response"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteResponse
       summary: Delete a response
       description: Deletes a response from the database.
@@ -752,6 +766,8 @@ paths:
                 $ref: "#/components/schemas/response"
   /contacts:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContacts
       summary: Get contacts
       description: Gets contacts from the database.
@@ -805,6 +821,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/contact"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContact
       summary: Create a contact
       description: Creates a contact in the database.
@@ -826,6 +844,8 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contacts/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContact
       summary: Get a contact
       description: Gets a contact from the database.
@@ -845,6 +865,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContact
       summary: Update a contact
       description: Updates a contact in the database.
@@ -871,6 +893,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContact
       summary: Delete a contact
       description: Deletes a contact from the database.
@@ -891,6 +915,8 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contact-attributes:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributes
       summary: Get contact attributes
       description: Gets contact attributes from the database.
@@ -944,6 +970,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/contactAttribute"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContactAttribute
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
@@ -961,6 +989,8 @@ paths:
           description: Contact attribute created successfully.
   /contact-attributes/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttribute
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
@@ -980,6 +1010,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContactAttribute
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
@@ -1006,6 +1038,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContactAttribute
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
@@ -1026,6 +1060,8 @@ paths:
                 $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
@@ -1079,6 +1115,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/contactAttributeKey"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
@@ -1096,6 +1134,8 @@ paths:
           description: Contact attribute key created successfully.
   /contact-attribute-keys/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
@@ -1115,6 +1155,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
@@ -1141,6 +1183,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
@@ -1161,6 +1205,8 @@ paths:
                 $ref: "#/components/schemas/contactAttributeKey"
   /surveys:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getSurveys
       summary: Get surveys
       description: Gets surveys from the database.
@@ -1231,6 +1277,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/survey"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createSurvey
       summary: Create a survey
       description: Creates a survey in the database.
@@ -1252,6 +1300,8 @@ paths:
                 $ref: "#/components/schemas/survey"
   /surveys/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getSurvey
       summary: Get a survey
       description: Gets a survey from the database.
@@ -1272,6 +1322,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateSurvey
       summary: Update a survey
       description: Updates a survey in the database.
@@ -1299,6 +1351,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteSurvey
       summary: Delete a survey
       description: Deletes a survey from the database.
@@ -1320,6 +1374,8 @@ paths:
                 $ref: "#/components/schemas/survey"
   /api/v2/management/storage:
     post:
+      security:
+        - apiKeyAuth: []
       summary: Upload Public File
       description: >
         API endpoint for uploading public files. Uploaded files are public and accessible by anyone.
@@ -1426,14 +1482,14 @@ paths:
   /api/v2/management/storage/local:
     put:
       summary: Upload Public File to Local Storage
+      security:
+        - apiKeyAuth: []
       description: >
         Management API endpoint for uploading public files to local storage. This endpoint requires authentication.
         File metadata is provided via headers (X-File-Type, X-File-Name, X-Environment-ID, X-Signature, X-UUID, X-Timestamp)
         and the file is provided as a multipart/form-data file field named "file". The "Content-Type" header must be set to a valid MIME type.
       tags:
         - Management API > Storage
-      security:
-        - cookieAuth: []
       parameters:
         - in: header
           name: X-File-Type
