@@ -54,6 +54,9 @@
     "@formbricks/lib#lint": {
       "dependsOn": ["@formbricks/logger#build"]
     },
+    "@formbricks/lib#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
