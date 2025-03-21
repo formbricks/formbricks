@@ -11,7 +11,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Muted, P } from "@/modules/ui/components/typography";
 import { useTranslate } from "@tolgee/react";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { type Control, Controller } from "react-hook-form";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";

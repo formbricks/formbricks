@@ -1,25 +1,19 @@
 import {
   mockInviteDataBilling,
-  mockInviteDataMember,
   mockInviteDataOwner,
-  mockInviteId,
   mockMembershipManager,
   mockMembershipMember,
-  mockMembershipOwner,
   mockMembershipUpdateBilling,
-  mockMembershipUpdateMember,
   mockMembershipUpdateOwner,
   mockOrganizationFree,
   mockOrganizationId,
   mockOrganizationScale,
   mockOrganizationStartup,
   mockSession,
-  mockTargetUserId,
   mockUpdateInviteInput,
   mockUpdateMembershipInput,
   mockUpdatedMembership,
   mockUser,
-  mockUserId,
 } from "./__mocks__/actions.mock";
 import "@/lib/utils/action-client-middleware";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
@@ -27,11 +21,11 @@ import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/util
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { getServerSession } from "next-auth";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganization } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { TMembershipUpdateInput } from "@formbricks/types/memberships";
+import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { checkRoleManagementPermission } from "../actions";
 import { updateInviteAction, updateMembershipAction } from "../actions";
 
@@ -94,10 +88,18 @@ vi.mock("@formbricks/lib/constants", () => ({
 vi.mock("@/lib/utils/action-client-middleware", () => ({
   checkAuthorizationUpdated: vi.fn(),
 }));
+vi.mock("@formbricks/lib/errors", () => ({
+  OperationNotAllowedError: vi.fn(),
+  ValidationError: vi.fn(),
+}));
 
 describe("role-management/actions.ts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
   });
 
   describe("checkRoleManagementPermission", () => {
@@ -107,6 +109,7 @@ describe("role-management/actions.ts", () => {
       await expect(checkRoleManagementPermission(mockOrganizationId)).rejects.toThrow(
         "Organization not found"
       );
+
       expect(getOrganization).toHaveBeenCalledWith(mockOrganizationId);
     });
 
@@ -115,10 +118,12 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getRoleManagementPermission).mockResolvedValue(false);
 
       await expect(checkRoleManagementPermission(mockOrganizationId)).rejects.toThrow(
-        "Role management is not allowed for this organization"
+        new OperationNotAllowedError("Role management is not allowed for this organization")
       );
-      expect(getOrganization).toHaveBeenCalledWith(mockOrganizationId);
+
       expect(getRoleManagementPermission).toHaveBeenCalledWith("free");
+
+      expect(getOrganization).toHaveBeenCalledWith(mockOrganizationId);
     });
 
     test("succeeds when role management is allowed", async () => {
@@ -126,8 +131,8 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getRoleManagementPermission).mockResolvedValue(true);
 
       await expect(checkRoleManagementPermission(mockOrganizationId)).resolves.toBeUndefined();
+      await expect(getRoleManagementPermission).toHaveBeenCalledWith("startup");
       expect(getOrganization).toHaveBeenCalledWith(mockOrganizationId);
-      expect(getRoleManagementPermission).toHaveBeenCalledWith("startup");
     });
   });
 
@@ -137,7 +142,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getUser).mockResolvedValue(mockUser);
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
 
-      await expect(await updateInviteAction(mockUpdateInviteInput)).toStrictEqual({
+      expect(await updateInviteAction(mockUpdateInviteInput)).toStrictEqual({
         serverError: "User not a member of this organization",
       });
     });
@@ -153,7 +158,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembershipMember);
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
-      await expect(await updateInviteAction(inputWithBillingRole)).toStrictEqual({
+      expect(await updateInviteAction(inputWithBillingRole)).toStrictEqual({
         serverError: "Something went wrong while executing the operation.",
       });
     });
@@ -169,7 +174,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembershipManager);
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
-      await expect(await updateInviteAction(inputWithOwnerRole)).toStrictEqual({
+      expect(await updateInviteAction(inputWithOwnerRole)).toStrictEqual({
         serverError: "Managers can only invite members",
       });
     });
@@ -195,7 +200,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getUser).mockResolvedValue(mockUser);
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
 
-      await expect(await updateMembershipAction(mockUpdateMembershipInput)).toStrictEqual({
+      expect(await updateMembershipAction(mockUpdateMembershipInput)).toStrictEqual({
         serverError: "User not a member of this organization",
       });
     });
@@ -211,7 +216,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembershipMember);
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
-      await expect(await updateMembershipAction(inputWithBillingRole)).toStrictEqual({
+      expect(await updateMembershipAction(inputWithBillingRole)).toStrictEqual({
         serverError: "Something went wrong while executing the operation.",
       });
     });
@@ -227,7 +232,7 @@ describe("role-management/actions.ts", () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembershipManager);
       vi.mocked(checkAuthorizationUpdated).mockResolvedValue(true);
 
-      await expect(await updateMembershipAction(inputWithOwnerRole)).toStrictEqual({
+      expect(await updateMembershipAction(inputWithOwnerRole)).toStrictEqual({
         serverError: "Managers can only assign users to the member role",
       });
     });

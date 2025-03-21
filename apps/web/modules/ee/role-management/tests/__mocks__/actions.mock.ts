@@ -2,7 +2,7 @@ import { TInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { Session } from "next-auth";
 import { TMembership, TMembershipUpdateInput } from "@formbricks/types/memberships";
 import { TOrganization, TOrganizationBillingPlan } from "@formbricks/types/organizations";
-import { User } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 
 // Common mock IDs
 export const mockOrganizationId = "cblt7dwr7d0hvdifl4iw6d5x";
@@ -11,29 +11,29 @@ export const mockInviteId = "dc0b6ea6-bb65-4a22-88e1-847df2e85af4";
 export const mockTargetUserId = "vevt9qm7sqmh44e3za6a2vzd";
 
 // Mock user
-export const mockUser: User = {
+export const mockUser: TUser = {
   id: mockUserId,
   name: "Test User",
   email: "test@example.com",
   emailVerified: new Date(),
   createdAt: new Date(),
   updatedAt: new Date(),
-  onboardingCompleted: true,
-  objectiveSet: false,
+  identityProvider: "email",
+  twoFactorEnabled: false,
+  objective: null,
   notificationSettings: {
-    responseFinished: true,
-    weeklyDigest: true,
+    alert: {},
+    weeklySummary: {},
   },
-  attribution: null,
-  twoFactorAuth: null,
+  locale: "en-US",
+  imageUrl: null,
+  role: null,
 };
 
 // Mock session
 export const mockSession: Session = {
   user: {
     id: mockUserId,
-    name: "Test User",
-    email: "test@example.com",
   },
   expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
 };

@@ -160,7 +160,6 @@ export const resendInviteAction = authenticatedActionClient
     });
 
     const invite = await getInvite(parsedInput.inviteId);
-
     const updatedInvite = await resendInvite(parsedInput.inviteId);
     await sendInviteMemberEmail(
       parsedInput.inviteId,
