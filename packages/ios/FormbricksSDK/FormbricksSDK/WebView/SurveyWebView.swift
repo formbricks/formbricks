@@ -26,6 +26,7 @@ struct SurveyWebView: UIViewRepresentable {
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
         webView.isInspectable = true
+        webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         return webView
     }
@@ -51,13 +52,21 @@ struct SurveyWebView: UIViewRepresentable {
 }
 
 extension SurveyWebView {
-    class Coordinator: NSObject, WKUIDelegate {
+    class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate {
         // webView function handles Javascipt alert
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo,  completionHandler: @escaping () -> Void) {
             let alertController = UIAlertController(title: "", message: message, preferredStyle: .alert)
            alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in })
             UIApplication.safeKeyWindow?.rootViewController?.presentedViewController?.present(alertController, animated: true)
             completionHandler()
+        }
+        
+        func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+            if let serverTrust = challenge.protectionSpace.serverTrust {
+                completionHandler(.useCredential, URLCredential(trust: serverTrust))
+            } else {
+                 completionHandler(.useCredential, nil)
+            }
         }
     }
 }
