@@ -700,6 +700,9 @@ importers:
 
   packages/database:
     dependencies:
+      '@formbricks/logger':
+        specifier: workspace:*
+        version: link:../logger
       '@prisma/client':
         specifier: 6.0.1
         version: 6.0.1(prisma@6.0.1)
@@ -719,9 +722,6 @@ importers:
       '@formbricks/eslint-config':
         specifier: workspace:*
         version: link:../config-eslint
-      '@formbricks/logger':
-        specifier: workspace:*
-        version: link:../logger
       '@paralleldrive/cuid2':
         specifier: 2.2.2
         version: 2.2.2
