@@ -94,6 +94,9 @@
     "@formbricks/web#test": {
       "dependsOn": ["@formbricks/logger#build"]
     },
+    "@formbricks/web#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
