@@ -16,9 +16,6 @@
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
-    "@formbricks/database#test": {
-      "dependsOn": ["@formbricks/logger#build"]
-    },
     "@formbricks/demo#go": {
       "cache": false,
       "dependsOn": ["@formbricks/js#build"],
@@ -53,6 +50,9 @@
     },
     "@formbricks/js-core#test": {
       "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/lib#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],

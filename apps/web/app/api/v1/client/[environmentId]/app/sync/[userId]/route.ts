@@ -104,7 +104,7 @@ export const GET = async (
             },
           });
         } catch (error) {
-          logger.warn({ error, url: request.url }, `Error sending plan limits reached event to Posthog`);
+          logger.error({ error, url: request.url }, `Error sending plan limits reached event to Posthog`);
         }
       }
     }

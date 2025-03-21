@@ -130,7 +130,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
           });
         } catch (err) {
           // Log error but do not throw
-          logger.warn(err, "Error sending plan limits reached event to Posthog");
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }
