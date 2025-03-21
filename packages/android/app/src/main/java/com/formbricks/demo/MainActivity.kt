@@ -2,18 +2,16 @@ package com.formbricks.demo
 
 import android.os.Bundle
 import android.widget.Button
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.FragmentActivity
 import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
 import java.util.UUID
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         val config = FormbricksConfig.Builder("[appUrl]","[environmentId]")
             .setLoggingEnabled(true)
@@ -32,7 +30,7 @@ class MainActivity : AppCompatActivity() {
 
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener {
-            Formbricks.track("click_demo_button")
+            Formbricks.track("costumer_click_acceptbutton")
         }
     }
 }

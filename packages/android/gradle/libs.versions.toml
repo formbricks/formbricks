@@ -1,31 +1,29 @@
 [versions]
-agp = "8.8.0"
-kotlin = "2.0.0"
-coreKtx = "1.10.1"
+agp = "7.2.2"
+kotlin = "1.7.20"
+coreKtx = "1.8.0"
 
 lifecycleRuntimeKtx = "2.6.1"
 
-junit = "4.13.2"
-junitVersion = "1.1.5"
-espressoCore = "3.5.1"
+junit = "1.1.2"
+junitVersion = "4.13.2"
+espressoCore = "3.3.0"
 
-appcompat = "1.6.1"
-material = "1.10.0"
+appcompat = "1.2.0"
+material = "1.6.1"
 
 androidx-annotation = "1.8.0"
 
-kotlinx-serialization-json = "1.8.0"
+kotlinx-serialization-json = "1.4.1"
 
 retrofit = "2.9.0"
 okhttp3 = "4.11.0"
 gson = "2.10.1"
 legacySupportV4 = "1.0.0"
-lifecycleLivedataKtx = "2.8.7"
-lifecycleViewmodelKtx = "2.8.7"
-fragmentKtx = "1.8.5"
-databindingCommon = "8.8.0"
-activity = "1.10.1"
-constraintlayout = "2.1.4"
+lifecycleLivedataKtx = "2.6.1"
+lifecycleViewmodelKtx = "2.6.1"
+fragmentKtx = "1.3.0"
+databindingCommon = "4.1.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -49,8 +47,6 @@ androidx-lifecycle-livedata-ktx = { group = "androidx.lifecycle", name = "lifecy
 androidx-lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragmentKtx" }
 androidx-databinding-common = { group = "androidx.databinding", name = "databinding-common", version.ref = "databindingCommon" }
-androidx-activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
-androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
