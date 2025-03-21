@@ -27,7 +27,7 @@ x-environment: &environment
     CRON_SECRET:
 
     # Set the minimum log level(debug, info, warn, error, fatal)
-    LOG_LEVEL: info
+    # LOG_LEVEL: info
 
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
