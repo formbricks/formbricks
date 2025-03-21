@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 type Plan = "free" | "startup" | "scale" | "enterprise";
@@ -46,7 +47,7 @@ export const productRevamp: MigrationScript = {
 
     await Promise.all(updateOrganizationPromises);
 
-    console.log(`Updated ${updateOrganizationPromises.length.toString()} organizations`);
+    logger.info(`Updated ${updateOrganizationPromises.length.toString()} organizations`);
 
     const updatedEmptyConfigProjects: number | undefined = await tx.$executeRaw`
           UPDATE "Project"
@@ -57,7 +58,7 @@ export const productRevamp: MigrationScript = {
           WHERE config = '{}';
         `;
 
-    console.log(
+    logger.info(
       `Updated ${updatedEmptyConfigProjects ? updatedEmptyConfigProjects.toString() : "0"} projects with empty config`
     );
   },

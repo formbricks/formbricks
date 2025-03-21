@@ -12,6 +12,7 @@ import { checkAIPermission } from "@/modules/ee/insights/actions";
 import { ZInsightFilterCriteria } from "@/modules/ee/insights/experience/types/insights";
 import { z } from "zod";
 import { ZInsight } from "@formbricks/database/zod/insights";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { getInsights, updateInsight } from "./lib/insights";
 import { getStats } from "./lib/stats";
@@ -113,10 +114,14 @@ export const updateInsightAction = authenticatedActionClient
 
       return await updateInsight(parsedInput.insightId, parsedInput.data);
     } catch (error) {
-      console.error("Error updating insight:", {
-        insightId: parsedInput.insightId,
-        error,
-      });
+      logger.error(
+        {
+          insightId: parsedInput.insightId,
+          error,
+        },
+        "Error updating insight"
+      );
+
       if (error instanceof Error) {
         throw new Error(`Failed to update insight: ${error.message}`);
       }

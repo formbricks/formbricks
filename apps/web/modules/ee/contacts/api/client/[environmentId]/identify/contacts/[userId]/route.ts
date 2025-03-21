@@ -3,6 +3,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { contactCache } from "@/lib/cache/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZJsUserIdentifyInput } from "@formbricks/types/js";
 import { getPersonState } from "./lib/personState";
@@ -62,11 +63,11 @@ export const GET = async (
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
-      console.error(err);
+      logger.error({ err, url: request.url }, "Error fetching person state");
       return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
     }
   } catch (error) {
-    console.error(error);
+    logger.error({ error, url: request.url }, "Error fetching person state");
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
 };
