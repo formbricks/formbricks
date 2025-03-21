@@ -26,10 +26,10 @@
     "@prisma/client": "6.0.1",
     "@prisma/extension-accelerate": "1.2.1",
     "dotenv-cli": "7.4.4",
+    "@formbricks/logger": "workspace:*",
     "zod-openapi": "4.2.3"
   },
   "devDependencies": {
-    "@formbricks/logger": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
