@@ -28,6 +28,7 @@
     "lint": "turbo run lint",
     "release": "turbo run build --filter=@formbricks/js... && changeset publish",
     "test": "turbo run test --no-cache",
+    "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
     "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=20",
     "prepare": "husky install",
