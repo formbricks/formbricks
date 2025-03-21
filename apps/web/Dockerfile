@@ -53,7 +53,7 @@ RUN touch apps/web/.env
 # Install the dependencies
 RUN pnpm install
 
-# Build the project and logger
+# Build the project
 RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
