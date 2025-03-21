@@ -1,63 +1,39 @@
-import { Button } from "@/modules/ui/components/button";
 import { VariantProps, cva } from "class-variance-authority";
-import { content } from "googleapis/build/src/apis/content";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
 import { cn } from "@formbricks/lib/cn";
 
-// Create a context to share Alert's variant and size with child components
-const AlertContext = React.createContext<{
-  variant: "default" | "error" | "warning" | "info" | "success";
-  size: "default" | "small";
-}>({
+// Create a context to share variant and size with child components
+interface AlertContextValue {
+  variant?: "default" | "error" | "warning" | "info" | "success" | null;
+  size?: "default" | "small" | null;
+}
+
+const AlertContext = React.createContext<AlertContextValue>({
   variant: "default",
   size: "default",
 });
 
+const useAlertContext = () => React.useContext(AlertContext);
+
 // Define alert styles with variants
-const alertVariants = cva(
-  "relative w-full rounded-lg border px-4 py-3 text-sm [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
-  {
-    variants: {
-      variant: {
-        default: "text-foreground border-border 80",
-        error: "text-error-foreground border-error/50 ",
-        warning: "text-warning-foreground border-warning/50",
-        info: "text-info-foreground border-info/50",
-        success: "text-success-foreground border-success/50",
-      },
-      size: {
-        default: "py-3 px-4 text-sm",
-        small: "pl-3 text-xs",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-);
-
-const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
-  default: null,
-  error: <AlertCircle className="h-4 w-4 text-red-600" />,
-  warning: <AlertTriangle className="h-4 w-4 text-amber-600" />,
-  info: <Info className="h-4 w-4 text-blue-600" />,
-  success: <CheckCircle2Icon className="h-4 w-4 text-green-600" />,
-};
-
-const alertButtonVariants = cva("shadow-none", {
+const alertVariants = cva("relative w-full rounded-lg border px-4 py-3 [&>svg+div]:translate-y-[-3px]", {
   variants: {
     variant: {
-      default: "secondary",
-      error: "bg-error-background text-error-foreground hover:bg-error-background-muted",
-      warning: "bg-warning-background text-warning-foreground hover:bg-warning-background-muted",
-      info: "bg-info-background text-info-foreground hover:bg-info-background-muted",
-      success: "bg-success-background text-success-foreground hover:bg-success-background-muted",
+      default: "text-foreground border-border 80",
+      error:
+        "text-error-foreground border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted ",
+      warning:
+        "text-warning-foreground border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted",
+      info: "text-info-foreground border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted",
+      success:
+        "text-success-foreground border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted",
     },
     size: {
-      default: "secondary lg",
-      small: "sm bg-transparent hover:bg-transparent",
+      default:
+        "py-3 px-4 text-sm  [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:w-4 [&>svg]:h-4 [&>svg]:text-foreground [&>svg~*]:pl-7", // Keep padding and text size in size variant
+      small:
+        "py-2 px-3 text-xs flex items-baseline gap-2 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent", // Add flex for small size
     },
   },
   defaultVariants: {
@@ -66,84 +42,23 @@ const alertButtonVariants = cva("shadow-none", {
   },
 });
 
+const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
+  default: null,
+  error: <AlertCircle className="h-4 w-4" />,
+  warning: <AlertTriangle className="h-4 w-4" />,
+  info: <Info className="h-4 w-4" />,
+  success: <CheckCircle2Icon className="h-4 w-4" />,
+};
+
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant = "default", size = "default", children, ...props }, ref) => {
-  // Separate children into icon, content, and button for layout
-  let iconElement: React.ReactNode = null;
-  let contentElements: React.ReactNode[] = [];
-  let buttonElement: React.ReactNode = null;
-
-  // Process children to identify different parts
-  React.Children.forEach(children, (child) => {
-    if (!React.isValidElement(child)) {
-      contentElements.push(child); // Non-element children go into content
-      return;
-    }
-
-    const displayName = (child.type as any).displayName || "";
-    if (displayName === "AlertButton") {
-      buttonElement = child;
-    } else if (typeof child.type !== "string" && !["AlertTitle", "AlertDescription"].includes(displayName)) {
-      iconElement = React.cloneElement(child as React.ReactElement<any>, {
-        className: cn("h-4 w-4", (child as React.ReactElement<any>).props.className || ""),
-      });
-
-      iconElement = !iconElement && variant ? alertVariantIcons[variant] : null;
-    } else {
-      // All other elements go into content
-      contentElements.push(child);
-    }
-  });
-
-  return (
-    <AlertContext.Provider value={{ variant, size }}>
-      <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
-        {/* Small size layout - row-based with vertical centering */}
-        {size === "small" && (
-          <div className="flex flex-wrap items-center gap-2">
-            {/* Icon */}
-            {iconElement && <div className="flex-shrink-0">{iconElement}</div>}
-
-            {/* Content area */}
-            <div className="flex min-w-0 flex-grow flex-wrap items-baseline gap-2">{contentElements}</div>
-
-            {/* Button */}
-            {buttonElement}
-          </div>
-        )}
-
-        {/* Default size layout - stacked with absolute icon */}
-        {size === "default" && (
-          <div className="relative">
-            {/* Main content with proper padding when icon is present */}
-            <div
-              className={cn(
-                "flex flex-col",
-                iconElement ? "pl-6" : "" // Add padding when icon is present
-              )}>
-              <div className="flex flex-col">
-                {/* Icon - absolutely positioned */}
-                {iconElement && <div className="absolute left-0 top-0 mt-3.5">{iconElement}</div>}
-
-                {/* Title and description stacked */}
-                <div className="flex-grow">{contentElements}</div>
-              </div>
-
-              {/* Button at bottom right */}
-              {buttonElement && <div className="mt-2 flex justify-end">{buttonElement}</div>}
-            </div>
-          </div>
-        )}
-      </div>
-    </AlertContext.Provider>
-  );
-});
+>(({ className, variant, size, ...props }, ref) => (
+  <AlertContext.Provider value={{ variant, size }}>
+    <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props} />
+  </AlertContext.Provider>
+));
 Alert.displayName = "Alert";
-
-// Hook to use the alert context
-const useAlertContext = () => React.useContext(AlertContext);
 
 const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
@@ -159,53 +74,44 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
 );
 AlertDescription.displayName = "AlertDescription";
 
-// AlertButton component
-const AlertButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & {
-    loading?: boolean;
-    variant?: string;
-    size?: string;
-    onClick?: (e: React.MouseEvent) => void;
-  }
->(({ className, loading, children, variant: buttonVariant, size: buttonSize, ...props }, ref) => {
-  const { variant, size } = useAlertContext();
+const AlertActions = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => {
+    const { variant, size } = useAlertContext();
 
-  // Get button styling based on alert context
-  const alertButtonStyle = alertButtonVariants({
-    variant,
-    size,
-  });
+    // Clone children and inject button type based on alert size
+    const modifiedChildren = React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        // Only apply default type if child doesn't already have a type prop
+        const childProps = {
+          ...child.props,
+          // Only set type if it's not already defined in child props
+          ...(child.props.variant === undefined && {
+            variant: size === "small" ? "link" : "secondary",
+          }),
+          ...(child.props.size === undefined && {
+            size: size === "small" ? "sm" : "default",
+          }),
+        };
+        return React.cloneElement(child, childProps);
+      }
+      return child;
+    });
 
-  const finalButtonSize = (buttonSize || (size === "small" ? "sm" : "default")) as
-    | "default"
-    | "sm"
-    | "lg"
-    | "icon"
-    | null;
-  const finalButtonVariant = (buttonVariant || (size === "small" ? "link" : "secondary")) as
-    | "default"
-    | "link"
-    | "secondary"
-    | "destructive"
-    | "outline"
-    | "ghost"
-    | null;
-
-  return (
-    <div className="ml-auto mt-auto flex-shrink-0 self-end">
-      <Button
+    return (
+      <div
         ref={ref}
-        className={cn(alertButtonStyle, className)}
-        disabled={loading || props.disabled}
-        variant={finalButtonVariant}
-        size={finalButtonSize}
+        className={cn(
+          size === "small" ? "absolute bottom-0 right-0 ml-auto" : "absolute bottom-3 right-4",
+          className
+        )}
         {...props}>
-        {loading ? "Loading..." : children}
-      </Button>
-    </div>
-  );
-});
-AlertButton.displayName = "AlertButton";
+        {modifiedChildren}
+      </div>
+    );
+  }
+);
 
-export { Alert, AlertDescription, AlertTitle, AlertButton };
+AlertActions.displayName = "AlertActions";
+
+// Export the new component
+export { Alert, AlertTitle, AlertDescription, AlertActions };
