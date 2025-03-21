@@ -40,6 +40,7 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
@@ -89,6 +90,9 @@
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
+    },
+    "@formbricks/web#test": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
