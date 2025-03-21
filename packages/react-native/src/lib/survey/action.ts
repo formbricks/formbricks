@@ -1,3 +1,4 @@
+import { fetch } from "@react-native-community/netinfo";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
@@ -62,24 +63,49 @@ export const trackAction = (name: string, alias?: string): Result<void, NetworkE
  * @param code - The action code to track
  * @returns Result indicating success, network error, or invalid code error
  */
-export const track = (code: string): Result<void, NetworkError> | Result<void, InvalidCodeError> => {
-  const appConfig = RNConfig.getInstance();
+export const track = async (
+  code: string
+): Promise<
+  | Result<void, NetworkError>
+  | Result<void, InvalidCodeError>
+  | Result<void, { code: "error"; message: string }>
+> => {
+  try {
+    const appConfig = RNConfig.getInstance();
 
-  const {
-    environment: {
-      data: { actionClasses = [] },
-    },
-  } = appConfig.get();
+    const netInfo = await fetch();
 
-  const codeActionClasses = actionClasses.filter((action) => action.type === "code");
-  const actionClass = codeActionClasses.find((action) => action.key === code);
+    if (!netInfo.isConnected) {
+      return err({
+        code: "network_error",
+        status: 500,
+        message: "No internet connection. Please check your connection and try again.",
+        responseMessage: "No internet connection. Please check your connection and try again.",
+        url: new URL(`${appConfig.get().appUrl}/js/surveys.umd.cjs`),
+      });
+    }
 
-  if (!actionClass) {
+    const {
+      environment: {
+        data: { actionClasses = [] },
+      },
+    } = appConfig.get();
+
+    const codeActionClasses = actionClasses.filter((action) => action.type === "code");
+    const actionClass = codeActionClasses.find((action) => action.key === code);
+
+    if (!actionClass) {
+      return err({
+        code: "invalid_code",
+        message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
+      });
+    }
+
+    return trackAction(actionClass.name, code);
+  } catch (error) {
     return err({
-      code: "invalid_code",
-      message: `${code} action unknown. Please add this action in Formbricks first in order to use it in your code.`,
+      code: "error",
+      message: "Error tracking action",
     });
   }
-
-  return trackAction(actionClass.name, code);
 };

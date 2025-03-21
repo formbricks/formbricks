@@ -36,6 +36,12 @@ vi.mock("@/lib/common/utils", () => ({
   shouldDisplayBasedOnPercentage: vi.fn(),
 }));
 
+vi.mock("@react-native-community/netinfo", () => ({
+  fetch: vi.fn(() => ({
+    isConnected: true,
+  })),
+}));
+
 describe("survey/action.ts", () => {
   const mockSurvey = {
     id: "survey_001",
@@ -153,15 +159,14 @@ describe("survey/action.ts", () => {
       });
     });
 
-    test("tracks a valid action by code", () => {
-      const result = track("testCode");
+    test("tracks a valid action by code", async () => {
+      const result = await track("testCode");
 
       expect(result.ok).toBe(true);
-      // expect(mockLogger.debug).toHaveBeenCalledWith('Formbricks: Action "testAction" tracked');
     });
 
-    test("returns error for invalid action code", () => {
-      const result = track("invalidCode");
+    test("returns error for invalid action code", async () => {
+      const result = await track("invalidCode");
 
       expect(result.ok).toBe(false);
 
