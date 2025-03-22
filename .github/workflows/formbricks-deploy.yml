@@ -2,12 +2,6 @@ name: Build and Deploy Formbricks
 
 on:
   workflow_dispatch:
-    inputs:
-      deploy_experimental_image:
-        description: 'Deploy the experimental image'
-        required: false
-        default: false
-        type: boolean
   push:
     tags:
       - "v*"
@@ -26,7 +20,7 @@ jobs:
     with:
       VERSION: ${{ needs.docker-build.outputs.VERSION }}
 
-  formbricks-cloud-deployment:
+  deploy-formbricks-cloud:
     name: Deploy Helm Chart
     secrets: inherit
     uses: ./.github/workflows/deploy-formbricks-cloud.yml
@@ -35,8 +29,3 @@ jobs:
       - helm-chart-release
     with:
       VERSION: ${{ needs.docker-build.outputs.VERSION }}
-
-
-
-
-
