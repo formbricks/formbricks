@@ -105,7 +105,7 @@
     "lru-cache": "11.0.2",
     "lucide-react": "0.468.0",
     "mime": "4.0.4",
-    "next": "15.1.2",
+    "next": "15.2.3",
     "next-auth": "4.24.11",
     "next-safe-action": "7.10.2",
     "node-fetch": "3.3.2",
