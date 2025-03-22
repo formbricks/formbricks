@@ -1,9 +1,11 @@
 name: Release on Dockerhub
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    outputs:
+      VERSION:
+        description: release version
+        value: ${{ jobs.build-and-push-image.outputs.VERSION }}
 
 permissions:
   contents: read
@@ -14,6 +16,8 @@ jobs:
     permissions:
       contents: read
     runs-on: ubuntu-latest
+    outputs:
+      VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
@@ -33,6 +37,7 @@ jobs:
           TAG=${{ github.ref }}
           TAG=${TAG#refs/tags/v}
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update package.json version
         run: |
