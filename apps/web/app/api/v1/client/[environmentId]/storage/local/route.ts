@@ -36,13 +36,13 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
 
   const accessType = "private"; // private files are accessible only by authorized users
 
-  const formData = await req.json();
-  const fileType = formData.fileType as string;
-  const encodedFileName = formData.fileName as string;
-  const surveyId = formData.surveyId as string;
-  const signedSignature = formData.signature as string;
-  const signedUuid = formData.uuid as string;
-  const signedTimestamp = formData.timestamp as string;
+  const jsonInput = await req.json();
+  const fileType = jsonInput.fileType as string;
+  const encodedFileName = jsonInput.fileName as string;
+  const surveyId = jsonInput.surveyId as string;
+  const signedSignature = jsonInput.signature as string;
+  const signedUuid = jsonInput.uuid as string;
+  const signedTimestamp = jsonInput.timestamp as string;
 
   if (!fileType) {
     return responses.badRequestResponse("contentType is required");
@@ -99,7 +99,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
     return responses.unauthorizedResponse();
   }
 
-  const base64String = formData.fileBase64String as string;
+  const base64String = jsonInput.fileBase64String as string;
 
   const buffer = Buffer.from(base64String.split(",")[1], "base64");
   const file = new Blob([buffer], { type: fileType });

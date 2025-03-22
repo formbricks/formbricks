@@ -16,7 +16,16 @@ export const ZUploadFileConfig = z.object({
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
 
-const ZUploadFileResponse = z.object({
+export const ZUploadFileRequest = z.object({
+  fileName: z.string(),
+  fileType: z.string(),
+  surveyId: z.string().cuid2(),
+  environmentId: z.string().cuid2(),
+});
+
+export type TUploadFileRequest = z.infer<typeof ZUploadFileRequest>;
+
+export const ZUploadFileResponse = z.object({
   data: z.object({
     signedUrl: z.string(),
     fileUrl: z.string(),
