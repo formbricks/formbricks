@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
@@ -36,7 +37,7 @@ interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
   webAppUrl: string;
-  singleUseId?: string;
+  refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
@@ -47,7 +48,7 @@ export const SurveyDropDownMenu = ({
   environmentId,
   survey,
   webAppUrl,
-  singleUseId,
+  refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
@@ -168,11 +169,12 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <div
                     className="flex w-full cursor-pointer items-center"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      const previewUrl = singleUseId
-                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
+                      const newId = await refreshSingleUseId();
+                      const previewUrl = newId
+                        ? `/s/${survey.id}?suId=${newId}&preview=true`
                         : `/s/${survey.id}?preview=true`;
                       window.open(previewUrl, "_blank");
                     }}>
@@ -184,12 +186,12 @@ export const SurveyDropDownMenu = ({
                   <button
                     type="button"
                     className="flex w-full items-center"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      navigator.clipboard.writeText(
-                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
-                      );
+                      const newId = await refreshSingleUseId();
+                      const copiedLink = copySurveyLink(surveyUrl, newId);
+                      navigator.clipboard.writeText(copiedLink);
                       toast.success("Copied link to clipboard");
                       router.refresh();
                     }}>
