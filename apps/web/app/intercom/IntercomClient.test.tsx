@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TUser } from "@formbricks/types/user";
 import { IntercomClient } from "./IntercomClient";
 
-// Mock the Intercom package
 vi.mock("@intercom/messenger-js-sdk", () => ({
   default: vi.fn(),
 }));
