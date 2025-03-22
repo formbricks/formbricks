@@ -6,10 +6,11 @@ name: Docker Release to Github
 # documentation.
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    outputs:
+      VERSION:
+        description: release version
+        value: ${{ jobs.build-and-push-image.outputs.VERSION }}
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -33,6 +34,9 @@ jobs:
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
+    outputs:
+      VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
+
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
@@ -48,6 +52,7 @@ jobs:
           TAG=${{ github.ref }}
           TAG=${TAG#refs/tags/v}
           echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
 
       - name: Update package.json version
         run: |

@@ -1,0 +1,31 @@
+name: Build and Deploy Formbricks
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  docker-build:
+    name: Build stable docker image
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: ./.github/workflows/release-docker-github.yml
+
+  helm-chart-release:
+    name: Release Helm Chart
+    uses: ./.github/workflows/release-helm-chart.yml
+    needs:
+      - docker-build
+    with:
+      VERSION: ${{ needs.docker-build.outputs.VERSION }}
+
+  deploy-formbricks-cloud:
+    name: Deploy Helm Chart
+    secrets: inherit
+    uses: ./.github/workflows/deploy-formbricks-cloud.yml
+    needs:
+      - docker-build
+      - helm-chart-release
+    with:
+      VERSION: ${{ needs.docker-build.outputs.VERSION }}

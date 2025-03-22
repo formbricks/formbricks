@@ -1,9 +1,12 @@
 name: Publish Helm Chart
 
 on:
-  release:
-    types:
-      - published
+  workflow_call:
+    inputs:
+      VERSION:
+        description: 'The version of the Helm chart to release'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -39,8 +42,8 @@ jobs:
 
       - name: Update Chart.yaml with new version
         run: |
-          yq -i ".version = \"${VERSION#v}\"" helm-chart/Chart.yaml
-          yq -i ".appVersion = \"${VERSION}\"" helm-chart/Chart.yaml
+          yq -i ".version = \"${{ inputs.VERSION }}\"" helm-chart/Chart.yaml
+          yq -i ".appVersion = \"v${{ inputs.VERSION }}\"" helm-chart/Chart.yaml
 
       - name: Package Helm chart
         run: |
@@ -48,4 +51,4 @@ jobs:
 
       - name: Push Helm chart to GitHub Container Registry
         run: |
-          helm push formbricks-${VERSION#v}.tgz oci://ghcr.io/formbricks/helm-charts
+          helm push formbricks-${{ inputs.VERSION }}.tgz oci://ghcr.io/formbricks/helm-charts
