@@ -31,18 +31,22 @@ export const SurveyCard = ({
   locale,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
-  const surveyStatusLabel =
-    survey.status === "inProgress"
-      ? t("common.in_progress")
-      : survey.status === "scheduled"
-        ? t("common.scheduled")
-        : survey.status === "completed"
-          ? t("common.completed")
-          : survey.status === "draft"
-            ? t("common.draft")
-            : survey.status === "paused"
-              ? t("common.paused")
-              : undefined;
+  const surveyStatusLabel = (() => {
+    switch (survey.status) {
+      case "inProgress":
+        return t("common.in_progress");
+      case "scheduled":
+        return t("common.scheduled");
+      case "completed":
+        return t("common.completed");
+      case "draft":
+        return t("common.draft");
+      case "paused":
+        return t("common.paused");
+      default:
+        return undefined;
+    }
+  })();
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 

@@ -48,18 +48,11 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
 
   let singleUseId: string | undefined = undefined;
 
-  console.log("survey", survey);
-  console.log("isSingleUseSurvey", isSingleUseSurvey);
-
   if (isSingleUseSurvey) {
-    console.log("suId", suId);
-
     // check if the single use id is present for single use surveys
     if (!suId) {
       return <SurveyInactive status="link invalid" />;
     }
-
-    console.log("isSingleUseSurveyEncrypted", isSingleUseSurveyEncrypted);
 
     // if encryption is enabled, validate the single use id
     let validatedSingleUseId: string | undefined = undefined;

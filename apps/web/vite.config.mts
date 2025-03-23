@@ -8,7 +8,6 @@ export default defineConfig({
   test: {
     environment: "node",
     environmentMatchGlobs: [
-      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
       ["**/*.test.tsx", "jsdom"],
     ],
     exclude: ["playwright/**", "node_modules/**"],
@@ -34,9 +33,13 @@ export default defineConfig({
         "modules/survey/link/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "app/intercom/*.tsx",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
+        "modules/survey/hooks/*.tsx",
+        "modules/survey/lib/client-utils.ts",
+        "modules/survey/list/components/survey-card.tsx"
       ],
       exclude: [
         "**/.next/**",
