@@ -58,7 +58,7 @@ jobs:
           helm-plugins: >
             https://github.com/databus23/helm-diff,
             https://github.com/jkroepke/helm-secrets
-          helmfile-args: diff
+          helmfile-args: apply
           helmfile-auto-init: "false"
           helmfile-workdirectory: infra/formbricks-cloud-helm
 
