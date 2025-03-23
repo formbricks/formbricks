@@ -77,6 +77,21 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
+  const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      e.preventDefault();
+      setIsDropDownOpen(false);
+      const newId = await refreshSingleUseId();
+      const copiedLink = copySurveyLink(surveyUrl, newId);
+      navigator.clipboard.writeText(copiedLink);
+      toast.success(t("common.copied_to_clipboard"));
+      router.refresh();
+    }
+    catch (error) {
+      toast.error(t("environments.surveys.error_copying_link"));
+    }
+  };
+
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
     setLoading(true);
     try {
@@ -186,15 +201,7 @@ export const SurveyDropDownMenu = ({
                   <button
                     type="button"
                     className="flex w-full items-center"
-                    onClick={async (e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      const newId = await refreshSingleUseId();
-                      const copiedLink = copySurveyLink(surveyUrl, newId);
-                      navigator.clipboard.writeText(copiedLink);
-                      toast.success("Copied link to clipboard");
-                      router.refresh();
-                    }}>
+                    onClick={async (e) => handleCopyLink(e)}>
                     <LinkIcon className="mr-2 h-4 w-4" />
                     {t("common.copy_link")}
                   </button>
