@@ -39,7 +39,8 @@ export default defineConfig({
         "modules/organization/settings/teams/actions.ts",
         "modules/survey/hooks/*.tsx",
         "modules/survey/lib/client-utils.ts",
-        "modules/survey/list/components/survey-card.tsx"
+        "modules/survey/list/components/survey-card.tsx",
+        "modules/survey/list/components/survey-dropdown-menu.tsx"
       ],
       exclude: [
         "**/.next/**",

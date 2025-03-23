@@ -121,6 +121,7 @@ export const SurveyDropDownMenu = ({
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
+      data-testid="survey-dropdown-menu"
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
@@ -200,6 +201,7 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <button
                     type="button"
+                    data-testid="copy-link"
                     className="flex w-full items-center"
                     onClick={async (e) => handleCopyLink(e)}>
                     <LinkIcon className="mr-2 h-4 w-4" />
