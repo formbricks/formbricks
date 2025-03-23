@@ -140,6 +140,11 @@ ingress:
         - path: /
           pathType: Prefix
           serviceName: formbricks
+    - host: app.formbricks.com
+      paths:
+        - path: /
+          pathType: Prefix
+          serviceName: formbricks
   ingressClassName: alb
 
 ## RBAC
