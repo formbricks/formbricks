@@ -88,7 +88,7 @@ export const SurveyDropDownMenu = ({
       router.refresh();
     }
     catch (error) {
-      toast.error(t("environments.surveys.error_copying_link"));
+      toast.error(t("environments.surveys.summary.failed_to_copy_link"));
     }
   };
 
