@@ -273,8 +273,8 @@ export const QuestionCard = ({
             TSurveyQuestionTypeEnum.Matrix,
             TSurveyQuestionTypeEnum.CTA,
           ].includes(question.type) ? (
-            <Alert variant="warning" size="small">
-              <AlertTitle>{t("environments.surveys.edit.response_count_warning")}</AlertTitle>
+            <Alert variant="warning" size="small" className="w-fill">
+              <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => onAlertTrigger()}>{t("common.learn_more")}</AlertButton>
             </Alert>
           ) : null}

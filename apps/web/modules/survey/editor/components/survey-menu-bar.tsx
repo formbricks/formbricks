@@ -333,7 +333,7 @@ export const SurveyMenuBar = ({
           {responseCount > 0 && (
             <div>
               <Alert variant="warning" size="small">
-                <AlertTitle>{t("environments.surveys.edit.response_count_warning")}</AlertTitle>
+                <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
                 <AlertButton onClick={() => setIsCautionDialogOpen(true)}>
                   {t("common.learn_more")}
                 </AlertButton>
