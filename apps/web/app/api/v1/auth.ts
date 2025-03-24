@@ -12,9 +12,8 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
   const apiKeyData = await getApiKeyWithPermissions(apiKey);
   if (!apiKeyData) return null;
 
-  // For backward compatibility, create auth object with the first environment ID
   // In the route handlers, we'll do more specific permission checks
-  const environmentIds = apiKeyData.apiKeyEnvironments.map((env: any) => env.environmentId);
+  const environmentIds = apiKeyData.apiKeyEnvironments.map((env) => env.environmentId);
   if (environmentIds.length === 0) return null;
 
   const hashedApiKey = hashApiKey(apiKey);
