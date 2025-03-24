@@ -86,4 +86,5 @@ const document = createDocument({
   ],
 });
 
+// do not replace this with logger.info
 console.log(yaml.stringify(document));

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { ValidationError } from "@formbricks/types/errors";
 
 type ValidationPair<T> = [T, z.ZodType<T>];
@@ -11,8 +12,9 @@ export function validateInputs<T extends ValidationPair<any>[]>(
   for (const [value, schema] of pairs) {
     const inputValidation = schema.safeParse(value);
     if (!inputValidation.success) {
-      console.error(
-        `Validation failed for ${JSON.stringify(value).substring(0, 100)} and ${JSON.stringify(schema)}: ${inputValidation.error.message}`
+      logger.error(
+        inputValidation.error,
+        `Validation failed for ${JSON.stringify(value).substring(0, 100)} and ${JSON.stringify(schema)}`
       );
       throw new ValidationError("Validation failed");
     }

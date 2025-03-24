@@ -3,6 +3,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
+import { logger } from "@formbricks/logger";
 import { getSignedUrlForPublicFile } from "./lib/getSignedUrl";
 
 // api endpoint for uploading public files
@@ -17,7 +18,7 @@ export const POST = async (req: NextRequest): Promise<Response> => {
   try {
     storageInput = await req.json();
   } catch (error) {
-    console.error(`Error parsing JSON input: ${error}`);
+    logger.error({ error, url: req.url }, "Error parsing JSON input");
     return responses.badRequestResponse("Malformed JSON input, please check your request body");
   }
 

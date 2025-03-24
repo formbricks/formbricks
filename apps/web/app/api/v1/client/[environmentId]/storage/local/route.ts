@@ -9,6 +9,7 @@ import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 
 interface Context {
   params: Promise<{
@@ -125,7 +126,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
       message: "File uploaded successfully",
     });
   } catch (err) {
-    console.error("err: ", err);
+    logger.error({ error: err, url: req.url }, "Error in POST /api/v1/client/[environmentId]/upload");
     if (err.name === "FileTooLargeError") {
       return responses.badRequestResponse(err.message);
     }

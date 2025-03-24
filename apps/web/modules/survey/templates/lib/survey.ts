@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { capturePosthogEnvironmentEvent } from "@formbricks/lib/posthogServer";
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const createSurvey = async (
@@ -101,7 +102,7 @@ export const createSurvey = async (
     return { id: survey.id };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error creating survey");
       throw new DatabaseError(error.message);
     }
     throw error;

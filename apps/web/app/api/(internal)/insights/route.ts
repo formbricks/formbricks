@@ -5,6 +5,7 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { CRON_SECRET } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 import { generateInsightsEnabledForSurveyQuestions } from "./lib/utils";
 
 export const maxDuration = 300; // This function can run for a maximum of 300 seconds
@@ -25,7 +26,7 @@ export const POST = async (request: Request) => {
     const inputValidation = ZGenerateInsightsInput.safeParse(jsonInput);
 
     if (!inputValidation.success) {
-      console.error(inputValidation.error);
+      logger.error({ error: inputValidation.error, url: request.url }, "Error in POST /api/insights");
       return responses.badRequestResponse(
         "Fields are missing or incorrectly formatted",
         transformErrorToDetails(inputValidation.error),
