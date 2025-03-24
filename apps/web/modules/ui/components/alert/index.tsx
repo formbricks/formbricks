@@ -37,7 +37,7 @@ const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 [&>s
       default:
         "py-3 px-4 text-sm grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
       small:
-        "px-3 py-2 text-xs flex items-center gap-2 [&>svg]:flex-shrink-0 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
+        "px-3 py-2 text-xs flex items-center justify-between gap-2 [&>svg]:flex-shrink-0 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {
@@ -124,7 +124,7 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "self-end",
           alertSize === "small"
-            ? "-my-2 -mr-3 flex-shrink-0"
+            ? "-my-2 -mr-3 ml-auto flex-shrink-0"
             : "col-start-2 row-span-2 row-start-1 flex items-center justify-center"
         )}>
         <Button ref={ref} variant={buttonVariant} size={buttonSize} className={className} {...props}>
