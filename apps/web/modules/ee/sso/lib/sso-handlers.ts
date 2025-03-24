@@ -1,13 +1,18 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@formbricks/lib/constants";
+import {
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_ORGANIZATION_ROLE,
+  DEFAULT_TEAM_ID,
+} from "@formbricks/lib/constants";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
@@ -132,12 +137,21 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
         });
         isNewOrganization = true;
       }
-      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "manager";
+      const role = isNewOrganization ? "owner" : DEFAULT_ORGANIZATION_ROLE || "owner";
       await createMembership(organization.id, userProfile.id, { role: role, accepted: true });
       await createAccount({
         ...account,
         userId: userProfile.id,
       });
+
+      await createTeamMembership(
+        {
+          organizationId: organization.id,
+          role: role,
+          teamIds: [DEFAULT_TEAM_ID || ""],
+        },
+        userProfile.id
+      );
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...userProfile.notificationSettings,

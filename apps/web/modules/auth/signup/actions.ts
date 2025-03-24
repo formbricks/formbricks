@@ -3,7 +3,7 @@
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import { createDefaultTeamMembership, createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
@@ -25,6 +25,7 @@ const ZCreateUserAction = z.object({
   userLocale: ZUserLocale.optional(),
   defaultOrganizationId: z.string().optional(),
   defaultOrganizationRole: ZOrganizationRole.optional(),
+  defaultTeamId: z.string().optional(),
   emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
@@ -93,45 +94,45 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
     await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
     await deleteInvite(invite.id);
   }
-  // Handle organization assignment
-  else {
-    let organizationId: string | undefined;
-    let role: TOrganizationRole = "owner";
 
-    if (parsedInput.defaultOrganizationId) {
-      // Use existing or create organization with specific ID
-      let organization = await getOrganization(parsedInput.defaultOrganizationId);
-      if (!organization) {
-        organization = await createOrganization({
-          id: parsedInput.defaultOrganizationId,
-          name: `${user.name}'s Organization`,
-        });
-      } else {
-        role = parsedInput.defaultOrganizationRole || "owner";
-      }
-      organizationId = organization.id;
-    } else {
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (isMultiOrgEnabled) {
-        // Create new organization
-        const organization = await createOrganization({ name: `${user.name}'s Organization` });
-        organizationId = organization.id;
-      }
-    }
+  let organizationId: string | undefined;
+  let role: TOrganizationRole = "owner";
 
-    if (organizationId) {
-      await createMembership(organizationId, user.id, { role, accepted: true });
-      await updateUser(user.id, {
-        notificationSettings: {
-          ...user.notificationSettings,
-          alert: { ...user.notificationSettings?.alert },
-          weeklySummary: { ...user.notificationSettings?.weeklySummary },
-          unsubscribedOrganizationIds: Array.from(
-            new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organizationId])
-          ),
-        },
+  if (parsedInput.defaultOrganizationId) {
+    // Use existing or create organization with specific ID
+    let organization = await getOrganization(parsedInput.defaultOrganizationId);
+    if (!organization) {
+      organization = await createOrganization({
+        id: parsedInput.defaultOrganizationId,
+        name: `${user.name}'s Organization`,
       });
+    } else {
+      role = parsedInput.defaultOrganizationRole || "owner";
     }
+    organizationId = organization.id;
+  } else {
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    if (isMultiOrgEnabled) {
+      // Create new organization
+      const organization = await createOrganization({ name: `${user.name}'s Organization` });
+      organizationId = organization.id;
+    }
+  }
+
+  if (organizationId) {
+    await createMembership(organizationId, user.id, { role, accepted: true });
+    await updateUser(user.id, {
+      notificationSettings: {
+        ...user.notificationSettings,
+        alert: { ...user.notificationSettings?.alert },
+        weeklySummary: { ...user.notificationSettings?.weeklySummary },
+        unsubscribedOrganizationIds: Array.from(
+          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), organizationId])
+        ),
+      },
+    });
+
+    await createDefaultTeamMembership(user.id);
   }
 
   // Send verification email if enabled

@@ -778,7 +778,6 @@
         "add_env_api_key": "Adicionar Chave API {environmentType}",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
-        "api_key_created": "Chave API criada",
         "api_key_deleted": "Chave API eliminada",
         "api_key_label": "Etiqueta da Chave API",
         "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
