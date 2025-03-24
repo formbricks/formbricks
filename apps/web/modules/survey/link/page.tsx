@@ -47,6 +47,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
 
   let singleUseId: string | undefined = undefined;
+
   if (isSingleUseSurvey) {
     // check if the single use id is present for single use surveys
     if (!suId) {
