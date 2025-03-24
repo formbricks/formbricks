@@ -4,13 +4,6 @@ import toast from "react-hot-toast";
 import { afterEach, beforeAll, describe, expect, test, vi } from "vitest";
 import { OnboardingSetupInstructions } from "./OnboardingSetupInstructions";
 
-// Mock the translation hook to simply return the key
-vi.mock("@tolgee/react", () => ({
-  useTranslate: () => ({
-    t: (key: string) => key,
-  }),
-}));
-
 // Mock react-hot-toast so we can assert that a success message is shown
 vi.mock("react-hot-toast", () => ({
   __esModule: true,

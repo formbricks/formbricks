@@ -237,6 +237,7 @@
     "maximum": "Máximo",
     "member": "Membro",
     "members": "Membros",
+    "membership_not_found": "Associação não encontrada",
     "metadata": "Metadados",
     "minimum": "Mínimo",
     "mobile_overlay_text": "O Formbricks não está disponível para dispositivos com resoluções menores.",
@@ -292,7 +293,6 @@
     "privacy": "Política de Privacidade",
     "privacy_policy": "Política de Privacidade",
     "product_manager": "Gestor de Produto",
-    "product_not_found": "Produto não encontrado",
     "profile": "Perfil",
     "project": "Projeto",
     "project_configuration": "Configuração do Projeto",
@@ -773,23 +773,6 @@
       "zapier_integration_description": "Integre o Formbricks com mais de 5000 apps via Zapier"
     },
     "project": {
-      "api-keys": {
-        "add_api_key": "Adicionar Chave API",
-        "add_env_api_key": "Adicionar Chave API {environmentType}",
-        "api_key": "Chave API",
-        "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
-        "api_key_created": "Chave API criada",
-        "api_key_deleted": "Chave API eliminada",
-        "api_key_label": "Etiqueta da Chave API",
-        "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
-        "dev_api_keys": "Chaves de Ambiente de Desenvolvimento",
-        "dev_api_keys_description": "Adicionar e remover chaves de API para o seu ambiente de Desenvolvimento.",
-        "no_api_keys_yet": "Ainda não tem nenhuma chave API",
-        "prod_api_keys": "Chaves de Ambiente de Produção",
-        "prod_api_keys_description": "Adicionar e remover chaves de API para o seu ambiente de Produção.",
-        "secret": "Segredo",
-        "unable_to_delete_api_key": "Não é possível eliminar a chave API"
-      },
       "app-connection": {
         "api_host_description": "Este é o URL do seu backend Formbricks.",
         "app_connection": "Ligação de Aplicação",

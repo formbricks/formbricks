@@ -237,6 +237,7 @@
     "maximum": "Máximo",
     "member": "Membros",
     "members": "Membros",
+    "membership_not_found": "Assinatura não encontrada",
     "metadata": "metadados",
     "minimum": "Mínimo",
     "mobile_overlay_text": "O Formbricks não está disponível para dispositivos com resoluções menores.",
@@ -292,7 +293,6 @@
     "privacy": "Política de Privacidade",
     "privacy_policy": "Política de Privacidade",
     "product_manager": "Gerente de Produto",
-    "product_not_found": "Produto não encontrado",
     "profile": "Perfil",
     "project": "Projeto",
     "project_configuration": "Configuração do Projeto",
@@ -773,23 +773,6 @@
       "zapier_integration_description": "Integrar o Formbricks com mais de 5000 apps via Zapier"
     },
     "project": {
-      "api-keys": {
-        "add_api_key": "Adicionar Chave API",
-        "add_env_api_key": "Adicionar chave de API {environmentType}",
-        "api_key": "Chave de API",
-        "api_key_copied_to_clipboard": "Chave da API copiada para a área de transferência",
-        "api_key_created": "Chave da API criada",
-        "api_key_deleted": "Chave da API deletada",
-        "api_key_label": "Rótulo da Chave API",
-        "api_key_security_warning": "Por motivos de segurança, a chave da API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
-        "dev_api_keys": "Chaves do Ambiente de Desenvolvimento",
-        "dev_api_keys_description": "Adicionar e remover chaves de API para o seu ambiente de Desenvolvimento.",
-        "no_api_keys_yet": "Você ainda não tem nenhuma chave de API",
-        "prod_api_keys": "Chaves do Ambiente de Produção",
-        "prod_api_keys_description": "Adicionar e remover chaves de API para seu ambiente de Produção.",
-        "secret": "Segredo",
-        "unable_to_delete_api_key": "Não foi possível deletar a Chave API"
-      },
       "app-connection": {
         "api_host_description": "Essa é a URL do seu backend do Formbricks.",
         "app_connection": "Conexão do App",
