@@ -19,7 +19,7 @@ const LoadingCard = () => {
             <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
               <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                {t("environments.project.api-keys.api_key")}
+                {t("environments.project.api_keys.api_key")}
               </div>
               <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
             </div>

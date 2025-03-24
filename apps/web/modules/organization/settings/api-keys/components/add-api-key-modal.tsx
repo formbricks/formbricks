@@ -163,7 +163,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
           <div className="flex items-center justify-between p-6">
             <div className="flex items-center space-x-2">
               <div className="text-xl font-medium text-slate-700">
-                {t("environments.project.api-keys.add_api_key")}
+                {t("environments.project.api_keys.add_api_key")}
               </div>
             </div>
           </div>
@@ -172,7 +172,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
           <div className="flex flex-col justify-between rounded-lg p-6">
             <div className="w-full space-y-6">
               <div className="space-y-2">
-                <Label>{t("environments.project.api-keys.api_key_label")}</Label>
+                <Label>{t("environments.project.api_keys.api_key_label")}</Label>
                 <Input
                   placeholder="e.g. GitHub, PostHog, Slack"
                   {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
@@ -301,14 +301,14 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
 
                   {/* Add permission button */}
                   <Button type="button" variant="outline" onClick={addPermission}>
-                    <span className="mr-2">+</span> {t("environments.settings.api-keys.add_permission")}
+                    <span className="mr-2">+</span> {t("environments.settings.api_keys.add_permission")}
                   </Button>
                 </div>
               </div>
 
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
                 <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
-                <p>{t("environments.project.api-keys.api_key_security_warning")}</p>
+                <p>{t("environments.project.api_keys.api_key_security_warning")}</p>
               </div>
             </div>
           </div>
@@ -325,7 +325,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
                 {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={apiKeyLabel === ""}>
-                {t("environments.project.api-keys.add_api_key")}
+                {t("environments.project.api_keys.add_api_key")}
               </Button>
             </div>
           </div>

@@ -30,7 +30,7 @@ export const APIKeysPage = async (props) => {
       </PageHeader>
       <SettingsCard
         title={t("common.api_keys")}
-        description={t("environments.settings.api-keys.api_keys_description")}>
+        description={t("environments.settings.api_keys.api_keys_description")}>
         <ApiKeyList
           organizationId={organization.id}
           locale={locale}

@@ -773,7 +773,7 @@
       "zapier_integration_description": "透過 Zapier 將 Formbricks 與 5000 多個應用程式整合"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "新增 API 金鑰",
         "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
         "api_key": "API 金鑰",
@@ -986,12 +986,10 @@
       "with_the_formbricks_sdk": "使用 Formbricks SDK"
     },
     "settings": {
-      "api-keys": {
+      "api_keys": {
+        "add_api_key": "新增 API 金鑰",
         "add_permission": "新增權限",
         "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API"
-      },
-      "api_keys": {
-        "add_api_key": "新增 API 金鑰"
       },
       "billing": {
         "10000_monthly_responses": "10000 個每月回應",

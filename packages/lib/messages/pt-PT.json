@@ -773,7 +773,7 @@
       "zapier_integration_description": "Integre o Formbricks com mais de 5000 apps via Zapier"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "Adicionar Chave API",
         "add_env_api_key": "Adicionar Chave API {environmentType}",
         "api_key": "Chave API",
@@ -986,12 +986,10 @@
       "with_the_formbricks_sdk": "com o SDK Formbricks"
     },
     "settings": {
-      "api-keys": {
+      "api_keys": {
+        "add_api_key": "Adicionar chave API",
         "add_permission": "Adicionar permissão",
         "api_keys_description": "Gerir chaves API para aceder às APIs de gestão do Formbricks"
-      },
-      "api_keys": {
-        "add_api_key": "Adicionar chave API"
       },
       "billing": {
         "10000_monthly_responses": "10000 Respostas Mensais",
