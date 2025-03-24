@@ -30,7 +30,7 @@ ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_ru
 ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
 ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runtime"
 
-ARG SENTRY_DNS
+ARG SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
 # Increase Node.js memory limit

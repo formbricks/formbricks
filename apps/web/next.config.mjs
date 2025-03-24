@@ -321,7 +321,7 @@ const sentryConfig = {
   disableLogger: true,
 };
 
-const exportConfig = process.env.SENTRY_DNS
+const exportConfig = process.env.SENTRY_DSN
   ? withSentryConfig(nextConfig, sentryOptions)
   : nextConfig;
 
