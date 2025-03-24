@@ -7,7 +7,7 @@ interface StoryOptions {
   title: string;
   description: string;
   showIcon: boolean;
-  showActions: boolean;
+  showButton: boolean;
   actionButtonText: string;
 }
 
@@ -30,6 +30,7 @@ const meta: Meta<typeof Alert> = {
       table: {
         category: "Appearance",
         type: { summary: "string" },
+        defaultValue: { summary: "default" },
       },
       order: 1,
     },
@@ -43,6 +44,24 @@ const meta: Meta<typeof Alert> = {
         defaultValue: { summary: "default" },
       },
       order: 2,
+    },
+    showIcon: {
+      control: "boolean",
+      description: "Whether to show an icon",
+      table: {
+        category: "Appearance",
+        type: { summary: "boolean" },
+      },
+      order: 3,
+    },
+    showButton: {
+      control: "boolean",
+      description: "Whether to show action buttons",
+      table: {
+        category: "Appearance",
+        type: { summary: "boolean" },
+      },
+      order: 4,
     },
     title: {
       control: "text",
@@ -62,24 +81,6 @@ const meta: Meta<typeof Alert> = {
       },
       order: 2,
     },
-    showIcon: {
-      control: "boolean",
-      description: "Whether to show an icon",
-      table: {
-        category: "Appearance",
-        type: { summary: "boolean" },
-      },
-      order: 4,
-    },
-    showActions: {
-      control: "boolean",
-      description: "Whether to show action buttons",
-      table: {
-        category: "Appearance",
-        type: { summary: "boolean" },
-      },
-      order: 5,
-    },
     actionButtonText: {
       control: "text",
       description: "Text for the action button",
@@ -87,16 +88,7 @@ const meta: Meta<typeof Alert> = {
         category: "Content",
         type: { summary: "string" },
       },
-      order: 3,
-    },
-    className: {
-      control: "text",
-      description: "Additional CSS classes",
-      table: {
-        category: "Appearance",
-        type: { summary: "string" },
-      },
-      order: 3,
+      order: 2,
     },
   } as any,
 };
@@ -116,16 +108,16 @@ const renderAlert = (args: any) => {
     title = "",
     description = "",
     showIcon = false,
-    showActions = false,
+    showButton = false,
     actionButtonText = "",
   } = args as StoryOptions;
 
   return (
     <Alert variant={variant} size={size} className={className}>
-      {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
+      {showIcon && <LightbulbIcon />}
       <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
       {description && <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>}
-      {showActions && <AlertButton onClick={() => alert("Button clicked")}>{actionButtonText}</AlertButton>}
+      {showButton && <AlertButton onClick={() => alert("Button clicked")}>{actionButtonText}</AlertButton>}
     </Alert>
   );
 };
@@ -135,10 +127,10 @@ export const Default: Story = {
   render: renderAlert,
   args: {
     variant: "default",
+    showIcon: false,
+    showButton: false,
     title: "Alert Title",
     description: "This is an important notification.",
-    showIcon: false,
-    showActions: false,
     actionButtonText: "Learn more",
   },
 };
@@ -152,7 +144,7 @@ export const Small: Story = {
     title: "Information Alert",
     description: "This is an important notification.",
     showIcon: false,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Learn more",
   },
   parameters: {
@@ -172,7 +164,7 @@ export const withButtonAndIcon: Story = {
     title: "Alert Title",
     description: "This is an important notification.",
     showIcon: true,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Learn more",
   },
 };
@@ -185,7 +177,7 @@ export const Error: Story = {
     title: "Error Alert",
     description: "Your session has expired. Please log in again.",
     showIcon: false,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Log in",
   },
   parameters: {
@@ -205,7 +197,7 @@ export const Warning: Story = {
     title: "Warning Alert",
     description: "You are editing sensitive data. Be cautious",
     showIcon: false,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Proceed",
   },
   parameters: {
@@ -225,7 +217,7 @@ export const Info: Story = {
     title: "Info Alert",
     description: "There was an update to your application.",
     showIcon: false,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Refresh",
   },
   parameters: {
@@ -245,7 +237,7 @@ export const Success: Story = {
     title: "Success Alert",
     description: "This worked! Please proceed.",
     showIcon: false,
-    showActions: true,
+    showButton: true,
     actionButtonText: "Close",
   },
   parameters: {

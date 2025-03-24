@@ -21,7 +21,7 @@ const AlertContext = createContext<AlertContextValue>({
 const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-lg border", {
+const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 [&>svg]:text-foreground", {
   variants: {
     variant: {
       default: "text-foreground border-border",
@@ -35,9 +35,9 @@ const alertVariants = cva("relative w-full rounded-lg border", {
     },
     size: {
       default:
-        "py-3 px-4 text-sm grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:size-4 [&>svg]:text-foreground [&>svg~*]:pl-7",
+        "py-3 px-4 text-sm grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
       small:
-        "px-3 py-2 text-xs flex items-center gap-2 [&>svg]:flex [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0 ",
+        "px-3 py-2 text-xs flex items-center gap-2 [&>svg]:flex-shrink-0 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {
@@ -79,8 +79,7 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
         ref={ref}
         className={cn(
           "col-start-1 row-start-1 font-medium leading-none tracking-tight",
-          size === "small" ? "truncate" : "col-start-1 row-start-1",
-
+          size === "small" ? "min-w-0 flex-shrink truncate" : "col-start-1 row-start-1",
           className
         )}
         {...props}
@@ -100,8 +99,9 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
         ref={ref}
         className={cn(
           "[&_p]:leading-relaxed",
-          // Add truncation and size-specific classes
-          size === "small" ? "truncate" : "col-start-1 row-start-2",
+          size === "small"
+            ? "hidden min-w-0 flex-shrink flex-grow truncate opacity-80 sm:block" // Hidden on very small screens, limited width
+            : "col-start-1 row-start-2",
           className
         )}
         {...props}
@@ -124,7 +124,7 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "self-end",
           alertSize === "small"
-            ? "-my-2 -mr-3 ml-auto"
+            ? "-my-2 -mr-3 flex-shrink-0"
             : "col-start-2 row-span-2 row-start-1 flex items-center justify-center"
         )}>
         <Button ref={ref} variant={buttonVariant} size={buttonSize} className={className} {...props}>
