@@ -19,7 +19,7 @@ import { RankingQuestionForm } from "@/modules/survey/editor/components/ranking-
 import { RatingQuestionForm } from "@/modules/survey/editor/components/rating-question-form";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getQuestionIconMap, getTSurveyQuestionTypeEnumName } from "@/modules/survey/lib/questions";
-import { AlertJakob } from "@/modules/ui/components/jakob";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
 import { useSortable } from "@dnd-kit/sortable";
@@ -273,15 +273,10 @@ export const QuestionCard = ({
             TSurveyQuestionTypeEnum.Matrix,
             TSurveyQuestionTypeEnum.CTA,
           ].includes(question.type) ? (
-            <AlertJakob
-              variant="warning"
-              size="small"
-              title={t("environments.surveys.edit.caution_text")}
-              button={{
-                label: t("common.learn_more"),
-                onClick: () => onAlertTrigger(),
-              }}
-              className="mb-4 mt-3"></AlertJakob>
+            <Alert variant="warning" size="small">
+              <AlertTitle>{t("environments.surveys.edit.response_count_warning")}</AlertTitle>
+              <AlertButton onClick={() => onAlertTrigger()}>{t("common.learn_more")}</AlertButton>
+            </Alert>
           ) : null}
           {question.type === TSurveyQuestionTypeEnum.OpenText ? (
             <OpenQuestionForm

@@ -1,6 +1,5 @@
-"use client";
-
-import { AlertJakob } from "@/modules/ui/components/jakob";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
+import { useTranslate } from "@tolgee/react";
 import React from "react";
 
 export default function YourClientPage() {
@@ -8,18 +7,15 @@ export default function YourClientPage() {
     alert("Learn more");
   };
 
+  // Inside your component function
+  const { t } = useTranslate();
+
   return (
     <div>
-      <AlertJakob
-        variant="info"
-        size="small"
-        title="Inconsistent Response Data"
-        className="w-fit"
-        button={{
-          label: "Learn more",
-          onClick: handleLearnMore,
-        }}
-      />
+      <Alert variant="warning" size="small" className="w-fit">
+        <AlertTitle>Inconsistent Response Data</AlertTitle>
+        <AlertButton onClick={() => handleLearnMore()}>{t("common.learn_more")}</AlertButton>
+      </Alert>
     </div>
   );
 }

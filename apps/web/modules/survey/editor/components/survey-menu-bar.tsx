@@ -2,10 +2,10 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { AlertJakob } from "@/modules/ui/components/jakob";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { isEqual } from "lodash";
@@ -64,8 +64,6 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
-  const cautionText = t("environments.surveys.edit.caution_text");
-  const cautionButton = t("common.learn_more");
 
   useEffect(() => {
     if (audiencePrompt && activeId === "settings") {
@@ -334,14 +332,12 @@ export const SurveyMenuBar = ({
         <div className="mt-3 flex items-center gap-2 sm:ml-4 sm:mt-0">
           {responseCount > 0 && (
             <div>
-              <AlertJakob
-                variant="warning"
-                size="small"
-                title={cautionText}
-                button={{
-                  label: cautionButton,
-                  onClick: () => setIsCautionDialogOpen(true), //alert("Learn more")
-                }}></AlertJakob>
+              <Alert variant="warning" size="small">
+                <AlertTitle>{t("environments.surveys.edit.response_count_warning")}</AlertTitle>
+                <AlertButton onClick={() => setIsCautionDialogOpen(true)}>
+                  {t("common.learn_more")}
+                </AlertButton>
+              </Alert>
             </div>
           )}
           {!isCxMode && (
