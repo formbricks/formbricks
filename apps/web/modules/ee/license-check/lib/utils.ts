@@ -19,6 +19,7 @@ import {
 } from "@formbricks/lib/constants";
 import { env } from "@formbricks/lib/env";
 import { hashString } from "@formbricks/lib/hashString";
+import { logger } from "@formbricks/logger";
 
 const hashedKey = ENTERPRISE_LICENSE_KEY ? hashString(ENTERPRISE_LICENSE_KEY) : undefined;
 const PREVIOUS_RESULTS_CACHE_TAG_KEY = `getPreviousResult-${hashedKey}` as const;
@@ -98,12 +99,12 @@ const fetchLicenseForE2ETesting = async (): Promise<{
       return newResult;
     } else if (currentTime.getTime() - previousResult.lastChecked.getTime() > 60 * 60 * 1000) {
       // Fail after 1 hour
-      console.log("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
+      logger.info("E2E_TESTING is enabled. Enterprise license was revoked after 1 hour.");
       return null;
     }
     return previousResult;
   } catch (error) {
-    console.error("Error fetching license: ", error);
+    logger.error(error, "Error fetching license");
     return null;
   }
 };
@@ -191,7 +192,7 @@ export const getEnterpriseLicense = async (): Promise<{
     }
 
     // Log error only after 72 hours
-    console.error("Error while checking license: The license check failed");
+    logger.error("Error while checking license: The license check failed");
 
     return {
       active: false,
@@ -254,7 +255,7 @@ export const fetchLicense = reactCache(
 
           return null;
         } catch (error) {
-          console.error("Error while checking license: ", error);
+          logger.error(error, "Error while checking license");
           return null;
         }
       },

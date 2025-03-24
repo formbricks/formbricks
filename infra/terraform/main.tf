@@ -476,7 +476,7 @@ resource "helm_release" "formbricks" {
   namespace   = "formbricks"
   repository  = "oci://ghcr.io/formbricks/helm-charts"
   chart       = "formbricks"
-  version     = "3.5.0"
+  version     = "3.5.1"
   max_history = 5
 
   values = [
@@ -514,21 +514,19 @@ resource "helm_release" "formbricks" {
         eks.amazonaws.com/role-arn: ${module.formkey-aws-access.iam_role_arn}
   serviceMonitor:
     enabled: true
-  reloadOnChange: true
   deployment:
+    reloadOnChange: true
     nodeSelector:
       karpenter.sh/capacity-type: "on-demand"
     env:
       S3_BUCKET_NAME:
-        value: "formbricks-20250311043609595200000002"
+        value: "formbricks-cloud-uploads"
       RATE_LIMITING_DISABLED:
         value: "1"
     envFrom:
       app-env:
         type: secret
         nameSuffix: app-env
-    annotations:
-      last_updated_at: ${timestamp()}
   externalSecret:
     enabled: true  # Enable/disable ExternalSecrets
     secretStore:
