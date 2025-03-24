@@ -37,6 +37,12 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "mock-webapp-url",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
+  AI_AZURE_LLM_RESSOURCE_NAME: "mock-azure-llm-resource-name",
+  AI_AZURE_LLM_API_KEY: "mock-azure-llm-api-key",
+  AI_AZURE_LLM_DEPLOYMENT_ID: "mock-azure-llm-deployment-id",
+  AI_AZURE_EMBEDDINGS_RESSOURCE_NAME: "mock-azure-embeddings-resource-name",
+  AI_AZURE_EMBEDDINGS_API_KEY: "mock-azure-embeddings-api-key",
+  AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID: "mock-azure-embeddings-deployment-id",
 }));
 
 vi.mock("next-auth", () => ({
