@@ -778,7 +778,6 @@
         "add_env_api_key": "Add {environmentType} API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
-        "api_key_created": "API key created",
         "api_key_deleted": "API Key deleted",
         "api_key_label": "API Key Label",
         "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
