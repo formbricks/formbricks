@@ -21,6 +21,7 @@
     "@aws-sdk/s3-request-presigner": "3.741.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
+    "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "@t3-oss/env-nextjs": "0.12.0",

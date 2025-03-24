@@ -1,0 +1,17 @@
+repositories:
+  - name: helm-charts
+    url: ghcr.io/formbricks/helm-charts
+    oci: true
+
+releases:
+  - name: formbricks
+    namespace: formbricks
+    chart: helm-charts/formbricks
+    version: ^3.0.0
+    values:
+      - values.yaml.gotmpl
+    set:
+      - name: deployment.image.tag
+        value: v{{ requiredEnv "VERSION" }}
+      - name: deployment.image.repository
+        value: {{ requiredEnv "REPOSITORY" }}
