@@ -1,8 +1,7 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   deleteContactAttributeKey,
@@ -12,15 +11,11 @@ import {
 import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys";
 
 const fetchAndAuthorizeContactAttributeKey = async (
-  authentication: TAuthenticationApiKey,
   contactAttributeKeyId: string
 ): Promise<TContactAttributeKey | null> => {
   const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
   if (!contactAttributeKey) {
     return null;
-  }
-  if (contactAttributeKey.environmentId !== authentication.environmentId) {
-    throw new Error("Unauthorized");
   }
   return contactAttributeKey;
 };
@@ -39,11 +34,12 @@ export const GET = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
-      authentication,
-      params.contactAttributeKeyId
-    );
+    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(params.contactAttributeKeyId);
+
     if (contactAttributeKey) {
+      if (!hasPermission(authentication.environmentPermissions, contactAttributeKey.environmentId, "GET")) {
+        return responses.unauthorizedResponse();
+      }
       return responses.successResponse(contactAttributeKey);
     }
     return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
@@ -66,12 +62,12 @@ export const DELETE = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
-      authentication,
-      params.contactAttributeKeyId
-    );
+    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(params.contactAttributeKeyId);
     if (!contactAttributeKey) {
       return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
+    }
+    if (!hasPermission(authentication.environmentPermissions, contactAttributeKey.environmentId, "DELETE")) {
+      return responses.unauthorizedResponse();
     }
     if (contactAttributeKey.type === "default") {
       return responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted");
@@ -97,12 +93,12 @@ export const PUT = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
-      authentication,
-      params.contactAttributeKeyId
-    );
+    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(params.contactAttributeKeyId);
     if (!contactAttributeKey) {
       return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
+    }
+    if (!hasPermission(authentication.environmentPermissions, contactAttributeKey.environmentId, "PUT")) {
+      return responses.unauthorizedResponse();
     }
 
     let contactAttributeKeyUpdate;

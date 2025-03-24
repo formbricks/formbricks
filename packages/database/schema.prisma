@@ -555,13 +555,13 @@ model Environment {
   contacts             Contact[]
   actionClasses        ActionClass[]
   attributeKeys        ContactAttributeKey[]
-  apiKeys              ApiKey[]
   webhooks             Webhook[]
   tags                 Tag[]
   segments             Segment[]
   integration          Integration[]
   documents            Document[]
   insights             Insight[]
+  ApiKeyEnvironment    ApiKeyEnvironment[]
 
   @@index([projectId])
 }
@@ -639,6 +639,7 @@ model Organization {
   invites     Invite[]
   isAIEnabled Boolean      @default(false)
   teams       Team[]
+  apiKeys     ApiKey[]
 }
 
 enum OrganizationRole {
@@ -711,23 +712,56 @@ model Invite {
   @@index([organizationId])
 }
 
-/// Represents API authentication keys.
-/// Used for authenticating API requests to Formbricks.
+/// Represents enhanced API authentication keys with organization-level ownership.
+/// Used for authenticating API requests to Formbricks with more granular permissions.
 ///
 /// @property id - Unique identifier for the API key
 /// @property label - Optional descriptive name for the key
 /// @property hashedKey - Securely stored API key
-/// @property environment - The environment this key belongs to
+/// @property organization - The organization this key belongs to
+/// @property createdBy - User ID who created this key
 /// @property lastUsedAt - Timestamp of last usage
+/// @property apiKeyEnvironments - Environments this key has access to
 model ApiKey {
-  id            String      @id @unique @default(cuid())
-  createdAt     DateTime    @default(now())
-  lastUsedAt    DateTime?
-  label         String?
-  hashedKey     String      @unique()
-  environment   Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
-  environmentId String
+  id                 String              @id @default(cuid())
+  createdAt          DateTime            @default(now())
+  createdBy          String
+  lastUsedAt         DateTime?
+  label              String?
+  hashedKey          String              @unique
+  organizationId     String
+  organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyEnvironments ApiKeyEnvironment[]
 
+  @@index([organizationId])
+}
+
+/// Defines permission levels for API keys.
+/// Controls what operations an API key can perform.
+enum ApiKeyPermission {
+  read
+  write
+  manage
+}
+
+/// Links API keys to environments with specific permissions.
+/// Enables granular access control for API keys across environments.
+///
+/// @property id - Unique identifier for the environment access entry
+/// @property apiKey - The associated API key
+/// @property environment - The environment being accessed
+/// @property permission - Level of access granted
+model ApiKeyEnvironment {
+  id            String           @id @default(cuid())
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  apiKeyId      String
+  apiKey        ApiKey           @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  environmentId String
+  environment   Environment      @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+  permission    ApiKeyPermission
+
+  @@unique([apiKeyId, environmentId])
   @@index([environmentId])
 }
 

@@ -8,17 +8,20 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-export const createWebhook = async (environmentId: string, webhookInput: TWebhookInput): Promise<Webhook> => {
-  validateInputs([environmentId, ZId], [webhookInput, ZWebhookInput]);
+export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhook> => {
+  validateInputs([webhookInput, ZWebhookInput]);
 
   try {
     const createdWebhook = await prisma.webhook.create({
       data: {
-        ...webhookInput,
+        url: webhookInput.url,
+        name: webhookInput.name,
+        source: webhookInput.source,
         surveyIds: webhookInput.surveyIds || [],
+        triggers: webhookInput.triggers || [],
         environment: {
           connect: {
-            id: environmentId,
+            id: webhookInput.environmentId,
           },
         },
       },
@@ -37,7 +40,9 @@ export const createWebhook = async (environmentId: string, webhookInput: TWebhoo
     }
 
     if (!(error instanceof InvalidInputError)) {
-      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
+      throw new DatabaseError(
+        `Database error when creating webhook for environment ${webhookInput.environmentId}`
+      );
     }
 
     throw error;

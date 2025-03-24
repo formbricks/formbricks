@@ -1,4 +1,4 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -6,18 +6,7 @@ import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
-import { TSurvey, ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
-
-const fetchAndAuthorizeSurvey = async (authentication: any, surveyId: string): Promise<TSurvey | null> => {
-  const survey = await getSurvey(surveyId);
-  if (!survey) {
-    return null;
-  }
-  if (survey.environmentId !== authentication.environmentId) {
-    throw new Error("Unauthorized");
-  }
-  return survey;
-};
+import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 
 export const GET = async (
   request: Request,
@@ -27,8 +16,11 @@ export const GET = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
+    const survey = await getSurvey(params.surveyId);
     if (survey) {
+      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+        return responses.unauthorizedResponse();
+      }
       return responses.successResponse(survey);
     }
     return responses.notFoundResponse("Survey", params.surveyId);
@@ -45,9 +37,12 @@ export const DELETE = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
+    const survey = await getSurvey(params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
+    }
+    if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "DELETE")) {
+      return responses.unauthorizedResponse();
     }
     const deletedSurvey = await deleteSurvey(params.surveyId);
     return responses.successResponse(deletedSurvey);
@@ -65,12 +60,15 @@ export const PUT = async (
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const survey = await fetchAndAuthorizeSurvey(authentication, params.surveyId);
+    const survey = await getSurvey(params.surveyId);
     if (!survey) {
       return responses.notFoundResponse("Survey", params.surveyId);
     }
+    if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "PUT")) {
+      return responses.unauthorizedResponse();
+    }
 
-    const organization = await getOrganizationByEnvironmentId(authentication.environmentId);
+    const organization = await getOrganizationByEnvironmentId(survey.environmentId);
     if (!organization) {
       return responses.notFoundResponse("Organization", null);
     }

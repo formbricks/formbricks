@@ -31,6 +31,7 @@ export const XMTemplateList = ({ project, user, environmentId }: XMTemplateListP
       ...activeTemplate,
       type: "link",
       createdBy: user.id,
+      environmentId: environmentId,
     };
     const createSurveyResponse = await createSurveyAction({
       environmentId: environmentId,

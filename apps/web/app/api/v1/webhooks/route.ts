@@ -1,42 +1,28 @@
-import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
+import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { headers } from "next/headers";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
-export const GET = async () => {
-  const headersList = await headers();
-  const apiKey = headersList.get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
-  if (!environmentId) {
+export const GET = async (request: Request) => {
+  const authentication = await authenticateRequest(request);
+  if (!authentication) {
     return responses.notAuthenticatedResponse();
   }
 
-  // get webhooks from database
-  try {
+  const environmentIds = authentication.environmentPermissions.map((permission) => permission.environmentId);
+  const webhooks = [];
+  for (const environmentId of environmentIds) {
     const webhooks = await getWebhooks(environmentId);
-    return Response.json({ data: webhooks });
-  } catch (error) {
-    if (error instanceof DatabaseError) {
-      return responses.badRequestResponse(error.message);
-    }
-    return responses.internalServerErrorResponse(error.message);
+    webhooks.push(...webhooks);
   }
+  return responses.successResponse(webhooks);
 };
 
 export const POST = async (request: Request) => {
-  const headersList = await headers();
-  const apiKey = headersList.get("x-api-key");
-  if (!apiKey) {
-    return responses.notAuthenticatedResponse();
-  }
-  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
-  if (!environmentId) {
+  const authentication = await authenticateRequest(request);
+  if (!authentication) {
     return responses.notAuthenticatedResponse();
   }
   const webhookInput = await request.json();
@@ -50,9 +36,19 @@ export const POST = async (request: Request) => {
     );
   }
 
+  const environmentId = inputValidation.data.environmentId;
+
+  if (!environmentId) {
+    return responses.badRequestResponse("Environment ID is required");
+  }
+
+  if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+    return responses.unauthorizedResponse();
+  }
+
   // add webhook to database
   try {
-    const webhook = await createWebhook(environmentId, inputValidation.data);
+    const webhook = await createWebhook(inputValidation.data);
     return responses.successResponse(webhook);
   } catch (error) {
     if (error instanceof InvalidInputError) {

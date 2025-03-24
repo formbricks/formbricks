@@ -14,7 +14,17 @@ export const GET = async (request: Request) => {
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contactAttributes = await getContactAttributes(authentication.environmentId);
+    const environmentIds = authentication.environmentPermissions.map(
+      (permission) => permission.environmentId
+    );
+
+    const contactAttributes = [];
+
+    for (const environmentId of environmentIds) {
+      const contactAttributes = await getContactAttributes(environmentId);
+      contactAttributes.push(...contactAttributes);
+    }
+
     return responses.successResponse(contactAttributes);
   } catch (error) {
     if (error instanceof DatabaseError) {

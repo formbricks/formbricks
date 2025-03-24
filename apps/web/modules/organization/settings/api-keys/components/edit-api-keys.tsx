@@ -1,9 +1,10 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TApiKey } from "@/modules/projects/settings/api-keys/types/api-keys";
+import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import { ApiKey, ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -14,26 +15,18 @@ import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
 interface EditAPIKeysProps {
-  environmentTypeId: string;
-  environmentType: string;
-  apiKeys: TApiKey[];
-  environmentId: string;
+  organizationId: string;
+  apiKeys: ApiKey[];
   locale: TUserLocale;
   isReadOnly: boolean;
+  projects: TOrganizationProject[];
 }
 
-export const EditAPIKeys = ({
-  environmentTypeId,
-  environmentType,
-  apiKeys,
-  environmentId,
-  locale,
-  isReadOnly,
-}: EditAPIKeysProps) => {
+export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, projects }: EditAPIKeysProps) => {
   const { t } = useTranslate();
   const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
   const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
-  const [apiKeysLocal, setApiKeysLocal] = useState<TApiKey[]>(apiKeys);
+  const [apiKeysLocal, setApiKeysLocal] = useState<(ApiKey & { actualKey?: string })[]>(apiKeys);
   const [activeKey, setActiveKey] = useState({} as any);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
@@ -43,23 +36,30 @@ export const EditAPIKeys = ({
   };
 
   const handleDeleteKey = async () => {
-    try {
-      await deleteApiKeyAction({ id: activeKey.id });
+    const deleteApiKeyResponse = await deleteApiKeyAction({ id: activeKey.id });
+    if (deleteApiKeyResponse?.data) {
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success(t("environments.project.api-keys.api_key_deleted"));
-    } catch (e) {
+      setOpenDeleteKeyModal(false);
+    } else {
       toast.error(t("environments.project.api-keys.unable_to_delete_api_key"));
-    } finally {
       setOpenDeleteKeyModal(false);
     }
   };
 
-  const handleAddAPIKey = async (data) => {
+  const handleAddAPIKey = async (data: {
+    label: string;
+    environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+  }) => {
     const createApiKeyResponse = await createApiKeyAction({
-      environmentId: environmentTypeId,
-      apiKeyData: { label: data.label },
+      organizationId: organizationId,
+      apiKeyData: {
+        label: data.label,
+        environmentPermissions: data.environmentPermissions,
+      },
     });
+
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
@@ -116,7 +116,7 @@ export const EditAPIKeys = ({
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                  <ApiKeyDisplay apiKey={apiKey.apiKey} />
+                  <ApiKeyDisplay apiKey={apiKey.actualKey} />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   {timeSince(apiKey.createdAt.toString(), locale)}
@@ -138,11 +138,10 @@ export const EditAPIKeys = ({
         <div>
           <Button
             size="sm"
-            disabled={environmentId !== environmentTypeId}
             onClick={() => {
               setOpenAddAPIKeyModal(true);
             }}>
-            {t("environments.project.api-keys.add_env_api_key", { environmentType })}
+            {t("environments.settings.api_keys.add_api_key")}
           </Button>
         </div>
       )}
@@ -150,6 +149,7 @@ export const EditAPIKeys = ({
         open={isAddAPIKeyModalOpen}
         setOpen={setOpenAddAPIKeyModal}
         onSubmit={handleAddAPIKey}
+        projects={projects}
       />
       <DeleteDialog
         open={isDeleteKeyModalOpen}

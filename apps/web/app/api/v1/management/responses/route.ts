@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
+import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { NextRequest } from "next/server";
@@ -20,9 +20,22 @@ export const GET = async (request: NextRequest) => {
     let environmentResponses: TResponse[] = [];
 
     if (surveyId) {
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        return responses.notFoundResponse("Survey", surveyId, true);
+      }
+      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+        return responses.unauthorizedResponse();
+      }
       environmentResponses = await getResponses(surveyId, limit, offset);
     } else {
-      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId, limit, offset);
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
+      environmentIds.forEach(async (environmentId) => {
+        const environmentResponses = await getResponsesByEnvironmentId(environmentId, limit, offset);
+        environmentResponses.push(...environmentResponses);
+      });
     }
     return responses.successResponse(environmentResponses);
   } catch (error) {
@@ -38,8 +51,6 @@ export const POST = async (request: Request): Promise<Response> => {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const environmentId = authentication.environmentId;
-
     let jsonInput;
 
     try {
@@ -48,9 +59,6 @@ export const POST = async (request: Request): Promise<Response> => {
       console.error(`Error parsing JSON input: ${err}`);
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
-
-    // add environmentId to response
-    jsonInput.environmentId = environmentId;
 
     const inputValidation = ZResponseInput.safeParse(jsonInput);
 
@@ -63,6 +71,12 @@ export const POST = async (request: Request): Promise<Response> => {
     }
 
     const responseInput = inputValidation.data;
+
+    const environmentId = responseInput.environmentId;
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
 
     // get and check survey
     const survey = await getSurvey(responseInput.surveyId);

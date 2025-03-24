@@ -1,21 +1,15 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
 
-const fetchAndAuthorizeContact = async (authentication: TAuthenticationApiKey, contactId: string) => {
+const fetchAndAuthorizeContact = async (contactId: string) => {
   const contact = await getContact(contactId);
 
   if (!contact) {
     return null;
-  }
-
-  if (contact.environmentId !== authentication.environmentId) {
-    throw new AuthorizationError("Unauthorized");
   }
 
   return contact;
@@ -35,8 +29,11 @@ export const GET = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contact = await fetchAndAuthorizeContact(authentication, params.contactId);
+    const contact = await fetchAndAuthorizeContact(params.contactId);
     if (contact) {
+      if (!hasPermission(authentication.environmentPermissions, contact.environmentId, "GET")) {
+        return responses.unauthorizedResponse();
+      }
       return responses.successResponse(contact);
     }
 
@@ -60,9 +57,12 @@ export const DELETE = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contact = await fetchAndAuthorizeContact(authentication, params.contactId);
+    const contact = await fetchAndAuthorizeContact(params.contactId);
     if (!contact) {
       return responses.notFoundResponse("Contact", params.contactId);
+    }
+    if (!hasPermission(authentication.environmentPermissions, contact.environmentId, "DELETE")) {
+      return responses.unauthorizedResponse();
     }
     await deleteContact(params.contactId);
     return responses.successResponse({ success: "Contact deleted successfully" });

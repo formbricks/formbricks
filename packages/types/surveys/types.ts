@@ -2338,6 +2338,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurvey.innerType())
   })
   .extend({
     name: z.string(), // Keep name required
+    environmentId: z.string(),
     questions: ZSurvey.innerType().shape.questions, // Keep questions required and with its original validation
     languages: z.array(ZSurveyLanguage).default([]),
     welcomeCard: ZSurveyWelcomeCard.default({

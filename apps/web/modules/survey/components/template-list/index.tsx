@@ -59,6 +59,7 @@ export const TemplateList = ({
       ...activeTemplate.preset,
       type: surveyType,
       createdBy: userId,
+      environmentId: environmentId,
     };
     const createSurveyResponse = await createSurveyAction({
       environmentId: environmentId,

@@ -237,6 +237,7 @@
     "maximum": "Maximal",
     "member": "Mitglied",
     "members": "Mitglieder",
+    "membership_not_found": "Mitgliedschaft nicht gefunden",
     "metadata": "Metadaten",
     "minimum": "Minimum",
     "mobile_overlay_text": "Formbricks ist für Geräte mit kleineren Auflösungen nicht verfügbar.",
@@ -292,7 +293,6 @@
     "privacy": "Datenschutz",
     "privacy_policy": "Datenschutzerklärung",
     "product_manager": "Produktmanager",
-    "product_not_found": "Produkt nicht gefunden",
     "profile": "Profil",
     "project": "Projekt",
     "project_configuration": "Projektkonfiguration",
@@ -986,6 +986,13 @@
       "with_the_formbricks_sdk": "mit dem Formbricks SDK"
     },
     "settings": {
+      "api-keys": {
+        "add_permission": "Berechtigung hinzufügen",
+        "api_keys_description": "Verwalte API-Schlüssel, um auf die Formbricks-Management-APIs zuzugreifen"
+      },
+      "api_keys": {
+        "add_api_key": "API-Schlüssel hinzufügen"
+      },
       "billing": {
         "10000_monthly_responses": "10,000 monatliche Antworten",
         "1500_monthly_responses": "1,500 monatliche Antworten",

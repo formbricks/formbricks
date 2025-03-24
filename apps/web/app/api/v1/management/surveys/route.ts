@@ -1,4 +1,4 @@
-import { authenticateRequest } from "@/app/api/v1/auth";
+import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
@@ -6,7 +6,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { TSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 
 export const GET = async (request: Request) => {
   try {
@@ -17,7 +17,16 @@ export const GET = async (request: Request) => {
     const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
     const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
-    const surveys = await getSurveys(authentication.environmentId!, limit, offset);
+    const environmentIds = authentication.environmentPermissions.map(
+      (permission) => permission.environmentId
+    );
+
+    const surveys: TSurvey[] = [];
+    environmentIds.forEach(async (environmentId) => {
+      const surveys = await getSurveys(environmentId, limit, offset);
+      surveys.push(...surveys);
+    });
+
     return responses.successResponse(surveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
@@ -31,11 +40,6 @@ export const POST = async (request: Request): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-
-    const organization = await getOrganizationByEnvironmentId(authentication.environmentId);
-    if (!organization) {
-      return responses.notFoundResponse("Organization", null);
-    }
 
     let surveyInput;
     try {
@@ -55,8 +59,18 @@ export const POST = async (request: Request): Promise<Response> => {
       );
     }
 
-    const environmentId = authentication.environmentId;
-    const surveyData = { ...inputValidation.data, environmentId: undefined };
+    const environmentId = inputValidation.data.environmentId;
+
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      return responses.notFoundResponse("Organization", null);
+    }
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
+
+    const surveyData = { ...inputValidation.data, environmentId };
 
     if (surveyData.followUps?.length) {
       const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);

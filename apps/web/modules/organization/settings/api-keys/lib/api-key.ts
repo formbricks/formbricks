@@ -1,30 +1,29 @@
 import "server-only";
-import { apiKeyCache } from "@/lib/cache/api-key";
-import { TApiKeyCreateInput, ZApiKeyCreateInput } from "@/modules/projects/settings/api-keys/types/api-keys";
-import { TApiKey } from "@/modules/projects/settings/api-keys/types/api-keys";
-import { ApiKey, Prisma } from "@prisma/client";
+import { apiKeyNewCache } from "@/lib/cache/api-keys-new";
+import {
+  TApiKeyCreateInput,
+  ZApiKeyCreateInput,
+} from "@/modules/organization/settings/api-keys/types/api-keys";
+import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { createHash, randomBytes } from "crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
-import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
-import { ZId, ZOptionalNumber } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getApiKeys = reactCache(
-  async (environmentId: string, page?: number): Promise<ApiKey[]> =>
+  async (organizationId: string): Promise<ApiKey[]> =>
     cache(
       async () => {
-        validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+        validateInputs([organizationId, ZId]);
 
         try {
           const apiKeys = await prisma.apiKey.findMany({
             where: {
-              environmentId,
+              organizationId,
             },
-            take: page ? ITEMS_PER_PAGE : undefined,
-            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
           });
 
           return apiKeys;
@@ -35,9 +34,9 @@ export const getApiKeys = reactCache(
           throw error;
         }
       },
-      [`getApiKeys-${environmentId}-${page}`],
+      [`getApiKeys-${organizationId}`],
       {
-        tags: [apiKeyCache.tag.byEnvironmentId(environmentId)],
+        tags: [apiKeyNewCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
@@ -52,10 +51,10 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
       },
     });
 
-    apiKeyCache.revalidate({
+    apiKeyNewCache.revalidate({
       id: deletedApiKeyData.id,
       hashedKey: deletedApiKeyData.hashedKey,
-      environmentId: deletedApiKeyData.environmentId,
+      organizationId: deletedApiKeyData.organizationId,
     });
 
     return deletedApiKeyData;
@@ -71,29 +70,50 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
 const hashApiKey = (key: string): string => createHash("sha256").update(key).digest("hex");
 
 export const createApiKey = async (
-  environmentId: string,
-  apiKeyData: TApiKeyCreateInput
-): Promise<TApiKey> => {
-  validateInputs([environmentId, ZId], [apiKeyData, ZApiKeyCreateInput]);
+  organizationId: string,
+  userId: string,
+  apiKeyData: TApiKeyCreateInput & {
+    environmentPermissions?: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+  }
+): Promise<ApiKey & { actualKey: string }> => {
+  validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
     const key = randomBytes(16).toString("hex");
     const hashedKey = hashApiKey(key);
 
+    // Extract environmentPermissions from apiKeyData
+    const { environmentPermissions, ...apiKeyDataWithoutPermissions } = apiKeyData;
+
+    // Create the API key
     const result = await prisma.apiKey.create({
       data: {
-        ...apiKeyData,
+        ...apiKeyDataWithoutPermissions,
         hashedKey,
-        environment: { connect: { id: environmentId } },
+        createdBy: userId,
+        organization: { connect: { id: organizationId } },
+        ...(environmentPermissions && environmentPermissions.length > 0
+          ? {
+              apiKeyEnvironments: {
+                create: environmentPermissions.map((envPerm) => ({
+                  environmentId: envPerm.environmentId,
+                  permission: envPerm.permission,
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        apiKeyEnvironments: true,
       },
     });
 
-    apiKeyCache.revalidate({
+    apiKeyNewCache.revalidate({
       id: result.id,
       hashedKey: result.hashedKey,
-      environmentId: result.environmentId,
+      organizationId: result.organizationId,
     });
 
-    return { ...result, apiKey: key };
+    return { ...result, actualKey: key };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

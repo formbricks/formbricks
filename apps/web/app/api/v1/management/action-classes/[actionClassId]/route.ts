@@ -1,4 +1,4 @@
-import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
@@ -7,15 +7,20 @@ import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
 const fetchAndAuthorizeActionClass = async (
   authentication: TAuthenticationApiKey,
-  actionClassId: string
+  actionClassId: string,
+  method: "GET" | "POST" | "PUT" | "DELETE"
 ): Promise<TActionClass | null> => {
+  // Get the action class
   const actionClass = await getActionClass(actionClassId);
   if (!actionClass) {
     return null;
   }
-  if (actionClass.environmentId !== authentication.environmentId) {
+
+  // Check if API key has permission to access this environment with appropriate permissions
+  if (!hasPermission(authentication.environmentPermissions, actionClass.environmentId, method)) {
     throw new Error("Unauthorized");
   }
+
   return actionClass;
 };
 
@@ -27,7 +32,7 @@ export const GET = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "GET");
     if (actionClass) {
       return responses.successResponse(actionClass);
     }
@@ -45,7 +50,7 @@ export const PUT = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "PUT");
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
     }
@@ -87,7 +92,7 @@ export const DELETE = async (
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId);
+    const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "DELETE");
     if (!actionClass) {
       return responses.notFoundResponse("Action Class", params.actionClassId);
     }
