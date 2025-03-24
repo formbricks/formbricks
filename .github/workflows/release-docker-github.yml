@@ -10,7 +10,7 @@ on:
     outputs:
       VERSION:
         description: release version
-        value: ${{ jobs.build-and-push-image.outputs.VERSION }}
+        value: ${{ jobs.build.outputs.VERSION }}
 
 env:
   # Use docker.io for Docker Hub if empty
