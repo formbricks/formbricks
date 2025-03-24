@@ -7,9 +7,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/*.test.tsx", "jsdom"],
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["../../packages/lib/vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
@@ -27,12 +25,18 @@ export default defineConfig({
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
+        "modules/ui/components/post-hog-client/*.tsx",
+        "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
+        "app/(app)/environments/**/components/PosthogIdentify.tsx",
+        "app/(app)/(onboarding)/organizations/**/layout.tsx",
+        "app/(app)/(survey-editor)/environments/**/layout.tsx",
         "modules/ee/sso/lib/**/*.ts",
         "modules/ee/contacts/lib/**/*.ts",
         "modules/survey/link/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
+        "app/layout.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "app/intercom/*.tsx",
         "modules/ee/role-management/*.ts",
@@ -40,7 +44,7 @@ export default defineConfig({
         "modules/survey/hooks/*.tsx",
         "modules/survey/lib/client-utils.ts",
         "modules/survey/list/components/survey-card.tsx",
-        "modules/survey/list/components/survey-dropdown-menu.tsx"
+        "modules/survey/list/components/survey-dropdown-menu.tsx",
       ],
       exclude: [
         "**/.next/**",
