@@ -17,6 +17,14 @@
     "logger",
     "logging"
   ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js",
+    "require": "./dist/index.cjs"
+  },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",

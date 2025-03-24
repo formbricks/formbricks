@@ -33,6 +33,9 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
+  IS_POSTHOG_CONFIGURED: true,
+  POSTHOG_API_HOST: "test-posthog-api-host",
+  POSTHOG_API_KEY: "test-posthog-api-key",
 }));
 
 vi.mock("@/app/(app)/components/FormbricksClient", () => ({
