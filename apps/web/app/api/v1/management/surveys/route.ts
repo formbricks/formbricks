@@ -24,10 +24,10 @@ export const GET = async (request: Request) => {
     );
 
     const allSurveys: TSurvey[] = [];
-    environmentIds.forEach(async (environmentId) => {
+    for (const environmentId of environmentIds) {
       const surveys = await getSurveys(environmentId, limit, offset);
       allSurveys.push(...surveys);
-    });
+    }
 
     return responses.successResponse(allSurveys);
   } catch (error) {

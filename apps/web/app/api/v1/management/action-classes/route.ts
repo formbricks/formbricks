@@ -17,12 +17,12 @@ export const GET = async (request: Request) => {
     );
 
     const allActionClasses: TActionClass[] = [];
-    environmentIds.forEach(async (environmentId) => {
+    for (const environmentId of environmentIds) {
       if (hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
         const actionClasses = await getActionClasses(environmentId);
         allActionClasses.push(...actionClasses);
       }
-    });
+    }
 
     return responses.successResponse(allActionClasses);
   } catch (error) {

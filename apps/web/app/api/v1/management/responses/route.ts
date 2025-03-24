@@ -35,10 +35,12 @@ export const GET = async (request: NextRequest) => {
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
       );
-      environmentIds.forEach(async (environmentId) => {
+      const allEnvironmentResponses: TResponse[] = [];
+      for (const environmentId of environmentIds) {
         const environmentResponses = await getResponsesByEnvironmentId(environmentId, limit, offset);
-        allResponses.push(...environmentResponses);
-      });
+        allEnvironmentResponses.push(...environmentResponses);
+      }
+      allResponses.push(...allEnvironmentResponses);
     }
     return responses.successResponse(allResponses);
   } catch (error) {
