@@ -32,6 +32,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { CopySurveyModal } from "./copy-survey-modal";
+import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -60,6 +61,7 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
+  const responseCount = await getResponseCountBySurveyId(survey.id);
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
@@ -138,12 +140,27 @@ export const SurveyDropDownMenu = ({
             {!isSurveyCreationDeletionDisabled && (
               <>
                 <DropdownMenuItem>
+
+                 {survey.status === "inProgress" && responseCount > 0 
+                  ? 
                   <Link
+                  // TRIGGER ALERT DIALOG 
+                  
+                  className="flex w-full items-center"
+                  href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                    <SquarePenIcon className="mr-2 size-4" />
+                      HELLO{t("common.edit")}
+                  </Link>
+                  : 
+                    <Link
+                    // TRIGGER ALERT DIALOG 
+                    
                     className="flex w-full items-center"
                     href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                    <SquarePenIcon className="mr-2 h-4 w-4" />
-                    {t("common.edit")}
-                  </Link>
+                      <SquarePenIcon className="mr-2 size-4" />
+                        {t("common.edit")}
+                    </Link>
+                  }
                 </DropdownMenuItem>
 
                 <DropdownMenuItem>
