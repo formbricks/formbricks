@@ -103,24 +103,19 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
  * Builds a Prisma where clause from a person filter
  */
 const buildPersonFilterWhereClause = (filter: TSegmentPersonFilter): Prisma.ContactWhereInput => {
-  const { root, qualifier, value } = filter;
-  const { personIdentifier } = root;
-  const { operator } = qualifier;
+  const { personIdentifier } = filter.root;
 
-  // Currently user ID is stored as an attribute
   if (personIdentifier === "userId") {
     const personFilter: TSegmentAttributeFilter = {
       ...filter,
       root: {
         type: "attribute",
-        contactAttributeKey: "userId",
+        contactAttributeKey: personIdentifier,
       },
     };
     return buildAttributeFilterWhereClause(personFilter);
   }
 
-  // Return an empty filter if the person identifier is not supported
-  // This could be expanded in the future for more identifiers
   return {};
 };
 
@@ -176,7 +171,6 @@ const processSingleFilter = async (filter: TSegmentFilter): Promise<Prisma.Conta
       return buildAttributeFilterWhereClause(filter as TSegmentAttributeFilter);
     case "person":
       return buildPersonFilterWhereClause(filter as TSegmentPersonFilter);
-    // Implement other filter types as needed (segment, device)
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter);
     case "segment":
@@ -216,8 +210,7 @@ const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWher
         if (filters[1].connector === "and") query.AND.push(whereClause);
         else query.OR.push(whereClause);
       } else {
-        let currConnector = connector;
-        if (currConnector === "and") query.AND.push(whereClause);
+        if (connector === "and") query.AND.push(whereClause);
         else query.OR.push(whereClause);
       }
     }
