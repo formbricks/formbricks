@@ -30,7 +30,7 @@ export async function EmailTemplate({
           <Section>
             {isDefaultLogo ? (
               <Link href={logoLink} target="_blank">
-                <Img data-testid="default-logo-image" alt="Logo" className="mx-auto w-80" src={fbLogoUrl} />
+                <Img data-testid="default-logo-image" alt="Logo" className="mx-auto w-60" src={fbLogoUrl} />
               </Link>
             ) : (
               <Img

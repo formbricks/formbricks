@@ -1,26 +1,24 @@
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
-import { getOrganization, getOrganizationsByUserId } from "@formbricks/lib/organization/service";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 
 const Page = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+
+  const { session, organization } = await getOrganizationAuth(params.organizationId);
+
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 
   const user = await getUser(session.user.id);
   if (!user) return notFound();
-
-  const organization = await getOrganization(params.organizationId);
-  if (!organization) return notFound();
 
   const organizations = await getOrganizationsByUserId(session.user.id);
 

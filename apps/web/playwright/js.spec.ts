@@ -8,13 +8,14 @@ const HTML_TEMPLATE = `<head>
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
       var e = document.getElementsByTagName("script")[0];
-      e.parentNode.insertBefore(t, e),
-        setTimeout(function () {
-          formbricks.setup({
-            environmentId: "ENVIRONMENT_ID",
-            appUrl: "http://localhost:3000",
-          });
-        }, 500);
+      t.onload = function(){
+        if (window.formbricks) {
+          window.formbricks.setup({environmentId: "ENVIRONMENT_ID", appUrl: "http://localhost:3000"});
+        } else {
+          console.error("Formbricks library failed to load properly. The formbricks object is not available.");
+        }
+      };
+      e.parentNode.insertBefore(t, e);
     })();
   </script>
 </head>

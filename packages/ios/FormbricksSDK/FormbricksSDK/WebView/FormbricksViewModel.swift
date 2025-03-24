@@ -74,6 +74,7 @@ private extension FormbricksViewModel {
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);

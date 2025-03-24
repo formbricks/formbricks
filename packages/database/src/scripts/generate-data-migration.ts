@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
 import { createId } from "@paralleldrive/cuid2";
+import { logger } from "@formbricks/logger";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -12,7 +13,7 @@ const migrationsDir = path.resolve(__dirname, "../../migration");
 
 async function createMigration(): Promise<void> {
   // Log the full path to verify directory location
-  console.log("Migrations Directory Full Path:", migrationsDir);
+  logger.info(migrationsDir, "Migrations Directory Full Path");
 
   // Check if migrations directory exists, create if not
   const hasAccess = await fs
@@ -22,7 +23,7 @@ async function createMigration(): Promise<void> {
 
   if (!hasAccess) {
     await fs.mkdir(migrationsDir, { recursive: true });
-    console.log(`Created migrations directory: ${migrationsDir}`);
+    logger.info(`Created migrations directory: ${migrationsDir}`);
   }
 
   const migrationNameSpaced = await promptForMigrationName();
@@ -55,22 +56,22 @@ async function createMigration(): Promise<void> {
 
   // Create the migration directory
   await fs.mkdir(fullMigrationPath, { recursive: true });
-  console.log("Created migration directory:", fullMigrationPath);
+  logger.info(fullMigrationPath, "Created migration directory");
 
   // Create the migration file
   await fs.writeFile(filePath, getTemplateContent(migrationFunctionName, migrationNameTimestamped));
-  console.log(`New migration created: ${filePath}`);
+  logger.info(filePath, "New migration created");
 }
 
 function promptForMigrationName(): Promise<string> {
   return new Promise((resolve) => {
     rl.question("Enter the name of the migration (please use spaces): ", (name) => {
       if (!name.trim()) {
-        console.error("Migration name cannot be empty.");
+        logger.error("Migration name cannot be empty.");
         process.exit(1);
       }
       if (/[^a-zA-Z0-9\s]/.test(name)) {
-        console.error(
+        logger.error(
           "Migration name contains invalid characters. Only letters, numbers, and spaces are allowed."
         );
         process.exit(1);
@@ -107,6 +108,6 @@ export const ${migrationName}: MigrationScript = {
 }
 
 createMigration().catch((error: unknown) => {
-  console.error("An error occurred while creating the migration:", error);
+  logger.fatal(error, "An error occurred while creating the migration");
   process.exit(1);
 });

@@ -120,7 +120,6 @@ export const LoginForm = ({
   };
 
   const [showLogin, setShowLogin] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const [totpLogin, setTotpLogin] = useState(false);
   const [totpBackup, setTotpBackup] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -202,7 +201,8 @@ export const LoginForm = ({
                             autoComplete="current-password"
                             placeholder="*******"
                             aria-placeholder="password"
-                            onFocus={() => setIsPasswordFocused(true)}
+                            aria-label="password"
+                            aria-required="true"
                             required
                             className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
                             value={field.value}
@@ -214,7 +214,7 @@ export const LoginForm = ({
                     </FormItem>
                   )}
                 />
-                {passwordResetEnabled && isPasswordFocused && (
+                {passwordResetEnabled && (
                   <div className="ml-1 text-right transition-all duration-500 ease-in-out">
                     <Link
                       href="/auth/forgot-password"

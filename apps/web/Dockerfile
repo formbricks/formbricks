@@ -85,6 +85,8 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
 
 # Copy Prisma-specific generated files
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
@@ -93,14 +95,16 @@ COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_mod
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Copy only @paralleldrive/cuid2 and @noble/hashes
+# Copy required dependencies
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma
+RUN npm install -g tsx typescript prisma pino-pretty
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
+ENV NODE_ENV="production"
 # USER nextjs
 
 # Prepare volume for uploads

@@ -7,6 +7,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { selectSurvey } from "@formbricks/lib/survey/service";
 import { transformPrismaSurvey } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -34,7 +35,7 @@ export const getSurveys = reactCache(
           return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error({ error }, "getSurveys: Could not fetch surveys");
             throw new DatabaseError(error.message);
           }
           throw error;

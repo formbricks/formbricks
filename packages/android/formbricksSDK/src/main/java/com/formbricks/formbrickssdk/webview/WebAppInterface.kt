@@ -15,6 +15,7 @@ class WebAppInterface(private val callback: WebAppCallback?) {
         fun onDisplayCreated()
         fun onResponseCreated()
         fun onFilePick(data: FileUploadData)
+        fun onSurveyLibraryLoadError()
     }
 
     /**
@@ -32,6 +33,7 @@ class WebAppInterface(private val callback: WebAppCallback?) {
                 EventType.ON_DISPLAY_CREATED -> callback?.onDisplayCreated()
                 EventType.ON_RESPONSE_CREATED -> callback?.onResponseCreated()
                 EventType.ON_FILE_PICK -> { callback?.onFilePick(FileUploadData.from(data)) }
+                EventType.ON_SURVEY_LIBRARY_LOAD_ERROR -> { callback?.onSurveyLibraryLoadError() }
             }
         } catch (e: Exception) {
             Logger.e(e.message)
