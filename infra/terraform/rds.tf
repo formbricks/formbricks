@@ -23,6 +23,15 @@ module "rds-aurora" {
   master_username             = "formbricks"
   master_password             = random_password.postgres.result
   manage_master_user_password = false
+  create_db_cluster_parameter_group = true
+  db_cluster_parameter_group_family = data.aws_rds_engine_version.postgresql.parameter_group_family
+  db_cluster_parameter_group_parameters = [
+    {
+      name         = "shared_preload_libraries"
+      value        = "pglogical"
+      apply_method = "pending-reboot"
+    }
+  ]
 
   vpc_id               = module.vpc.vpc_id
   db_subnet_group_name = module.vpc.database_subnet_group_name
