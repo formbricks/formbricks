@@ -6,11 +6,8 @@ import { logger } from "@formbricks/logger";
 export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
   logApiError(request, err);
 
-  console.log("err", err);
-
   switch (err.type) {
     case "bad_request":
-      console.log("bad_request");
       return responses.badRequestResponse({ details: err.details });
     case "unauthorized":
       return responses.unauthorizedResponse();
@@ -25,7 +22,6 @@ export const handleApiError = (request: Request, err: ApiErrorResponseV2): Respo
     case "too_many_requests":
       return responses.tooManyRequestsResponse();
     default:
-      console.log("internalServerError");
       // Replace with a generic error message, because we don't want to expose internal errors to API users.
       return responses.internalServerErrorResponse({
         details: [

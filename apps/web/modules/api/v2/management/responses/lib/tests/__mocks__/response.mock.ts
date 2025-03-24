@@ -1,5 +1,7 @@
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
-import { Organization, Response } from "@prisma/client";
+import { Response } from "@prisma/client";
+import { z } from "zod";
+import { ZOrganizationBilling } from "@formbricks/types/organizations";
 
 export const responseInput: Omit<Response, "id"> = {
   surveyId: "lygo31gfsexlr4lh6rq8dxyl",
@@ -77,7 +79,7 @@ export const response: Response = {
 export const environmentId = "ou9sjm7a7qnilxhhhfszct95";
 export const organizationId = "qybv4vk77pw71vnq9rmfrsvi";
 
-export const organizationBilling: Organization["billing"] = {
+export const organizationBilling: z.infer<typeof ZOrganizationBilling> = {
   stripeCustomerId: "cus_P78901234567890123456789",
   plan: "free",
   period: "monthly",

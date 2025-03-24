@@ -1,5 +1,4 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
