@@ -84,20 +84,27 @@ Since all logs are written to stdout/stderr, you can integrate with various logg
 
 ## OpenTelemetry Integration
 
-Formbricks leverages Next.js's built-in OpenTelemetry instrumentation for comprehensive observability. When enabled, it automatically instruments various aspects of your application.
+Formbricks offers two complementary observability approaches:
 
-Set the following environment variables:
+1. **Next.js OpenTelemetry** - For tracing and APM integration
+2. **Prometheus Integration** - For metrics collection and monitoring
+
+### Next.js OpenTelemetry for Tracing
+
+Formbricks leverages Next.js's built-in OpenTelemetry instrumentation for tracing and APM integration. When enabled, it automatically instruments various aspects of your application, providing detailed insights into request flows and performance.
+
+To enable Next.js OpenTelemetry, set the following environment variables:
 
 ```env
 OTEL_ENABLED=true
-OTEL_ENDPOINT=<your-collector-endpoint>
+OTEL_ENDPOINT=<your-collector-endpoint> # e.g., http://localhost:4318/v1/traces for OTLP HTTP
 OTEL_SERVICE_NAME=formbricks
 NEXT_OTEL_VERBOSE=1 # Optional: enables detailed tracing
 ```
 
-### Default Instrumentation
+#### Default Next.js Instrumentation
 
-The OpenTelemetry integration automatically tracks:
+The Next.js OpenTelemetry integration automatically tracks:
 
 - HTTP requests and responses
 - Route rendering
@@ -106,17 +113,17 @@ The OpenTelemetry integration automatically tracks:
 - Database queries
 - External API calls
 
-### Supported Backends
+#### Supported Backends for Tracing
 
-OpenTelemetry data can be exported to various observability platforms:
+OpenTelemetry trace data can be exported to various observability platforms:
 
-#### Tracing Backends
+##### Tracing Backends
 
 - Jaeger
 - Zipkin
 - Tempo
 
-#### APM & Full-Stack Observability Platforms
+##### APM & Full-Stack Observability Platforms
 
 - New Relic
 - Datadog
@@ -125,17 +132,9 @@ OpenTelemetry data can be exported to various observability platforms:
 - AWS X-Ray
 - Google Cloud Trace
 
-### Key Metrics
-
-- HTTP request duration
-- Database performance
-- Memory usage
-- Response times
-- Error rates
-
 ## Prometheus Integration
 
-Formbricks implements a dedicated Prometheus integration using OpenTelemetry's Prometheus exporter. This runs a metrics server on a separate port and exposes metrics in Prometheus format for scraping.
+Formbricks implements a dedicated Prometheus metrics exporter using OpenTelemetry. This integration runs a metrics server on a separate port and exposes metrics in Prometheus format for scraping. It focuses specifically on host and runtime metrics rather than application-specific traces.
 
 ### Configuration
 
@@ -152,11 +151,25 @@ The exporter listens on all network interfaces (0.0.0.0) and exposes metrics at 
 
 ### Available Metrics
 
-The metrics exported include:
+The metrics exported by the Prometheus integration include:
 
-- **Host Metrics**: CPU usage, memory usage, network I/O
-- **HTTP Metrics**: Request counts, durations, error rates
-- **Runtime Metrics**: Garbage collection, event loop timing, heap statistics
+- **Host Metrics**:
+
+  - CPU usage (user, system, idle)
+  - Memory usage (used, free, cached)
+  - Disk I/O (reads, writes)
+  - Network I/O (bytes in/out, packets in/out)
+
+- **HTTP Metrics**:
+
+  - Request counts
+  - Request durations
+  - Error rates
+
+- **Runtime Metrics**:
+  - Garbage collection frequency and duration
+  - Event loop lag
+  - Heap statistics (size, used, available)
 
 ### Collecting Metrics
 
