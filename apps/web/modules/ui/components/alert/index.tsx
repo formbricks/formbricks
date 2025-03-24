@@ -76,7 +76,7 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
         ref={ref}
         className={cn(
           "col-start-1 row-start-1 font-medium leading-none tracking-tight",
-          size === "small" ? "min-w-[200] truncate" : "col-start-1 row-start-1",
+          size === "small" ? "truncate" : "col-start-1 row-start-1",
 
           className
         )}
