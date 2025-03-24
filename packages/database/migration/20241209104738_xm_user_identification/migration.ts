@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const xmUserIdentification: MigrationScript = {
@@ -23,7 +24,7 @@ export const xmUserIdentification: MigrationScript = {
 
     // If no contacts have a userId, migration is already complete
     if (totalContacts > 0 && contactsWithUserId === 0) {
-      console.log("Migration already completed. No contacts with userId found.");
+      logger.info("Migration already completed. No contacts with userId found.");
       return;
     }
 
@@ -40,7 +41,7 @@ export const xmUserIdentification: MigrationScript = {
         break;
       }
 
-      console.log("Processing attributeKeys for", environments.length, "environments");
+      logger.info(`Processing attributeKeys for ${environments.length.toString()} environments`);
 
       // Process each environment
       for (const env of environments) {
@@ -80,7 +81,7 @@ export const xmUserIdentification: MigrationScript = {
     SELECT COUNT(*)::integer AS deleted_count FROM deleted
   `;
 
-    console.log("Deleted userId attributes for", deletedCount, "contacts");
+    logger.info(`Deleted userId attributes for ${deletedCount.toString()} contacts`);
 
     while (true) {
       // Fetch contacts with userId in batches
@@ -164,7 +165,7 @@ export const xmUserIdentification: MigrationScript = {
       processedContacts += contacts.length;
 
       if (processedContacts > 0) {
-        console.log(`Processed ${processedContacts.toString()} contacts`);
+        logger.info(`Processed ${processedContacts.toString()} contacts`);
       }
     }
 
@@ -186,13 +187,12 @@ export const xmUserIdentification: MigrationScript = {
     )
   `;
 
-    console.log("Total contacts after migration:", totalContactsAfterMigration);
-    console.log("Total attributes with userId now:", totalUserIdAttributes);
+    logger.info(`Total contacts after migration: ${totalContactsAfterMigration.toString()}`);
+    logger.info(`Total attributes with userId now: ${totalUserIdAttributes.toString()}`);
 
     if (totalContactsAfterMigration !== totalUserIdAttributes) {
-      console.log(
-        "Difference between total contacts and total attributes with userId: ",
-        totalContactsAfterMigration - totalUserIdAttributes
+      logger.info(
+        `Difference between total contacts and total attributes with userId: ${(totalContactsAfterMigration - totalUserIdAttributes).toString()}`
       );
     }
   },

@@ -2,6 +2,7 @@ import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
@@ -49,7 +50,7 @@ export const POST = async (request: Request): Promise<Response> => {
     try {
       contactAttibuteKeyInput = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON input: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON input");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

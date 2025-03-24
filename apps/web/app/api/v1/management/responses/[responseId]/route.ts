@@ -3,6 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteResponse, getResponse, updateResponse } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { ZResponseUpdateInput } from "@formbricks/types/responses";
 
 export const GET = async (
@@ -80,7 +81,7 @@ export const PUT = async (
     try {
       responseUpdate = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

@@ -2,6 +2,7 @@ import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/a
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
+import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 
@@ -59,7 +60,7 @@ export const PUT = async (
     try {
       actionClassUpdate = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
 

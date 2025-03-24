@@ -25,6 +25,7 @@ interface IndividualInviteTabProps {
   canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
+  membershipRole?: TOrganizationRole;
 }
 
 export const IndividualInviteTab = ({
@@ -34,6 +35,7 @@ export const IndividualInviteTab = ({
   canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
+  membershipRole,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
@@ -47,7 +49,7 @@ export const IndividualInviteTab = ({
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: "owner",
+      role: "member",
       teamIds: [],
     },
   });
@@ -102,6 +104,7 @@ export const IndividualInviteTab = ({
             control={control}
             canDoRoleManagement={canDoRoleManagement}
             isFormbricksCloud={isFormbricksCloud}
+            membershipRole={membershipRole}
           />
           {watch("role") === "member" && (
             <Alert className="mt-2" variant="info">

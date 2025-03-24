@@ -2,6 +2,7 @@ import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
 import { headers } from "next/headers";
+import { logger } from "@formbricks/logger";
 
 export const GET = async (request: Request, props: { params: Promise<{ webhookId: string }> }) => {
   const params = await props.params;
@@ -52,7 +53,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ webhoo
     const webhook = await deleteWebhook(params.webhookId);
     return responses.successResponse(webhook);
   } catch (e) {
-    console.error(e.message);
+    logger.error({ error: e, url: request.url }, "Error deleting webhook");
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
 };

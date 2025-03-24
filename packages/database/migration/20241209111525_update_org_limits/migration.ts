@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 type Plan = "free" | "startup" | "scale";
@@ -94,6 +95,6 @@ export const updateOrgLimits: MigrationScript = {
 
     await Promise.all(updationPromises);
 
-    console.log(`Updated ${organizations.length.toString()} organizations`);
+    logger.info(`Updated ${organizations.length.toString()} organizations`);
   },
 };
