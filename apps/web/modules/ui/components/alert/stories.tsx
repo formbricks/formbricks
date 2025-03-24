@@ -1,7 +1,6 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { LightbulbIcon } from "lucide-react";
-import { Button } from "../button";
-import { Alert, AlertActions, AlertDescription, AlertTitle } from "./index";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "./index";
 
 // We'll define the story options separately from the component props
 interface StoryOptions {
@@ -41,7 +40,7 @@ const meta: Meta<typeof Alert> = {
       table: {
         category: "Appearance",
         type: { summary: "string" },
-        default: "default",
+        defaultValue: { summary: "default" },
       },
       order: 2,
     },
@@ -105,32 +104,35 @@ const meta: Meta<typeof Alert> = {
 export default meta;
 
 // Our story type just specifies Alert props plus our story options
-type Story = StoryObj<typeof Alert & StoryOptions>;
+type Story = StoryObj<typeof Alert> & { args: StoryOptions };
+
+// Create a common render function to reduce duplication
+const renderAlert = (args: any) => {
+  // Extract component props
+  const { variant = "default", size = "default", className = "" } = args;
+
+  // Extract story content options
+  const {
+    title = "",
+    description = "",
+    showIcon = false,
+    showActions = false,
+    actionButtonText = "",
+  } = args as StoryOptions;
+
+  return (
+    <Alert variant={variant} size={size} className={className}>
+      {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
+      <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
+      {description && <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>}
+      {showActions && <AlertButton onClick={() => alert("Button clicked")}>{actionButtonText}</AlertButton>}
+    </Alert>
+  );
+};
 
 // Basic example with direct props
 export const Default: Story = {
-  render: (args) => {
-    // Extract component props
-    const { variant, size, className } = args;
-
-    // Extract story content options
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant={variant} size={size} className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
     variant: "default",
     title: "Alert Title",
@@ -143,28 +145,7 @@ export const Default: Story = {
 
 // Small size example
 export const Small: Story = {
-  render: (args) => {
-    // Extract component props
-    const { variant, className } = args;
-
-    // Extract story content options
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant={variant} size="small" className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
     variant: "default",
     size: "small",
@@ -185,28 +166,7 @@ export const Small: Story = {
 
 // With custom icon
 export const withButtonAndIcon: Story = {
-  render: (args) => {
-    // Extract component props
-    const { variant, size } = args;
-
-    // Extract story content options
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant={variant} size={size} className="flex flex-wrap">
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
     variant: "default",
     title: "Alert Title",
@@ -217,28 +177,11 @@ export const withButtonAndIcon: Story = {
   },
 };
 
-// Remaining variants follow the same pattern
+// Error variant
 export const Error: Story = {
-  render: (args) => {
-    const { size, className } = args;
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant="error" size={size} className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
+    variant: "error",
     title: "Error Alert",
     description: "Your session has expired. Please log in again.",
     showIcon: false,
@@ -256,26 +199,9 @@ export const Error: Story = {
 
 // Warning variant
 export const Warning: Story = {
-  render: (args) => {
-    const { size, className } = args;
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant="warning" size={size} className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
+    variant: "warning",
     title: "Warning Alert",
     description: "You are editing sensitive data. Be cautious",
     showIcon: false,
@@ -293,26 +219,9 @@ export const Warning: Story = {
 
 // Info variant
 export const Info: Story = {
-  render: (args) => {
-    const { size, className } = args;
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant="info" size={size} className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
+    variant: "info",
     title: "Info Alert",
     description: "There was an update to your application.",
     showIcon: false,
@@ -330,26 +239,9 @@ export const Info: Story = {
 
 // Success variant
 export const Success: Story = {
-  render: (args) => {
-    const { size, className } = args;
-    const { title, description, showIcon, showActions, actionButtonText } = args as StoryOptions;
-
-    return (
-      <Alert variant="success" size={size} className={className}>
-        {showIcon && <LightbulbIcon className="absolute left-4 top-4 h-4 w-4" />}
-        <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
-        <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>
-        {showActions && (
-          <AlertActions>
-            <Button size="default" variant="secondary" onClick={() => alert("Button clicked")}>
-              {actionButtonText}
-            </Button>
-          </AlertActions>
-        )}
-      </Alert>
-    );
-  },
+  render: renderAlert,
   args: {
+    variant: "success",
     title: "Success Alert",
     description: "This worked! Please proceed.",
     showIcon: false,

@@ -41,7 +41,7 @@ module.exports = {
           dark: "#00C4B8",
         },
         focus: "var(--formbricks-focus, #1982fc)",
-        error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
+        // error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
         primary: {
           DEFAULT: "#0f172a",
