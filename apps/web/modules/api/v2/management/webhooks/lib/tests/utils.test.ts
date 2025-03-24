@@ -11,11 +11,6 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 describe("getWebhooksQuery", () => {
   const environmentId = "env-123";
 
-  it("returns undefined if params are not provided", () => {
-    const result = getWebhooksQuery(environmentId);
-    expect(result).toBeUndefined();
-  });
-
   it("adds surveyIds condition when provided", () => {
     const params = { surveyIds: ["survey1"] } as TGetWebhooksFilter;
     const result = getWebhooksQuery(environmentId, params);

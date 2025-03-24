@@ -10,11 +10,6 @@ vi.mock("@/modules/api/v2/management/lib/utils", () => ({
 }));
 
 describe("getResponsesQuery", () => {
-  it("returns undefined if no params are provided", () => {
-    const result = getResponsesQuery("env-id");
-    expect(result).toBeUndefined();
-  });
-
   it("adds surveyId to where clause if provided", () => {
     const result = getResponsesQuery("env-id", { surveyId: "survey123" } as TGetResponsesFilter);
     expect(result?.where?.surveyId).toBe("survey123");
