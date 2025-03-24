@@ -5,11 +5,6 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
 import { createApiKey, deleteApiKey, getApiKeys } from "./api-key";
 
-// Mock the ITEMS_PER_PAGE to be 10 (or actual value)
-vi.mock("@formbricks/lib/constants", () => ({
-  ITEMS_PER_PAGE: 30,
-}));
-
 const mockApiKey: ApiKey = {
   id: "apikey123",
   label: "Test API Key",
@@ -23,7 +18,7 @@ const mockApiKey: ApiKey = {
 // Mock modules before tests
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    apiKeyNew: {
+    apiKey: {
       findMany: vi.fn(),
       delete: vi.fn(),
       create: vi.fn(),
@@ -76,15 +71,13 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKey]);
       vi.mocked(apiKeyNewCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
-      const result = await getApiKeys("org123", 2);
+      const result = await getApiKeys("org123");
 
       expect(result).toEqual([mockApiKey]);
       expect(prisma.apiKey.findMany).toHaveBeenCalledWith({
         where: {
           organizationId: "org123",
         },
-        take: 30,
-        skip: 30,
       });
     });
 
