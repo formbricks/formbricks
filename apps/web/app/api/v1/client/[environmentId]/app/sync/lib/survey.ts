@@ -14,6 +14,7 @@ import { getSurveys } from "@formbricks/lib/survey/service";
 import { anySurveyHasFilters } from "@formbricks/lib/survey/utils";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -150,7 +151,7 @@ export const getSyncSurveys = reactCache(
           return surveys;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error);
             throw new DatabaseError(error.message);
           }
 

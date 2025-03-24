@@ -1,6 +1,7 @@
 import { sendFollowUpEmail } from "@/modules/email";
 import { z } from "zod";
 import { TSurveyFollowUpAction } from "@formbricks/database/types/survey-follow-up";
+import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -89,6 +90,6 @@ export const sendSurveyFollowUps = async (
     .map((result) => `FollowUp ${result.followUpId} failed: ${result.error}`);
 
   if (errors.length > 0) {
-    console.error("Follow-up processing errors:", errors);
+    logger.error(errors, "Follow-up processing errors");
   }
 };

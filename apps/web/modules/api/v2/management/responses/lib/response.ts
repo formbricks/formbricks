@@ -16,6 +16,7 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const createResponse = async (
@@ -110,7 +111,7 @@ export const createResponse = async (
           });
         } catch (err) {
           // Log error but do not throw it
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }
