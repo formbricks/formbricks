@@ -3,6 +3,21 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
+// mock react toast
+
+vi.mock("react-hot-toast", () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  success: vi.fn(),
+  error: vi.fn(),
+}));
+
 // mock next cache
 
 vi.mock("next/cache", () => ({
@@ -37,16 +52,25 @@ vi.mock("@tolgee/react", () => ({
 
 // mock next/router navigation
 
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-    refresh: vi.fn(),
-  }),
-}));
+vi.mock("next/navigation", async () => {
+  const actual = await vi.importActual<typeof import("next/navigation")>("next/navigation");
+
+  return {
+    ...actual,
+    useRouter: () => ({
+      push: vi.fn(),
+      replace: vi.fn(),
+      back: vi.fn(),
+      forward: vi.fn(),
+      prefetch: vi.fn(),
+      refresh: vi.fn(),
+    }),
+    notFound: vi.fn(),
+    redirect: vi.fn(),
+    useSearchParams: vi.fn(),
+    usePathname: vi.fn(),
+  };
+});
 
 // mock server-only
 vi.mock("server-only", () => {
