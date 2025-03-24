@@ -106,7 +106,7 @@ describe("AddApiKeyModal", () => {
     });
     expect(modalTitle).toBeInTheDocument();
     expect(screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack")).toBeInTheDocument();
-    expect(screen.getByText("Permissions")).toBeInTheDocument();
+    expect(screen.getByText("environments.project.api_keys.permissions")).toBeInTheDocument();
   });
 
   it("handles label input", async () => {
