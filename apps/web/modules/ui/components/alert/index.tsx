@@ -1,6 +1,9 @@
+"use client";
+
 import { VariantProps, cva } from "class-variance-authority";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
+import { createContext, useContext } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { Button, ButtonProps } from "../button";
 
@@ -10,12 +13,12 @@ interface AlertContextValue {
   size?: "default" | "small" | null;
 }
 
-const AlertContext = React.createContext<AlertContextValue>({
+const AlertContext = createContext<AlertContextValue>({
   variant: "default",
   size: "default",
 });
 
-const useAlertContext = () => React.useContext(AlertContext);
+const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
 const alertVariants = cva("relative w-full rounded-lg border", {
