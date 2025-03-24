@@ -1,14 +1,17 @@
+import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetWebhooksFilter } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { Prisma } from "@prisma/client";
 
 export const getWebhooksQuery = (environmentId: string, params?: TGetWebhooksFilter) => {
-  const { limit, skip, sortBy, order, startDate, endDate, surveyIds } = params || {};
-
   let query: Prisma.WebhookFindManyArgs = {
     where: {
       environmentId,
     },
   };
+
+  if (!params) return;
+
+  const { surveyIds } = params || {};
 
   if (surveyIds) {
     query = {
@@ -22,53 +25,10 @@ export const getWebhooksQuery = (environmentId: string, params?: TGetWebhooksFil
     };
   }
 
-  if (startDate) {
-    query = {
-      ...query,
-      where: {
-        ...query.where,
-        createdAt: {
-          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Webhook">),
-          gte: startDate,
-        },
-      },
-    };
-  }
+  const baseFilter = pickCommonFilter(params);
 
-  if (endDate) {
-    query = {
-      ...query,
-      where: {
-        ...query.where,
-        createdAt: {
-          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Webhook">),
-          lte: endDate,
-        },
-      },
-    };
-  }
-
-  if (sortBy) {
-    query = {
-      ...query,
-      orderBy: {
-        [sortBy]: order,
-      },
-    };
-  }
-
-  if (limit) {
-    query = {
-      ...query,
-      take: limit,
-    };
-  }
-
-  if (skip) {
-    query = {
-      ...query,
-      skip,
-    };
+  if (baseFilter) {
+    query = buildCommonFilterQuery<Prisma.WebhookFindManyArgs>(query, baseFilter);
   }
 
   return query;

@@ -58,24 +58,20 @@ export const updateWebhook = async (
 
     return ok(updatedWebhook);
   } catch (error) {
-    console.log("error", error);
-
     if (error instanceof PrismaClientKnownRequestError) {
-      console.log("error.code", error.code);
-
       if (
         error.code === PrismaErrorType.RecordDoesNotExist ||
         error.code === PrismaErrorType.RelatedRecordDoesNotExist
       ) {
         return err({
           type: "not_found",
-          details: [{ field: "response", issue: "not found" }],
+          details: [{ field: "webhook", issue: "not found" }],
         });
       }
     }
     return err({
       type: "internal_server_error",
-      details: [{ field: "response", issue: error.message }],
+      details: [{ field: "webhook", issue: error.message }],
     });
   }
 };
