@@ -28,7 +28,7 @@ const RootLayout = async ({ children }: { children: React.ReactNode }) => {
     <html lang={locale} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
         {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
-        <SentryProvider sentryDns={SENTRY_DSN}>
+        <SentryProvider sentryDsn={SENTRY_DSN}>
           <PHProvider posthogEnabled={IS_POSTHOG_CONFIGURED}>
             <TolgeeNextProvider language={locale} staticData={staticData as unknown as TolgeeStaticData}>
               {children}

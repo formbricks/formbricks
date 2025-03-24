@@ -71,9 +71,9 @@ vi.mock("@/tolgee/client", () => ({
 }));
 
 vi.mock("@/app/sentry/SentryProvider", () => ({
-  SentryProvider: ({ children, sentryDns }: { children: React.ReactNode; sentryDns?: string }) => (
+  SentryProvider: ({ children, sentryDsn }: { children: React.ReactNode; sentryDsn?: string }) => (
     <div data-testid="sentry-provider">
-      SentryProvider: {sentryDns}
+      SentryProvider: {sentryDsn}
       {children}
     </div>
   ),

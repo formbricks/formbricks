@@ -22,12 +22,12 @@ describe("SentryProvider", () => {
     cleanup();
   });
 
-  it("calls Sentry.init when sentryDns is provided", () => {
-    const sentryDns = "https://examplePublicKey@o0.ingest.sentry.io/0";
+  it("calls Sentry.init when sentryDsn is provided", () => {
+    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
-      <SentryProvider sentryDns={sentryDns}>
+      <SentryProvider sentryDsn={sentryDsn}>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );
@@ -36,7 +36,7 @@ describe("SentryProvider", () => {
     expect(initSpy).toHaveBeenCalled();
     expect(initSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        dsn: sentryDns,
+        dsn: sentryDsn,
         tracesSampleRate: 1,
         debug: false,
         replaysOnErrorSampleRate: 1.0,
@@ -47,7 +47,7 @@ describe("SentryProvider", () => {
     );
   });
 
-  it("does not call Sentry.init when sentryDns is not provided", () => {
+  it("does not call Sentry.init when sentryDsn is not provided", () => {
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
@@ -60,9 +60,9 @@ describe("SentryProvider", () => {
   });
 
   it("renders children", () => {
-    const sentryDns = "https://examplePublicKey@o0.ingest.sentry.io/0";
+    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     render(
-      <SentryProvider sentryDns={sentryDns}>
+      <SentryProvider sentryDsn={sentryDsn}>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );
@@ -70,11 +70,11 @@ describe("SentryProvider", () => {
   });
 
   it("processes beforeSend correctly", () => {
-    const sentryDns = "https://examplePublicKey@o0.ingest.sentry.io/0";
+    const sentryDsn = "https://examplePublicKey@o0.ingest.sentry.io/0";
     const initSpy = vi.spyOn(Sentry, "init").mockImplementation(() => undefined);
 
     render(
-      <SentryProvider sentryDns={sentryDns}>
+      <SentryProvider sentryDsn={sentryDsn}>
         <div data-testid="child">Test Content</div>
       </SentryProvider>
     );
