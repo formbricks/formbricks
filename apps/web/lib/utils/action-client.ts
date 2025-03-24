@@ -2,6 +2,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getServerSession } from "next-auth";
 import { DEFAULT_SERVER_ERROR_MESSAGE, createSafeActionClient } from "next-safe-action";
 import { getUser } from "@formbricks/lib/user/service";
+import { logger } from "@formbricks/logger";
 import {
   AuthenticationError,
   AuthorizationError,
@@ -25,7 +26,7 @@ export const actionClient = createSafeActionClient({
     }
 
     // eslint-disable-next-line no-console -- This error needs to be logged for debugging server-side errors
-    console.error("SERVER ERROR: ", e);
+    logger.error(e, "SERVER ERROR");
     return DEFAULT_SERVER_ERROR_MESSAGE;
   },
 });

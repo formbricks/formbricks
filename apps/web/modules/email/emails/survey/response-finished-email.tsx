@@ -96,8 +96,8 @@ export async function ResponseFinishedEmail({
       <Container>
         <Row>
           <Column>
-            <Text className="mb-4 text-3xl font-bold"> {t("emails.survey_response_finished_email_hey")}</Text>
-            <Text className="mb-4">
+            <Text className="mb-4 text-xl font-bold"> {t("emails.survey_response_finished_email_hey")}</Text>
+            <Text className="mb-4 font-normal">
               {t("emails.survey_response_finished_email_congrats", {
                 surveyName: survey.name,
               })}

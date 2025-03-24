@@ -13,12 +13,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
+import { getAccessFlags } from "@formbricks/lib/membership/utils";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface OrganizationActionsProps {
   role: TOrganizationRole;
-  isOwnerOrManager: boolean;
+  membershipRole?: TOrganizationRole;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   teams: TOrganizationTeam[];
@@ -30,9 +31,9 @@ interface OrganizationActionsProps {
 }
 
 export const OrganizationActions = ({
-  isOwnerOrManager,
   role,
   organization,
+  membershipRole,
   teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
@@ -46,6 +47,9 @@ export const OrganizationActions = ({
   const [isLeaveOrganizationModalOpen, setLeaveOrganizationModalOpen] = useState(false);
   const [isInviteMemberModalOpen, setInviteMemberModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const { isOwner, isManager } = getAccessFlags(membershipRole);
+  const isOwnerOrManager = isOwner || isManager;
 
   const handleLeaveOrganization = async () => {
     setLoading(true);
@@ -139,6 +143,7 @@ export const OrganizationActions = ({
         open={isInviteMemberModalOpen}
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
+        membershipRole={membershipRole}
         canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}

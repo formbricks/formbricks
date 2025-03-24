@@ -10,6 +10,9 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
@@ -37,6 +40,7 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
@@ -47,6 +51,12 @@
     },
     "@formbricks/js-core#test": {
       "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/lib#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/lib#test": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
@@ -81,8 +91,11 @@
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
     },
+    "@formbricks/web#test": {
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+    },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/js#build"]
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -134,6 +147,7 @@
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_APP_ID",
         "INTERCOM_SECRET_KEY",
+        "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
         "NEXT_PUBLIC_LAYER_API_KEY",
@@ -235,6 +249,7 @@
     },
     "db:setup": {
       "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
       "outputs": []
     },
     "db:start": {
