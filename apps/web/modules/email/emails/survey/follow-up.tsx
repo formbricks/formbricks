@@ -14,7 +14,6 @@ interface FollowUpEmailProps {
 
 export async function FollowUpEmail({ html, logoUrl }: FollowUpEmailProps): Promise<React.JSX.Element> {
   const t = await getTranslate();
-  console.log(t("emails.imprint"));
   const isDefaultLogo = !logoUrl || logoUrl === fbLogoUrl;
 
   return (
