@@ -1,12 +1,12 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { hasPermission } from "@/modules/api/v2/management/auth/authenticate-request";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getContact } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/contacts";
 import { getResponse } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/response";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/surveys";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 

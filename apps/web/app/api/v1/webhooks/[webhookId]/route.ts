@@ -1,6 +1,7 @@
-import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
 

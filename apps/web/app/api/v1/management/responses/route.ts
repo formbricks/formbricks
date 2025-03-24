@@ -1,6 +1,7 @@
-import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { getResponses, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";

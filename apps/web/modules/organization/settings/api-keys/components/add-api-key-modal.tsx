@@ -320,7 +320,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
                 onClick={() => {
                   setOpen(false);
                   reset();
-                  setSelectedPermissions({});
+                  setSelectedPermissions(getInitialPermissions());
                 }}>
                 {t("common.cancel")}
               </Button>

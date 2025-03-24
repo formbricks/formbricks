@@ -1,7 +1,8 @@
-import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError } from "@formbricks/types/errors";

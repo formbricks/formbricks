@@ -1,9 +1,9 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { hasPermission } from "@/modules/api/v2/management/auth/authenticate-request";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { createResponse, getResponses } from "./lib/response";

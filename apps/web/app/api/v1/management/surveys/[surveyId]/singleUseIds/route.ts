@@ -1,5 +1,6 @@
-import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseIds } from "@formbricks/lib/utils/singleUseSurveys";

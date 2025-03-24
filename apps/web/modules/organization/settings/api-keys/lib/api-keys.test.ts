@@ -1,4 +1,4 @@
-import { apiKeyNewCache } from "@/lib/cache/api-keys-new";
+import { apiKeyCache } from "@/lib/cache/api-key";
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -26,8 +26,8 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/lib/cache/api-keys-new", () => ({
-  apiKeyNewCache: {
+vi.mock("@/lib/cache/api-key", () => ({
+  apiKeyCache: {
     revalidate: vi.fn(),
     tag: {
       byOrganizationId: vi.fn(),
@@ -53,7 +53,7 @@ describe("API Key Management", () => {
   describe("getApiKeys", () => {
     it("retrieves API keys successfully", async () => {
       vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKey]);
-      vi.mocked(apiKeyNewCache.tag.byOrganizationId).mockReturnValue("org-tag");
+      vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       const result = await getApiKeys("org123");
 
@@ -73,7 +73,7 @@ describe("API Key Management", () => {
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.apiKey.findMany).mockRejectedValueOnce(errToThrow);
-      vi.mocked(apiKeyNewCache.tag.byOrganizationId).mockReturnValue("org-tag");
+      vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
       await expect(getApiKeys("org123")).rejects.toThrow(DatabaseError);
     });
@@ -91,7 +91,7 @@ describe("API Key Management", () => {
           id: mockApiKey.id,
         },
       });
-      expect(apiKeyNewCache.revalidate).toHaveBeenCalled();
+      expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
     it("throws DatabaseError on prisma error", async () => {
@@ -131,7 +131,7 @@ describe("API Key Management", () => {
 
       expect(result).toEqual({ ...mockApiKey, actualKey: "generated_key" });
       expect(prisma.apiKey.create).toHaveBeenCalled();
-      expect(apiKeyNewCache.revalidate).toHaveBeenCalled();
+      expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
     it("creates an API key with environment permissions successfully", async () => {
@@ -144,7 +144,7 @@ describe("API Key Management", () => {
 
       expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "generated_key" });
       expect(prisma.apiKey.create).toHaveBeenCalled();
-      expect(apiKeyNewCache.revalidate).toHaveBeenCalled();
+      expect(apiKeyCache.revalidate).toHaveBeenCalled();
     });
 
     it("throws DatabaseError on prisma error", async () => {

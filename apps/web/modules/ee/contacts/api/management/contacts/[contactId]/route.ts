@@ -1,6 +1,7 @@
-import { authenticateRequest, handleErrorResponse, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person

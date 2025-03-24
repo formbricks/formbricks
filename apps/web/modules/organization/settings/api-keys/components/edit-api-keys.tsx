@@ -86,7 +86,11 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       <div className="flex items-center">
         <span>{apiKey}</span>
         <div className="copyApiKeyIcon">
-          <FilesIcon className="mx-2 h-4 w-4 cursor-pointer" onClick={copyToClipboard} />
+          <FilesIcon
+            className="mx-2 h-4 w-4 cursor-pointer"
+            onClick={copyToClipboard}
+            data-testid="copy-button"
+          />
         </div>
       </div>
     );

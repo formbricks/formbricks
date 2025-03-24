@@ -37,6 +37,10 @@ export default defineConfig({
         "app/intercom/*.tsx",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
+        "modules/organization/settings/api-keys/lib/**/*.ts",
+        "app/api/v1/**/*.ts",
+        "modules/api/v2/management/auth/*.ts",
+        "modules/organization/settings/api-keys/components/*.tsx",
       ],
       exclude: [
         "**/.next/**",

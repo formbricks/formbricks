@@ -1,5 +1,5 @@
 import "server-only";
-import { apiKeyNewCache } from "@/lib/cache/api-keys-new";
+import { apiKeyCache } from "@/lib/cache/api-key";
 import {
   TApiKeyCreateInput,
   ZApiKeyCreateInput,
@@ -36,10 +36,50 @@ export const getApiKeys = reactCache(
       },
       [`getApiKeys-${organizationId}`],
       {
-        tags: [apiKeyNewCache.tag.byOrganizationId(organizationId)],
+        tags: [apiKeyCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
+
+// Get API key with its permissions from a raw API key
+export const getApiKeyWithPermissions = reactCache(async (apiKey: string) => {
+  const hashedKey = hashApiKey(apiKey);
+  return cache(
+    async () => {
+      // Look up the API key in the new structure
+      const apiKeyData = await prisma.apiKey.findUnique({
+        where: {
+          hashedKey,
+        },
+        include: {
+          apiKeyEnvironments: {
+            include: {
+              environment: true,
+            },
+          },
+        },
+      });
+
+      if (!apiKeyData) return null;
+
+      // Update the last used timestamp
+      await prisma.apiKey.update({
+        where: {
+          id: apiKeyData.id,
+        },
+        data: {
+          lastUsedAt: new Date(),
+        },
+      });
+
+      return apiKeyData;
+    },
+    [`getApiKeyWithPermissions-${apiKey}`],
+    {
+      tags: [apiKeyCache.tag.byHashedKey(hashedKey)],
+    }
+  )();
+});
 
 export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
   validateInputs([id, ZId]);
@@ -51,7 +91,7 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
       },
     });
 
-    apiKeyNewCache.revalidate({
+    apiKeyCache.revalidate({
       id: deletedApiKeyData.id,
       hashedKey: deletedApiKeyData.hashedKey,
       organizationId: deletedApiKeyData.organizationId,
@@ -107,7 +147,7 @@ export const createApiKey = async (
       },
     });
 
-    apiKeyNewCache.revalidate({
+    apiKeyCache.revalidate({
       id: result.id,
       hashedKey: result.hashedKey,
       organizationId: result.organizationId,

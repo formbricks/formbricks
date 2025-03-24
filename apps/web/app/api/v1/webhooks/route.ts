@@ -1,8 +1,9 @@
-import { authenticateRequest, hasPermission } from "@/app/api/v1/auth";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { createWebhook, getWebhooks } from "@/app/api/v1/webhooks/lib/webhook";
 import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { Webhook } from "@prisma/client";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
