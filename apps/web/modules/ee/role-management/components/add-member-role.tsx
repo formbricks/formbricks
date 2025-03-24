@@ -62,7 +62,7 @@ export function AddMemberRole({
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue="member"
+            defaultValue={canDoRoleManagement ? "member" : "owner"}
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);
