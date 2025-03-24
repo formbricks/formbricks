@@ -8,7 +8,52 @@ icon: "magnifying-glass-chart"
 
 Formbricks follows Next.js best practices with all logs being written to stdout/stderr, making it easy to collect and forward logs to your preferred logging solution.
 
-### Docker Container Logs
+### Log Levels
+
+- `debug`: Detailed information for debugging purposes.
+- `info`: General information about the system's operation.
+- `warn`: Potential issues that may require attention.
+- `error`: Errors that occur during the operation of the system.
+- `fatal`: Critical errors that cause the system to crash.
+
+### Log Format
+
+Formbricks uses JSON format for logs, which is structured and easy to parse. Each log entry includes:
+
+- `level`: The log level (e.g., info, error).
+- `time`: Timestamp of the log entry in milliseconds since epoch.
+- `pid`: Process ID of the application.
+- `hostname`: Hostname of the server where the log was generated.
+- `requestId`: Unique identifier for the request (if applicable).
+- `userId`: Unique identifier for the user (if applicable).
+- `msg`: The log message.
+- `stack`: Stack trace (if applicable).
+- `data`: Additional data related to the log entry.
+
+### Example Log Entry
+
+```json
+{
+  "hostname": "server-1",
+  "level": 30,
+  "msg": "User logged in successfully",
+  "pid": 12345,
+  "requestId": "abc-123",
+  "time": 1710000000000,
+  "userId": "user-789"
+}
+```
+
+### Configuring Log Levels
+
+You can configure the minimum log level using the `LOG_LEVEL` environment variable. Valid values: `debug`, `info`, `warn`, `error`, `fatal`.
+The default log level in production environments is `warn`, while in development environments it is `debug`.
+
+```env
+LOG_LEVEL=debug
+```
+
+### AccessDocker Container Logs
 
 ```bash
 # One-Click setup
@@ -20,7 +65,7 @@ docker logs <container-name>
 docker logs -f <container-name> # Follow logs
 ```
 
-### Kubernetes Pod Logs
+### Access Kubernetes Pod Logs
 
 ```bash
 kubectl logs <pod-name> -n <namespace>
@@ -37,7 +82,7 @@ Since all logs are written to stdout/stderr, you can integrate with various logg
 - Splunk
 - CloudWatch Logs (AWS)
 
-## OpenTelemetry Integration (Beta)
+## OpenTelemetry Integration
 
 Formbricks leverages Next.js's built-in OpenTelemetry instrumentation for comprehensive observability. When enabled, it automatically instruments various aspects of your application.
 
@@ -63,14 +108,22 @@ The OpenTelemetry integration automatically tracks:
 
 ### Supported Backends
 
-OpenTelemetry can export data to:
+OpenTelemetry data can be exported to various observability platforms:
+
+#### Tracing Backends
 
 - Jaeger
 - Zipkin
-- Prometheus
+- Tempo
+
+#### APM & Full-Stack Observability Platforms
+
 - New Relic
 - Datadog
+- Dynatrace
 - Azure Monitor
+- AWS X-Ray
+- Google Cloud Trace
 
 ### Key Metrics
 
@@ -79,6 +132,52 @@ OpenTelemetry can export data to:
 - Memory usage
 - Response times
 - Error rates
+
+## Prometheus Integration
+
+Formbricks implements a dedicated Prometheus integration using OpenTelemetry's Prometheus exporter. This runs a metrics server on a separate port and exposes metrics in Prometheus format for scraping.
+
+### Configuration
+
+To enable and configure the Prometheus exporter, set the following environment variables:
+
+```env
+PROMETHEUS_ENABLED=1
+PROMETHEUS_EXPORTER_PORT=9464  # Optional, defaults to 9464
+```
+
+The `PROMETHEUS_ENABLED` environment variable must be set to `1` to enable metrics collection. The `PROMETHEUS_EXPORTER_PORT` variable is optional and defaults to 9464 if not specified.
+
+The exporter listens on all network interfaces (0.0.0.0) and exposes metrics at the `/metrics` endpoint.
+
+### Available Metrics
+
+The metrics exported include:
+
+- **Host Metrics**: CPU usage, memory usage, network I/O
+- **HTTP Metrics**: Request counts, durations, error rates
+- **Runtime Metrics**: Garbage collection, event loop timing, heap statistics
+
+### Collecting Metrics
+
+You can scrape metrics from your Prometheus server by adding the following to your Prometheus configuration:
+
+```yaml
+scrape_configs:
+  - job_name: "formbricks"
+    static_configs:
+      - targets: ["your-formbricks-host:9464"]
+```
+
+### Resource Attributes
+
+The metrics include resource attributes automatically detected from:
+
+- Environment variables
+- Process information
+- Host information
+
+These attributes can help you filter and group metrics in your dashboards.
 
 ## Health Checks
 
