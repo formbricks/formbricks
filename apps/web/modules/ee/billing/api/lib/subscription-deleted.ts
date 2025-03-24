@@ -1,13 +1,14 @@
 import Stripe from "stripe";
 import { BILLING_LIMITS, PROJECT_FEATURE_KEYS } from "@formbricks/lib/constants";
 import { getOrganization, updateOrganization } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const handleSubscriptionDeleted = async (event: Stripe.Event) => {
   const stripeSubscriptionObject = event.data.object as Stripe.Subscription;
   const organizationId = stripeSubscriptionObject.metadata.organizationId;
   if (!organizationId) {
-    console.error("No organizationId found in subscription");
+    logger.error({ event, organizationId }, "No organizationId found in subscription");
     return { status: 400, message: "skipping, no organizationId found" };
   }
 

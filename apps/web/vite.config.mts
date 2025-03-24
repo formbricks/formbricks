@@ -7,10 +7,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
-      ["**/*.test.tsx", "jsdom"],
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["../../packages/lib/vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
@@ -24,6 +21,8 @@ export default defineConfig({
         "modules/auth/lib/**/*.ts",
         "modules/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
+        "modules/ee/role-management/components/*.tsx",
+        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "modules/ui/components/post-hog-client/*.tsx",
@@ -38,7 +37,14 @@ export default defineConfig({
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
         "app/layout.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "app/intercom/*.tsx",
+        "modules/ee/role-management/*.ts",
+        "modules/organization/settings/teams/actions.ts",
+        "modules/survey/hooks/*.tsx",
+        "modules/survey/lib/client-utils.ts",
+        "modules/survey/list/components/survey-card.tsx",
+        "modules/survey/list/components/survey-dropdown-menu.tsx",
       ],
       exclude: [
         "**/.next/**",
@@ -48,7 +54,6 @@ export default defineConfig({
         "**/openapi.ts", // Exclude openapi configuration files
         "**/openapi-document.ts", // Exclude openapi document files
         "modules/**/types/**", // Exclude types
-        "**/*.tsx", // Exclude tsx files
       ],
     },
   },

@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const removedNewSessionEvent: MigrationScript = {
@@ -17,7 +18,7 @@ export const removedNewSessionEvent: MigrationScript = {
         )
     `;
 
-    console.log(`Updated ${updatedActions.toString()} automatic actions`);
+    logger.info(`Updated ${updatedActions.toString()} automatic actions`);
 
     // Delete actions that are not referenced in SurveyTrigger
     const deletedActions = await tx.$executeRaw`
@@ -29,6 +30,6 @@ export const removedNewSessionEvent: MigrationScript = {
           WHERE "actionClassId" = "ActionClass".id
         )
     `;
-    console.log(`Deleted ${deletedActions.toString()} automatic actions`);
+    logger.info(`Deleted ${deletedActions.toString()} automatic actions`);
   },
 };
