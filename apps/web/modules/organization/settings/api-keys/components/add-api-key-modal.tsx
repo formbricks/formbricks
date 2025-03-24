@@ -180,7 +180,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
               </div>
 
               <div className="space-y-2">
-                <Label>Permissions</Label>
+                <Label>{t("environments.project.api_keys.permissions")}</Label>
                 <div className="space-y-2">
                   {/* Permission rows */}
                   {Object.keys(selectedPermissions).map((key) => {
