@@ -778,7 +778,6 @@
         "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
-        "api_key_created": "API 金鑰已建立",
         "api_key_deleted": "API 金鑰已刪除",
         "api_key_label": "API 金鑰標籤",
         "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",

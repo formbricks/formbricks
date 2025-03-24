@@ -1,5 +1,6 @@
 import { LRUCache } from "lru-cache";
 import { ENTERPRISE_LICENSE_KEY, REDIS_HTTP_URL } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 
 interface Options {
   interval: number;
@@ -28,8 +29,7 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
     }
     const tokenCountResponse = await fetch(`${REDIS_HTTP_URL}/INCR/${token}`);
     if (!tokenCountResponse.ok) {
-      // eslint-disable-next-line no-console -- need for debugging
-      console.error("Failed to increment token count in Redis", tokenCountResponse);
+      logger.error({ tokenCountResponse }, "Failed to increment token count in Redis");
       return;
     }
 

@@ -1,0 +1,64 @@
+name: Formbricks Cloud Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        description: 'The version of the Docker image to release'
+        required: true
+        type: string
+      REPOSITORY:
+        description: 'The repository to use for the Docker image'
+        required: false
+        type: string
+        default: 'ghcr.io/formbricks/formbricks'
+  workflow_call:
+    inputs:
+      VERSION:
+        description: 'The version of the Docker image to release'
+        required: true
+        type: string
+      REPOSITORY:
+        description: 'The repository to use for the Docker image'
+        required: false
+        type: string
+        default: 'ghcr.io/formbricks/formbricks'
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  helmfile-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: "eu-central-1"
+
+      - name: Setup Cluster Access
+        run: |
+          aws eks update-kubeconfig --name formbricks-prod-eks --region eu-central-1
+        env:
+          AWS_REGION: eu-central-1
+
+      - uses: helmfile/helmfile-action@v2
+        env:
+          VERSION: ${{ inputs.VERSION }}
+          REPOSITORY: ${{ inputs.REPOSITORY }}
+          FORMBRICKS_S3_BUCKET: ${{ secrets.FORMBRICKS_S3_BUCKET }}
+          FORMBRICKS_INGRESS_CERT_ARN: ${{ secrets.FORMBRICKS_INGRESS_CERT_ARN }}
+          FORMBRICKS_ROLE_ARN: ${{ secrets.FORMBRICKS_ROLE_ARN }}
+        with:
+          helm-plugins: >
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets
+          helmfile-args: apply
+          helmfile-auto-init: "false"
+          helmfile-workdirectory: infra/formbricks-cloud-helm
+
