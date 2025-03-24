@@ -11,11 +11,52 @@ export const upsertBulkContacts = async (
   environmentId: string,
   parsedEmails: string[]
 ) => {
+  const userIdsInContacts = contacts.flatMap((contact) =>
+    contact.attributes.filter((attr) => attr.attributeKey.key === "userId").map((attr) => attr.value)
+  );
+
+  const existingUserIds = await prisma.contactAttribute.findMany({
+    where: {
+      attributeKey: {
+        environmentId,
+        key: "userId",
+      },
+      value: {
+        in: userIdsInContacts,
+      },
+    },
+    select: {
+      value: true,
+    },
+  });
+
+  // in the contacts array, find the contacts that have an existing userId attribute, and remove the userId attribute from the contact
+  const filteredContacts = contacts.map((contact) => {
+    const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
+    if (!userIdAttr) {
+      return contact;
+    }
+
+    // check if the userId exists in the existingUserIds array
+    const existingUserId = existingUserIds.find(
+      (existingUserId) => existingUserId.value === userIdAttr.value
+    );
+
+    if (existingUserId) {
+      return {
+        ...contact,
+        attributes: contact.attributes.filter((attr) => attr.attributeKey.key !== "userId"),
+      };
+    }
+
+    return contact;
+  });
+
   const emailKey = "email";
 
   // Get unique attribute keys from the payload
   const keys = Array.from(
-    new Set(contacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
+    new Set(filteredContacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
   );
 
   // 2. Fetch attribute key records for these keys in this environment
@@ -33,7 +74,7 @@ export const upsertBulkContacts = async (
 
   // 2a. Check for missing attribute keys and create them if needed.
   const missingKeysMap = new Map<string, { key: string; name: string }>();
-  for (const contact of contacts) {
+  for (const contact of filteredContacts) {
     for (const attr of contact.attributes) {
       if (!attributeKeyMap[attr.attributeKey.key]) {
         missingKeysMap.set(attr.attributeKey.key, attr.attributeKey);
@@ -108,7 +149,7 @@ export const upsertBulkContacts = async (
     }[];
   }[] = [];
 
-  for (const contact of contacts) {
+  for (const contact of filteredContacts) {
     const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
 
     if (emailAttr && contactMap.has(emailAttr.value)) {

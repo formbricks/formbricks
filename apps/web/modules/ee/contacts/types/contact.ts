@@ -146,3 +146,19 @@ export const ZContactBulkUploadRequest = z.object({
 });
 
 export type TContactBulkUploadRequest = z.infer<typeof ZContactBulkUploadRequest>;
+
+export type TContactBulkUploadResponseBase = {
+  status: "success" | "error";
+  message: string;
+};
+
+export type TContactBulkUploadResponseError = TContactBulkUploadResponseBase & {
+  status: "error";
+  message: string;
+  errors: Record<string, string>[];
+};
+
+export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase & {
+  processed: number;
+  failed: number;
+};

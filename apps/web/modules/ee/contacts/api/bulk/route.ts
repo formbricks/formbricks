@@ -4,11 +4,8 @@ import { authenticateRequest } from "@/modules/api/v2/management/auth/authentica
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZUserEmail } from "@formbricks/types/user";
 
 export const PUT = async (request: NextRequest) => {
