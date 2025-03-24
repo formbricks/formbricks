@@ -110,7 +110,7 @@ AlertDescription.displayName = "AlertDescription";
 
 const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, children, ...props }, ref) => {
-    const { variant: alertVariant, size: alertSize } = useAlertContext();
+    const { size: alertSize } = useAlertContext();
 
     // Determine button styling based on alert context
     const buttonVariant = variant || (alertSize === "small" ? "link" : "secondary");
