@@ -7,10 +7,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
-      ["**/*.test.tsx", "jsdom"],
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["../../packages/lib/vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
@@ -34,6 +31,7 @@ export default defineConfig({
         "modules/survey/link/lib/**/*.ts",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "app/intercom/*.tsx",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
@@ -41,6 +39,10 @@ export default defineConfig({
         "app/api/v1/**/*.ts",
         "modules/api/v2/management/auth/*.ts",
         "modules/organization/settings/api-keys/components/*.tsx",
+        "modules/survey/hooks/*.tsx",
+        "modules/survey/lib/client-utils.ts",
+        "modules/survey/list/components/survey-card.tsx",
+        "modules/survey/list/components/survey-dropdown-menu.tsx",
       ],
       exclude: [
         "**/.next/**",
