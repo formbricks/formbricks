@@ -27,6 +27,7 @@ module "cloudwatch_cis-alarms" {
 }
 
 locals {
+  alb_id = "app/k8s-formbricks-21ab9ecd60/342ed65d128ce4cb"
   alarms = {
     ALB_HTTPCode_Target_5XX_Count = {
       alarm_description   = "Average API 5XX target group error code count is too high"
@@ -38,6 +39,9 @@ locals {
       namespace           = "AWS/ApplicationELB"
       metric_name         = "HTTPCode_Target_5XX_Count"
       statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
     }
     ALB_HTTPCode_ELB_5XX_Count = {
       alarm_description   = "Average API 5XX load balancer error code count is too high"
@@ -49,6 +53,9 @@ locals {
       namespace           = "AWS/ApplicationELB"
       metric_name         = "HTTPCode_ELB_5XX_Count"
       statistic           = "Sum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
     }
     ALB_TargetResponseTime = {
       alarm_description   = format("Average API response time is greater than %s", 0.05)
@@ -60,6 +67,9 @@ locals {
       namespace           = "AWS/ApplicationELB"
       metric_name         = "TargetResponseTime"
       statistic           = "Average"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
     }
     ALB_UnHealthyHostCount = {
       alarm_description   = format("Unhealthy host count is greater than %s", 1)
@@ -71,6 +81,9 @@ locals {
       namespace           = "AWS/ApplicationELB"
       metric_name         = "UnHealthyHostCount"
       statistic           = "Minimum"
+      dimensions = {
+        LoadBalancer = local.alb_id
+      }
     }
     RDS_CPUUtilization = {
       alarm_description   = format("Average RDS CPU utilization is greater than %s", 80)
@@ -82,6 +95,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "CPUUtilization"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     RDS_FreeStorageSpace = {
       alarm_description   = format("Average RDS free storage space is less than %s", 5)
@@ -93,6 +109,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "FreeStorageSpace"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     RDS_FreeableMemory = {
       alarm_description   = format("Average RDS freeable memory is less than %s", 100)
@@ -104,6 +123,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "FreeableMemory"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     RDS_DiskQueueDepth = {
       alarm_description   = format("Average RDS disk queue depth is greater than %s", 1)
@@ -115,6 +137,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "DiskQueueDepth"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     RDS_ReadIOPS = {
       alarm_description   = format("Average RDS read IOPS is greater than %s", 1000)
@@ -126,6 +151,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "ReadIOPS"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     RDS_WriteIOPS = {
       alarm_description   = format("Average RDS write IOPS is greater than %s", 1000)
@@ -137,6 +165,9 @@ locals {
       namespace           = "AWS/RDS"
       metric_name         = "WriteIOPS"
       statistic           = "Average"
+      dimensions = {
+        DBInstanceIdentifier = module.rds-aurora.cluster_instances["one"].id
+      }
     }
     SQS_ApproximateAgeOfOldestMessage = {
       alarm_description   = format("Average SQS approximate age of oldest message is greater than %s", 300)
@@ -148,6 +179,9 @@ locals {
       namespace           = "AWS/SQS"
       metric_name         = "ApproximateAgeOfOldestMessage"
       statistic           = "Maximum"
+      dimensions = {
+        QueueName = module.karpenter.queue_name
+      }
     }
     DynamoDB_ConsumedReadCapacityUnits = {
       alarm_description   = format("Average DynamoDB consumed read capacity units is greater than %s", 90)
@@ -159,6 +193,23 @@ locals {
       namespace           = "AWS/DynamoDB"
       metric_name         = "ConsumedReadCapacityUnits"
       statistic           = "Average"
+      dimensions = {
+        TableName = "terraform-lock"
+      }
+    }
+    DynamoDB_ConsumedWriteCapacityUnits = {
+      alarm_description   = format("Average DynamoDB consumed write capacity units is greater than %s", 90)
+      comparison_operator = "GreaterThanThreshold"
+      evaluation_periods  = 5
+      threshold           = 90
+      period              = 60
+      unit                = "Count"
+      namespace           = "AWS/DynamoDB"
+      metric_name         = "ConsumedWriteCapacityUnits"
+      statistic           = "Average"
+      dimensions = {
+        TableName = "terraform-lock"
+      }
     }
     Lambda_Errors = {
       alarm_description   = format("Average Lambda errors is greater than %s", 1)
@@ -170,6 +221,9 @@ locals {
       namespace           = "AWS/Lambda"
       metric_name         = "Errors"
       statistic           = "Sum"
+      dimensions = {
+        FunctionName = module.notify-slack.notify_slack_lambda_function_name
+      }
     }
   }
 }
@@ -190,6 +244,8 @@ module "metric_alarm" {
   namespace   = each.value.namespace
   metric_name = each.value.metric_name
   statistic   = each.value.statistic
+
+  dimensions = each.value.dimensions
 
   alarm_actions = [module.notify-slack.slack_topic_arn]
 }
