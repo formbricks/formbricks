@@ -120,6 +120,7 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = false
   cluster_endpoint_public_access           = true
+  cloudwatch_log_group_retention_in_days   = 365
 
   cluster_addons = {
     coredns = {
