@@ -166,7 +166,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     return (
       <div
         ref={ContentRef}
-        className={`relative h-[90%] max-h-[40rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
+        className={`relative h-[90%] max-h-[42rem] w-[22rem] overflow-hidden rounded-[3rem] border-[6px] border-slate-400 ${getFilterStyle()}`}>
         {/* below element is use to create notch for the mobile device mockup   */}
         <div className="absolute left-1/2 right-1/2 top-2 z-20 h-4 w-1/3 -translate-x-1/2 transform rounded-full bg-slate-400"></div>
         {surveyType === "link" && renderBackground()}

@@ -1,4 +1,4 @@
-FROM node:22-alpine3.20 AS base
+FROM node:22-alpine3.20@sha256:40be979442621049f40b1d51a26b55e281246b5de4e5f51a18da7beb6e17e3f9 AS base
 
 #
 ## step 1: Prune monorepo
@@ -85,6 +85,8 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
 
 # Copy Prisma-specific generated files
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
@@ -93,14 +95,16 @@ COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_mod
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Copy only @paralleldrive/cuid2 and @noble/hashes
+# Copy required dependencies
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma
+RUN npm install -g tsx typescript prisma pino-pretty
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
+ENV NODE_ENV="production"
 # USER nextjs
 
 # Prepare volume for uploads
@@ -111,7 +115,12 @@ VOLUME /home/nextjs/apps/web/uploads/
 RUN mkdir -p /home/nextjs/apps/web/saml-connection
 VOLUME /home/nextjs/apps/web/saml-connection
 
-CMD supercronic -quiet /app/docker/cronjobs & \
+CMD if [ "${DOCKER_CRON_ENABLED:-1}" = "1" ]; then \
+      echo "Starting cron jobs..."; \
+      supercronic -quiet /app/docker/cronjobs & \
+    else \
+      echo "Docker cron jobs are disabled via DOCKER_CRON_ENABLED=0"; \
+    fi; \
     (cd packages/database && npm run db:migrate:deploy) && \
     (cd packages/database && npm run db:create-saml-database:deploy) && \
     exec node apps/web/server.js

@@ -24,9 +24,9 @@ npm install -s @formbricks/js
 import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
-  formbricks.init({
+  formbricks.setup({
     environmentId: "your-environment-id",
-    apiHost: "https://app.formbricks.com",
+    appUrl: "https://app.formbricks.com",
   });
 }
 ```

@@ -15,7 +15,7 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
 import { SendHorizonalIcon, ShareIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";

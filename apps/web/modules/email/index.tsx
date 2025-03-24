@@ -6,6 +6,7 @@ import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
   DEBUG,
   MAIL_FROM,
+  MAIL_FROM_NAME,
   SMTP_AUTHENTICATED,
   SMTP_HOST,
   SMTP_PASSWORD,
@@ -17,6 +18,7 @@ import {
 } from "@formbricks/lib/constants";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
+import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
@@ -69,13 +71,13 @@ export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean>
     } as SMTPTransport.Options);
 
     const emailDefaults = {
-      from: `Formbricks <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
+      from: `${MAIL_FROM_NAME ?? "Formbricks"} <${MAIL_FROM ?? "noreply@formbricks.com"}>`,
     };
     await transporter.sendMail({ ...emailDefaults, ...emailData });
 
     return true;
   } catch (error) {
-    console.error("Error in sendEmail:", error);
+    logger.error(error, "Error in sendEmail");
     throw new InvalidInputError("Incorrect SMTP credentials");
   }
 };
@@ -103,7 +105,7 @@ export const sendVerificationEmail = async ({
       html,
     });
   } catch (error) {
-    console.error("Error in sendVerificationEmail:", error);
+    logger.error(error, "Error in sendVerificationEmail");
     throw error; // Re-throw the error to maintain the original behavior
   }
 };

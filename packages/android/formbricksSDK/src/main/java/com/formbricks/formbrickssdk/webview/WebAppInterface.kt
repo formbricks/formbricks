@@ -1,11 +1,11 @@
 package com.formbricks.formbrickssdk.webview
 
 import android.webkit.JavascriptInterface
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.javascript.JsMessageData
 import com.formbricks.formbrickssdk.model.javascript.EventType
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
 import com.google.gson.JsonParseException
-import timber.log.Timber
 
 class WebAppInterface(private val callback: WebAppCallback?) {
 
@@ -15,6 +15,7 @@ class WebAppInterface(private val callback: WebAppCallback?) {
         fun onDisplayCreated()
         fun onResponseCreated()
         fun onFilePick(data: FileUploadData)
+        fun onSurveyLibraryLoadError()
     }
 
     /**
@@ -22,7 +23,7 @@ class WebAppInterface(private val callback: WebAppCallback?) {
      */
     @JavascriptInterface
     fun message(data: String) {
-        Timber.tag("WebAppInterface message").d(data)
+        Logger.d(data)
 
         try {
             val jsMessage = JsMessageData.from(data)
@@ -32,15 +33,16 @@ class WebAppInterface(private val callback: WebAppCallback?) {
                 EventType.ON_DISPLAY_CREATED -> callback?.onDisplayCreated()
                 EventType.ON_RESPONSE_CREATED -> callback?.onResponseCreated()
                 EventType.ON_FILE_PICK -> { callback?.onFilePick(FileUploadData.from(data)) }
+                EventType.ON_SURVEY_LIBRARY_LOAD_ERROR -> { callback?.onSurveyLibraryLoadError() }
             }
         } catch (e: Exception) {
-            Timber.tag("WebAppInterface error").e(e)
+            Logger.e(e.message)
         } catch (e: JsonParseException) {
-            Timber.tag("WebAppInterface error").e(e, "Failed to parse JSON message: $data")
+            Logger.e("Failed to parse JSON message: $data")
         } catch (e: IllegalArgumentException) {
-            Timber.tag("WebAppInterface error").e(e, "Invalid message format: $data")
+            Logger.e("Invalid message format: $data")
         } catch (e: Exception) {
-            Timber.tag("WebAppInterface error").e(e, "Unexpected error processing message: $data")
+            Logger.e("Unexpected error processing message: $data")
         }
     }
 

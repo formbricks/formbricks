@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- field.placeholder can be undefined for surveys created before this migration */
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 interface Field {
@@ -63,7 +64,7 @@ export const addPlaceholderToContactAndAddressQuestion: MigrationScript = {
     `;
 
     if (surveys.length === 0) {
-      console.log("No surveys found");
+      logger.info("No surveys found");
       return;
     }
     let surveyUpdateCount = 0;
@@ -194,6 +195,6 @@ export const addPlaceholderToContactAndAddressQuestion: MigrationScript = {
     }
 
     await Promise.all(updatePromises);
-    console.log(`Updated ${surveyUpdateCount.toString()} surveys`);
+    logger.info(`Updated ${surveyUpdateCount.toString()} surveys`);
   },
 };

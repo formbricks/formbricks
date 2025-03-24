@@ -1,13 +1,9 @@
 package com.formbricks.formbrickssdk.model.environment
 
 import com.google.gson.annotations.SerializedName
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
-@OptIn(ExperimentalSerializationApi::class)
 @Serializable
-@JsonIgnoreUnknownKeys
 data class Segment(
     @SerializedName("id") val id: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null,

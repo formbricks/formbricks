@@ -1,0 +1,75 @@
+name: 'Terraform'
+
+on:
+  workflow_dispatch:
+# TODO: enable it back when migration is completed.
+#  push:
+#    branches:
+#      - main
+#  pull_request:
+#    branches:
+#      - main
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ASSUME_ROLE_ARN }}
+          aws-region: "eu-central-1"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+        working-directory: infra/terraform
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        working-directory: infra/terraform
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+        working-directory: infra/terraform
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -out .planfile
+        working-directory: infra/terraform
+
+#      - name: Post PR comment
+#        uses: borchero/terraform-plan-comment@3399d8dbae8b05185e815e02361ede2949cd99c4 # v2.4.0
+#        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
+#        with:
+#          token: ${{ github.token }}
+#          planfile: .planfile
+#          working-directory: "infra/terraform"
+#          skip-comment: true
+
+      - name: Terraform Apply
+        id: apply
+#        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply .planfile
+        working-directory: "infra/terraform"
+

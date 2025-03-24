@@ -45,22 +45,23 @@ export const getShuffledChoicesIds = (
   const otherOption = choices.find((choice) => {
     return choice.id === "other";
   });
+
   const shuffledChoices = otherOption ? [...choices.filter((choice) => choice.id !== "other")] : [...choices];
 
   if (shuffleOption === "all") {
     shuffle(shuffledChoices);
-  } else if (shuffleOption === "exceptLast") {
-    if (otherOption) {
+  }
+  if (shuffleOption === "exceptLast") {
+    const lastElement = shuffledChoices.pop();
+    if (lastElement) {
       shuffle(shuffledChoices);
-    } else {
-      const lastElement = shuffledChoices.pop();
-      if (lastElement) {
-        shuffle(shuffledChoices);
-        shuffledChoices.push(lastElement);
-      }
+      shuffledChoices.push(lastElement);
     }
   }
-  if (otherOption) shuffledChoices.push(otherOption);
+
+  if (otherOption) {
+    shuffledChoices.push(otherOption);
+  }
 
   return shuffledChoices.map((choice) => choice.id);
 };
@@ -115,12 +116,12 @@ export const isRejected = <T>(val: PromiseSettledResult<T>): val is PromiseRejec
 };
 
 export const makeRequest = async <T>(
-  apiHost: string,
+  appUrl: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
   data?: unknown
 ): Promise<Result<T, ApiErrorResponse>> => {
-  const url = new URL(apiHost + endpoint);
+  const url = new URL(appUrl + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
 
   const res = await wrapThrowsAsync(fetch)(url.toString(), {

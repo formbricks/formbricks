@@ -1,154 +1,216 @@
 ---
 title: "Kubernetes Deployment"
-description: "Deploy Formbricks on a Kubernetes cluster using Helm."
+description: "Deploy the new Helm chart on a Kubernetes cluster using Helm."
 icon: "circle-nodes"
 ---
 
-This guide explains how to deploy Formbricks on a Kubernetes cluster using Helm. The primary focus is on deploying Formbricks pods in a production-ready environment with external database services.
-
 ## Prerequisites
+Ensure you have the following before proceeding:
 
-Before you begin, ensure that:
+- A running Kubernetes cluster (EKS, GKE, AKS, Minikube, etc.)
+- An **Ingress Controller** (e.g., Traefik, Nginx)
+- **Helm installed** on your local machine
+- **Production setup requires managed PostgreSQL and Redis services**
 
-- You have a running Kubernetes cluster (AWS EKS, GCP GKE, Azure AKS, Minikube, etc.)
-- An Ingress controller (e.g., Traefik, Nginx) is configured
-- You have Helm installed on your local machine
-- For production environments, you have access to external PostgreSQL and Redis services
+> **Note:** Redis is required for **session handling** when deploying multiple pods.
 
-> **Important:** Running multiple Formbricks pods in a cluster setup requires a Formbricks Enterprise license. With the Community Edition, only a single Formbricks pod is supported. Redis is required when deploying multiple Formbricks pods for proper session handling and caching.
+---
 
-## Basic Installation
+## 1. Installation Steps
 
-### Step 1: Clone the Formbricks Helm Chart
-
+<Steps>
+<Step title="Clone the Helm Chart">
 ```sh
-git clone https://github.com/formbricks/formbricks.git
-cd formbricks/helm-chart
+git clone https://github.com/formbricks/formbricks
+cd helm-chart
 ```
+</Step>
 
-### Step 2: Deploy Formbricks
-
-For a basic deployment with a single pod (Community Edition) and PostgreSQL running in the cluster:
-
+<Step title="Install with Default Configuration">
 ```sh
-helm install my-formbricks ./ \
-  --namespace formbricks \
-  --set redis.enabled=false \
-  --create-namespace
+helm install formbricks ./ -n formbricks --create-namespace
 ```
+By default:
+- PostgreSQL and Redis are deployed within the cluster.
+- Secrets are dynamically generated and stored as Kubernetes Secrets.
+</Step>
 
-## Production Deployment
-
-For production environments, we recommend using managed database and cache services like AWS RDS for PostgreSQL and AWS ElastiCache for Redis:
-
+<Step title="Install with an Enterprise License">
 ```sh
-helm install my-formbricks ./ \
-  --namespace formbricks \
-  --create-namespace \
-  --set replicaCount=3 \
-  --set postgresql.enabled=false \
-  --set postgresql.externalUrl="postgresql://user:password@your-postgres-host:5432/formbricks" \
-  --set redis.enabled=false \
-  --set redis.externalUrl="redis://your-redis-host:6379"
+helm install formbricks ./ -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
+```
+</Step>
+</Steps>
+
+---
+
+## 2. Configuring Secrets
+
+### Using Kubernetes Secrets (Default)
+By default, **secrets are stored as Kubernetes Secrets**.
+The chart automatically generates **random values** for required secrets.
+
+Modify `values.yaml`:
+```yaml
+secret:
+  enabled: true
 ```
 
-> **Note:** The above multi-pod configuration requires a Formbricks Enterprise license. Redis is enabled and configured to support multiple Formbricks pods.
+---
 
-## Verify Installation
+### Using External Secrets (AWS Secrets Manager, Vault, etc.)
+To use an **external secrets manager**, enable `externalSecret` in `values.yaml`:
+```yaml
+secret:
+  enabled: false  # Disable default secret generation
 
-### Check Running Services
+externalSecret:
+  enabled: true
+  secretStore:
+    name: aws-secrets-manager
+    kind: ClusterSecretStore
+  refreshInterval: "1h"
+  files:
+    redis:
+      data:
+        REDIS_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_PASSWORD
+    postgres:
+      data:
+        POSTGRES_ADMIN_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_ADMIN_PASSWORD
+        POSTGRES_USER_PASSWORD:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: POSTGRES_USER_PASSWORD
+    app-secrets:
+      data:
+        DATABASE_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: DATABASE_URL
+        REDIS_URL:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: REDIS_URL
+        ENCRYPTION_KEY:
+          remoteRef:
+            key: "prod/formbricks/secrets"
+            property: ENCRYPTION_KEY
+```
+**Ensure ExternalSecrets Operator is installed:**
+[https://external-secrets.io/latest/](https://external-secrets.io/latest/)
 
+Install with:
 ```sh
-kubectl get pods -n formbricks
-kubectl get svc -n formbricks
-kubectl get ingress -n formbricks
+helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 ```
 
-> **Note:** The Formbricks application pod may take some time to reach a stable state as it runs database migrations during startup.
+---
 
-### Access Formbricks
+## 3. Configuring PostgreSQL and Redis
 
-- If running locally with Minikube:
-  ```sh
-  minikube service my-formbricks -n formbricks
-  ```
-- If deployed on a cloud cluster, make sure to set up your ingress controller properly and visit the domain or IP address associated with your ingress.
+### Using Managed PostgreSQL and Redis
+For production, we recommend using **managed database and cache services**.
 
-## Upgrading Formbricks
+Modify `values.yaml`:
+```yaml
+postgresql:
+  enabled: false
+  externalDatabaseUrl: "postgresql://user:password@your-postgres-host:5432/mydb"
 
-To upgrade your Formbricks deployment, use:
-
-```bash
-# From the helm-chart directory
-helm upgrade my-formbricks ./ --namespace formbricks
+redis:
+  enabled: false
+  externalRedisUrl: "redis://your-redis-host:6379"
+```
+Install with:
+```sh
+helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 ```
 
-### Common Upgrade Scenarios
+---
 
-#### 1. Updating Environment Variables
+### Using In-Cluster PostgreSQL and Redis (Default)
+By default, PostgreSQL and Redis are **deployed inside the cluster**.
+To **ensure in-cluster deployment**, use:
 
-```bash
-helm upgrade my-formbricks ./ --namespace formbricks \
-  --set env.SMTP_HOST=new-smtp.example.com \
-  --set env.SMTP_PORT=587 \
-  --set env.NEW_CUSTOM_VAR=newvalue
+```yaml
+postgresql:
+  enabled: true
+
+redis:
+  enabled: true
+```
+Apply with:
+```sh
+helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 ```
 
-#### 2. Scaling Resources
+---
 
-```bash
-helm upgrade my-formbricks ./ --namespace formbricks \
-  --set resources.limits.cpu=1 \
-  --set resources.limits.memory=2Gi \
-  --set resources.requests.cpu=500m \
-  --set resources.requests.memory=1Gi
+## 4. Upgrading the Deployment
+To apply changes:
+```sh
+helm upgrade formbricks ./ -n formbricks
 ```
 
-#### 3. Updating Autoscaling Configuration
-
-```bash
-helm upgrade my-formbricks ./ --namespace formbricks \
-  --set autoscaling.enabled=true \
-  --set autoscaling.minReplicas=3 \
-  --set autoscaling.maxReplicas=10 \
-  --set autoscaling.metrics[0].resource.target.averageUtilization=75
+### Scaling Resources
+```sh
+helm upgrade formbricks ./ -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
 ```
 
-> **Note:** Enabling autoscaling requires a Formbricks Enterprise license and proper Redis configuration.
-
-#### 4. Changing Database Connection
-
-```bash
-helm upgrade my-formbricks ./ --namespace formbricks \
-  --set postgresql.enabled=false \
-  --set postgresql.externalUrl="postgresql://newuser:newpassword@external-postgres-host:5432/newdatabase"
+### Enabling Autoscaling
+```sh
+helm upgrade formbricks ./ -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
 ```
 
-## Advanced Configuration Options
+---
 
-For advanced configurations including:
+## 5. Key Configuration Values
 
-- Deploying PostgreSQL and Redis within your Kubernetes cluster
-- Configuring Traefik ingress controller
-- Setting up high availability
-- Customizing autoscaling behavior
+| Field                         | Description                          | Default Value |
+|--------------------------------|--------------------------------------|--------------|
+| `deployment.replicas`         | Number of application replicas       | `1`          |
+| `deployment.image.repository` | Docker image repository              | `"ghcr.io/formbricks/formbricks"` |
+| `deployment.image.tag`        | Docker image tag                     | `"latest"`   |
+| `autoscaling.enabled`         | Enable autoscaling                   | `false`      |
+| `postgresql.enabled`          | Deploy PostgreSQL in cluster         | `true`       |
+| `postgresql.externalDatabaseUrl` | External PostgreSQL URL           | `""`         |
+| `redis.enabled`               | Deploy Redis in cluster              | `true`       |
+| `redis.externalRedisUrl`      | External Redis URL                   | `""`         |
+| `externalSecret.enabled`      | Enable external secrets manager      | `false`      |
 
-Please refer to the complete Helm chart documentation at:
-[https://github.com/formbricks/formbricks/tree/main/helm-chart](https://github.com/formbricks/formbricks/tree/main/helm-chart)
+**Refer to the Helm chart repository for full configuration options.**
 
-## Key Configuration Values
+---
 
-| Field                     | Description                   | Default                         |
-| ------------------------- | ----------------------------- | ------------------------------- |
-| `replicaCount`            | Number of Formbricks replicas | `1`                             |
-| `image.repository`        | Docker image repository       | `ghcr.io/formbricks/formbricks` |
-| `image.tag`               | Docker image tag              | `"2.6.0"`                       |
-| `resources.limits.cpu`    | CPU resource limit            | `500m`                          |
-| `resources.limits.memory` | Memory resource limit         | `1Gi`                           |
-| `autoscaling.enabled`     | Enable autoscaling            | `false`                         |
-| `postgresql.enabled`      | Deploy PostgreSQL in cluster  | `true`                          |
-| `postgresql.externalUrl`  | External PostgreSQL URL       | `""`                            |
-| `redis.enabled`           | Deploy Redis in cluster       | `false`                         |
-| `redis.externalUrl`       | External Redis URL            | `""`                            |
+## 6. Uninstalling the Deployment
+To remove the deployment:
+```sh
+helm uninstall formbricks -n formbricks
+```
 
-For the complete list of configuration options, please refer to the Formbricks Helm chart repository.
+### Removing Persistent Volumes (PVCs)
+By default, **PVCs are not deleted** with Helm.
+To manually remove them:
+```sh
+kubectl delete pvc --all -n formbricks
+```
+
+To completely delete the namespace:
+```sh
+kubectl delete namespace formbricks
+```
+
+---
+
+## Additional Notes
+- **Ingress Setup:** If using an ingress controller, make sure to configure `ingress.enabled: true` in `values.yaml`.
+- **Environment Variables:** Pass custom environment variables via `envFrom` in `values.yaml`.
+- **Backup Strategy:** Ensure you have a backup policy for PostgreSQL if running in-cluster.
+
+**Your Formbricks deployment is now ready!**

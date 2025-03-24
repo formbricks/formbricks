@@ -21,6 +21,7 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
+import { logger } from "@formbricks/logger";
 import { ZJsPeopleUserIdInput } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -103,7 +104,7 @@ export const GET = async (
             },
           });
         } catch (error) {
-          console.error(`Error sending plan limits reached event to Posthog: ${error}`);
+          logger.error({ error, url: request.url }, `Error sending plan limits reached event to Posthog`);
         }
       }
     }
@@ -187,7 +188,10 @@ export const GET = async (
 
     return responses.successResponse({ ...state }, true);
   } catch (error) {
-    console.error(error);
+    logger.error(
+      { error, url: request.url },
+      "Error in GET /api/v1/client/[environmentId]/app/sync/[userId]"
+    );
     return responses.internalServerErrorResponse("Unable to handle the request: " + error.message, true);
   }
 };

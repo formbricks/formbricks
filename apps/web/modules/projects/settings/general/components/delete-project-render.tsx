@@ -7,7 +7,7 @@ import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { useTranslate } from "@tolgee/react";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@formbricks/lib/localStorage";
 import { truncate } from "@formbricks/lib/utils/strings";

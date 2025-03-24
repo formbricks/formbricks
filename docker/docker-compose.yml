@@ -26,6 +26,9 @@ x-environment: &environment
     # You can use: $(openssl rand -hex 32) to generate a secure one
     CRON_SECRET:
 
+    # Set the minimum log level(debug, info, warn, error, fatal)
+    # LOG_LEVEL: info
+
     ############################################# OPTIONAL (ENTERPRISE EDITION) #############################################
 
     # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
@@ -36,6 +39,7 @@ x-environment: &environment
 
     # Email Configuration
     # MAIL_FROM:
+    # MAIL_FROM_NAME:
     # SMTP_HOST:
     # SMTP_PORT:
     # SMTP_USER:
@@ -67,6 +71,9 @@ x-environment: &environment
 
     # Set the below to your Unsplash API Key for their Survey Backgrounds
     # UNSPLASH_ACCESS_KEY:
+
+    # Set the below to 0 to disable cron jobs
+    # DOCKER_CRON_ENABLED: 1
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
@@ -156,6 +163,7 @@ x-environment: &environment
 
     # Set the below to use Redis for Next Caching (default is In-Memory from Next Cache)
     # REDIS_URL:
+    # REDIS_DEFAULT_TTL:
 
     # Set the below to use for Rate Limiting (default us In-Memory LRU Cache)
     # REDIS_HTTP_URL:

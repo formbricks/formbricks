@@ -13,10 +13,8 @@
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" tsx ./src/scripts/create-saml-database.ts",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- tsx ./src/scripts/create-saml-database.ts",
     "db:push": "prisma db push --accept-data-loss",
-    "db:up": "docker compose up -d",
-    "db:setup": "pnpm db:up && pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
+    "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev",
     "db:start": "pnpm db:setup",
-    "db:down": "docker compose down",
     "format": "prisma format",
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
@@ -28,6 +26,7 @@
     "@prisma/client": "6.0.1",
     "@prisma/extension-accelerate": "1.2.1",
     "dotenv-cli": "7.4.4",
+    "@formbricks/logger": "workspace:*",
     "zod-openapi": "4.2.3"
   },
   "devDependencies": {

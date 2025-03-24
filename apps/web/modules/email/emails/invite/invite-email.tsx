@@ -1,5 +1,5 @@
 import { getTranslate } from "@/tolgee/server";
-import { Container, Text } from "@react-email/components";
+import { Container, Heading, Text } from "@react-email/components";
 import React from "react";
 import { EmailButton } from "../../components/email-button";
 import { EmailFooter } from "../../components/email-footer";
@@ -20,8 +20,10 @@ export async function InviteEmail({
   return (
     <EmailTemplate t={t}>
       <Container>
-        <Text>{t("emails.invite_email_heading", { inviteeName })}</Text>
-        <Text>
+        <Heading className="text-xl">
+          {t("emails.invite_email_heading", { inviteeName })} {inviteeName}
+        </Heading>
+        <Text className="font-normal">
           {t("emails.invite_email_text_par1", { inviterName })} {inviterName}{" "}
           {t("emails.invite_email_text_par2")}
         </Text>

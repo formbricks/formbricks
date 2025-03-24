@@ -84,7 +84,6 @@ export const TemplateContainerWithPreview = ({
               project={project}
               environment={environment}
               languageCode={"default"}
-              onFileUpload={async (file) => file.name}
             />
           )}
         </aside>
