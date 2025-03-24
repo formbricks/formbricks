@@ -120,14 +120,39 @@ export const PUT = async (request: NextRequest) => {
       });
     }
 
-    await upsertBulkContacts(filteredContacts, environmentId, parsedEmails.data);
+    const { contactIdxWithConflictingUserIds } = await upsertBulkContacts(
+      filteredContacts,
+      environmentId,
+      parsedEmails.data
+    );
+
+    if (contactIdxWithConflictingUserIds.length) {
+      return responses.multiStatusResponse({
+        data: {
+          status: "success",
+          message:
+            "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting userIds.",
+          skippedContacts: contactIdxWithConflictingUserIds.map((idx) => `contact_${idx + 1}`),
+        },
+      });
+    }
 
     return responses.successResponse({
       data: {
+        status: "success",
         message: "Contacts bulk upload successful",
-        duplicateEmails: Array.from(duplicateEmails),
-        duplicateUserIds: Array.from(duplicateUserIds),
-        processedContacts: filteredContacts.length,
+        processed: filteredContacts.length,
+        ...(duplicateEmails.size > 0 || duplicateUserIds.size > 0
+          ? {
+              skipped: {
+                total: contacts.length - filteredContacts.length,
+                conflicts: {
+                  duplicateEmails: Array.from(duplicateEmails),
+                  duplicateUserIds: Array.from(duplicateUserIds),
+                },
+              },
+            }
+          : {}),
       },
     });
   } catch (error) {

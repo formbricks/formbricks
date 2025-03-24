@@ -133,15 +133,15 @@ export const ZContactBulkUploadRequest = z.object({
     .superRefine((contacts, ctx) => {
       // every contact must have an email attribute
 
-      for (const contact of contacts) {
+      contacts.forEach((contact, idx) => {
         const email = contact.attributes.find((attr) => attr.attributeKey.key === "email");
         if (!email) {
-          return ctx.addIssue({
+          ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "Missing email attribute for one or more contacts",
+            message: `Missing email attribute for contact ${idx + 1}`,
           });
         }
-      }
+      });
     }),
 });
 

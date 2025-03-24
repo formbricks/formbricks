@@ -10,7 +10,11 @@ export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],
   environmentId: string,
   parsedEmails: string[]
-) => {
+): Promise<{
+  contactIdxWithConflictingUserIds: number[];
+}> => {
+  const contactIdxWithConflictingUserIds: number[] = [];
+
   const userIdsInContacts = contacts.flatMap((contact) =>
     contact.attributes.filter((attr) => attr.attributeKey.key === "userId").map((attr) => attr.value)
   );
@@ -30,11 +34,11 @@ export const upsertBulkContacts = async (
     },
   });
 
-  // in the contacts array, find the contacts that have an existing userId attribute, and remove the userId attribute from the contact
-  const filteredContacts = contacts.map((contact) => {
+  // in the contacts array, skip the contacts that have an existing userId attribute
+  const filteredContacts = contacts.filter((contact, idx) => {
     const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
     if (!userIdAttr) {
-      return contact;
+      return true;
     }
 
     // check if the userId exists in the existingUserIds array
@@ -43,13 +47,10 @@ export const upsertBulkContacts = async (
     );
 
     if (existingUserId) {
-      return {
-        ...contact,
-        attributes: contact.attributes.filter((attr) => attr.attributeKey.key !== "userId"),
-      };
+      contactIdxWithConflictingUserIds.push(idx);
     }
 
-    return contact;
+    return !existingUserId;
   });
 
   const emailKey = "email";
@@ -286,4 +287,8 @@ export const upsertBulkContacts = async (
 
     contactAttributeCache.revalidate({ environmentId });
   });
+
+  return {
+    contactIdxWithConflictingUserIds,
+  };
 };
