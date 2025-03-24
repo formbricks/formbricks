@@ -144,14 +144,16 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
         userId: userProfile.id,
       });
 
-      await createTeamMembership(
-        {
-          organizationId: organization.id,
-          role: role,
-          teamIds: [DEFAULT_TEAM_ID || ""],
-        },
-        userProfile.id
-      );
+      if (DEFAULT_TEAM_ID) {
+        await createTeamMembership(
+          {
+            organizationId: organization.id,
+            role: role,
+            teamIds: [DEFAULT_TEAM_ID || ""],
+          },
+          userProfile.id
+        );
+      }
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...userProfile.notificationSettings,

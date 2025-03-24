@@ -25,7 +25,6 @@ const ZCreateUserAction = z.object({
   userLocale: ZUserLocale.optional(),
   defaultOrganizationId: z.string().optional(),
   defaultOrganizationRole: ZOrganizationRole.optional(),
-  defaultTeamId: z.string().optional(),
   emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()

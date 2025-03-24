@@ -50,7 +50,6 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
-  defaultTeamId?: string;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
@@ -73,7 +72,6 @@ export const SignupForm = ({
   emailVerificationDisabled,
   defaultOrganizationId,
   defaultOrganizationRole,
-  defaultTeamId,
   isSsoEnabled,
   samlSsoEnabled,
   isTurnstileConfigured,
@@ -121,7 +119,6 @@ export const SignupForm = ({
         emailVerificationDisabled,
         defaultOrganizationId,
         defaultOrganizationRole,
-        defaultTeamId,
         turnstileToken,
       });
 

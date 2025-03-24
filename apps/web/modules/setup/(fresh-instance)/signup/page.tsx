@@ -6,7 +6,6 @@ import {
   AZURE_OAUTH_ENABLED,
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
-  DEFAULT_TEAM_ID,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   GITHUB_OAUTH_ENABLED,
@@ -55,7 +54,6 @@ export const SignupPage = async () => {
         userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-        defaultTeamId={DEFAULT_TEAM_ID}
         isSsoEnabled={isSsoEnabled}
         samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
