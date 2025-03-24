@@ -9,7 +9,7 @@ export const getWebhooksQuery = (environmentId: string, params?: TGetWebhooksFil
     },
   };
 
-  if (!params) return;
+  if (!params) return query;
 
   const { surveyIds } = params || {};
 

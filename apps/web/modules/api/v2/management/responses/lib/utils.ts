@@ -11,7 +11,7 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
     },
   };
 
-  if (!params) return;
+  if (!params) return query;
 
   const { surveyId, contactId } = params || {};
 
