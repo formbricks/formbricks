@@ -1,5 +1,6 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -42,6 +43,10 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/modules/auth/signup/lib/team", () => ({
+  createTeamMembership: vi.fn(),
+}));
+
 vi.mock("@formbricks/lib/account/service", () => ({
   createAccount: vi.fn(),
 }));
@@ -63,6 +68,7 @@ vi.mock("@formbricks/lib/utils/locale", () => ({
 vi.mock("@formbricks/lib/constants", () => ({
   DEFAULT_ORGANIZATION_ID: "org-123",
   DEFAULT_ORGANIZATION_ROLE: "member",
+  DEFAULT_TEAM_ID: "team-123",
 }));
 
 describe("handleSSOCallback", () => {
