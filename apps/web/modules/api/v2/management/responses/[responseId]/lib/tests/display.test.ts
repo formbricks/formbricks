@@ -2,7 +2,7 @@ import { displayId, mockDisplay } from "./__mocks__/display.mock";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { deleteDisplay } from "../display";
 
 vi.mock("@formbricks/database", () => ({

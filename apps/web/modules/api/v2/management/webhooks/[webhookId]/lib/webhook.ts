@@ -5,7 +5,7 @@ import { Webhook } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 

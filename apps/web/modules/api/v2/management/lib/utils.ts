@@ -14,13 +14,17 @@ type HasFindMany = Prisma.WebhookFindManyArgs | Prisma.ResponseFindManyArgs;
 export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: TGetFilter): T {
   const { limit, skip, sortBy, order, startDate, endDate } = params || {};
 
+  let filteredQuery = {
+    ...query,
+  };
+
   if (startDate) {
-    query = {
-      ...query,
+    filteredQuery = {
+      ...filteredQuery,
       where: {
-        ...query.where,
+        ...filteredQuery.where,
         createdAt: {
-          ...((query.where?.createdAt as Prisma.DateTimeFilter<"Webhook">) ?? {}),
+          ...((filteredQuery.where?.createdAt as Prisma.DateTimeFilter) ?? {}),
           gte: startDate,
         },
       },
@@ -28,12 +32,12 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
   }
 
   if (endDate) {
-    query = {
-      ...query,
+    filteredQuery = {
+      ...filteredQuery,
       where: {
-        ...query.where,
+        ...filteredQuery.where,
         createdAt: {
-          ...((query.where?.createdAt as Prisma.DateTimeFilter<"Webhook">) ?? {}),
+          ...((filteredQuery.where?.createdAt as Prisma.DateTimeFilter) ?? {}),
           lte: endDate,
         },
       },
@@ -41,8 +45,8 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
   }
 
   if (sortBy) {
-    query = {
-      ...query,
+    filteredQuery = {
+      ...filteredQuery,
       orderBy: {
         [sortBy]: order,
       },
@@ -50,12 +54,12 @@ export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: 
   }
 
   if (limit) {
-    query = { ...query, take: limit };
+    filteredQuery = { ...filteredQuery, take: limit };
   }
 
   if (skip) {
-    query = { ...query, skip };
+    filteredQuery = { ...filteredQuery, skip };
   }
 
-  return query;
+  return filteredQuery;
 }

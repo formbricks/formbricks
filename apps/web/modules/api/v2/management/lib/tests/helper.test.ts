@@ -1,5 +1,6 @@
 import { fetchEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/services";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, it, vi } from "vitest";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { getEnvironmentId, getEnvironmentIdFromSurveyIds } from "../helper";
@@ -45,19 +46,22 @@ describe("Tests for getEnvironmentId", () => {
 });
 
 describe("getEnvironmentIdFromSurveyIds", () => {
+  const envId1 = createId();
+  const envId2 = createId();
+
   it("returns the common environment id when all survey ids are in the same environment", async () => {
     vi.mocked(fetchEnvironmentIdFromSurveyIds).mockResolvedValueOnce({
       ok: true,
-      data: ["env123", "env123"],
+      data: [envId1, envId1],
     });
     const result = await getEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
-    expect(result).toEqual(ok("env123"));
+    expect(result).toEqual(ok(envId1));
   });
 
   it("returns error when surveys are not in the same environment", async () => {
     vi.mocked(fetchEnvironmentIdFromSurveyIds).mockResolvedValueOnce({
       ok: true,
-      data: ["env123", "env456"],
+      data: [envId1, envId2],
     });
     const result = await getEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
     expect(result.ok).toBe(false);

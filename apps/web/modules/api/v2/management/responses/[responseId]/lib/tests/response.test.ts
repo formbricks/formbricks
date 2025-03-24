@@ -2,7 +2,7 @@ import { response, responseId, responseInput, survey } from "./__mocks__/respons
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ok, okVoid } from "@formbricks/types/error-handlers";
 import { deleteDisplay } from "../display";
 import { deleteResponse, getResponse, updateResponse } from "../response";

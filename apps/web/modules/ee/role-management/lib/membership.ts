@@ -3,7 +3,7 @@ import { membershipCache } from "@/lib/cache/membership";
 import { teamCache } from "@/lib/cache/team";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";

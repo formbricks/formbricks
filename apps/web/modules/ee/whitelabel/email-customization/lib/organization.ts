@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { projectCache } from "@formbricks/lib/project/cache";

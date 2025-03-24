@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { evaluateLogic } from "surveyLogic/utils";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurvey, getSurveyCount, getSurveys, getSurveysByActionClassId, updateSurvey } from "../service";
 import {

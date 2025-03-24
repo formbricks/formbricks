@@ -2,7 +2,7 @@ import { webhookCache } from "@/lib/cache/webhook";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { Prisma, Webhook } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";

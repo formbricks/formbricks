@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { userCache } from "@formbricks/lib/user/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";

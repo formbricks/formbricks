@@ -43,7 +43,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 }): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication.ok) throw err(authentication.error);
+    if (!authentication.ok) return handleApiError(request, authentication.error);
 
     let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 

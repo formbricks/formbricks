@@ -9,7 +9,7 @@ import {
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { prismaMock } from "@formbricks/database/src/jestClient";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 

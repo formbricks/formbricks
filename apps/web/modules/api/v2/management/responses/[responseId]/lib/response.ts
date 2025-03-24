@@ -8,7 +8,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { PrismaErrorType } from "@formbricks/database/src/types/error";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
