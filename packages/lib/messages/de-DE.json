@@ -773,23 +773,6 @@
       "zapier_integration_description": "Integriere Formbricks mit über 5000 Apps über Zapier"
     },
     "project": {
-      "api_keys": {
-        "add_api_key": "API-Schlüssel hinzufügen",
-        "add_env_api_key": "{environmentType} API-Schlüssel hinzufügen",
-        "api_key": "API-Schlüssel",
-        "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
-        "api_key_created": "API-Schlüssel erstellt",
-        "api_key_deleted": "API-Schlüssel gelöscht",
-        "api_key_label": "API-Schlüssel Label",
-        "api_key_security_warning": "Aus Sicherheitsgründen wird der API-Schlüssel nur einmal nach der Erstellung angezeigt. Bitte kopiere ihn sofort an einen sicheren Ort.",
-        "dev_api_keys": "API-Schlüssel (Dev)",
-        "dev_api_keys_description": "API-Schlüssel für deine Entwicklungsumgebung hinzufügen und entfernen.",
-        "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
-        "prod_api_keys": "API-Schlüssel (Prod)",
-        "prod_api_keys_description": "API-Schlüssel für deine Produktionsumgebung hinzufügen und entfernen.",
-        "secret": "Geheimnis",
-        "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
-      },
       "app-connection": {
         "api_host_description": "Dies ist die URL deines Formbricks Backends.",
         "app_connection": "App-Verbindung",

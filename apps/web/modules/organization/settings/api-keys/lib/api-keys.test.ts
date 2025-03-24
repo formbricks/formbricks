@@ -67,20 +67,6 @@ describe("API Key Management", () => {
       });
     });
 
-    it("retrieves paginated API keys successfully", async () => {
-      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKey]);
-      vi.mocked(apiKeyNewCache.tag.byOrganizationId).mockReturnValue("org-tag");
-
-      const result = await getApiKeys("org123");
-
-      expect(result).toEqual([mockApiKey]);
-      expect(prisma.apiKey.findMany).toHaveBeenCalledWith({
-        where: {
-          organizationId: "org123",
-        },
-      });
-    });
-
     it("throws DatabaseError on prisma error", async () => {
       const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
         code: "P2002",

@@ -15,15 +15,15 @@ export const GET = async (request: Request) => {
       (permission) => permission.environmentId
     );
 
-    const actionClasses: TActionClass[] = [];
+    const allActionClasses: TActionClass[] = [];
     environmentIds.forEach(async (environmentId) => {
       if (hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
         const actionClasses = await getActionClasses(environmentId);
-        actionClasses.push(...actionClasses);
+        allActionClasses.push(...actionClasses);
       }
     });
 
-    return responses.successResponse(actionClasses);
+    return responses.successResponse(allActionClasses);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

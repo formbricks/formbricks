@@ -18,7 +18,7 @@ export const GET = async (request: NextRequest) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    let environmentResponses: TResponse[] = [];
+    let allResponses: TResponse[] = [];
 
     if (surveyId) {
       const survey = await getSurvey(surveyId);
@@ -28,17 +28,18 @@ export const GET = async (request: NextRequest) => {
       if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
         return responses.unauthorizedResponse();
       }
-      environmentResponses = await getResponses(surveyId, limit, offset);
+      const surveyResponses = await getResponses(surveyId, limit, offset);
+      allResponses.push(...surveyResponses);
     } else {
       const environmentIds = authentication.environmentPermissions.map(
         (permission) => permission.environmentId
       );
       environmentIds.forEach(async (environmentId) => {
         const environmentResponses = await getResponsesByEnvironmentId(environmentId, limit, offset);
-        environmentResponses.push(...environmentResponses);
+        allResponses.push(...environmentResponses);
       });
     }
-    return responses.successResponse(environmentResponses);
+    return responses.successResponse(allResponses);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

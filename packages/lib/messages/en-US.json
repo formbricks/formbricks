@@ -773,23 +773,6 @@
       "zapier_integration_description": "Integrate Formbricks with 5000+ apps via Zapier"
     },
     "project": {
-      "api_keys": {
-        "add_api_key": "Add API Key",
-        "add_env_api_key": "Add {environmentType} API Key",
-        "api_key": "API Key",
-        "api_key_copied_to_clipboard": "API key copied to clipboard",
-        "api_key_created": "API key created",
-        "api_key_deleted": "API Key deleted",
-        "api_key_label": "API Key Label",
-        "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
-        "dev_api_keys": "Development Env Keys",
-        "dev_api_keys_description": "Add and remove API keys for your Development environment.",
-        "no_api_keys_yet": "You don't have any API keys yet",
-        "prod_api_keys": "Production Env Keys",
-        "prod_api_keys_description": "Add and remove API keys for your Production environment.",
-        "secret": "Secret",
-        "unable_to_delete_api_key": "Unable to delete API Key"
-      },
       "app-connection": {
         "api_host_description": "This is the URL of your Formbricks backend.",
         "app_connection": "App Connection",

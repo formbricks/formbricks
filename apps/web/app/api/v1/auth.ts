@@ -10,6 +10,7 @@ const methodPermissionMap = {
   POST: "write", // Create operations need at least write permission
   PUT: "write", // Update operations need at least write permission
   DELETE: "manage", // Delete operations need manage permission
+  PATCH: "write", // Partial update operations need at least write permission
 };
 
 // Get API key with its permissions from a raw API key

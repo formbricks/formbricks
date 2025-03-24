@@ -22,13 +22,13 @@ export const GET = async (request: Request) => {
       (permission) => permission.environmentId
     );
 
-    const surveys: TSurvey[] = [];
+    const allSurveys: TSurvey[] = [];
     environmentIds.forEach(async (environmentId) => {
       const surveys = await getSurveys(environmentId, limit, offset);
-      surveys.push(...surveys);
+      allSurveys.push(...surveys);
     });
 
-    return responses.successResponse(surveys);
+    return responses.successResponse(allSurveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
