@@ -71,6 +71,14 @@ export const GET = async (
 
       const { data: contacts, meta } = contactsResult.data;
 
+      // Calculate expiration date based on expirationDays
+      let expiresAt: string | null = null;
+      if (query?.expirationDays) {
+        const expirationDate = new Date();
+        expirationDate.setDate(expirationDate.getDate() + query.expirationDays);
+        expiresAt = expirationDate.toISOString();
+      }
+
       // Generate survey links for each contact
       const contactLinks = contacts
         .map((contact) => {
@@ -82,22 +90,10 @@ export const GET = async (
 
           if (!surveyUrlResult.ok) {
             logger.error(
-              {
-                error: surveyUrlResult.error,
-                contactId: contact.id,
-                surveyId: params.surveyId,
-              },
+              { error: surveyUrlResult.error, contactId: contact.id, surveyId: params.surveyId },
               "Failed to generate survey URL for contact"
             );
             return null;
-          }
-
-          // Calculate expiration date based on expirationDays
-          let expiresAt: string | null = null;
-          if (query?.expirationDays) {
-            const expirationDate = new Date();
-            expirationDate.setDate(expirationDate.getDate() + query.expirationDays);
-            expiresAt = expirationDate.toISOString();
           }
 
           return {
@@ -109,7 +105,7 @@ export const GET = async (
             expiresAt,
           };
         })
-        .filter(Boolean); // Remove any failed URL generations
+        .filter(Boolean);
 
       return responses.successResponse({
         data: contactLinks,

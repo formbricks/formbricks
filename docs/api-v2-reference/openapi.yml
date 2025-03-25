@@ -17,517 +17,13 @@ tags:
     description: Operations for managing contact attributes keys.
   - name: Management API > Surveys
     description: Operations for managing surveys.
-  - name: Management API > Storage
-    description: Operations for managing storage.
-  - name: Client API > File Upload
-    description: Operations for uploading files.
-
+  - name: Management API > Surveys > Contact Links
+    description: Operations for generating personalized survey links for contacts.
+security:
+  - apiKeyAuth: []
 paths:
-  /{environmentId}/responses/{responseId}:
-    put:
-      description: Update an existing response for example when you want to mark a
-        response as finished or you want to change an existing response's value.
-      parameters:
-        - in: path
-          name: environmentId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: responseId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                data:
-                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
-                finished: true
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                data: {}
-              schema:
-                type: object
-          description: OK
-        "404":
-          content:
-            application/json:
-              example:
-                code: not_found
-                details:
-                  resource_type: Response
-                message: Response not found
-              schema:
-                type: object
-          description: Not Found
-      summary: Update Response
-      tags:
-        - Client API > Response
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/responses:
-    post:
-      description: Create a response for a survey and its fields with the user's
-        responses. The userId & meta here is optional
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                surveyId: survey123
-                responses: {}
-              type: object
-      responses:
-        "201":
-          content:
-            application/json:
-              example:
-                responseId: response123
-              schema:
-                type: object
-          description: Created
-      summary: Create Response
-      tags:
-        - Client API > Response
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/contacts/{userId}/attributes:
-    put:
-      description: Update a contact's attributes in Formbricks to keep them in sync
-        with your app or when you want to set a custom attribute in Formbricks.
-      parameters:
-        - in: path
-          name: environmentId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                attributes: {}
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              examples:
-                example-0: {}
-                example-1: {}
-              schema:
-                type: object
-          description: OK
-        "500":
-          content:
-            application/json:
-              example:
-                code: internal_server_error
-                details: {}
-                message: "Unable to complete request: Expected"
-              schema:
-                type: object
-          description: Internal Server Error
-      summary: Update Contact (Attributes)
-      tags:
-        - Client API > Contacts
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/identify/contacts/{userId}:
-    get:
-      description: Retrieves a contact's state including their segments, displays,
-        responses and other tracking information. If the contact doesn't exist,
-        it will be created.
-      parameters:
-        - in: path
-          name: environmentId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                userId: user123
-                state: active
-              schema:
-                type: object
-          description: OK
-      summary: Get Contact State
-      tags:
-        - Client API > Contacts
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/displays:
-    post:
-      description: Create a new display for a valid survey ID. If a userId is passed,
-        the display is linked to the user.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                surveyId: survey123
-                userId: user123
-              type: object
-      responses:
-        "201":
-          content:
-            application/json:
-              example:
-                displayId: display123
-              schema:
-                type: object
-          description: Created
-      summary: Create Display
-      tags:
-        - Client API > Display
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/displays/{displayId}:
-    put:
-      description: Update a Display for a user. A use case can be when a user submits
-        a response & you want to link it to an existing display.
-      parameters:
-        - in: path
-          name: displayId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                responseId: response123
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                displayId: display123
-              schema:
-                type: object
-          description: OK
-      summary: Update Display
-      tags:
-        - Client API > Display
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/environment:
-    get:
-      description: Retrieves the environment state to be used in Formbricks SDKs
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                environmentId: env123
-                state: active
-              schema:
-                type: object
-          description: OK
-      summary: Get Environment State
-      tags:
-        - Client API > Environment
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/user:
-    post:
-      description: Endpoint for creating or identifying a user within the specified
-        environment. If the user already exists, this will identify them and
-        potentially update user attributes. If they don't exist, it will create
-        a new user.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                userId: user123
-                attributes: {}
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                userId: user123
-                state: identified
-              schema:
-                type: object
-          description: OK
-      summary: Create or Identify User
-      tags:
-        - Client API > User
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks Client
-  /{environmentId}/storage:
-    post:
-      summary: Upload Private File
-      description: >
-        API endpoint for uploading private files. Uploaded files are kept
-        private so that only users with access to the specified environment can
-        retrieve them. The endpoint validates the survey ID, file name, and file
-        type from the request body, and returns a signed URL for S3 uploads
-        along with a local upload URL.
-      tags:
-        - Client API > File Upload
-      parameters:
-        - in: path
-          name: environmentId
-          required: true
-          schema:
-            type: string
-          description: The ID of the environment.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                surveyId:
-                  type: string
-                  description: The ID of the survey associated with the file.
-                fileName:
-                  type: string
-                  description: The name of the file to be uploaded.
-                fileType:
-                  type: string
-                  description: The MIME type of the file.
-              required:
-                - surveyId
-                - fileName
-                - fileType
-              example:
-                surveyId: cm7pr0x2y004o192zmit8cjvb
-                fileName: example.jpg
-                fileType: image/jpeg
-      responses:
-        "200":
-          description: OK - Returns the signed URL, signing data, updated file name, and file URL.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      signedUrl:
-                        type: string
-                        description: Signed URL for uploading the file to local storage.
-                      signingData:
-                        type: object
-                        properties:
-                          signature:
-                            type: string
-                            description: Signature for verifying the upload.
-                          timestamp:
-                            type: number
-                            description: Timestamp used in the signature.
-                          uuid:
-                            type: string
-                            description: Unique identifier for the signed upload.
-                      updatedFileName:
-                        type: string
-                        description: The updated file name after processing.
-                      fileUrl:
-                        type: string
-                        description: URL where the uploaded file can be accessed.
-                example:
-                  data:
-                    signedUrl: "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/local"
-                    signingData:
-                      signature: "3e51c6f441e646a0c9a47fdcdd25eee9bfac26d5506461d811b9c55cbdd90914"
-                      timestamp: 1741693207760
-                      uuid: "f48bcb1aad904f574069a253388024af"
-                    updatedFileName: "halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg"
-                    fileUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/private/halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg"
-        "400":
-          description: Bad Request - One or more required fields are missing.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-                example:
-                  error: fileName is required
-        "404":
-          description: Not Found - The specified survey or organization does not exist.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-                example:
-                  error: Survey survey123 not found
-      servers:
-        - url: https://app.formbricks.com/api/v2/client
-          description: Formbricks API Server
-  /{environmentId}/storage/local:
-    post:
-      summary: Upload Private File to Local Storage
-      description: >
-        API endpoint for uploading private files to local storage. The request must include a valid signature,
-        UUID, and timestamp to verify the upload. The file is provided as a Base64 encoded string in the request body.
-        The "Content-Type" header must be set to a valid MIME type, and the file data must be a valid file object (buffer).
-      tags:
-        - Client API > File Upload
-      parameters:
-        - in: path
-          name: environmentId
-          required: true
-          schema:
-            type: string
-          description: The ID of the environment.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                surveyId:
-                  type: string
-                  description: The ID of the survey associated with the file.
-                fileName:
-                  type: string
-                  description: The URI encoded file name.
-                fileType:
-                  type: string
-                  description: The MIME type of the file.
-                signature:
-                  type: string
-                  description: Signed signature for verifying the file upload.
-                uuid:
-                  type: string
-                  description: Unique identifier used in the signature validation.
-                timestamp:
-                  type: string
-                  description: Timestamp used in the signature validation.
-                fileBase64String:
-                  type: string
-                  description: >
-                    Base64 encoded string of the file. It should include data type information,
-                    e.g. "data:<mime-type>;base64,<base64-encoded-data>".
-              required:
-                - surveyId
-                - fileName
-                - fileType
-                - signature
-                - uuid
-                - timestamp
-                - fileBase64String
-            example:
-              surveyId: "survey123"
-              fileName: "example.jpg"
-              fileType: "image/jpeg"
-              signature: "signedSignatureValue"
-              uuid: "uniqueUuidValue"
-              timestamp: "1627891234567"
-              fileBase64String: "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/..."
-      responses:
-        "200":
-          description: OK - File uploaded successfully.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    description: Success message.
-              example:
-                message: "File uploaded successfully"
-        "400":
-          description: Bad Request - One or more required fields are missing or the file is too large.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "fileName is required"
-        "401":
-          description: Unauthorized - Signature validation failed or required signature fields are missing.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "Unauthorized"
-        "404":
-          description: Not Found - The specified survey or organization does not exist.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "Survey survey123 not found"
-        "500":
-          description: Internal Server Error - File upload failed.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "File upload failed"
-      servers:
-        - url: https://app.formbricks.com/api/v2
-          description: Formbricks API Server
   /responses:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getResponses
       summary: Get responses
       description: Gets responses from the database.
@@ -591,10 +87,168 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/response"
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    createdAt:
+                      type: string
+                    updatedAt:
+                      type: string
+                    surveyId:
+                      type: string
+                    displayId:
+                      type:
+                        - string
+                        - "null"
+                    contact:
+                      type:
+                        - object
+                        - "null"
+                      properties:
+                        id:
+                          type: string
+                        userId:
+                          type: string
+                      required:
+                        - id
+                        - userId
+                    contactAttributes:
+                      type:
+                        - object
+                        - "null"
+                      additionalProperties:
+                        type: string
+                    finished:
+                      type: boolean
+                    endingId:
+                      type:
+                        - string
+                        - "null"
+                    data:
+                      type: object
+                      additionalProperties:
+                        anyOf:
+                          - type: string
+                          - type: number
+                          - type: array
+                            items:
+                              type: string
+                          - type: object
+                            additionalProperties:
+                              type: string
+                    variables:
+                      type: object
+                      additionalProperties:
+                        anyOf:
+                          - type: string
+                          - type: number
+                    ttc:
+                      type: object
+                      additionalProperties:
+                        type: number
+                    notes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          updatedAt:
+                            type: string
+                          createdAt:
+                            type: string
+                          id:
+                            type: string
+                          text:
+                            type: string
+                          user:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              name:
+                                type:
+                                  - string
+                                  - "null"
+                            required:
+                              - id
+                              - name
+                          isResolved:
+                            type: boolean
+                          isEdited:
+                            type: boolean
+                        required:
+                          - updatedAt
+                          - createdAt
+                          - id
+                          - text
+                          - user
+                          - isResolved
+                          - isEdited
+                    tags:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          createdAt:
+                            type: string
+                          updatedAt:
+                            type: string
+                          name:
+                            type: string
+                          environmentId:
+                            type: string
+                        required:
+                          - id
+                          - createdAt
+                          - updatedAt
+                          - name
+                          - environmentId
+                    meta:
+                      type: object
+                      properties:
+                        source:
+                          type: string
+                        url:
+                          type: string
+                        userAgent:
+                          type: object
+                          properties:
+                            browser:
+                              type: string
+                            os:
+                              type: string
+                            device:
+                              type: string
+                        country:
+                          type: string
+                        action:
+                          type: string
+                    singleUseId:
+                      type:
+                        - string
+                        - "null"
+                    language:
+                      type:
+                        - string
+                        - "null"
+                  required:
+                    - id
+                    - createdAt
+                    - updatedAt
+                    - surveyId
+                    - contact
+                    - contactAttributes
+                    - finished
+                    - data
+                    - variables
+                    - notes
+                    - tags
+                    - meta
+                    - singleUseId
+                    - language
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createResponse
       summary: Create a response
       description: Creates a response in the database.
@@ -606,18 +260,252 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/responseCreate"
+              type: object
+              properties:
+                createdAt:
+                  type: string
+                updatedAt:
+                  type: string
+                environmentId:
+                  type: string
+                surveyId:
+                  type: string
+                userId:
+                  type:
+                    - string
+                    - "null"
+                displayId:
+                  type:
+                    - string
+                    - "null"
+                singleUseId:
+                  type:
+                    - string
+                    - "null"
+                finished:
+                  type: boolean
+                endingId:
+                  type:
+                    - string
+                    - "null"
+                language:
+                  type: string
+                data:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                      - type: array
+                        items:
+                          type: string
+                      - type: object
+                        additionalProperties:
+                          type: string
+                variables:
+                  type: object
+                  additionalProperties:
+                    anyOf:
+                      - type: string
+                      - type: number
+                ttc:
+                  type: object
+                  additionalProperties:
+                    type: number
+                meta:
+                  type: object
+                  properties:
+                    source:
+                      type: string
+                    url:
+                      type: string
+                    userAgent:
+                      type: object
+                      properties:
+                        browser:
+                          type: string
+                        device:
+                          type: string
+                        os:
+                          type: string
+                    country:
+                      type: string
+                    action:
+                      type: string
+              required:
+                - environmentId
+                - surveyId
+                - finished
+                - data
       responses:
         "201":
           description: Response created successfully.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/response"
+                type: object
+                properties:
+                  id:
+                    type: string
+                  createdAt:
+                    type: string
+                  updatedAt:
+                    type: string
+                  surveyId:
+                    type: string
+                  displayId:
+                    type:
+                      - string
+                      - "null"
+                  contact:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                      userId:
+                        type: string
+                    required:
+                      - id
+                      - userId
+                  contactAttributes:
+                    type:
+                      - object
+                      - "null"
+                    additionalProperties:
+                      type: string
+                  finished:
+                    type: boolean
+                  endingId:
+                    type:
+                      - string
+                      - "null"
+                  data:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                        - type: array
+                          items:
+                            type: string
+                        - type: object
+                          additionalProperties:
+                            type: string
+                  variables:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                  ttc:
+                    type: object
+                    additionalProperties:
+                      type: number
+                  notes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        updatedAt:
+                          type: string
+                        createdAt:
+                          type: string
+                        id:
+                          type: string
+                        text:
+                          type: string
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type:
+                                - string
+                                - "null"
+                          required:
+                            - id
+                            - name
+                        isResolved:
+                          type: boolean
+                        isEdited:
+                          type: boolean
+                      required:
+                        - updatedAt
+                        - createdAt
+                        - id
+                        - text
+                        - user
+                        - isResolved
+                        - isEdited
+                  tags:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        createdAt:
+                          type: string
+                        updatedAt:
+                          type: string
+                        name:
+                          type: string
+                        environmentId:
+                          type: string
+                      required:
+                        - id
+                        - createdAt
+                        - updatedAt
+                        - name
+                        - environmentId
+                  meta:
+                    type: object
+                    properties:
+                      source:
+                        type: string
+                      url:
+                        type: string
+                      userAgent:
+                        type: object
+                        properties:
+                          browser:
+                            type: string
+                          os:
+                            type: string
+                          device:
+                            type: string
+                      country:
+                        type: string
+                      action:
+                        type: string
+                  singleUseId:
+                    type:
+                      - string
+                      - "null"
+                  language:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - id
+                  - createdAt
+                  - updatedAt
+                  - surveyId
+                  - contact
+                  - contactAttributes
+                  - finished
+                  - data
+                  - variables
+                  - notes
+                  - tags
+                  - meta
+                  - singleUseId
+                  - language
   /responses/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getResponse
       summary: Get a response
       description: Gets a response from the database.
@@ -638,8 +526,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/response"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateResponse
       summary: Update a response
       description: Updates a response in the database.
@@ -743,8 +629,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/response"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteResponse
       summary: Delete a response
       description: Deletes a response from the database.
@@ -766,8 +650,6 @@ paths:
                 $ref: "#/components/schemas/response"
   /contacts:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContacts
       summary: Get contacts
       description: Gets contacts from the database.
@@ -821,8 +703,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/contact"
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContact
       summary: Create a contact
       description: Creates a contact in the database.
@@ -844,8 +724,6 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contacts/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContact
       summary: Get a contact
       description: Gets a contact from the database.
@@ -865,8 +743,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContact
       summary: Update a contact
       description: Updates a contact in the database.
@@ -893,8 +769,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContact
       summary: Delete a contact
       description: Deletes a contact from the database.
@@ -915,8 +789,6 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contact-attributes:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributes
       summary: Get contact attributes
       description: Gets contact attributes from the database.
@@ -968,10 +840,28 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/contactAttribute"
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    createdAt:
+                      type: string
+                    updatedAt:
+                      type: string
+                    attributeKeyId:
+                      type: string
+                    contactId:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                    - id
+                    - createdAt
+                    - updatedAt
+                    - attributeKeyId
+                    - contactId
+                    - value
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContactAttribute
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
@@ -989,8 +879,6 @@ paths:
           description: Contact attribute created successfully.
   /contact-attributes/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttribute
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
@@ -1010,8 +898,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContactAttribute
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
@@ -1038,8 +924,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContactAttribute
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
@@ -1060,8 +944,6 @@ paths:
                 $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
@@ -1113,10 +995,45 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/contactAttributeKey"
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    createdAt:
+                      type: string
+                    updatedAt:
+                      type: string
+                    isUnique:
+                      type: boolean
+                      default: false
+                    key:
+                      type: string
+                    name:
+                      type:
+                        - string
+                        - "null"
+                    description:
+                      type:
+                        - string
+                        - "null"
+                    type:
+                      type: string
+                      enum:
+                        - default
+                        - custom
+                    environmentId:
+                      type: string
+                  required:
+                    - id
+                    - createdAt
+                    - updatedAt
+                    - isUnique
+                    - key
+                    - name
+                    - description
+                    - type
+                    - environmentId
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
@@ -1134,8 +1051,6 @@ paths:
           description: Contact attribute key created successfully.
   /contact-attribute-keys/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
@@ -1155,8 +1070,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
@@ -1183,8 +1096,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
@@ -1205,8 +1116,6 @@ paths:
                 $ref: "#/components/schemas/contactAttributeKey"
   /surveys:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getSurveys
       summary: Get surveys
       description: Gets surveys from the database.
@@ -1277,8 +1186,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/survey"
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createSurvey
       summary: Create a survey
       description: Creates a survey in the database.
@@ -1300,8 +1207,6 @@ paths:
                 $ref: "#/components/schemas/survey"
   /surveys/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getSurvey
       summary: Get a survey
       description: Gets a survey from the database.
@@ -1322,8 +1227,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateSurvey
       summary: Update a survey
       description: Updates a survey in the database.
@@ -1351,8 +1254,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteSurvey
       summary: Delete a survey
       description: Deletes a survey from the database.
@@ -1372,230 +1273,96 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/survey"
-  /api/v2/management/storage:
-    post:
-      security:
-        - apiKeyAuth: []
-      summary: Upload Public File
-      description: >
-        API endpoint for uploading public files. Uploaded files are public and accessible by anyone.
-        This endpoint requires authentication. It accepts a JSON body with fileName, fileType, environmentId,
-        and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading
-        the file to S3 along with a local upload URL.
+  /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    get:
+      operationId: getContactLinksBySegment
+      summary: Get survey links for contacts in a segment
+      description: Generates personalized survey links for contacts in a segment.
       tags:
-        - Management API > Storage
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                fileName:
-                  type: string
-                  description: The name of the file to be uploaded.
-                fileType:
-                  type: string
-                  description: The MIME type of the file.
-                environmentId:
-                  type: string
-                  description: The ID of the environment.
-                allowedFileExtensions:
-                  type: array
-                  items:
-                    type: string
-                  description: Optional. List of allowed file extensions.
-              required:
-                - fileName
-                - fileType
-                - environmentId
-            example:
-              fileName: "profile.png"
-              fileType: "image/png"
-              environmentId: "env123"
-              allowedFileExtensions: ["png", "jpg", "jpeg"]
-      responses:
-        "200":
-          description: OK - Returns the signed URL, updated file name, and file URL.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: object
-                    properties:
-                      signedUrl:
-                        type: string
-                        description: Signed URL for uploading the file to S3.
-                      localUrl:
-                        type: string
-                        description: URL for uploading the file to local storage.
-                      updatedFileName:
-                        type: string
-                        description: The updated file name after processing.
-                      fileUrl:
-                        type: string
-                        description: URL where the uploaded file can be accessed.
-              example:
-                data:
-                  signedUrl: "http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/public"
-                  localUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile.png"
-                  updatedFileName: "profile--fid--abc123.png"
-                  fileUrl: "http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/public/profile--fid--abc123.png"
-        "400":
-          description: Bad Request - Missing required fields or invalid file extension.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "fileName is required"
-        "401":
-          description: Unauthorized - Authentication failed or user not logged in.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "Not authenticated"
-        "403":
-          description: Forbidden - User does not have access to the specified environment.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "User does not have access to environment env123"
-  /api/v2/management/storage/local:
-    put:
-      summary: Upload Public File to Local Storage
-      security:
-        - apiKeyAuth: []
-      description: >
-        Management API endpoint for uploading public files to local storage. This endpoint requires authentication.
-        File metadata is provided via headers (X-File-Type, X-File-Name, X-Environment-ID, X-Signature, X-UUID, X-Timestamp)
-        and the file is provided as a multipart/form-data file field named "file". The "Content-Type" header must be set to a valid MIME type.
-      tags:
-        - Management API > Storage
+        - Management API > Surveys > Contact Links
       parameters:
-        - in: header
-          name: X-File-Type
-          required: true
+        - in: path
+          name: surveyId
+          description: The ID of the survey
           schema:
             type: string
-          description: "MIME type of the file. Must be a valid MIME type."
-        - in: header
-          name: X-File-Name
+            description: The ID of the survey
           required: true
+        - in: path
+          name: segmentId
+          description: The ID of the segment
           schema:
             type: string
-          description: "URI encoded file name."
-        - in: header
-          name: X-Environment-ID
+            description: The ID of the segment
           required: true
+        - in: query
+          name: expirationDays
+          description: Number of days until the generated JWT expires. If not provided,
+            there is no expiration.
           schema:
-            type: string
-          description: "ID of the environment."
-        - in: header
-          name: X-Signature
-          required: true
+            type:
+              - number
+              - "null"
+            minimum: 1
+            maximum: 365
+            default: null
+            description: Number of days until the generated JWT expires. If not provided,
+              there is no expiration.
+        - in: query
+          name: limit
+          description: Number of items to return
           schema:
-            type: string
-          description: "Signature for verifying the request."
-        - in: header
-          name: X-UUID
-          required: true
+            type: number
+            minimum: 1
+            maximum: 10
+            default: 10
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
           schema:
-            type: string
-          description: "Unique identifier for the signed upload."
-        - in: header
-          name: X-Timestamp
-          required: true
-          schema:
-            type: string
-          description: "Timestamp used for the signature."
-      requestBody:
-        required: true
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-                  description: "The file to be uploaded as a valid file object (buffer)."
-              required:
-                - file
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
       responses:
         "200":
-          description: OK - File uploaded successfully.
+          description: Contact links generated successfully.
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        contactId:
+                          type: string
+                        surveyUrl:
+                          type: string
+                          format: uri
+                        expiresAt:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - contactId
+                        - surveyUrl
+                        - expiresAt
+                      additionalProperties:
+                        type: string
+                  meta:
                     type: object
                     properties:
-                      message:
-                        type: string
-                        description: Success message.
-                example:
-                  data:
-                    message: "File uploaded successfully"
-        "400":
-          description: Bad Request - Missing required fields, invalid header values, or file issues.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "fileType is required"
-        "401":
-          description: Unauthorized - Authentication failed, invalid signature, or user not authorized.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "Not authenticated"
-        "500":
-          description: Internal Server Error - File upload failed due to server error.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    description: Detailed error message.
-              example:
-                error: "File upload failed"
-      servers:
-        - url: https://app.formbricks.com/api/v2
-          description: Formbricks API Server
+                      total:
+                        type: number
+                    required:
+                      - total
+                required:
+                  - data
+                  - meta
 components:
   securitySchemes:
     apiKeyAuth:
@@ -1648,7 +1415,7 @@ components:
                 additionalProperties:
                   type: string
           description: The data of the response
-          example: &a2
+          example:
             question1: answer1
             question2: 2
             question3:
@@ -1663,7 +1430,7 @@ components:
               - type: string
               - type: number
           description: The variables of the response
-          example: &a3
+          example:
             variable1: answer1
             variable2: 2
         ttc:
@@ -1671,7 +1438,7 @@ components:
           additionalProperties:
             type: number
           description: The TTC of the response
-          example: &a4
+          example:
             question1: 10
             question2: 20
         meta:
@@ -1699,7 +1466,7 @@ components:
             action:
               type: string
           description: The meta data of the response
-          example: &a5
+          example:
             source: https://example.com
             url: https://example.com
             userAgent:
@@ -2018,7 +1785,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a6 []
+          default: &a2 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -2086,7 +1853,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a7
+          enum: &a3
             - displayOnce
             - displayMultiple
             - displaySome
@@ -2165,7 +1932,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a9
+              enum: &a5
                 - bottomLeft
                 - bottomRight
                 - topLeft
@@ -2343,7 +2110,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a8
+                  enum: &a4
                     - animation
                     - color
                     - image
@@ -2448,104 +2215,6 @@ components:
         - verifyEmail
         - displayPercentage
         - questions
-    responseCreate:
-      type: object
-      properties:
-        createdAt:
-          type: string
-          description: The date and time the response was created
-          example: 2021-01-01T00:00:00.000Z
-        updatedAt:
-          type: string
-          description: The date and time the response was last updated
-          example: 2021-01-01T00:00:00.000Z
-        surveyId:
-          type: string
-          description: The ID of the survey
-        displayId:
-          type:
-            - string
-            - "null"
-          description: The display ID of the response
-        singleUseId:
-          type:
-            - string
-            - "null"
-          description: The single use ID of the response
-        finished:
-          type: boolean
-          description: Whether the response is finished
-          example: true
-        endingId:
-          type:
-            - string
-            - "null"
-          description: The ID of the ending
-        language:
-          type:
-            - string
-            - "null"
-          description: The language of the response
-          example: en
-        data:
-          type: object
-          additionalProperties:
-            anyOf:
-              - type: string
-              - type: number
-              - type: array
-                items:
-                  type: string
-              - type: object
-                additionalProperties:
-                  type: string
-          description: The data of the response
-          example: *a2
-        variables:
-          type: object
-          additionalProperties:
-            anyOf:
-              - type: string
-              - type: number
-          description: The variables of the response
-          example: *a3
-        ttc:
-          type: object
-          additionalProperties:
-            type: number
-          description: The TTC of the response
-          example: *a4
-        meta:
-          type: object
-          properties:
-            source:
-              type: string
-              description: The source of the response
-              example: https://example.com
-            url:
-              type: string
-              description: The URL of the response
-              example: https://example.com
-            userAgent:
-              type: object
-              properties:
-                browser:
-                  type: string
-                os:
-                  type: string
-                device:
-                  type: string
-            country:
-              type: string
-            action:
-              type: string
-          description: The meta data of the response
-          example: *a5
-      required:
-        - surveyId
-        - finished
-        - data
-      description: A response to create
     responseId:
       type: string
       description: The ID of the response
@@ -2691,7 +2360,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a6
+          default: *a2
           description: The endings of the survey
         thankYouCard:
           type:
@@ -2757,7 +2426,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a7
+          enum: *a3
           description: Display options for the survey
         recontactDays:
           type:
@@ -3037,7 +2706,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a8
+                  enum: *a4
                 brightness:
                   type:
                     - number
@@ -3070,7 +2739,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a9
+              enum: *a5
             clickOutsideClose:
               type:
                 - boolean
@@ -3101,3 +2770,4 @@ components:
     surveyId:
       type: string
       description: The ID of the survey
+

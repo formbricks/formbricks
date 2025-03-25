@@ -275,11 +275,7 @@ export const segmentFilterToPrismaQuery = reactCache(
           return { whereClause };
         } catch (error) {
           logger.error(
-            {
-              error,
-              segmentId,
-              environmentId,
-            },
+            { error, segmentId, environmentId },
             "Error transforming segment filter to Prisma query"
           );
           throw error;
