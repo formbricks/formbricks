@@ -1,5 +1,9 @@
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
+import { cache } from "@formbricks/lib/cache";
+import { segmentCache } from "@formbricks/lib/cache/segment";
+import { logger } from "@formbricks/logger";
 import {
   TBaseFilters,
   TSegmentAttributeFilter,
@@ -78,8 +82,6 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
       valueQuery.attributes!.some!.value = { endsWith: String(value), mode: "insensitive" };
       break;
     case "greaterThan":
-      // For number comparisons, we convert string value to number first
-      // This might need type checking in a real implementation
       valueQuery.attributes!.some!.value = { gt: String(value) };
       break;
     case "greaterEqual":
@@ -92,7 +94,6 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
       valueQuery.attributes!.some!.value = { lte: String(value) };
       break;
     default:
-      // Fallback to equals for unknown operators
       valueQuery.attributes!.some!.value = String(value);
   }
 
@@ -147,6 +148,9 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
   return baseQuery;
 };
 
+/**
+ * Builds a Prisma where clause from a segment filter
+ */
 const buildSegmentFilterWhereClause = async (
   filter: TSegmentSegmentFilter
 ): Promise<Prisma.ContactWhereInput> => {
@@ -155,7 +159,10 @@ const buildSegmentFilterWhereClause = async (
 
   const segment = await getSegment(segmentId);
 
-  // ! TODO: Handle errors
+  if (!segment) {
+    logger.error({ segmentId }, "Segment not found");
+    return {};
+  }
 
   return processFilters(segment.filters);
 };
@@ -222,22 +229,41 @@ const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWher
 /**
  * Transforms a segment filter into a Prisma query for contacts
  */
-export const segmentFilterToPrismaQuery = async (
-  filters: TBaseFilters,
-  environmentId: string
-): Promise<SegmentFilterQueryResult> => {
-  // Base where clause to ensure contacts belong to the specified environment
-  const baseWhereClause: Prisma.ContactWhereInput = {
-    environmentId,
-  };
+export const segmentFilterToPrismaQuery = reactCache(
+  async (
+    segmentId: string,
+    filters: TBaseFilters,
+    environmentId: string
+  ): Promise<SegmentFilterQueryResult> =>
+    cache(
+      async () => {
+        try {
+          const baseWhereClause: Prisma.ContactWhereInput = {
+            environmentId,
+          };
 
-  // Process filters into a Prisma where clause
-  const filtersWhereClause = await processFilters(filters);
+          const filtersWhereClause = await processFilters(filters);
 
-  // Combine the base where clause with the filters where clause
-  const whereClause: Prisma.ContactWhereInput = {
-    AND: [baseWhereClause, filtersWhereClause],
-  };
+          const whereClause: Prisma.ContactWhereInput = {
+            AND: [baseWhereClause, filtersWhereClause],
+          };
 
-  return { whereClause };
-};
+          return { whereClause };
+        } catch (error) {
+          logger.error(
+            {
+              error,
+              segmentId,
+              environmentId,
+            },
+            "Error transforming segment filter to Prisma query"
+          );
+          throw error;
+        }
+      },
+      [`segmentFilterToPrismaQuery-${segmentId}-${environmentId}-${JSON.stringify(filters)}`],
+      {
+        tags: [segmentCache.tag.byEnvironmentId(environmentId), segmentCache.tag.byId(segmentId)],
+      }
+    )()
+);

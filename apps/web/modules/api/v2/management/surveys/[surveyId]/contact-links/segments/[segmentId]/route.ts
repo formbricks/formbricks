@@ -3,9 +3,10 @@ import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
-import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/service";
+import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 
 const ZContactLinksBySegmentParams = z.object({
   surveyId: z.string().cuid2(),
@@ -76,7 +77,14 @@ export const GET = async (
           const surveyUrlResult = getContactSurveyLink(contact.id, params.surveyId, query?.expirationDays);
 
           if (!surveyUrlResult.ok) {
-            console.error(`Failed to generate survey URL for contact ${contact.id}`);
+            logger.error(
+              {
+                error: surveyUrlResult.error,
+                contactId: contact.id,
+                surveyId: params.surveyId,
+              },
+              "Failed to generate survey URL for contact"
+            );
             return null;
           }
 
