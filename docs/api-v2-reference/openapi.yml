@@ -19,8 +19,6 @@ tags:
     description: Operations for managing surveys.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
-security:
-  - apiKeyAuth: []
 paths:
   /responses/{responseId}:
     put:
@@ -282,8 +280,249 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2/client
           description: Formbricks Client
+  /{environmentId}/storage:
+    post:
+      summary: Upload Private File
+      description: API endpoint for uploading private files. Uploaded files are kept
+        private so that only users with access to the specified environment can
+        retrieve them. The endpoint validates the survey ID, file name, and file
+        type from the request body, and returns a signed URL for S3 uploads
+        along with a local upload URL.
+      tags:
+        - Client API > File Upload
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey associated with the file.
+                fileName:
+                  type: string
+                  description: The name of the file to be uploaded.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+              required:
+                - surveyId
+                - fileName
+                - fileType
+              example:
+                surveyId: cm7pr0x2y004o192zmit8cjvb
+                fileName: example.jpg
+                fileType: image/jpeg
+      responses:
+        "200":
+          description: OK - Returns the signed URL, signing data, updated file name, and
+            file URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signedUrl:
+                        type: string
+                        description: Signed URL for uploading the file to local storage.
+                      signingData:
+                        type: object
+                        properties:
+                          signature:
+                            type: string
+                            description: Signature for verifying the upload.
+                          timestamp:
+                            type: number
+                            description: Timestamp used in the signature.
+                          uuid:
+                            type: string
+                            description: Unique identifier for the signed upload.
+                      updatedFileName:
+                        type: string
+                        description: The updated file name after processing.
+                      fileUrl:
+                        type: string
+                        description: URL where the uploaded file can be accessed.
+                example:
+                  data:
+                    signedUrl: http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/local
+                    signingData:
+                      signature: 3e51c6f441e646a0c9a47fdcdd25eee9bfac26d5506461d811b9c55cbdd90914
+                      timestamp: 1741693207760
+                      uuid: f48bcb1aad904f574069a253388024af
+                    updatedFileName: halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg
+                    fileUrl: http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/private/halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg
+        "400":
+          description: Bad Request - One or more required fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: fileName is required
+        "404":
+          description: Not Found - The specified survey or organization does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Survey survey123 not found
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks API Server
+  /{environmentId}/storage/local:
+    post:
+      summary: Upload Private File to Local Storage
+      description: API endpoint for uploading private files to local storage. The
+        request must include a valid signature, UUID, and timestamp to verify
+        the upload. The file is provided as a Base64 encoded string in the
+        request body. The "Content-Type" header must be set to a valid MIME
+        type, and the file data must be a valid file object (buffer).
+      tags:
+        - Client API > File Upload
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey associated with the file.
+                fileName:
+                  type: string
+                  description: The URI encoded file name.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+                signature:
+                  type: string
+                  description: Signed signature for verifying the file upload.
+                uuid:
+                  type: string
+                  description: Unique identifier used in the signature validation.
+                timestamp:
+                  type: string
+                  description: Timestamp used in the signature validation.
+                fileBase64String:
+                  type: string
+                  description: Base64 encoded string of the file. It should include data type
+                    information, e.g.
+                    "data:<mime-type>;base64,<base64-encoded-data>".
+              required:
+                - surveyId
+                - fileName
+                - fileType
+                - signature
+                - uuid
+                - timestamp
+                - fileBase64String
+              example:
+                surveyId: survey123
+                fileName: example.jpg
+                fileType: image/jpeg
+                signature: signedSignatureValue
+                uuid: uniqueUuidValue
+                timestamp: "1627891234567"
+                fileBase64String: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...
+      responses:
+        "200":
+          description: OK - File uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                example:
+                  message: File uploaded successfully
+        "400":
+          description: Bad Request - One or more required fields are missing or the file
+            is too large.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: fileName is required
+        "401":
+          description: Unauthorized - Signature validation failed or required signature
+            fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Unauthorized
+        "404":
+          description: Not Found - The specified survey or organization does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Survey survey123 not found
+        "500":
+          description: Internal Server Error - File upload failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: File upload failed
+      servers:
+        - url: https://app.formbricks.com/api/v2
+          description: Formbricks API Server
   /responses:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getResponses
       summary: Get responses
       description: Gets responses from the database.
@@ -491,6 +730,8 @@ paths:
                         offset:
                           type: number
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createResponse
       summary: Create a response
       description: Creates a response in the database.
@@ -714,6 +955,8 @@ paths:
                     description: The display ID of the response
   /responses/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getResponse
       summary: Get a response
       description: Gets a response from the database.
@@ -841,6 +1084,8 @@ paths:
                       - "null"
                     description: The display ID of the response
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateResponse
       summary: Update a response
       description: Updates a response in the database.
@@ -1051,6 +1296,8 @@ paths:
                       - "null"
                     description: The display ID of the response
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteResponse
       summary: Delete a response
       description: Deletes a response from the database.
@@ -1179,6 +1426,8 @@ paths:
                     description: The display ID of the response
   /contacts:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContacts
       summary: Get contacts
       description: Gets contacts from the database.
@@ -1232,6 +1481,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/contact"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContact
       summary: Create a contact
       description: Creates a contact in the database.
@@ -1253,6 +1504,8 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contacts/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContact
       summary: Get a contact
       description: Gets a contact from the database.
@@ -1272,6 +1525,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContact
       summary: Update a contact
       description: Updates a contact in the database.
@@ -1298,6 +1553,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContact
       summary: Delete a contact
       description: Deletes a contact from the database.
@@ -1318,6 +1575,8 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contact-attributes:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributes
       summary: Get contact attributes
       description: Gets contact attributes from the database.
@@ -1391,6 +1650,8 @@ paths:
                     - contactId
                     - value
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContactAttribute
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
@@ -1408,6 +1669,8 @@ paths:
           description: Contact attribute created successfully.
   /contact-attributes/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttribute
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
@@ -1427,6 +1690,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContactAttribute
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
@@ -1453,6 +1718,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContactAttribute
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
@@ -1473,6 +1740,8 @@ paths:
                 $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
@@ -1563,6 +1832,8 @@ paths:
                     - type
                     - environmentId
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
@@ -1580,6 +1851,8 @@ paths:
           description: Contact attribute key created successfully.
   /contact-attribute-keys/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
@@ -1599,6 +1872,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
@@ -1625,6 +1900,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
@@ -1645,6 +1922,8 @@ paths:
                 $ref: "#/components/schemas/contactAttributeKey"
   /surveys:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getSurveys
       summary: Get surveys
       description: Gets surveys from the database.
@@ -1715,6 +1994,8 @@ paths:
                 items:
                   $ref: "#/components/schemas/survey"
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createSurvey
       summary: Create a survey
       description: Creates a survey in the database.
@@ -1736,6 +2017,8 @@ paths:
                 $ref: "#/components/schemas/survey"
   /surveys/{id}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getSurvey
       summary: Get a survey
       description: Gets a survey from the database.
@@ -1756,6 +2039,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateSurvey
       summary: Update a survey
       description: Updates a survey in the database.
@@ -1783,6 +2068,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteSurvey
       summary: Delete a survey
       description: Deletes a survey from the database.
@@ -1804,6 +2091,8 @@ paths:
                 $ref: "#/components/schemas/survey"
   /webhooks:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getWebhooks
       summary: Get webhooks
       description: Gets webhooks from the database.
@@ -1926,6 +2215,8 @@ paths:
                         offset:
                           type: number
     post:
+      security:
+        - apiKeyAuth: []
       operationId: createWebhook
       summary: Create a webhook
       description: Creates a webhook in the database.
@@ -2021,6 +2312,8 @@ paths:
                     description: "The IDs of the surveys "
   /webhooks/{webhookId}:
     get:
+      security:
+        - apiKeyAuth: []
       operationId: getWebhook
       summary: Get a webhook
       description: Gets a webhook from the database.
@@ -2080,6 +2373,8 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
     put:
+      security:
+        - apiKeyAuth: []
       operationId: updateWebhook
       summary: Update a webhook
       description: Updates a webhook in the database.
@@ -2181,6 +2476,8 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
     delete:
+      security:
+        - apiKeyAuth: []
       operationId: deleteWebhook
       summary: Delete a webhook
       description: Deletes a webhook from the database.
