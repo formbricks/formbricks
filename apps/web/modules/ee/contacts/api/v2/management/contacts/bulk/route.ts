@@ -47,7 +47,6 @@ export const PUT = async (request: Request) =>
         data: {
           status: "success",
           message: "Contacts bulk upload successful",
-          processed: contacts.length,
         },
       });
     },

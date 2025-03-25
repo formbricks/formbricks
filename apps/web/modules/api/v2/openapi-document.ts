@@ -3,6 +3,7 @@ import { contactAttributePaths } from "@/modules/api/v2/management/contact-attri
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
+import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
@@ -23,6 +24,7 @@ const document = createDocument({
   },
   paths: {
     ...responsePaths,
+    ...bulkContactPaths,
     ...contactPaths,
     ...contactAttributePaths,
     ...contactAttributeKeyPaths,
