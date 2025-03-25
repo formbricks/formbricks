@@ -76,6 +76,14 @@ module "valkey" {
     }
   }
 
+  log_delivery_configuration = {
+    slow-log = {
+      destination_type                       = "cloudwatch-logs"
+      log_format                             = "json"
+      cloudwatch_log_group_retention_in_days = 365
+    }
+  }
+
   # Subnet Group
   subnet_group_name        = "${local.name}-valkey"
   subnet_group_description = "${title(local.name)} subnet group"

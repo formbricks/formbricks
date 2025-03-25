@@ -33,7 +33,7 @@ locals {
       alarm_description   = "Average API 5XX target group error code count is too high"
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
-      threshold           = 1
+      threshold           = 5
       period              = 60
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"
@@ -47,7 +47,7 @@ locals {
       alarm_description   = "Average API 5XX load balancer error code count is too high"
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
-      threshold           = 1
+      threshold           = 5
       period              = 60
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"
@@ -61,7 +61,7 @@ locals {
       alarm_description   = format("Average API response time is greater than %s", 0.05)
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
-      threshold           = 0.05
+      threshold           = 5
       period              = 60
       unit                = "Seconds"
       namespace           = "AWS/ApplicationELB"
@@ -75,7 +75,7 @@ locals {
       alarm_description   = format("Unhealthy host count is greater than %s", 1)
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
-      threshold           = 1
+      threshold           = 2
       period              = 60
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"
@@ -232,14 +232,15 @@ module "metric_alarm" {
   source  = "terraform-aws-modules/cloudwatch/aws//modules/metric-alarm"
   version = "5.7.1"
 
-  for_each            = local.alarms
-  alarm_name          = each.key
-  alarm_description   = each.value.alarm_description
-  comparison_operator = each.value.comparison_operator
-  evaluation_periods  = each.value.evaluation_periods
-  threshold           = each.value.threshold
-  period              = each.value.period
-  unit                = each.value.unit
+  for_each                  = local.alarms
+  alarm_name                = each.key
+  alarm_description         = each.value.alarm_description
+  comparison_operator       = each.value.comparison_operator
+  evaluation_periods        = each.value.evaluation_periods
+  threshold                 = each.value.threshold
+  period                    = each.value.period
+  unit                      = each.value.unit
+  insufficient_data_actions = []
 
   namespace   = each.value.namespace
   metric_name = each.value.metric_name
