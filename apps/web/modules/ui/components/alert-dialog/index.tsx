@@ -11,9 +11,11 @@ interface AlertDialogProps {
   mainText: string;
   confirmBtnLabel: string;
   declineBtnLabel?: string;
-  declineBtnVariant?: "destructive" | "ghost";
+  declineBtnVariant?: "destructive" | "ghost" | "outline";
+  tertiaryBtnLabel?: string;
   onDecline: () => void;
   onConfirm?: () => void;
+  onTertiary?: () => void;
 }
 
 export const AlertDialog = ({
@@ -26,6 +28,8 @@ export const AlertDialog = ({
   confirmBtnLabel,
   declineBtnVariant = "ghost",
   onConfirm,
+  tertiaryBtnLabel,
+  onTertiary,
 }: AlertDialogProps) => {
   const { t } = useTranslate();
   return (
@@ -34,6 +38,9 @@ export const AlertDialog = ({
         {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
       </p>
       <div className="space-x-2 text-right">
+        <Button variant="ghost" onClick={onTertiary}>
+          {tertiaryBtnLabel}
+        </Button>
         <Button variant={declineBtnVariant} onClick={onDecline}>
           {declineBtnLabel || "Discard"}
         </Button>

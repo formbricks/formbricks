@@ -15,6 +15,8 @@ import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
@@ -42,6 +44,7 @@ export const SurveyAnalysisCTA = ({
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  let responseCount = 0;
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -107,6 +110,13 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
+  
+  const handleEditforActiveSurvey = (e) => {
+    e.preventDefault();
+    setIsCautionDialogOpen(true);
+  };
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   const iconActions = [
     {
       icon: Eye,
@@ -144,7 +154,12 @@ export const SurveyAnalysisCTA = ({
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
-      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      onClick: async () => {
+        responseCount = await getResponseCountBySurveyId(survey.id); 
+        survey.status === "inProgress" && responseCount > 0 
+        ? handleEditforActiveSurvey
+        : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+      },
       isVisible: !isReadOnly,
     },
   ];
@@ -181,6 +196,35 @@ export const SurveyAnalysisCTA = ({
           ))}
           <SuccessMessage environment={environment} survey={survey} />
         </>
+      )}
+      
+      {responseCount > 0 && (
+        <AlertDialog
+          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          mainText={
+            <>
+              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+              <ul className="mt-3 list-disc space-y-0.5 pl-5">
+                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+              </ul>
+            </>
+          }
+          confirmBtnLabel={t("common.duplicate")}
+          declineBtnLabel={t("common.cancel")}
+          declineBtnVariant="outline"
+          onConfirm={async () => {
+            // await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+          }}
+          onDecline={() => setIsCautionDialogOpen(false)}
+          >
+          </AlertDialog>
       )}
     </div>
   );

@@ -9,16 +9,7 @@ import {
 } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/modules/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -161,25 +152,22 @@ export const SurveyDropDownMenu = ({
             {!isSurveyCreationDeletionDisabled && (
               <>
                 <DropdownMenuItem>
-                  {survey.status === "inProgress" && survey.responseCount > 0 ? (
-                    <Link
-                      // TRIGGER ALERT DIALOG
-
-                      className="flex w-full items-center"
-                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
-                      onClick={handleEditforActiveSurvey}>
-                      <SquarePenIcon className="mr-2 size-4" />
-                      HELLO{t("common.edit")}
-                    </Link>
-                  ) : (
-                    <Link
-                      // TRIGGER ALERT DIALOG
-
-                      className="flex w-full items-center"
-                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                      <SquarePenIcon className="mr-2 size-4" />
-                      {t("common.edit")}
-                    </Link>
+                  {survey.status === "inProgress" && survey.responseCount > 0 
+                    ? (
+                      <Link
+                        className="flex w-full items-center"
+                        href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                        onClick={handleEditforActiveSurvey}>
+                        <SquarePenIcon className="mr-2 size-4" />
+                        {t("common.edit")}
+                      </Link> )
+                    : (
+                      <Link
+                        className="flex w-full items-center"
+                        href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                        <SquarePenIcon className="mr-2 size-4" />
+                        {t("common.edit")}
+                      </Link>
                   )}
                 </DropdownMenuItem>
 
@@ -283,8 +271,8 @@ export const SurveyDropDownMenu = ({
           mainText={
             <>
               <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-              <p>{t("environments.surveys.edit.caution_explanation_intro")}</p>
-              <ul className="mt-2 list-disc space-y-1 pl-5">
+              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+              <ul className="mt-3 list-disc space-y-0.5 pl-5">
                 <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
                 <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
                 <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
@@ -293,9 +281,16 @@ export const SurveyDropDownMenu = ({
             </>
           }
           confirmBtnLabel={t("common.duplicate")}
-          declineBtnLabel={t("common.edit")}
-          onConfirm={() => handleConfirmNavigation()}
-          onDecline={() => setIsCautionDialogOpen(false)}></AlertDialog>
+          declineBtnLabel={t("common.cancel")}
+          declineBtnVariant="outline"
+          tertiaryBtnLabel={t("common.edit")}
+          onConfirm={async () => {
+            await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+          }}
+          onDecline={() => setIsCautionDialogOpen(false)}
+          onTertiary={() => handleConfirmNavigation()}>
+          </AlertDialog>
       )}
 
       {isCopyFormOpen && (
