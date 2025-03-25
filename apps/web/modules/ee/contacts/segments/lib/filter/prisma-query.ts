@@ -243,8 +243,8 @@ const processFilters = async (
   }
 
   return {
-    AND: query.AND.length > 0 ? query.AND : undefined,
-    OR: query.OR.length > 0 ? query.OR : undefined,
+    ...(query.AND.length > 0 ? { AND: query.AND } : {}),
+    ...(query.OR.length > 0 ? { OR: query.OR } : {}),
   };
 };
 
