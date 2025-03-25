@@ -16,9 +16,27 @@ jobs:
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+
+    # Add PostgreSQL service container
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: formbricks
+        ports:
+          - 5432:5432
+        # Health check to ensure PostgreSQL is ready before using it
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -40,6 +58,7 @@ jobs:
           # Start the container in the background with port mapping
           docker run --name formbricks-test \
             -p 3000:3000 \
+            --network host \
             -e DATABASE_URL="postgresql://test:test@localhost:5432/formbricks" \
             -e NEXTAUTH_SECRET="test_nextauth_secret_at_least_32_chars_long" \
             -e ENCRYPTION_KEY="test_encryption_key_must_be_at_least_32_chars_long" \

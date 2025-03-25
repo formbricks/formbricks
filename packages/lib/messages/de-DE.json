@@ -778,6 +778,7 @@
         "add_env_api_key": "{environmentType} API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
         "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
+        "api_key_created": "API-Schlüssel erstellt",
         "api_key_deleted": "API-Schlüssel gelöscht",
         "api_key_label": "API-Schlüssel Label",
         "api_key_security_warning": "Aus Sicherheitsgründen wird der API-Schlüssel nur einmal nach der Erstellung angezeigt. Bitte kopiere ihn sofort an einen sicheren Ort.",
