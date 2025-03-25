@@ -248,4 +248,5 @@ module "metric_alarm" {
   dimensions = each.value.dimensions
 
   alarm_actions = [module.notify-slack.slack_topic_arn]
+  ok_actions    = [module.notify-slack.slack_topic_arn]
 }
