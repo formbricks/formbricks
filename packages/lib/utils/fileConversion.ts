@@ -1,5 +1,6 @@
 import { AsyncParser } from "@json2csv/node";
 import * as xlsx from "xlsx";
+import { logger } from "@formbricks/logger";
 
 export const convertToCsv = async (fields: string[], jsonData: Record<string, string | number>[]) => {
   let csv: string = "";
@@ -11,7 +12,7 @@ export const convertToCsv = async (fields: string[], jsonData: Record<string, st
   try {
     csv = await parser.parse(jsonData).promise();
   } catch (err) {
-    console.error({ err });
+    logger.error(err, "Failed to convert to CSV");
     throw new Error("Failed to convert to CSV");
   }
   return csv;

@@ -46,11 +46,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          cd apps/web
           pnpm test:coverage
-          cd ../../
-          # The Vitest coverage config is in your vite.config.mts
-
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@bfd4e558cda28cda6b5defafb9232d191be8c203
         env:

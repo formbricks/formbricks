@@ -1,5 +1,6 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { symmetricDecrypt, symmetricEncrypt } from "./crypto";
 import { env } from "./env";
 
@@ -153,7 +154,7 @@ export const verifyInviteToken = (token: string): { inviteId: string; email: str
       email: decryptedEmail,
     };
   } catch (error) {
-    console.error(`Error verifying invite token: ${error}`);
+    logger.error(error, "Error verifying invite token");
     throw new Error("Invalid or expired invite token");
   }
 };

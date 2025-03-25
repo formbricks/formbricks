@@ -1,6 +1,7 @@
 import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { PipelineTriggers } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { sendToPipeline } from "./pipelines";
 
@@ -8,6 +9,13 @@ import { sendToPipeline } from "./pipelines";
 vi.mock("@formbricks/lib/constants", () => ({
   CRON_SECRET: "mocked-cron-secret",
   WEBAPP_URL: "https://test.formbricks.com",
+}));
+
+// Mock the logger
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+  },
 }));
 
 // Mock global fetch
@@ -61,9 +69,6 @@ describe("pipelines", () => {
   });
 
   test("sendToPipeline should handle fetch errors", async () => {
-    // Spy on console.error
-    const consoleErrorSpy = vi.spyOn(console, "error");
-
     // Mock fetch to throw an error
     const testError = new Error("Network error");
     mockFetch.mockRejectedValueOnce(testError);
@@ -79,8 +84,8 @@ describe("pipelines", () => {
     // Call the function
     await sendToPipeline(testData);
 
-    // Check that the error was logged
-    expect(consoleErrorSpy).toHaveBeenCalledWith(`Error sending event to pipeline: ${testError}`);
+    // Check that the error was logged using logger
+    expect(logger.error).toHaveBeenCalledWith(testError, "Error sending event to pipeline");
   });
 
   test("sendToPipeline should throw error if CRON_SECRET is not set", async () => {
@@ -102,7 +107,7 @@ describe("pipelines", () => {
       response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
     };
 
-    // Check that the function throws an error
+    // Expect the function to throw an error
     await expect(sendToPipelineNoSecret(testData)).rejects.toThrow("CRON_SECRET is not set");
   });
 });

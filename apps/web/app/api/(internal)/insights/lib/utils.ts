@@ -4,6 +4,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { doesSurveyHasOpenTextQuestion } from "@formbricks/lib/survey/utils";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse } from "@formbricks/types/responses";
@@ -84,7 +85,7 @@ export const generateInsightsEnabledForSurveyQuestions = async (
 
     return { success: false };
   } catch (error) {
-    console.error("Error generating insights for surveys:", error);
+    logger.error(error, "Error generating insights for surveys");
     throw error;
   }
 };

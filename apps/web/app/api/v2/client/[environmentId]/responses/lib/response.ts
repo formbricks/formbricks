@@ -14,6 +14,7 @@ import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
@@ -129,7 +130,7 @@ export const createResponse = async (responseInput: TResponseInputV2): Promise<T
           });
         } catch (err) {
           // Log error but do not throw
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }

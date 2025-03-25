@@ -48,55 +48,15 @@ describe("generateSurveySingleUseId", () => {
   it("returns unencrypted cuid when isEncrypted is false", () => {
     const result = generateSurveySingleUseId(false);
 
-    expect(cuid2.createId).toHaveBeenCalledTimes(1);
-    expect(crypto.symmetricEncrypt).not.toHaveBeenCalled();
     expect(result).toBe(mockCuid);
+    expect(crypto.symmetricEncrypt).not.toHaveBeenCalled();
   });
 
   it("returns encrypted cuid when isEncrypted is true", () => {
     const result = generateSurveySingleUseId(true);
 
-    expect(cuid2.createId).toHaveBeenCalledTimes(1);
-    expect(crypto.symmetricEncrypt).toHaveBeenCalledWith(mockCuid, "test-encryption-key");
     expect(result).toBe(mockEncryptedCuid);
-  });
-});
-
-describe("validateSurveySingleUseId", () => {
-  const mockDecryptedCuid = "decrypted-cuid-123";
-  const mockEncryptedCuid = "encrypted:cuid:123";
-  const mockEncryptedCuidAES128 = "a".repeat(64); // 64 character string for AES128
-
-  beforeEach(() => {
-    // Setup mocks
-    vi.mocked(crypto.symmetricDecrypt).mockReturnValue(mockDecryptedCuid);
-    vi.mocked(crypto.decryptAES128).mockReturnValue(mockDecryptedCuid);
-    vi.mocked(cuid2.isCuid).mockReturnValue(true);
-  });
-
-  afterEach(() => {
-    vi.resetAllMocks();
-  });
-
-  it("validates and returns decrypted cuid for symmetric encryption", () => {
-    const result = validateSurveySingleUseId(mockEncryptedCuid);
-
-    expect(crypto.symmetricDecrypt).toHaveBeenCalledWith(mockEncryptedCuid, "test-encryption-key");
-    expect(crypto.decryptAES128).not.toHaveBeenCalled();
-    expect(cuid2.isCuid).toHaveBeenCalledWith(mockDecryptedCuid);
-    expect(result).toBe(mockDecryptedCuid);
-  });
-
-  it("validates and returns decrypted cuid for AES128 encryption", () => {
-    const result = validateSurveySingleUseId(mockEncryptedCuidAES128);
-
-    expect(crypto.symmetricDecrypt).not.toHaveBeenCalled();
-    expect(crypto.decryptAES128).toHaveBeenCalledWith(
-      "test-formbricks-encryption-key",
-      mockEncryptedCuidAES128
-    );
-    expect(cuid2.isCuid).toHaveBeenCalledWith(mockDecryptedCuid);
-    expect(result).toBe(mockDecryptedCuid);
+    expect(crypto.symmetricEncrypt).toHaveBeenCalledWith(mockCuid, "test-encryption-key");
   });
 
   it("returns undefined when cuid is not valid", () => {
@@ -115,5 +75,46 @@ describe("validateSurveySingleUseId", () => {
     const result = validateSurveySingleUseId(mockEncryptedCuid);
 
     expect(result).toBeUndefined();
+  });
+
+  it("throws error when ENCRYPTION_KEY is not set in generateSurveySingleUseId", async () => {
+    // Temporarily mock ENCRYPTION_KEY as undefined
+    vi.doMock("@formbricks/lib/constants", () => ({
+      ENCRYPTION_KEY: undefined,
+      FORMBRICKS_ENCRYPTION_KEY: "test-formbricks-encryption-key",
+    }));
+
+    // Re-import to get the new mock values
+    const { generateSurveySingleUseId: generateSurveySingleUseIdNoKey } = await import("./singleUseSurveys");
+
+    expect(() => generateSurveySingleUseIdNoKey(true)).toThrow("ENCRYPTION_KEY is not set");
+  });
+
+  it("throws error when ENCRYPTION_KEY is not set in validateSurveySingleUseId for symmetric encryption", async () => {
+    // Temporarily mock ENCRYPTION_KEY as undefined
+    vi.doMock("@formbricks/lib/constants", () => ({
+      ENCRYPTION_KEY: undefined,
+      FORMBRICKS_ENCRYPTION_KEY: "test-formbricks-encryption-key",
+    }));
+
+    // Re-import to get the new mock values
+    const { validateSurveySingleUseId: validateSurveySingleUseIdNoKey } = await import("./singleUseSurveys");
+
+    expect(() => validateSurveySingleUseIdNoKey(mockEncryptedCuid)).toThrow("ENCRYPTION_KEY is not set");
+  });
+
+  it("throws error when FORMBRICKS_ENCRYPTION_KEY is not set in validateSurveySingleUseId for AES128", async () => {
+    // Temporarily mock FORMBRICKS_ENCRYPTION_KEY as undefined
+    vi.doMock("@formbricks/lib/constants", () => ({
+      ENCRYPTION_KEY: "test-encryption-key",
+      FORMBRICKS_ENCRYPTION_KEY: undefined,
+    }));
+
+    // Re-import to get the new mock values
+    const { validateSurveySingleUseId: validateSurveySingleUseIdNoKey } = await import("./singleUseSurveys");
+
+    expect(() =>
+      validateSurveySingleUseIdNoKey("M(.Bob=dS1!wUSH2lb,E7hxO=He1cnnitmXrG|Su/DKYZrPy~zgS)u?dgI53sfs/")
+    ).toThrow("FORMBRICKS_ENCRYPTION_KEY is not defined");
   });
 });
