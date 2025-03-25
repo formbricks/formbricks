@@ -1,8 +1,8 @@
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SurveyDropDownMenu } from "../survey-dropdown-menu";
 
 // Mock constants
 vi.mock("@formbricks/lib/constants", () => ({
@@ -45,7 +45,7 @@ const fakeSurvey = {
   status: "inProgress",
   type: "link",
   creator: { name: "Test User" },
-} as unknown as TSurvey ;
+} as unknown as TSurvey;
 
 describe("SurveyDropDownMenu", () => {
   afterEach(() => {

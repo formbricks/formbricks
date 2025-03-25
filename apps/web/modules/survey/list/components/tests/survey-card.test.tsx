@@ -1,7 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { SurveyCard } from "../survey-card";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { SurveyCard } from "../survey-card";
 
 // Mock constants
 vi.mock("@formbricks/lib/constants", () => ({
@@ -67,16 +67,13 @@ describe("SurveyCard", () => {
     );
     // Draft survey => link should point to edit
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute(
-      "href",
-      `/environments/${environmentId}/surveys/${dummySurvey.id}/edit`
-    );
+    expect(link).toHaveAttribute("href", `/environments/${environmentId}/surveys/${dummySurvey.id}/edit`);
   });
 
   it("displays no clickable link when readOnly and survey is draft", () => {
     render(
       <SurveyCard
-        survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey }
+        survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={true}
         WEBAPP_URL={WEBAPP_URL}
@@ -104,9 +101,6 @@ describe("SurveyCard", () => {
     );
     // For non-draft => link to summary
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute(
-      "href",
-      `/environments/${environmentId}/surveys/${dummySurvey.id}/summary`
-    );
+    expect(link).toHaveAttribute("href", `/environments/${environmentId}/surveys/${dummySurvey.id}/summary`);
   });
 });

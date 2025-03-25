@@ -86,8 +86,7 @@ export const SurveyDropDownMenu = ({
       navigator.clipboard.writeText(copiedLink);
       toast.success(t("common.copied_to_clipboard"));
       router.refresh();
-    }
-    catch (error) {
+    } catch (error) {
       toast.error(t("environments.surveys.summary.failed_to_copy_link"));
     }
   };

@@ -81,7 +81,7 @@ export function EditMembershipRole({
     let roles: string[] = ["member"];
 
     if (isOwner) {
-      roles.push("owner", "manager");
+      roles.push("manager", "owner");
 
       if (isFormbricksCloud) {
         roles.push("billing");
@@ -111,7 +111,8 @@ export function EditMembershipRole({
               onValueChange={(value) => {
                 handleRoleChange(value.toLowerCase() as TOrganizationRole);
               }}
-              value={memberRole}>
+              value={memberRole}
+              className="flex flex-col-reverse">
               {getMembershipRoles().map((role) => (
                 <DropdownMenuRadioItem className="capitalize" key={role} value={role}>
                   {role.toLowerCase()}
