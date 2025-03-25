@@ -1,4 +1,4 @@
-name: Build and release Formbricks images
+name: Build, release & deploy Formbricks images
 
 on:
   workflow_dispatch:
