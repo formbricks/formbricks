@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 export const GET = async (req: NextRequest) => {
   let name = req.nextUrl.searchParams.get("name");
   let brandColor = req.nextUrl.searchParams.get("brandColor");
+  let timeToFinish = req.nextUrl.searchParams.get("timeToFinish");
 
   return new ImageResponse(
     (
@@ -29,7 +30,7 @@ export const GET = async (req: NextRequest) => {
                 <h2 tw="flex flex-col text-[8] sm:text-4xl font-bold tracking-tight text-slate-900 text-left mt-15">
                   {name}
                 </h2>
-                <span tw="text-slate-600 text-xl">Complete in ~ 4 minutes</span>
+                {timeToFinish && <span tw="text-slate-600 text-xl">Complete in ~ {timeToFinish}</span>}
               </div>
             </div>
             <div tw="flex justify-end mr-10 ">

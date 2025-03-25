@@ -21,6 +21,8 @@ export const getSurveyMetadata = reactCache(async (surveyId: string) =>
             environmentId: true,
             name: true,
             styling: true,
+            questions: true,
+            endings: true,
           },
         });
 
