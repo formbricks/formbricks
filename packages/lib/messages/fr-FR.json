@@ -778,6 +778,7 @@
         "add_env_api_key": "Ajouter la clé API {environmentType}",
         "api_key": "Clé API",
         "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
+        "api_key_created": "Clé API créée",
         "api_key_deleted": "Clé API supprimée",
         "api_key_label": "Étiquette de clé API",
         "api_key_security_warning": "Pour des raisons de sécurité, la clé API ne sera affichée qu'une seule fois après sa création. Veuillez la copier immédiatement à votre destination.",
