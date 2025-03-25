@@ -194,7 +194,6 @@
     "full_name": "Nome completo",
     "gathering_responses": "Recolhendo respostas",
     "general": "geral",
-    "get_started": "Começar",
     "go_back": "Voltar",
     "go_to_dashboard": "Ir para o Painel",
     "hidden": "Escondido",
@@ -238,6 +237,7 @@
     "maximum": "Máximo",
     "member": "Membros",
     "members": "Membros",
+    "membership_not_found": "Assinatura não encontrada",
     "metadata": "metadados",
     "minimum": "Mínimo",
     "mobile_overlay_text": "O Formbricks não está disponível para dispositivos com resoluções menores.",
@@ -293,7 +293,6 @@
     "privacy": "Política de Privacidade",
     "privacy_policy": "Política de Privacidade",
     "product_manager": "Gerente de Produto",
-    "product_not_found": "Produto não encontrado",
     "profile": "Perfil",
     "project": "Projeto",
     "project_configuration": "Configuração do Projeto",
@@ -511,13 +510,6 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurar uma nova pesquisa",
     "weekly_summary_create_reminder_notification_body_text": "Adoraríamos te enviar um Resumo Semanal, mas no momento não há pesquisas em andamento para {projectName}.",
     "weekly_summary_email_subject": "Insights de usuários do {projectName} – Semana passada por Formbricks"
-  },
-  "environment": {
-    "settings": {
-      "general": {
-        "use_multi_language_surveys_with_a_higher_plan_description": "Pesquise seus usuários em diferentes idiomas."
-      }
-    }
   },
   "environments": {
     "actions": {
@@ -786,7 +778,6 @@
         "add_env_api_key": "Adicionar chave de API {environmentType}",
         "api_key": "Chave de API",
         "api_key_copied_to_clipboard": "Chave da API copiada para a área de transferência",
-        "api_key_created": "Chave da API criada",
         "api_key_deleted": "Chave da API deletada",
         "api_key_label": "Rótulo da Chave API",
         "api_key_security_warning": "Por motivos de segurança, a chave da API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
@@ -812,7 +803,6 @@
         "formbricks_sdk_connected": "O SDK do Formbricks está conectado",
         "formbricks_sdk_not_connected": "O SDK do Formbricks ainda não está conectado.",
         "formbricks_sdk_not_connected_description": "Conecte seu site ou app com o Formbricks",
-        "function": "função",
         "have_a_problem": "Tá com problema?",
         "how_to_setup": "Como configurar",
         "how_to_setup_description": "Siga esses passos para configurar o widget do Formbricks no seu app.",
@@ -832,11 +822,10 @@
         "step_3": "Passo 3: Modo de depuração",
         "switch_on_the_debug_mode_by_appending": "Ative o modo de depuração adicionando",
         "tag_of_your_app": "etiqueta do seu app",
-        "to_the": "pro",
         "to_the_url_where_you_load_the": "para a URL onde você carrega o",
         "want_to_learn_how_to_add_user_attributes": "Quer aprender como adicionar atributos de usuário, eventos personalizados e mais?",
-        "you_also_need_to_pass_a": "você também precisa passar um",
         "you_are_done": "Você terminou \uD83C\uDF89",
+        "you_can_set_the_user_id_with": "você pode definir o id do usuário com",
         "your_app_now_communicates_with_formbricks": "Seu app agora se comunica com o Formbricks - enviando eventos e carregando pesquisas automaticamente!"
       },
       "general": {
@@ -1142,7 +1131,8 @@
         "share_invite_link": "Compartilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Compartilhe esse link para que o membro da sua organização possa entrar na sua organização:",
         "test_email_sent_successfully": "E-mail de teste enviado com sucesso",
-        "use_multi_language_surveys_with_a_higher_plan": "Use pesquisas multilíngues com um plano superior"
+        "use_multi_language_surveys_with_a_higher_plan": "Use pesquisas multilíngues com um plano superior",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Pesquise seus usuários em diferentes idiomas."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Inscrever-se automaticamente em novas pesquisas",
@@ -1906,6 +1896,7 @@
     "preview_survey_questions": "Visualizar perguntas da pesquisa.",
     "question_preview": "Prévia da Pergunta",
     "response_already_received": "Já recebemos uma resposta para este endereço de email.",
+    "response_submitted": "Já existe uma resposta vinculada a esta pesquisa e contato",
     "survey_already_answered_heading": "A pesquisa já foi respondida.",
     "survey_already_answered_subheading": "Você só pode usar esse link uma vez.",
     "survey_sent_to": "Pesquisa enviada para {email}",

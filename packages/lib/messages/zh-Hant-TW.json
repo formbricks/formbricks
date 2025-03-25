@@ -194,7 +194,6 @@
     "full_name": "全名",
     "gathering_responses": "收集回應中",
     "general": "一般",
-    "get_started": "開始使用",
     "go_back": "返回",
     "go_to_dashboard": "前往儀表板",
     "hidden": "隱藏",
@@ -238,6 +237,7 @@
     "maximum": "最大值",
     "member": "成員",
     "members": "成員",
+    "membership_not_found": "找不到成員資格",
     "metadata": "元數據",
     "minimum": "最小值",
     "mobile_overlay_text": "Formbricks 不適用於較小解析度的裝置。",
@@ -293,7 +293,6 @@
     "privacy": "隱私權政策",
     "privacy_policy": "隱私權政策",
     "product_manager": "產品經理",
-    "product_not_found": "找不到產品",
     "profile": "個人資料",
     "project": "專案",
     "project_configuration": "專案組態",
@@ -511,13 +510,6 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "設定新的問卷",
     "weekly_summary_create_reminder_notification_body_text": "我們很樂意向您發送每週摘要，但目前 '{'projectName'}' 沒有正在執行的問卷。",
     "weekly_summary_email_subject": "{projectName} 用戶洞察 - 上週 by Formbricks"
-  },
-  "environment": {
-    "settings": {
-      "general": {
-        "use_multi_language_surveys_with_a_higher_plan_description": "用不同語言調查您的用戶。"
-      }
-    }
   },
   "environments": {
     "actions": {
@@ -786,7 +778,6 @@
         "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
         "api_key": "API 金鑰",
         "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
-        "api_key_created": "API 金鑰已建立",
         "api_key_deleted": "API 金鑰已刪除",
         "api_key_label": "API 金鑰標籤",
         "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",
@@ -812,7 +803,6 @@
         "formbricks_sdk_connected": "Formbricks SDK 已連線",
         "formbricks_sdk_not_connected": "Formbricks SDK 尚未連線。",
         "formbricks_sdk_not_connected_description": "將您的網站或應用程式與 Formbricks 連線",
-        "function": "函式",
         "have_a_problem": "有問題嗎？",
         "how_to_setup": "如何設定",
         "how_to_setup_description": "請按照這些步驟在您的應用程式中設定 Formbricks 小工具。",
@@ -832,11 +822,10 @@
         "step_3": "步驟 3：偵錯模式",
         "switch_on_the_debug_mode_by_appending": "藉由附加以下項目開啟偵錯模式",
         "tag_of_your_app": "您應用程式的標籤",
-        "to_the": "到",
         "to_the_url_where_you_load_the": "到您載入",
         "want_to_learn_how_to_add_user_attributes": "想瞭解如何新增使用者屬性、自訂事件等嗎？",
-        "you_also_need_to_pass_a": "您還需要傳遞",
         "you_are_done": "您已完成 \uD83C\uDF89",
+        "you_can_set_the_user_id_with": "您可以使用 user id 設定",
         "your_app_now_communicates_with_formbricks": "您的應用程式現在可與 Formbricks 通訊 - 自動傳送事件和載入問卷！"
       },
       "general": {
@@ -1142,7 +1131,8 @@
         "share_invite_link": "分享邀請連結",
         "share_this_link_to_let_your_organization_member_join_your_organization": "分享此連結以讓您的組織成員加入您的組織：",
         "test_email_sent_successfully": "測試電子郵件已成功發送",
-        "use_multi_language_surveys_with_a_higher_plan": "使用更高等級的方案使用多語言問卷"
+        "use_multi_language_surveys_with_a_higher_plan": "使用更高等級的方案使用多語言問卷",
+        "use_multi_language_surveys_with_a_higher_plan_description": "用不同語言調查您的用戶。"
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "自動訂閱新問卷",
@@ -1906,6 +1896,7 @@
     "preview_survey_questions": "預覽問卷問題。",
     "question_preview": "問題預覽",
     "response_already_received": "我們已收到此電子郵件地址的回應。",
+    "response_submitted": "與此問卷和聯絡人相關的回應已經存在",
     "survey_already_answered_heading": "問卷已回答。",
     "survey_already_answered_subheading": "您只能使用此連結一次。",
     "survey_sent_to": "問卷已發送至 '{'email'}'",

@@ -194,7 +194,6 @@
     "full_name": "Nome completo",
     "gathering_responses": "A recolher respostas",
     "general": "Geral",
-    "get_started": "Começar",
     "go_back": "Voltar",
     "go_to_dashboard": "Ir para o Painel",
     "hidden": "Oculto",
@@ -238,6 +237,7 @@
     "maximum": "Máximo",
     "member": "Membro",
     "members": "Membros",
+    "membership_not_found": "Associação não encontrada",
     "metadata": "Metadados",
     "minimum": "Mínimo",
     "mobile_overlay_text": "O Formbricks não está disponível para dispositivos com resoluções menores.",
@@ -293,7 +293,6 @@
     "privacy": "Política de Privacidade",
     "privacy_policy": "Política de Privacidade",
     "product_manager": "Gestor de Produto",
-    "product_not_found": "Produto não encontrado",
     "profile": "Perfil",
     "project": "Projeto",
     "project_configuration": "Configuração do Projeto",
@@ -511,13 +510,6 @@
     "weekly_summary_create_reminder_notification_body_setup_a_new_survey": "Configurar um novo inquérito",
     "weekly_summary_create_reminder_notification_body_text": "Gostaríamos de lhe enviar um Resumo Semanal, mas de momento não há inquéritos a decorrer para {projectName}.",
     "weekly_summary_email_subject": "{projectName} Informações do Utilizador - Última Semana por Formbricks"
-  },
-  "environment": {
-    "settings": {
-      "general": {
-        "use_multi_language_surveys_with_a_higher_plan_description": "Inquira os seus utilizadores em diferentes idiomas."
-      }
-    }
   },
   "environments": {
     "actions": {
@@ -786,7 +778,6 @@
         "add_env_api_key": "Adicionar Chave API {environmentType}",
         "api_key": "Chave API",
         "api_key_copied_to_clipboard": "Chave API copiada para a área de transferência",
-        "api_key_created": "Chave API criada",
         "api_key_deleted": "Chave API eliminada",
         "api_key_label": "Etiqueta da Chave API",
         "api_key_security_warning": "Por razões de segurança, a chave API será mostrada apenas uma vez após a criação. Por favor, copie-a para o seu destino imediatamente.",
@@ -812,7 +803,6 @@
         "formbricks_sdk_connected": "O SDK do Formbricks está conectado",
         "formbricks_sdk_not_connected": "O SDK do Formbricks ainda não está conectado",
         "formbricks_sdk_not_connected_description": "Ligue o seu website ou aplicação ao Formbricks",
-        "function": "função",
         "have_a_problem": "Tem um problema?",
         "how_to_setup": "Como configurar",
         "how_to_setup_description": "Siga estes passos para configurar o widget Formbricks na sua aplicação.",
@@ -832,11 +822,10 @@
         "step_3": "Passo 3: Modo de depuração",
         "switch_on_the_debug_mode_by_appending": "Ativar o modo de depuração adicionando",
         "tag_of_your_app": "tag da sua aplicação",
-        "to_the": "para o",
         "to_the_url_where_you_load_the": "para o URL onde carrega o",
         "want_to_learn_how_to_add_user_attributes": "Quer aprender a adicionar atributos de utilizador, eventos personalizados e mais?",
-        "you_also_need_to_pass_a": "também precisa passar um",
         "you_are_done": "Está concluído \uD83C\uDF89",
+        "you_can_set_the_user_id_with": "pode definir o ID do utilizador com",
         "your_app_now_communicates_with_formbricks": "A sua aplicação agora comunica com o Formbricks - enviando eventos e carregando inquéritos automaticamente!"
       },
       "general": {
@@ -1142,7 +1131,8 @@
         "share_invite_link": "Partilhar Link de Convite",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Partilhe este link para permitir que o membro da sua organização se junte à sua organização:",
         "test_email_sent_successfully": "Email de teste enviado com sucesso",
-        "use_multi_language_surveys_with_a_higher_plan": "Use inquéritos multilingues com um plano superior"
+        "use_multi_language_surveys_with_a_higher_plan": "Use inquéritos multilingues com um plano superior",
+        "use_multi_language_surveys_with_a_higher_plan_description": "Inquira os seus utilizadores em diferentes idiomas."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Subscrever automaticamente a novos inquéritos",
@@ -1906,6 +1896,7 @@
     "preview_survey_questions": "Pré-visualizar perguntas do inquérito.",
     "question_preview": "Pré-visualização da Pergunta",
     "response_already_received": "Já recebemos uma resposta para este endereço de email.",
+    "response_submitted": "Já existe uma resposta associada a este inquérito e contacto",
     "survey_already_answered_heading": "O inquérito já foi respondido.",
     "survey_already_answered_subheading": "Só pode usar este link uma vez.",
     "survey_sent_to": "Inquérito enviado para {email}",
