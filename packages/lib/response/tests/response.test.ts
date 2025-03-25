@@ -1,27 +1,23 @@
 import { prisma } from "../../__mocks__/database";
 import {
-  // getFilteredMockResponses,
   getMockUpdateResponseInput,
   mockContact,
   mockDisplay,
   mockEnvironmentId,
-  mockMeta,
   mockResponse,
   mockResponseData,
   mockResponseNote,
-  // mockResponseWithMockPerson,
   mockSingleUseId,
-  // mockSurvey,
   mockSurveyId,
   mockSurveySummaryOutput,
   mockTags,
-  mockUserId,
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponse, TResponseInput } from "@formbricks/types/responses";
+import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { getSurveySummary } from "../../../../apps/web/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
 import {
@@ -35,45 +31,14 @@ import {
   getResponseBySingleUseId,
   getResponseCountBySurveyId,
   getResponseDownloadUrl,
-  getResponses,
-  getResponsesByContactId,
   getResponsesByEnvironmentId,
   updateResponse,
 } from "../service";
-import { buildWhereClause } from "../utils";
-import { constantsForTests, mockEnvironment } from "./constants";
-
-// vitest.mock("../../organization/service", async (methods) => {
-//   return {
-//     ...methods,
-//     getOrganizationByEnvironmentId: vitest.fn(),
-//   };
-// });
 
 const expectedResponseWithoutPerson: TResponse = {
   ...mockResponse,
   contact: null,
   tags: mockTags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-};
-
-const expectedResponseWithPerson: TResponse = {
-  ...mockResponse,
-  contact: mockContact,
-  tags: mockTags?.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-};
-
-const mockResponseInputWithoutUserId: TResponseInput = {
-  environmentId: mockEnvironmentId,
-  surveyId: mockSurveyId,
-  singleUseId: mockSingleUseId,
-  finished: constantsForTests.boolean,
-  data: {},
-  meta: mockMeta,
-};
-
-const mockResponseInputWithUserId: TResponseInput = {
-  ...mockResponseInputWithoutUserId,
-  userId: mockUserId,
 };
 
 beforeEach(() => {
@@ -126,47 +91,6 @@ beforeEach(() => {
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
 
-// describe("Tests for getResponsesByPersonId", () => {
-//   describe("Happy Path", () => {
-//     it("Returns all responses associated with a given person ID", async () => {
-//       prisma.response.findMany.mockResolvedValue([mockResponseWithMockPerson]);
-
-//       const responses = await getResponsesByContactId(mockContact.id);
-//       expect(responses).toEqual([expectedResponseWithPerson]);
-//     });
-
-//     it("Returns an empty array when no responses are found for the given person ID", async () => {
-//       prisma.response.findMany.mockResolvedValue([]);
-
-//       const responses = await getResponsesByContactId(mockContact.id);
-//       expect(responses).toEqual([]);
-//     });
-//   });
-
-//   describe("Sad Path", () => {
-//     testInputValidation(getResponsesByContactId, "123#", 1);
-
-//     it("Throws a DatabaseError error if there is a PrismaClientKnownRequestError", async () => {
-//       const mockErrorMessage = "Mock error message";
-//       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-//         code: "P2002",
-//         clientVersion: "0.0.1",
-//       });
-
-//       prisma.response.findMany.mockRejectedValue(errToThrow);
-
-//       await expect(getResponsesByContactId(mockContact.id)).rejects.toThrow(DatabaseError);
-//     });
-
-//     it("Throws a generic Error for unexpected exceptions", async () => {
-//       const mockErrorMessage = "Mock error message";
-//       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
-
-//       await expect(getResponsesByContactId(mockContact.id)).rejects.toThrow(Error);
-//     });
-//   });
-// });
-
 describe("Tests for getResponsesBySingleUseId", () => {
   describe("Happy Path", () => {
     it("Retrieves responses linked to a specific single-use ID", async () => {
@@ -181,7 +105,7 @@ describe("Tests for getResponsesBySingleUseId", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -219,7 +143,7 @@ describe("Tests for getResponse service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -236,121 +160,6 @@ describe("Tests for getResponse service", () => {
     });
   });
 });
-
-// describe("Tests for getResponses service", () => {
-//   describe("Happy Path", () => {
-//     it("Fetches first 10 responses for a given survey ID", async () => {
-//       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-
-//       const response = await getResponses(mockSurveyId, 1, 10);
-//       expect(response).toEqual([expectedResponseWithoutPerson]);
-//     });
-//   });
-
-//   describe("Tests for getResponses service with filters", () => {
-//     describe("Happy Path", () => {
-//       // it("Fetches all responses for a given survey ID with basic filters", async () => {
-//       //   const whereClause = buildWhereClause(mockSurvey, { finished: true });
-//       //   let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
-
-//       //   // @ts-expect-error
-//       //   prisma.response.findMany.mockImplementation(async (args) => {
-//       //     expectedWhereClause = args?.where;
-//       //     return getFilteredMockResponses({ finished: true }, false);
-//       //   });
-
-//       //   prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-//       //   const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
-
-//       //   expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
-//       //   expect(response).toEqual(getFilteredMockResponses({ finished: true }));
-//       // });
-
-//       it("Fetches all responses for a given survey ID with complex filters", async () => {
-//         const criteria: TResponseFilterCriteria = {
-//           finished: false,
-//           data: {
-//             hagrboqlnynmxh3obl1wvmtl: {
-//               op: "equals",
-//               value: "Google Search",
-//             },
-//             uvy0fa96e1xpd10nrj1je662: {
-//               op: "includesOne",
-//               value: ["Sun ☀️"],
-//             },
-//           },
-//           tags: {
-//             applied: ["tag1"],
-//             notApplied: ["tag4"],
-//           },
-//           contactAttributes: {
-//             "Init Attribute 2": {
-//               op: "equals",
-//               value: "four",
-//             },
-//           },
-//         };
-//         const whereClause = buildWhereClause(mockSurvey, criteria);
-//         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
-
-//         // @ts-expect-error
-//         prisma.response.findMany.mockImplementation(async (args) => {
-//           expectedWhereClause = args?.where;
-//           return getFilteredMockResponses(criteria, false);
-//         });
-//         prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-//         const response = await getResponses(mockSurveyId, 1, undefined, criteria);
-
-//         expect(expectedWhereClause).toEqual({ surveyId: mockSurveyId, ...whereClause });
-//         expect(response).toEqual(getFilteredMockResponses(criteria));
-//       });
-//     });
-
-//     describe("Sad Path", () => {
-//       it("Throws an error when the where clause is different and the data is matched when filters are different.", async () => {
-//         const whereClause = buildWhereClause(mockSurvey, { finished: true });
-//         let expectedWhereClause: Prisma.ResponseWhereInput | undefined = {};
-
-//         // @ts-expect-error
-//         prisma.response.findMany.mockImplementation(async (args) => {
-//           expectedWhereClause = args?.where;
-
-//           return getFilteredMockResponses({ finished: true });
-//         });
-//         prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-//         const response = await getResponses(mockSurveyId, 1, undefined, { finished: true });
-
-//         expect(expectedWhereClause).not.toEqual(whereClause);
-//         expect(response).not.toEqual(getFilteredMockResponses({ finished: false }));
-//       });
-//     });
-//   });
-
-//   describe("Sad Path", () => {
-//     testInputValidation(getResponses, mockSurveyId, "1");
-
-//     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
-//       const mockErrorMessage = "Mock error message";
-//       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-//         code: "P2002",
-//         clientVersion: "0.0.1",
-//       });
-
-//       prisma.response.findMany.mockRejectedValue(errToThrow);
-//       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-
-//       await expect(getResponses(mockSurveyId)).rejects.toThrow(DatabaseError);
-//     });
-
-//     it("Throws a generic Error for unexpected problems", async () => {
-//       const mockErrorMessage = "Mock error message";
-//       prisma.response.findMany.mockRejectedValue(new Error(mockErrorMessage));
-//       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
-
-//       await expect(getResponses(mockSurveyId)).rejects.toThrow(Error);
-//     });
-//   });
-// });
 
 describe("Tests for getSurveySummary service", () => {
   describe("Happy Path", () => {
@@ -370,7 +179,7 @@ describe("Tests for getSurveySummary service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -432,7 +241,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponseCountBySurveyId fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
       prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
@@ -444,7 +253,7 @@ describe("Tests for getResponseDownloadUrl service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError, when the getResponses fails", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -480,7 +289,7 @@ describe("Tests for getResponsesByEnvironmentId", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -531,7 +340,7 @@ describe("Tests for updateResponse Service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -565,7 +374,7 @@ describe("Tests for deleteResponse service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 

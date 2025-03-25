@@ -19,6 +19,8 @@ tags:
     description: Operations for managing surveys.
   - name: Management API > Surveys > Contact Links
     description: Operations for generating personalized survey links for contacts.
+  - name: Management API > Webhooks
+    description: Operations for managing webhooks.
 security:
   - apiKeyAuth: []
 paths:
@@ -47,7 +49,7 @@ paths:
           name: sortBy
           schema:
             type: string
-            enum:
+            enum: &a6
               - createdAt
               - updatedAt
             default: createdAt
@@ -55,7 +57,7 @@ paths:
           name: order
           schema:
             type: string
-            enum:
+            enum: &a7
               - asc
               - desc
             default: desc
@@ -89,165 +91,147 @@ paths:
                 items:
                   type: object
                   properties:
-                    id:
-                      type: string
-                    createdAt:
-                      type: string
-                    updatedAt:
-                      type: string
-                    surveyId:
-                      type: string
-                    displayId:
-                      type:
-                        - string
-                        - "null"
-                    contact:
-                      type:
-                        - object
-                        - "null"
-                      properties:
-                        id:
-                          type: string
-                        userId:
-                          type: string
-                      required:
-                        - id
-                        - userId
-                    contactAttributes:
-                      type:
-                        - object
-                        - "null"
-                      additionalProperties:
-                        type: string
-                    finished:
-                      type: boolean
-                    endingId:
-                      type:
-                        - string
-                        - "null"
                     data:
-                      type: object
-                      additionalProperties:
-                        anyOf:
-                          - type: string
-                          - type: number
-                          - type: array
-                            items:
-                              type: string
-                          - type: object
-                            additionalProperties:
-                              type: string
-                    variables:
-                      type: object
-                      additionalProperties:
-                        anyOf:
-                          - type: string
-                          - type: number
-                    ttc:
-                      type: object
-                      additionalProperties:
-                        type: number
-                    notes:
                       type: array
                       items:
                         type: object
                         properties:
-                          updatedAt:
-                            type: string
-                          createdAt:
-                            type: string
                           id:
                             type: string
-                          text:
+                            description: The ID of the response
+                          createdAt:
                             type: string
-                          user:
+                            description: The date and time the response was created
+                            example: 2021-01-01T00:00:00.000Z
+                          updatedAt:
+                            type: string
+                            description: The date and time the response was last updated
+                            example: 2021-01-01T00:00:00.000Z
+                          finished:
+                            type: boolean
+                            description: Whether the response is finished
+                            example: true
+                          surveyId:
+                            type: string
+                            description: The ID of the survey
+                          contactId:
+                            type:
+                              - string
+                              - "null"
+                            description: The ID of the contact
+                          endingId:
+                            type:
+                              - string
+                              - "null"
+                            description: The ID of the ending
+                          data:
+                            type: object
+                            additionalProperties:
+                              anyOf:
+                                - type: string
+                                - type: number
+                                - type: array
+                                  items:
+                                    type: string
+                                - type: object
+                                  additionalProperties:
+                                    type: string
+                            description: The data of the response
+                            example: &a1
+                              question1: answer1
+                              question2: 2
+                              question3:
+                                - answer3
+                                - answer4
+                              question4:
+                                subquestion1: answer5
+                          variables:
+                            type: object
+                            additionalProperties:
+                              anyOf:
+                                - type: string
+                                - type: number
+                            description: The variables of the response
+                            example: &a2
+                              variable1: answer1
+                              variable2: 2
+                          ttc:
+                            type: object
+                            additionalProperties:
+                              type: number
+                            description: The TTC of the response
+                            example: &a3
+                              question1: 10
+                              question2: 20
+                          meta:
                             type: object
                             properties:
-                              id:
+                              source:
                                 type: string
-                              name:
-                                type:
-                                  - string
-                                  - "null"
-                            required:
-                              - id
-                              - name
-                          isResolved:
-                            type: boolean
-                          isEdited:
-                            type: boolean
-                        required:
-                          - updatedAt
-                          - createdAt
-                          - id
-                          - text
-                          - user
-                          - isResolved
-                          - isEdited
-                    tags:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                          createdAt:
-                            type: string
-                          updatedAt:
-                            type: string
-                          name:
-                            type: string
-                          environmentId:
-                            type: string
-                        required:
-                          - id
-                          - createdAt
-                          - updatedAt
-                          - name
-                          - environmentId
+                                description: The source of the response
+                                example: https://example.com
+                              url:
+                                type: string
+                                description: The URL of the response
+                                example: https://example.com
+                              userAgent:
+                                type: object
+                                properties:
+                                  browser:
+                                    type: string
+                                  os:
+                                    type: string
+                                  device:
+                                    type: string
+                              country:
+                                type: string
+                              action:
+                                type: string
+                            description: The meta data of the response
+                            example: &a4
+                              source: https://example.com
+                              url: https://example.com
+                              userAgent:
+                                browser: Chrome
+                                os: Windows
+                                device: Desktop
+                              country: US
+                              action: click
+                          contactAttributes:
+                            type:
+                              - object
+                              - "null"
+                            additionalProperties:
+                              type: string
+                            description: The attributes of the contact
+                            example: &a5
+                              attribute1: value1
+                              attribute2: value2
+                          singleUseId:
+                            type:
+                              - string
+                              - "null"
+                            description: The single use ID of the response
+                          language:
+                            type:
+                              - string
+                              - "null"
+                            description: The language of the response
+                            example: en
+                          displayId:
+                            type:
+                              - string
+                              - "null"
+                            description: The display ID of the response
                     meta:
                       type: object
                       properties:
-                        source:
-                          type: string
-                        url:
-                          type: string
-                        userAgent:
-                          type: object
-                          properties:
-                            browser:
-                              type: string
-                            os:
-                              type: string
-                            device:
-                              type: string
-                        country:
-                          type: string
-                        action:
-                          type: string
-                    singleUseId:
-                      type:
-                        - string
-                        - "null"
-                    language:
-                      type:
-                        - string
-                        - "null"
-                  required:
-                    - id
-                    - createdAt
-                    - updatedAt
-                    - surveyId
-                    - contact
-                    - contactAttributes
-                    - finished
-                    - data
-                    - variables
-                    - notes
-                    - tags
-                    - meta
-                    - singleUseId
-                    - language
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
     post:
       operationId: createResponse
       summary: Create a response
@@ -264,32 +248,40 @@ paths:
               properties:
                 createdAt:
                   type: string
+                  description: The date and time the response was created
+                  example: 2021-01-01T00:00:00.000Z
                 updatedAt:
                   type: string
-                environmentId:
-                  type: string
+                  description: The date and time the response was last updated
+                  example: 2021-01-01T00:00:00.000Z
                 surveyId:
                   type: string
-                userId:
-                  type:
-                    - string
-                    - "null"
+                  description: The ID of the survey
                 displayId:
                   type:
                     - string
                     - "null"
+                  description: The display ID of the response
                 singleUseId:
                   type:
                     - string
                     - "null"
+                  description: The single use ID of the response
                 finished:
                   type: boolean
+                  description: Whether the response is finished
+                  example: true
                 endingId:
                   type:
                     - string
                     - "null"
+                  description: The ID of the ending
                 language:
-                  type: string
+                  type:
+                    - string
+                    - "null"
+                  description: The language of the response
+                  example: en
                 data:
                   type: object
                   additionalProperties:
@@ -302,38 +294,49 @@ paths:
                       - type: object
                         additionalProperties:
                           type: string
+                  description: The data of the response
+                  example: *a1
                 variables:
                   type: object
                   additionalProperties:
                     anyOf:
                       - type: string
                       - type: number
+                  description: The variables of the response
+                  example: *a2
                 ttc:
                   type: object
                   additionalProperties:
                     type: number
+                  description: The TTC of the response
+                  example: *a3
                 meta:
                   type: object
                   properties:
                     source:
                       type: string
+                      description: The source of the response
+                      example: https://example.com
                     url:
                       type: string
+                      description: The URL of the response
+                      example: https://example.com
                     userAgent:
                       type: object
                       properties:
                         browser:
                           type: string
-                        device:
-                          type: string
                         os:
+                          type: string
+                        device:
                           type: string
                     country:
                       type: string
                     action:
                       type: string
+                  description: The meta data of the response
+                  example: *a4
               required:
-                - environmentId
                 - surveyId
                 - finished
                 - data
@@ -347,40 +350,32 @@ paths:
                 properties:
                   id:
                     type: string
+                    description: The ID of the response
                   createdAt:
                     type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  finished:
+                    type: boolean
+                    description: Whether the response is finished
+                    example: true
                   surveyId:
                     type: string
-                  displayId:
+                    description: The ID of the survey
+                  contactId:
                     type:
                       - string
                       - "null"
-                  contact:
-                    type:
-                      - object
-                      - "null"
-                    properties:
-                      id:
-                        type: string
-                      userId:
-                        type: string
-                    required:
-                      - id
-                      - userId
-                  contactAttributes:
-                    type:
-                      - object
-                      - "null"
-                    additionalProperties:
-                      type: string
-                  finished:
-                    type: boolean
+                    description: The ID of the contact
                   endingId:
                     type:
                       - string
                       - "null"
+                    description: The ID of the ending
                   data:
                     type: object
                     additionalProperties:
@@ -393,81 +388,33 @@ paths:
                         - type: object
                           additionalProperties:
                             type: string
+                    description: The data of the response
+                    example: *a1
                   variables:
                     type: object
                     additionalProperties:
                       anyOf:
                         - type: string
                         - type: number
+                    description: The variables of the response
+                    example: *a2
                   ttc:
                     type: object
                     additionalProperties:
                       type: number
-                  notes:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        updatedAt:
-                          type: string
-                        createdAt:
-                          type: string
-                        id:
-                          type: string
-                        text:
-                          type: string
-                        user:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            name:
-                              type:
-                                - string
-                                - "null"
-                          required:
-                            - id
-                            - name
-                        isResolved:
-                          type: boolean
-                        isEdited:
-                          type: boolean
-                      required:
-                        - updatedAt
-                        - createdAt
-                        - id
-                        - text
-                        - user
-                        - isResolved
-                        - isEdited
-                  tags:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        createdAt:
-                          type: string
-                        updatedAt:
-                          type: string
-                        name:
-                          type: string
-                        environmentId:
-                          type: string
-                      required:
-                        - id
-                        - createdAt
-                        - updatedAt
-                        - name
-                        - environmentId
+                    description: The TTC of the response
+                    example: *a3
                   meta:
                     type: object
                     properties:
                       source:
                         type: string
+                        description: The source of the response
+                        example: https://example.com
                       url:
                         type: string
+                        description: The URL of the response
+                        example: https://example.com
                       userAgent:
                         type: object
                         properties:
@@ -481,29 +428,32 @@ paths:
                         type: string
                       action:
                         type: string
+                    description: The meta data of the response
+                    example: *a4
+                  contactAttributes:
+                    type:
+                      - object
+                      - "null"
+                    additionalProperties:
+                      type: string
+                    description: The attributes of the contact
+                    example: *a5
                   singleUseId:
                     type:
                       - string
                       - "null"
+                    description: The single use ID of the response
                   language:
                     type:
                       - string
                       - "null"
-                required:
-                  - id
-                  - createdAt
-                  - updatedAt
-                  - surveyId
-                  - contact
-                  - contactAttributes
-                  - finished
-                  - data
-                  - variables
-                  - notes
-                  - tags
-                  - meta
-                  - singleUseId
-                  - language
+                    description: The language of the response
+                    example: en
+                  displayId:
+                    type:
+                      - string
+                      - "null"
+                    description: The display ID of the response
   /responses/{id}:
     get:
       operationId: getResponse
@@ -524,7 +474,114 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/response"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the response
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  finished:
+                    type: boolean
+                    description: Whether the response is finished
+                    example: true
+                  surveyId:
+                    type: string
+                    description: The ID of the survey
+                  contactId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the contact
+                  endingId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the ending
+                  data:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                        - type: array
+                          items:
+                            type: string
+                        - type: object
+                          additionalProperties:
+                            type: string
+                    description: The data of the response
+                    example: *a1
+                  variables:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                    description: The variables of the response
+                    example: *a2
+                  ttc:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: The TTC of the response
+                    example: *a3
+                  meta:
+                    type: object
+                    properties:
+                      source:
+                        type: string
+                        description: The source of the response
+                        example: https://example.com
+                      url:
+                        type: string
+                        description: The URL of the response
+                        example: https://example.com
+                      userAgent:
+                        type: object
+                        properties:
+                          browser:
+                            type: string
+                          os:
+                            type: string
+                          device:
+                            type: string
+                      country:
+                        type: string
+                      action:
+                        type: string
+                    description: The meta data of the response
+                    example: *a4
+                  contactAttributes:
+                    type:
+                      - object
+                      - "null"
+                    additionalProperties:
+                      type: string
+                    description: The attributes of the contact
+                    example: *a5
+                  singleUseId:
+                    type:
+                      - string
+                      - "null"
+                    description: The single use ID of the response
+                  language:
+                    type:
+                      - string
+                      - "null"
+                    description: The language of the response
+                    example: en
+                  displayId:
+                    type:
+                      - string
+                      - "null"
+                    description: The display ID of the response
     put:
       operationId: updateResponse
       summary: Update a response
@@ -627,7 +684,114 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/response"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the response
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  finished:
+                    type: boolean
+                    description: Whether the response is finished
+                    example: true
+                  surveyId:
+                    type: string
+                    description: The ID of the survey
+                  contactId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the contact
+                  endingId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the ending
+                  data:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                        - type: array
+                          items:
+                            type: string
+                        - type: object
+                          additionalProperties:
+                            type: string
+                    description: The data of the response
+                    example: *a1
+                  variables:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                    description: The variables of the response
+                    example: *a2
+                  ttc:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: The TTC of the response
+                    example: *a3
+                  meta:
+                    type: object
+                    properties:
+                      source:
+                        type: string
+                        description: The source of the response
+                        example: https://example.com
+                      url:
+                        type: string
+                        description: The URL of the response
+                        example: https://example.com
+                      userAgent:
+                        type: object
+                        properties:
+                          browser:
+                            type: string
+                          os:
+                            type: string
+                          device:
+                            type: string
+                      country:
+                        type: string
+                      action:
+                        type: string
+                    description: The meta data of the response
+                    example: *a4
+                  contactAttributes:
+                    type:
+                      - object
+                      - "null"
+                    additionalProperties:
+                      type: string
+                    description: The attributes of the contact
+                    example: *a5
+                  singleUseId:
+                    type:
+                      - string
+                      - "null"
+                    description: The single use ID of the response
+                  language:
+                    type:
+                      - string
+                      - "null"
+                    description: The language of the response
+                    example: en
+                  displayId:
+                    type:
+                      - string
+                      - "null"
+                    description: The display ID of the response
     delete:
       operationId: deleteResponse
       summary: Delete a response
@@ -647,7 +811,114 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/response"
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the response
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  finished:
+                    type: boolean
+                    description: Whether the response is finished
+                    example: true
+                  surveyId:
+                    type: string
+                    description: The ID of the survey
+                  contactId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the contact
+                  endingId:
+                    type:
+                      - string
+                      - "null"
+                    description: The ID of the ending
+                  data:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                        - type: array
+                          items:
+                            type: string
+                        - type: object
+                          additionalProperties:
+                            type: string
+                    description: The data of the response
+                    example: *a1
+                  variables:
+                    type: object
+                    additionalProperties:
+                      anyOf:
+                        - type: string
+                        - type: number
+                    description: The variables of the response
+                    example: *a2
+                  ttc:
+                    type: object
+                    additionalProperties:
+                      type: number
+                    description: The TTC of the response
+                    example: *a3
+                  meta:
+                    type: object
+                    properties:
+                      source:
+                        type: string
+                        description: The source of the response
+                        example: https://example.com
+                      url:
+                        type: string
+                        description: The URL of the response
+                        example: https://example.com
+                      userAgent:
+                        type: object
+                        properties:
+                          browser:
+                            type: string
+                          os:
+                            type: string
+                          device:
+                            type: string
+                      country:
+                        type: string
+                      action:
+                        type: string
+                    description: The meta data of the response
+                    example: *a4
+                  contactAttributes:
+                    type:
+                      - object
+                      - "null"
+                    additionalProperties:
+                      type: string
+                    description: The attributes of the contact
+                    example: *a5
+                  singleUseId:
+                    type:
+                      - string
+                      - "null"
+                    description: The single use ID of the response
+                  language:
+                    type:
+                      - string
+                      - "null"
+                    description: The language of the response
+                    example: en
+                  displayId:
+                    type:
+                      - string
+                      - "null"
+                    description: The display ID of the response
   /contacts:
     get:
       operationId: getContacts
@@ -1363,6 +1634,439 @@ paths:
                 required:
                   - data
                   - meta
+  /webhooks:
+    get:
+      operationId: getWebhooks
+      summary: Get webhooks
+      description: Gets webhooks from the database.
+      tags:
+        - Management API > Webhooks
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: surveyIds
+          schema:
+            type: array
+            items:
+              type: string
+          required: true
+      responses:
+        "200":
+          description: Webhooks retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: The ID of the webhook
+                          name:
+                            type:
+                              - string
+                              - "null"
+                            description: The name of the webhook
+                          createdAt:
+                            type: string
+                            description: The date and time the webhook was created
+                            example: 2021-01-01T00:00:00.000Z
+                          updatedAt:
+                            type: string
+                            description: The date and time the webhook was last updated
+                            example: 2021-01-01T00:00:00.000Z
+                          url:
+                            type: string
+                            format: uri
+                            description: The URL of the webhook
+                          source:
+                            type: string
+                            enum: &a8
+                              - user
+                              - zapier
+                              - make
+                              - n8n
+                            description: The source of the webhook
+                          environmentId:
+                            type: string
+                            description: The ID of the environment
+                          triggers:
+                            type: array
+                            items:
+                              type: string
+                              enum: &a9
+                                - responseFinished
+                                - responseCreated
+                                - responseUpdated
+                            description: The triggers of the webhook
+                          surveyIds:
+                            type: array
+                            items:
+                              type: string
+                            description: "The IDs of the surveys "
+                    meta:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
+    post:
+      operationId: createWebhook
+      summary: Create a webhook
+      description: Creates a webhook in the database.
+      tags:
+        - Management API > Webhooks
+      requestBody:
+        required: true
+        description: The webhook to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type:
+                    - string
+                    - "null"
+                  description: The name of the webhook
+                url:
+                  type: string
+                  format: uri
+                  description: The URL of the webhook
+                source:
+                  type: string
+                  enum: *a8
+                  description: The source of the webhook
+                environmentId:
+                  type: string
+                  description: The ID of the environment
+                triggers:
+                  type: array
+                  items:
+                    type: string
+                    enum: *a9
+                  description: The triggers of the webhook
+                surveyIds:
+                  type: array
+                  items:
+                    type: string
+                  description: "The IDs of the surveys "
+              required:
+                - name
+                - url
+                - source
+                - environmentId
+                - triggers
+                - surveyIds
+      responses:
+        "201":
+          description: Webhook created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the webhook
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: The name of the webhook
+                  createdAt:
+                    type: string
+                    description: The date and time the webhook was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the webhook was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  url:
+                    type: string
+                    format: uri
+                    description: The URL of the webhook
+                  source:
+                    type: string
+                    enum: *a8
+                    description: The source of the webhook
+                  environmentId:
+                    type: string
+                    description: The ID of the environment
+                  triggers:
+                    type: array
+                    items:
+                      type: string
+                      enum: *a9
+                    description: The triggers of the webhook
+                  surveyIds:
+                    type: array
+                    items:
+                      type: string
+                    description: "The IDs of the surveys "
+  /webhooks/{webhookId}:
+    get:
+      operationId: getWebhook
+      summary: Get a webhook
+      description: Gets a webhook from the database.
+      tags:
+        - Management API > Webhooks
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the webhook
+          schema:
+            $ref: "#/components/schemas/webhookId"
+          required: true
+      responses:
+        "200":
+          description: Webhook retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the webhook
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: The name of the webhook
+                  createdAt:
+                    type: string
+                    description: The date and time the webhook was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the webhook was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  url:
+                    type: string
+                    format: uri
+                    description: The URL of the webhook
+                  source:
+                    type: string
+                    enum: *a8
+                    description: The source of the webhook
+                  environmentId:
+                    type: string
+                    description: The ID of the environment
+                  triggers:
+                    type: array
+                    items:
+                      type: string
+                      enum: *a9
+                    description: The triggers of the webhook
+                  surveyIds:
+                    type: array
+                    items:
+                      type: string
+                    description: "The IDs of the surveys "
+    put:
+      operationId: updateWebhook
+      summary: Update a webhook
+      description: Updates a webhook in the database.
+      tags:
+        - Management API > Webhooks
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the webhook
+          schema:
+            $ref: "#/components/schemas/webhookId"
+          required: true
+      requestBody:
+        required: true
+        description: The webhook to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type:
+                    - string
+                    - "null"
+                  description: The name of the webhook
+                url:
+                  type: string
+                  format: uri
+                  description: The URL of the webhook
+                source:
+                  type: string
+                  enum: *a8
+                  description: The source of the webhook
+                environmentId:
+                  type: string
+                  description: The ID of the environment
+                triggers:
+                  type: array
+                  items:
+                    type: string
+                    enum: *a9
+                  description: The triggers of the webhook
+                surveyIds:
+                  type: array
+                  items:
+                    type: string
+                  description: "The IDs of the surveys "
+              required:
+                - name
+                - url
+                - source
+                - environmentId
+                - triggers
+                - surveyIds
+      responses:
+        "200":
+          description: Webhook updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the webhook
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: The name of the webhook
+                  createdAt:
+                    type: string
+                    description: The date and time the webhook was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the webhook was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  url:
+                    type: string
+                    format: uri
+                    description: The URL of the webhook
+                  source:
+                    type: string
+                    enum: *a8
+                    description: The source of the webhook
+                  environmentId:
+                    type: string
+                    description: The ID of the environment
+                  triggers:
+                    type: array
+                    items:
+                      type: string
+                      enum: *a9
+                    description: The triggers of the webhook
+                  surveyIds:
+                    type: array
+                    items:
+                      type: string
+                    description: "The IDs of the surveys "
+    delete:
+      operationId: deleteWebhook
+      summary: Delete a webhook
+      description: Deletes a webhook from the database.
+      tags:
+        - Management API > Webhooks
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the webhook
+          schema:
+            $ref: "#/components/schemas/webhookId"
+          required: true
+      responses:
+        "200":
+          description: Webhook deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the webhook
+                  name:
+                    type:
+                      - string
+                      - "null"
+                    description: The name of the webhook
+                  createdAt:
+                    type: string
+                    description: The date and time the webhook was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the webhook was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  url:
+                    type: string
+                    format: uri
+                    description: The URL of the webhook
+                  source:
+                    type: string
+                    enum: *a8
+                    description: The source of the webhook
+                  environmentId:
+                    type: string
+                    description: The ID of the environment
+                  triggers:
+                    type: array
+                    items:
+                      type: string
+                      enum: *a9
+                    description: The triggers of the webhook
+                  surveyIds:
+                    type: array
+                    items:
+                      type: string
+                    description: "The IDs of the surveys "
 components:
   securitySchemes:
     apiKeyAuth:
@@ -1415,14 +2119,7 @@ components:
                 additionalProperties:
                   type: string
           description: The data of the response
-          example:
-            question1: answer1
-            question2: 2
-            question3:
-              - answer3
-              - answer4
-            question4:
-              subquestion1: answer5
+          example: *a1
         variables:
           type: object
           additionalProperties:
@@ -1430,17 +2127,13 @@ components:
               - type: string
               - type: number
           description: The variables of the response
-          example:
-            variable1: answer1
-            variable2: 2
+          example: *a2
         ttc:
           type: object
           additionalProperties:
             type: number
           description: The TTC of the response
-          example:
-            question1: 10
-            question2: 20
+          example: *a3
         meta:
           type: object
           properties:
@@ -1466,15 +2159,7 @@ components:
             action:
               type: string
           description: The meta data of the response
-          example:
-            source: https://example.com
-            url: https://example.com
-            userAgent:
-              browser: Chrome
-              os: Windows
-              device: Desktop
-            country: US
-            action: click
+          example: *a4
         contactAttributes:
           type:
             - object
@@ -1482,9 +2167,7 @@ components:
           additionalProperties:
             type: string
           description: The attributes of the contact
-          example:
-            attribute1: value1
-            attribute2: value2
+          example: *a5
         singleUseId:
           type:
             - string
@@ -1785,7 +2468,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a2 []
+          default: &a11 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -1853,7 +2536,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a3
+          enum: &a12
             - displayOnce
             - displayMultiple
             - displaySome
@@ -1932,7 +2615,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a5
+              enum: &a14
                 - bottomLeft
                 - bottomRight
                 - topLeft
@@ -2087,13 +2770,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a1
+                  enum: &a10
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a1
+                  enum: *a10
               required:
                 - linkSurveys
                 - appSurveys
@@ -2110,7 +2793,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a4
+                  enum: &a13
                     - animation
                     - color
                     - image
@@ -2215,6 +2898,57 @@ components:
         - verifyEmail
         - displayPercentage
         - questions
+    webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the webhook
+        name:
+          type:
+            - string
+            - "null"
+          description: The name of the webhook
+        createdAt:
+          type: string
+          description: The date and time the webhook was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the webhook was last updated
+          example: 2021-01-01T00:00:00.000Z
+        url:
+          type: string
+          format: uri
+          description: The URL of the webhook
+        source:
+          type: string
+          enum: *a8
+          description: The source of the webhook
+        environmentId:
+          type: string
+          description: The ID of the environment
+        triggers:
+          type: array
+          items:
+            type: string
+            enum: *a9
+          description: The triggers of the webhook
+        surveyIds:
+          type: array
+          items:
+            type: string
+          description: "The IDs of the surveys "
+      required:
+        - id
+        - name
+        - createdAt
+        - updatedAt
+        - url
+        - source
+        - environmentId
+        - triggers
+        - surveyIds
     responseId:
       type: string
       description: The ID of the response
@@ -2360,7 +3094,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a2
+          default: *a11
           description: The endings of the survey
         thankYouCard:
           type:
@@ -2426,7 +3160,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a3
+          enum: *a12
           description: Display options for the survey
         recontactDays:
           type:
@@ -2686,10 +3420,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a1
+                  enum: *a10
                 appSurveys:
                   type: string
-                  enum: *a1
+                  enum: *a10
               required:
                 - linkSurveys
                 - appSurveys
@@ -2706,7 +3440,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a4
+                  enum: *a13
                 brightness:
                   type:
                     - number
@@ -2739,7 +3473,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a5
+              enum: *a14
             clickOutsideClose:
               type:
                 - boolean
@@ -2770,4 +3504,7 @@ components:
     surveyId:
       type: string
       description: The ID of the survey
+    webhookId:
+      type: string
+      description: The ID of the webhook
 

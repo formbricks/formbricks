@@ -43,7 +43,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 }): Promise<Response> => {
   try {
     const authentication = await authenticateRequest(request);
-    if (!authentication.ok) throw authentication.error;
+    if (!authentication.ok) return handleApiError(request, authentication.error);
 
     let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
@@ -53,7 +53,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 
       if (!bodyResult.success) {
         throw err({
-          type: "forbidden",
+          type: "bad_request",
           details: formatZodError(bodyResult.error),
         });
       }
