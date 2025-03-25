@@ -9,31 +9,42 @@ export const generateSurveySingleUseId = (isEncrypted: boolean): string => {
     return cuid;
   }
 
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
   const encryptedCuid = symmetricEncrypt(cuid, ENCRYPTION_KEY);
   return encryptedCuid;
 };
 
 // validate the survey single use id
 export const validateSurveySingleUseId = (surveySingleUseId: string): string | undefined => {
-  try {
-    let decryptedCuid: string | null = null;
+  let decryptedCuid: string | null = null;
 
-    if (surveySingleUseId.length === 64) {
-      if (!FORMBRICKS_ENCRYPTION_KEY) {
-        throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
-      }
-
-      decryptedCuid = decryptAES128(FORMBRICKS_ENCRYPTION_KEY!, surveySingleUseId);
-    } else {
-      decryptedCuid = symmetricDecrypt(surveySingleUseId, ENCRYPTION_KEY);
+  if (surveySingleUseId.length === 64) {
+    if (!FORMBRICKS_ENCRYPTION_KEY) {
+      throw new Error("FORMBRICKS_ENCRYPTION_KEY is not defined");
     }
 
-    if (cuid2.isCuid(decryptedCuid)) {
-      return decryptedCuid;
-    } else {
+    try {
+      decryptedCuid = decryptAES128(FORMBRICKS_ENCRYPTION_KEY, surveySingleUseId);
+    } catch (error) {
       return undefined;
     }
-  } catch (error) {
+  } else {
+    if (!ENCRYPTION_KEY) {
+      throw new Error("ENCRYPTION_KEY is not set");
+    }
+    try {
+      decryptedCuid = symmetricDecrypt(surveySingleUseId, ENCRYPTION_KEY);
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  if (cuid2.isCuid(decryptedCuid)) {
+    return decryptedCuid;
+  } else {
     return undefined;
   }
 };

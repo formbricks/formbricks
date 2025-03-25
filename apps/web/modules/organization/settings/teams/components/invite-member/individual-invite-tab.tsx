@@ -49,7 +49,7 @@ export const IndividualInviteTab = ({
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: "member",
+      role: canDoRoleManagement ? "member" : "owner",
       teamIds: [],
     },
   });
