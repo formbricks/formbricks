@@ -20,7 +20,7 @@ jobs:
     # Add PostgreSQL service container
     services:
       postgres:
-        image: postgres:17
+        image: postgres:15
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
@@ -36,13 +36,13 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744
+        uses: actions/checkout@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Build Docker Image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./apps/web/Dockerfile
@@ -55,18 +55,21 @@ jobs:
       - name: Test Docker Image with Health Check
         run: |
           echo "🧪 Testing if the Docker image starts correctly..."
+          # Get the GitHub runner's host IP for connecting to Postgres
+          HOST_IP=$(ip route get 1 | awk '{print $7;exit}')
+          echo "Using host IP: $HOST_IP for database connection"
+
           # Start the container in the background with port mapping
           docker run --name formbricks-test \
             -p 3000:3000 \
-            --network host \
-            -e DATABASE_URL="postgresql://test:test@localhost:5432/formbricks" \
+            -e DATABASE_URL="postgresql://test:test@$HOST_IP:5432/formbricks" \
             -e NEXTAUTH_SECRET="test_nextauth_secret_at_least_32_chars_long" \
             -e ENCRYPTION_KEY="test_encryption_key_must_be_at_least_32_chars_long" \
             -e CRON_SECRET="test_cron_secret_key_must_be_32_chars_or_longer" \
             -d formbricks-test:${{ github.sha }}
 
           # Give it some time to start up
-          sleep 10
+          sleep 20
 
           # Check if the container is running (would exit on crash)
           if [ "$(docker inspect -f {{.State.Running}} formbricks-test)" != "true" ]; then
