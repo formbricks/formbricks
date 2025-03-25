@@ -250,22 +250,28 @@ export const upsertBulkContacts = async (
 
     // Skip the raw query if there are no attributes to upsert
     if (attributesToUpsert.length > 0) {
-      // Use a raw query to perform a bulk insert with an ON CONFLICT clause
-      await tx.$executeRaw`
-          INSERT INTO "ContactAttribute" (
-            "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
-          )
-          SELECT 
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.id)}]`}),
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.createdAt)}]`}),
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.updatedAt)}]`}),
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.contactId)}]`}),
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.value)}]`}),
-            unnest(${Prisma.sql`ARRAY[${attributesToUpsert.map((a) => a.attributeKeyId)}]`})
-          ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
-            "value" = EXCLUDED."value",
-            "updated_at" = EXCLUDED."updated_at"
-        `;
+      // Process attributes in batches of 10,000
+      const BATCH_SIZE = 10000;
+      for (let i = 0; i < attributesToUpsert.length; i += BATCH_SIZE) {
+        const batch = attributesToUpsert.slice(i, i + BATCH_SIZE);
+
+        // Use a raw query to perform a bulk insert with an ON CONFLICT clause
+        await tx.$executeRaw`
+            INSERT INTO "ContactAttribute" (
+              "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
+            )
+            SELECT 
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.id)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.createdAt)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.updatedAt)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.contactId)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.value)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((a) => a.attributeKeyId)}]`})
+            ON CONFLICT ("contactId", "attributeKeyId") DO UPDATE SET
+              "value" = EXCLUDED."value",
+              "updated_at" = EXCLUDED."updated_at"
+          `;
+      }
     }
 
     contactCache.revalidate({
