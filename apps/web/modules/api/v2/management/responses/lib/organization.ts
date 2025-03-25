@@ -1,8 +1,7 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { Organization } from "@prisma/client";
 import { cache as reactCache } from "react";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
-import { ZOrganizationBilling } from "@formbricks/database/zod/organizations";
 import { cache } from "@formbricks/lib/cache";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
@@ -49,7 +48,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
 
 export const getOrganizationBilling = reactCache(async (organizationId: string) =>
   cache(
-    async (): Promise<Result<z.infer<typeof ZOrganizationBilling>, ApiErrorResponseV2>> => {
+    async (): Promise<Result<Organization["billing"], ApiErrorResponseV2>> => {
       try {
         const organization = await prisma.organization.findFirst({
           where: {
@@ -64,7 +63,7 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
           return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
         }
 
-        return ok(ZOrganizationBilling.parse(organization.billing));
+        return ok(organization.billing);
       } catch (error) {
         return err({
           type: "internal_server_error",
