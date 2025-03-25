@@ -100,6 +100,6 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
       request,
     });
   } catch (err) {
-    return handleApiError(request, err);
+    return handleApiError(request, err.error);
   }
 };

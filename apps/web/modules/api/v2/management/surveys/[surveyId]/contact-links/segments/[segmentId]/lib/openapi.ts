@@ -1,15 +1,13 @@
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
-import { ZId } from "@formbricks/types/common";
 
-const ZContactLinkResponse = z.object({
-  contactId: z.string(),
-  firstName: z.string().nullable(),
-  lastName: z.string().nullable(),
-  email: z.string().nullable(),
-  surveyUrl: z.string().url(),
-  expiresAt: z.string().nullable(),
-});
+const ZContactLinkResponse = z
+  .object({
+    contactId: z.string(),
+    surveyUrl: z.string().url(),
+    expiresAt: z.string().nullable(),
+  })
+  .catchall(z.string());
 
 const ZContactLinksResponse = z.object({
   data: z.array(ZContactLinkResponse),
@@ -20,21 +18,25 @@ const ZContactLinksResponse = z.object({
 
 export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactLinksBySegment",
-  summary: "Get contact links by segment",
+  summary: "Get survey links for contacts in a segment",
   description: "Generates personalized survey links for contacts in a segment.",
   tags: ["Management API > Surveys > Contact Links"],
   requestParams: {
     path: z.object({
-      surveyId: ZId.describe("The ID of the survey"),
-      segmentId: ZId.describe("The ID of the segment"),
+      surveyId: z.string().cuid2().describe("The ID of the survey"),
+      segmentId: z.string().cuid2().describe("The ID of the segment"),
     }),
     query: z.object({
       expirationDays: z
         .number()
         .positive()
+        .min(1)
+        .max(365)
+        .nullable()
         .optional()
+        .default(null)
         .describe("Number of days until the generated JWT expires"),
-      limit: z.number().min(1).max(250).default(10).describe("Number of items to return"),
+      limit: z.number().min(1).max(10).default(10).describe("Number of items to return"),
       skip: z.number().min(0).default(0).describe("Number of items to skip"),
     }),
   },

@@ -14,8 +14,8 @@ const ZContactLinksBySegmentParams = z.object({
 });
 
 const ZContactLinksBySegmentQuery = z.object({
-  expirationDays: z.coerce.number().positive().optional(),
-  limit: z.coerce.number().min(1).max(250).optional().default(10),
+  expirationDays: z.coerce.number().positive().min(1).max(365).nullable().default(null).optional(),
+  limit: z.coerce.number().min(1).max(10).optional().default(10),
   skip: z.coerce.number().min(0).optional().default(0),
 });
 
@@ -61,8 +61,8 @@ export const GET = async (
       const contactsResult = await getContactsInSegment(
         params.surveyId,
         params.segmentId,
-        query?.limit,
-        query?.skip
+        query?.limit || 10,
+        query?.skip || 0
       );
 
       if (!contactsResult.ok) {
@@ -74,7 +74,11 @@ export const GET = async (
       // Generate survey links for each contact
       const contactLinks = contacts
         .map((contact) => {
-          const surveyUrlResult = getContactSurveyLink(contact.id, params.surveyId, query?.expirationDays);
+          const surveyUrlResult = getContactSurveyLink(
+            contact.id,
+            params.surveyId,
+            query?.expirationDays || undefined
+          );
 
           if (!surveyUrlResult.ok) {
             logger.error(

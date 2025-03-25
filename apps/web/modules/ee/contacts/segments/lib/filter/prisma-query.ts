@@ -152,10 +152,19 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
  * Builds a Prisma where clause from a segment filter
  */
 const buildSegmentFilterWhereClause = async (
-  filter: TSegmentSegmentFilter
+  filter: TSegmentSegmentFilter,
+  segmentPath: Set<string>
 ): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
   const { segmentId } = root;
+
+  if (segmentPath.has(segmentId)) {
+    logger.error(
+      { segmentId, path: Array.from(segmentPath) },
+      "Circular reference detected in segment filter"
+    );
+    return {};
+  }
 
   const segment = await getSegment(segmentId);
 
@@ -164,13 +173,19 @@ const buildSegmentFilterWhereClause = async (
     return {};
   }
 
-  return processFilters(segment.filters);
+  const newPath = new Set(segmentPath);
+  newPath.add(segmentId);
+
+  return processFilters(segment.filters, newPath);
 };
 
 /**
  * Recursively processes a segment filter or group and returns a Prisma where clause
  */
-const processSingleFilter = async (filter: TSegmentFilter): Promise<Prisma.ContactWhereInput> => {
+const processSingleFilter = async (
+  filter: TSegmentFilter,
+  segmentPath: Set<string>
+): Promise<Prisma.ContactWhereInput> => {
   const { root } = filter;
 
   switch (root.type) {
@@ -181,7 +196,7 @@ const processSingleFilter = async (filter: TSegmentFilter): Promise<Prisma.Conta
     case "device":
       return buildDeviceFilterWhereClause(filter as TSegmentDeviceFilter);
     case "segment":
-      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter);
+      return await buildSegmentFilterWhereClause(filter as TSegmentSegmentFilter, segmentPath);
     default:
       return {};
   }
@@ -190,7 +205,10 @@ const processSingleFilter = async (filter: TSegmentFilter): Promise<Prisma.Conta
 /**
  * Recursively processes filters and returns a combined Prisma where clause
  */
-const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWhereInput> => {
+const processFilters = async (
+  filters: TBaseFilters,
+  segmentPath: Set<string>
+): Promise<Prisma.ContactWhereInput> => {
   if (filters.length === 0) return {};
 
   const query: { AND: Prisma.ContactWhereInput[]; OR: Prisma.ContactWhereInput[] } = {
@@ -205,12 +223,13 @@ const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWher
     // Process the resource based on its type
     if (isResourceFilter(resource)) {
       // If it's a single filter, process it directly
-      whereClause = await processSingleFilter(resource);
+      whereClause = await processSingleFilter(resource, segmentPath);
     } else {
       // If it's a group of filters, process it recursively
-      whereClause = await processFilters(resource);
+      whereClause = await processFilters(resource, segmentPath);
     }
 
+    if (Object.keys(whereClause).length === 0) continue;
     if (filters.length === 1) query.AND = [whereClause];
     else {
       if (i === 0) {
@@ -223,7 +242,10 @@ const processFilters = async (filters: TBaseFilters): Promise<Prisma.ContactWher
     }
   }
 
-  return query;
+  return {
+    AND: query.AND.length > 0 ? query.AND : undefined,
+    OR: query.OR.length > 0 ? query.OR : undefined,
+  };
 };
 
 /**
@@ -242,7 +264,9 @@ export const segmentFilterToPrismaQuery = reactCache(
             environmentId,
           };
 
-          const filtersWhereClause = await processFilters(filters);
+          // Initialize an empty stack for tracking the current evaluation path
+          const segmentPath = new Set<string>([segmentId]);
+          const filtersWhereClause = await processFilters(filters, segmentPath);
 
           const whereClause: Prisma.ContactWhereInput = {
             AND: [baseWhereClause, filtersWhereClause],

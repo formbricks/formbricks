@@ -18,17 +18,11 @@ type GetSegmentContactsResponseData = {
   };
 };
 
-// Default pagination values
-const DEFAULT_LIMIT = 10;
-const DEFAULT_SKIP = 0;
-// Maximum limit to prevent excessive load
-const MAX_LIMIT = 250;
-
 export const getContactsInSegment = async (
   surveyId: string,
   segmentId: string,
-  limit: number = DEFAULT_LIMIT,
-  skip: number = DEFAULT_SKIP
+  limit: number,
+  skip: number
 ): Promise<Result<GetSegmentContactsResponseData, ApiErrorResponseV2>> => {
   try {
     const surveyResult = await getSurvey(surveyId);
@@ -46,6 +40,7 @@ export const getContactsInSegment = async (
     const segment = segmentResult.data;
 
     if (survey.environmentId !== segment.environmentId) {
+      logger.error({ surveyId, segmentId }, "Survey and segment are not in the same environment");
       return err({
         type: "bad_request",
         message: "Survey and segment are not in the same environment",
@@ -53,11 +48,7 @@ export const getContactsInSegment = async (
       });
     }
 
-    const constrainedLimit = Math.min(limit || DEFAULT_LIMIT, MAX_LIMIT);
-    const constrainedSkip = skip || DEFAULT_SKIP;
-
     let whereClause: Prisma.ContactWhereInput;
-    // 5. Convert segment filters to a Prisma query
     try {
       const { whereClause: resultWhereClause } = await segmentFilterToPrismaQuery(
         segment.id,
@@ -66,14 +57,7 @@ export const getContactsInSegment = async (
       );
       whereClause = resultWhereClause;
     } catch (error) {
-      logger.error(
-        {
-          error,
-          segmentId,
-          surveyId,
-        },
-        "Error converting segment filters to Prisma query"
-      );
+      logger.error({ error, segmentId, surveyId }, "Error converting segment filters to Prisma query");
       return err({
         type: "bad_request",
         message: "Failed to convert segment filters to Prisma query",
@@ -81,12 +65,10 @@ export const getContactsInSegment = async (
       });
     }
     logger.info({ whereClause }, "whereClause");
-    // 6. Get total count of contacts in the segment for pagination metadata
     const totalContacts = await prisma.contact.count({
       where: whereClause,
     });
 
-    // 7. Get contacts with pagination
     const contacts = await prisma.contact.findMany({
       where: whereClause,
       select: {
@@ -102,17 +84,14 @@ export const getContactsInSegment = async (
           },
         },
       },
-      take: constrainedLimit,
-      skip: constrainedSkip,
+      take: limit,
+      skip: skip,
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    // 8. Transform contact data to the desired format
     const contactsWithAttributes = contacts.map((contact) => {
-      // Find email, firstName, lastName attributes
-
       return {
         id: contact.id,
         ...contact.attributes.reduce((acc, attr) => {
@@ -129,14 +108,7 @@ export const getContactsInSegment = async (
       },
     });
   } catch (error) {
-    logger.error(
-      {
-        error,
-        surveyId,
-        segmentId,
-      },
-      "Error getting contacts in segment"
-    );
+    logger.error({ error, surveyId, segmentId }, "Error getting contacts in segment");
     return err({
       type: "internal_server_error",
       message: "Failed to get contacts in segment",
