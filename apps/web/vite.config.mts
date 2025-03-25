@@ -38,6 +38,8 @@ export default defineConfig({
         "app/sentry/*.tsx",
         "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
         "modules/ee/sso/lib/**/*.ts",
+        "app/lib/**/*.ts",
+        "app/api/(internal)/insights/lib/**/*.ts",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
         "modules/survey/hooks/*.tsx",

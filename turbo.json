@@ -92,10 +92,10 @@
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],

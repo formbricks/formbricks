@@ -24,12 +24,6 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
-# Set hardcoded environment variables
-ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
-ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
-ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
-ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runtime"
-
 ARG SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
