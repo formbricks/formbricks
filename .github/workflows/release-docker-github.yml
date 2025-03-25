@@ -6,10 +6,11 @@ name: Docker Release to Github
 # documentation.
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    outputs:
+      VERSION:
+        description: release version
+        value: ${{ jobs.build.outputs.VERSION }}
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -19,6 +20,9 @@ env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -30,24 +34,45 @@ jobs:
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
+    outputs:
+      VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
+
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        with:
+          egress-policy: audit
+
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Get Release Tag
+        id: extract_release_tag
+        run: |
+          TAG=${{ github.ref }}
+          TAG=${TAG#refs/tags/v}
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        run: |
+          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.RELEASE_TAG }}\"/" ./apps/web/package.json
+          cat ./apps/web/package.json | grep version
 
       - name: Set up Depot CLI
-        uses: depot/setup-action@v1
+        uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v3.5.0
+        uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 # v3.5.0
 
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
       - name: Log into registry ${{ env.REGISTRY }}
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3 # v3.0.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -57,7 +82,7 @@ jobs:
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
         id: meta
-        uses: docker/metadata-action@v5 # v5.0.0
+        uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
@@ -65,7 +90,7 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push Docker image
         id: build-and-push
-        uses: depot/build-push-action@v1
+        uses: depot/build-push-action@636daae76684e38c301daa0c5eca1c095b24e780 # v1.14.0
         with:
           project: tw0fqmsx3c
           token: ${{ secrets.DEPOT_PROJECT_TOKEN }}

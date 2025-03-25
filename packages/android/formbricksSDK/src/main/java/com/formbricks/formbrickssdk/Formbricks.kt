@@ -7,12 +7,11 @@ import androidx.annotation.Keep
 import androidx.fragment.app.FragmentManager
 import com.formbricks.formbrickssdk.api.FormbricksApi
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.manager.UserManager
 import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
-import timber.log.Timber
-
 
 @Keep
 object Formbricks {
@@ -23,7 +22,7 @@ object Formbricks {
     internal var language: String = "default"
     internal var loggingEnabled: Boolean = true
     private var fragmentManager: FragmentManager? = null
-    private var isInitialized = false
+    internal var isInitialized = false
 
     /**
      * Initializes the Formbricks SDK with the given [Context] config [FormbricksConfig].
@@ -61,10 +60,6 @@ object Formbricks {
         SurveyManager.refreshEnvironmentIfNeeded()
         UserManager.syncUserStateIfNeeded()
 
-        if (loggingEnabled) {
-            Timber.plant(Timber.DebugTree())
-        }
-
         isInitialized = true
     }
 
@@ -79,7 +74,7 @@ object Formbricks {
      */
     fun setUserId(userId: String) {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
         UserManager.set(userId)
@@ -96,7 +91,7 @@ object Formbricks {
      */
     fun setAttribute(attribute: String, key: String) {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
         UserManager.addAttribute(attribute, key)
@@ -113,7 +108,7 @@ object Formbricks {
      */
     fun setAttributes(attributes: Map<String, String>) {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
         UserManager.setAttributes(attributes)
@@ -130,11 +125,11 @@ object Formbricks {
      */
     fun setLanguage(language: String) {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
         Formbricks.language = language
-        UserManager.addAttribute(language, "language")
+        UserManager.setLanguage(language)
     }
 
     /**
@@ -148,12 +143,12 @@ object Formbricks {
      */
     fun track(action: String) {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
 
         if (!isInternetAvailable()) {
-            Timber.w(SDKError.connectionIsNotAvailable)
+            Logger.w(exception = SDKError.connectionIsNotAvailable)
             return
         }
 
@@ -171,7 +166,7 @@ object Formbricks {
      */
     fun logout() {
         if (!isInitialized) {
-            Timber.e(SDKError.sdkIsNotInitialized)
+            Logger.e(exception = SDKError.sdkIsNotInitialized)
             return
         }
 
@@ -195,7 +190,7 @@ object Formbricks {
     /// Assembles the survey fragment and presents it
     internal fun showSurvey(id: String) {
         if (fragmentManager == null) {
-            Timber.e(SDKError.fragmentManagerIsNotSet)
+            Logger.e(exception = SDKError.fragmentManagerIsNotSet)
             return
         }
 

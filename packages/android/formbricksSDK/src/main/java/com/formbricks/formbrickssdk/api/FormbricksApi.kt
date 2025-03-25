@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object FormbricksApi {
-    private val service = FormbricksApiService()
+    var service = FormbricksApiService()
 
     fun initialize() {
         service.initialize(

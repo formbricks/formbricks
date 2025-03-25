@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.manager.SurveyManager
+import com.formbricks.formbrickssdk.manager.UserManager
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.getProjectStylingJson
 import com.formbricks.formbrickssdk.model.environment.getStyling
@@ -109,6 +110,7 @@ class FormbricksViewModel : ViewModel() {
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    FormbricksJavascript.message(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);
@@ -130,6 +132,7 @@ class FormbricksViewModel : ViewModel() {
         jsonObject.addProperty("apiHost", Formbricks.appUrl)
         jsonObject.addProperty("languageCode", Formbricks.language)
         jsonObject.addProperty("environmentId", Formbricks.environmentId)
+        jsonObject.addProperty("contactId", UserManager.contactId)
 
         val hasCustomStyling = environmentDataHolder.data?.data?.surveys?.first { it.id == surveyId }?.styling != null
         val enabled = environmentDataHolder.data?.data?.project?.styling?.allowStyleOverwrite ?: false

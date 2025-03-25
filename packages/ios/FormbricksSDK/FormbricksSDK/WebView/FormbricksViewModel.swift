@@ -74,6 +74,7 @@ private extension FormbricksViewModel {
                 script.async = true;
                 script.onload = () => loadSurvey();
                 script.onerror = (error) => {
+                    window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
                     console.error("Failed to load Formbricks Surveys library:", error);
                 };
                 document.head.appendChild(script);
@@ -94,7 +95,7 @@ private class WebViewData {
         data["languageCode"] = Formbricks.language
         data["apiHost"] = Formbricks.appUrl
         data["environmentId"] = Formbricks.environmentId
-        data["userId"] = UserManager.shared.userId
+        data["contactId"] = UserManager.shared.contactId
         
         let hasCustomStyling = environmentResponse.data.data.surveys?.first(where: { $0.id == surveyId })?.styling != nil
         let enabled = environmentResponse.data.data.project.styling?.allowStyleOverwrite ?? false

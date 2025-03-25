@@ -1,3 +1,5 @@
+import Foundation
+
 /// Update queue. This class is used to queue updates to the user.
 /// The given properties will be sent to the backend and updated in the user object when the debounce interval is reached.
 final class UpdateQueue {

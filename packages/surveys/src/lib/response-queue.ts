@@ -3,7 +3,7 @@ import { ApiClient } from "./api-client";
 import { SurveyState } from "./survey-state";
 
 interface QueueConfig {
-  apiHost: string;
+  appUrl: string;
   environmentId: string;
   retryAttempts: number;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate) => void;
@@ -28,7 +28,7 @@ export class ResponseQueue {
     this.config = config;
     this.surveyState = surveyState;
     this.api = new ApiClient({
-      apiHost: config.apiHost,
+      appUrl: config.appUrl,
       environmentId: config.environmentId,
     });
   }
@@ -89,6 +89,7 @@ export class ResponseQueue {
         const response = await this.api.createResponse({
           ...responseUpdate,
           surveyId: this.surveyState.surveyId,
+          contactId: this.surveyState.contactId || null,
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
           data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },

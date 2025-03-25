@@ -4,9 +4,6 @@ import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.user.UserState
 import com.formbricks.formbrickssdk.model.user.UserStateData
 import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -22,9 +19,9 @@ fun Date.dateString(): String {
 fun UserStateData.lastDisplayAt(): Date? {
     lastDisplayAt?.let {
         try {
-            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-            val dateTime = LocalDateTime.parse(it, formatter)
-            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+            val formatter = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
+            formatter.timeZone = TimeZone.getTimeZone("UTC")
+            return formatter.parse(it)
         } catch (e: Exception) {
            return null
         }
@@ -36,9 +33,9 @@ fun UserStateData.lastDisplayAt(): Date? {
 fun UserState.expiresAt(): Date? {
     expiresAt?.let {
         try {
-            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-            val dateTime = LocalDateTime.parse(it, formatter)
-            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+            val formatter = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
+            formatter.timeZone = TimeZone.getTimeZone("UTC")
+            return formatter.parse(it)
         } catch (e: Exception) {
             return null
         }
@@ -50,9 +47,9 @@ fun UserState.expiresAt(): Date? {
 fun EnvironmentDataHolder.expiresAt(): Date? {
     data?.expiresAt?.let {
         try {
-            val formatter = DateTimeFormatter.ofPattern(dateFormatPattern)
-            val dateTime = LocalDateTime.parse(it, formatter)
-            return Date.from(dateTime.atZone(ZoneId.of("GMT")).toInstant())
+            val formatter = SimpleDateFormat(dateFormatPattern, Locale.getDefault())
+            formatter.timeZone = TimeZone.getTimeZone("UTC")
+            return formatter.parse(it)
         } catch (e: Exception) {
             return null
         }

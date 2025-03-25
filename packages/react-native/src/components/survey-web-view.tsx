@@ -103,9 +103,8 @@ export function SurveyWebView({ survey }: SurveyWebViewProps): JSX.Element | und
         originWhitelist={["*"]}
         source={{
           html: renderHtml({
-            apiHost: appConfig.get().appUrl,
             environmentId: appConfig.get().environmentId,
-            userId: appConfig.get().user.data.userId ?? undefined,
+            contactId: appConfig.get().user.data.contactId ?? undefined,
             survey,
             isBrandingEnabled,
             styling,

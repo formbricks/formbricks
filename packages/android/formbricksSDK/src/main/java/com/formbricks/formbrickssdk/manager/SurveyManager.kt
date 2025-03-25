@@ -5,7 +5,7 @@ import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.api.FormbricksApi
 import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
-import com.formbricks.formbrickssdk.model.environment.DisplayOptionType
+import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
 import com.formbricks.formbrickssdk.model.user.Display
@@ -13,16 +13,10 @@ import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import timber.log.Timber
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Timer
 import java.util.TimerTask
-
-interface FileUploadListener {
-    fun fileUploaded(url: String, uploadId: String)
-}
+import java.util.concurrent.TimeUnit
 
 /**
  *  The SurveyManager is responsible for managing the surveys that are displayed to the user.
@@ -33,10 +27,12 @@ object SurveyManager {
     private const val FORMBRICKS_PREFS = "formbricks_prefs"
     private const val PREF_FORMBRICKS_DATA_HOLDER = "formbricksDataHolder"
 
-    private val refreshTimer = Timer()
-    private var displayTimer = Timer()
+    internal val refreshTimer = Timer()
+    internal var displayTimer = Timer()
+    internal var hasApiError = false
+    internal var isShowingSurvey = false
     private val prefManager by lazy { Formbricks.applicationContext.getSharedPreferences(FORMBRICKS_PREFS, Context.MODE_PRIVATE) }
-    private var filteredSurveys: MutableList<Survey> = mutableListOf()
+    internal var filteredSurveys: MutableList<Survey> = mutableListOf()
 
     private var environmentDataHolderJson: String?
         get() {
@@ -61,7 +57,7 @@ object SurveyManager {
                     try {
                         Gson().fromJson(json, EnvironmentDataHolder::class.java)
                     } catch (e: Exception) {
-                        Timber.tag("SurveyManager").e("Unable to retrieve environment data from the local storage.")
+                        Logger.e("Unable to retrieve environment data from the local storage.")
                         null
                     }
                 }
@@ -101,12 +97,14 @@ object SurveyManager {
      * Checks if the environment state needs to be refreshed based on its [expiresAt] property,
      * and if so, refreshes it, starts the refresh timer, and filters the surveys.
      */
-    fun refreshEnvironmentIfNeeded() {
-        environmentDataHolder?.expiresAt()?.let {
-            if (it.after(Date())) {
-                Timber.tag("SurveyManager").d("Environment state is still valid until $it")
-                filterSurveys()
-                return
+    fun refreshEnvironmentIfNeeded(force: Boolean = false) {
+        if (!force) {
+            environmentDataHolder?.expiresAt()?.let {
+                if (it.after(Date())) {
+                    Logger.d("Environment state is still valid until $it")
+                    filterSurveys()
+                    return
+                }
             }
         }
 
@@ -115,8 +113,10 @@ object SurveyManager {
                 environmentDataHolder = FormbricksApi.getEnvironmentState().getOrThrow()
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
+                hasApiError = false
             } catch (e: Exception) {
-                Timber.tag("SurveyManager").e(e, "Unable to refresh environment state.")
+                hasApiError = true
+                Logger.e("Unable to refresh environment state.")
                 startErrorTimer()
             }
         }
@@ -139,6 +139,7 @@ object SurveyManager {
 
         if (shouldDisplay) {
             firstSurveyWithActionClass?.id?.let {
+                isShowingSurvey = true
                 val timeout = firstSurveyWithActionClass.delay ?: 0.0
                 stopDisplayTimer()
                 displayTimer.schedule(object : TimerTask() {
@@ -146,7 +147,7 @@ object SurveyManager {
                         Formbricks.showSurvey(it)
                     }
 
-                }, Date.from(Instant.now().plusSeconds(timeout.toLong())))
+                }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))
             }
         }
     }
@@ -165,7 +166,7 @@ object SurveyManager {
      */
     fun postResponse(surveyId: String?) {
         val id = surveyId.guard {
-            Timber.tag("SurveyManager").e("Survey id is mandatory to set.")
+            Logger.e("Survey id is mandatory to set.")
             return
         }
 
@@ -177,7 +178,7 @@ object SurveyManager {
      */
     fun onNewDisplay(surveyId: String?) {
         val id = surveyId.guard {
-            Timber.tag("SurveyManager").e("Survey id is mandatory to set.")
+            Logger.e("Survey id is mandatory to set.")
             return
         }
 
@@ -191,7 +192,7 @@ object SurveyManager {
         val date = expiresAt.guard { return }
         refreshTimer.schedule(object: TimerTask() {
             override fun run() {
-                Timber.tag("SurveyManager").d("Refreshing environment state.")
+                Logger.d("Refreshing environment state.")
                 refreshEnvironmentIfNeeded()
             }
 
@@ -205,7 +206,7 @@ object SurveyManager {
         val targetDate = Date(System.currentTimeMillis() + 1000 * 60 * REFRESH_STATE_ON_ERROR_TIMEOUT_IN_MINUTES)
         refreshTimer.schedule(object: TimerTask() {
             override fun run() {
-                Timber.tag("SurveyManager").d("Refreshing environment state after an error")
+                Logger.d("Refreshing environment state after an error")
                 refreshEnvironmentIfNeeded()
             }
 
@@ -218,17 +219,17 @@ object SurveyManager {
     private fun filterSurveysBasedOnDisplayType(surveys: List<Survey>, displays: List<Display>, responses: List<String>): List<Survey> {
         return surveys.filter { survey ->
             when (survey.displayOption) {
-                DisplayOptionType.RESPOND_MULTIPLE -> true
+                "respondMultiple" -> true
 
-                DisplayOptionType.DISPLAY_ONCE -> {
+                "displayOnce" -> {
                     displays.none { it.surveyId == survey.id }
                 }
 
-                DisplayOptionType.DISPLAY_MULTIPLE -> {
+                "displayMultiple" -> {
                     responses.none { it == survey.id }
                 }
 
-                DisplayOptionType.DISPLAY_SOME -> {
+                "displaySome" -> {
                     survey.displayLimit?.let { limit ->
                         if (responses.any { it == survey.id }) {
                             return@filter false
@@ -238,7 +239,7 @@ object SurveyManager {
                 }
 
                 else -> {
-                    Timber.tag("SurveyManager").e("Invalid Display Option")
+                    Logger.e("Invalid Display Option")
                     false
                 }
             }
@@ -255,7 +256,7 @@ object SurveyManager {
             val recontactDays = survey.recontactDays ?: defaultRecontactDays
 
             if (recontactDays != null) {
-                val daysBetween = ChronoUnit.DAYS.between(lastDisplayedAt.toInstant(), Instant.now())
+                val daysBetween = TimeUnit.MILLISECONDS.toDays(Date().time - lastDisplayedAt.time)
                 return@filter daysBetween >= recontactDays.toInt()
             }
 

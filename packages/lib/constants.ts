@@ -15,6 +15,8 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
 export const DEFAULT_BRAND_COLOR = "#64748b";
+export const FB_LOGO_URL =
+  "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
 
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
@@ -81,6 +83,7 @@ export const SMTP_PASSWORD = env.SMTP_PASSWORD;
 export const SMTP_AUTHENTICATED = env.SMTP_AUTHENTICATED !== "0";
 export const SMTP_REJECT_UNAUTHORIZED_TLS = env.SMTP_REJECT_UNAUTHORIZED_TLS !== "0";
 export const MAIL_FROM = env.MAIL_FROM;
+export const MAIL_FROM_NAME = env.MAIL_FROM_NAME;
 
 export const NEXTAUTH_SECRET = env.NEXTAUTH_SECRET;
 export const ITEMS_PER_PAGE = 30;
@@ -163,6 +166,11 @@ export const CLIENT_SIDE_API_RATE_LIMIT = {
   interval: 60, // 1 minute
   allowedPerInterval: 100,
 };
+export const MANAGEMENT_API_RATE_LIMIT = {
+  interval: 60, // 1 minute
+  allowedPerInterval: 100,
+};
+
 export const SHARE_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
   allowedPerInterval: 100,
@@ -192,7 +200,9 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
+export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
 export const BREVO_API_KEY = env.BREVO_API_KEY;
 export const BREVO_LIST_ID = env.BREVO_LIST_ID;
@@ -206,7 +216,7 @@ export const STRIPE_API_VERSION = "2024-06-20";
 export const MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT = 150 as const;
 
 export const DEFAULT_LOCALE = "en-US";
-export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW"];
+export const AVAILABLE_LOCALES: TUserLocale[] = ["en-US", "de-DE", "pt-BR", "fr-FR", "zh-Hant-TW", "pt-PT"];
 
 // Billing constants
 
@@ -248,6 +258,8 @@ export const BILLING_LIMITS = {
   },
 } as const;
 
+export const AI_AZURE_LLM_RESSOURCE_NAME = env.AI_AZURE_LLM_RESSOURCE_NAME;
+
 export const IS_AI_CONFIGURED = Boolean(
   env.AI_AZURE_EMBEDDINGS_API_KEY &&
     env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID &&
@@ -256,11 +268,24 @@ export const IS_AI_CONFIGURED = Boolean(
     env.AI_AZURE_LLM_DEPLOYMENT_ID &&
     env.AI_AZURE_LLM_RESSOURCE_NAME
 );
+export const AI_AZURE_LLM_API_KEY = env.AI_AZURE_LLM_API_KEY;
+export const AI_AZURE_LLM_DEPLOYMENT_ID = env.AI_AZURE_LLM_DEPLOYMENT_ID;
+export const AI_AZURE_EMBEDDINGS_RESSOURCE_NAME = env.AI_AZURE_EMBEDDINGS_RESSOURCE_NAME;
+export const AI_AZURE_EMBEDDINGS_API_KEY = env.AI_AZURE_EMBEDDINGS_API_KEY;
+export const AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID = env.AI_AZURE_EMBEDDINGS_DEPLOYMENT_ID;
 
 export const INTERCOM_SECRET_KEY = env.INTERCOM_SECRET_KEY;
+export const INTERCOM_APP_ID = env.INTERCOM_APP_ID;
+export const IS_INTERCOM_CONFIGURED = Boolean(env.INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
 
-export const IS_INTERCOM_CONFIGURED = Boolean(env.NEXT_PUBLIC_INTERCOM_APP_ID && INTERCOM_SECRET_KEY);
+export const POSTHOG_API_KEY = env.POSTHOG_API_KEY;
+export const POSTHOG_API_HOST = env.POSTHOG_API_HOST;
+export const IS_POSTHOG_CONFIGURED = Boolean(POSTHOG_API_KEY && POSTHOG_API_HOST);
 
 export const TURNSTILE_SECRET_KEY = env.TURNSTILE_SECRET_KEY;
 
 export const IS_TURNSTILE_CONFIGURED = Boolean(env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && TURNSTILE_SECRET_KEY);
+
+export const IS_PRODUCTION = env.NODE_ENV === "production";
+
+export const IS_DEVELOPMENT = env.NODE_ENV === "development";

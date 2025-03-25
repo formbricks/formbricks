@@ -88,7 +88,7 @@ export const EmbedView = ({
               locale={locale}
             />
           ) : activeId === "app" ? (
-            <AppTab environmentId={environmentId} />
+            <AppTab />
           ) : null}
           <div className="mt-2 rounded-md p-3 text-center lg:hidden">
             {tabs.slice(0, 2).map((tab) => (

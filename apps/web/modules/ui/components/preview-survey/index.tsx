@@ -9,9 +9,7 @@ import { useTranslate } from "@tolgee/react";
 import { Variants, motion } from "framer-motion";
 import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { TJsFileUploadParams } from "@formbricks/types/js";
 import { TProjectStyling } from "@formbricks/types/project";
-import { TUploadFileConfig } from "@formbricks/types/storage";
 import { TSurvey, TSurveyQuestionId, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { Modal } from "./components/modal";
 import { TabOption } from "./components/tab-option";
@@ -25,7 +23,6 @@ interface PreviewSurveyProps {
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
-  onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
 }
 
 let surveyNameTemp: string;
@@ -66,7 +63,6 @@ export const PreviewSurvey = ({
   project,
   environment,
   languageCode,
-  onFileUpload,
 }: PreviewSurveyProps) => {
   const [isModalOpen, setIsModalOpen] = useState(true);
   const [isFullScreenPreview, setIsFullScreenPreview] = useState(false);
@@ -265,11 +261,11 @@ export const PreviewSurvey = ({
                   borderRadius={styling?.roundness ?? 8}
                   background={styling?.cardBackgroundColor?.light}>
                   <SurveyInline
+                    isPreviewMode={true}
                     survey={survey}
                     isBrandingEnabled={project.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
-                    onFileUpload={onFileUpload}
                     styling={styling}
                     isCardBorderVisible={!styling.highlightBorderColor?.light}
                     onClose={handlePreviewModalClose}
@@ -288,9 +284,9 @@ export const PreviewSurvey = ({
                   </div>
                   <div className="z-10 w-full max-w-md rounded-lg border border-transparent">
                     <SurveyInline
+                      isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={project.linkSurveyBranding}
-                      onFileUpload={onFileUpload}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
@@ -367,11 +363,11 @@ export const PreviewSurvey = ({
                 borderRadius={styling.roundness ?? 8}
                 background={styling.cardBackgroundColor?.light}>
                 <SurveyInline
+                  isPreviewMode={true}
                   survey={survey}
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
-                  onFileUpload={onFileUpload}
                   styling={styling}
                   isCardBorderVisible={!styling.highlightBorderColor?.light}
                   onClose={handlePreviewModalClose}
@@ -392,12 +388,12 @@ export const PreviewSurvey = ({
                     <ClientLogo environmentId={environment.id} projectLogo={project.logo} previewSurvey />
                   )}
                 </div>
-                <div className="z-0 w-full max-w-lg rounded-lg border-transparent">
+                <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
                   <SurveyInline
+                    isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
                     isBrandingEnabled={project.linkSurveyBranding}
                     isRedirectDisabled={true}
-                    onFileUpload={onFileUpload}
                     languageCode={languageCode}
                     responseCount={42}
                     styling={styling}

@@ -37,7 +37,7 @@ export const TeamsView = async ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: t("common.start_free_trial"),
+      text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",

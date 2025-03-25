@@ -7,4 +7,7 @@
    <FileRef
       location = "group:Demo/Demo.xcodeproj">
    </FileRef>
+   <FileRef
+      location = "group:FormbricksSDK/FormbricksSDK.xctestplan">
+   </FileRef>
 </Workspace>

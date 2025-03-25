@@ -30,6 +30,7 @@ interface LinkSurveyProps {
   IS_FORMBRICKS_CLOUD: boolean;
   locale: string;
   isPreview: boolean;
+  contactId?: string;
 }
 
 export const LinkSurvey = ({
@@ -48,6 +49,7 @@ export const LinkSurvey = ({
   IS_FORMBRICKS_CLOUD,
   locale,
   isPreview,
+  contactId,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
@@ -170,14 +172,14 @@ export const LinkSurvey = ({
       PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
-        apiHost={!isPreview ? webAppUrl : undefined}
-        environmentId={!isPreview ? survey.environmentId : undefined}
+        appUrl={webAppUrl}
+        environmentId={survey.environmentId}
+        isPreviewMode={isPreview}
         survey={survey}
         styling={determineStyling()}
         languageCode={languageCode}
         isBrandingEnabled={project.linkSurveyBranding}
         shouldResetQuestionId={false}
-        onFileUpload={isPreview ? async (file) => `https://formbricks.com/${file.name}` : undefined}
         // eslint-disable-next-line jsx-a11y/no-autofocus -- need it as focus behaviour is different in normal surveys and survey preview
         autoFocus={autoFocus}
         prefillResponseData={prefillValue}
@@ -198,6 +200,7 @@ export const LinkSurvey = ({
         singleUseId={singleUseId}
         singleUseResponseId={responseId}
         getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
+        contactId={contactId}
       />
     </LinkSurveyWrapper>
   );

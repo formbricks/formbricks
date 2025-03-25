@@ -18,12 +18,12 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["@aws-sdk"],
+  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
   i18n: {
-    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW"],
+    locales: ["en-US", "de-DE", "fr-FR", "pt-BR", "zh-Hant-TW", "pt-PT"],
     localeDetection: false,
     defaultLocale: "en-US",
   },
@@ -108,6 +108,10 @@ const nextConfig = {
         },
       ],
     });
+    config.resolve.fallback = {
+      http: false, // Prevents Next.js from trying to bundle 'http'
+      https: false,
+    };
     return config;
   },
   async headers() {

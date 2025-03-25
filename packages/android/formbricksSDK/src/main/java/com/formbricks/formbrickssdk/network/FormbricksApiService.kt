@@ -13,7 +13,7 @@ import kotlinx.serialization.json.jsonObject
 import retrofit2.Call
 import retrofit2.Retrofit
 
-class FormbricksApiService {
+open class FormbricksApiService {
 
     private lateinit var retrofit: Retrofit
 
@@ -23,20 +23,20 @@ class FormbricksApiService {
             .build()
     }
 
-    fun getEnvironmentStateObject(environmentId: String): Result<EnvironmentDataHolder> {
+    open fun getEnvironmentStateObject(environmentId: String): Result<EnvironmentDataHolder> {
         val result = execute {
             retrofit.create(FormbricksService::class.java)
                 .getEnvironmentState(environmentId)
         }
-
+        val json = Json { ignoreUnknownKeys = true }
         val resultMap = result.getOrThrow()
         val resultJson = mapToJsonElement(resultMap).jsonObject
-        val environmentResponse = Json.decodeFromJsonElement<EnvironmentResponse>(resultJson)
+        val environmentResponse = json.decodeFromJsonElement<EnvironmentResponse>(resultJson)
         val data = EnvironmentDataHolder(environmentResponse.data, resultMap)
         return Result.success(data)
     }
 
-    fun postUser(environmentId: String, body: PostUserBody): Result<UserResponse> {
+    open fun postUser(environmentId: String, body: PostUserBody): Result<UserResponse> {
         return execute {
             retrofit.create(FormbricksService::class.java)
                 .postUser(environmentId, body)
@@ -49,6 +49,7 @@ class FormbricksApiService {
             val body = call.body()
             if (body == null) {
                 Result.failure(RuntimeException("Invalid response"))
+
             } else {
                 Result.success(body)
             }

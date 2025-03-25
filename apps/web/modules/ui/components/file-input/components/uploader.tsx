@@ -1,4 +1,5 @@
 import { ArrowUpFromLineIcon } from "lucide-react";
+import React from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TAllowedFileExtension } from "@formbricks/types/common";
 
@@ -47,6 +48,7 @@ export const Uploader = ({
           <span className="font-semibold">Click or drag to upload files.</span>
         </p>
         <input
+          data-testid="upload-file-input"
           type="file"
           id={`${id}-${name}`}
           name={`${id}-${name}`}

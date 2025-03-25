@@ -1,0 +1,43 @@
+---
+title: "Open ID Connect"
+description: "Configure Open ID Connect for secure Single Sign-On with your Formbricks instance. Implement enterprise-grade authentication for your survey platform with Open ID Connect."
+icon: "key"
+---
+
+<Note>OpenID Connect is part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license)</Note>
+
+Integrating your own OIDC (OpenID Connect) instance with your Formbricks instance allows users to log in using their OIDC credentials, ensuring a secure and streamlined user experience. Please follow the steps below to set up OIDC for your Formbricks instance.
+
+- Configure your OIDC provider & get the following variables:
+
+- `OIDC_CLIENT_ID`
+
+- `OIDC_CLIENT_SECRET`
+
+- `OIDC_ISSUER`
+
+- `OIDC_SIGNING_ALGORITHM`
+
+<Note>
+  Make sure the Redirect URI for your OIDC Client is set to `{WEBAPP_URL}/api/auth/callback/openid`.
+</Note>
+
+- Update these environment variables in your `docker-compose.yml` or pass it directly to the running container.
+
+An example configuration for a FusionAuth OpenID Connect in Formbricks would look like:
+
+
+```yml Formbricks Env for FusionAuth OIDC
+OIDC_CLIENT_ID=59cada54-56d4-4aa8-a5e7-5823bbe0e5b7
+OIDC_CLIENT_SECRET=4f4dwP0ZoOAqMW8fM9290A7uIS3E8Xg29xe1umhlB_s
+OIDC_ISSUER=http://localhost:9011 
+OIDC_DISPLAY_NAME=FusionAuth
+OIDC_SIGNING_ALGORITHM=HS256
+```
+
+
+- Set an environment variable `OIDC_DISPLAY_NAME` to the display name of your OIDC provider.
+
+- Restart your Formbricks instance.
+
+- You're all set! Users can now sign up & log in using their OIDC credentials.

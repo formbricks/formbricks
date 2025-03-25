@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const getEnvironment = reactCache(
@@ -27,7 +28,7 @@ export const getEnvironment = reactCache(
           return environment;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error fetching environment");
             throw new DatabaseError(error.message);
           }
 

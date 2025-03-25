@@ -1,3 +1,5 @@
+import Foundation
+
 enum FormbricksAPIErrorType: Int {
     case invalidResponse
     case responseError

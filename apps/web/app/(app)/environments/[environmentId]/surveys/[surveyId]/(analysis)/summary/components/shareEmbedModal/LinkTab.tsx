@@ -16,12 +16,8 @@ interface LinkTabProps {
 
 export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: LinkTabProps) => {
   const { t } = useTranslate();
+
   const docsLinks = [
-    {
-      title: t("environments.surveys.summary.identify_users"),
-      description: t("environments.surveys.summary.identify_users_description"),
-      link: "https://formbricks.com/docs/link-surveys/user-identification",
-    },
     {
       title: t("environments.surveys.summary.data_prefilling"),
       description: t("environments.surveys.summary.data_prefilling_description"),
@@ -53,6 +49,7 @@ export const LinkTab = ({ survey, webAppUrl, surveyUrl, setSurveyUrl, locale }: 
           locale={locale}
         />
       </div>
+
       <div className="flex flex-wrap justify-between gap-2">
         <p className="pt-2 font-semibold text-slate-700">
           {t("environments.surveys.summary.you_can_do_a_lot_more_with_links_surveys")} 💡

@@ -4,6 +4,7 @@ plugins {
     kotlin("kapt")
     kotlin("plugin.serialization") version "2.1.0"
     id("org.jetbrains.dokka") version "1.9.10"
+    id("jacoco")
 }
 
 android {
@@ -11,13 +12,16 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
     }
 
     buildTypes {
+        getByName("debug") {
+            enableAndroidTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -25,6 +29,24 @@ android {
                 "proguard-rules.pro"
             )
         }
+    }
+
+    packaging {
+        resources {
+            excludes += "META-INF/library_release.kotlin_module"
+            excludes += "classes.dex"
+            excludes += "**.**"
+            pickFirsts += "**/DataBinderMapperImpl.java"
+            pickFirsts += "**/DataBinderMapperImpl.class"
+            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.java"
+            pickFirsts += "**/formbrickssdk/DataBinderMapperImpl.class"
+        }
+    }
+    viewBinding {
+        enable = true
+    }
+    dataBinding {
+        enable = true
     }
     buildFeatures {
         dataBinding = true
@@ -36,6 +58,15 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf(
+            "jdk.internal.*",
+        )
     }
 }
 
@@ -52,8 +83,6 @@ dependencies {
 
     implementation(libs.material)
 
-    implementation(libs.timber)
-
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.legacy.support.v4)
     implementation(libs.androidx.lifecycle.livedata.ktx)
@@ -64,4 +93,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(project(":formbricksSDK"))
 }

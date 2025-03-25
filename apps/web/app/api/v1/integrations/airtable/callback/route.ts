@@ -7,6 +7,7 @@ import { fetchAirtableAuthToken } from "@formbricks/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { createOrUpdateIntegration } from "@formbricks/lib/integration/service";
+import { logger } from "@formbricks/logger";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -77,7 +78,7 @@ export const GET = async (req: NextRequest) => {
     await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
     return Response.redirect(`${WEBAPP_URL}/environments/${environmentId}/integrations/airtable`);
   } catch (error) {
-    console.error(error);
+    logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
     responses.internalServerErrorResponse(error);
   }
   responses.badRequestResponse("unknown error occurred");

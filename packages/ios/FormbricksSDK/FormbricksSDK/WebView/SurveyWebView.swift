@@ -26,6 +26,7 @@ struct SurveyWebView: UIViewRepresentable {
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
         webView.isInspectable = true
+        webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         return webView
     }
@@ -51,13 +52,21 @@ struct SurveyWebView: UIViewRepresentable {
 }
 
 extension SurveyWebView {
-    class Coordinator: NSObject, WKUIDelegate {
+    class Coordinator: NSObject, WKUIDelegate, WKNavigationDelegate {
         // webView function handles Javascipt alert
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo,  completionHandler: @escaping () -> Void) {
             let alertController = UIAlertController(title: "", message: message, preferredStyle: .alert)
            alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in })
             UIApplication.safeKeyWindow?.rootViewController?.presentedViewController?.present(alertController, animated: true)
             completionHandler()
+        }
+        
+        func webView(_ webView: WKWebView, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+            if let serverTrust = challenge.protectionSpace.serverTrust {
+                completionHandler(.useCredential, URLCredential(trust: serverTrust))
+            } else {
+                 completionHandler(.useCredential, nil)
+            }
         }
     }
 }
@@ -99,6 +108,10 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
                 if let message = try? JSONDecoder().decode(OpenExternalUrlMessage.self, from: data), let url = URL(string:  message.onOpenExternalURLParams.url) {
                     UIApplication.shared.open(url)
                 }
+                
+            /// Happens when the survey library fails to load.
+            case .onSurveyLibraryLoadError:
+                SurveyManager.shared.dismissSurveyWebView()
             }
             
         } else {
@@ -140,7 +153,8 @@ private extension SurveyWebView {
         console.debug = function() { log("📘", "debug", arguments); originalDebug.apply(null, arguments) }
     
         window.addEventListener("error", function(e) {
-           log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
+            window.webkit.messageHandlers.jsMessage.postMessage(JSON.stringify({ event: "onSurveyLibraryLoadError" }));
+            log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
         })
     """
     }

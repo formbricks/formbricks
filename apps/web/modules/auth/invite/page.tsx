@@ -11,6 +11,7 @@ import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { getUser, updateUser } from "@formbricks/lib/user/service";
+import { logger } from "@formbricks/logger";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {
@@ -131,7 +132,7 @@ export const InvitePage = async (props: InvitePageProps) => {
       </ContentLayout>
     );
   } catch (e) {
-    console.error(e);
+    logger.error(e, "Error in InvitePage");
     return (
       <ContentLayout
         headline={t("auth.invite.invite_not_found")}

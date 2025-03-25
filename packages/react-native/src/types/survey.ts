@@ -1,3 +1,4 @@
+import { type TJsFileUploadParams } from "../../../types/js";
 import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "@/types/config";
 import type { TResponseData, TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
@@ -37,15 +38,20 @@ export interface SurveyInlineProps extends SurveyBaseProps {
 }
 
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
-  apiHost: string;
-  environmentId: string;
+  appUrl?: string;
+  environmentId?: string;
   userId?: string;
-  onDisplayCreated?: () => void;
-  onResponseCreated?: () => void;
+  contactId?: string;
+  onDisplayCreated?: () => void | Promise<void>;
+  onResponseCreated?: () => void | Promise<void>;
+  onFileUpload?: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
+  onOpenExternalURL?: (url: string) => void | Promise<void>;
   mode?: "modal" | "inline";
   containerId?: string;
   clickOutside?: boolean;
   darkOverlay?: boolean;
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
+  singleUseId?: string;
+  singleUseResponseId?: string;
 }
