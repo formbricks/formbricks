@@ -10,7 +10,6 @@ import {
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
-  isContactsBulkApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
   isManagementApiRoute,
@@ -101,7 +100,7 @@ export const middleware = async (originalRequest: NextRequest) => {
   });
 
   // Enforce HTTPS for management endpoints
-  if (isManagementApiRoute(request.nextUrl.pathname) || isContactsBulkApiRoute(request.nextUrl.pathname)) {
+  if (isManagementApiRoute(request.nextUrl.pathname)) {
     const httpsResponse = enforceHttps(request);
     if (httpsResponse) return httpsResponse;
   }
@@ -153,6 +152,5 @@ export const config = {
     "/auth/forgot-password",
     "/api/v1/management/:path*",
     "/api/v2/management/:path*",
-    "/api/v2/contacts/bulk",
   ],
 };

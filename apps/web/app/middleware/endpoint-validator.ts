@@ -19,11 +19,6 @@ export const isManagementApiRoute = (url: string): boolean => {
   return regex.test(url);
 };
 
-export const isContactsBulkApiRoute = (url: string): boolean => {
-  const regex = /^\/api\/v2\/contacts\/bulk$/;
-  return regex.test(url);
-};
-
 export const isShareUrlRoute = (url: string): boolean => {
   const regex = /\/share\/[A-Za-z0-9]+\/(?:summary|responses)/;
   return regex.test(url);

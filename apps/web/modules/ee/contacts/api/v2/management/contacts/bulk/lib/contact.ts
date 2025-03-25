@@ -59,7 +59,7 @@ export const upsertBulkContacts = async (
     };
   }
 
-  const emailKey = "email";
+  const emailAttributeKey = "email";
 
   // Get unique attribute keys from the payload
   const keys = Array.from(
@@ -95,7 +95,7 @@ export const upsertBulkContacts = async (
       environmentId,
       attributes: {
         some: {
-          attributeKey: { key: emailKey },
+          attributeKey: { key: emailAttributeKey },
           value: { in: parsedEmails },
         },
       },
@@ -120,7 +120,7 @@ export const upsertBulkContacts = async (
   >();
 
   existingContacts.forEach((contact) => {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
+    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailAttributeKey);
 
     if (emailAttr) {
       contactMap.set(emailAttr.value, {
@@ -157,7 +157,7 @@ export const upsertBulkContacts = async (
   }[] = [];
 
   for (const contact of filteredContacts) {
-    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailKey);
+    const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailAttributeKey);
 
     if (emailAttr && contactMap.has(emailAttr.value)) {
       contactsToUpdate.push({

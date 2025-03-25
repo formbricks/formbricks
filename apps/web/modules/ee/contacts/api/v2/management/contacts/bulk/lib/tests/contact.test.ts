@@ -1,7 +1,7 @@
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
-import { upsertBulkContacts } from "@/modules/ee/contacts/api/bulk/lib/contact";
+import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 
