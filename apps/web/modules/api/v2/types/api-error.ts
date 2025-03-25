@@ -1,4 +1,6 @@
-export type ApiErrorDetails = { field: string; issue: string }[];
+import { ZodCustomIssue } from "zod";
+
+export type ApiErrorDetails = { field: string; issue: string; params?: ZodCustomIssue["params"] }[];
 
 export type ApiErrorResponseV2 =
   | {

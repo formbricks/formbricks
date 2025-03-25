@@ -10,6 +10,7 @@ import {
 import {
   isAuthProtectedRoute,
   isClientSideApiRoute,
+  isContactsBulkApiRoute,
   isForgotPasswordRoute,
   isLoginRoute,
   isManagementApiRoute,
@@ -32,7 +33,12 @@ const enforceHttps = (request: NextRequest): Response | null => {
   if (IS_PRODUCTION && !E2E_TESTING && forwardedProto !== "https") {
     const apiError: ApiErrorResponseV2 = {
       type: "forbidden",
-      details: [{ field: "", issue: "Only HTTPS connections are allowed on the management endpoint." }],
+      details: [
+        {
+          field: "",
+          issue: "Only HTTPS connections are allowed on the management and contacts bulk endpoints.",
+        },
+      ],
     };
     logApiError(request, apiError);
     return NextResponse.json(apiError, { status: 403 });
@@ -95,7 +101,7 @@ export const middleware = async (originalRequest: NextRequest) => {
   });
 
   // Enforce HTTPS for management endpoints
-  if (isManagementApiRoute(request.nextUrl.pathname)) {
+  if (isManagementApiRoute(request.nextUrl.pathname) || isContactsBulkApiRoute(request.nextUrl.pathname)) {
     const httpsResponse = enforceHttps(request);
     if (httpsResponse) return httpsResponse;
   }
@@ -147,5 +153,6 @@ export const config = {
     "/auth/forgot-password",
     "/api/v1/management/:path*",
     "/api/v2/management/:path*",
+    "/api/v2/contacts/bulk",
   ],
 };

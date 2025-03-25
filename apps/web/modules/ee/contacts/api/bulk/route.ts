@@ -3,8 +3,6 @@ import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authent
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { z } from "zod";
-import { ZUserEmail } from "@formbricks/types/user";
 
 export const PUT = async (request: Request) =>
   authenticatedApiClient({
@@ -21,98 +19,11 @@ export const PUT = async (request: Request) =>
       const { contacts } = parsedInput.body ?? { contacts: [] };
       const { environmentId } = authentication;
 
-      const emailKey = "email";
-
-      const seenEmails = new Set<string>();
-      const duplicateEmails = new Set<string>();
-
-      for (const contact of contacts) {
-        const email = contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value;
-
-        if (email) {
-          if (seenEmails.has(email)) {
-            duplicateEmails.add(email);
-          } else {
-            seenEmails.add(email);
-          }
-        }
-      }
-
-      // Filter out any contacts that have a duplicate email.
-      // All contacts with an email that appears more than once will be excluded.
-      const filteredContactsByEmail = contacts.filter((contact) => {
-        const email = contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value;
-        return email && !duplicateEmails.has(email);
-      });
-
-      if (filteredContactsByEmail.length === 0) {
-        return responses.badRequestResponse({
-          details: [
-            { field: "contacts", issue: "No valid contacts to process after filtering duplicate emails" },
-          ],
-        });
-      }
-
-      // duplicate userIds
-      const seenUserIds = new Set<string>();
-      const duplicateUserIds = new Set<string>();
-
-      for (const contact of filteredContactsByEmail) {
-        const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
-
-        if (userId) {
-          if (seenUserIds.has(userId)) {
-            duplicateUserIds.add(userId);
-          } else {
-            seenUserIds.add(userId);
-          }
-        }
-      }
-
-      // userIds need to be unique, so we get rid of all the contacts with duplicate userIds
-      const filteredContacts = filteredContactsByEmail.filter((contact) => {
-        const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
-        if (userId) {
-          return !duplicateUserIds.has(userId);
-        }
-
-        return true;
-      });
-
-      if (filteredContacts.length === 0) {
-        return responses.badRequestResponse({
-          details: [
-            { field: "contacts", issue: "No valid contacts to process after filtering duplicate userIds" },
-          ],
-        });
-      }
-
-      const emails = filteredContacts
-        .map((contact) => contact.attributes.find((attr) => attr.attributeKey.key === emailKey)?.value)
-        .filter((email): email is string => Boolean(email));
-
-      if (!emails.length) {
-        return responses.badRequestResponse({
-          details: [
-            { field: "contacts", issue: "No email found for any contact, please check your contacts" },
-          ],
-        });
-      }
-
-      const parsedEmails = z.array(ZUserEmail).safeParse(emails);
-      if (!parsedEmails.success) {
-        return responses.badRequestResponse({
-          details: [
-            { field: "contacts", issue: "Invalid email found for some contacts, please check your contacts" },
-          ],
-        });
-      }
-
-      const { contactIdxWithConflictingUserIds } = await upsertBulkContacts(
-        filteredContacts,
-        environmentId,
-        parsedEmails.data
+      const emails = contacts.map(
+        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
       );
+
+      const { contactIdxWithConflictingUserIds } = await upsertBulkContacts(contacts, environmentId, emails);
 
       if (contactIdxWithConflictingUserIds.length) {
         return responses.multiStatusResponse({
@@ -120,7 +31,10 @@ export const PUT = async (request: Request) =>
             status: "success",
             message:
               "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting userIds.",
-            skippedContacts: contactIdxWithConflictingUserIds.map((idx) => `contact_${idx + 1}`),
+            skippedContacts: contactIdxWithConflictingUserIds.map((idx) => ({
+              index: idx,
+              userId: contacts[idx].attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
+            })),
           },
         });
       }
@@ -129,18 +43,7 @@ export const PUT = async (request: Request) =>
         data: {
           status: "success",
           message: "Contacts bulk upload successful",
-          processed: filteredContacts.length,
-          ...(duplicateEmails.size > 0 || duplicateUserIds.size > 0
-            ? {
-                skipped: {
-                  total: contacts.length - filteredContacts.length,
-                  conflicts: {
-                    duplicateEmails: Array.from(duplicateEmails),
-                    duplicateUserIds: Array.from(duplicateUserIds),
-                  },
-                },
-              }
-            : {}),
+          processed: contacts.length,
         },
       });
     },

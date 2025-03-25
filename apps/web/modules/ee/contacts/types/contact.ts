@@ -132,16 +132,74 @@ export const ZContactBulkUploadRequest = z.object({
     .max(1000, { message: "Maximum 1000 contacts allowed at a time." })
     .superRefine((contacts, ctx) => {
       // every contact must have an email attribute
-
       contacts.forEach((contact, idx) => {
         const email = contact.attributes.find((attr) => attr.attributeKey.key === "email");
-        if (!email) {
+        if (!email?.value) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: `Missing email attribute for contact ${idx + 1}`,
+            message: `Missing email attribute for contact at index ${idx}`,
           });
         }
+
+        if (email?.value) {
+          // parse the email:
+          const parsedEmail = z.string().email().safeParse(email.value);
+          if (!parsedEmail.success) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `Invalid email for contact at index ${idx}`,
+            });
+          }
+        }
       });
+
+      const seenEmails = new Set<string>();
+      const duplicateEmails = new Set<string>();
+
+      const seenUserIds = new Set<string>();
+      const duplicateUserIds = new Set<string>();
+
+      for (const contact of contacts) {
+        const email = contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value;
+        const userId = contact.attributes.find((attr) => attr.attributeKey.key === "userId")?.value;
+
+        if (email) {
+          if (seenEmails.has(email)) {
+            duplicateEmails.add(email);
+          } else {
+            seenEmails.add(email);
+          }
+        }
+
+        if (userId) {
+          if (seenUserIds.has(userId)) {
+            duplicateUserIds.add(userId);
+          } else {
+            seenUserIds.add(userId);
+          }
+        }
+      }
+
+      if (duplicateEmails.size > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Duplicate emails found in the records, please ensure each email is unique.",
+          params: {
+            duplicateEmails: Array.from(duplicateEmails),
+          },
+        });
+      }
+
+      // if userId is present, check for duplicate userIds
+      if (duplicateUserIds.size > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Duplicate userIds found in the records, please ensure each userId is unique.",
+          params: {
+            duplicateUserIds: Array.from(duplicateUserIds),
+          },
+        });
+      }
     }),
 });
 

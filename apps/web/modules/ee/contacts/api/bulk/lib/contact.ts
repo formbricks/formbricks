@@ -60,7 +60,7 @@ export const upsertBulkContacts = async (
     new Set(filteredContacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
   );
 
-  // 2. Fetch attribute key records for these keys in this environment
+  // Fetch attribute key records for these keys in this environment
   const attributeKeys = await prisma.contactAttributeKey.findMany({
     where: {
       key: { in: keys },
@@ -73,7 +73,7 @@ export const upsertBulkContacts = async (
     return acc;
   }, {});
 
-  // 2a. Check for missing attribute keys and create them if needed.
+  // Check for missing attribute keys and create them if needed.
   const missingKeysMap = new Map<string, { key: string; name: string }>();
   for (const contact of filteredContacts) {
     for (const attr of contact.attributes) {
@@ -83,7 +83,7 @@ export const upsertBulkContacts = async (
     }
   }
 
-  // 3. Find existing contacts by matching email attribute
+  // Find existing contacts by matching email attribute
   const existingContacts = await prisma.contact.findMany({
     where: {
       environmentId,
@@ -128,7 +128,7 @@ export const upsertBulkContacts = async (
     }
   });
 
-  // 4. Split contacts into ones to update and ones to create
+  // Split contacts into ones to update and ones to create
   const contactsToUpdate: {
     contactId: string;
     attributes: {
@@ -184,12 +184,11 @@ export const upsertBulkContacts = async (
     }
   }
 
-  // 5. Execute everything in ONE transaction
+  // Execute everything in ONE transaction
   await prisma.$transaction(async (tx) => {
-    // Create missing attribute keys if needed (moved inside transaction)
+    // Create missing attribute keys if needed
     if (missingKeysMap.size > 0) {
       const missingKeysArray = Array.from(missingKeysMap.values());
-      // Create missing attribute keys in a batch
       const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
         data: missingKeysArray.map((keyObj) => ({
           key: keyObj.key,
