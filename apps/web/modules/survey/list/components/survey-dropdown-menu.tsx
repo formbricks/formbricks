@@ -8,7 +8,17 @@ import {
   getSurveyAction,
 } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +42,6 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { CopySurveyModal } from "./copy-survey-modal";
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 
 interface SurveyDropDownMenuProps {
   environmentId: string;
@@ -61,7 +70,6 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
-  const responseCount = await getResponseCountBySurveyId(survey.id);
 
   const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
 
@@ -119,6 +127,19 @@ export const SurveyDropDownMenu = ({
     setLoading(false);
   };
 
+  const handleEditforActiveSurvey = (e) => {
+    e.preventDefault();
+    setIsDropDownOpen(false);
+    setIsCautionDialogOpen(true);
+  };
+
+  const handleConfirmNavigation = () => {
+    setIsCautionDialogOpen(false);
+    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
+  };
+
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
@@ -140,27 +161,26 @@ export const SurveyDropDownMenu = ({
             {!isSurveyCreationDeletionDisabled && (
               <>
                 <DropdownMenuItem>
-
-                 {survey.status === "inProgress" && responseCount > 0 
-                  ? 
-                  <Link
-                  // TRIGGER ALERT DIALOG 
-                  
-                  className="flex w-full items-center"
-                  href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                    <SquarePenIcon className="mr-2 size-4" />
-                      HELLO{t("common.edit")}
-                  </Link>
-                  : 
+                  {survey.status === "inProgress" && survey.responseCount > 0 ? (
                     <Link
-                    // TRIGGER ALERT DIALOG 
-                    
-                    className="flex w-full items-center"
-                    href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                      // TRIGGER ALERT DIALOG
+
+                      className="flex w-full items-center"
+                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                      onClick={handleEditforActiveSurvey}>
                       <SquarePenIcon className="mr-2 size-4" />
-                        {t("common.edit")}
+                      HELLO{t("common.edit")}
                     </Link>
-                  }
+                  ) : (
+                    <Link
+                      // TRIGGER ALERT DIALOG
+
+                      className="flex w-full items-center"
+                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                      <SquarePenIcon className="mr-2 size-4" />
+                      {t("common.edit")}
+                    </Link>
+                  )}
                 </DropdownMenuItem>
 
                 <DropdownMenuItem>
@@ -253,6 +273,29 @@ export const SurveyDropDownMenu = ({
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("environments.surveys.delete_survey_and_responses_warning")}
         />
+      )}
+
+      {survey.responseCount > 0 && (
+        <AlertDialog
+          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          mainText={
+            <>
+              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+              <p>{t("environments.surveys.edit.caution_explanation_intro")}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-5">
+                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+              </ul>
+            </>
+          }
+          confirmBtnLabel={t("common.duplicate")}
+          declineBtnLabel={t("common.edit")}
+          onConfirm={() => handleConfirmNavigation()}
+          onDecline={() => setIsCautionDialogOpen(false)}></AlertDialog>
       )}
 
       {isCopyFormOpen && (
