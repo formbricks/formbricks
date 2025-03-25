@@ -53,6 +53,12 @@ export const upsertBulkContacts = async (
     return !existingUserId;
   });
 
+  if (!filteredContacts.length) {
+    return {
+      contactIdxWithConflictingUserIds,
+    };
+  }
+
   const emailKey = "email";
 
   // Get unique attribute keys from the payload

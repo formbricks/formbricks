@@ -23,6 +23,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
       rateLimit,
       handler,
     });
+
     if (response.ok) {
       logApiRequest(request, response.status);
     }

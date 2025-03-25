@@ -1,4 +1,5 @@
 import { responses } from "@/modules/api/v2/lib/response";
+import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
@@ -13,7 +14,10 @@ export const PUT = async (request: Request) =>
     handler: async ({ authentication, parsedInput }) => {
       const isContactsEnabled = await getIsContactsEnabled();
       if (!isContactsEnabled) {
-        return responses.forbiddenResponse();
+        return handleApiError(request, {
+          type: "forbidden",
+          details: [{ field: "error", issue: "Contacts are not enabled for this environment." }],
+        });
       }
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
