@@ -48,7 +48,7 @@ model Webhook {
   id            String             @id @default(cuid())
   name          String?
   createdAt     DateTime           @default(now()) @map(name: "created_at")
-  updatedAt     DateTime           @updatedAt @map(name: "updated_at")
+  updatedAt     DateTime           @default(now()) @updatedAt @map(name: "updated_at")
   url           String
   source        WebhookSource      @default(user)
   environment   Environment        @relation(fields: [environmentId], references: [id], onDelete: Cascade)
