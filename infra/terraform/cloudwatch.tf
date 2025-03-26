@@ -58,7 +58,7 @@ locals {
       }
     }
     ALB_TargetResponseTime = {
-      alarm_description   = format("Average API response time is greater than %s", 0.05)
+      alarm_description   = format("Average API response time is greater than %s", 5)
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
       threshold           = 5
@@ -72,7 +72,7 @@ locals {
       }
     }
     ALB_UnHealthyHostCount = {
-      alarm_description   = format("Unhealthy host count is greater than %s", 1)
+      alarm_description   = format("Unhealthy host count is greater than %s", 2)
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
       threshold           = 2
