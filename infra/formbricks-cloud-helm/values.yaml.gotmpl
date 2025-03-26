@@ -73,6 +73,12 @@ cronJob:
 
 ## Deployment & Autoscaling
 deployment:
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
   env:
     DOCKER_CRON_ENABLED:
       value: "0"
@@ -89,7 +95,7 @@ deployment:
   reloadOnChange: true
 autoscaling:
   enabled: true
-  maxReplicas: 40
+  maxReplicas: 95
   minReplicas: 3
   metrics:
     - resource:
