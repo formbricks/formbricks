@@ -32,6 +32,11 @@ export const POST = async (): Promise<Response> => {
     const batchedProjects = await Promise.all(batchedProjectsPromises);
     for (const projects of batchedProjects) {
       for (const project of projects) {
+        // Skip projects without production environments
+        if (!project.environments || project.environments.length === 0) {
+          continue;
+        }
+
         const organizationMembers = project.organization.memberships;
         const organizationMembersWithNotificationEnabled = organizationMembers.filter(
           (member) =>
