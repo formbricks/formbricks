@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { isS3Configured } from "@formbricks/lib/constants";
 import { environmentCache } from "@formbricks/lib/environment/cache";
 import { createEnvironment } from "@formbricks/lib/environment/service";
@@ -140,12 +141,15 @@ export const createProject = async (
 
     return updatedProject;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
       throw new InvalidInputError("A project with this name already exists in your organization");
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw new InvalidInputError("A project with this name already exists in this organization");
       }
       throw new DatabaseError(error.message);
