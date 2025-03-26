@@ -1,7 +1,7 @@
+import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
+import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
 import { checkRateLimitAndThrowError } from "@/modules/api/v2/lib/rate-limit";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { apiWrapper } from "@/modules/api/v2/management/auth/api-wrapper";
-import { authenticateRequest } from "@/modules/api/v2/management/auth/authenticate-request";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
