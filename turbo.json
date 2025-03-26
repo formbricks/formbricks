@@ -10,6 +10,9 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
@@ -37,6 +40,7 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+
     "@formbricks/js-core#go": {
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
@@ -47,6 +51,12 @@
     },
     "@formbricks/js-core#test": {
       "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/lib#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/lib#test": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
@@ -80,6 +90,12 @@
       "cache": false,
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
+    },
+    "@formbricks/web#test": {
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+    },
+    "@formbricks/web#test:coverage": {
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -131,6 +147,7 @@
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_APP_ID",
         "INTERCOM_SECRET_KEY",
+        "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
         "NEXT_PUBLIC_LAYER_API_KEY",
@@ -143,8 +160,6 @@
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
         "NEXT_PUBLIC_SENTRY_DSN",
-        "NEXT_PUBLIC_POSTHOG_API_HOST",
-        "NEXT_PUBLIC_POSTHOG_API_KEY",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
@@ -161,6 +176,8 @@
         "OIDC_SIGNING_ALGORITHM",
         "PASSWORD_RESET_DISABLED",
         "PLAYWRIGHT_CI",
+        "POSTHOG_API_HOST",
+        "POSTHOG_API_KEY",
         "PRIVACY_URL",
         "RATE_LIMITING_DISABLED",
         "REDIS_HTTP_URL",
@@ -232,6 +249,7 @@
     },
     "db:setup": {
       "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
       "outputs": []
     },
     "db:start": {

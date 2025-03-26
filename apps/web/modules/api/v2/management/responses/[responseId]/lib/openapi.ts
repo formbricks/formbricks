@@ -1,4 +1,5 @@
 import { responseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
@@ -19,7 +20,7 @@ export const getResponseEndpoint: ZodOpenApiOperationObject = {
       description: "Response retrieved successfully.",
       content: {
         "application/json": {
-          schema: ZResponse,
+          schema: makePartialSchema(ZResponse),
         },
       },
     },
@@ -41,7 +42,7 @@ export const deleteResponseEndpoint: ZodOpenApiOperationObject = {
       description: "Response deleted successfully.",
       content: {
         "application/json": {
-          schema: ZResponse,
+          schema: makePartialSchema(ZResponse),
         },
       },
     },
@@ -72,7 +73,7 @@ export const updateResponseEndpoint: ZodOpenApiOperationObject = {
       description: "Response updated successfully.",
       content: {
         "application/json": {
-          schema: ZResponse,
+          schema: makePartialSchema(ZResponse),
         },
       },
     },
