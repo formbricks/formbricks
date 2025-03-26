@@ -20,9 +20,7 @@ icon: "eye-slash"
 
 ![Filled Hidden Fields](/images/xm-and-surveys/surveys/general-features/hidden-fields/filled-hidden-fields.webp)
 
-## Set Hidden Field in Responses
-
-### Link Surveys
+### Set Hidden Field in Link Surveys
 
 Single Hidden Field:
 
@@ -36,20 +34,8 @@ Multiple Hidden Fields:
   sh https://formbricks.com/clin3dxja02k8l80hpwmx4bjy?screen=landing_page&job=Founder
 ```
 
-### App & Website Surveys
-
-For in-product surveys, you can set hidden fields in the response by adding them to the `formbricks.track` call:
-
-<CodeGroup>
-  ```JS action.js
-  formbricks.track("my event", {
-    hiddenFields: {
-      screen: "landing_page",
-      job: "Founder"
-    },
-  });
-  ```
-</CodeGroup>
+### Website & App Surveys
+We're reworking our approach to setting hidden fields in Website & App Surveys.
 
 ## View Hidden Fields in Responses
 
