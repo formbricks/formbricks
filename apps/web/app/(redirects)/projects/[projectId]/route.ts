@@ -19,6 +19,8 @@ export const GET = async (_: Request, context: { params: Promise<{ projectId: st
   if (!hasAccess) throw new AuthorizationError("Unauthorized");
   // redirect to project's production environment
   const environments = await getEnvironments(project.id);
+  if (!environments || environments.length === 0) return notFound();
+
   const prodEnvironment = environments.find((e) => e.type === "production");
   if (!prodEnvironment) return notFound();
   redirect(`/environments/${prodEnvironment.id}/`);
