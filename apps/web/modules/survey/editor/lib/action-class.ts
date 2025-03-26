@@ -1,5 +1,6 @@
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { actionClassCache } from "@formbricks/lib/actionClass/cache";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -28,7 +29,10 @@ export const createActionClass = async (
 
     return actionClassPrisma;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.UniqueConstraintViolation
+    ) {
       throw new DatabaseError(
         `Action with ${error.meta?.target?.[0]} ${actionClass[error.meta?.target?.[0]]} already exists`
       );

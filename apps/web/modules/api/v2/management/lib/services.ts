@@ -41,3 +41,36 @@ export const fetchEnvironmentId = reactCache(async (id: string, isResponseId: bo
     }
   )()
 );
+
+export const fetchEnvironmentIdFromSurveyIds = reactCache(async (surveyIds: string[]) =>
+  cache(
+    async (): Promise<Result<string[], ApiErrorResponseV2>> => {
+      try {
+        const results = await prisma.survey.findMany({
+          where: { id: { in: surveyIds } },
+          select: {
+            environmentId: true,
+          },
+        });
+
+        if (results.length !== surveyIds.length) {
+          return err({
+            type: "not_found",
+            details: [{ field: "survey", issue: "not found" }],
+          });
+        }
+
+        return ok(results.map((result) => result.environmentId));
+      } catch (error) {
+        return err({
+          type: "internal_server_error",
+          details: [{ field: "survey", issue: error.message }],
+        });
+      }
+    },
+    [`services-fetchEnvironmentIdFromSurveyIds-${surveyIds.join("-")}`],
+    {
+      tags: surveyIds.map((surveyId) => surveyCache.tag.byId(surveyId)),
+    }
+  )()
+);

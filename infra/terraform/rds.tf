@@ -15,14 +15,14 @@ module "rds-aurora" {
   source  = "terraform-aws-modules/rds-aurora/aws"
   version = "9.12.0"
 
-  name                        = "${local.name}-postgres"
-  engine                      = data.aws_rds_engine_version.postgresql.engine
-  engine_mode                 = "provisioned"
-  engine_version              = data.aws_rds_engine_version.postgresql.version
-  storage_encrypted           = true
-  master_username             = "formbricks"
-  master_password             = random_password.postgres.result
-  manage_master_user_password = false
+  name                              = "${local.name}-postgres"
+  engine                            = data.aws_rds_engine_version.postgresql.engine
+  engine_mode                       = "provisioned"
+  engine_version                    = data.aws_rds_engine_version.postgresql.version
+  storage_encrypted                 = true
+  master_username                   = "formbricks"
+  master_password                   = random_password.postgres.result
+  manage_master_user_password       = false
   create_db_cluster_parameter_group = true
   db_cluster_parameter_group_family = data.aws_rds_engine_version.postgresql.parameter_group_family
   db_cluster_parameter_group_parameters = [

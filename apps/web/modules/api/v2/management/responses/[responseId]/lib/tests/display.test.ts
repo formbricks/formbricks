@@ -2,6 +2,7 @@ import { displayId, mockDisplay } from "./__mocks__/display.mock";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { deleteDisplay } from "../display";
 
 vi.mock("@formbricks/database", () => ({
@@ -39,7 +40,7 @@ describe("Display Lib", () => {
   test("return a not_found error when the display is not found", async () => {
     vi.mocked(prisma.display.delete).mockRejectedValue(
       new PrismaClientKnownRequestError("Display not found", {
-        code: "P2025",
+        code: PrismaErrorType.RelatedRecordDoesNotExist,
         clientVersion: "1.0.0",
         meta: {
           cause: "Display not found",
