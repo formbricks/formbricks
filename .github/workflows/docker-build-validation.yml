@@ -20,7 +20,7 @@ jobs:
     # Add PostgreSQL service container
     services:
       postgres:
-        image: postgres:15
+        image: pgvector/pgvector:pg17
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
