@@ -51,6 +51,8 @@ jobs:
           tags: formbricks-test:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          build-args: |
+            DATABASE_URL=postgresql://test:test@host.docker.internal:5432/formbricks
 
       - name: Verify PostgreSQL Connection
         run: |

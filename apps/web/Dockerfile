@@ -26,6 +26,7 @@ RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
+ARG DATABASE_URL
 
 # Increase Node.js memory limit
 # ENV NODE_OPTIONS="--max_old_space_size=4096"
