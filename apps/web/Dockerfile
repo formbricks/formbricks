@@ -24,7 +24,7 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
-ARG SENTRY_DSN
+ENV SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
 # Increase Node.js memory limit
