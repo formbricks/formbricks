@@ -1,0 +1,28 @@
+{{- if and (.Values.serviceMonitor).enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") }}
+---
+apiVersion: "monitoring.coreos.com/v1"
+kind: ServiceMonitor
+metadata:
+  name: {{ template "formbricks.name" . }}-svc-monitor
+  namespace: {{ include "formbricks.namespace" . }}
+  labels:
+  {{- include "formbricks.labels" $ | nindent 4 }}
+{{- if .Values.serviceMonitor.additionalLabels }}
+{{ toYaml .Values.serviceMonitor.additionalLabels | indent 4 }}
+{{- end }}
+{{- if .Values.serviceMonitor.annotations }}
+  annotations:
+{{- end }}
+{{- if or .Values.serviceMonitor.annotations }}
+{{ toYaml .Values.serviceMonitor.annotations | indent 4 }}
+{{- end }}
+spec:
+  selector:
+    matchLabels:
+{{ include "formbricks.labels" $ | indent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ include "formbricks.namespace" . }}
+  endpoints:
+{{ toYaml .Values.serviceMonitor.endpoints | indent 4 }}
+{{- end }}

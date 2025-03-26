@@ -35,6 +35,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   FB_LOGO_URL: "https://example.com/mock-logo.png",
   SMTP_HOST: "mock-smtp-host",
   SMTP_PORT: "mock-smtp-port",
+  IS_POSTHOG_CONFIGURED: true,
 }));
 
 // Create a spy for refreshSingleUseId so we can override it in tests

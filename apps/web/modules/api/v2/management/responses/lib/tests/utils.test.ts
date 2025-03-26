@@ -1,97 +1,40 @@
+import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
-import { describe, expect, test } from "vitest";
+import { Prisma } from "@prisma/client";
+import { describe, expect, it, vi } from "vitest";
 import { getResponsesQuery } from "../utils";
 
+vi.mock("@/modules/api/v2/management/lib/utils", () => ({
+  pickCommonFilter: vi.fn(),
+  buildCommonFilterQuery: vi.fn(),
+}));
+
 describe("getResponsesQuery", () => {
-  const environmentId = "env_1";
-  const filters: TGetResponsesFilter = {
-    limit: 10,
-    skip: 0,
-    sortBy: "createdAt",
-    order: "asc",
-  };
-
-  test("return the base query when no params are provided", () => {
-    const query = getResponsesQuery([environmentId]);
-    expect(query).toEqual({
-      where: {
-        survey: { environmentId: { in: [environmentId] } },
-      },
-    });
+  it("adds surveyId to where clause if provided", () => {
+    const result = getResponsesQuery(["env-id"], { surveyId: "survey123" } as TGetResponsesFilter);
+    expect(result?.where?.surveyId).toBe("survey123");
   });
 
-  test("add surveyId to the query when provided", () => {
-    const query = getResponsesQuery([environmentId], { ...filters, surveyId: "survey_1" });
-    expect(query.where).toEqual({
-      survey: { environmentId: { in: [environmentId] } },
-      surveyId: "survey_1",
-    });
+  it("adds contactId to where clause if provided", () => {
+    const result = getResponsesQuery(["env-id"], { contactId: "contact123" } as TGetResponsesFilter);
+    expect(result?.where?.contactId).toBe("contact123");
   });
 
-  test("add startDate filter to the query", () => {
-    const startDate = new Date("2023-01-01");
-    const query = getResponsesQuery([environmentId], { ...filters, startDate });
-    expect(query.where).toEqual({
-      survey: { environmentId: { in: [environmentId] } },
-      createdAt: { gte: startDate },
-    });
-  });
+  it("calls pickCommonFilter & buildCommonFilterQuery with correct arguments", () => {
+    vi.mocked(pickCommonFilter).mockReturnValueOnce({ someFilter: true } as any);
+    vi.mocked(buildCommonFilterQuery).mockReturnValueOnce({ where: { combined: true } as any });
 
-  test("add endDate filter to the query", () => {
-    const endDate = new Date("2023-01-31");
-    const query = getResponsesQuery([environmentId], { ...filters, endDate });
-    expect(query.where).toEqual({
-      survey: { environmentId: { in: [environmentId] } },
-      createdAt: { lte: endDate },
-    });
-  });
-
-  test("add sortBy and order to the query", () => {
-    const query = getResponsesQuery([environmentId], { ...filters, sortBy: "createdAt", order: "desc" });
-    expect(query.orderBy).toEqual({
-      createdAt: "desc",
-    });
-  });
-
-  test("add limit (take) to the query", () => {
-    const query = getResponsesQuery([environmentId], { ...filters, limit: 10 });
-    expect(query.take).toBe(10);
-  });
-
-  test("add skip to the query", () => {
-    const query = getResponsesQuery([environmentId], { ...filters, skip: 5 });
-    expect(query.skip).toBe(5);
-  });
-
-  test("add contactId to the query", () => {
-    const query = getResponsesQuery([environmentId], { ...filters, contactId: "contact_1" });
-    expect(query.where).toEqual({
-      survey: { environmentId: { in: [environmentId] } },
-      contactId: "contact_1",
-    });
-  });
-
-  test("combine multiple filters correctly", () => {
-    const params = {
-      ...filters,
-      surveyId: "survey_1",
-      startDate: new Date("2023-01-01"),
-      endDate: new Date("2023-01-31"),
-      limit: 20,
-      skip: 10,
-      contactId: "contact_1",
-    };
-    const query = getResponsesQuery([environmentId], params);
-    expect(query.where).toEqual({
-      survey: { environmentId: { in: [environmentId] } },
-      surveyId: "survey_1",
-      createdAt: { lte: params.endDate, gte: params.startDate },
-      contactId: "contact_1",
-    });
-    expect(query.orderBy).toEqual({
-      createdAt: "asc",
-    });
-    expect(query.take).toBe(20);
-    expect(query.skip).toBe(10);
+    const result = getResponsesQuery(["env-id"], { surveyId: "test" } as TGetResponsesFilter);
+    expect(pickCommonFilter).toHaveBeenCalledWith({ surveyId: "test" });
+    expect(buildCommonFilterQuery).toHaveBeenCalledWith(
+      expect.objectContaining<Prisma.ResponseFindManyArgs>({
+        where: {
+          survey: { environmentId: { in: ["env-id"] } },
+          surveyId: "test",
+        },
+      }),
+      { someFilter: true }
+    );
+    expect(result).toEqual({ where: { combined: true } });
   });
 });

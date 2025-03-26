@@ -1,6 +1,5 @@
 import { Prisma } from "@prisma/client";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TAttributeClass } from "@formbricks/types/attribute-classes";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -14,8 +13,25 @@ import {
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
-import { selectContact } from "../../../person/service";
 import { selectSurvey } from "../../service";
+
+const selectContact = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  environmentId: true,
+  attributes: {
+    select: {
+      value: true,
+      attributeKey: {
+        select: {
+          key: true,
+          name: true,
+        },
+      },
+    },
+  },
+};
 
 const currentDate = new Date();
 const fourDaysAgo = new Date();
@@ -42,6 +58,7 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      projectId: mockId,
     },
   },
   {
@@ -53,6 +70,7 @@ export const mockSurveyLanguages: TSurveyLanguage[] = [
       alias: null,
       createdAt: new Date(),
       updatedAt: new Date(),
+      projectId: mockId,
     },
   },
 ];
@@ -63,10 +81,7 @@ export const mockProject: TProject = {
   updatedAt: currentDate,
   name: "mock Project",
   organizationId: mockId,
-  brandColor: "#000000",
-  highlightBorderColor: "#000000",
   recontactDays: 0,
-  displayLimit: 0,
   linkSurveyBranding: false,
   inAppSurveyBranding: false,
   placement: "bottomRight",
@@ -74,6 +89,10 @@ export const mockProject: TProject = {
   darkOverlay: false,
   environments: [],
   languages: [],
+  config: {
+    channel: "link",
+    industry: "saas",
+  },
   styling: {
     allowStyleOverwrite: false,
   },
@@ -115,9 +134,10 @@ export const mockUser: TUser = {
     unsubscribedOrganizationIds: [],
   },
   role: "other",
+  locale: "en-US",
 };
 
-export const mockPrismaPerson: Prisma.PersonGetPayload<{
+export const mockPrismaPerson: Prisma.ContactGetPayload<{
   include: typeof selectContact;
 }> = {
   id: mockId,
@@ -125,8 +145,8 @@ export const mockPrismaPerson: Prisma.PersonGetPayload<{
   attributes: [
     {
       value: "de",
-      attributeClass: {
-        id: mockId,
+      attributeKey: {
+        key: "language",
         name: "language",
       },
     },
@@ -189,7 +209,7 @@ const baseSurveyProperties = {
   endings: [
     {
       id: "umyknohldc7w26ocjdhaa62c",
-      type: "endScreen",
+      type: "endScreen" as const,
       headline: { default: "Thank You!", de: "Danke!" },
     },
   ],
@@ -241,6 +261,11 @@ export const mockSyncSurveyOutput: SurveyMock = {
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   ...baseSurveyProperties,
+  followUps: [],
+  variables: [],
+  showLanguageSwitch: null,
+  thankYouCard: null,
+  verifyEmail: null,
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -260,6 +285,10 @@ export const mockSurveyOutput: SurveyMock = {
   inlineTriggers: null,
   languages: mockSurveyLanguages,
   followUps: [],
+  variables: [],
+  showLanguageSwitch: null,
+  thankYouCard: null,
+  verifyEmail: null,
   ...baseSurveyProperties,
 };
 
