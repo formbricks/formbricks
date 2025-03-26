@@ -1,18 +1,14 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { CheckIcon } from "lucide-react";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -21,20 +17,8 @@ const Page = async (props) => {
     notFound();
   }
 
-  const session = await getServerSession(authOptions);
+  const { isMember, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
 
-  const organization = await getOrganizationByEnvironmentId(params.environmentId);
-
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
-
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
-
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember } = getAccessFlags(currentUserMembership?.role);
   const isPricingDisabled = isMember;
 
   if (isPricingDisabled) {

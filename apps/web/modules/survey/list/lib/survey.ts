@@ -15,6 +15,7 @@ import { projectCache } from "@formbricks/lib/project/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 
@@ -72,7 +73,7 @@ export const getSurveys = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -161,7 +162,7 @@ export const getSurveysSortedByRelevance = reactCache(
           return surveys;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys sorted by relevance");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -193,7 +194,7 @@ export const getSurvey = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -283,7 +284,7 @@ export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error deleting survey");
       throw new DatabaseError(error.message);
     }
 
@@ -606,7 +607,7 @@ export const copySurveyToOtherEnvironment = async (
     return newSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error copying survey to other environment");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -628,7 +629,7 @@ export const getSurveyCount = reactCache(
           return surveyCount;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey count");
             throw new DatabaseError(error.message);
           }
 

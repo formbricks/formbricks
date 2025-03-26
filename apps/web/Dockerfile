@@ -24,12 +24,6 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
-# Set hardcoded environment variables
-ENV DATABASE_URL="postgresql://placeholder:for@build:5432/gets_overwritten_at_runtime?schema=public"
-ENV NEXTAUTH_SECRET="placeholder_for_next_auth_of_64_chars_get_overwritten_at_runtime"
-ENV ENCRYPTION_KEY="placeholder_for_build_key_of_64_chars_get_overwritten_at_runtime"
-ENV CRON_SECRET="placeholder_for_cron_secret_of_64_chars_get_overwritten_at_runtime"
-
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
@@ -85,6 +79,8 @@ COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
 
 # Copy Prisma-specific generated files
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
@@ -93,14 +89,16 @@ COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_mod
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
 COPY /docker/cronjobs /app/docker/cronjobs
 
-# Copy only @paralleldrive/cuid2 and @noble/hashes
+# Copy required dependencies
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+COPY --from=installer /app/node_modules/zod ./node_modules/zod
 
-RUN npm install -g tsx typescript prisma
+RUN npm install -g tsx typescript prisma pino-pretty
 
 EXPOSE 3000
 ENV HOSTNAME "0.0.0.0"
+ENV NODE_ENV="production"
 # USER nextjs
 
 # Prepare volume for uploads

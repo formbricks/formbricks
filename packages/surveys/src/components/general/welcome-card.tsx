@@ -139,7 +139,7 @@ export function WelcomeCard({
           {fileUrl ? (
             <img
               src={fileUrl}
-              className="fb-mb-8 fb-max-h-96 fb-w-1/3 fb-rounded-lg fb-object-contain"
+              className="fb-mb-8 fb-max-h-96 fb-w-1/4 fb-rounded-lg fb-object-contain"
               alt="Company Logo"
             />
           ) : null}

@@ -9,71 +9,40 @@ import notionLogo from "@/images/notion.png";
 import SlackLogo from "@/images/slacklogo.png";
 import WebhookLogo from "@/images/webhook.png";
 import ZapierLogo from "@/images/zapier-small.png";
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Card } from "@/modules/ui/components/integration-card";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
 import Image from "next/image";
 import { redirect } from "next/navigation";
-import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { TIntegrationType } from "@formbricks/types/integration";
 
 const Page = async (props) => {
   const params = await props.params;
-  const environmentId = params.environmentId;
   const t = await getTranslate();
+
+  const { isReadOnly, environment, isBilling } = await getEnvironmentAuth(params.environmentId);
+
   const [
-    environment,
     integrations,
-    organization,
-    session,
     userWebhookCount,
     zapierWebhookCount,
     makeWebhookCount,
     n8nwebhookCount,
     activePiecesWebhookCount,
   ] = await Promise.all([
-    getEnvironment(environmentId),
-    getIntegrations(environmentId),
-    getOrganizationByEnvironmentId(params.environmentId),
-    getServerSession(authOptions),
-    getWebhookCountBySource(environmentId, "user"),
-    getWebhookCountBySource(environmentId, "zapier"),
-    getWebhookCountBySource(environmentId, "make"),
-    getWebhookCountBySource(environmentId, "n8n"),
-    getWebhookCountBySource(environmentId, "activepieces"),
+    getIntegrations(params.environmentId),
+    getWebhookCountBySource(params.environmentId, "user"),
+    getWebhookCountBySource(params.environmentId, "zapier"),
+    getWebhookCountBySource(params.environmentId, "make"),
+    getWebhookCountBySource(params.environmentId, "n8n"),
+    getWebhookCountBySource(params.environmentId, "activepieces"),
   ]);
 
   const isIntegrationConnected = (type: TIntegrationType) =>
     integrations.some((integration) => integration.type === type);
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
-
-  if (!organization) {
-    throw new Error(t("common.organization_not_found"));
-  }
-
-  if (!environment) {
-    throw new Error(t("common.environment_not_found"));
-  }
-
-  const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
-  const { isMember, isBilling } = getAccessFlags(currentUserMembership?.role);
-
-  const projectPermission = await getProjectPermissionByUserId(session?.user.id, environment?.projectId);
-
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
-
-  const isReadOnly = isMember && hasReadAccess;
 
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
@@ -244,7 +213,7 @@ const Page = async (props) => {
     docsHref: "https://formbricks.com/docs/app-surveys/quickstart",
     docsText: t("common.docs"),
     docsNewTab: true,
-    connectHref: `/environments/${environmentId}/project/app-connection`,
+    connectHref: `/environments/${params.environmentId}/project/app-connection`,
     connectText: t("common.connect"),
     connectNewTab: false,
     label: "Javascript SDK",

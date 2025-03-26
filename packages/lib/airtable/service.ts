@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
@@ -60,7 +61,7 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   const parsedToken = ZIntegrationAirtableTokenSchema.safeParse(tokenRes);
 
   if (!parsedToken.success) {
-    console.error(parsedToken.error);
+    logger.error(parsedToken.error, "Error parsing airtable token");
     throw new Error(parsedToken.error.message);
   }
   const { access_token, refresh_token, expires_in } = parsedToken.data;

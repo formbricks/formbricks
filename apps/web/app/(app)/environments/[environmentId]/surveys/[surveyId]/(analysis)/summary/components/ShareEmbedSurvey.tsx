@@ -27,17 +27,9 @@ interface ShareEmbedSurveyProps {
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
-  surveyDomain: string;
 }
 
-export const ShareEmbedSurvey = ({
-  survey,
-  open,
-  modalView,
-  setOpen,
-  user,
-  surveyDomain,
-}: ShareEmbedSurveyProps) => {
+export const ShareEmbedSurvey = ({ survey, open, modalView, setOpen, user }: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
@@ -60,7 +52,7 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState(surveyDomain + "/s/" + survey.id);
+  const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
     if (survey.type !== "link") {

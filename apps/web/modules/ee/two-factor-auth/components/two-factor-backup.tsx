@@ -4,7 +4,6 @@ import { FormField, FormItem } from "@/modules/ui/components/form";
 import { FormControl } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
-import React from "react";
 import { UseFormReturn } from "react-hook-form";
 
 interface TwoFactorBackupProps {

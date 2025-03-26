@@ -18,3 +18,7 @@ data "aws_iam_roles" "administrator" {
 data "aws_iam_roles" "github" {
   name_regex = "formbricks-prod-github"
 }
+
+data "aws_acm_certificate" "formbricks" {
+  domain = local.domain
+}

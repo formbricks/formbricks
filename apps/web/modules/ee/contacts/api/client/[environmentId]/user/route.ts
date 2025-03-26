@@ -2,9 +2,11 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest, userAgent } from "next/server";
+import { logger } from "@formbricks/logger";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsPersonState, ZJsUserIdentifyInput, ZJsUserUpdateInput } from "@formbricks/types/js";
+import { ZUserEmail } from "@formbricks/types/user";
 import { updateUser } from "./lib/update-user";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -43,6 +45,17 @@ export const POST = async (
       );
     }
 
+    // validate email if present in attributes
+    if (parsedInput.data.attributes?.email) {
+      const emailValidation = ZUserEmail.safeParse(parsedInput.data.attributes.email);
+      if (!emailValidation.success) {
+        return responses.badRequestResponse(
+          "Invalid email",
+          transformErrorToDetails(emailValidation.error),
+          true
+        );
+      }
+    }
     const { userId, attributes } = parsedInput.data;
 
     const isContactsEnabled = await getIsContactsEnabled();
@@ -82,11 +95,11 @@ export const POST = async (
         return responses.notFoundResponse(err.resourceType, err.resourceId);
       }
 
-      console.error(err);
+      logger.error({ err, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
       return responses.internalServerErrorResponse(err.message ?? "Unable to fetch person state", true);
     }
   } catch (error) {
-    console.error(error);
+    logger.error({ error, url: request.url }, "Error in POST /api/v1/client/[environmentId]/user");
     return responses.internalServerErrorResponse(`Unable to complete response: ${error.message}`, true);
   }
 };

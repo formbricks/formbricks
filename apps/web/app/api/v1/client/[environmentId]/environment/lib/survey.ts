@@ -5,6 +5,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
@@ -80,7 +81,7 @@ export const getSurveysForEnvironmentState = reactCache(
           return surveysPrisma.map((survey) => transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys for environment state");
             throw new DatabaseError(error.message);
           }
           throw error;

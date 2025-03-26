@@ -1,14 +1,12 @@
 "use client";
 
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
+import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { SurveyTypeIndicator } from "@/modules/survey/list/components/survey-type-indicator";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
 import { TUserLocale } from "@formbricks/types/user";
@@ -33,43 +31,26 @@ export const SurveyCard = ({
   locale,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
-  const surveyStatusLabel =
-    survey.status === "inProgress"
-      ? t("common.in_progress")
-      : survey.status === "scheduled"
-        ? t("common.scheduled")
-        : survey.status === "completed"
-          ? t("common.completed")
-          : survey.status === "draft"
-            ? t("common.draft")
-            : survey.status === "paused"
-              ? t("common.paused")
-              : undefined;
+  const surveyStatusLabel = (() => {
+    switch (survey.status) {
+      case "inProgress":
+        return t("common.in_progress");
+      case "scheduled":
+        return t("common.scheduled");
+      case "completed":
+        return t("common.completed");
+      case "draft":
+        return t("common.draft");
+      case "paused":
+        return t("common.paused");
+      default:
+        return undefined;
+    }
+  })();
 
   const isSurveyCreationDeletionDisabled = isReadOnly;
 
-  const [singleUseId, setSingleUseId] = useState<string | undefined>();
-
-  useEffect(() => {
-    const fetchSingleUseId = async () => {
-      if (survey.singleUse?.enabled) {
-        const generateSingleUseIdResponse = await generateSingleUseIdAction({
-          surveyId: survey.id,
-          isEncrypted: !!survey.singleUse?.isEncrypted,
-        });
-        if (generateSingleUseIdResponse?.data) {
-          setSingleUseId(generateSingleUseIdResponse.data);
-        } else {
-          const errorMessage = getFormattedErrorMessage(generateSingleUseIdResponse);
-          toast.error(errorMessage);
-        }
-      } else {
-        setSingleUseId(undefined);
-      }
-    };
-
-    fetchSingleUseId();
-  }, [survey]);
+  const { refreshSingleUseId } = useSingleUseId(survey);
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"
@@ -123,7 +104,7 @@ export const SurveyCard = ({
           environmentId={environmentId}
           surveyDomain={surveyDomain}
           disabled={isDraftAndReadOnly}
-          singleUseId={singleUseId}
+          refreshSingleUseId={refreshSingleUseId}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           duplicateSurvey={duplicateSurvey}
           deleteSurvey={deleteSurvey}

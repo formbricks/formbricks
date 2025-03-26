@@ -34,7 +34,7 @@ interface VariableStackEntry {
 }
 
 export function Survey({
-  apiHost,
+  appUrl,
   environmentId,
   isPreviewMode = false,
   userId,
@@ -73,15 +73,15 @@ export function Survey({
 }: SurveyContainerProps) {
   let apiClient: ApiClient | null = null;
 
-  if (apiHost && environmentId) {
+  if (appUrl && environmentId) {
     apiClient = new ApiClient({
-      apiHost,
+      appUrl,
       environmentId,
     });
   }
 
   const surveyState = useMemo(() => {
-    if (apiHost && environmentId) {
+    if (appUrl && environmentId) {
       if (mode === "inline") {
         return new SurveyState(survey.id, singleUseId, singleUseResponseId, userId, contactId);
       }
@@ -89,14 +89,14 @@ export function Survey({
       return new SurveyState(survey.id, null, null, userId, contactId);
     }
     return null;
-  }, [apiHost, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
+  }, [appUrl, environmentId, mode, survey.id, userId, singleUseId, singleUseResponseId, contactId]);
 
   // Update the responseQueue to use the stored responseId
   const responseQueue = useMemo(() => {
-    if (apiHost && environmentId && surveyState) {
+    if (appUrl && environmentId && surveyState) {
       return new ResponseQueue(
         {
-          apiHost,
+          appUrl,
           environmentId,
           retryAttempts: 2,
           onResponseSendingFailed: () => {
@@ -119,7 +119,7 @@ export function Survey({
     }
 
     return null;
-  }, [apiHost, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
+  }, [appUrl, environmentId, getSetIsError, getSetIsResponseSendingFinished, surveyState]);
 
   const [hasInteracted, setHasInteracted] = useState(false);
 
@@ -260,7 +260,7 @@ export function Survey({
   useEffect(() => {
     // call onDisplay when component is mounted
 
-    if (apiHost && environmentId) {
+    if (appUrl && environmentId) {
       createDisplay();
     } else {
       onDisplay?.();
@@ -412,7 +412,7 @@ export function Survey({
   const onResponseCreateOrUpdate = useCallback(
     (responseUpdate: TResponseUpdate) => {
       // Always trigger the onResponse callback even in preview mode
-      if (!apiHost || !environmentId) {
+      if (!appUrl || !environmentId) {
         onResponse?.({
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
@@ -468,7 +468,7 @@ export function Survey({
       }
     },
     [
-      apiHost,
+      appUrl,
       environmentId,
       isPreviewMode,
       surveyState,
