@@ -56,6 +56,10 @@ runs:
     - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
       run: |
         RANDOM_KEY=$(openssl rand -hex 32)
+        sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
+        sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
+        sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
+        sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${RANDOM_KEY}/" .env
         echo "E2E_TESTING=${{ inputs.e2e_testing_mode }}" >> .env
       shell: bash
 
