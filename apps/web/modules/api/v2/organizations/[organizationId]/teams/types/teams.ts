@@ -21,7 +21,6 @@ export type TGetTeamsFilter = z.infer<typeof ZGetTeamsFilter>;
 
 export const ZTeamInput = ZTeam.pick({
   name: true,
-  organizationId: true,
 });
 
-export type TResponseInput = z.infer<typeof ZTeamInput>;
+export type TTeamInput = z.infer<typeof ZTeamInput>;
