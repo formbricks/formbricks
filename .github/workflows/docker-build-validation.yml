@@ -81,10 +81,6 @@ jobs:
             $DOCKER_RUN_ARGS \
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
-            -e NEXTAUTH_SECRET="test_nextauth_secret_at_least_32_chars_long" \
-            -e ENCRYPTION_KEY="test_encryption_key_must_be_at_least_32_chars_long" \
-            -e CRON_SECRET="test_cron_secret_key_must_be_32_chars_or_longer" \
-            -e DEBUG="prisma:*" \
             -d formbricks-test:${{ github.sha }}
 
           # Give it more time to start up
