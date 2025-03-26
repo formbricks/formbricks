@@ -48,7 +48,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentI
 
 export const getOrganizationBilling = reactCache(async (organizationId: string) =>
   cache(
-    async (): Promise<Result<Pick<Organization, "billing">, ApiErrorResponseV2>> => {
+    async (): Promise<Result<Organization["billing"], ApiErrorResponseV2>> => {
       try {
         const organization = await prisma.organization.findFirst({
           where: {
@@ -62,7 +62,8 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
         if (!organization) {
           return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
         }
-        return ok(organization);
+
+        return ok(organization.billing);
       } catch (error) {
         return err({
           type: "internal_server_error",
@@ -126,26 +127,27 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
   cache(
     async (): Promise<Result<number, ApiErrorResponseV2>> => {
       try {
-        const organization = await getOrganizationBilling(organizationId);
-        if (!organization.ok) {
-          return err(organization.error);
+        const billing = await getOrganizationBilling(organizationId);
+        if (!billing.ok) {
+          return err(billing.error);
         }
 
         // Determine the start date based on the plan type
         let startDate: Date;
-        if (organization.data.billing.plan === "free") {
+
+        if (billing.data.plan === "free") {
           // For free plans, use the first day of the current calendar month
           const now = new Date();
           startDate = new Date(now.getFullYear(), now.getMonth(), 1);
         } else {
           // For other plans, use the periodStart from billing
-          if (!organization.data.billing.periodStart) {
+          if (!billing.data.periodStart) {
             return err({
               type: "internal_server_error",
               details: [{ field: "organization", issue: "billing period start is not set" }],
             });
           }
-          startDate = organization.data.billing.periodStart;
+          startDate = billing.data.periodStart;
         }
 
         // Get all environment IDs for the organization

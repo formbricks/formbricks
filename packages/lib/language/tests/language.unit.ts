@@ -9,6 +9,7 @@ import {
 } from "./__mocks__/data.mock";
 import { Prisma } from "@prisma/client";
 import { prismaMock } from "@formbricks/database/src/jestClient";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { createLanguage, deleteLanguage, updateLanguage } from "../service";
 
@@ -34,7 +35,7 @@ describe("Tests for createLanguage service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -72,7 +73,7 @@ describe("Tests for updateLanguage Service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -109,7 +110,7 @@ describe("Tests for deleteLanguage", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
