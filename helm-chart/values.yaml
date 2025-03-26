@@ -80,7 +80,6 @@ deployment:
     repository: "ghcr.io/formbricks/formbricks"
     digest: ""  # If set, digest takes precedence over the tag
     pullPolicy: IfNotPresent
-    tag: "latest"
 
   # Health probes configuration
   probes:
