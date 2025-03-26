@@ -27,7 +27,13 @@ export const PUT = async (request: Request) =>
         (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
       );
 
-      const { contactIdxWithConflictingUserIds } = await upsertBulkContacts(contacts, environmentId, emails);
+      const upsertBulkContactsResult = await upsertBulkContacts(contacts, environmentId, emails);
+
+      if (!upsertBulkContactsResult.ok) {
+        return handleApiError(request, upsertBulkContactsResult.error);
+      }
+
+      const { contactIdxWithConflictingUserIds } = upsertBulkContactsResult.data;
 
       if (contactIdxWithConflictingUserIds.length) {
         return responses.multiStatusResponse({
@@ -35,10 +41,12 @@ export const PUT = async (request: Request) =>
             status: "success",
             message:
               "Contacts bulk upload partially successful. Some contacts were skipped due to conflicting userIds.",
-            skippedContacts: contactIdxWithConflictingUserIds.map((idx) => ({
-              index: idx,
-              userId: contacts[idx].attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
-            })),
+            meta: {
+              skippedContacts: contactIdxWithConflictingUserIds.map((idx) => ({
+                index: idx,
+                userId: contacts[idx].attributes.find((attr) => attr.attributeKey.key === "userId")?.value,
+              })),
+            },
           },
         });
       }

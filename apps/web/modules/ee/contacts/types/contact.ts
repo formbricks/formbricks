@@ -200,6 +200,36 @@ export const ZContactBulkUploadRequest = z.object({
           },
         });
       }
+
+      const contactsWithDuplicateKeys = contacts
+        .map((contact, idx) => {
+          // Count how many times each attribute key appears
+          const keyCounts = contact.attributes.reduce<Record<string, number>>((acc, attr) => {
+            const key = attr.attributeKey.key;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Find attribute keys that appear more than once
+          const duplicateKeys = Object.entries(keyCounts)
+            .filter(([_, count]) => count > 1)
+            .map(([key]) => key);
+
+          return { idx, duplicateKeys };
+        })
+        // Only keep contacts that have at least one duplicate key
+        .filter(({ duplicateKeys }) => duplicateKeys.length > 0);
+
+      if (contactsWithDuplicateKeys.length > 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Duplicate attribute keys found in the records, please ensure each attribute key is unique.",
+          params: {
+            contactsWithDuplicateKeys,
+          },
+        });
+      }
     }),
 });
 

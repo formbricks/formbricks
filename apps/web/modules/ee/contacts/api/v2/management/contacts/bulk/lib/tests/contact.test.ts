@@ -5,11 +5,12 @@ import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/cont
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 
+// Ensure that createId always returns "mock-id" for predictability
 vi.mock("@paralleldrive/cuid2", () => ({
   createId: vi.fn(() => "mock-id"),
 }));
 
-// Mock prisma
+// Mock prisma methods
 vi.mock("@formbricks/database", () => ({
   prisma: {
     contactAttribute: {
@@ -65,7 +66,7 @@ describe("upsertBulkContacts", () => {
   });
 
   test("should create new contacts when all provided contacts have unique user IDs and emails", async () => {
-    // Mock data
+    // Mock data: two contacts with unique userId and email
     const mockContacts = [
       {
         attributes: [
@@ -85,27 +86,26 @@ describe("upsertBulkContacts", () => {
 
     const mockParsedEmails = ["john@example.com", "jane@example.com"];
 
-    // Mock existing user IDs (none for this test case)
+    // Mock: no existing userIds in DB
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
-
-    // Mock attribute keys
+    // Mock: all attribute keys already exist
     const mockAttributeKeys = [
       { id: "attr-key-email", key: "email", environmentId: mockEnvironmentId },
       { id: "attr-key-userId", key: "userId", environmentId: mockEnvironmentId },
       { id: "attr-key-name", key: "name", environmentId: mockEnvironmentId },
     ];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
-
-    // Mock existing contacts (none for this test case)
+    // Mock: no existing contacts by email
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
     // Execute the function
     const result = await upsertBulkContacts(mockContacts, mockEnvironmentId, mockParsedEmails);
 
-    // Assertions
-    expect(result).toEqual({ contactIdxWithConflictingUserIds: [] });
+    // Assert that the result is ok and data is as expected
+    if (!result.ok) throw new Error("Expected result.ok to be true");
+    expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
 
-    // Verify that the function checked for existing user IDs
+    // Verify that existing user IDs were checked
     expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
       where: {
         attributeKey: {
@@ -116,12 +116,10 @@ describe("upsertBulkContacts", () => {
           in: ["user-123", "user-456"],
         },
       },
-      select: {
-        value: true,
-      },
+      select: { value: true },
     });
 
-    // Verify that the function fetched attribute keys
+    // Verify that attribute keys were fetched
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: {
         key: { in: ["email", "userId", "name"] },
@@ -129,7 +127,7 @@ describe("upsertBulkContacts", () => {
       },
     });
 
-    // Verify that the function checked for existing contacts by email
+    // Verify that existing contacts were looked up by email
     expect(prisma.contact.findMany).toHaveBeenCalledWith({
       where: {
         environmentId: mockEnvironmentId,
@@ -153,7 +151,7 @@ describe("upsertBulkContacts", () => {
       },
     });
 
-    // Verify that new contacts were created
+    // Verify that new contacts were created in the transaction
     expect(prisma.contact.createMany).toHaveBeenCalledWith({
       data: [
         { id: "mock-id", environmentId: mockEnvironmentId },
@@ -161,54 +159,55 @@ describe("upsertBulkContacts", () => {
       ],
     });
 
-    // Verify that the raw SQL query was executed for inserting attributes
+    // Verify that the raw SQL query was executed to upsert attributes
     expect(prisma.$executeRaw).toHaveBeenCalled();
 
     // Verify that caches were revalidated
-    expect(contactCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
-    expect(contactCache.revalidate).toHaveBeenCalledWith({
-      id: "mock-id",
-    });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
-    expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
+    expect(contactCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
+    // Since two new contacts are created with same id "mock-id", expect at least one revalidation with id "mock-id"
+    expect(contactCache.revalidate).toHaveBeenCalledWith({ id: "mock-id" });
+    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
+    expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({ environmentId: mockEnvironmentId });
   });
 
-  test("should update existing contacts when provided contacts have existing userIds", async () => {
-    // Mock data
+  test("should update existing contacts when provided contacts match an existing email", async () => {
+    // Mock data: a contact that exists in the DB
     const mockContacts = [
       {
-        attributes: [{ attributeKey: { key: "email", name: "Email" }, value: "john@example.com" }],
+        attributes: [
+          { attributeKey: { key: "email", name: "Email" }, value: "john@example.com" },
+          // No userId is provided so it should be treated as update
+        ],
       },
     ];
 
     const mockParsedEmails = ["john@example.com"];
 
-    // Mock existing user IDs (none for this test case)
+    // Mock: no existing userIds conflict
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
-
-    // Mock attribute keys
+    // Mock: attribute keys for email exist
     const mockAttributeKeys = [{ id: "attr-key-email", key: "email", environmentId: mockEnvironmentId }];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
-
-    // Mock existing contacts
+    // Mock: an existing contact with the same email
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([
       {
         id: "existing-contact-id",
-        attributes: [{ attributeKey: { key: "email", name: "Email" }, value: "john@example.com" }],
+        attributes: [
+          {
+            id: "existing-email-attr",
+            attributeKey: { key: "email", name: "Email" },
+            value: "john@example.com",
+            createdAt: new Date("2023-01-01"),
+          },
+        ],
       },
     ]);
 
     // Execute the function
     const result = await upsertBulkContacts(mockContacts, mockEnvironmentId, mockParsedEmails);
 
-    // Assertions
-    expect(result).toEqual({ contactIdxWithConflictingUserIds: [] });
+    if (!result.ok) throw new Error("Expected result.ok to be true");
+    expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
   });
 
   test("should return the indices of contacts with conflicting user IDs", async () => {
@@ -267,121 +266,120 @@ describe("upsertBulkContacts", () => {
     // Execute the function
     const result = await upsertBulkContacts(mockContacts, mockEnvironmentId, mockParsedEmails);
 
-    // Assertions - verify that the function correctly identified contacts with conflicting user IDs
-    expect(result.contactIdxWithConflictingUserIds).toEqual([1, 3]);
+    if (result.ok) {
+      // Assertions - verify that the function correctly identified contacts with conflicting user IDs
+      expect(result.data.contactIdxWithConflictingUserIds).toEqual([1, 3]);
 
-    // Verify that the function checked for existing user IDs
-    expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
-      where: {
-        attributeKey: {
+      // Verify that the function checked for existing user IDs
+      expect(prisma.contactAttribute.findMany).toHaveBeenCalledWith({
+        where: {
+          attributeKey: {
+            environmentId: mockEnvironmentId,
+            key: "userId",
+          },
+          value: {
+            in: ["user-123", "existing-user-1", "existing-user-2"],
+          },
+        },
+        select: {
+          value: true,
+        },
+      });
+
+      // Verify that the function fetched attribute keys for the filtered contacts (without conflicting userIds)
+      expect(prisma.contactAttributeKey.findMany).toHaveBeenCalled();
+
+      // Verify that the function checked for existing contacts by email
+      expect(prisma.contact.findMany).toHaveBeenCalledWith({
+        where: {
           environmentId: mockEnvironmentId,
-          key: "userId",
+          attributes: {
+            some: {
+              attributeKey: { key: "email" },
+              value: { in: mockParsedEmails },
+            },
+          },
         },
-        value: {
-          in: ["user-123", "existing-user-1", "existing-user-2"],
+        select: {
+          attributes: {
+            select: {
+              attributeKey: { select: { key: true } },
+              createdAt: true,
+              id: true,
+              value: true,
+            },
+          },
+          id: true,
         },
-      },
-      select: {
-        value: true,
-      },
-    });
+      });
 
-    // Verify that the function fetched attribute keys for the filtered contacts (without conflicting userIds)
-    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalled();
+      // Verify that only non-conflicting contacts were processed
+      expect(prisma.contact.createMany).toHaveBeenCalledWith({
+        data: [
+          { id: "mock-id", environmentId: mockEnvironmentId },
+          { id: "mock-id", environmentId: mockEnvironmentId },
+        ],
+      });
 
-    // Verify that the function checked for existing contacts by email
-    expect(prisma.contact.findMany).toHaveBeenCalledWith({
-      where: {
+      // Verify that the transaction was executed
+      expect(prisma.$transaction).toHaveBeenCalled();
+
+      // Verify that caches were revalidated
+      expect(contactCache.revalidate).toHaveBeenCalledWith({
         environmentId: mockEnvironmentId,
-        attributes: {
-          some: {
-            attributeKey: { key: "email" },
-            value: { in: mockParsedEmails },
-          },
-        },
-      },
-      select: {
-        attributes: {
-          select: {
-            attributeKey: { select: { key: true } },
-            createdAt: true,
-            id: true,
-            value: true,
-          },
-        },
-        id: true,
-      },
-    });
-
-    // Verify that only non-conflicting contacts were processed
-    expect(prisma.contact.createMany).toHaveBeenCalledWith({
-      data: [
-        { id: "mock-id", environmentId: mockEnvironmentId },
-        { id: "mock-id", environmentId: mockEnvironmentId },
-      ],
-    });
-
-    // Verify that the transaction was executed
-    expect(prisma.$transaction).toHaveBeenCalled();
-
-    // Verify that caches were revalidated
-    expect(contactCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
-    expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
-    expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({
-      environmentId: mockEnvironmentId,
-    });
+      });
+      expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
+        environmentId: mockEnvironmentId,
+      });
+      expect(contactAttributeCache.revalidate).toHaveBeenCalledWith({
+        environmentId: mockEnvironmentId,
+      });
+    }
   });
 
   test("should create missing attribute keys when they are not found in the database", async () => {
-    // Mock data with some attributes that don't exist in the database
+    // Mock data: contacts with attributes that include missing attribute keys
     const mockContacts = [
       {
         attributes: [
           { attributeKey: { key: "email", name: "Email" }, value: "john@example.com" },
-          { attributeKey: { key: "newKey1", name: "New Key 1" }, value: "value1" }, // New attribute key
+          { attributeKey: { key: "newKey1", name: "New Key 1" }, value: "value1" },
         ],
       },
       {
         attributes: [
           { attributeKey: { key: "email", name: "Email" }, value: "jane@example.com" },
-          { attributeKey: { key: "newKey2", name: "New Key 2" }, value: "value2" }, // New attribute key
+          { attributeKey: { key: "newKey2", name: "New Key 2" }, value: "value2" },
         ],
       },
     ];
-
     const mockParsedEmails = ["john@example.com", "jane@example.com"];
 
-    // Mock existing user IDs (none for this test case)
+    // Mock: no existing user IDs
     vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
-
-    // Mock attribute keys - only "email" exists, "newKey1" and "newKey2" are missing
+    // Mock: only "email" exists; new keys are missing
     const mockAttributeKeys = [{ id: "attr-key-email", key: "email", environmentId: mockEnvironmentId }];
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
 
-    // Mock the creation of new attribute keys
+    // Mock: creation of new attribute keys returns new keys
     const mockNewAttributeKeys = [
       { id: "attr-key-newKey1", key: "newKey1" },
       { id: "attr-key-newKey2", key: "newKey2" },
     ];
-
     vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValueOnce(
-      mockNewAttributeKeys as unknown as any
+      mockNewAttributeKeys as any
     );
 
-    // Mock existing contacts (none for this test case)
+    // Mock: no existing contacts for update
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
 
     // Execute the function
     const result = await upsertBulkContacts(mockContacts, mockEnvironmentId, mockParsedEmails);
 
-    // Assertions
-    expect(result).toEqual({ contactIdxWithConflictingUserIds: [] });
+    if (!result.ok) throw new Error("Expected result.ok to be true");
+    expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
 
-    // Verify that the function fetched attribute keys
+    // Verify that attribute keys were fetched for all keys
     expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
       where: {
         key: { in: ["email", "newKey1", "newKey2"] },

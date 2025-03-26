@@ -41,7 +41,7 @@ export const formatZodError = (error: { issues: (ZodIssue | ZodCustomIssue)[] })
     return {
       field: issue.path.join("."),
       issue: issue.message ?? "An error occurred while processing your request. Please try again later.",
-      ...(issueParams && { params: issueParams }),
+      ...(issueParams && { meta: issueParams }),
     };
   });
 };

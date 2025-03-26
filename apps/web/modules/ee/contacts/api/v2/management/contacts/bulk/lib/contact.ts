@@ -1,18 +1,25 @@
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
 import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const upsertBulkContacts = async (
   contacts: TContactBulkUploadContact[],
   environmentId: string,
   parsedEmails: string[]
-): Promise<{
-  contactIdxWithConflictingUserIds: number[];
-}> => {
+): Promise<
+  Result<
+    {
+      contactIdxWithConflictingUserIds: number[];
+    },
+    ApiErrorResponseV2
+  >
+> => {
   const contactIdxWithConflictingUserIds: number[] = [];
 
   const userIdsInContacts = contacts.flatMap((contact) =>
@@ -54,9 +61,9 @@ export const upsertBulkContacts = async (
   });
 
   if (!filteredContacts.length) {
-    return {
+    return ok({
       contactIdxWithConflictingUserIds,
-    };
+    });
   }
 
   const emailAttributeKey = "email";
@@ -190,73 +197,74 @@ export const upsertBulkContacts = async (
     }
   }
 
-  // Execute everything in ONE transaction
-  await prisma.$transaction(async (tx) => {
-    // Create missing attribute keys if needed
-    if (missingKeysMap.size > 0) {
-      const missingKeysArray = Array.from(missingKeysMap.values());
-      const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
-        data: missingKeysArray.map((keyObj) => ({
-          key: keyObj.key,
-          name: keyObj.name,
-          environmentId,
-        })),
-        select: { key: true, id: true },
-        skipDuplicates: true,
-      });
+  try {
+    // Execute everything in ONE transaction
+    await prisma.$transaction(async (tx) => {
+      // Create missing attribute keys if needed
+      if (missingKeysMap.size > 0) {
+        const missingKeysArray = Array.from(missingKeysMap.values());
+        const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
+          data: missingKeysArray.map((keyObj) => ({
+            key: keyObj.key,
+            name: keyObj.name,
+            environmentId,
+          })),
+          select: { key: true, id: true },
+          skipDuplicates: true,
+        });
 
-      // Refresh the attribute key map for the missing keys
-      for (const attrKey of newAttributeKeys) {
-        attributeKeyMap[attrKey.key] = attrKey.id;
+        // Refresh the attribute key map for the missing keys
+        for (const attrKey of newAttributeKeys) {
+          attributeKeyMap[attrKey.key] = attrKey.id;
+        }
       }
-    }
 
-    // Create new contacts
-    const newContacts = contactsToCreate.map(() => ({
-      id: createId(),
-      environmentId,
-    }));
-
-    if (newContacts.length > 0) {
-      await tx.contact.createMany({
-        data: newContacts,
-      });
-    }
-
-    // Prepare attributes for both new and existing contacts
-    const attributesUpsertForCreatedUsers = contactsToCreate.flatMap((contact, idx) =>
-      contact.attributes.map((attr) => ({
+      // Create new contacts
+      const newContacts = contactsToCreate.map(() => ({
         id: createId(),
-        contactId: newContacts[idx].id,
-        attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-        value: attr.value,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }))
-    );
+        environmentId,
+      }));
 
-    const attributesUpsertForExistingUsers = contactsToUpdate.flatMap((contact) =>
-      contact.attributes.map((attr) => ({
-        id: attr.id,
-        contactId: contact.contactId,
-        attributeKeyId: attributeKeyMap[attr.attributeKey.key],
-        value: attr.value,
-        createdAt: attr.createdAt,
-        updatedAt: new Date(),
-      }))
-    );
+      if (newContacts.length > 0) {
+        await tx.contact.createMany({
+          data: newContacts,
+        });
+      }
 
-    const attributesToUpsert = [...attributesUpsertForCreatedUsers, ...attributesUpsertForExistingUsers];
+      // Prepare attributes for both new and existing contacts
+      const attributesUpsertForCreatedUsers = contactsToCreate.flatMap((contact, idx) =>
+        contact.attributes.map((attr) => ({
+          id: createId(),
+          contactId: newContacts[idx].id,
+          attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+          value: attr.value,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }))
+      );
 
-    // Skip the raw query if there are no attributes to upsert
-    if (attributesToUpsert.length > 0) {
-      // Process attributes in batches of 10,000
-      const BATCH_SIZE = 10000;
-      for (let i = 0; i < attributesToUpsert.length; i += BATCH_SIZE) {
-        const batch = attributesToUpsert.slice(i, i + BATCH_SIZE);
+      const attributesUpsertForExistingUsers = contactsToUpdate.flatMap((contact) =>
+        contact.attributes.map((attr) => ({
+          id: attr.id,
+          contactId: contact.contactId,
+          attributeKeyId: attributeKeyMap[attr.attributeKey.key],
+          value: attr.value,
+          createdAt: attr.createdAt,
+          updatedAt: new Date(),
+        }))
+      );
 
-        // Use a raw query to perform a bulk insert with an ON CONFLICT clause
-        await tx.$executeRaw`
+      const attributesToUpsert = [...attributesUpsertForCreatedUsers, ...attributesUpsertForExistingUsers];
+
+      // Skip the raw query if there are no attributes to upsert
+      if (attributesToUpsert.length > 0) {
+        // Process attributes in batches of 10,000
+        const BATCH_SIZE = 10000;
+        for (let i = 0; i < attributesToUpsert.length; i += BATCH_SIZE) {
+          const batch = attributesToUpsert.slice(i, i + BATCH_SIZE);
+
+          // Use a raw query to perform a bulk insert with an ON CONFLICT clause
+          await tx.$executeRaw`
             INSERT INTO "ContactAttribute" (
               "id", "created_at", "updated_at", "contactId", "value", "attributeKeyId"
             )
@@ -271,35 +279,43 @@ export const upsertBulkContacts = async (
               "value" = EXCLUDED."value",
               "updated_at" = EXCLUDED."updated_at"
           `;
+        }
       }
-    }
 
-    contactCache.revalidate({
-      environmentId,
+      contactCache.revalidate({
+        environmentId,
+      });
+
+      // revalidate all the new contacts:
+      for (const newContact of newContacts) {
+        contactCache.revalidate({
+          id: newContact.id,
+        });
+      }
+
+      // revalidate all the existing contacts:
+      for (const existingContact of existingContacts) {
+        contactCache.revalidate({
+          id: existingContact.id,
+        });
+      }
+
+      contactAttributeKeyCache.revalidate({
+        environmentId,
+      });
+
+      contactAttributeCache.revalidate({ environmentId });
     });
 
-    // revalidate all the new contacts:
-    for (const newContact of newContacts) {
-      contactCache.revalidate({
-        id: newContact.id,
-      });
-    }
-
-    // revalidate all the existing contacts:
-    for (const existingContact of existingContacts) {
-      contactCache.revalidate({
-        id: existingContact.id,
-      });
-    }
-
-    contactAttributeKeyCache.revalidate({
-      environmentId,
+    return ok({
+      contactIdxWithConflictingUserIds,
     });
+  } catch (error) {
+    console.error(error);
 
-    contactAttributeCache.revalidate({ environmentId });
-  });
-
-  return {
-    contactIdxWithConflictingUserIds,
-  };
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "error", issue: "Failed to upsert contacts" }],
+    });
+  }
 };
