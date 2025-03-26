@@ -26,8 +26,6 @@ RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
 # Set dummy DATABASE_URL for build time only
 ENV DATABASE_URL="postgresql://dummy:<placeholder>@localhost:5432/dummy_db_for_build_only"
-ENV NEXTAUTH_SECRET="<placeholder>"
-ENV ENCRYPTION_KEY="<placeholder>"
 ENV CRON_SECRET="<placeholder>"
 
 ARG NEXT_PUBLIC_SENTRY_DSN
