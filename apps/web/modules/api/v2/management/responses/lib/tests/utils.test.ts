@@ -12,61 +12,61 @@ describe("getResponsesQuery", () => {
   };
 
   test("return the base query when no params are provided", () => {
-    const query = getResponsesQuery(environmentId);
+    const query = getResponsesQuery([environmentId]);
     expect(query).toEqual({
       where: {
-        survey: { environmentId },
+        survey: { environmentId: { in: [environmentId] } },
       },
     });
   });
 
   test("add surveyId to the query when provided", () => {
-    const query = getResponsesQuery(environmentId, { ...filters, surveyId: "survey_1" });
+    const query = getResponsesQuery([environmentId], { ...filters, surveyId: "survey_1" });
     expect(query.where).toEqual({
-      survey: { environmentId },
+      survey: { environmentId: { in: [environmentId] } },
       surveyId: "survey_1",
     });
   });
 
   test("add startDate filter to the query", () => {
     const startDate = new Date("2023-01-01");
-    const query = getResponsesQuery(environmentId, { ...filters, startDate });
+    const query = getResponsesQuery([environmentId], { ...filters, startDate });
     expect(query.where).toEqual({
-      survey: { environmentId },
+      survey: { environmentId: { in: [environmentId] } },
       createdAt: { gte: startDate },
     });
   });
 
   test("add endDate filter to the query", () => {
     const endDate = new Date("2023-01-31");
-    const query = getResponsesQuery(environmentId, { ...filters, endDate });
+    const query = getResponsesQuery([environmentId], { ...filters, endDate });
     expect(query.where).toEqual({
-      survey: { environmentId },
+      survey: { environmentId: { in: [environmentId] } },
       createdAt: { lte: endDate },
     });
   });
 
   test("add sortBy and order to the query", () => {
-    const query = getResponsesQuery(environmentId, { ...filters, sortBy: "createdAt", order: "desc" });
+    const query = getResponsesQuery([environmentId], { ...filters, sortBy: "createdAt", order: "desc" });
     expect(query.orderBy).toEqual({
       createdAt: "desc",
     });
   });
 
   test("add limit (take) to the query", () => {
-    const query = getResponsesQuery(environmentId, { ...filters, limit: 10 });
+    const query = getResponsesQuery([environmentId], { ...filters, limit: 10 });
     expect(query.take).toBe(10);
   });
 
   test("add skip to the query", () => {
-    const query = getResponsesQuery(environmentId, { ...filters, skip: 5 });
+    const query = getResponsesQuery([environmentId], { ...filters, skip: 5 });
     expect(query.skip).toBe(5);
   });
 
   test("add contactId to the query", () => {
-    const query = getResponsesQuery(environmentId, { ...filters, contactId: "contact_1" });
+    const query = getResponsesQuery([environmentId], { ...filters, contactId: "contact_1" });
     expect(query.where).toEqual({
-      survey: { environmentId },
+      survey: { environmentId: { in: [environmentId] } },
       contactId: "contact_1",
     });
   });
@@ -81,9 +81,9 @@ describe("getResponsesQuery", () => {
       skip: 10,
       contactId: "contact_1",
     };
-    const query = getResponsesQuery(environmentId, params);
+    const query = getResponsesQuery([environmentId], params);
     expect(query.where).toEqual({
-      survey: { environmentId },
+      survey: { environmentId: { in: [environmentId] } },
       surveyId: "survey_1",
       createdAt: { lte: params.endDate, gte: params.startDate },
       contactId: "contact_1",

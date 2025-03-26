@@ -23,7 +23,7 @@ export const hasPermission = (
   if (!environmentPermission) return false;
 
   // Get required permission level for this method
-  const requiredPermission = methodPermissionMap[method as keyof typeof methodPermissionMap] || "manage";
+  const requiredPermission = methodPermissionMap[method];
 
   // Check if the API key has sufficient permission
   switch (environmentPermission.permission) {

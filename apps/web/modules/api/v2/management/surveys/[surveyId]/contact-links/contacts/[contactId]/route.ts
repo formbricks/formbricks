@@ -46,7 +46,6 @@ export const GET = async (
       if (!hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
-          details: [{ field: "authentication", issue: "Missing or invalid authentication" }],
         });
       }
 

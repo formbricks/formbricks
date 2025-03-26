@@ -17,13 +17,13 @@ export const ZApiKey = z.object({
   createdAt: z.date(),
   createdBy: z.string(),
   lastUsedAt: z.date().nullable(),
-  label: z.string().nullable(),
+  label: z.string(),
   hashedKey: z.string(),
   organizationId: z.string().cuid2(),
 }) satisfies z.ZodType<ApiKey>;
 
 export const ZApiKeyCreateInput = z.object({
-  label: z.string().optional(),
+  label: z.string(),
   organizationId: z.string().cuid2(),
   environmentIds: z.array(z.string().cuid2()),
   permissions: z.record(z.string().cuid2(), ZApiKeyPermission),

@@ -1,7 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { ContactAttribute } from "@prisma/client";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getContactAttributes } from "./lib/contact-attributes";
 
@@ -19,14 +18,8 @@ export const GET = async (request: Request) => {
       (permission) => permission.environmentId
     );
 
-    const contactAttributes: ContactAttribute[] = [];
-
-    for (const environmentId of environmentIds) {
-      const attributes = await getContactAttributes(environmentId);
-      contactAttributes.push(...attributes);
-    }
-
-    return responses.successResponse(contactAttributes);
+    const attributes = await getContactAttributes(environmentIds);
+    return responses.successResponse(attributes);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

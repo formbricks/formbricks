@@ -95,6 +95,7 @@ describe("AddApiKeyModal", () => {
     setOpen: mockSetOpen,
     onSubmit: mockOnSubmit,
     projects: mockProjects,
+    isCreatingAPIKey: false,
   };
 
   it("renders the modal with initial state", () => {
@@ -129,9 +130,9 @@ describe("AddApiKeyModal", () => {
     const project2Option = await screen.findByRole("menuitem", { name: "Project 2" });
     await userEvent.click(project2Option);
 
-    // Verify project selection
-    const updatedDropdown = screen.getAllByRole("button", { name: /Project 2/i });
-    expect(updatedDropdown[0]).toBeInTheDocument();
+    // Verify project selection by checking the button text
+    const updatedButton = await screen.findByRole("button", { name: "Project 2" });
+    expect(updatedButton).toBeInTheDocument();
   });
 
   it("adds and removes permissions", async () => {
@@ -174,7 +175,6 @@ describe("AddApiKeyModal", () => {
         },
       ],
     });
-    expect(mockSetOpen).toHaveBeenCalledWith(false);
   });
 
   it("disables submit button when label is empty", async () => {

@@ -727,7 +727,7 @@ model ApiKey {
   createdAt          DateTime            @default(now())
   createdBy          String
   lastUsedAt         DateTime?
-  label              String?
+  label              String
   hashedKey          String              @unique
   organizationId     String
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)

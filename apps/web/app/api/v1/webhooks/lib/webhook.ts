@@ -49,15 +49,15 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
   }
 };
 
-export const getWebhooks = (environmentId: string, page?: number): Promise<Webhook[]> =>
+export const getWebhooks = (environmentIds: string[], page?: number): Promise<Webhook[]> =>
   cache(
     async () => {
-      validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+      validateInputs([environmentIds, ZId.array()], [page, ZOptionalNumber]);
 
       try {
         const webhooks = await prisma.webhook.findMany({
           where: {
-            environmentId: environmentId,
+            environmentId: { in: environmentIds },
           },
           take: page ? ITEMS_PER_PAGE : undefined,
           skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
@@ -71,8 +71,8 @@ export const getWebhooks = (environmentId: string, page?: number): Promise<Webho
         throw error;
       }
     },
-    [`getWebhooks-${environmentId}-${page}`],
+    environmentIds.map((environmentId) => `getWebhooks-${environmentId}-${page}`),
     {
-      tags: [webhookCache.tag.byEnvironmentId(environmentId)],
+      tags: environmentIds.map((environmentId) => webhookCache.tag.byEnvironmentId(environmentId)),
     }
   )();

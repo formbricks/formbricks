@@ -25,11 +25,20 @@ interface AddApiKeyModalProps {
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
   }) => void;
   projects: TOrganizationProject[];
+  isCreatingAPIKey: boolean;
 }
 
 interface ProjectOption {
   id: string;
   name: string;
+}
+
+interface PermissionRecord {
+  projectId: string;
+  environmentId: string;
+  permission: ApiKeyPermission;
+  projectName: string;
+  environmentType: string;
 }
 
 const permissionOptions: ApiKeyPermission[] = [
@@ -38,7 +47,13 @@ const permissionOptions: ApiKeyPermission[] = [
   ApiKeyPermission.manage,
 ];
 
-export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyModalProps) => {
+export const AddApiKeyModal = ({
+  open,
+  setOpen,
+  onSubmit,
+  projects,
+  isCreatingAPIKey,
+}: AddApiKeyModalProps) => {
   const { t } = useTranslate();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
   const apiKeyLabel = watch("label");
@@ -50,23 +65,18 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
           projectId: projects[0].id,
           environmentId: projects[0].environments[0].id,
           permission: ApiKeyPermission.read,
+          projectName: projects[0].name,
+          environmentType: projects[0].environments[0].type,
         },
       };
     }
-    return {} as Record<string, { projectId: string; environmentId: string; permission: ApiKeyPermission }>;
+    return {} as Record<string, PermissionRecord>;
   };
 
   // Initialize with one permission by default
-  const [selectedPermissions, setSelectedPermissions] = useState<
-    Record<
-      string,
-      {
-        projectId: string;
-        environmentId: string;
-        permission: ApiKeyPermission;
-      }
-    >
-  >(() => getInitialPermissions());
+  const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>(() =>
+    getInitialPermissions()
+  );
 
   const projectOptions: ProjectOption[] = projects.map((project) => ({
     id: project.id,
@@ -84,21 +94,21 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
     if (projects.length > 0 && projects[0].environments.length > 0) {
       setSelectedPermissions({
         ...selectedPermissions,
-        [`permission-${newIndex}`]: {
-          projectId: projects[0].id,
-          environmentId: projects[0].environments[0].id,
-          permission: ApiKeyPermission.read,
-        },
+        [`permission-${newIndex}`]: getInitialPermissions()[`permission-0`],
       });
     }
   };
 
   const updatePermission = (key: string, field: string, value: string) => {
+    const project = projects.find((p) => p.id === selectedPermissions[key].projectId);
+    const environment = project?.environments.find((env) => env.id === value);
+
     setSelectedPermissions({
       ...selectedPermissions,
       [key]: {
         ...selectedPermissions[key],
         [field]: value,
+        ...(field === "environmentId" && environment ? { environmentType: environment.type } : {}),
       },
     });
   };
@@ -107,12 +117,15 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
   const updateProjectAndEnvironment = (key: string, projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     if (project && project.environments.length > 0) {
+      const environment = project.environments[0];
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {
           ...selectedPermissions[key],
           projectId,
-          environmentId: project.environments[0].id,
+          environmentId: environment.id,
+          projectName: project.name,
+          environmentType: environment.type,
         },
       });
     }
@@ -132,28 +145,14 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
       environmentPermissions,
     });
 
-    setOpen(false);
     reset();
     setSelectedPermissions(getInitialPermissions());
-  };
-
-  // Find project name from id
-  const getProjectNameById = (id: string) => {
-    const project = projectOptions.find((project) => project.id === id);
-    return project ? project.name : "Select Project";
   };
 
   // Get environment options for a project
   const getEnvironmentOptionsForProject = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project?.environments || [];
-  };
-
-  // Find environment name by id
-  const getEnvironmentNameById = (projectId: string, environmentId: string) => {
-    const environments = getEnvironmentOptionsForProject(projectId);
-    const environment = environments.find((env) => env.id === environmentId);
-    return environment?.type;
   };
 
   return (
@@ -196,9 +195,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
                                 type="button"
                                 className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                                 <span className="flex w-4/5 flex-1">
-                                  <span className="w-full truncate text-left">
-                                    {getProjectNameById(permission.projectId)}
-                                  </span>
+                                  <span className="w-full truncate text-left">{permission.projectName}</span>
                                 </span>
                                 <span className="flex h-full items-center border-l pl-3">
                                   <ChevronDownIcon className="h-4 w-4 text-slate-500" />
@@ -228,7 +225,7 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
                                 className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left capitalize">
-                                    {getEnvironmentNameById(permission.projectId, permission.environmentId)}
+                                    {permission.environmentType}
                                   </span>
                                 </span>
                                 <span className="flex h-full items-center border-l pl-3">
@@ -324,7 +321,10 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit, projects }: AddApiKeyM
                 }}>
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={apiKeyLabel === ""}>
+              <Button
+                type="submit"
+                disabled={apiKeyLabel === "" || isCreatingAPIKey}
+                loading={isCreatingAPIKey}>
                 {t("environments.project.api_keys.add_api_key")}
               </Button>
             </div>

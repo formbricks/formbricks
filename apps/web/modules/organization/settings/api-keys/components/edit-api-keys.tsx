@@ -24,15 +24,16 @@ interface EditAPIKeysProps {
 
 export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, projects }: EditAPIKeysProps) => {
   const { t } = useTranslate();
-  const [isAddAPIKeyModalOpen, setOpenAddAPIKeyModal] = useState(false);
-  const [isDeleteKeyModalOpen, setOpenDeleteKeyModal] = useState(false);
+  const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
+  const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
   const [apiKeysLocal, setApiKeysLocal] = useState<(ApiKey & { actualKey?: string })[]>(apiKeys);
   const [activeKey, setActiveKey] = useState({} as any);
+  const [isCreatingAPIKey, setIsCreatingAPIKey] = useState(false);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
     e.preventDefault();
     setActiveKey(apiKey);
-    setOpenDeleteKeyModal(true);
+    setIsDeleteKeyModalOpen(true);
   };
 
   const handleDeleteKey = async () => {
@@ -41,10 +42,10 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success(t("environments.project.api_keys.api_key_deleted"));
-      setOpenDeleteKeyModal(false);
+      setIsDeleteKeyModalOpen(false);
     } else {
       toast.error(t("environments.project.api_keys.unable_to_delete_api_key"));
-      setOpenDeleteKeyModal(false);
+      setIsDeleteKeyModalOpen(false);
     }
   };
 
@@ -52,6 +53,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
     label: string;
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
   }) => {
+    setIsCreatingAPIKey(true);
     const createApiKeyResponse = await createApiKeyAction({
       organizationId: organizationId,
       apiKeyData: {
@@ -61,15 +63,17 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
     });
 
     if (createApiKeyResponse?.data) {
-      const updatedApiKeys = [...apiKeysLocal!, createApiKeyResponse.data];
+      const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
+      setIsCreatingAPIKey(false);
       toast.success(t("environments.project.api_keys.api_key_created"));
     } else {
+      setIsCreatingAPIKey(false);
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
       toast.error(errorMessage);
     }
 
-    setOpenAddAPIKeyModal(false);
+    setIsAddAPIKeyModalOpen(false);
   };
 
   const ApiKeyDisplay = ({ apiKey }) => {
@@ -108,13 +112,12 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           <div></div>
         </div>
         <div className="grid-cols-9">
-          {apiKeysLocal && apiKeysLocal.length === 0 ? (
+          {apiKeysLocal?.length === 0 ? (
             <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
               {t("environments.project.api_keys.no_api_keys_yet")}
             </div>
           ) : (
-            apiKeysLocal &&
-            apiKeysLocal.map((apiKey) => (
+            apiKeysLocal?.map((apiKey) => (
               <div
                 className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
                 key={apiKey.hashedKey}>
@@ -143,7 +146,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           <Button
             size="sm"
             onClick={() => {
-              setOpenAddAPIKeyModal(true);
+              setIsAddAPIKeyModalOpen(true);
             }}>
             {t("environments.settings.api_keys.add_api_key")}
           </Button>
@@ -151,13 +154,14 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
       )}
       <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
-        setOpen={setOpenAddAPIKeyModal}
+        setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         projects={projects}
+        isCreatingAPIKey={isCreatingAPIKey}
       />
       <DeleteDialog
         open={isDeleteKeyModalOpen}
-        setOpen={setOpenDeleteKeyModal}
+        setOpen={setIsDeleteKeyModalOpen}
         deleteWhat={t("environments.project.api_keys.api_key")}
         onDelete={handleDeleteKey}
       />

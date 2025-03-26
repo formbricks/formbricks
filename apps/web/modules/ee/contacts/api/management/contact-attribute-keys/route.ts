@@ -4,7 +4,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./lib/contact-attribute-keys";
@@ -23,13 +22,9 @@ export const GET = async (request: Request) => {
       (permission) => permission.environmentId
     );
 
-    const allContactAttributeKeys: TContactAttributeKey[] = [];
-    for (const environmentId of environmentIds) {
-      const contactAttributeKeys = await getContactAttributeKeys(environmentId);
-      allContactAttributeKeys.push(...contactAttributeKeys);
-    }
+    const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
 
-    return responses.successResponse(allContactAttributeKeys);
+    return responses.successResponse(contactAttributeKeys);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

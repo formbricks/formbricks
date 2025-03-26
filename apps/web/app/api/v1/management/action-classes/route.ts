@@ -2,10 +2,11 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { createActionClass, getActionClasses } from "@formbricks/lib/actionClass/service";
+import { createActionClass } from "@formbricks/lib/actionClass/service";
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
+import { getActionClasses } from "./lib/action-classes";
 
 export const GET = async (request: Request) => {
   try {
@@ -16,15 +17,9 @@ export const GET = async (request: Request) => {
       (permission) => permission.environmentId
     );
 
-    const allActionClasses: TActionClass[] = [];
-    for (const environmentId of environmentIds) {
-      if (hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
-        const actionClasses = await getActionClasses(environmentId);
-        allActionClasses.push(...actionClasses);
-      }
-    }
+    const actionClasses = await getActionClasses(environmentIds);
 
-    return responses.successResponse(allActionClasses);
+    return responses.successResponse(actionClasses);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);

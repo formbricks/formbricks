@@ -29,15 +29,13 @@ export const GET = async (request: NextRequest) =>
       );
 
       const environmentResponses: Response[] = [];
-      for (const environmentId of environmentIds) {
-        const res = await getResponses(environmentId, query);
+      const res = await getResponses(environmentIds, query);
 
-        if (!res.ok) {
-          return handleApiError(request, res.error);
-        }
-
-        environmentResponses.push(...res.data.data);
+      if (!res.ok) {
+        return handleApiError(request, res.error);
       }
+
+      environmentResponses.push(...res.data.data);
 
       return responses.successResponse({ data: environmentResponses });
     },

@@ -4,7 +4,6 @@ import { ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { Webhook } from "@prisma/client";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 
 export const GET = async (request: Request) => {
@@ -12,14 +11,18 @@ export const GET = async (request: Request) => {
   if (!authentication) {
     return responses.notAuthenticatedResponse();
   }
-
-  const environmentIds = authentication.environmentPermissions.map((permission) => permission.environmentId);
-  const allWebhooks: Webhook[] = [];
-  for (const environmentId of environmentIds) {
-    const webhooks = await getWebhooks(environmentId);
-    allWebhooks.push(...webhooks);
+  try {
+    const environmentIds = authentication.environmentPermissions.map(
+      (permission) => permission.environmentId
+    );
+    const webhooks = await getWebhooks(environmentIds);
+    return responses.successResponse(webhooks);
+  } catch (error) {
+    if (error instanceof DatabaseError) {
+      return responses.internalServerErrorResponse(error.message);
+    }
+    throw error;
   }
-  return responses.successResponse(allWebhooks);
 };
 
 export const POST = async (request: Request) => {

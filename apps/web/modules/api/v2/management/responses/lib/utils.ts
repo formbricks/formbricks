@@ -1,13 +1,13 @@
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 import { Prisma } from "@prisma/client";
 
-export const getResponsesQuery = (environmentId: string, params?: TGetResponsesFilter) => {
+export const getResponsesQuery = (environmentIds: string[], params?: TGetResponsesFilter) => {
   const { surveyId, limit, skip, sortBy, order, startDate, endDate, contactId } = params || {};
 
   let query: Prisma.ResponseFindManyArgs = {
     where: {
       survey: {
-        environmentId,
+        environmentId: { in: environmentIds },
       },
     },
   };

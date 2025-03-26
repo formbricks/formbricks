@@ -2,18 +2,27 @@ import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { deleteContact, getContact } from "./lib/contact";
 
 // Please use the methods provided by the client API to update a person
 
-const fetchAndAuthorizeContact = async (contactId: string) => {
+const fetchAndAuthorizeContact = async (
+  contactId: string,
+  authentication: TAuthenticationApiKey,
+  requiredPermission: "GET" | "PUT" | "DELETE"
+) => {
   const contact = await getContact(contactId);
 
   if (!contact) {
-    return null;
+    return { error: responses.notFoundResponse("Contact", contactId) };
   }
 
-  return contact;
+  if (!hasPermission(authentication.environmentPermissions, contact.environmentId, requiredPermission)) {
+    return { error: responses.unauthorizedResponse() };
+  }
+
+  return { contact };
 };
 
 export const GET = async (
@@ -30,15 +39,10 @@ export const GET = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contact = await fetchAndAuthorizeContact(params.contactId);
-    if (contact) {
-      if (!hasPermission(authentication.environmentPermissions, contact.environmentId, "GET")) {
-        return responses.unauthorizedResponse();
-      }
-      return responses.successResponse(contact);
-    }
+    const result = await fetchAndAuthorizeContact(params.contactId, authentication, "GET");
+    if (result.error) return result.error;
 
-    return responses.notFoundResponse("Contact", params.contactId);
+    return responses.successResponse(result.contact);
   } catch (error) {
     return handleErrorResponse(error);
   }
@@ -58,13 +62,9 @@ export const DELETE = async (
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contact = await fetchAndAuthorizeContact(params.contactId);
-    if (!contact) {
-      return responses.notFoundResponse("Contact", params.contactId);
-    }
-    if (!hasPermission(authentication.environmentPermissions, contact.environmentId, "DELETE")) {
-      return responses.unauthorizedResponse();
-    }
+    const result = await fetchAndAuthorizeContact(params.contactId, authentication, "DELETE");
+    if (result.error) return result.error;
+
     await deleteContact(params.contactId);
     return responses.successResponse({ success: "Contact deleted successfully" });
   } catch (error) {

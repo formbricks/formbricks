@@ -7,7 +7,7 @@ CREATE TABLE "ApiKeyNew" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "createdBy" TEXT NOT NULL,
     "lastUsedAt" TIMESTAMP(3),
-    "label" TEXT,
+    "label" TEXT NOT NULL,
     "hashedKey" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
 
