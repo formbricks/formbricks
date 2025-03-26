@@ -44,6 +44,9 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
+# Set dummy DATABASE_URL for build time only
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy_db_for_build_only"
+
 # Install the dependencies
 RUN pnpm install
 
