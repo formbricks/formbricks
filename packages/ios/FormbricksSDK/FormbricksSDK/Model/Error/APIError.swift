@@ -1,6 +1,6 @@
 import Foundation
 
-enum FormbricksAPIErrorType: Int {
+public enum FormbricksAPIErrorType: Int {
     case invalidResponse
     case responseError
     
@@ -14,12 +14,12 @@ enum FormbricksAPIErrorType: Int {
     }
 }
 
-final class FormbricksAPIClientError: LocalizedError {
-    let type: FormbricksAPIErrorType
-    let statusCodeInt: Int?
+public final class FormbricksAPIClientError: LocalizedError {
+    public let type: FormbricksAPIErrorType
+    public let statusCodeInt: Int?
     let statusCode: HTTPStatusCode?
     
-    var errorDescription: String
+    public var errorDescription: String
     
     init(type: FormbricksAPIErrorType, statusCode: Int? = nil) {
         self.type = type

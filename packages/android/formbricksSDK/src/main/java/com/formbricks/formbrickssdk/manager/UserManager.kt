@@ -8,6 +8,7 @@ import com.formbricks.formbrickssdk.extensions.expiresAt
 import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.extensions.lastDisplayAt
 import com.formbricks.formbrickssdk.logger.Logger
+import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.model.user.Display
 import com.formbricks.formbrickssdk.network.queue.UpdateQueue
 import com.google.gson.Gson
@@ -140,7 +141,9 @@ object UserManager {
                 SurveyManager.filterSurveys()
                 startSyncTimer()
             } catch (e: Exception) {
-                Logger.e("Unable to post survey response.")
+                val error = SDKError.unableToPostResponse
+                Formbricks.callback?.onError(error)
+                Logger.e(error)
             }
         }
     }

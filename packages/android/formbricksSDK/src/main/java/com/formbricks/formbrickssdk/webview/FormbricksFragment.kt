@@ -25,6 +25,7 @@ import com.formbricks.formbrickssdk.R
 import com.formbricks.formbrickssdk.databinding.FragmentFormbricksBinding
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
+import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -45,10 +46,12 @@ class FormbricksFragment : BottomSheetDialogFragment() {
 
     private var webAppInterface = WebAppInterface(object : WebAppInterface.WebAppCallback {
         override fun onClose() {
+            Formbricks.callback?.onSurveyClosed()
             dismiss()
         }
 
         override fun onFinished() {
+            Formbricks.callback?.onSurveyFinished()
             closeTimer.schedule(object: TimerTask() {
                 override fun run() {
                     dismiss()
@@ -59,6 +62,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         }
 
         override fun onDisplayCreated() {
+            Formbricks.callback?.onSurveyStarted()
             SurveyManager.onNewDisplay(surveyId)
         }
 
@@ -76,6 +80,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         }
 
         override fun onSurveyLibraryLoadError() {
+            Formbricks.callback?.onError(SDKError.unableToLoadFormbicksJs)
             dismiss()
         }
     })

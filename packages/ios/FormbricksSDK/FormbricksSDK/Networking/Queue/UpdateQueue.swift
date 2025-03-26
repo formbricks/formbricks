@@ -58,7 +58,9 @@ private extension UpdateQueue {
     
     @objc func commit() {
         guard let userId = userId else {
-            Formbricks.logger.error(FormbricksSDKError(type: .userIdIsNotSetYet).message)
+            let error = FormbricksSDKError(type: .userIdIsNotSetYet)
+            Formbricks.delegate?.onError(error)
+            Formbricks.logger.error(error.message)
             return
         }
         

@@ -1,3 +1,4 @@
 -keep class com.formbricks.formbrickssdk.DataBinderMapperImpl { *; }
 -keep class com.formbricks.formbrickssdk.Formbricks { *; }
 -keep class com.formbricks.formbrickssdk.helper.FormbricksConfig { *; }
+-keep class com.formbricks.formbrickssdk.model.error.SDKError { *; }
