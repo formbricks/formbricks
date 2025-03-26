@@ -22,7 +22,7 @@ export const POST = async (): Promise<Response> => {
   const organizationIds = await getOrganizationIds();
 
   // Paginate through organizations
-  for (let i = 0; i < organizationIds?.length; i += BATCH_SIZE) {
+  for (let i = 0; i < organizationIds.length; i += BATCH_SIZE) {
     const batchedOrganizationIds = organizationIds.slice(i, i + BATCH_SIZE);
     // Fetch projects for batched organizations asynchronously
     const batchedProjectsPromises = batchedOrganizationIds.map((organizationId) =>
@@ -39,7 +39,7 @@ export const POST = async (): Promise<Response> => {
             member.user.notificationSettings.weeklySummary[project.id]
         );
 
-        if (organizationMembersWithNotificationEnabled?.length === 0) continue;
+        if (organizationMembersWithNotificationEnabled.length === 0) continue;
 
         const notificationResponse = getNotificationResponse(project.environments[0], project.name);
 
