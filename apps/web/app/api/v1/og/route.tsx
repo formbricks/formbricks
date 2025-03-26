@@ -29,7 +29,6 @@ export const GET = async (req: NextRequest) => {
                 <h2 tw="flex flex-col text-[8] sm:text-4xl font-bold tracking-tight text-slate-900 text-left mt-15">
                   {name}
                 </h2>
-                <span tw="text-slate-600 text-xl">Complete in ~ 4 minutes</span>
               </div>
             </div>
             <div tw="flex justify-end mr-10 ">
