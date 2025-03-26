@@ -10,6 +10,10 @@ import { getProjectsByOrganizationId } from "./lib/project";
 const BATCH_SIZE = 500;
 
 export const POST = async (): Promise<Response> => {
+  if (!CRON_SECRET) {
+    throw new Error("CRON_SECRET is not set");
+  }
+
   const headersList = await headers();
   // Check authentication
   if (headersList.get("x-api-key") !== CRON_SECRET) {
