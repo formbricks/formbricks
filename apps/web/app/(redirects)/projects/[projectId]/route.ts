@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { hasOrganizationAccess } from "@formbricks/lib/auth";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProject } from "@formbricks/lib/project/service";
+import { TEnvironment } from "@formbricks/types/environment";
 import { AuthenticationError, AuthorizationError } from "@formbricks/types/errors";
 
 export const GET = async (_: Request, context: { params: Promise<{ projectId: string }> }) => {
@@ -23,9 +24,9 @@ export const GET = async (_: Request, context: { params: Promise<{ projectId: st
     if (!hasAccess) throw new AuthorizationError("Unauthorized");
 
     // redirect to project's production environment
-    let environments = [];
+    let environments: TEnvironment[] = [];
     try {
-      environments = (await getEnvironments(project.id)) || [];
+      environments = await getEnvironments(project.id);
     } catch (error) {
       console.error("Error fetching environments:", error);
       return notFound();
