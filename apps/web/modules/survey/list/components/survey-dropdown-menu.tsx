@@ -37,7 +37,6 @@ interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
   surveyDomain: string;
-  singleUseId?: string;
   refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
@@ -49,7 +48,6 @@ export const SurveyDropDownMenu = ({
   environmentId,
   survey,
   surveyDomain,
-  singleUseId,
   refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
