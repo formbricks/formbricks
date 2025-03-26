@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { userCache } from "@formbricks/lib/user/cache";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TUser } from "@formbricks/types/user";
-import { TUserUpdateInput } from "@formbricks/types/user";
+import { TUser, TUserUpdateInput } from "@formbricks/types/user";
 
 // function to update a user's user
 export const updateUser = async (personId: string, data: TUserUpdateInput): Promise<TUser> => {
@@ -37,7 +37,10 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
 
     return updatedUser;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2016") {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
       throw new ResourceNotFoundError("User", personId);
     }
     throw error; // Re-throw any other errors

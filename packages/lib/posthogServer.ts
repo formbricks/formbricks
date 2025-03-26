@@ -2,26 +2,21 @@ import { PostHog } from "posthog-node";
 import { logger } from "@formbricks/logger";
 import { TOrganizationBillingPlan, TOrganizationBillingPlanLimits } from "@formbricks/types/organizations";
 import { cache } from "./cache";
-import { IS_PRODUCTION } from "./constants";
-import { env } from "./env";
+import { IS_POSTHOG_CONFIGURED, IS_PRODUCTION, POSTHOG_API_HOST, POSTHOG_API_KEY } from "./constants";
 
-const enabled = IS_PRODUCTION && env.NEXT_PUBLIC_POSTHOG_API_HOST && env.NEXT_PUBLIC_POSTHOG_API_KEY;
+const enabled = IS_PRODUCTION && IS_POSTHOG_CONFIGURED;
 
 export const capturePosthogEnvironmentEvent = async (
   environmentId: string,
   eventName: string,
   properties: any = {}
 ) => {
-  if (
-    !enabled ||
-    typeof env.NEXT_PUBLIC_POSTHOG_API_HOST !== "string" ||
-    typeof env.NEXT_PUBLIC_POSTHOG_API_KEY !== "string"
-  ) {
+  if (!enabled || typeof POSTHOG_API_HOST !== "string" || typeof POSTHOG_API_KEY !== "string") {
     return;
   }
   try {
-    const client = new PostHog(env.NEXT_PUBLIC_POSTHOG_API_KEY, {
-      host: env.NEXT_PUBLIC_POSTHOG_API_HOST,
+    const client = new PostHog(POSTHOG_API_KEY, {
+      host: POSTHOG_API_HOST,
     });
     client.capture({
       // workaround with a static string as exaplained in PostHog docs: https://posthog.com/docs/product-analytics/group-analytics

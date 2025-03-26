@@ -1,18 +1,17 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { fetchEnvironmentId } from "../services";
+import { fetchEnvironmentId, fetchEnvironmentIdFromSurveyIds } from "../services";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    survey: { findFirst: vi.fn() },
+    survey: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
   },
 }));
 
 describe("Services", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   describe("getSurveyAndEnvironmentId", () => {
     test("should return surveyId and environmentId for responseId", async () => {
       vi.mocked(prisma.survey.findFirst).mockResolvedValue({
@@ -74,6 +73,38 @@ describe("Services", () => {
       vi.mocked(prisma.survey.findFirst).mockRejectedValue(new Error("Internal server error"));
 
       const result = await fetchEnvironmentId("survey-id", false);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("internal_server_error");
+      }
+    });
+  });
+
+  describe("fetchEnvironmentIdFromSurveyIds", () => {
+    test("should return an array of environmentIds if all surveys exist", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([
+        { environmentId: "env-1" },
+        { environmentId: "env-2" },
+      ]);
+      const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data).toEqual(["env-1", "env-2"]);
+      }
+    });
+
+    test("should return not_found error if any survey is missing", async () => {
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ environmentId: "env-1" }]);
+      const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("not_found");
+      }
+    });
+
+    test("should return internal_server_error if prisma query fails", async () => {
+      vi.mocked(prisma.survey.findMany).mockRejectedValue(new Error("Query failed"));
+      const result = await fetchEnvironmentIdFromSurveyIds(["survey1", "survey2"]);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
