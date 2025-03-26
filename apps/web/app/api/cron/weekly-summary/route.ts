@@ -55,7 +55,10 @@ export const POST = async (): Promise<Response> => {
         }
 
         for (const organizationMember of organizationMembersWithNotificationEnabled) {
-          if (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id)) {
+          if (
+            project.environments?.length > 0 &&
+            (await hasUserEnvironmentAccess(organizationMember.user.id, project.environments[0].id))
+          ) {
             emailSendingPromises.push(
               sendWeeklySummaryNotificationEmail(organizationMember.user.email, notificationResponse)
             );
