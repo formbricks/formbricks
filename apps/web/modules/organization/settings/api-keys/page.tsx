@@ -18,6 +18,8 @@ export const APIKeysPage = async (props) => {
 
   const projects = await getProjectsByOrganizationId(organization.id);
 
+  console.log("projects by organization id", projects);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>

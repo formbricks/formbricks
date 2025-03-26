@@ -1,5 +1,5 @@
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
-import { TGetTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
+import { TGetTeamsFilter } from "@/modules/api/v2/organizations/teams/types/teams";
 import { Prisma } from "@prisma/client";
 
 export const getTeamsQuery = (organizationId: string, params?: TGetTeamsFilter) => {

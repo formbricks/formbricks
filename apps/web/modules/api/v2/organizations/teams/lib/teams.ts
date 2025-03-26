@@ -1,9 +1,6 @@
 import "server-only";
-import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
-import {
-  TGetTeamsFilter,
-  TTeamInput,
-} from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
+import { getTeamsQuery } from "@/modules/api/v2/organizations/teams/lib/utils";
+import { TGetTeamsFilter, TTeamInput } from "@/modules/api/v2/organizations/teams/types/teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { Prisma, Team } from "@prisma/client";
@@ -23,7 +20,11 @@ export const createTeam = async (
   try {
     const prismaData: Prisma.TeamCreateInput = {
       name,
-      organization: organizationId,
+      organization: {
+        connect: {
+          id: organizationId,
+        },
+      },
     };
 
     const team = await prisma.team.create({

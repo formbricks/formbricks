@@ -59,6 +59,8 @@ export const AddApiKeyModal = ({
   const apiKeyLabel = watch("label");
 
   const getInitialPermissions = () => {
+    console.log(projects);
+
     if (projects.length > 0 && projects[0].environments.length > 0) {
       return {
         "permission-0": {

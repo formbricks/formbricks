@@ -4,6 +4,7 @@ import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
+import { teamPaths } from "@/modules/api/v2/organizations/teams/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
@@ -12,6 +13,7 @@ import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 extendZodWithOpenApi(z);
@@ -30,6 +32,7 @@ const document = createDocument({
     ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...webhookPaths,
+    ...teamPaths,
   },
   servers: [
     {
@@ -62,6 +65,10 @@ const document = createDocument({
       name: "Management API > Webhooks",
       description: "Operations for managing webhooks.",
     },
+    {
+      name: "Organizations API > Teams",
+      description: "Operations for managing teams.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -79,6 +86,7 @@ const document = createDocument({
       contactAttributeKey: ZContactAttributeKey,
       survey: ZSurveyWithoutQuestionType,
       webhook: ZWebhook,
+      team: ZTeam,
     },
   },
   security: [
