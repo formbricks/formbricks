@@ -15,9 +15,12 @@ import {
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
+import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
+import { Alert, AlertTitle, AlertButton} from "@/modules/ui/components/alert";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import {SummaryInconsistentResponseDataAlert} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryInconsistentResponseDataAlert";
 
 const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
@@ -45,6 +48,13 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
 
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
+  // Get responses to check if any were created before the survey was last updated
+  // MISSING: ONLY FOR RELEVANT QUESTIONS
+  const responses = await getResponses(surveyId);
+  const responsesBeforeLastEdit = responses.some(response => 
+    new Date(response.createdAt) < new Date(survey.updatedAt)
+  );  
+
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
 
@@ -58,6 +68,14 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     <PageContentWrapper>
       <PageHeader
         pageTitle={survey.name}
+        // pageTitleAddon={SummaryInconsistentResponseDataAlert(responsesBeforeLastEdit, t)}
+        pageTitleAddon={responsesBeforeLastEdit ? (
+          <SummaryInconsistentResponseDataAlert 
+            responsesBeforeLastEdit={responsesBeforeLastEdit}
+            environmentId={environment.id}
+            surveyId={survey.id}
+          />
+        ) : null}
         cta={
           <SurveyAnalysisCTA
             environment={environment}
@@ -65,6 +83,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             isReadOnly={isReadOnly}
             webAppUrl={WEBAPP_URL}
             user={user}
+            responseCount={totalResponseCount}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

@@ -16,7 +16,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 
 interface SurveyAnalysisCTAProps {
   survey: TSurvey;
@@ -24,6 +23,7 @@ interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
   webAppUrl: string;
   user: TUser;
+  responseCount?: number;
 }
 
 interface ModalState {
@@ -39,12 +39,12 @@ export const SurveyAnalysisCTA = ({
   isReadOnly,
   webAppUrl,
   user,
+  responseCount = 0,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  let responseCount = 0;
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -110,11 +110,6 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
-  
-  const handleEditforActiveSurvey = (e) => {
-    e.preventDefault();
-    setIsCautionDialogOpen(true);
-  };
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   const iconActions = [
@@ -154,10 +149,9 @@ export const SurveyAnalysisCTA = ({
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
-      onClick: async () => {
-        responseCount = await getResponseCountBySurveyId(survey.id); 
+      onClick: () => {
         survey.status === "inProgress" && responseCount > 0 
-        ? handleEditforActiveSurvey
+        ? setIsCautionDialogOpen(true)
         : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
       },
       isVisible: !isReadOnly,
@@ -216,13 +210,13 @@ export const SurveyAnalysisCTA = ({
             </>
           }
           confirmBtnLabel={t("common.duplicate")}
-          declineBtnLabel={t("common.cancel")}
+          declineBtnLabel={t("common.edit")}
           declineBtnVariant="outline"
           onConfirm={async () => {
             // await duplicateSurveyAndRefresh(survey.id);
             setIsCautionDialogOpen(false);
           }}
-          onDecline={() => setIsCautionDialogOpen(false)}
+          onDecline={() => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)}
           >
           </AlertDialog>
       )}
