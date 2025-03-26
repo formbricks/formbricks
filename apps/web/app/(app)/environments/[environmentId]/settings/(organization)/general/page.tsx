@@ -88,7 +88,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         </SettingsCard>
       )}
 
-      <SettingsId title={t("common.organization")} id={organization.id}></SettingsId>
+      <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
     </PageContentWrapper>
   );
 };
