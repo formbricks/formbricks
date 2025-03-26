@@ -88,7 +88,7 @@ jobs:
           sleep 45
 
           # Check if the container is running
-          if [ "$(docker inspect -f {{.State.Running}} formbricks-test)" != "true" ]; then
+          if [ "$(docker inspect -f '{{.State.Running}}' formbricks-test)" != "true" ]; then
             echo "❌ Container failed to start properly!"
             docker logs formbricks-test
             exit 1
