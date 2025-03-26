@@ -353,7 +353,7 @@ resource "kubernetes_manifest" "node_pool" {
         }
       }
       limits = {
-        cpu = 100
+        cpu = 1000
       }
       disruption = {
         consolidationPolicy = "WhenEmpty"

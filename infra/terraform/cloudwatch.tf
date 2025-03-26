@@ -34,7 +34,7 @@ locals {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
       threshold           = 5
-      period              = 60
+      period              = 600
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"
       metric_name         = "HTTPCode_Target_5XX_Count"
@@ -48,7 +48,7 @@ locals {
       comparison_operator = "GreaterThanThreshold"
       evaluation_periods  = 5
       threshold           = 5
-      period              = 60
+      period              = 600
       unit                = "Count"
       namespace           = "AWS/ApplicationELB"
       metric_name         = "HTTPCode_ELB_5XX_Count"
@@ -249,5 +249,4 @@ module "metric_alarm" {
   dimensions = each.value.dimensions
 
   alarm_actions = [module.notify-slack.slack_topic_arn]
-  ok_actions    = [module.notify-slack.slack_topic_arn]
 }
