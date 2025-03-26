@@ -15,17 +15,24 @@ import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
+  surveyDomain: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
 }
 
-export const ShareSurveyLink = ({ survey, surveyUrl, setSurveyUrl, locale }: ShareSurveyLinkProps) => {
+export const ShareSurveyLink = ({
+  survey,
+  surveyUrl,
+  surveyDomain,
+  setSurveyUrl,
+  locale,
+}: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
-    let url = surveyUrl;
+    let url = `${surveyDomain}/s/${survey.id}`;
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {

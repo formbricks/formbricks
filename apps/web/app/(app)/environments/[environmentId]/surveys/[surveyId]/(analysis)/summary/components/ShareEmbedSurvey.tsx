@@ -23,13 +23,21 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
+  surveyDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   user: TUser;
 }
 
-export const ShareEmbedSurvey = ({ survey, open, modalView, setOpen, user }: ShareEmbedSurveyProps) => {
+export const ShareEmbedSurvey = ({
+  survey,
+  surveyDomain,
+  open,
+  modalView,
+  setOpen,
+  user,
+}: ShareEmbedSurveyProps) => {
   const router = useRouter();
   const environmentId = survey.environmentId;
   const isSingleUseLinkSurvey = survey.singleUse?.enabled ?? false;
@@ -97,6 +105,7 @@ export const ShareEmbedSurvey = ({ survey, open, modalView, setOpen, user }: Sha
               <ShareSurveyLink
                 survey={survey}
                 surveyUrl={surveyUrl}
+                surveyDomain={surveyDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -150,6 +159,7 @@ export const ShareEmbedSurvey = ({ survey, open, modalView, setOpen, user }: Sha
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
+            surveyDomain={surveyDomain}
             setSurveyUrl={setSurveyUrl}
             locale={user.locale}
           />

@@ -24,7 +24,13 @@ import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import {
+  E2E_TESTING,
+  IS_PRODUCTION,
+  RATE_LIMITING_DISABLED,
+  SURVEY_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
 
 const enforceHttps = (request: NextRequest): Response | null => {
@@ -78,6 +84,23 @@ const applyRateLimiting = (request: NextRequest, ip: string) => {
   }
 };
 
+const handleSurveyDomain = (request: NextRequest): Response | null => {
+  if (!SURVEY_URL) return null;
+
+  const host = request.headers.get("host") || "";
+  const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
+  if (host !== surveyDomain) return null;
+
+  const isSurveyPath =
+    request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
+
+  if (isSurveyPath) {
+    return NextResponse.next();
+  }
+
+  return new NextResponse(null, { status: 404 });
+};
+
 export const middleware = async (originalRequest: NextRequest) => {
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {
@@ -87,7 +110,12 @@ export const middleware = async (originalRequest: NextRequest) => {
   request.headers.set("x-request-id", uuidv4());
   request.headers.set("x-start-time", Date.now().toString());
 
+  // Handle survey domain routing.
+  const surveyResponse = handleSurveyDomain(request);
+  if (surveyResponse) return surveyResponse;
+
   // Create a new NextResponse object to forward the new request with headers
+
   const nextResponseWithCustomHeader = NextResponse.next({
     request: {
       headers: request.headers,

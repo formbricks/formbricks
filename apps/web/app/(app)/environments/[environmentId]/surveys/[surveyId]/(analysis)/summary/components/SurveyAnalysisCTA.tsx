@@ -172,6 +172,7 @@ export const SurveyAnalysisCTA = ({
             <ShareEmbedSurvey
               key={key}
               survey={survey}
+              surveyDomain={surveyDomain}
               open={modalState[key as keyof ModalState]}
               setOpen={setOpen}
               user={user}

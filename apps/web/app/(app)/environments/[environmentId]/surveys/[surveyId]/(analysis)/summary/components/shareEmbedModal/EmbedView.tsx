@@ -20,6 +20,7 @@ interface EmbedViewProps {
   survey: any;
   email: string;
   surveyUrl: string;
+  surveyDomain: string;
   setSurveyUrl: React.Dispatch<React.SetStateAction<string>>;
   locale: TUserLocale;
 }
@@ -34,6 +35,7 @@ export const EmbedView = ({
   survey,
   email,
   surveyUrl,
+  surveyDomain,
   setSurveyUrl,
   locale,
 }: EmbedViewProps) => {
@@ -78,7 +80,13 @@ export const EmbedView = ({
           ) : activeId === "webpage" ? (
             <WebsiteTab surveyUrl={surveyUrl} environmentId={environmentId} />
           ) : activeId === "link" ? (
-            <LinkTab survey={survey} surveyUrl={surveyUrl} setSurveyUrl={setSurveyUrl} locale={locale} />
+            <LinkTab
+              survey={survey}
+              surveyUrl={surveyUrl}
+              surveyDomain={surveyDomain}
+              setSurveyUrl={setSurveyUrl}
+              locale={locale}
+            />
           ) : activeId === "app" ? (
             <AppTab />
           ) : null}
