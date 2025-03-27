@@ -1,5 +1,6 @@
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { EnableInsightsBanner } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/EnableInsightsBanner";
+import { SummaryInconsistentResponseDataAlert } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryInconsistentResponseDataAlert";
 import { SummaryPage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { needsInsightsGeneration } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/utils";
@@ -15,12 +16,13 @@ import {
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
+import {
+  checkResponseConsistency,
+  getResponseCountBySurveyId,
+  getResponses,
+} from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { Alert, AlertTitle, AlertButton} from "@/modules/ui/components/alert";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
-import {SummaryInconsistentResponseDataAlert} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SummaryInconsistentResponseDataAlert";
 
 const SurveyPage = async (props: { params: Promise<{ environmentId: string; surveyId: string }> }) => {
   const params = await props.params;
@@ -51,9 +53,9 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   // Get responses to check if any were created before the survey was last updated
   // MISSING: ONLY FOR RELEVANT QUESTIONS
   const responses = await getResponses(surveyId);
-  const responsesBeforeLastEdit = responses.some(response => 
-    new Date(response.createdAt) < new Date(survey.updatedAt)
-  );  
+  const responsesBeforeLastEdit = responses.some(
+    (response) => new Date(response.createdAt) < new Date(survey.updatedAt)
+  );
 
   // I took this out cause it's cloud only right?
   // const { active: isEnterpriseEdition } = await getEnterpriseLicense();
@@ -64,18 +66,23 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
 
+  const summaryResponseSchemas = await checkResponseConsistency(surveyId);
+  console.log("Summary has divergent response schemas:");
+  console.log(summaryResponseSchemas);
   return (
     <PageContentWrapper>
       <PageHeader
         pageTitle={survey.name}
         // pageTitleAddon={SummaryInconsistentResponseDataAlert(responsesBeforeLastEdit, t)}
-        pageTitleAddon={responsesBeforeLastEdit ? (
-          <SummaryInconsistentResponseDataAlert 
-            responsesBeforeLastEdit={responsesBeforeLastEdit}
-            environmentId={environment.id}
-            surveyId={survey.id}
-          />
-        ) : null}
+        pageTitleAddon={
+          summaryResponseSchemas.hasInconsistencies ? (
+            <SummaryInconsistentResponseDataAlert
+              responsesBeforeLastEdit={responsesBeforeLastEdit}
+              environmentId={environment.id}
+              surveyId={survey.id}
+            />
+          ) : null
+        }
         cta={
           <SurveyAnalysisCTA
             environment={environment}
