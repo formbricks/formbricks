@@ -1,5 +1,5 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
+import { SurveyStatus, SurveyType } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TBaseFilters } from "@formbricks/types/segment";
@@ -14,6 +14,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    $transaction: vi.fn(),
   },
 }));
 
@@ -35,6 +36,8 @@ describe("getContactsInSegment", () => {
   const mockSurvey = {
     id: mockSurveyId,
     environmentId: mockEnvironmentId,
+    type: "link" as SurveyType,
+    status: "inProgress" as SurveyStatus,
   };
 
   // Define filters as a TBaseFilters array with correct structure
@@ -101,13 +104,31 @@ describe("getContactsInSegment", () => {
   });
 
   test("should return contacts when all operations succeed", async () => {
+    vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
+
     const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
 
-    const { whereClause } = await segmentFilterToPrismaQuery(
-      mockSegmentId,
-      mockSegment.filters,
-      mockEnvironmentId
-    );
+    const whereClause = {
+      AND: [
+        {
+          environmentId: "env-789",
+        },
+        {
+          AND: [
+            {
+              attributes: {
+                some: {
+                  attributeKey: {
+                    key: "email",
+                  },
+                  value: { equals: "test@example.com", mode: "insensitive" },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
@@ -233,7 +254,6 @@ describe("getContactsInSegment", () => {
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
     expect(prisma.contact.count).toHaveBeenCalled();
-    expect(prisma.contact.findMany).not.toHaveBeenCalled();
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

@@ -4,20 +4,12 @@ import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authent
 import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact";
+import {
+  ZContactLinksBySegmentParams,
+  ZContactLinksBySegmentQuery,
+} from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
-import { z } from "zod";
 import { logger } from "@formbricks/logger";
-
-const ZContactLinksBySegmentParams = z.object({
-  surveyId: z.string().cuid2(),
-  segmentId: z.string().cuid2(),
-});
-
-const ZContactLinksBySegmentQuery = z.object({
-  expirationDays: z.coerce.number().positive().min(1).max(365).nullable().default(null).optional(),
-  limit: z.coerce.number().min(1).max(10).optional().default(10),
-  skip: z.coerce.number().min(0).optional().default(0),
-});
 
 export const GET = async (
   request: Request,
@@ -96,11 +88,11 @@ export const GET = async (
             return null;
           }
 
+          const { id, ...attributes } = contact;
+
           return {
-            contactId: contact.id,
-            firstName: contact.firstName,
-            lastName: contact.lastName,
-            email: contact.email,
+            contactId: id,
+            ...attributes,
             surveyUrl: surveyUrlResult.data,
             expiresAt,
           };

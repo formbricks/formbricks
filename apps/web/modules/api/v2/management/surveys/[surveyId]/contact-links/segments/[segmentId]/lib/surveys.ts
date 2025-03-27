@@ -8,13 +8,17 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getSurvey = reactCache(async (surveyId: string) =>
   cache(
-    async (): Promise<Result<Pick<Survey, "id" | "environmentId">, ApiErrorResponseV2>> => {
+    async (): Promise<
+      Result<Pick<Survey, "id" | "environmentId" | "type" | "status">, ApiErrorResponseV2>
+    > => {
       try {
         const survey = await prisma.survey.findUnique({
           where: { id: surveyId },
           select: {
             id: true,
             environmentId: true,
+            type: true,
+            status: true,
           },
         });
 

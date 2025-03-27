@@ -1,3 +1,7 @@
+import {
+  ZContactLinksBySegmentParams,
+  ZContactLinksBySegmentQuery,
+} from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
 
@@ -22,23 +26,8 @@ export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
   description: "Generates personalized survey links for contacts in a segment.",
   tags: ["Management API > Surveys > Contact Links"],
   requestParams: {
-    path: z.object({
-      surveyId: z.string().cuid2().describe("The ID of the survey"),
-      segmentId: z.string().cuid2().describe("The ID of the segment"),
-    }),
-    query: z.object({
-      expirationDays: z
-        .number()
-        .positive()
-        .min(1)
-        .max(365)
-        .nullable()
-        .optional()
-        .default(null)
-        .describe("Number of days until the generated JWT expires. If not provided, there is no expiration."),
-      limit: z.number().min(1).max(10).default(10).describe("Number of items to return"),
-      skip: z.number().min(0).default(0).describe("Number of items to skip"),
-    }),
+    path: ZContactLinksBySegmentParams,
+    query: ZContactLinksBySegmentQuery,
   },
   responses: {
     "200": {

@@ -51,6 +51,8 @@ describe("getSurvey", () => {
       select: {
         id: true,
         environmentId: true,
+        status: true,
+        type: true,
       },
     });
 
@@ -75,6 +77,8 @@ describe("getSurvey", () => {
       select: {
         id: true,
         environmentId: true,
+        status: true,
+        type: true,
       },
     });
 

@@ -1,9 +1,11 @@
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { isResourceFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";
 import { logger } from "@formbricks/logger";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 import {
   TBaseFilters,
   TSegmentAttributeFilter,
@@ -28,7 +30,7 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
   const { operator } = qualifier;
 
   // This base query checks if the contact has an attribute with the specified key
-  const baseQuery: Prisma.ContactWhereInput = {
+  const baseQuery = {
     attributes: {
       some: {
         attributeKey: {
@@ -50,7 +52,7 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
   }
 
   // For all other operators, we need to check the attribute value
-  const valueQuery: Prisma.ContactWhereInput = {
+  const valueQuery = {
     attributes: {
       some: {
         attributeKey: {
@@ -59,42 +61,42 @@ const buildAttributeFilterWhereClause = (filter: TSegmentAttributeFilter): Prism
         value: {},
       },
     },
-  };
+  } satisfies Prisma.ContactWhereInput;
 
   // Apply the appropriate operator to the attribute value
   switch (operator) {
     case "equals":
-      valueQuery.attributes!.some!.value = String(value);
+      valueQuery.attributes.some.value = { equals: String(value), mode: "insensitive" };
       break;
     case "notEquals":
-      valueQuery.attributes!.some!.value = { not: String(value) };
+      valueQuery.attributes.some.value = { not: String(value), mode: "insensitive" };
       break;
     case "contains":
-      valueQuery.attributes!.some!.value = { contains: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { contains: String(value), mode: "insensitive" };
       break;
     case "doesNotContain":
-      valueQuery.attributes!.some!.value = { not: { contains: String(value) }, mode: "insensitive" };
+      valueQuery.attributes.some.value = { not: { contains: String(value) }, mode: "insensitive" };
       break;
     case "startsWith":
-      valueQuery.attributes!.some!.value = { startsWith: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { startsWith: String(value), mode: "insensitive" };
       break;
     case "endsWith":
-      valueQuery.attributes!.some!.value = { endsWith: String(value), mode: "insensitive" };
+      valueQuery.attributes.some.value = { endsWith: String(value), mode: "insensitive" };
       break;
     case "greaterThan":
-      valueQuery.attributes!.some!.value = { gt: String(value) };
+      valueQuery.attributes.some.value = { gt: String(value) };
       break;
     case "greaterEqual":
-      valueQuery.attributes!.some!.value = { gte: String(value) };
+      valueQuery.attributes.some.value = { gte: String(value) };
       break;
     case "lessThan":
-      valueQuery.attributes!.some!.value = { lt: String(value) };
+      valueQuery.attributes.some.value = { lt: String(value) };
       break;
     case "lessEqual":
-      valueQuery.attributes!.some!.value = { lte: String(value) };
+      valueQuery.attributes.some.value = { lte: String(value) };
       break;
     default:
-      valueQuery.attributes!.some!.value = String(value);
+      valueQuery.attributes.some.value = String(value);
   }
 
   return valueQuery;
@@ -128,7 +130,7 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
   const { type } = root;
   const { operator } = qualifier;
 
-  const baseQuery: Prisma.ContactWhereInput = {
+  const baseQuery = {
     attributes: {
       some: {
         attributeKey: {
@@ -137,12 +139,12 @@ const buildDeviceFilterWhereClause = (filter: TSegmentDeviceFilter): Prisma.Cont
         value: {},
       },
     },
-  };
+  } satisfies Prisma.ContactWhereInput;
 
   if (operator === "equals") {
-    baseQuery.attributes!.some!.value = String(value);
+    baseQuery.attributes.some.value = { equals: String(value), mode: "insensitive" };
   } else if (operator === "notEquals") {
-    baseQuery.attributes!.some!.value = { not: String(value) };
+    baseQuery.attributes.some.value = { not: String(value), mode: "insensitive" };
   }
 
   return baseQuery;
@@ -252,15 +254,11 @@ const processFilters = async (
  * Transforms a segment filter into a Prisma query for contacts
  */
 export const segmentFilterToPrismaQuery = reactCache(
-  async (
-    segmentId: string,
-    filters: TBaseFilters,
-    environmentId: string
-  ): Promise<SegmentFilterQueryResult> =>
+  async (segmentId: string, filters: TBaseFilters, environmentId: string) =>
     cache(
-      async () => {
+      async (): Promise<Result<SegmentFilterQueryResult, ApiErrorResponseV2>> => {
         try {
-          const baseWhereClause: Prisma.ContactWhereInput = {
+          const baseWhereClause = {
             environmentId,
           };
 
@@ -268,17 +266,21 @@ export const segmentFilterToPrismaQuery = reactCache(
           const segmentPath = new Set<string>([segmentId]);
           const filtersWhereClause = await processFilters(filters, segmentPath);
 
-          const whereClause: Prisma.ContactWhereInput = {
+          const whereClause = {
             AND: [baseWhereClause, filtersWhereClause],
           };
 
-          return { whereClause };
+          return ok({ whereClause });
         } catch (error) {
           logger.error(
             { error, segmentId, environmentId },
             "Error transforming segment filter to Prisma query"
           );
-          throw error;
+          return err({
+            type: "bad_request",
+            message: "Failed to convert segment filters to Prisma query",
+            details: [{ field: "segment", issue: "Invalid segment filters" }],
+          });
         }
       },
       [`segmentFilterToPrismaQuery-${segmentId}-${environmentId}-${JSON.stringify(filters)}`],
