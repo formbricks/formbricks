@@ -163,14 +163,29 @@ EOT
 
     # Add SMTP configuration to values.yaml
     cat <<EOT >> values.yaml
-    MAIL_FROM: "${mail_from}"
-    MAIL_FROM_NAME: "${mail_from_name}"
-    SMTP_HOST: "${smtp_host}"
-    SMTP_PORT: "${smtp_port}"
-    SMTP_USER: "${smtp_user}"
-    SMTP_PASSWORD: "${smtp_password}"
-    SMTP_AUTHENTICATED: ${smtp_authenticated:-1}
-    SMTP_SECURE_ENABLED: ${smtp_secure_enabled:-0}
+    MAIL_FROM:
+      value: "${mail_from}"
+    MAIL_FROM_NAME:
+      value: "${mail_from_name}"
+    SMTP_HOST:
+      value: "${smtp_host}"
+    SMTP_PORT:
+      value: "${smtp_port}"
+    SMTP_USER:
+      value: "${smtp_user}"
+    SMTP_PASSWORD:
+      value: "${smtp_password}"
+    SMTP_AUTHENTICATED:
+      value: ${smtp_authenticated:-1}
+    SMTP_SECURE_ENABLED:
+      value: ${smtp_secure_enabled:-0}
+EOT
+  else
+    cat <<EOT >> values.yaml
+    EMAIL_VERIFICATION_DISABLED:
+      value: "1"
+    PASSWORD_RESET_DISABLED:
+      value: "1"
 EOT
   fi
 
@@ -222,7 +237,7 @@ EOT
 
   # Install Formbricks with Helm
   echo "🚀 Installing Formbricks via Helm chart..."
-  microk8s helm3 install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
+  microk8s helm3 upgrade -i formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
 
   echo "⏳ Waiting for Formbricks to be ready..."
   kubectl -n formbricks rollout status deployment formbricks
@@ -256,7 +271,6 @@ stop_formbricks() {
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
-  microk8s helm3 repo update
   microk8s helm3 upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks -f values.yaml
   echo "🎉 Formbricks updated successfully!"
   echo "🎉 Check the status of Formbricks with 'kubectl get pods -n formbricks'"
