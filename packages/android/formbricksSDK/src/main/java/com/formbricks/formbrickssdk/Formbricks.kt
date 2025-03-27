@@ -53,7 +53,7 @@ object Formbricks {
      * ```
      *
      */
-    fun setup(context: Context, config: FormbricksConfig) {
+    fun setup(context: Context, config: FormbricksConfig, forceRefresh: Boolean = false) {
         if (isInitialized) {
             val error = SDKError.sdkIsAlreadyInitialized
             callback?.onError(error)
@@ -73,7 +73,7 @@ object Formbricks {
         config.attributes?.get("language")?.let { UserManager.setLanguage(it) }
 
         FormbricksApi.initialize()
-        SurveyManager.refreshEnvironmentIfNeeded()
+        SurveyManager.refreshEnvironmentIfNeeded(force = forceRefresh)
         UserManager.syncUserStateIfNeeded()
 
         isInitialized = true
