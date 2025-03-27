@@ -11,7 +11,9 @@ interface StoryOptions {
   actionButtonText: string;
 }
 
-const meta: Meta<typeof Alert> = {
+type StoryProps = React.ComponentProps<typeof Alert> & StoryOptions;
+
+const meta: Meta<StoryProps> = {
   title: "UI/Alert",
   component: Alert,
   tags: ["autodocs"],
@@ -90,7 +92,7 @@ const meta: Meta<typeof Alert> = {
       },
       order: 2,
     },
-  } as any,
+  },
 };
 
 export default meta;
@@ -99,7 +101,7 @@ export default meta;
 type Story = StoryObj<typeof Alert> & { args: StoryOptions };
 
 // Create a common render function to reduce duplication
-const renderAlert = (args: any) => {
+const renderAlert = (args: StoryProps) => {
   // Extract component props
   const { variant = "default", size = "default", className = "" } = args;
 
