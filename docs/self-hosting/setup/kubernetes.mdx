@@ -19,17 +19,12 @@ Ensure you have the following before proceeding:
 ## 1. Installation Steps
 
 <Steps>
-<Step title="Clone the Helm Chart">
-```sh
-git clone https://github.com/formbricks/formbricks
-cd helm-chart
-```
-</Step>
-
 <Step title="Install with Default Configuration">
 ```sh
-helm install formbricks ./ -n formbricks --create-namespace
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace
 ```
+> **Note:** To specify specific version use `--version` flag. E.g., `--version 1.0.0`. Starting from 3.5.0, the chart is available on the GitHub Container Registry (GHCR).
+
 By default:
 - PostgreSQL and Redis are deployed within the cluster.
 - Secrets are dynamically generated and stored as Kubernetes Secrets.
@@ -37,7 +32,7 @@ By default:
 
 <Step title="Install with an Enterprise License">
 ```sh
-helm install formbricks ./ -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace --set enterprise.licenseKey="YOUR_LICENSE_KEY"
 ```
 </Step>
 </Steps>
@@ -107,7 +102,7 @@ externalSecret:
 
 Install with:
 ```sh
-helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
 ```
 
 ---
@@ -129,7 +124,7 @@ redis:
 ```
 Install with:
 ```sh
-helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
 ```
 
 ---
@@ -147,7 +142,7 @@ redis:
 ```
 Apply with:
 ```sh
-helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks --create-namespace -f values.yaml
 ```
 
 ---
@@ -155,17 +150,17 @@ helm install formbricks ./ -n formbricks --create-namespace -f values.yaml
 ## 4. Upgrading the Deployment
 To apply changes:
 ```sh
-helm upgrade formbricks ./ -n formbricks
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks
 ```
 
 ### Scaling Resources
 ```sh
-helm upgrade formbricks ./ -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set deployment.resources.limits.cpu=2   --set deployment.resources.limits.memory=4Gi
 ```
 
 ### Enabling Autoscaling
 ```sh
-helm upgrade formbricks ./ -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
+helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks -n formbricks   --set autoscaling.enabled=true   --set autoscaling.minReplicas=3   --set autoscaling.maxReplicas=10
 ```
 
 ---
