@@ -469,6 +469,14 @@ module "formbricks_s3_bucket" {
     enabled = true
   }
   policy = data.aws_iam_policy_document.replication_bucket_policy.json
+  cors_rule = [
+    {
+      allowed_methods = ["POST"]
+      allowed_origins = ["https://*"]
+      allowed_headers = ["*"]
+      expose_headers  = []
+    }
+  ]
 }
 
 module "formbricks_app_iam_policy" {
