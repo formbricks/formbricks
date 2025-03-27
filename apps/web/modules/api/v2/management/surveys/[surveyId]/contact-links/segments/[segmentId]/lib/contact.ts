@@ -22,19 +22,19 @@ export const getContactsInSegment = async (
     const survey = surveyResult.data;
 
     if (survey.type !== "link") {
-      return err({
+      const error: ApiErrorResponseV2 = {
         type: "forbidden",
-        message: "Survey is not a link survey",
         details: [{ field: "surveyId", issue: "Invalid survey" }],
-      });
+      };
+      return err(error);
     }
 
     if (survey.status !== "inProgress") {
-      return err({
+      const error: ApiErrorResponseV2 = {
         type: "forbidden",
-        message: "Survey is not active",
         details: [{ field: "surveyId", issue: "Invalid survey" }],
-      });
+      };
+      return err(error);
     }
 
     const segmentResult = await getSegment(segmentId);
@@ -46,11 +46,11 @@ export const getContactsInSegment = async (
 
     if (survey.environmentId !== segment.environmentId) {
       logger.error({ surveyId, segmentId }, "Survey and segment are not in the same environment");
-      return err({
+      const error: ApiErrorResponseV2 = {
         type: "bad_request",
-        message: "Survey and segment are not in the same environment",
         details: [{ field: "segmentId", issue: "Environment mismatch" }],
-      });
+      };
+      return err(error);
     }
 
     const segmentFilterToPrismaQueryResult = await segmentFilterToPrismaQuery(
@@ -113,11 +113,10 @@ export const getContactsInSegment = async (
       },
     });
   } catch (error) {
-    console.log("error", error);
     logger.error({ error, surveyId, segmentId }, "Error getting contacts in segment");
-    return err({
+    const apiError: ApiErrorResponseV2 = {
       type: "internal_server_error",
-      message: "Failed to get contacts in segment",
-    });
+    };
+    return err(apiError);
   }
 };

@@ -175,7 +175,6 @@ describe("getContactsInSegment", () => {
   test("should return error when survey is not a link survey", async () => {
     const surveyError: ApiErrorResponseV2 = {
       type: "forbidden",
-      message: "Survey is not a link survey",
       details: [{ field: "surveyId", issue: "Invalid survey" }],
     };
 
@@ -201,7 +200,6 @@ describe("getContactsInSegment", () => {
   test("should return error when survey is not active", async () => {
     const surveyError: ApiErrorResponseV2 = {
       type: "forbidden",
-      message: "Survey is not active",
       details: [{ field: "surveyId", issue: "Invalid survey" }],
     };
 
@@ -292,7 +290,6 @@ describe("getContactsInSegment", () => {
     if (!result.ok) {
       expect(result.error).toEqual({
         type: "bad_request",
-        message: "Survey and segment are not in the same environment",
         details: [{ field: "segmentId", issue: "Environment mismatch" }],
       });
     }
@@ -311,7 +308,6 @@ describe("getContactsInSegment", () => {
     if (!result.ok) {
       expect(result.error).toEqual({
         type: "internal_server_error",
-        message: "Failed to get contacts in segment",
       });
     }
   });

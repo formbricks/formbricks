@@ -852,7 +852,7 @@ describe("segmentFilterToPrismaQuery", () => {
             type: "attribute" as const,
             contactAttributeKey: "device",
           },
-          value: "chutiya",
+          value: "mobile",
           qualifier: {
             operator: "equals",
           },
