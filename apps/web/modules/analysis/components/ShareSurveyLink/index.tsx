@@ -58,7 +58,9 @@ export const ShareSurveyLink = ({
     }
 
     setSurveyUrl(url);
-  }, [survey, language]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey, surveyDomain, language]);
 
   const generateNewSingleUseLink = () => {
     getUrl();

@@ -48,6 +48,7 @@ const Page = async (props) => {
   });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
   const locale = await findMatchingLocale();
+  const surveyDomain = getSurveyDomain();
 
   return (
     <PageContentWrapper>
@@ -59,7 +60,7 @@ const Page = async (props) => {
             survey={survey}
             isReadOnly={isReadOnly}
             user={user}
-            surveyDomain={getSurveyDomain()}
+            surveyDomain={surveyDomain}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

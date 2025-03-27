@@ -7,14 +7,14 @@ interface LegalFooterProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
-  surveyLink: string;
+  surveyUrl: string;
 }
 
 export const LegalFooter = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
-  surveyLink,
+  surveyUrl,
 }: LegalFooterProps) => {
   const { t } = useTranslate();
   if (!IMPRINT_URL && !PRIVACY_URL && !IS_FORMBRICKS_CLOUD) return null;
@@ -36,7 +36,7 @@ export const LegalFooter = ({
         {PRIVACY_URL && IS_FORMBRICKS_CLOUD && <span className="px-2">|</span>}
         {IS_FORMBRICKS_CLOUD && (
           <Link
-            href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyLink}`}
+            href={`https://app.formbricks.com/s/clxbivtla014iye2vfrn436xd?surveyUrl=${surveyUrl}`}
             target="_blank"
             className="hover:underline"
             tabIndex={-1}>

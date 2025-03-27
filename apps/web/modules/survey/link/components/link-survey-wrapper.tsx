@@ -96,7 +96,7 @@ export const LinkSurveyWrapper = ({
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyLink={surveyDomain + "/s/" + surveyId}
+          surveyUrl={surveyDomain + "/s/" + surveyId}
         />
       </div>
     );
