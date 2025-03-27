@@ -52,7 +52,7 @@ module "rds-aurora" {
 
   serverlessv2_scaling_configuration = {
     min_capacity             = 0
-    max_capacity             = 10
+    max_capacity             = 50
     seconds_until_auto_pause = 3600
   }
 
