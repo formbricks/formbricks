@@ -24,9 +24,12 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
-# Set dummy DATABASE_URL for build time only
-ENV DATABASE_URL="postgresql://dummy:<placeholder>@localhost:5432/dummy_db_for_build_only"
-ENV ENCRYPTION_KEY="<placeholder>"
+# Set build arguments for sensitive values
+ARG DATABASE_URL
+ARG ENCRYPTION_KEY
+# Set environment variables for build time only
+ENV DATABASE_URL=${DATABASE_URL}
+ENV ENCRYPTION_KEY=${ENCRYPTION_KEY}
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
