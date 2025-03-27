@@ -6,6 +6,7 @@ import { TContactBulkUploadContact } from "@/modules/ee/contacts/types/contact";
 import { createId } from "@paralleldrive/cuid2";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const upsertBulkContacts = async (
@@ -20,6 +21,7 @@ export const upsertBulkContacts = async (
     ApiErrorResponseV2
   >
 > => {
+  const emailAttributeKey = "email";
   const contactIdxWithConflictingUserIds: number[] = [];
 
   const userIdsInContacts = contacts.flatMap((contact) =>
@@ -41,63 +43,8 @@ export const upsertBulkContacts = async (
     },
   });
 
-  // in the contacts array, skip the contacts that have an existing userId attribute
-  const filteredContacts = contacts.filter((contact, idx) => {
-    const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
-    if (!userIdAttr) {
-      return true;
-    }
-
-    // check if the userId exists in the existingUserIds array
-    const existingUserId = existingUserIds.find(
-      (existingUserId) => existingUserId.value === userIdAttr.value
-    );
-
-    if (existingUserId) {
-      contactIdxWithConflictingUserIds.push(idx);
-    }
-
-    return !existingUserId;
-  });
-
-  if (!filteredContacts.length) {
-    return ok({
-      contactIdxWithConflictingUserIds,
-    });
-  }
-
-  const emailAttributeKey = "email";
-
-  // Get unique attribute keys from the payload
-  const keys = Array.from(
-    new Set(filteredContacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
-  );
-
-  // Fetch attribute key records for these keys in this environment
-  const attributeKeys = await prisma.contactAttributeKey.findMany({
-    where: {
-      key: { in: keys },
-      environmentId,
-    },
-  });
-
-  const attributeKeyMap = attributeKeys.reduce<Record<string, string>>((acc, keyObj) => {
-    acc[keyObj.key] = keyObj.id;
-    return acc;
-  }, {});
-
-  // Check for missing attribute keys and create them if needed.
-  const missingKeysMap = new Map<string, { key: string; name: string }>();
-  for (const contact of filteredContacts) {
-    for (const attr of contact.attributes) {
-      if (!attributeKeyMap[attr.attributeKey.key]) {
-        missingKeysMap.set(attr.attributeKey.key, attr.attributeKey);
-      }
-    }
-  }
-
   // Find existing contacts by matching email attribute
-  const existingContacts = await prisma.contact.findMany({
+  const existingContactsByEmail = await prisma.contact.findMany({
     where: {
       environmentId,
       attributes: {
@@ -123,10 +70,13 @@ export const upsertBulkContacts = async (
   // Build a map from email to contact id (if the email attribute exists)
   const contactMap = new Map<
     string,
-    { contactId: string; attributes: { id: string; attributeKey: { key: string }; createdAt: Date }[] }
+    {
+      contactId: string;
+      attributes: { id: string; attributeKey: { key: string }; createdAt: Date; value: string }[];
+    }
   >();
 
-  existingContacts.forEach((contact) => {
+  existingContactsByEmail.forEach((contact) => {
     const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailAttributeKey);
 
     if (emailAttr) {
@@ -136,9 +86,23 @@ export const upsertBulkContacts = async (
           id: attr.id,
           attributeKey: { key: attr.attributeKey.key },
           createdAt: attr.createdAt,
+          value: attr.value,
         })),
       });
     }
+  });
+
+  // Get unique attribute keys from the payload
+  const attributeKeys = Array.from(
+    new Set(contacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
+  );
+
+  // Fetch attribute key records for these keys in this environment
+  const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
+    where: {
+      key: { in: attributeKeys },
+      environmentId,
+    },
   });
 
   // Split contacts into ones to update and ones to create
@@ -163,63 +127,172 @@ export const upsertBulkContacts = async (
     }[];
   }[] = [];
 
-  for (const contact of filteredContacts) {
+  contacts.forEach((contact, idx) => {
     const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailAttributeKey);
 
     if (emailAttr && contactMap.has(emailAttr.value)) {
-      contactsToUpdate.push({
-        contactId: contactMap.get(emailAttr.value)!.contactId,
-        attributes: contact.attributes.map((attr) => {
-          const existingAttr = contactMap
-            .get(emailAttr.value)!
-            .attributes.find((a) => a.attributeKey.key === attr.attributeKey.key);
+      // if all the attributes passed are the same as the existing attributes, skip the update:
+      const existingContact = contactMap.get(emailAttr.value);
+      if (existingContact) {
+        // Create maps of existing attributes by key
+        const existingAttributesByKey = new Map(
+          existingContact.attributes.map((attr) => [attr.attributeKey.key, attr.value])
+        );
 
-          if (!existingAttr) {
-            // Should never happen, just to be safe and satisfy typescript
+        // Check if any attributes need updating
+        const needsUpdate = contact.attributes.some(
+          (attr) => existingAttributesByKey.get(attr.attributeKey.key) !== attr.value
+        );
+
+        if (!needsUpdate) {
+          // No attributes need to be updated
+          return;
+        }
+
+        // which attributes need to be updated?
+        const attributesToUpdate = contact.attributes.filter(
+          (attr) => existingAttributesByKey.get(attr.attributeKey.key) !== attr.value
+        );
+
+        // if the attributes to update have a userId that exists in the db, we need to skip the update
+        const userIdAttr = attributesToUpdate.find((attr) => attr.attributeKey.key === "userId");
+
+        if (userIdAttr) {
+          const existingUserId = existingUserIds.find(
+            (existingUserId) => existingUserId.value === userIdAttr.value
+          );
+
+          if (existingUserId) {
+            contactIdxWithConflictingUserIds.push(idx);
+            return;
+          }
+        }
+
+        contactsToUpdate.push({
+          contactId: existingContact.contactId,
+          attributes: attributesToUpdate.map((attr) => {
+            const existingAttr = existingContact.attributes.find(
+              (a) => a.attributeKey.key === attr.attributeKey.key
+            );
+
+            if (!existingAttr) {
+              return {
+                id: createId(),
+                createdAt: new Date(),
+                value: attr.value,
+                attributeKey: attr.attributeKey,
+              };
+            }
+
             return {
-              id: createId(),
-              createdAt: new Date(),
+              id: existingAttr.id,
+              createdAt: existingAttr.createdAt,
               value: attr.value,
               attributeKey: attr.attributeKey,
             };
-          }
-
-          return {
-            id: existingAttr.id,
-            createdAt: existingAttr.createdAt,
-            value: attr.value,
-            attributeKey: attr.attributeKey,
-          };
-        }),
-      });
+          }),
+        });
+      }
     } else {
+      // There can't be a case where the emailAttr is not defined since that should be caught by zod.
+
+      // if the contact has a userId that already exists in the db, we need to skip the create
+      const userIdAttr = contact.attributes.find((attr) => attr.attributeKey.key === "userId");
+      if (userIdAttr) {
+        const existingUserId = existingUserIds.find(
+          (existingUserId) => existingUserId.value === userIdAttr.value
+        );
+
+        if (existingUserId) {
+          contactIdxWithConflictingUserIds.push(idx);
+          return;
+        }
+      }
+
       contactsToCreate.push(contact);
     }
-  }
+  });
+
+  const filteredContacts = contacts.filter((_, idx) => !contactIdxWithConflictingUserIds.includes(idx));
 
   try {
     // Execute everything in ONE transaction
     await prisma.$transaction(async (tx) => {
-      // Create missing attribute keys if needed
-      if (missingKeysMap.size > 0) {
-        const missingKeysArray = Array.from(missingKeysMap.values());
-        const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
-          data: missingKeysArray.map((keyObj) => ({
-            key: keyObj.key,
-            name: keyObj.name,
-            environmentId,
-          })),
-          select: { key: true, id: true },
-          skipDuplicates: true,
-        });
+      const attributeKeyMap = existingAttributeKeys.reduce<Record<string, string>>((acc, keyObj) => {
+        acc[keyObj.key] = keyObj.id;
+        return acc;
+      }, {});
 
-        // Refresh the attribute key map for the missing keys
-        for (const attrKey of newAttributeKeys) {
-          attributeKeyMap[attrKey.key] = attrKey.id;
+      // Check for missing attribute keys and create them if needed.
+      const missingKeysMap = new Map<string, { key: string; name: string }>();
+      const attributeKeyNameUpdates = new Map<string, { key: string; name: string }>();
+
+      for (const contact of filteredContacts) {
+        for (const attr of contact.attributes) {
+          if (!attributeKeyMap[attr.attributeKey.key]) {
+            missingKeysMap.set(attr.attributeKey.key, attr.attributeKey);
+          } else {
+            // Check if the name has changed for existing attribute keys
+            const existingKey = existingAttributeKeys.find((ak) => ak.key === attr.attributeKey.key);
+            if (existingKey && existingKey.name !== attr.attributeKey.name) {
+              attributeKeyNameUpdates.set(attr.attributeKey.key, attr.attributeKey);
+            }
+          }
         }
       }
 
-      // Create new contacts
+      // Create missing attribute keys if needed
+      if (missingKeysMap.size > 0) {
+        const missingKeysArray = Array.from(missingKeysMap.values());
+
+        // Batch this, not sure if we need to do this.
+        // Generally, the number of attribute keys that are missing shouldn't be that high.
+        const BATCH_SIZE = 10000;
+        for (let i = 0; i < missingKeysArray.length; i += BATCH_SIZE) {
+          const batch = missingKeysArray.slice(i, i + BATCH_SIZE);
+
+          const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
+            data: batch.map((keyObj) => ({
+              key: keyObj.key,
+              name: keyObj.name,
+              environmentId,
+            })),
+            select: { key: true, id: true },
+            skipDuplicates: true,
+          });
+
+          // Refresh the attribute key map for the missing keys
+          for (const attrKey of newAttributeKeys) {
+            attributeKeyMap[attrKey.key] = attrKey.id;
+          }
+        }
+      }
+
+      // Update names of existing attribute keys if they've changed
+      if (attributeKeyNameUpdates.size > 0) {
+        const nameUpdatesArray = Array.from(attributeKeyNameUpdates.values());
+        const BATCH_SIZE = 10000;
+
+        for (let i = 0; i < nameUpdatesArray.length; i += BATCH_SIZE) {
+          const batch = nameUpdatesArray.slice(i, i + BATCH_SIZE);
+
+          await Promise.all(
+            batch.map((keyObj) =>
+              tx.contactAttributeKey.update({
+                where: {
+                  key_environmentId: {
+                    key: keyObj.key,
+                    environmentId,
+                  },
+                },
+                data: { name: keyObj.name },
+              })
+            )
+          );
+        }
+      }
+
+      // Create new contacts -- should be at most 1000, no need to batch
       const newContacts = contactsToCreate.map(() => ({
         id: createId(),
         environmentId,
@@ -294,7 +367,7 @@ export const upsertBulkContacts = async (
       }
 
       // revalidate all the existing contacts:
-      for (const existingContact of existingContacts) {
+      for (const existingContact of existingContactsByEmail) {
         contactCache.revalidate({
           id: existingContact.id,
         });
@@ -311,7 +384,7 @@ export const upsertBulkContacts = async (
       contactIdxWithConflictingUserIds,
     });
   } catch (error) {
-    console.error(error);
+    logger.error({ error }, "Failed to upsert contacts");
 
     return err({
       type: "internal_server_error",
