@@ -39,7 +39,7 @@ export const TopControlButtons = ({
 
       <TooltipRenderer tooltipContent={t("common.share_feedback")}>
         <Button variant="ghost" size="icon" className="h-fit w-fit bg-slate-50 p-1" asChild>
-          <Link href="https://github.com/formbricks/formbricks/issues/new/choose" target="_blank">
+          <Link href="https://github.com/formbricks/formbricks/issues" target="_blank">
             <BugIcon />
           </Link>
         </Button>
