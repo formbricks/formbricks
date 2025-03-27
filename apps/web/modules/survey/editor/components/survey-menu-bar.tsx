@@ -402,13 +402,23 @@ export const SurveyMenuBar = ({
           onConfirm={() => handleSaveAndGoBack()}
         />
         <AlertDialog
-          headerText={t("environments.surveys.edit.caution_dialog_title")}
+          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          mainText={t("environments.surveys.edit.caution_dialog_body")}
+          mainText={
+            <>
+              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+              <ul className="mt-3 list-disc space-y-0.5 pl-5">
+                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+              </ul>
+            </>
+          }
           confirmBtnLabel={t("common.close")}
           onConfirm={() => setIsCautionDialogOpen(false)}
-          onDecline={() => setIsCautionDialogOpen(false)}
         />
       </div>
     </>

@@ -152,22 +152,21 @@ export const SurveyDropDownMenu = ({
             {!isSurveyCreationDeletionDisabled && (
               <>
                 <DropdownMenuItem>
-                  {survey.status === "inProgress" && survey.responseCount > 0 
-                    ? (
-                      <Link
-                        className="flex w-full items-center"
-                        href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
-                        onClick={handleEditforActiveSurvey}>
-                        <SquarePenIcon className="mr-2 size-4" />
-                        {t("common.edit")}
-                      </Link> )
-                    : (
-                      <Link
-                        className="flex w-full items-center"
-                        href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
-                        <SquarePenIcon className="mr-2 size-4" />
-                        {t("common.edit")}
-                      </Link>
+                  {survey.responseCount > 0 ? (
+                    <Link
+                      className="flex w-full items-center"
+                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}
+                      onClick={handleEditforActiveSurvey}>
+                      <SquarePenIcon className="mr-2 size-4" />
+                      {t("common.edit")}
+                    </Link>
+                  ) : (
+                    <Link
+                      className="flex w-full items-center"
+                      href={`/environments/${environmentId}/surveys/${survey.id}/edit`}>
+                      <SquarePenIcon className="mr-2 size-4" />
+                      {t("common.edit")}
+                    </Link>
                   )}
                 </DropdownMenuItem>
 
@@ -281,16 +280,13 @@ export const SurveyDropDownMenu = ({
             </>
           }
           confirmBtnLabel={t("common.duplicate")}
-          declineBtnLabel={t("common.cancel")}
+          declineBtnLabel={t("common.edit")}
           declineBtnVariant="outline"
-          tertiaryBtnLabel={t("common.edit")}
           onConfirm={async () => {
             await duplicateSurveyAndRefresh(survey.id);
             setIsCautionDialogOpen(false);
           }}
-          onDecline={() => setIsCautionDialogOpen(false)}
-          onTertiary={() => handleConfirmNavigation()}>
-          </AlertDialog>
+          onDecline={() => handleConfirmNavigation()}></AlertDialog>
       )}
 
       {isCopyFormOpen && (
