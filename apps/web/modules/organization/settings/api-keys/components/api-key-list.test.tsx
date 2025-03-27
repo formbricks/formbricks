@@ -2,12 +2,12 @@ import "@testing-library/jest-dom/vitest";
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
-import { getApiKeys } from "../lib/api-key";
+import { getApiKeysWithEnvironmentPermissions } from "../lib/api-key";
 import { ApiKeyList } from "./api-key-list";
 
-// Mock the getApiKeys function
+// Mock the getApiKeysWithEnvironmentPermissions function
 vi.mock("../lib/api-key", () => ({
-  getApiKeys: vi.fn(),
+  getApiKeysWithEnvironmentPermissions: vi.fn(),
 }));
 
 // Mock @formbricks/lib/constants
@@ -109,8 +109,10 @@ const mockApiKeys = [
 
 describe("ApiKeyList", () => {
   it("renders EditAPIKeys with correct props", async () => {
-    // Mock the getApiKeys function to return our mock data
-    (getApiKeys as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(mockApiKeys);
+    // Mock the getApiKeysWithEnvironmentPermissions function to return our mock data
+    (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockApiKeys
+    );
 
     const props = {
       organizationId: "org1",
@@ -122,13 +124,13 @@ describe("ApiKeyList", () => {
     const { container } = render(await ApiKeyList(props));
 
     // Verify that EditAPIKeys is rendered with the correct props
-    expect(getApiKeys).toHaveBeenCalledWith("org1");
+    expect(getApiKeysWithEnvironmentPermissions).toHaveBeenCalledWith("org1");
     expect(container).toBeInTheDocument();
   });
 
   it("handles empty api keys", async () => {
-    // Mock the getApiKeys function to return empty array
-    (getApiKeys as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+    // Mock the getApiKeysWithEnvironmentPermissions function to return empty array
+    (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue([]);
 
     const props = {
       organizationId: "org1",
@@ -140,12 +142,14 @@ describe("ApiKeyList", () => {
     const { container } = render(await ApiKeyList(props));
 
     // Verify that EditAPIKeys is rendered even with empty api keys
-    expect(getApiKeys).toHaveBeenCalledWith("org1");
+    expect(getApiKeysWithEnvironmentPermissions).toHaveBeenCalledWith("org1");
     expect(container).toBeInTheDocument();
   });
 
   it("passes isReadOnly prop correctly", async () => {
-    (getApiKeys as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(mockApiKeys);
+    (getApiKeysWithEnvironmentPermissions as unknown as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockApiKeys
+    );
 
     const props = {
       organizationId: "org1",
@@ -156,7 +160,7 @@ describe("ApiKeyList", () => {
 
     const { container } = render(await ApiKeyList(props));
 
-    expect(getApiKeys).toHaveBeenCalledWith("org1");
+    expect(getApiKeysWithEnvironmentPermissions).toHaveBeenCalledWith("org1");
     expect(container).toBeInTheDocument();
   });
 });

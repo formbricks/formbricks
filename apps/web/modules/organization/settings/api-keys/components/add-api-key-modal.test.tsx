@@ -170,7 +170,7 @@ describe("AddApiKeyModal", () => {
       label: "Test API Key",
       environmentPermissions: [
         {
-          environmentId: "env1",
+          environmentId: "env2",
           permission: ApiKeyPermission.read,
         },
       ],

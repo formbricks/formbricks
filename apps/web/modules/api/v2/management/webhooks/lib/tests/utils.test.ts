@@ -16,7 +16,7 @@ describe("getWebhooksQuery", () => {
     const result = getWebhooksQuery([environmentId], params);
     expect(result).toBeDefined();
     expect(result?.where).toMatchObject({
-      environmentId,
+      environmentId: { in: [environmentId] },
       surveyIds: { hasSome: ["survey1"] },
     });
   });

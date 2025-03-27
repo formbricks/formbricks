@@ -73,8 +73,14 @@ describe("API Key Management", () => {
         where: {
           organizationId: "org123",
         },
-        take: undefined,
-        skip: undefined,
+        include: {
+          apiKeyEnvironments: {
+            select: {
+              environmentId: true,
+              permission: true,
+            },
+          },
+        },
       });
     });
 

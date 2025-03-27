@@ -1,4 +1,4 @@
-import { ApiKey, ApiKeyPermission } from "@prisma/client";
+import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
+import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import { EditAPIKeys } from "./edit-api-keys";
 
 // Mock the actions
@@ -64,11 +65,19 @@ const mockProjects: TProject[] = [
         projectId: "project1",
         appSetupCompleted: true,
       },
+      {
+        id: "env2",
+        type: "development",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        projectId: "project1",
+        appSetupCompleted: true,
+      },
     ],
   },
 ];
 
-const mockApiKeys: ApiKey[] = [
+const mockApiKeys: TApiKeyWithEnvironmentPermission[] = [
   {
     id: "key1",
     hashedKey: "hashed1",
@@ -77,6 +86,12 @@ const mockApiKeys: ApiKey[] = [
     lastUsedAt: null,
     organizationId: "org1",
     createdBy: "user1",
+    apiKeyEnvironments: [
+      {
+        environmentId: "env1",
+        permission: ApiKeyPermission.read,
+      },
+    ],
   },
   {
     id: "key2",
@@ -86,6 +101,12 @@ const mockApiKeys: ApiKey[] = [
     lastUsedAt: null,
     organizationId: "org1",
     createdBy: "user1",
+    apiKeyEnvironments: [
+      {
+        environmentId: "env2",
+        permission: ApiKeyPermission.read,
+      },
+    ],
   },
 ];
 
@@ -164,7 +185,7 @@ describe("EditAPIKeys", () => {
   });
 
   it("handles API key creation", async () => {
-    const newApiKey: ApiKey = {
+    const newApiKey: TApiKeyWithEnvironmentPermission = {
       id: "key3",
       hashedKey: "hashed3",
       label: "New Key",
@@ -172,6 +193,12 @@ describe("EditAPIKeys", () => {
       lastUsedAt: null,
       organizationId: "org1",
       createdBy: "user1",
+      apiKeyEnvironments: [
+        {
+          environmentId: "env2",
+          permission: ApiKeyPermission.read,
+        },
+      ],
     };
 
     (createApiKeyAction as unknown as ReturnType<typeof vi.fn>).mockResolvedValue({ data: newApiKey });
@@ -196,7 +223,7 @@ describe("EditAPIKeys", () => {
       organizationId: "org1",
       apiKeyData: {
         label: "New Key",
-        environmentPermissions: [{ environmentId: "env1", permission: ApiKeyPermission.read }],
+        environmentPermissions: [{ environmentId: "env2", permission: ApiKeyPermission.read }],
       },
     });
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_created");
@@ -213,7 +240,7 @@ describe("EditAPIKeys", () => {
     const apiKeyWithActual = {
       ...mockApiKeys[0],
       actualKey: "test-api-key-123",
-    } as ApiKey & { actualKey: string };
+    } as TApiKeyWithEnvironmentPermission & { actualKey: string };
 
     render(<EditAPIKeys {...defaultProps} apiKeys={[apiKeyWithActual]} />);
 
