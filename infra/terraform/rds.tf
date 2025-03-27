@@ -42,8 +42,11 @@ module "rds-aurora" {
   }
   performance_insights_enabled = true
 
-  apply_immediately   = true
-  skip_final_snapshot = true
+  backup_retention_period = 7
+  apply_immediately       = true
+  skip_final_snapshot     = false
+
+  deletion_protection = true
 
   enable_http_endpoint = true
 
