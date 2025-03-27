@@ -3,7 +3,7 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
 export const moveApiKeysToApiKeysNew: MigrationScript = {
   type: "data",
   id: "mvwdryxrxaf8rhr97g2zlv3m",
-  name: "20250320111101_move_api_keys_to_api_keys_new",
+  name: "20250326111101_move_api_keys_to_api_keys_new",
   run: async ({ tx }) => {
     // Step 1: Get all existing API keys with related data
     const apiKeys = await tx.$queryRaw`
@@ -24,38 +24,41 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
     // @ts-expect-error
     for (const apiKey of apiKeys) {
       const organizationId = apiKey.organizationId;
-
-      // Find the first organization member with owner role
-      let createdBy;
-      try {
-        // @ts-expect-error
-        const [membership] = await tx.$queryRaw`
-          SELECT "userId"
-          FROM "Membership"
-          WHERE "organizationId" = ${organizationId}
-          AND role = 'owner'
-          LIMIT 1
-        `;
-        createdBy = membership?.userId || "system_migration";
-      } catch (error) {
-        console.error(`Error finding owner for organization ${organizationId}:`, error);
-        createdBy = "system_migration";
-      }
-
+      console.log(apiKey);
       console.log(
         `Migrating API key ${apiKey.id} from environment ${apiKey.environmentId} to organization ${organizationId}`
       );
 
       try {
+        // Check if the API key already exists in the new table
+        const existingKey = await tx.$queryRaw`
+          SELECT id FROM "ApiKeyNew" WHERE id = ${apiKey.id}
+        `;
+
+        if (Array.isArray(existingKey) && existingKey.length > 0) {
+          console.log(`API key ${apiKey.id} already migrated, skipping...`);
+          continue;
+        }
+
+        // Check if the API key environment relation already exists
+        const existingEnv = await tx.$queryRaw`
+          SELECT id FROM "ApiKeyEnvironment" 
+          WHERE "apiKeyId" = ${apiKey.id} AND "environmentId" = ${apiKey.environmentId}
+        `;
+
+        if (Array.isArray(existingEnv) && existingEnv.length > 0) {
+          console.log(`API key environment relation already exists for key ${apiKey.id}, skipping...`);
+          continue;
+        }
+
         // Step 3: Create new API key in the ApiKeyNew table and its environment relation
         await tx.$executeRaw`
           INSERT INTO "ApiKeyNew" (
             "id", 
             "createdAt", 
             "lastUsedAt", 
-            "label", 
+            "label",
             "hashedKey", 
-            "createdBy", 
             "organizationId"
           ) VALUES (
             ${apiKey.id},
@@ -63,23 +66,18 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
             ${apiKey.lastUsedAt},
             ${apiKey.label},
             ${apiKey.hashedKey},
-            ${createdBy},
             ${organizationId}
           )
         `;
 
-        // Create the API key environment relation
-        await tx.$executeRaw`
-          INSERT INTO "ApiKeyEnvironment" (
-            "apiKeyId",
-            "environmentId",
-            "permission"
-          ) VALUES (
-            ${apiKey.id},
-            ${apiKey.environmentId},
-            'manage'
-          )
-        `;
+        // Create the API key environment relation using Prisma
+        await tx.apiKeyEnvironment.create({
+          data: {
+            apiKeyId: apiKey.id,
+            environmentId: apiKey.environmentId,
+            permission: "manage",
+          },
+        });
 
         console.log(`Successfully migrated API key ${apiKey.id} to new model.`);
       } catch (error) {

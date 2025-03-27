@@ -2,6 +2,7 @@ import "server-only";
 import { apiKeyCache } from "@/lib/cache/api-key";
 import {
   TApiKeyCreateInput,
+  TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
@@ -13,8 +14,8 @@ import { validateInputs } from "@formbricks/lib/utils/validate";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const getApiKeys = reactCache(
-  async (organizationId: string): Promise<ApiKey[]> =>
+export const getApiKeysWithEnvironmentPermissions = reactCache(
+  async (organizationId: string): Promise<TApiKeyWithEnvironmentPermission[]> =>
     cache(
       async () => {
         validateInputs([organizationId, ZId]);
@@ -24,8 +25,15 @@ export const getApiKeys = reactCache(
             where: {
               organizationId,
             },
+            include: {
+              apiKeyEnvironments: {
+                select: {
+                  environmentId: true,
+                  permission: true,
+                },
+              },
+            },
           });
-
           return apiKeys;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -34,7 +42,7 @@ export const getApiKeys = reactCache(
           throw error;
         }
       },
-      [`getApiKeys-${organizationId}`],
+      [`getApiKeysWithEnvironments-${organizationId}`],
       {
         tags: [apiKeyCache.tag.byOrganizationId(organizationId)],
       }

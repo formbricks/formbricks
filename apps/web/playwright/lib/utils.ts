@@ -13,11 +13,13 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
       throw new Error("Unable to parse environmentId from URL");
     })();
 
-  await page.goto(`/environments/${environmentId}/project/api-keys`);
+  await page.goto(`/environments/${environmentId}/settings/api-keys`);
 
-  await page.getByRole("button", { name: "Add Production API Key" }).isVisible();
-  await page.getByRole("button", { name: "Add Production API Key" }).click();
+  await page.getByRole("button", { name: "Add API Key" }).isVisible();
+  await page.getByRole("button", { name: "Add API Key" }).click();
   await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
+  await page.getByRole("button", { name: "read" }).click();
+  await page.getByRole("menuitem", { name: "manage" }).click();
   await page.getByRole("button", { name: "Add API Key" }).click();
   await page.locator(".copyApiKeyIcon").click();
 

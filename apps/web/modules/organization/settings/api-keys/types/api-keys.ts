@@ -31,3 +31,14 @@ export const OrganizationProject = z.object({
 });
 
 export type TOrganizationProject = z.infer<typeof OrganizationProject>;
+
+export const TApiKeyEnvironmentPermission = z.object({
+  environmentId: z.string(),
+  permission: z.nativeEnum(ApiKeyPermission),
+});
+
+export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
+
+export interface TApiKeyWithEnvironmentPermission extends ApiKey {
+  apiKeyEnvironments: TApiKeyEnvironmentPermission[];
+}

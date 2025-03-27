@@ -2,6 +2,7 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
+import { Alert } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
@@ -14,9 +15,11 @@ export const APIKeysPage = async (props) => {
   const t = await getTranslate();
   const locale = await findMatchingLocale();
 
-  const { currentUserMembership, isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
   const projects = await getProjectsByOrganizationId(organization.id);
+
+  const isReadOnly = currentUserMembership.role !== "owner" && currentUserMembership.role !== "manager";
 
   return (
     <PageContentWrapper>
@@ -28,18 +31,22 @@ export const APIKeysPage = async (props) => {
           activeId="api-keys"
         />
       </PageHeader>
-      <SettingsCard
-        title={t("common.api_keys")}
-        description={t("environments.settings.api_keys.api_keys_description")}>
-        <ApiKeyList
-          organizationId={organization.id}
-          locale={locale}
-          isReadOnly={isReadOnly}
-          projects={projects}
-        />
-      </SettingsCard>
+      {isReadOnly ? (
+        <Alert variant="warning">
+          {t("environments.settings.api_keys.only_organization_owners_and_managers_can_manage_api_keys")}
+        </Alert>
+      ) : (
+        <SettingsCard
+          title={t("common.api_keys")}
+          description={t("environments.settings.api_keys.api_keys_description")}>
+          <ApiKeyList
+            organizationId={organization.id}
+            locale={locale}
+            isReadOnly={isReadOnly}
+            projects={projects}
+          />
+        </SettingsCard>
+      )}
     </PageContentWrapper>
   );
 };
-
-export default APIKeysPage;

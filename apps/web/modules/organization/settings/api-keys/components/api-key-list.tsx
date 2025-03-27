@@ -1,4 +1,4 @@
-import { getApiKeys } from "@/modules/organization/settings/api-keys/lib/api-key";
+import { getApiKeysWithEnvironmentPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { TUserLocale } from "@formbricks/types/user";
 import { EditAPIKeys } from "./edit-api-keys";
@@ -11,7 +11,7 @@ interface ApiKeyListProps {
 }
 
 export const ApiKeyList = async ({ organizationId, locale, isReadOnly, projects }: ApiKeyListProps) => {
-  const apiKeys = await getApiKeys(organizationId);
+  const apiKeys = await getApiKeysWithEnvironmentPermissions(organizationId);
 
   return (
     <EditAPIKeys

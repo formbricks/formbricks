@@ -63,10 +63,10 @@ export const AddApiKeyModal = ({
       return {
         "permission-0": {
           projectId: projects[0].id,
-          environmentId: projects[0].environments[0].id,
+          environmentId: projects[0].environments[1].id,
           permission: ApiKeyPermission.read,
           projectName: projects[0].name,
-          environmentType: projects[0].environments[0].type,
+          environmentType: projects[0].environments[1].type,
         },
       };
     }
@@ -117,7 +117,7 @@ export const AddApiKeyModal = ({
   const updateProjectAndEnvironment = (key: string, projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     if (project && project.environments.length > 0) {
-      const environment = project.environments[0];
+      const environment = project.environments[1];
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {

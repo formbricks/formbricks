@@ -725,7 +725,7 @@ model Invite {
 model ApiKey {
   id                 String              @id @default(cuid())
   createdAt          DateTime            @default(now())
-  createdBy          String
+  createdBy          String?
   lastUsedAt         DateTime?
   label              String
   hashedKey          String              @unique

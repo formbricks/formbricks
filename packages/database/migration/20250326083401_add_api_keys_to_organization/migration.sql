@@ -5,7 +5,7 @@ CREATE TYPE "ApiKeyPermission" AS ENUM ('read', 'write', 'manage');
 CREATE TABLE "ApiKeyNew" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "createdBy" TEXT NOT NULL,
+    "createdBy" TEXT,
     "lastUsedAt" TIMESTAMP(3),
     "label" TEXT NOT NULL,
     "hashedKey" TEXT NOT NULL,

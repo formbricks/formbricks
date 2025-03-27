@@ -1,3 +1,11 @@
+-- Verify all data is migrated before proceeding
+DO $$
+BEGIN
+  IF (SELECT COUNT(*) FROM "ApiKey") != (SELECT COUNT(*) FROM "ApiKeyNew") THEN
+    RAISE EXCEPTION 'Data migration incomplete. Counts do not match.';
+  END IF;
+END $$;
+
 -- Drop the old ApiKey table first
 DROP TABLE IF EXISTS "ApiKey";
 

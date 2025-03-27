@@ -1009,7 +1009,8 @@
       "api_keys": {
         "add_api_key": "Add API key",
         "add_permission": "Add permission",
-        "api_keys_description": "Manage API keys to access Formbricks management APIs"
+        "api_keys_description": "Manage API keys to access Formbricks management APIs",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Only organization owners and managers can manage API keys"
       },
       "billing": {
         "10000_monthly_responses": "10000 Monthly Responses",

@@ -1,7 +1,11 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
+import {
+  TApiKeyWithEnvironmentPermission,
+  TOrganizationProject,
+} from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { ApiKey, ApiKeyPermission } from "@prisma/client";
@@ -16,7 +20,7 @@ import { AddApiKeyModal } from "./add-api-key-modal";
 
 interface EditAPIKeysProps {
   organizationId: string;
-  apiKeys: ApiKey[];
+  apiKeys: TApiKeyWithEnvironmentPermission[];
   locale: TUserLocale;
   isReadOnly: boolean;
   projects: TOrganizationProject[];
@@ -29,6 +33,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   const [apiKeysLocal, setApiKeysLocal] = useState<(ApiKey & { actualKey?: string })[]>(apiKeys);
   const [activeKey, setActiveKey] = useState({} as any);
   const [isCreatingAPIKey, setIsCreatingAPIKey] = useState(false);
+  const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
     e.preventDefault();
@@ -119,7 +124,11 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full cursor-pointer grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
+                onClick={() => {
+                  setActiveKey(apiKey);
+                  setViewPermissionsOpen(true);
+                }}
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
@@ -130,7 +139,13 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                 </div>
                 {!isReadOnly && (
                   <div className="col-span-1 text-center">
-                    <Button size="icon" variant="ghost" onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        handleOpenDeleteKeyModal(e, apiKey);
+                        e.stopPropagation();
+                      }}>
                       <TrashIcon />
                     </Button>
                   </div>
@@ -158,6 +173,12 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         onSubmit={handleAddAPIKey}
         projects={projects}
         isCreatingAPIKey={isCreatingAPIKey}
+      />
+      <ViewPermissionModal
+        open={viewPermissionsOpen}
+        setOpen={setViewPermissionsOpen}
+        apiKey={activeKey}
+        projects={projects}
       />
       <DeleteDialog
         open={isDeleteKeyModalOpen}

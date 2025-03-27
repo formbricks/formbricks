@@ -3,7 +3,8 @@ import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { createApiKey, deleteApiKey, getApiKeys } from "./api-key";
+import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
+import { createApiKey, deleteApiKey, getApiKeysWithEnvironmentPermissions } from "./api-key";
 
 const mockApiKey: ApiKey = {
   id: "apikey123",
@@ -13,6 +14,16 @@ const mockApiKey: ApiKey = {
   createdBy: "user123",
   organizationId: "org123",
   lastUsedAt: null,
+};
+
+const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
+  ...mockApiKey,
+  apiKeyEnvironments: [
+    {
+      environmentId: "env123",
+      permission: ApiKeyPermission.manage,
+    },
+  ],
 };
 
 // Mock modules before tests
@@ -50,14 +61,14 @@ describe("API Key Management", () => {
     vi.clearAllMocks();
   });
 
-  describe("getApiKeys", () => {
+  describe("getApiKeysWithEnvironmentPermissions", () => {
     it("retrieves API keys successfully", async () => {
-      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKey]);
+      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments]);
       vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
-      const result = await getApiKeys("org123");
+      const result = await getApiKeysWithEnvironmentPermissions("org123");
 
-      expect(result).toEqual([mockApiKey]);
+      expect(result).toEqual([mockApiKeyWithEnvironments]);
       expect(prisma.apiKey.findMany).toHaveBeenCalledWith({
         where: {
           organizationId: "org123",
@@ -75,7 +86,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findMany).mockRejectedValueOnce(errToThrow);
       vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
-      await expect(getApiKeys("org123")).rejects.toThrow(DatabaseError);
+      await expect(getApiKeysWithEnvironmentPermissions("org123")).rejects.toThrow(DatabaseError);
     });
   });
 
