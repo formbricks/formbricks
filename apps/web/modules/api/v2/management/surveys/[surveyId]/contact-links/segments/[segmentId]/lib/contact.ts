@@ -14,9 +14,7 @@ export const getContactsInSegment = async (
   skip: number
 ): Promise<Result<TGetSegmentContactsResponseData, ApiErrorResponseV2>> => {
   try {
-    console.log("getContactsInSegment", surveyId, segmentId, limit, skip);
     const surveyResult = await getSurvey(surveyId);
-    console.log("surveyResult", surveyResult);
     if (!surveyResult.ok) {
       return err(surveyResult.error);
     }
@@ -60,7 +58,6 @@ export const getContactsInSegment = async (
       segment.filters,
       segment.environmentId
     );
-    console.log("segmentFilterToPrismaQueryResult", segmentFilterToPrismaQueryResult);
 
     if (!segmentFilterToPrismaQueryResult.ok) {
       return err(segmentFilterToPrismaQueryResult.error);
@@ -68,7 +65,6 @@ export const getContactsInSegment = async (
 
     const { whereClause } = segmentFilterToPrismaQueryResult.data;
 
-    console.log("lundd");
     const [totalContacts, contacts] = await prisma.$transaction([
       prisma.contact.count({
         where: whereClause,
@@ -109,7 +105,6 @@ export const getContactsInSegment = async (
         ),
       };
     });
-    console.log("lundd2");
 
     return ok({
       data: contactsWithAttributes,
