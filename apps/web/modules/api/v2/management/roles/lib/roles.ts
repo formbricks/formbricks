@@ -7,7 +7,7 @@ export const getRoles = async (): Promise<Result<ApiResponse<string[]>, ApiError
   try {
     // We use a raw query to get all the roles because we can't list enum options with prisma
     const results = await prisma.$queryRaw<{ unnest: string }[]>`
-        SELECT unnest(enum_range(NULL::"MembershipRole"));
+        SELECT unnest(enum_range(NULL::"OrganizationRole"));
     `;
 
     if (!results) {
