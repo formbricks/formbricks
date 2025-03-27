@@ -32,6 +32,7 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
+import { logger } from "@formbricks/logger";
 
 const enforceHttps = (request: NextRequest): Response | null => {
   const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
@@ -85,20 +86,25 @@ const applyRateLimiting = (request: NextRequest, ip: string) => {
 };
 
 const handleSurveyDomain = (request: NextRequest): Response | null => {
-  if (!SURVEY_URL) return null;
+  try {
+    if (!SURVEY_URL) return null;
 
-  const host = request.headers.get("host") || "";
-  const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
-  if (host !== surveyDomain) return null;
+    const host = request.headers.get("host") || "";
+    const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
+    if (host !== surveyDomain) return null;
 
-  const isSurveyPath =
-    request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
+    const isSurveyPath =
+      request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
 
-  if (isSurveyPath) {
-    return NextResponse.next();
+    if (isSurveyPath) {
+      return NextResponse.next();
+    }
+
+    return new NextResponse(null, { status: 404 });
+  } catch (error) {
+    logger.error(error, "Error handling survey domain");
+    return new NextResponse(null, { status: 404 });
   }
-
-  return new NextResponse(null, { status: 404 });
 };
 
 export const middleware = async (originalRequest: NextRequest) => {
