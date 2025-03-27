@@ -326,3 +326,15 @@ prometheusRule:
        for: 1m
        labels:
          severity: critical
+
+##########################################################
+# Minio
+##########################################################
+minio:
+  enabled: true
+  fullnameOverride: formbricks-minio
+  mode: standalone
+  persistence:
+    enabled: true
+    size: 50Gi
+  defaultBuckets: "formbricks"
