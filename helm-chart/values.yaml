@@ -62,6 +62,8 @@ deployment:
   env:
     DOCKER_CRON_ENABLED:
       value: "0"
+    PROMETHEUS_ENABLED:
+      value: "1"
 
   # Tolerations for scheduling pods on tainted nodes
   tolerations: []
@@ -236,7 +238,7 @@ redis:
   auth:
     enabled: true
     existingSecret: "formbricks-app-secrets"
-    existingSecretPasswordKey: "REDIS_PASSWORD"
+    existingSecretPasswordKey: "redis-password"
   networkPolicy:
     enabled: false
   master:
@@ -297,3 +299,30 @@ postgresql:
       enabled: true
       runAsUser: 1001
       readOnlyRootFilesystem: false
+
+##########################################################
+# Prometheus Rule Configuration
+##########################################################
+prometheusRule:
+  # -- (bool) Deploy a PrometheusRule (Prometheus Operator) resource.
+  # @section -- PrometheusRule Parameters
+  enabled: false
+  # -- (object) Additional labels for PrometheusRule.
+  # @section -- PrometheusRule Parameters
+  additionalLabels:
+  # prometheus: stakater-workload-monitoring
+  # role: alert-rules
+  # -- (list) Groups with alerting rules.
+  # Read more about it at [https://docs.openshift.com/container-platform/4.7/rest_api/monitoring_apis/prometheusrule-monitoring-coreos-com-v1.html](OpenShift's PrometheusRule documentation).
+  # @section -- PrometheusRule Parameters
+  groups:
+   - name: formbricks
+     rules:
+     - alert: AppDown
+       annotations:
+         message: >-
+           Not able to scrape formbricks, maybe app is Down (or not reachable)
+       expr: up{job="formbricks"} == 0
+       for: 1m
+       labels:
+         severity: critical

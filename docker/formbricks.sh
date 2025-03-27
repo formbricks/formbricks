@@ -26,33 +26,33 @@ install_formbricks() {
   # Install microK8s
   echo "☸️  Installing microK8s Kubernetes..."
   sudo snap install microk8s --classic >/dev/null 2>&1
-  
+
   # Add user to microk8s group
   echo "👥 Adding your user to the microk8s group..."
   sudo usermod -a -G microk8s $USER >/dev/null 2>&1
   sudo mkdir -p ~/.kube >/dev/null 2>&1
   sudo chown -R $USER ~/.kube >/dev/null 2>&1
-  
+
   # Create alias for kubectl
   echo "🔧 Creating kubectl alias..."
   sudo snap alias microk8s.kubectl kubectl >/dev/null 2>&1
-  
+
   # Wait for microk8s to be ready
   echo "⏳ Waiting for microK8s to be ready..."
   sudo microk8s status --wait-ready >/dev/null 2>&1
-  
+
   # Setting up microK8s configuration
   mkdir -p ~/.kube
   sudo microk8s config > ~/.kube/config
   sudo chown -R $USER ~/.kube
-  
+
   # Enable required add-ons
   echo "🔌 Enabling required microK8s add-ons (DNS, storage, ingress, helm3, cert-manager)..."
   sudo microk8s enable dns storage ingress helm3 cert-manager >/dev/null 2>&1
-  
+
   echo "⏳ Waiting for add-ons to be ready..."
   sleep 10
-  
+
   # Create formbricks directory
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks directory at ./formbricks."
@@ -83,7 +83,7 @@ install_formbricks() {
     if [[ $dns_setup == "y" ]]; then
       echo "💡 Please enter your email address for the SSL certificate:"
       read email_address
-      
+
       # Create ClusterIssuer for Let's Encrypt
       echo "🔒 Creating Let's Encrypt certificate issuer..."
       cat <<EOT > cluster-issuer.yaml
@@ -100,7 +100,7 @@ spec:
     solvers:
     - http01:
         ingress:
-          class: public
+          ingressClassName: public
 EOT
 
       kubectl apply -f cluster-issuer.yaml
@@ -127,12 +127,12 @@ EOT
 # Formbricks helm chart values
 deployment:
   env:
-    NEXTAUTH_URL: "https://${domain_name}"
-    WEBAPP_URL: "https://${domain_name}"
-    NEXTAUTH_SECRET: "$(openssl rand -hex 32)"
-    ENCRYPTION_KEY: "$(openssl rand -hex 32)"
-    CRON_SECRET: "$(openssl rand -hex 32)"
-    DOCKER_CRON_ENABLED: "0"
+    NEXTAUTH_URL:
+      value: "https://${domain_name}"
+    WEBAPP_URL:
+      value: "https://${domain_name}"
+    DOCKER_CRON_ENABLED:
+      value: "0"
 EOT
 
   # Add email configuration if selected
@@ -154,7 +154,7 @@ EOT
 
     echo -n "Enter your SMTP password: "
     read smtp_password
-    
+
     echo -n "Enable Authenticated SMTP? Enter 1 for yes and 0 for no(default is 1): "
     read smtp_authenticated
 
@@ -207,13 +207,18 @@ EOT
   fi
 
   # Create a namespace for Formbricks
-  echo "🚀 Creating namespace for Formbricks..."
-  kubectl create namespace formbricks
-  
+    echo "🚀 Ensuring namespace 'formbricks' exists..."
+    if ! kubectl get namespace formbricks >/dev/null 2>&1; then
+      kubectl create namespace formbricks
+      echo "✅ Namespace 'formbricks' created."
+    else
+      echo "ℹ️  Namespace 'formbricks' already exists."
+    fi
+
   # Add helm repo and update
-  echo "⚓ Adding Formbricks Helm repository..."
-  microk8s helm3 repo add formbricks-repo oci://ghcr.io/formbricks/helm-charts
-  microk8s helm3 repo update
+#  echo "⚓ Adding Formbricks Helm repository..."
+#  microk8s helm3 repo add formbricks-repo oci://ghcr.io/formbricks/helm-charts
+#  microk8s helm3 repo update
 
   # Install Formbricks with Helm
   echo "🚀 Installing Formbricks via Helm chart..."

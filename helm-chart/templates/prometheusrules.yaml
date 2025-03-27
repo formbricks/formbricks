@@ -1,0 +1,16 @@
+{{- if and (.Values.prometheusRule).enabled (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1") -}}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ template "formbricks.name" . }}
+  namespace: {{ include "formbricks.namespace" . }}
+  labels:
+  {{- include "formbricks.labels" $ | nindent 4 }}
+{{- if .Values.prometheusRule.additionalLabels }}
+{{ toYaml .Values.prometheusRule.additionalLabels | indent 4 }}
+{{- end }}
+spec:
+  groups:
+{{ toYaml .Values.prometheusRule.groups | indent 4 }}
+{{- end -}}
