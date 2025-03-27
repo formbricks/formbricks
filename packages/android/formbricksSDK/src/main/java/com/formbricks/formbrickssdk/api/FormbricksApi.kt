@@ -14,7 +14,8 @@ object FormbricksApi {
     fun initialize() {
         service.initialize(
             appUrl = Formbricks.appUrl,
-            isLoggingEnabled = Formbricks.loggingEnabled
+            isLoggingEnabled = Formbricks.loggingEnabled,
+            certificates = Formbricks.certificates
         )
     }
 
