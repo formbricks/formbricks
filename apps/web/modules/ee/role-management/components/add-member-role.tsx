@@ -37,7 +37,7 @@ export function AddMemberRole({
     let rolesArray = ["member"];
 
     if (isOwner) {
-      rolesArray.push("owner", "manager");
+      rolesArray.push("manager", "owner");
       if (isFormbricksCloud) {
         rolesArray.push("billing");
       }
@@ -62,7 +62,7 @@ export function AddMemberRole({
         <div className="flex flex-col space-y-2">
           <Label>{t("common.role_organization")}</Label>
           <Select
-            defaultValue="member"
+            defaultValue={canDoRoleManagement ? "member" : "owner"}
             disabled={!canDoRoleManagement}
             onValueChange={(v) => {
               onChange(v as TOrganizationRole);
@@ -74,7 +74,7 @@ export function AddMemberRole({
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectGroup>
+              <SelectGroup className="flex flex-col-reverse">
                 {roles.map((role) => (
                   <SelectItem key={role} value={role}>
                     <P className="capitalize">{role}</P>

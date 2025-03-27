@@ -43,7 +43,7 @@ export const getActionClasses = reactCache(
           throw new DatabaseError(`Database error when fetching actions for environment ${environmentIds}`);
         }
       },
-      environmentIds.map((environmentId) => `getActionClasses-${environmentId}`),
+      environmentIds.map((environmentId) => `getActionClasses-management-api-${environmentId}`),
       {
         tags: environmentIds.map((environmentId) => actionClassCache.tag.byEnvironmentId(environmentId)),
       }
