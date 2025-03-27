@@ -15,7 +15,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}-experimental
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
 permissions:
   contents: read
@@ -80,6 +79,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

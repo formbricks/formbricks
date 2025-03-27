@@ -73,13 +73,17 @@ cronJob:
 
 ## Deployment & Autoscaling
 deployment:
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
   env:
     DOCKER_CRON_ENABLED:
       value: "0"
     RATE_LIMITING_DISABLED:
       value: "1"
-    S3_BUCKET_NAME:
-      value: {{ requiredEnv "FORMBRICKS_S3_BUCKET" }}
   envFrom:
     app-env:
       nameSuffix: app-env
@@ -89,7 +93,7 @@ deployment:
   reloadOnChange: true
 autoscaling:
   enabled: true
-  maxReplicas: 10
+  maxReplicas: 95
   minReplicas: 3
   metrics:
     - resource:

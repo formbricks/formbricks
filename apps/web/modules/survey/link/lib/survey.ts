@@ -32,7 +32,7 @@ export const getSurveyMetadata = reactCache(async (surveyId: string) =>
         return survey;
       } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          logger.error(error, "Error getting survey metadata");
+          logger.error(error);
           throw new DatabaseError(error.message);
         }
         throw error;
