@@ -124,11 +124,20 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
-                className="grid h-12 w-full cursor-pointer grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
+                className="grid h-12 w-full cursor-pointer grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
                 onClick={() => {
                   setActiveKey(apiKey);
                   setViewPermissionsOpen(true);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveKey(apiKey);
+                    setViewPermissionsOpen(true);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
