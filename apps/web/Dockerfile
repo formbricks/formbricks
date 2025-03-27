@@ -40,7 +40,6 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'exec "$@"' >> /tmp/read-secrets.sh && \
     chmod +x /tmp/read-secrets.sh
 
-ENV SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
 
 # Increase Node.js memory limit as a regular build argument
