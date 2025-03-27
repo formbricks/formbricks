@@ -172,6 +172,58 @@ describe("getContactsInSegment", () => {
     }
   });
 
+  test("should return error when survey is not a link survey", async () => {
+    const surveyError: ApiErrorResponseV2 = {
+      type: "forbidden",
+      message: "Survey is not a link survey",
+      details: [{ field: "surveyId", issue: "Invalid survey" }],
+    };
+
+    vi.mocked(getSurvey).mockResolvedValue({
+      ok: true,
+      data: {
+        ...mockSurvey,
+        type: "web" as SurveyType,
+      },
+    });
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+
+    expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
+    expect(getSegment).not.toHaveBeenCalled();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toEqual(surveyError);
+    }
+  });
+
+  test("should return error when survey is not active", async () => {
+    const surveyError: ApiErrorResponseV2 = {
+      type: "forbidden",
+      message: "Survey is not active",
+      details: [{ field: "surveyId", issue: "Invalid survey" }],
+    };
+
+    vi.mocked(getSurvey).mockResolvedValue({
+      ok: true,
+      data: {
+        ...mockSurvey,
+        status: "completed" as SurveyStatus,
+      },
+    });
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+
+    expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
+    expect(getSegment).not.toHaveBeenCalled();
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toEqual(surveyError);
+    }
+  });
+
   test("should return error when survey is not found", async () => {
     const surveyError: ApiErrorResponseV2 = {
       type: "not_found",
