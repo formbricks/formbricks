@@ -5,6 +5,7 @@ import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { IS_POSTHOG_CONFIGURED } from "@formbricks/lib/constants";
 import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
@@ -25,7 +26,8 @@ const EnvLayout = async (props: {
 
   const t = await getTranslate();
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
+
+  if (!session?.user) {
     return redirect(`/auth/login`);
   }
 
@@ -55,24 +57,23 @@ const EnvLayout = async (props: {
   }
 
   return (
-    <>
-      <ResponseFilterProvider>
-        <PosthogIdentify
-          session={session}
-          user={user}
-          environmentId={params.environmentId}
-          organizationId={organization.id}
-          organizationName={organization.name}
-          organizationBilling={organization.billing}
-        />
-        <FormbricksClient userId={user.id} email={user.email} />
-        <ToasterClient />
-        <EnvironmentStorageHandler environmentId={params.environmentId} />
-        <EnvironmentLayout environmentId={params.environmentId} session={session}>
-          {children}
-        </EnvironmentLayout>
-      </ResponseFilterProvider>
-    </>
+    <ResponseFilterProvider>
+      <PosthogIdentify
+        session={session}
+        user={user}
+        environmentId={params.environmentId}
+        organizationId={organization.id}
+        organizationName={organization.name}
+        organizationBilling={organization.billing}
+        isPosthogEnabled={IS_POSTHOG_CONFIGURED}
+      />
+      <FormbricksClient userId={user.id} email={user.email} />
+      <ToasterClient />
+      <EnvironmentStorageHandler environmentId={params.environmentId} />
+      <EnvironmentLayout environmentId={params.environmentId} session={session}>
+        {children}
+      </EnvironmentLayout>
+    </ResponseFilterProvider>
   );
 };
 

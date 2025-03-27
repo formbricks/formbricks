@@ -31,6 +31,9 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 export const POST = async (req: NextRequest, context: Context): Promise<Response> => {
+  if (!ENCRYPTION_KEY) {
+    return responses.internalServerErrorResponse("Encryption key is not set");
+  }
   const params = await context.params;
   const environmentId = params.environmentId;
 
