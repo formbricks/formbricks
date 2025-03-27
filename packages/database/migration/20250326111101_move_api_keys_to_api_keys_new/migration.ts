@@ -24,10 +24,6 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
     // @ts-expect-error
     for (const apiKey of apiKeys) {
       const organizationId = apiKey.organizationId;
-      console.log(apiKey);
-      console.log(
-        `Migrating API key ${apiKey.id} from environment ${apiKey.environmentId} to organization ${organizationId}`
-      );
 
       try {
         // Check if the API key already exists in the new table
@@ -36,7 +32,6 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
         `;
 
         if (Array.isArray(existingKey) && existingKey.length > 0) {
-          console.log(`API key ${apiKey.id} already migrated, skipping...`);
           continue;
         }
 
@@ -47,7 +42,6 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
         `;
 
         if (Array.isArray(existingEnv) && existingEnv.length > 0) {
-          console.log(`API key environment relation already exists for key ${apiKey.id}, skipping...`);
           continue;
         }
 
