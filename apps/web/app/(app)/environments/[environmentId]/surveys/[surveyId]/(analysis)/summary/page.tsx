@@ -55,6 +55,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     billing: organization.billing,
   });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
+  const surveyDomain = getSurveyDomain();
 
   return (
     <PageContentWrapper>
@@ -66,7 +67,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             survey={survey}
             isReadOnly={isReadOnly}
             user={user}
-            surveyDomain={getSurveyDomain()}
+            surveyDomain={surveyDomain}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

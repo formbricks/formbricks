@@ -99,12 +99,13 @@ export const renderSurvey = async ({
   const languageCode = getLanguageCode();
   const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
+  const surveyDomain = getSurveyDomain();
 
   if (isSurveyPinProtected) {
     return (
       <PinScreen
         surveyId={survey.id}
-        surveyDomain={getSurveyDomain()}
+        surveyDomain={surveyDomain}
         project={project}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={singleUseId}
@@ -127,7 +128,7 @@ export const renderSurvey = async ({
     <LinkSurvey
       survey={survey}
       project={project}
-      surveyDomain={getSurveyDomain()}
+      surveyDomain={surveyDomain}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}

@@ -33,6 +33,7 @@ export const SurveysPage = async ({
   params: paramsProps,
   searchParams: searchParamsProps,
 }: SurveyTemplateProps) => {
+  const surveyDomain = getSurveyDomain();
   const searchParams = await searchParamsProps;
   const params = await paramsProps;
   const t = await getTranslate();
@@ -80,7 +81,7 @@ export const SurveysPage = async ({
         <SurveysList
           environmentId={environment.id}
           isReadOnly={isReadOnly}
-          surveyDomain={getSurveyDomain()}
+          surveyDomain={surveyDomain}
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}

@@ -1039,7 +1039,7 @@
         "startup": "啟動版",
         "startup_description": "免費方案中的所有功能以及其他功能。",
         "switch_plan": "切換方案",
-        "switch_plan_confirmation_text": "您確定要切換至 '{'plan'}' 方案嗎？您將每月被收取 '{'price'}'。",
+        "switch_plan_confirmation_text": "您確定要切換到 {plan} 計劃嗎？您將被收取 {price} {period}。",
         "team_access_roles": "團隊存取角色",
         "technical_onboarding": "技術新手上路",
         "unable_to_upgrade_plan": "無法升級方案",
