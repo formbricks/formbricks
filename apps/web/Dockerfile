@@ -24,12 +24,17 @@ RUN corepack enable
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
 
-# Set build arguments for sensitive values
-ARG DATABASE_URL
-ARG ENCRYPTION_KEY
-# Set environment variables for build time only
-ENV DATABASE_URL=${DATABASE_URL}
-ENV ENCRYPTION_KEY=${ENCRYPTION_KEY}
+# Create a script that will read secrets at build time without storing them in layers
+# This approach ensures the sensitive information is not stored in any Docker layer
+RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
+    echo 'if [ -f "/run/secrets/database_url" ]; then' >> /tmp/read-secrets.sh && \
+    echo '  export DATABASE_URL=$(cat /run/secrets/database_url)' >> /tmp/read-secrets.sh && \
+    echo 'fi' >> /tmp/read-secrets.sh && \
+    echo 'if [ -f "/run/secrets/encryption_key" ]; then' >> /tmp/read-secrets.sh && \
+    echo '  export ENCRYPTION_KEY=$(cat /run/secrets/encryption_key)' >> /tmp/read-secrets.sh && \
+    echo 'fi' >> /tmp/read-secrets.sh && \
+    echo 'exec "$@"' >> /tmp/read-secrets.sh && \
+    chmod +x /tmp/read-secrets.sh
 
 ARG NEXT_PUBLIC_SENTRY_DSN
 ARG SENTRY_AUTH_TOKEN
@@ -51,13 +56,14 @@ COPY . .
 # Create a .env file
 RUN touch apps/web/.env
 
-
-
 # Install the dependencies
 RUN pnpm install
 
-# Build the project
-RUN NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
+# Build the project using our secret reader script
+# This mounts the secrets only during this build step without storing them in layers
+RUN --mount=type=secret,id=database_url \
+    --mount=type=secret,id=encryption_key \
+    /tmp/read-secrets.sh NODE_OPTIONS="--max_old_space_size=4096" pnpm build --filter=@formbricks/web...
 
 # Extract Prisma version
 RUN jq -r '.devDependencies.prisma' packages/database/package.json > /prisma_version.txt
