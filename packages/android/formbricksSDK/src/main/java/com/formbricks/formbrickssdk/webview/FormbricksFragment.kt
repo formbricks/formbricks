@@ -15,7 +15,11 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentManager
@@ -51,6 +55,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         }
 
         override fun onFinished() {
+            dialog?.window?.setDimAmount(0f)
             Formbricks.callback?.onSurveyFinished()
             closeTimer.schedule(object: TimerTask() {
                 override fun run() {
@@ -154,6 +159,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.window?.setDimAmount(0.0f)
         binding.formbricksWebview.setBackgroundColor(Color.TRANSPARENT)
         binding.formbricksWebview.let {
 
@@ -165,6 +171,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
                         if (cm.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
+                            Formbricks.callback?.onError(SDKError.surveyDisplayFetchError)
                             dismiss()
                         }
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
@@ -179,6 +186,22 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 domStorageEnabled = true
                 loadWithOverviewMode = true
                 useWideViewPort = true
+            }
+
+            it.webViewClient = object : WebViewClient() {
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    Logger.d("WebView Error: ${error?.description}")
+                }
+
+                override fun onPageCommitVisible(view: WebView?, url: String?) {
+                    dialog?.window?.setDimAmount(0.5f)
+                    super.onPageCommitVisible(view, url)
+                }
             }
 
             it.setOnFocusChangeListener { _, hasFocus ->
