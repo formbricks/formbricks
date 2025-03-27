@@ -26,6 +26,7 @@ export default defineConfig({
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "modules/ui/components/post-hog-client/*.tsx",
+        "modules/ui/components/alert/*.tsx",
         "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
