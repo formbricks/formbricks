@@ -13,7 +13,7 @@ export const createTeam = async (
   teamInput: TTeamInput,
   organizationId
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
-  captureTelemetry("response created");
+  captureTelemetry("team created");
 
   const { name } = teamInput;
 
