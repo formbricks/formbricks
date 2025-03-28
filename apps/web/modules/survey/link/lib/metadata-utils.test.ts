@@ -171,7 +171,7 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(SURVEY_URL || WEBAPP_URL),
+        metadataBase: new URL(SURVEY_URL),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
