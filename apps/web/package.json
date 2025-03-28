@@ -157,7 +157,7 @@
     "@vitest/coverage-v8": "2.1.8",
     "vite": "6.2.3",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.0.7",
+    "vitest": "3.0.9",
     "vitest-mock-extended": "2.0.2"
   }
 }
