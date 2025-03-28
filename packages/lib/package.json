@@ -42,7 +42,7 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@types/jsonwebtoken": "9.0.8",
+    "@types/jsonwebtoken": "9.0.9",
     "@types/mime-types": "2.1.4",
     "@types/ungap__structured-clone": "1.2.0",
     "dotenv": "16.4.7",
