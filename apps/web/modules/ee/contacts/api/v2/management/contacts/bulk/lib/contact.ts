@@ -24,48 +24,72 @@ export const upsertBulkContacts = async (
   const emailAttributeKey = "email";
   const contactIdxWithConflictingUserIds: number[] = [];
 
-  const userIdsInContacts = contacts.flatMap((contact) =>
-    contact.attributes.filter((attr) => attr.attributeKey.key === "userId").map((attr) => attr.value)
-  );
+  let userIdsInContacts: string[] = [];
+  let attributeKeysSet: Set<string> = new Set();
+  let attributeKeys: string[] = [];
 
-  const existingUserIds = await prisma.contactAttribute.findMany({
-    where: {
-      attributeKey: {
+  // both can be done with a single loop:
+  contacts.forEach((contact) => {
+    contact.attributes.forEach((attr) => {
+      if (attr.attributeKey.key === "userId") {
+        userIdsInContacts.push(attr.value);
+      }
+
+      if (!attributeKeysSet.has(attr.attributeKey.key)) {
+        attributeKeys.push(attr.attributeKey.key);
+      }
+
+      // Add the attribute key to the set
+      attributeKeysSet.add(attr.attributeKey.key);
+    });
+  });
+
+  const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
+    prisma.contactAttribute.findMany({
+      where: {
+        attributeKey: {
+          environmentId,
+          key: "userId",
+        },
+        value: {
+          in: userIdsInContacts,
+        },
+      },
+      select: {
+        value: true,
+      },
+    }),
+
+    prisma.contact.findMany({
+      where: {
         environmentId,
-        key: "userId",
+        attributes: {
+          some: {
+            attributeKey: { key: emailAttributeKey },
+            value: { in: parsedEmails },
+          },
+        },
       },
-      value: {
-        in: userIdsInContacts,
+      select: {
+        attributes: {
+          select: {
+            attributeKey: { select: { key: true } },
+            createdAt: true,
+            id: true,
+            value: true,
+          },
+        },
+        id: true,
       },
-    },
-    select: {
-      value: true,
-    },
-  });
+    }),
 
-  // Find existing contacts by matching email attribute
-  const existingContactsByEmail = await prisma.contact.findMany({
-    where: {
-      environmentId,
-      attributes: {
-        some: {
-          attributeKey: { key: emailAttributeKey },
-          value: { in: parsedEmails },
-        },
+    prisma.contactAttributeKey.findMany({
+      where: {
+        key: { in: attributeKeys },
+        environmentId,
       },
-    },
-    select: {
-      attributes: {
-        select: {
-          attributeKey: { select: { key: true } },
-          createdAt: true,
-          id: true,
-          value: true,
-        },
-      },
-      id: true,
-    },
-  });
+    }),
+  ]);
 
   // Build a map from email to contact id (if the email attribute exists)
   const contactMap = new Map<
@@ -92,19 +116,6 @@ export const upsertBulkContacts = async (
     }
   });
 
-  // Get unique attribute keys from the payload
-  const attributeKeys = Array.from(
-    new Set(contacts.flatMap((contact) => contact.attributes.map((attr) => attr.attributeKey.key)))
-  );
-
-  // Fetch attribute key records for these keys in this environment
-  const existingAttributeKeys = await prisma.contactAttributeKey.findMany({
-    where: {
-      key: { in: attributeKeys },
-      environmentId,
-    },
-  });
-
   // Split contacts into ones to update and ones to create
   const contactsToUpdate: {
     contactId: string;
@@ -127,6 +138,8 @@ export const upsertBulkContacts = async (
     }[];
   }[] = [];
 
+  let filteredContacts: TContactBulkUploadContact[] = [];
+
   contacts.forEach((contact, idx) => {
     const emailAttr = contact.attributes.find((attr) => attr.attributeKey.key === emailAttributeKey);
 
@@ -139,20 +152,19 @@ export const upsertBulkContacts = async (
           existingContact.attributes.map((attr) => [attr.attributeKey.key, attr.value])
         );
 
-        // Check if any attributes need updating
-        const needsUpdate = contact.attributes.some(
-          (attr) => existingAttributesByKey.get(attr.attributeKey.key) !== attr.value
-        );
-
-        if (!needsUpdate) {
-          // No attributes need to be updated
-          return;
-        }
-
-        // which attributes need to be updated?
+        // Determine which attributes need updating by comparing values.
         const attributesToUpdate = contact.attributes.filter(
           (attr) => existingAttributesByKey.get(attr.attributeKey.key) !== attr.value
         );
+
+        // Check if any attributes need updating
+        const needsUpdate = attributesToUpdate.length > 0;
+
+        if (!needsUpdate) {
+          filteredContacts.push(contact);
+          // No attributes need to be updated
+          return;
+        }
 
         // if the attributes to update have a userId that exists in the db, we need to skip the update
         const userIdAttr = attributesToUpdate.find((attr) => attr.attributeKey.key === "userId");
@@ -168,6 +180,7 @@ export const upsertBulkContacts = async (
           }
         }
 
+        filteredContacts.push(contact);
         contactsToUpdate.push({
           contactId: existingContact.contactId,
           attributes: attributesToUpdate.map((attr) => {
@@ -209,11 +222,10 @@ export const upsertBulkContacts = async (
         }
       }
 
+      filteredContacts.push(contact);
       contactsToCreate.push(contact);
     }
   });
-
-  const filteredContacts = contacts.filter((_, idx) => !contactIdxWithConflictingUserIds.includes(idx));
 
   try {
     // Execute everything in ONE transaction
