@@ -46,7 +46,7 @@
     "autoprefixer": "10.4.20",
     "concurrently": "9.1.0",
     "isomorphic-dompurify": "2.19.0",
-    "postcss": "8.4.49",
+    "postcss": "8.5.3",
     "preact": "10.25.2",
     "react-date-picker": "11.0.0",
     "serve": "14.2.4",
