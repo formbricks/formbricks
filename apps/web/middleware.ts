@@ -93,13 +93,6 @@ const handleSurveyDomain = (request: NextRequest): Response | null => {
     const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
     if (host !== surveyDomain) return null;
 
-    const isSurveyPath =
-      request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
-
-    if (isSurveyPath) {
-      return NextResponse.next();
-    }
-
     return new NextResponse(null, { status: 404 });
   } catch (error) {
     logger.error(error, "Error handling survey domain");
@@ -107,7 +100,37 @@ const handleSurveyDomain = (request: NextRequest): Response | null => {
   }
 };
 
+export const shouldNotRunMiddleware = (request: NextRequest) => {
+  return (
+    request.nextUrl.pathname.startsWith("/_next/") ||
+    request.nextUrl.pathname.startsWith("/favicon.ico") ||
+    request.nextUrl.pathname.startsWith("/sitemap.xml") ||
+    request.nextUrl.pathname.startsWith("/js") ||
+    request.nextUrl.pathname.startsWith("/css") ||
+    request.nextUrl.pathname.startsWith("/images") ||
+    request.nextUrl.pathname.startsWith("/fonts") ||
+    request.nextUrl.pathname.startsWith("/icons") ||
+    request.nextUrl.pathname.startsWith("/public")
+  );
+};
+
+const isSurveyRoute = (request: NextRequest) => {
+  return request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
+};
+
 export const middleware = async (originalRequest: NextRequest) => {
+  if (shouldNotRunMiddleware(originalRequest)) {
+    return NextResponse.next();
+  }
+
+  if (isSurveyRoute(originalRequest)) {
+    return NextResponse.next();
+  }
+
+  // Handle survey domain routing.
+  const surveyResponse = handleSurveyDomain(originalRequest);
+  if (surveyResponse) return surveyResponse;
+
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {
     headers: new Headers(originalRequest.headers),
@@ -115,10 +138,6 @@ export const middleware = async (originalRequest: NextRequest) => {
 
   request.headers.set("x-request-id", uuidv4());
   request.headers.set("x-start-time", Date.now().toString());
-
-  // Handle survey domain routing.
-  const surveyResponse = handleSurveyDomain(request);
-  if (surveyResponse) return surveyResponse;
 
   // Create a new NextResponse object to forward the new request with headers
 
@@ -162,24 +181,4 @@ export const middleware = async (originalRequest: NextRequest) => {
   }
 
   return nextResponseWithCustomHeader;
-};
-
-export const config = {
-  matcher: [
-    "/api/auth/callback/credentials",
-    "/api/(.*)/client/:path*",
-    "/api/v1/js/actions",
-    "/api/v1/client/storage",
-    "/share/(.*)/:path",
-    "/environments/:path*",
-    "/setup/organization/:path*",
-    "/api/auth/signout",
-    "/auth/login",
-    "/auth/signup",
-    "/api/packages/:path*",
-    "/auth/verification-requested",
-    "/auth/forgot-password",
-    "/api/v1/management/:path*",
-    "/api/v2/management/:path*",
-  ],
 };
