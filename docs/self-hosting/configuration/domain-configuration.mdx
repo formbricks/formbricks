@@ -1,0 +1,62 @@
+---
+title: "Domain Configuration"
+description: "Configuring your domain for Formbricks."
+icon: "globe"
+---
+
+Formbricks supports both single domain and second domain configurations. This guide will help you set up your domains correctly.
+
+## Single Domain Setup
+
+For a single domain setup, you need to configure two essential environment variables:
+
+1. `WEBAPP_URL`: The base URL of your Formbricks instance
+2. `NEXTAUTH_URL`: The authentication URL (should be the same as WEBAPP_URL)
+
+### Example Configuration
+
+```bash
+WEBAPP_URL=https://formbricks.example.com
+NEXTAUTH_URL=https://formbricks.example.com
+```
+
+### Important Notes
+
+- Both URLs must be the same for authentication to work properly
+- The URLs should be the full URL including the protocol (http:// or https://)
+- Make sure your domain is properly configured in your DNS settings
+- If you're using HTTPS (recommended), ensure you have valid SSL certificates installed
+
+## Second Domain Setup (Survey Domain)
+
+Formbricks allows you to serve surveys from a different domain than your main application. This is useful for:
+
+- Separating your admin interface from public surveys
+- Using a dedicated domain for surveys
+
+### Configuration
+
+To set up a second domain for surveys:
+
+1. Set up DNS records for your survey domain (e.g., `surveys.example.com`)
+2. Configure your web server or reverse proxy to route requests from the survey domain to the Formbricks application
+3. Set the `SURVEY_URL` environment variable to your survey domain
+
+### Example Configuration
+
+```bash
+WEBAPP_URL=https://formbricks.example.com
+NEXTAUTH_URL=https://formbricks.example.com
+SURVEY_URL=https://surveys.example.com
+```
+
+### Important Notes
+
+- The `SURVEY_URL` must be a valid URL with protocol
+- When `SURVEY_URL` is set, all public survey links will use this domain instead of the main application domain
+- If `SURVEY_URL` is not set, surveys will be served from the `WEBAPP_URL` domain
+- Make sure your DNS and SSL certificates are properly configured for both domains
+- The survey domain should be properly configured in your reverse proxy or web server
+- **Important**: The second domain is exclusively for serving surveys. Any non-survey paths accessed on this domain will return a 404 error. This is a security feature to ensure the survey domain only serves survey content.
+
+If you have any questions or require help, feel free to reach out to us on [GitHub Discussions](https://github.com/formbricks/formbricks/discussions).
