@@ -33,7 +33,7 @@
     "mime-types": "2.1.35",
     "nanoid": "5.0.9",
     "next-auth": "4.24.11",
-    "posthog-node": "4.4.1",
+    "posthog-node": "4.10.2",
     "qrcode": "1.5.4",
     "server-only": "0.0.1",
     "superjson": "2.2.2",
