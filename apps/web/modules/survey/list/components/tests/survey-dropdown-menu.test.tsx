@@ -61,7 +61,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={{ ...fakeSurvey, status: "completed" }}
-        webAppUrl="http://webapp.test"
+        surveyDomain="http://survey.test"
         refreshSingleUseId={mockRefresh}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
@@ -93,7 +93,7 @@ describe("SurveyDropDownMenu", () => {
       <SurveyDropDownMenu
         environmentId="env123"
         survey={fakeSurvey}
-        webAppUrl="http://webapp.test"
+        surveyDomain="http://survey.test"
         refreshSingleUseId={vi.fn()}
         duplicateSurvey={vi.fn()}
         deleteSurvey={vi.fn()}
