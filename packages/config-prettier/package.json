@@ -10,6 +10,6 @@
     "@trivago/prettier-plugin-sort-imports": "5.2.0",
     "prettier": "3.4.2",
     "prettier-plugin-tailwindcss": "0.6.9",
-    "prettier-plugin-sort-json": "4.0.0"
+    "prettier-plugin-sort-json": "4.1.1"
   }
 }
