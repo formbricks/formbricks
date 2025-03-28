@@ -68,15 +68,3 @@ These variables are present inside your machine’s docker-compose file. Restart
 | SURVEY_URL                   | Set this to change the domain of the survey.                                                                   | optional                                                | WEBAPP_URL                                                                |
 
 Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we’ll try our best to work out a solution with you.
-
-## Survey Domain Configuration
-
-You can configure a separate domain for public surveys by setting the `SURVEY_URL` environment variable.
-
-### Setup Steps:
-
-1. Set up DNS records for your survey domain (e.g., `surveys.example.com`)
-2. Configure your web server or reverse proxy to route requests from the survey domain to the Formbricks application
-3. Set the `SURVEY_URL` environment variable to your survey domain (e.g., `https://surveys.example.com`)
-
-When `SURVEY_URL` is set, all public survey links will use this domain instead of the main application domain (`WEBAPP_URL`).
