@@ -95,8 +95,8 @@ export const sendVerificationEmail = async ({
     const token = createToken(id, email, {
       expiresIn: "1d",
     });
-    const verifyLink = `${getSurveyDomain()}/auth/verify?token=${encodeURIComponent(token)}`;
-    const verificationRequestLink = `${getSurveyDomain()}/auth/verification-requested?token=${encodeURIComponent(token)}`;
+    const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
+    const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
 
     const html = await render(await VerificationEmail({ verificationRequestLink, verifyLink }));
 
@@ -120,7 +120,7 @@ export const sendForgotPasswordEmail = async (user: {
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",
   });
-  const verifyLink = `${getSurveyDomain()}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
   const html = await render(await ForgotPasswordEmail({ verifyLink }));
   return await sendEmail({
     to: user.email,
@@ -152,7 +152,7 @@ export const sendInviteMemberEmail = async (
   });
   const t = await getTranslate();
 
-  const verifyLink = `${getSurveyDomain()}/invite?token=${encodeURIComponent(token)}`;
+  const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
   if (isOnboardingInvite && inviteMessage) {
     const html = await render(
