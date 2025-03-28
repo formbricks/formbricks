@@ -223,7 +223,7 @@ describe("EditAPIKeys", () => {
       organizationId: "org1",
       apiKeyData: {
         label: "New Key",
-        environmentPermissions: [{ environmentId: "env2", permission: ApiKeyPermission.read }],
+        environmentPermissions: [{ environmentId: "env1", permission: ApiKeyPermission.read }],
       },
     });
     expect(toast.success).toHaveBeenCalledWith("environments.project.api_keys.api_key_created");

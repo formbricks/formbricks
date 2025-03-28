@@ -170,7 +170,7 @@ describe("AddApiKeyModal", () => {
       label: "Test API Key",
       environmentPermissions: [
         {
-          environmentId: "env2",
+          environmentId: "env1",
           permission: ApiKeyPermission.read,
         },
       ],
@@ -184,13 +184,12 @@ describe("AddApiKeyModal", () => {
     const submitButton = screen.getByRole("button", {
       name: "environments.project.api_keys.add_api_key",
     });
-    expect(submitButton.className).toContain("disabled:opacity-50");
+    expect(submitButton).toBeDisabled();
 
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
     await userEvent.type(labelInput, "Test");
 
     // After typing, button should be enabled
-    expect(submitButton.className).toContain("disabled:opacity-50");
     expect(submitButton).not.toBeDisabled();
   });
 

@@ -123,7 +123,7 @@ export const createApiKey = async (
   apiKeyData: TApiKeyCreateInput & {
     environmentPermissions?: Array<{ environmentId: string; permission: ApiKeyPermission }>;
   }
-): Promise<ApiKey & { actualKey: string }> => {
+): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
   try {
     const key = randomBytes(16).toString("hex");

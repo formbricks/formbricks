@@ -19,7 +19,7 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
     `;
     // @ts-expect-error
     console.log(`Found ${apiKeys.length} API keys to migrate.`);
-
+    let migratedCount = 0;
     // Step 2: Migrate each API key to the new format
     // @ts-expect-error
     for (const apiKey of apiKeys) {
@@ -72,13 +72,12 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
             permission: "manage",
           },
         });
-
-        console.log(`Successfully migrated API key ${apiKey.id} to new model.`);
+        migratedCount++;
       } catch (error) {
         console.error(`Error migrating API key ${apiKey.id}:`, error);
       }
     }
 
-    console.log("API key migration completed.");
+    console.log(`API key migration completed. Migrated ${migratedCount} API keys.`);
   },
 };

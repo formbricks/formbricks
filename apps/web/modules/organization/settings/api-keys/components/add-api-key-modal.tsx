@@ -16,6 +16,7 @@ import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 
 interface AddApiKeyModalProps {
   open: boolean;
@@ -63,10 +64,10 @@ export const AddApiKeyModal = ({
       return {
         "permission-0": {
           projectId: projects[0].id,
-          environmentId: projects[0].environments[1].id,
+          environmentId: projects[0].environments[0].id,
           permission: ApiKeyPermission.read,
           projectName: projects[0].name,
-          environmentType: projects[0].environments[1].type,
+          environmentType: projects[0].environments[0].type,
         },
       };
     }
@@ -92,10 +93,13 @@ export const AddApiKeyModal = ({
   const addPermission = () => {
     const newIndex = Object.keys(selectedPermissions).length;
     if (projects.length > 0 && projects[0].environments.length > 0) {
-      setSelectedPermissions({
-        ...selectedPermissions,
-        [`permission-${newIndex}`]: getInitialPermissions()[`permission-0`],
-      });
+      const initialPermission = getInitialPermissions()["permission-0"];
+      if (initialPermission) {
+        setSelectedPermissions({
+          ...selectedPermissions,
+          [`permission-${newIndex}`]: initialPermission,
+        });
+      }
     }
   };
 
@@ -117,7 +121,7 @@ export const AddApiKeyModal = ({
   const updateProjectAndEnvironment = (key: string, projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     if (project && project.environments.length > 0) {
-      const environment = project.environments[1];
+      const environment = project.environments[0];
       setSelectedPermissions({
         ...selectedPermissions,
         [key]: {
@@ -131,8 +135,19 @@ export const AddApiKeyModal = ({
     }
   };
 
+  const checkForDuplicatePermissions = () => {
+    const permissions = Object.values(selectedPermissions);
+    const uniquePermissions = new Set(permissions.map((p) => `${p.projectId}-${p.environmentId}`));
+    return uniquePermissions.size !== permissions.length;
+  };
+
   const submitAPIKey = async () => {
     const data = getValues();
+
+    if (checkForDuplicatePermissions()) {
+      toast.error(t("environments.project.api_keys.duplicate_permissions"));
+      return;
+    }
 
     // Convert permissions to the format expected by the API
     const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
@@ -153,6 +168,18 @@ export const AddApiKeyModal = ({
   const getEnvironmentOptionsForProject = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project?.environments || [];
+  };
+
+  const isSubmitDisabled = () => {
+    // Check if label is empty or only whitespace
+    if (!apiKeyLabel?.trim()) {
+      return true;
+    }
+    // Check if there are any valid permissions
+    if (Object.keys(selectedPermissions).length === 0) {
+      return true;
+    }
+    return false;
   };
 
   return (
@@ -323,7 +350,7 @@ export const AddApiKeyModal = ({
               </Button>
               <Button
                 type="submit"
-                disabled={apiKeyLabel === "" || isCreatingAPIKey}
+                disabled={isSubmitDisabled() || isCreatingAPIKey}
                 loading={isCreatingAPIKey}>
                 {t("environments.project.api_keys.add_api_key")}
               </Button>

@@ -8,7 +8,7 @@ import {
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { ApiKey, ApiKeyPermission } from "@prisma/client";
+import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
@@ -30,10 +30,12 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   const { t } = useTranslate();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
-  const [apiKeysLocal, setApiKeysLocal] = useState<(ApiKey & { actualKey?: string })[]>(apiKeys);
-  const [activeKey, setActiveKey] = useState({} as any);
+  const [apiKeysLocal, setApiKeysLocal] =
+    useState<(TApiKeyWithEnvironmentPermission & { actualKey?: string })[]>(apiKeys);
+  const [activeKey, setActiveKey] = useState<TApiKeyWithEnvironmentPermission | null>(null);
   const [isCreatingAPIKey, setIsCreatingAPIKey] = useState(false);
   const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
+  const [isDeletingAPIKey, setIsDeletingAPIKey] = useState(false);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
     e.preventDefault();
@@ -42,15 +44,19 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   };
 
   const handleDeleteKey = async () => {
+    if (!activeKey) return;
+    setIsDeletingAPIKey(true);
     const deleteApiKeyResponse = await deleteApiKeyAction({ id: activeKey.id });
     if (deleteApiKeyResponse?.data) {
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success(t("environments.project.api_keys.api_key_deleted"));
       setIsDeleteKeyModalOpen(false);
+      setIsDeletingAPIKey(false);
     } else {
       toast.error(t("environments.project.api_keys.unable_to_delete_api_key"));
       setIsDeleteKeyModalOpen(false);
+      setIsDeletingAPIKey(false);
     }
   };
 
@@ -97,7 +103,10 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         <div className="copyApiKeyIcon">
           <FilesIcon
             className="mx-2 h-4 w-4 cursor-pointer"
-            onClick={copyToClipboard}
+            onClick={(e) => {
+              e.stopPropagation();
+              copyToClipboard();
+            }}
             data-testid="copy-button"
           />
         </div>
@@ -124,7 +133,8 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
-                className="grid h-12 w-full cursor-pointer grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                role="button"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
                 onClick={() => {
                   setActiveKey(apiKey);
                   setViewPermissionsOpen(true);
@@ -136,7 +146,6 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                     setViewPermissionsOpen(true);
                   }
                 }}
-                role="button"
                 tabIndex={0}
                 key={apiKey.hashedKey}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
@@ -183,17 +192,20 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         projects={projects}
         isCreatingAPIKey={isCreatingAPIKey}
       />
-      <ViewPermissionModal
-        open={viewPermissionsOpen}
-        setOpen={setViewPermissionsOpen}
-        apiKey={activeKey}
-        projects={projects}
-      />
+      {activeKey && (
+        <ViewPermissionModal
+          open={viewPermissionsOpen}
+          setOpen={setViewPermissionsOpen}
+          apiKey={activeKey}
+          projects={projects}
+        />
+      )}
       <DeleteDialog
         open={isDeleteKeyModalOpen}
         setOpen={setIsDeleteKeyModalOpen}
         deleteWhat={t("environments.project.api_keys.api_key")}
         onDelete={handleDeleteKey}
+        isDeleting={isDeletingAPIKey}
       />
     </div>
   );
