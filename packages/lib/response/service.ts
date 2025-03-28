@@ -92,7 +92,7 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
-const getResponseContact = (
+export const getResponseContact = (
   responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
 ): TResponseContact | null => {
   if (!responsePrisma.contact) return null;

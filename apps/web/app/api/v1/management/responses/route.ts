@@ -1,13 +1,14 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
-import { getResponses, getResponsesByEnvironmentId } from "@formbricks/lib/response/service";
+import { getResponses } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
-import { createResponse } from "./lib/response";
+import { createResponse, getResponsesByEnvironmentIds } from "./lib/response";
 
 export const GET = async (request: NextRequest) => {
   const searchParams = request.nextUrl.searchParams;
@@ -18,14 +19,26 @@ export const GET = async (request: NextRequest) => {
   try {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
-    let environmentResponses: TResponse[] = [];
+    let allResponses: TResponse[] = [];
 
     if (surveyId) {
-      environmentResponses = await getResponses(surveyId, limit, offset);
+      const survey = await getSurvey(surveyId);
+      if (!survey) {
+        return responses.notFoundResponse("Survey", surveyId, true);
+      }
+      if (!hasPermission(authentication.environmentPermissions, survey.environmentId, "GET")) {
+        return responses.unauthorizedResponse();
+      }
+      const surveyResponses = await getResponses(surveyId, limit, offset);
+      allResponses.push(...surveyResponses);
     } else {
-      environmentResponses = await getResponsesByEnvironmentId(authentication.environmentId, limit, offset);
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
+      const environmentResponses = await getResponsesByEnvironmentIds(environmentIds, limit, offset);
+      allResponses.push(...environmentResponses);
     }
-    return responses.successResponse(environmentResponses);
+    return responses.successResponse(allResponses);
   } catch (error) {
     if (error instanceof DatabaseError) {
       return responses.badRequestResponse(error.message);
@@ -39,8 +52,6 @@ export const POST = async (request: Request): Promise<Response> => {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const environmentId = authentication.environmentId;
-
     let jsonInput;
 
     try {
@@ -49,9 +60,6 @@ export const POST = async (request: Request): Promise<Response> => {
       logger.error({ error: err, url: request.url }, "Error parsing JSON input");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
-
-    // add environmentId to response
-    jsonInput.environmentId = environmentId;
 
     const inputValidation = ZResponseInput.safeParse(jsonInput);
 
@@ -64,6 +72,12 @@ export const POST = async (request: Request): Promise<Response> => {
     }
 
     const responseInput = inputValidation.data;
+
+    const environmentId = responseInput.environmentId;
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
 
     // get and check survey
     const survey = await getSurvey(responseInput.surveyId);

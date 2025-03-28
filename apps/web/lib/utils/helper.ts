@@ -155,7 +155,7 @@ export const getOrganizationIdFromApiKeyId = async (apiKeyId: string) => {
     throw new ResourceNotFoundError("apiKey", apiKeyId);
   }
 
-  return await getOrganizationIdFromEnvironmentId(apiKeyFromServer.environmentId);
+  return apiKeyFromServer.organizationId;
 };
 
 export const getOrganizationIdFromInviteId = async (inviteId: string) => {
@@ -238,15 +238,6 @@ export const getProjectIdFromSegmentId = async (segmentId: string) => {
   }
 
   return await getProjectIdFromEnvironmentId(segment.environmentId);
-};
-
-export const getProjectIdFromApiKeyId = async (apiKeyId: string) => {
-  const apiKey = await getApiKey(apiKeyId);
-  if (!apiKey) {
-    throw new ResourceNotFoundError("apiKey", apiKeyId);
-  }
-
-  return await getProjectIdFromEnvironmentId(apiKey.environmentId);
 };
 
 export const getProjectIdFromActionClassId = async (actionClassId: string) => {

@@ -11,6 +11,7 @@ export const ZWebhookInput = ZWebhook.partial({
   surveyIds: true,
   triggers: true,
   url: true,
+  environmentId: true,
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;

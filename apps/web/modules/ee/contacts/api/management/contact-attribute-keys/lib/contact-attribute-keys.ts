@@ -14,12 +14,12 @@ import {
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 
 export const getContactAttributeKeys = reactCache(
-  (environmentId: string): Promise<TContactAttributeKey[]> =>
+  (environmentIds: string[]): Promise<TContactAttributeKey[]> =>
     cache(
       async () => {
         try {
           const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-            where: { environmentId },
+            where: { environmentId: { in: environmentIds } },
           });
 
           return contactAttributeKeys;
@@ -30,9 +30,9 @@ export const getContactAttributeKeys = reactCache(
           throw error;
         }
       },
-      [`getContactAttributeKeys-attribute-keys-management-api-${environmentId}`],
+      environmentIds.map((id) => `getContactAttributeKeys-attribute-keys-management-api-${id}`),
       {
-        tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
+        tags: environmentIds.map((id) => contactAttributeKeyCache.tag.byEnvironmentId(id)),
       }
     )()
 );

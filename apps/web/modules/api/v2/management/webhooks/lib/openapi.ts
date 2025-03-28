@@ -60,7 +60,7 @@ export const webhookPaths: ZodOpenApiPathsObject = {
     get: getWebhooksEndpoint,
     post: createWebhookEndpoint,
   },
-  "/webhooks/{webhookId}": {
+  "/webhooks/{id}": {
     get: getWebhookEndpoint,
     put: updateWebhookEndpoint,
     delete: deleteWebhookEndpoint,

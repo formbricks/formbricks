@@ -12,19 +12,17 @@ export const GET = async () => {
         hashedKey: hashApiKey(apiKey),
       },
       select: {
-        environment: {
+        organization: {
           select: {
             id: true,
-            createdAt: true,
-            updatedAt: true,
-            type: true,
-            project: {
-              select: {
-                id: true,
-                name: true,
-              },
+          },
+        },
+        apiKeyEnvironments: {
+          select: {
+            environment: {
+              select: { id: true },
             },
-            appSetupCompleted: true,
+            permission: true,
           },
         },
       },
@@ -34,7 +32,7 @@ export const GET = async () => {
         status: 401,
       });
     }
-    return Response.json(apiKeyData.environment);
+    return Response.json(apiKeyData.organization);
   } else {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {
