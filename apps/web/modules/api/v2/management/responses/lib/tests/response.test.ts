@@ -55,7 +55,7 @@ describe("Response Lib", () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
       const result = await createResponse(environmentId, responseInput);
@@ -70,7 +70,7 @@ describe("Response Lib", () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
       const result = await createResponse(environmentId, responseInputNotFinished);
@@ -85,7 +85,7 @@ describe("Response Lib", () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
       const result = await createResponse(environmentId, responseInputWithoutTtc);
@@ -100,7 +100,7 @@ describe("Response Lib", () => {
       vi.mocked(prisma.response.create).mockResolvedValue(response);
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(50));
 
       const result = await createResponse(environmentId, responseInputWithoutDisplay);
@@ -145,7 +145,7 @@ describe("Response Lib", () => {
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
 
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
 
@@ -165,7 +165,7 @@ describe("Response Lib", () => {
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
 
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(
         err({ type: "internal_server_error", details: [{ field: "organization", issue: "Aggregate error" }] })
@@ -186,7 +186,7 @@ describe("Response Lib", () => {
 
       vi.mocked(getOrganizationIdFromEnvironmentId).mockResolvedValue(ok(organizationId));
 
-      vi.mocked(getOrganizationBilling).mockResolvedValue(ok({ billing: organizationBilling }));
+      vi.mocked(getOrganizationBilling).mockResolvedValue(ok(organizationBilling));
 
       vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(ok(100));
 

@@ -204,13 +204,12 @@ describe("EnvLayout", () => {
     vi.mocked(getProjectByEnvironmentId).mockResolvedValueOnce({ id: "proj-111" } as TProject);
     vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValueOnce(null);
 
-    const layoutElement = await EnvLayout({
-      params: Promise.resolve({ environmentId: "env-123" }),
-      children: <div data-testid="child-content">Hello!</div>,
-    });
-
-    expect(notFound).toHaveBeenCalled();
-    expect(layoutElement).toBeUndefined();
+    await expect(
+      EnvLayout({
+        params: Promise.resolve({ environmentId: "env-123" }),
+        children: <div>Child</div>,
+      })
+    ).rejects.toThrow("membership_not_found");
   });
 
   it("renders environment layout if everything is valid", async () => {

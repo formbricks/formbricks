@@ -3,6 +3,21 @@ import "@testing-library/jest-dom/vitest";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
 
+// mock react toast
+
+vi.mock("react-hot-toast", () => ({
+  default: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+  success: vi.fn(),
+  error: vi.fn(),
+}));
+
 // mock next cache
 
 vi.mock("next/cache", () => ({
@@ -52,7 +67,8 @@ vi.mock("next/navigation", async () => {
     }),
     notFound: vi.fn(),
     redirect: vi.fn(),
-    useSearchParams: () => new URLSearchParams(""),
+    useSearchParams: vi.fn(),
+    usePathname: vi.fn(),
   };
 });
 

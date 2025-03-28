@@ -60,7 +60,7 @@ export const ShareEmbedSurvey = ({
 
   const [activeId, setActiveId] = useState(survey.type === "link" ? tabs[0].id : tabs[3].id);
   const [showView, setShowView] = useState<"start" | "embed" | "panel">("start");
-  const [surveyUrl, setSurveyUrl] = useState(webAppUrl + "/s/" + survey.id);
+  const [surveyUrl, setSurveyUrl] = useState("");
 
   useEffect(() => {
     if (survey.type !== "link") {

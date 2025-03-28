@@ -29,7 +29,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  SENTRY_DNS: "mock-sentry-dsn",
+  SENTRY_DSN: "mock-sentry-dsn",
 }));
 
 vi.mock("@/tolgee/language", () => ({
@@ -71,9 +71,9 @@ vi.mock("@/tolgee/client", () => ({
 }));
 
 vi.mock("@/app/sentry/SentryProvider", () => ({
-  SentryProvider: ({ children, sentryDns }: { children: React.ReactNode; sentryDns?: string }) => (
+  SentryProvider: ({ children, sentryDsn }: { children: React.ReactNode; sentryDsn?: string }) => (
     <div data-testid="sentry-provider">
-      SentryProvider: {sentryDns}
+      SentryProvider: {sentryDsn}
       {children}
     </div>
   ),

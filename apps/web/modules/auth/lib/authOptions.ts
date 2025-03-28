@@ -12,6 +12,7 @@ import {
 } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
+import { logger } from "@formbricks/logger";
 import { TUser } from "@formbricks/types/user";
 import { createBrevoCustomer } from "./brevo";
 
@@ -51,7 +52,7 @@ export const authOptions: NextAuthOptions = {
             },
           });
         } catch (e) {
-          console.error(e);
+          logger.error(e, "Error in CredentialsProvider authorize");
           throw Error("Internal server error. Please try again later");
         }
         if (!user) {
@@ -69,7 +70,7 @@ export const authOptions: NextAuthOptions = {
 
         if (user.twoFactorEnabled && credentials.backupCode) {
           if (!ENCRYPTION_KEY) {
-            console.error("Missing encryption key; cannot proceed with backup code login.");
+            logger.error("Missing encryption key; cannot proceed with backup code login.");
             throw new Error("Internal Server Error");
           }
 
@@ -172,6 +173,9 @@ export const authOptions: NextAuthOptions = {
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
+  session: {
+    maxAge: 3600,
+  },
   callbacks: {
     async jwt({ token }) {
       const existingUser = await getUserByEmail(token?.email!);

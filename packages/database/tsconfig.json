@@ -1,4 +1,8 @@
 {
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
   "exclude": ["node_modules", "dist"],
   "extends": "@formbricks/config-typescript/node16.json",
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "tsup.config.ts"]
