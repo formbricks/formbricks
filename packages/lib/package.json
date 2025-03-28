@@ -30,7 +30,7 @@
     "date-fns": "4.1.0",
     "jsonwebtoken": "9.0.2",
     "markdown-it": "14.1.0",
-    "mime-types": "2.1.35",
+    "mime-types": "3.0.1",
     "nanoid": "5.0.9",
     "next-auth": "4.24.11",
     "posthog-node": "4.4.1",
