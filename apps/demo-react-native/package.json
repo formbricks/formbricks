@@ -13,7 +13,7 @@
   "dependencies": {
     "@formbricks/js": "workspace:*",
     "@formbricks/react-native": "workspace:*",
-    "@react-native-async-storage/async-storage": "2.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
     "expo": "52.0.28",
     "expo-status-bar": "2.0.1",
     "react": "18.3.1",
