@@ -2,16 +2,22 @@ name: 'Terraform'
 
 on:
   workflow_dispatch:
+# TODO: enable it back when migration is completed.
   push:
     branches:
       - main
+    paths:
+      - "infra/terraform/**"
   pull_request:
     branches:
       - main
+    paths:
+      - "infra/terraform/**"
 
 permissions:
   id-token: write
   contents: write
+  pull-requests: write
 
 jobs:
   terraform:
@@ -59,12 +65,11 @@ jobs:
 
       - name: Post PR comment
         uses: borchero/terraform-plan-comment@3399d8dbae8b05185e815e02361ede2949cd99c4 # v2.4.0
-        if: always() && github.ref != 'refs/heads/main' && (steps.validate.outcome == 'success' || steps.validate.outcome == 'failure')
+        if: always() && github.ref != 'refs/heads/main' && (steps.plan.outcome == 'success' || steps.plan.outcome == 'failure')
         with:
           token: ${{ github.token }}
           planfile: .planfile
           working-directory: "infra/terraform"
-          skip-comment: true
 
       - name: Terraform Apply
         id: apply

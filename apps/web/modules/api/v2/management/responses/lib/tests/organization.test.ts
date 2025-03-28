@@ -85,7 +85,7 @@ describe("Organization Lib", () => {
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data.billing).toEqual(organizationBilling);
+        expect(result.data).toEqual(organizationBilling);
       }
     });
 

@@ -1,33 +1,43 @@
 "use client";
 
-import { Button } from "@/modules/ui/components/button";
 import { VariantProps, cva } from "class-variance-authority";
 import { AlertCircle, AlertTriangle, CheckCircle2Icon, Info } from "lucide-react";
 import * as React from "react";
+import { createContext, useContext } from "react";
 import { cn } from "@formbricks/lib/cn";
+import { Button, ButtonProps } from "../button";
 
-// Define variant icons - now using cloneElement to ensure consistent sizing
-const variantIcons = {
-  default: null,
-  error: <AlertCircle className="text-red-600" />,
-  warning: <AlertTriangle className="text-amber-600" />,
-  info: <Info className="text-blue-600" />,
-  success: <CheckCircle2Icon className="text-green-600" />,
-};
+// Create a context to share variant and size with child components
+interface AlertContextValue {
+  variant?: "default" | "error" | "warning" | "info" | "success" | null;
+  size?: "default" | "small" | null;
+}
+
+const AlertContext = createContext<AlertContextValue>({
+  variant: "default",
+  size: "default",
+});
+
+const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-md border", {
+const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 [&>svg]:text-foreground", {
   variants: {
     variant: {
       default: "text-foreground border-border",
-      error: "text-red-800 border-red-600/50",
-      warning: "text-amber-800 border-amber-600/50",
-      info: "text-blue-800 border-blue-600/50",
-      success: "text-green-800 border-green-600/50",
+      error:
+        "text-error-foreground border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted",
+      warning:
+        "text-warning-foreground border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted",
+      info: "text-info-foreground border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted",
+      success:
+        "text-success-foreground border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted",
     },
     size: {
-      default: "py-3 px-4",
-      small: "pl-3",
+      default:
+        "py-3 px-4 text-sm grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
+      small:
+        "px-3 py-2 text-xs flex items-center justify-between gap-2 [&>svg]:flex-shrink-0 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {
@@ -36,283 +46,96 @@ const alertVariants = cva("relative w-full rounded-md border", {
   },
 });
 
-// Define button styles based on variant
-const getButtonStyles = (variant: string, size: string) => {
-  const variantStyles = {
-    default: "secondary",
-    error: "bg-red-50 text-red-800 shadow-none hover:bg-red-50/80",
-    warning: "bg-amber-50 text-amber-800 shadow-none hover:bg-amber-50/80",
-    info: "bg-blue-50 text-blue-800 shadow-none hover:bg-blue-50/80",
-    success: "bg-green-50 text-green-800 shadow-none hover:bg-green-50/80",
-  };
-
-  const variantTextColors = {
-    default: "",
-    error: "text-red-800",
-    warning: "text-amber-800",
-    info: "text-blue-800",
-    success: "text-green-800",
-  };
-
-  return {
-    variant: size === "small" ? "link" : variant === "default" ? "secondary" : undefined,
-    size: size === "small" ? "sm" : "default",
-    className:
-      size === "small" && variant !== "default"
-        ? variantTextColors[variant as keyof typeof variantTextColors]
-        : variant !== "default" && size !== "small"
-          ? variantStyles[variant as keyof typeof variantStyles]
-          : "",
-  };
+const alertVariantIcons: Record<"default" | "error" | "warning" | "info" | "success", React.ReactNode> = {
+  default: null,
+  error: <AlertCircle className="size-4" />,
+  warning: <AlertTriangle className="size-4" />,
+  info: <Info className="size-4" />,
+  success: <CheckCircle2Icon className="size-4" />,
 };
 
-// Enhanced interface for Alert props
-interface AlertProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "title">,
-    VariantProps<typeof alertVariants> {
-  icon?: React.ReactNode;
-  onIconClick?: (e: React.MouseEvent) => void;
-  title?: React.ReactNode;
-  description?: React.ReactNode;
-  button?:
-    | React.ReactElement
-    | {
-        label: string;
-        onClick: (e: React.MouseEvent) => void;
-        loading?: boolean;
-        disabled?: boolean;
-        className?: string;
-        variant?: string;
-      };
-  allowChildren?: boolean;
-}
+const Alert = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
+>(({ className, variant, size, ...props }, ref) => {
+  const variantIcon = variant ? (variant !== "default" ? alertVariantIcons[variant] : null) : null;
 
-// Add new ButtonWrapper component
-const ButtonWrapper = ({
-  buttonStyles,
-  children,
-}: {
-  buttonStyles: { variant?: string; size?: string; className?: string };
-  children: React.ReactElement<{ variant?: string; size?: string; className?: string }>;
-}) => {
-  return React.cloneElement(children, {
-    variant: buttonStyles.variant ?? children.props.variant,
-    size: buttonStyles.size ?? children.props.size,
-    className: cn(children.props.className, buttonStyles.className),
-  });
-};
+  return (
+    <AlertContext.Provider value={{ variant, size }}>
+      <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
+        {variantIcon}
+        {props.children}
+      </div>
+    </AlertContext.Provider>
+  );
+});
+Alert.displayName = "Alert";
 
-const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
-  (
-    {
-      className,
-      variant = "default",
-      size = "default",
-      icon,
-      title,
-      description,
-      button,
-      onIconClick,
-      children,
-      allowChildren = true, // updated default to true
-      ...props
-    },
-    ref
-  ) => {
-    // Get the icon based on variant or use provided icon, and ensure consistent sizing
-    let renderIcon: React.ReactNode = null;
+const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
+  ({ className, ...props }, ref) => {
+    const { size } = useAlertContext();
+    return (
+      <h5
+        ref={ref}
+        className={cn(
+          "col-start-1 row-start-1 font-medium leading-none tracking-tight",
+          size === "small" ? "min-w-0 flex-shrink truncate" : "col-start-1 row-start-1",
+          className
+        )}
+        {...props}
+      />
+    );
+  }
+);
 
-    if (icon !== null) {
-      if (icon === undefined && variantIcons[variant as keyof typeof variantIcons]) {
-        // Use variant icon with consistent sizing
-        const variantIcon = variantIcons[variant as keyof typeof variantIcons];
-        renderIcon = variantIcon
-          ? React.cloneElement(variantIcon, {
-              className: cn("h-4 w-4", (variantIcon.props as Partial<{ className: string }>)?.className),
-            })
-          : null;
-      } else if (React.isValidElement(icon)) {
-        // Apply consistent sizing to custom icon unless it explicitly has size classes
-        const iconProps: { className?: string } = icon.props || {};
-        const hasExplicitSize =
-          iconProps.className && (iconProps.className.includes("h-") || iconProps.className.includes("w-"));
+AlertTitle.displayName = "AlertTitle";
 
-        renderIcon = hasExplicitSize
-          ? icon
-          : React.cloneElement(icon as React.ReactElement<{ className?: string }>, {
-              className: cn("h-4 w-4", iconProps.className),
-            });
-      }
-    }
-
-    // Process children if they're provided alongside structured props
-    const childrenArray = React.Children.toArray(children);
-    let extractedTitle: React.ReactNode = title;
-    let extractedDescription: React.ReactNode = description;
-    let otherContent: React.ReactNode[] = [];
-
-    // Process children for backward compatibility
-    if (allowChildren && children) {
-      childrenArray.forEach((child) => {
-        if (React.isValidElement(child)) {
-          const element = child as React.ReactElement<{ children?: React.ReactNode }>;
-          if (element.type === AlertTitle && !extractedTitle) {
-            extractedTitle = element.props.children;
-          } else if (element.type === AlertDescription && !extractedDescription) {
-            extractedDescription = element.props.children;
-          } else {
-            otherContent.push(child);
-          }
-        } else {
-          otherContent.push(child);
-        }
-      });
-    }
-
-    // Compute condition: true if only a title or only a description is provided
-    const singleText = (extractedTitle ? 1 : 0) + (extractedDescription ? 1 : 0) === 1;
-
-    // Handle button creation from either React element or props object
-    const buttonElement = React.isValidElement(button) ? (
-      button
-    ) : button ? (
-      <AlertButton
-        onClick={button.onClick}
-        loading={button.loading}
-        disabled={button.disabled}
-        className={button.className}
-        variant={button.variant}>
-        {button.label}
-      </AlertButton>
-    ) : undefined;
-
-    const buttonStyles = getButtonStyles(variant || "default", size || "default");
-
-    // Create structured content
-    const titleElement = extractedTitle ? <AlertTitle>{extractedTitle}</AlertTitle> : null;
-    const descriptionElement = extractedDescription ? (
-      size === "small" ? (
-        <AlertDescription className="truncate">{extractedDescription}</AlertDescription>
-      ) : (
-        <AlertDescription>{extractedDescription}</AlertDescription>
-      )
-    ) : null;
+const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
+  ({ className, ...props }, ref) => {
+    const { size } = useAlertContext();
 
     return (
-      <div ref={ref} role="alert" className={cn(alertVariants({ variant, size }), className)} {...props}>
-        {size === "default" ? (
-          <div className="flex">
-            <div className="flex flex-grow items-center gap-2">
-              {/* Icon section with optional click handler */}
-              {renderIcon && (
-                <div
-                  className={cn(
-                    singleText ? "self-center" : "mt-0.5 self-start",
-                    "flex-shrink-0",
-                    onIconClick && "cursor-pointer"
-                  )}
-                  onClick={onIconClick}>
-                  {renderIcon}
-                </div>
-              )}
-
-              {/* Content section */}
-              <div className="space-y-1">
-                {titleElement}
-                {descriptionElement}
-                {allowChildren && otherContent}
-              </div>
-            </div>
-
-            {/* Button section for default size */}
-            {buttonElement && (
-              <div className="ml-4 flex-shrink-0 self-end">
-                <ButtonWrapper buttonStyles={buttonStyles}>{buttonElement}</ButtonWrapper>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            {/* Icon section with optional click handler */}
-            {renderIcon && (
-              <div className={cn("flex-shrink-0", onIconClick && "cursor-pointer")} onClick={onIconClick}>
-                {renderIcon}
-              </div>
-            )}
-
-            {/* Content section for small size - horizontal layout with truncation */}
-            <div className="flex min-w-0 flex-1 items-baseline space-x-1 py-2 pr-3">
-              {titleElement &&
-                React.cloneElement(titleElement as React.ReactElement<{ className?: string }>, {
-                  className: cn(
-                    "truncate",
-                    (titleElement as React.ReactElement<{ className?: string }>).props?.className || ""
-                  ),
-                })}
-              {descriptionElement && (
-                <div className="hidden truncate text-sm opacity-80 sm:block">{descriptionElement}</div>
-              )}
-              {allowChildren && otherContent}
-            </div>
-
-            {/* Button section for small size */}
-            {buttonElement && (
-              <div className="flex-shrink-0">
-                <ButtonWrapper buttonStyles={buttonStyles}>{buttonElement}</ButtonWrapper>
-              </div>
-            )}
-          </div>
+      <div
+        ref={ref}
+        className={cn(
+          "[&_p]:leading-relaxed",
+          size === "small"
+            ? "hidden min-w-0 flex-shrink flex-grow truncate opacity-80 sm:block" // Hidden on very small screens, limited width
+            : "col-start-1 row-start-2",
+          className
         )}
+        {...props}
+      />
+    );
+  }
+);
+AlertDescription.displayName = "AlertDescription";
+
+const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, children, ...props }, ref) => {
+    const { size: alertSize } = useAlertContext();
+
+    // Determine button styling based on alert context
+    const buttonVariant = variant || (alertSize === "small" ? "link" : "secondary");
+    const buttonSize = size || (alertSize === "small" ? "sm" : "default");
+
+    return (
+      <div
+        className={cn(
+          "self-end",
+          alertSize === "small"
+            ? "-my-2 -mr-3 ml-auto flex-shrink-0"
+            : "col-start-2 row-span-2 row-start-1 flex items-center justify-center"
+        )}>
+        <Button ref={ref} variant={buttonVariant} size={buttonSize} className={className} {...props}>
+          {children}
+        </Button>
       </div>
     );
   }
 );
-Alert.displayName = "Alert";
 
-// AlertTitle component
-const AlertTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttributes<HTMLHeadingElement>>(
-  ({ className, children, ...props }, ref) => (
-    <h5 ref={ref} className={cn("text-sm font-medium leading-none", className)} {...props}>
-      {children}
-    </h5>
-  )
-);
-AlertTitle.displayName = "AlertTitle";
-
-// AlertDescription component
-const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={cn("text-sm", className)} {...props}>
-      {children}
-    </div>
-  )
-);
-AlertDescription.displayName = "AlertDescription";
-
-// AlertButton component
-const AlertButton = React.forwardRef<
-  HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement> & { loading?: boolean; variant?: string }
->(({ className, loading, children, ...props }, ref) => (
-  <Button
-    ref={ref}
-    className={cn("shrink-0", className)}
-    disabled={loading || props.disabled}
-    {...props}
-    variant={
-      props.variant as
-        | "default"
-        | "link"
-        | "secondary"
-        | "destructive"
-        | "outline"
-        | "ghost"
-        | null
-        | undefined
-    }>
-    {loading ? "Loading..." : children}
-  </Button>
-));
 AlertButton.displayName = "AlertButton";
 
-export { Alert, AlertDescription, AlertTitle, AlertButton };
+// Export the new component
+export { Alert, AlertTitle, AlertDescription, AlertButton };

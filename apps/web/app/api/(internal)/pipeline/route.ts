@@ -19,6 +19,7 @@ import { getSurvey, updateSurvey } from "@formbricks/lib/survey/service";
 import { convertDatesInObject } from "@formbricks/lib/time";
 import { getPromptText } from "@formbricks/lib/utils/ai";
 import { parseRecallInfo } from "@formbricks/lib/utils/recall";
+import { logger } from "@formbricks/logger";
 import { handleIntegrations } from "./lib/handleIntegrations";
 
 export const POST = async (request: Request) => {
@@ -34,7 +35,10 @@ export const POST = async (request: Request) => {
   const inputValidation = ZPipelineInput.safeParse(convertedJsonInput);
 
   if (!inputValidation.success) {
-    console.error(inputValidation.error);
+    logger.error(
+      { error: inputValidation.error, url: request.url },
+      "Error in POST /api/(internal)/pipeline"
+    );
     return responses.badRequestResponse(
       "Fields are missing or incorrectly formatted",
       transformErrorToDetails(inputValidation.error),
@@ -87,7 +91,7 @@ export const POST = async (request: Request) => {
         data: response,
       }),
     }).catch((error) => {
-      console.error(`Webhook call to ${webhook.url} failed:`, error);
+      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
     })
   );
 
@@ -100,7 +104,7 @@ export const POST = async (request: Request) => {
     ]);
 
     if (!survey) {
-      console.error(`Survey with id ${surveyId} not found`);
+      logger.error({ url: request.url, surveyId }, `Survey with id ${surveyId} not found`);
       return new Response("Survey not found", { status: 404 });
     }
 
@@ -172,7 +176,10 @@ export const POST = async (request: Request) => {
 
     const emailPromises = usersWithNotifications.map((user) =>
       sendResponseFinishedEmail(user.email, environmentId, survey, response, responseCount).catch((error) => {
-        console.error(`Failed to send email to ${user.email}:`, error);
+        logger.error(
+          { error, url: request.url, userEmail: user.email },
+          `Failed to send email to ${user.email}`
+        );
       })
     );
 
@@ -188,7 +195,7 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled([...webhookPromises, ...emailPromises]);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        console.error("Promise rejected:", result.reason);
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
 
@@ -228,7 +235,7 @@ export const POST = async (request: Request) => {
                   text,
                 });
               } catch (e) {
-                console.error(e);
+                logger.error({ error: e, url: request.url }, "Error creating document and assigning insight");
               }
             }
           }
@@ -240,7 +247,7 @@ export const POST = async (request: Request) => {
     const results = await Promise.allSettled(webhookPromises);
     results.forEach((result) => {
       if (result.status === "rejected") {
-        console.error("Promise rejected:", result.reason);
+        logger.error({ error: result.reason, url: request.url }, "Promise rejected");
       }
     });
   }

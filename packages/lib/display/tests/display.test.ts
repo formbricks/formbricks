@@ -10,6 +10,7 @@ import {
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
 import { createDisplay } from "../../../../apps/web/app/api/v1/client/[environmentId]/displays/lib/display";
 import { deleteDisplay } from "../service";
@@ -52,7 +53,7 @@ describe("Tests for createDisplay service", () => {
       const mockErrorMessage = "Mock error message";
       prisma.environment.findUnique.mockResolvedValue(mockEnvironment);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 
@@ -83,7 +84,7 @@ describe("Tests for delete display service", () => {
     it("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
-        code: "P2002",
+        code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",
       });
 

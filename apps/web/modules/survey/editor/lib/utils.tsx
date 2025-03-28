@@ -1,15 +1,11 @@
-import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getQuestionTypes } from "@/modules/survey/lib/questions";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
-import { ActionClass } from "@prisma/client";
 import { TFnType } from "@tolgee/react";
 import { EyeOffIcon, FileDigitIcon, FileType2Icon } from "lucide-react";
 import { HTMLInputTypeAttribute } from "react";
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
-import { surveyCache } from "@formbricks/lib/survey/cache";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { InvalidInputError } from "@formbricks/types/errors";
 import {
   TConditionGroup,
   TLeftOperand,
@@ -1176,70 +1172,4 @@ export const findEndingCardUsedInLogic = (survey: TSurvey, endingCardId: string)
   return survey.questions.findIndex(
     (question) => question.logicFallback === endingCardId || question.logic?.some(isUsedInLogicRule)
   );
-};
-
-const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  if (!triggers) return;
-
-  // check if all the triggers are valid
-  triggers.forEach((trigger) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === trigger.actionClass.id)) {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-  });
-
-  // check if all the triggers are unique
-  const triggerIds = triggers.map((trigger) => trigger.actionClass.id);
-
-  if (new Set(triggerIds).size !== triggerIds.length) {
-    throw new InvalidInputError("Duplicate trigger id");
-  }
-};
-
-export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"],
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: ActionClass[]
-) => {
-  if (!updatedTriggers) return {};
-  checkTriggersValidity(updatedTriggers, actionClasses);
-
-  const currentTriggerIds = currentTriggers.map((trigger) => trigger.actionClass.id);
-  const updatedTriggerIds = updatedTriggers.map((trigger) => trigger.actionClass.id);
-
-  // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggers = updatedTriggers.filter(
-    (trigger) => !currentTriggerIds.includes(trigger.actionClass.id)
-  );
-
-  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggers = currentTriggers.filter(
-    (trigger) => !updatedTriggerIds.includes(trigger.actionClass.id)
-  );
-
-  // Construct the triggers update object
-  const triggersUpdate: TriggerUpdate = {};
-
-  if (addedTriggers.length > 0) {
-    triggersUpdate.create = addedTriggers.map((trigger) => ({
-      actionClassId: trigger.actionClass.id,
-    }));
-  }
-
-  if (deletedTriggers.length > 0) {
-    // disconnect the public triggers from the survey
-    triggersUpdate.deleteMany = {
-      actionClassId: {
-        in: deletedTriggers.map((trigger) => trigger.actionClass.id),
-      },
-    };
-  }
-
-  [...addedTriggers, ...deletedTriggers].forEach((trigger) => {
-    surveyCache.revalidate({
-      actionClassId: trigger.actionClass.id,
-    });
-  });
-
-  return triggersUpdate;
 };

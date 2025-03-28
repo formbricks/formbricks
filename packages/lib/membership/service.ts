@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
@@ -31,7 +32,7 @@ export const getMembershipByUserIdOrganizationId = reactCache(
           return membership;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting membership by user id and organization id");
             throw new DatabaseError(error.message);
           }
 

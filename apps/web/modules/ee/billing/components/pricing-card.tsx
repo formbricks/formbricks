@@ -215,6 +215,10 @@ export const PricingCard = ({
         text={t("environments.settings.billing.switch_plan_confirmation_text", {
           plan: t(plan.name),
           price: planPeriod === "monthly" ? plan.price.monthly : plan.price.yearly,
+          period:
+            planPeriod === "monthly"
+              ? t("environments.settings.billing.per_month")
+              : t("environments.settings.billing.per_year"),
         })}
         buttonVariant="default"
         buttonLoading={loading}

@@ -9,6 +9,7 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { ITEMS_PER_PAGE } from "@formbricks/lib/constants";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember } from "@formbricks/types/memberships";
@@ -51,7 +52,7 @@ export const getMembershipByOrganizationId = reactCache(
           return members;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error fetching membership by organization id");
             throw new DatabaseError(error.message);
           }
 
