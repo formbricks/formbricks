@@ -35,7 +35,7 @@
     "@intercom/messenger-js-sdk": "0.0.14",
     "@json2csv/node": "7.0.6",
     "@lexical/code": "0.21.0",
-    "@lexical/link": "0.21.0",
+    "@lexical/link": "0.29.0",
     "@lexical/list": "0.21.0",
     "@lexical/markdown": "0.21.0",
     "@lexical/react": "0.21.0",
