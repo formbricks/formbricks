@@ -12,7 +12,7 @@
     "eslint-config-turbo": "2.3.3",
     "eslint-plugin-i18n-json": "4.0.0",
     "eslint-plugin-react": "7.37.2",
-    "eslint-plugin-react-hooks": "5.1.0",
+    "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.4.16"
   }
 }
