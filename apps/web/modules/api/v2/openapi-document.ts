@@ -3,6 +3,7 @@ import { contactAttributePaths } from "@/modules/api/v2/management/contact-attri
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
+import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
@@ -12,6 +13,7 @@ import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 extendZodWithOpenApi(z);
 
@@ -29,6 +31,7 @@ const document = createDocument({
     ...contactAttributePaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
+    ...webhookPaths,
   },
   servers: [
     {
@@ -57,6 +60,10 @@ const document = createDocument({
       name: "Management API > Surveys",
       description: "Operations for managing surveys.",
     },
+    {
+      name: "Management API > Webhooks",
+      description: "Operations for managing webhooks.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -73,6 +80,7 @@ const document = createDocument({
       contactAttribute: ZContactAttribute,
       contactAttributeKey: ZContactAttributeKey,
       survey: ZSurveyWithoutQuestionType,
+      webhook: ZWebhook,
     },
   },
   security: [

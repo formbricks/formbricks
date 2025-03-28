@@ -92,10 +92,10 @@
       "persistent": true
     },
     "@formbricks/web#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "@formbricks/web#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
     },
     "build": {
       "dependsOn": ["^build"],
@@ -159,7 +159,6 @@
         "NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID",
         "NEXT_PUBLIC_FORMBRICKS_PMF_FORM_ID",
         "NEXT_PUBLIC_FORMBRICKS_URL",
-        "NEXT_PUBLIC_SENTRY_DSN",
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",

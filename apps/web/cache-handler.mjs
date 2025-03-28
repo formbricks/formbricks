@@ -57,8 +57,6 @@ CacheHandler.onCreation(async () => {
       timeoutMs: 1000,
     };
 
-    redisHandlerOptions.ttl =  Number(process.env.REDIS_DEFAULT_TTL) || 86400; // 1 day
-
     // Create the `redis-stack` Handler if the client is available and connected.
     handler = await createRedisHandler(redisHandlerOptions);
   } else {
@@ -70,6 +68,11 @@ CacheHandler.onCreation(async () => {
 
   return {
     handlers: [handler],
+    ttl: {
+      // We set the stale and the expire age to the same value, because the stale age is determined by the unstable_cache revalidation.
+      defaultStaleAge: (process.env.REDIS_URL && Number(process.env.REDIS_DEFAULT_TTL)) || 86400,
+      estimateExpireAge: (staleAge) => staleAge,
+    },
   };
 });
 
