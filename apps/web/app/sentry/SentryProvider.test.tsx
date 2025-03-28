@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { SentryProvider } from "./SentryProvider";
 
 vi.mock("@sentry/nextjs", async () => {

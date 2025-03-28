@@ -1,9 +1,7 @@
-// PosthogIdentify.test.tsx
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render } from "@testing-library/react";
 import { Session } from "next-auth";
 import { usePostHog } from "posthog-js/react";
-import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
