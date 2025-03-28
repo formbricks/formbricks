@@ -7,6 +7,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.util.Base64
 import android.view.LayoutInflater
@@ -50,20 +52,24 @@ class FormbricksFragment : BottomSheetDialogFragment() {
 
     private var webAppInterface = WebAppInterface(object : WebAppInterface.WebAppCallback {
         override fun onClose() {
-            Formbricks.callback?.onSurveyClosed()
-            dismiss()
+            Handler(Looper.getMainLooper()).post {
+                Formbricks.callback?.onSurveyClosed()
+                dismiss()
+            }
         }
 
         override fun onFinished() {
-            dialog?.window?.setDimAmount(0f)
-            Formbricks.callback?.onSurveyFinished()
-            closeTimer.schedule(object: TimerTask() {
-                override fun run() {
-                    dismiss()
-                }
+            Handler(Looper.getMainLooper()).post {
+                dialog?.window?.setDimAmount(0f)
+                Formbricks.callback?.onSurveyFinished()
+                closeTimer.schedule(object: TimerTask() {
+                    override fun run() {
+                        dismiss()
+                    }
 
-            }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
-            )
+                }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
+                )
+            }
         }
 
         override fun onDisplayCreated() {
