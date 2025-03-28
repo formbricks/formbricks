@@ -3,6 +3,7 @@ import { contactAttributePaths } from "@/modules/api/v2/management/contact-attri
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { rolePaths } from "@/modules/api/v2/management/roles/lib/openapi";
+import { surveyContactLinksBySegmentPaths } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import * as yaml from "yaml";
@@ -30,6 +31,7 @@ const document = createDocument({
     ...contactAttributePaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
+    ...surveyContactLinksBySegmentPaths,
     ...webhookPaths,
     ...rolePaths,
   },
@@ -59,6 +61,10 @@ const document = createDocument({
     {
       name: "Management API > Surveys",
       description: "Operations for managing surveys.",
+    },
+    {
+      name: "Management API > Surveys > Contact Links",
+      description: "Operations for generating personalized survey links for contacts.",
     },
     {
       name: "Management API > Webhooks",
