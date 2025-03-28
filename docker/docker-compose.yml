@@ -175,6 +175,7 @@ x-environment: &environment
     # (Role Management is an Enterprise feature)
     # DEFAULT_ORGANIZATION_ID:
     # DEFAULT_ORGANIZATION_ROLE: owner
+    # DEFAULT_TEAM_ID=
 
 services:
   postgres:
