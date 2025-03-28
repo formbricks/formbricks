@@ -8,6 +8,7 @@ import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
 import {
@@ -119,6 +120,8 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         isReadOnly={isReadOnly}
         locale={user.locale ?? DEFAULT_LOCALE}
       />
+
+      <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>
     </PageContentWrapper>
   );
 };
