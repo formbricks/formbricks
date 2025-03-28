@@ -140,8 +140,6 @@ spec:
                   key: root-password
             - name: S3_BUCKET_NAME
               value: formbricks
-            - name: S3_ENDPOINT
-              value: http://formbricks-minio:9000
             {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
             - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}

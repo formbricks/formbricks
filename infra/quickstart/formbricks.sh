@@ -57,9 +57,25 @@ install_formbricks() {
   mkdir -p formbricks && cd formbricks
   echo "📁 Created Formbricks directory at ./formbricks."
 
+  # Prompt for enabling Minio
+  echo "🪣 Do you want to enable Minio? [Y/n] (default is Y):"
+  read enable_minio
+  enable_minio=$(echo "$enable_minio" | tr '[:upper:]' '[:lower:]')
+  if [[ -z $enable_minio ]]; then
+    enable_minio="y"
+  fi
+
   # Ask the user for their domain name
   echo "🔗 Please enter your domain name for the SSL certificate (🚨 do NOT enter the protocol (http/https/etc)):"
   read domain_name
+
+  echo "🔗 Please enter your Minio Console domain (Press Enter to use default: minio.${domain_name}):"
+  read minio_domain
+  minio_domain=${minio_domain:-minio.${domain_name}}
+
+  echo "🔗 Please enter your Minio API domain (Press Enter to use default: minio-api.${domain_name}):"
+  read minio_api_domain
+  minio_api_domain=${minio_api_domain:-minio-api.${domain_name}}
 
   echo "🔗 Do you want us to set up an HTTPS certificate for you? [Y/n]"
   read https_setup
@@ -189,6 +205,14 @@ EOT
 EOT
   fi
 
+
+  if [[ $enable_minio == "y" ]]; then
+    cat <<EOT >> values.yaml
+    S3_ENDPOINT_URL:
+      value: "https://${minio_api_domain}"
+EOT
+  fi
+
   # Configure ingress with SSL
   if [[ $https_setup == "y" ]]; then
     cat <<EOT >> values.yaml
@@ -218,6 +242,32 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+EOT
+  fi
+# Configure ingress for Minio
+
+  if [[ $enable_minio == "y" ]]; then
+    cat <<EOT >> values.yaml
+minio:
+  ingress:
+    enabled: true
+    ingressClassName: public
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/tls-acme: "true"
+    hostname: ${minio_domain}
+    tls: true
+  apiIngress:
+    enabled: true
+    ingressClassName: public
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/tls-acme: "true"
+    hostname: ${minio_api_domain}
+    extraHosts:
+    - name: formbricks.${minio_api_domain}
+      path: /
+    tls: true
 EOT
   fi
 
