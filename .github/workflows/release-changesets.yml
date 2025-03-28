@@ -47,7 +47,7 @@ jobs:
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/action@c8bada60c408975afd1a20b3db81d6eee6789308 # v1.4.9
+        uses: changesets/action@06245a4e0a36c064a573d4150030f5ec548e4fcc # v1.4.10
         with:
           # This expects you to have a script called release which does a build for your packages and calls changeset publish
           publish: pnpm release
