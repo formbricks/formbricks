@@ -1,6 +1,6 @@
 import Foundation
 
-enum FormbricksSDKErrorType: Int {
+public enum FormbricksSDKErrorType: Int {
     case sdkIsNotInitialized
     case sdkIsAlreadyInitialized
     case invalidAppUrl
@@ -44,9 +44,9 @@ enum FormbricksSDKErrorType: Int {
     }
 }
 
-final class FormbricksSDKError:  LocalizedError {
-    let type: FormbricksSDKErrorType
-    var errorDescription: String
+public final class FormbricksSDKError:  LocalizedError {
+    public let type: FormbricksSDKErrorType
+    public var errorDescription: String
     
     init(type: FormbricksSDKErrorType) {
         self.type = type
