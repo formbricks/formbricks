@@ -100,29 +100,11 @@ const handleSurveyDomain = (request: NextRequest): Response | null => {
   }
 };
 
-export const shouldNotRunMiddleware = (request: NextRequest) => {
-  return (
-    request.nextUrl.pathname.startsWith("/_next/") ||
-    request.nextUrl.pathname.startsWith("/favicon.ico") ||
-    request.nextUrl.pathname.startsWith("/sitemap.xml") ||
-    request.nextUrl.pathname.startsWith("/js") ||
-    request.nextUrl.pathname.startsWith("/css") ||
-    request.nextUrl.pathname.startsWith("/images") ||
-    request.nextUrl.pathname.startsWith("/fonts") ||
-    request.nextUrl.pathname.startsWith("/icons") ||
-    request.nextUrl.pathname.startsWith("/public")
-  );
-};
-
 const isSurveyRoute = (request: NextRequest) => {
   return request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
 };
 
 export const middleware = async (originalRequest: NextRequest) => {
-  if (shouldNotRunMiddleware(originalRequest)) {
-    return NextResponse.next();
-  }
-
   if (isSurveyRoute(originalRequest)) {
     return NextResponse.next();
   }
@@ -181,4 +163,10 @@ export const middleware = async (originalRequest: NextRequest) => {
   }
 
   return nextResponseWithCustomHeader;
+};
+
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public).*)",
+  ],
 };
