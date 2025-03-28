@@ -23,7 +23,7 @@
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {
-    "@prisma/client": "6.0.1",
+    "@prisma/client": "6.5.0",
     "@prisma/extension-accelerate": "1.2.1",
     "dotenv-cli": "7.4.4",
     "@formbricks/logger": "workspace:*",
