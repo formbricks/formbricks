@@ -22,7 +22,7 @@
     "react-native-webview": "13.12.5"
   },
   "devDependencies": {
-    "@babel/core": "7.26.0",
+    "@babel/core": "7.26.10",
     "@types/react": "18.3.18",
     "typescript": "5.7.2"
   },
