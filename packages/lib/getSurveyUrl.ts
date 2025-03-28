@@ -1,5 +1,4 @@
-"server only";
-
+import "server-only";
 import { SURVEY_URL, WEBAPP_URL } from "./constants";
 
 /**
