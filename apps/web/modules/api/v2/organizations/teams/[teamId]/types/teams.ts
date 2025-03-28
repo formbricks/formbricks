@@ -21,7 +21,4 @@ export const teamUpdateSchema = ZTeam.omit({
   createdAt: true,
   updatedAt: true,
   organizationId: true,
-}).openapi({
-  ref: "teamUpdate",
-  description: "A team to update.",
 });

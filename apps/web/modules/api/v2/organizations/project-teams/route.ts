@@ -1,33 +1,32 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getProjectTeams, createProjectTeam } from "./lib/projectTeams";
-import { TProjectTeamInput, TGetProjectTeamsFilter, ZGetProjectTeamFilter, ZProjectTeamInput, projectTeamUpdateSchema } from "./types/projectTeams";
-import { z } from "zod";
-import { logger } from "@formbricks/logger";
+import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/project-teams/lib/utils";
+import {
+  createProjectTeam,
+  deleteProjectTeam,
+  getProjectTeams,
+  updateProjectTeam,
+} from "./lib/project-teams";
+import {
+  ZGetProjectTeamUpdateFilter,
+  ZGetProjectTeamsFilter,
+  ZProjectTeamInput,
+  projectTeamUpdateSchema,
+} from "./types/project-teams";
 
 export async function GET(request: Request) {
   return authenticatedApiClient({
     request,
     schemas: {
-      query: ZGetProjectTeamFilter.sourceType(),
+      query: ZGetProjectTeamsFilter.sourceType(),
     },
-    handler: async ({ parsedInput, authentication }) => {
-        const { query } = parsedInput;
-
+    handler: async ({ parsedInput: { query }, authentication }) => {
       if (!authentication.organizationId) {
-        logger.error("Organization ID is missing from the authentication object");
         return handleApiError(request, { type: "unauthorized" });
       }
 
-      if (!query) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "query", issue: "missing" }],
-        });
-      }
-
-      const result = await getProjectTeams(query);
+      const result = await getProjectTeams(authentication.organizationId, query!);
 
       if (!result.ok) {
         return handleApiError(request, result.error);
@@ -44,25 +43,16 @@ export async function POST(request: Request) {
     schemas: {
       body: ZProjectTeamInput,
     },
-    handler: async ({ parsedInput, authentication }) => {
-        const { body } = parsedInput;
+    handler: async ({ parsedInput: { body }, authentication }) => {
+      const { teamId, projectId } = body!;
 
-      if (!authentication.organizationId) {
-        logger.error("Organization ID is missing from the authentication object");
+      const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
-        return handleApiError(request, { type: "unauthorized" });
+      if (!hasAccess.ok) {
+        return handleApiError(request, hasAccess.error);
       }
 
-      if (!body) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "body", issue: "missing" }],
-        });
-      }
-
-
-
-      const result = await createProjectTeam(body);
+      const result = await createProjectTeam(body!);
       if (!result.ok) {
         return handleApiError(request, result.error);
       }
@@ -77,24 +67,43 @@ export async function PUT(request: Request) {
     request,
     schemas: {
       body: projectTeamUpdateSchema,
+      query: ZGetProjectTeamUpdateFilter,
     },
-    handler: async ({ parsedInput, authentication }) => {
-        const { body } = parsedInput;
+    handler: async ({ parsedInput: { query, body }, authentication }) => {
+      const { teamId, projectId } = query!;
 
-        if (!authentication.organizationId) {
-            logger.error("Organization ID is missing from the authentication object");
-    
-            return handleApiError(request, { type: "unauthorized" });
-          }
+      const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
-        if (!body) {
-            return handleApiError(request, {
-              type: "bad_request",
-              details: [{ field: "body", issue: "missing" }],
-            });
-        }
+      if (!hasAccess.ok) {
+        return handleApiError(request, hasAccess.error);
+      }
 
-      const result = await updateProjectTeam(body);
+      const result = await updateProjectTeam(teamId, projectId, body!);
+      if (!result.ok) {
+        return handleApiError(request, result.error);
+      }
+
+      return responses.successResponse({ data: result.data, cors: true });
+    },
+  });
+}
+
+export async function DELETE(request: Request) {
+  return authenticatedApiClient({
+    request,
+    schemas: {
+      query: ZGetProjectTeamUpdateFilter,
+    },
+    handler: async ({ parsedInput: { query }, authentication }) => {
+      const { teamId, projectId } = query!;
+
+      const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
+
+      if (!hasAccess.ok) {
+        return handleApiError(request, hasAccess.error);
+      }
+
+      const result = await deleteProjectTeam(teamId, projectId);
       if (!result.ok) {
         return handleApiError(request, result.error);
       }

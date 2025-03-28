@@ -21,6 +21,8 @@ tags:
     description: Operations for managing webhooks.
   - name: Organizations API > Teams
     description: Operations for managing teams.
+  - name: Organizations API > Project Teams
+    description: Operations for managing project teams.
 security:
   - apiKeyAuth: []
 paths:
@@ -2477,6 +2479,9 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
   /teams:
+    servers: &a10
+      - url: https://app.formbricks.com/api/v2/organizations
+        description: Formbricks Cloud
     get:
       operationId: getTeams
       summary: Get teams
@@ -2521,7 +2526,7 @@ paths:
           required: true
       responses:
         "200":
-          description: Responses retrieved successfully.
+          description: Teams retrieved successfully.
           content:
             application/json:
               schema:
@@ -2608,6 +2613,7 @@ paths:
                     type: string
                     description: The ID of the organization
   /teams/{id}:
+    servers: *a10
     get:
       operationId: getTeam
       summary: Get a team
@@ -2739,6 +2745,274 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
+  /project-teams:
+    servers: *a10
+    get:
+      operationId: getProjectTeams
+      summary: Get project teams
+      description: Gets projectTeams from the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+        - in: query
+          name: startDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: endDate
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: teamId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: projectId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Project teams retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          createdAt:
+                            type: string
+                            description: The date and time the response was created
+                            example: 2021-01-01T00:00:00.000Z
+                          updatedAt:
+                            type: string
+                            description: The date and time the response was last updated
+                            example: 2021-01-01T00:00:00.000Z
+                          projectId:
+                            type: string
+                            description: The ID of the project
+                          teamId:
+                            type: string
+                            description: The ID of the team
+                          permission:
+                            type: string
+                            enum:
+                              - read
+                              - readWrite
+                              - manage
+                            description: Level of access granted to the project
+                    meta:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
+    post:
+      operationId: createProjectTeam
+      summary: Create a projectTeam
+      description: Creates a project team in the database.
+      tags:
+        - Organizations API > Project Teams
+      requestBody:
+        required: true
+        description: The project team to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  description: The ID of the team
+                projectId:
+                  type: string
+                  description: The ID of the project
+                permission:
+                  type: string
+                  enum:
+                    - read
+                    - readWrite
+                    - manage
+                  description: Level of access granted to the project
+              required:
+                - teamId
+                - projectId
+                - permission
+      responses:
+        "201":
+          description: Project team created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
+    put:
+      operationId: updateProjectTeam
+      summary: Update a project team
+      description: Updates a project team in the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: query
+          name: teamId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: projectId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        description: The project team to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                permission:
+                  type: string
+                  enum:
+                    - read
+                    - readWrite
+                    - manage
+                  description: Level of access granted to the project
+              required:
+                - permission
+      responses:
+        "200":
+          description: Project team updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
+    delete:
+      operationId: deleteProjectTeam
+      summary: Delete a project team
+      description: Deletes a project team from the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: query
+          name: teamId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: projectId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Project team deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the response was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the response was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
 components:
   securitySchemes:
     apiKeyAuth:
@@ -3140,7 +3414,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a11 []
+          default: &a12 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3208,7 +3482,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a12
+          enum: &a13
             - displayOnce
             - displayMultiple
             - displaySome
@@ -3287,7 +3561,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a14
+              enum: &a15
                 - bottomLeft
                 - bottomRight
                 - topLeft
@@ -3442,13 +3716,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a10
+                  enum: &a11
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a11
               required:
                 - linkSurveys
                 - appSurveys
@@ -3465,7 +3739,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a13
+                  enum: &a14
                     - animation
                     - color
                     - image
@@ -3648,6 +3922,36 @@ components:
         - updatedAt
         - name
         - organizationId
+    projectTeam:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          description: The date and time the response was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the response was last updated
+          example: 2021-01-01T00:00:00.000Z
+        projectId:
+          type: string
+          description: The ID of the project
+        teamId:
+          type: string
+          description: The ID of the team
+        permission:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage
+          description: Level of access granted to the project
+      required:
+        - createdAt
+        - updatedAt
+        - projectId
+        - teamId
+        - permission
     responseId:
       type: string
       description: The ID of the response
@@ -3793,7 +4097,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a11
+          default: *a12
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3859,7 +4163,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a12
+          enum: *a13
           description: Display options for the survey
         recontactDays:
           type:
@@ -4119,10 +4423,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a11
                 appSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a11
               required:
                 - linkSurveys
                 - appSurveys
@@ -4139,7 +4443,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a13
+                  enum: *a14
                 brightness:
                   type:
                     - number
@@ -4172,7 +4476,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a14
+              enum: *a15
             clickOutsideClose:
               type:
                 - boolean

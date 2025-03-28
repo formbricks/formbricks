@@ -1,3 +1,4 @@
+import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import {
   deleteTeamEndpoint,
   getTeamEndpoint,
@@ -19,7 +20,7 @@ export const getTeamsEndpoint: ZodOpenApiOperationObject = {
   tags: ["Organizations API > Teams"],
   responses: {
     "200": {
-      description: "Responses retrieved successfully.",
+      description: "Teams retrieved successfully.",
       content: {
         "application/json": {
           schema: z.array(responseWithMetaSchema(makePartialSchema(ZTeam))),
@@ -57,10 +58,12 @@ export const createTeamEndpoint: ZodOpenApiOperationObject = {
 
 export const teamPaths: ZodOpenApiPathsObject = {
   "/teams": {
+    servers: organizationServer,
     get: getTeamsEndpoint,
     post: createTeamEndpoint,
   },
   "/teams/{id}": {
+    servers: organizationServer,
     get: getTeamEndpoint,
     put: updateTeamEndpoint,
     delete: deleteTeamEndpoint,

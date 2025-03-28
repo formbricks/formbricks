@@ -1,25 +1,30 @@
 import { teamCache } from "@/lib/cache/team";
 import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/project-teams/lib/utils";
-import { projectTeamUpdateSchema, TGetProjectTeamsFilter, TProjectTeamInput } from "@/modules/api/v2/organizations/project-teams/types/projectTeams";
+import {
+  TGetProjectTeamsFilter,
+  TProjectTeamInput,
+  projectTeamUpdateSchema,
+} from "@/modules/api/v2/organizations/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
+import { Prisma, ProjectTeam } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
-import { err, ok, Result } from "@formbricks/types/error-handlers";
-import { Prisma, ProjectTeam } from "@prisma/client";
-import { z } from "zod";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getProjectTeams = async (
+  organizationID: string,
   params: TGetProjectTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<ProjectTeam[]>, ApiErrorResponseV2>> => {
   try {
     const [projectTeams, count] = await prisma.$transaction([
       prisma.projectTeam.findMany({
-        ...getProjectTeamsQuery(params),
+        ...getProjectTeamsQuery(organizationID, params),
       }),
       prisma.projectTeam.count({
-        where: getProjectTeamsQuery(params).where,
+        where: getProjectTeamsQuery(organizationID, params).where,
       }),
     ]);
 
@@ -41,7 +46,7 @@ export const getProjectTeams = async (
 };
 
 export const createProjectTeam = async (
-  teamInput: TProjectTeamInput,
+  teamInput: TProjectTeamInput
 ): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
   captureTelemetry("project team created");
 
@@ -54,12 +59,12 @@ export const createProjectTeam = async (
           id: teamId,
         },
       },
-        project: {
-            connect: {
-            id: projectId,
-            },
+      project: {
+        connect: {
+          id: projectId,
         },
-        permission,
+      },
+      permission,
     };
 
     const projectTeam = await prisma.projectTeam.create({
@@ -71,7 +76,7 @@ export const createProjectTeam = async (
     });
 
     teamCache.revalidate({
-        id: teamId,
+      id: teamId,
     });
 
     return ok(projectTeam);
@@ -80,34 +85,60 @@ export const createProjectTeam = async (
   }
 };
 
-
 export const updateProjectTeam = async (
-    teamId: string,
-    projectId: string,
-    teamInput: z.infer<typeof projectTeamUpdateSchema>,
-  ): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
-    try {
-        const updatedProjectTeam = await prisma.projectTeam.update({
-            where: {
-                projectId_teamId: {
-                    projectId,
-                    teamId,
-                }
-            },
-            data: teamInput,
-          });
+  teamId: string,
+  projectId: string,
+  teamInput: z.infer<typeof projectTeamUpdateSchema>
+): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
+  try {
+    const updatedProjectTeam = await prisma.projectTeam.update({
+      where: {
+        projectId_teamId: {
+          projectId,
+          teamId,
+        },
+      },
+      data: teamInput,
+    });
 
-      projectCache.revalidate({
-        id: projectId,
-      });
-  
-      teamCache.revalidate({
-          id: teamId,
-      });
-  
-      return ok(projectTeam);
-    } catch (error) {
-      return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
-    }
-  };
-  
+    projectCache.revalidate({
+      id: projectId,
+    });
+
+    teamCache.revalidate({
+      id: teamId,
+    });
+
+    return ok(updatedProjectTeam);
+  } catch (error) {
+    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+  }
+};
+
+export const deleteProjectTeam = async (
+  teamId: string,
+  projectId: string
+): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
+  try {
+    const deletedProjectTeam = await prisma.projectTeam.delete({
+      where: {
+        projectId_teamId: {
+          projectId,
+          teamId,
+        },
+      },
+    });
+
+    projectCache.revalidate({
+      id: projectId,
+    });
+
+    teamCache.revalidate({
+      id: teamId,
+    });
+
+    return ok(deletedProjectTeam);
+  } catch (error) {
+    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+  }
+};

@@ -1,13 +1,20 @@
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
-import { TGetProjectTeamsFilter } from "@/modules/api/v2/organizations/project-teams/types/projectTeams";
+import { TGetProjectTeamsFilter } from "@/modules/api/v2/organizations/project-teams/types/project-teams";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Prisma } from "@prisma/client";
+import { prisma } from "@formbricks/database";
+import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getProjectTeamsQuery = (params: TGetProjectTeamsFilter) => {
-    const { teamId, projectId } = params || {};
+export const getProjectTeamsQuery = (organizationID: string, params: TGetProjectTeamsFilter) => {
+  const { teamId, projectId } = params || {};
 
   let query: Prisma.ProjectTeamFindManyArgs = {
     where: {
       teamId,
+      team: {
+        organizationId: organizationID,
+      },
     },
   };
 
@@ -17,6 +24,9 @@ export const getProjectTeamsQuery = (params: TGetProjectTeamsFilter) => {
       where: {
         ...query.where,
         projectId,
+        project: {
+          organizationId: organizationID,
+        },
       },
     };
   }
@@ -28,4 +38,57 @@ export const getProjectTeamsQuery = (params: TGetProjectTeamsFilter) => {
   }
 
   return query;
+};
+
+export const validateTeamIdAndProjectId = async (
+  organizationId: string,
+  teamId: string,
+  projectId: string
+): Promise<Result<boolean, ApiErrorResponseV2>> => {
+  try {
+    const hasAccess = await prisma.organization.findFirst({
+      where: {
+        id: organizationId,
+        teams: {
+          some: {
+            id: teamId,
+          },
+        },
+        projects: {
+          some: {
+            id: projectId,
+          },
+        },
+      },
+    });
+
+    if (!hasAccess) {
+      return err({ type: "not_found", details: [{ field: "teamId/projectId", issue: "not_found" }] });
+    }
+
+    return ok(true);
+  } catch (error) {
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "teamId/projectId", issue: error.message }],
+    });
+  }
+};
+
+export const checkAuthenticationAndAccess = async (
+  teamId: string,
+  projectId: string,
+  authentication: TAuthenticationApiKey
+): Promise<Result<boolean, ApiErrorResponseV2>> => {
+  if (!authentication.organizationId) {
+    return err({ type: "unauthorized", details: [{ field: "organizationId", issue: "missing" }] });
+  }
+
+  const hasAccess = await validateTeamIdAndProjectId(authentication.organizationId, teamId, projectId);
+
+  if (!hasAccess.ok) {
+    return err(hasAccess.error);
+  }
+
+  return ok(true);
 };
