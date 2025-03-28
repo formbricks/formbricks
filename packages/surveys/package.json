@@ -41,7 +41,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "@formbricks/lib": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "@preact/preset-vite": "2.9.3",
+    "@preact/preset-vite": "2.10.1",
     "@types/react": "19.0.1",
     "autoprefixer": "10.4.20",
     "concurrently": "9.1.0",
