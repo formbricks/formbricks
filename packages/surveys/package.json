@@ -36,7 +36,7 @@
     "clean": "rimraf .turbo node_modules dist"
   },
   "devDependencies": {
-    "@calcom/embed-snippet": "1.3.1",
+    "@calcom/embed-snippet": "1.3.2",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@formbricks/lib": "workspace:*",
