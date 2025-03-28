@@ -943,10 +943,18 @@ export const ZSurvey = z
         "placeholder",
       ];
 
-      const fieldsToValidate =
+      let fieldsToValidate =
         questionIndex === 0 || isBackButtonHidden
           ? initialFieldsToValidate
           : [...initialFieldsToValidate, "backButtonLabel"];
+
+      // Skip buttonLabel validation for required NPS and Rating questions
+      if (
+        (question.type === TSurveyQuestionTypeEnum.NPS || question.type === TSurveyQuestionTypeEnum.Rating) &&
+        question.required
+      ) {
+        fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
+      }
 
       for (const field of fieldsToValidate) {
         // Skip label validation for consent questions as its called checkbox label

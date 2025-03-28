@@ -146,6 +146,10 @@ export const validationRules = {
       fieldsToValidate = fieldsToValidate.filter((field) => field !== "backButtonLabel");
     }
 
+    if ((question.type === "nps" || question.type === "rating") && question.required) {
+      fieldsToValidate = fieldsToValidate.filter((field) => field !== "buttonLabel");
+    }
+
     for (const field of fieldsToValidate) {
       if (
         question[field] &&
