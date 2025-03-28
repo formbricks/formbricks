@@ -1,6 +1,6 @@
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { getContactByUserId } from "@/modules/ee/contacts/api/client/[environmentId]/identify/contacts/[userId]/lib/contact";
+import { getContactByUserId } from "@/modules/ee/contacts/api/v1/client/[environmentId]/identify/contacts/[userId]/lib/contact";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { segmentCache } from "@formbricks/lib/cache/segment";

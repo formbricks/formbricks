@@ -1,4 +1,4 @@
-import { GET } from "@/modules/ee/contacts/api/management/contacts/route";
+import { GET } from "@/modules/ee/contacts/api/v1/management/contacts/route";
 
 export { GET };
 
