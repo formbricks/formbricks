@@ -42,14 +42,17 @@ module "rds-aurora" {
   }
   performance_insights_enabled = true
 
-  apply_immediately   = true
-  skip_final_snapshot = true
+  backup_retention_period = 7
+  apply_immediately       = true
+  skip_final_snapshot     = false
+
+  deletion_protection = true
 
   enable_http_endpoint = true
 
   serverlessv2_scaling_configuration = {
     min_capacity             = 0
-    max_capacity             = 10
+    max_capacity             = 50
     seconds_until_auto_pause = 3600
   }
 

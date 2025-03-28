@@ -1,3 +1,5 @@
+const colors = require("tailwindcss/colors");
+
 module.exports = {
   content: [
     // app content
@@ -39,7 +41,7 @@ module.exports = {
           dark: "#00C4B8",
         },
         focus: "var(--formbricks-focus, #1982fc)",
-        error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
+        // error: "rgb(from var(--formbricks-error) r g b / <alpha-value>)",
         brandnew: "var(--formbricks-brand, #038178)",
         primary: {
           DEFAULT: "#0f172a",
@@ -56,6 +58,34 @@ module.exports = {
         accent: {
           DEFAULT: "#f4f6f8", // light gray background
           foreground: "#0f172a", // same as primary default for consistency
+        },
+        info: {
+          DEFAULT: colors.blue[600],
+          foreground: colors.blue[900],
+          muted: colors.blue[700],
+          background: colors.blue[50],
+          "background-muted": colors.blue[100],
+        },
+        warning: {
+          DEFAULT: colors.amber[500],
+          foreground: colors.amber[900],
+          muted: colors.amber[700],
+          background: colors.amber[50],
+          "background-muted": colors.amber[100],
+        },
+        success: {
+          DEFAULT: colors.green[600],
+          foreground: colors.green[900],
+          muted: colors.green[700],
+          background: colors.green[50],
+          "background-muted": colors.green[100],
+        },
+        error: {
+          DEFAULT: colors.red[600],
+          foreground: colors.red[900],
+          muted: colors.red[700],
+          background: colors.red[50],
+          "background-muted": colors.red[100],
         },
       },
       keyframes: {

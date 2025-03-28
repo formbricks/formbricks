@@ -21,6 +21,8 @@ tags:
     description: Operations for generating personalized survey links for contacts.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
+  - name: Management API > Roles
+    description: Operations for managing roles.
 security:
   - apiKeyAuth: []
 paths:
@@ -2067,6 +2069,22 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
+  /roles:
+    get:
+      operationId: getRoles
+      summary: Get roles
+      description: Gets roles from the database.
+      tags:
+        - Management API > Roles
+      responses:
+        "200":
+          description: Roles retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 components:
   securitySchemes:
     apiKeyAuth:
@@ -2949,6 +2967,10 @@ components:
         - environmentId
         - triggers
         - surveyIds
+    role:
+      type: array
+      items:
+        type: string
     responseId:
       type: string
       description: The ID of the response
@@ -3507,4 +3529,3 @@ components:
     webhookId:
       type: string
       description: The ID of the webhook
-

@@ -1029,6 +1029,8 @@
         "monthly": "Monthly",
         "monthly_identified_users": "Monthly Identified Users",
         "multi_language_surveys": "Multi-Language Surveys",
+        "per_month": "per month",
+        "per_year": "per year",
         "plan_upgraded_successfully": "Plan upgraded successfully",
         "premium_support_with_slas": "Premium support with SLAs",
         "priority_support": "Priority Support",
