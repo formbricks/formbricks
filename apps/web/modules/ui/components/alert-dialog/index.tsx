@@ -11,8 +11,8 @@ interface AlertDialogProps {
   mainText: string;
   confirmBtnLabel: string;
   declineBtnLabel?: string;
-  declineBtnVariant?: "destructive" | "ghost";
-  onDecline: () => void;
+  declineBtnVariant?: "destructive" | "ghost" | "outline";
+  onDecline?: () => void;
   onConfirm?: () => void;
 }
 
@@ -34,9 +34,11 @@ export const AlertDialog = ({
         {mainText ?? t("common.are_you_sure_this_action_cannot_be_undone")}
       </p>
       <div className="space-x-2 text-right">
-        <Button variant={declineBtnVariant} onClick={onDecline}>
-          {declineBtnLabel || "Discard"}
-        </Button>
+        {declineBtnLabel && onDecline && (
+          <Button variant={declineBtnVariant} onClick={onDecline}>
+            {declineBtnLabel}
+          </Button>
+        )}
         <Button
           onClick={() => {
             if (onConfirm) {

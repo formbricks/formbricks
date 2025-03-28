@@ -26,14 +26,19 @@ import { convertToCsv, convertToXlsxBuffer } from "../utils/fileConversion";
 import { validateInputs } from "../utils/validate";
 import { responseCache } from "./cache";
 import {
+  InconsistentQuestion,
+  ResponseConsistencyResult,
   buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
+  getExpectedResponseType,
   getResponseContactAttributes,
   getResponseHiddenFields,
   getResponseMeta,
   getResponsesFileName,
   getResponsesJson,
+  getValueType,
+  isTypeValid,
 } from "./utils";
 
 const RESPONSES_PER_PAGE = 10;
@@ -664,3 +669,115 @@ export const getResponseCountBySurveyId = reactCache(
       }
     )()
 );
+
+/**
+ * Checks a survey's responses for data consistency
+ * Returns information about inconsistent question responses
+ */
+export const checkResponseConsistency = async (surveyId: string): Promise<ResponseConsistencyResult> => {
+  validateInputs([surveyId, ZId]);
+
+  try {
+    const survey = await getSurvey(surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    // Create a map of question IDs to their question types for quick lookup
+    const questionTypeMap = new Map<string, TSurveyQuestionTypeEnum>();
+    survey.questions.forEach((question) => {
+      questionTypeMap.set(question.id, question.type as TSurveyQuestionTypeEnum);
+    });
+
+    // Create a set of valid field IDs (question IDs + hidden field IDs)
+    const validFieldIds = new Set<string>([
+      ...survey.questions.map((q) => q.id),
+      ...(survey.hiddenFields.fieldIds || []),
+    ]);
+
+    // Get all responses for this survey
+    // We need direct DB access for all responses, not paginated
+    const responsesData = await prisma.response.findMany({
+      where: {
+        surveyId,
+      },
+      select: {
+        id: true,
+        data: true,
+      },
+    });
+
+    if (responsesData.length === 0) {
+      return {
+        hasInconsistencies: false,
+        inconsistentQuestions: [],
+        unknownFields: [],
+      };
+    }
+
+    // Track type frequencies for each question
+    const questionTypeFrequencies: Record<string, Record<string, number>> = {};
+    const unknownFields: Set<string> = new Set();
+
+    // Analyze each response
+    responsesData.forEach((response) => {
+      const responseData = response.data as Record<string, unknown>;
+
+      // Check each field in the response
+      Object.entries(responseData).forEach(([fieldId, value]) => {
+        // Check if this is a valid field
+        if (!validFieldIds.has(fieldId)) {
+          unknownFields.add(fieldId);
+          return;
+        }
+
+        const valueType = getValueType(value);
+
+        // Initialize type frequency counter for this question if needed
+        if (!questionTypeFrequencies[fieldId]) {
+          questionTypeFrequencies[fieldId] = {};
+        }
+
+        // Increment the frequency counter for this type
+        questionTypeFrequencies[fieldId][valueType] = (questionTypeFrequencies[fieldId][valueType] || 0) + 1;
+      });
+    });
+
+    // Find questions with inconsistent types
+    const inconsistentQuestions: InconsistentQuestion[] = [];
+
+    Object.entries(questionTypeFrequencies).forEach(([questionId, typeFreq]) => {
+      const types = Object.keys(typeFreq);
+
+      // If there's only one type, it's consistent (but might still be wrong)
+      if (types.length <= 1) return;
+
+      // This question has multiple types - it's inconsistent
+      const questionType = questionTypeMap.get(questionId);
+      const expectedType = questionType
+        ? getExpectedResponseType(questionType)
+        : ["string", "array", "object", "number", "boolean"]; // For hidden fields, allow any type
+
+      const question = survey.questions.find((q) => q.id === questionId);
+
+      inconsistentQuestions.push({
+        questionId,
+        headline: question?.headline?.default,
+        expectedType,
+        foundTypes: typeFreq,
+        totalResponses: responsesData.length,
+      });
+    });
+
+    return {
+      hasInconsistencies: inconsistentQuestions.length > 0 || unknownFields.size > 0,
+      inconsistentQuestions,
+      unknownFields: Array.from(unknownFields),
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
