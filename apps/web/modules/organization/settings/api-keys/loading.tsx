@@ -1,6 +1,6 @@
 "use client";
 
-import { ProjectConfigNavigation } from "@/modules/projects/settings/components/project-config-navigation";
+import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { useTranslate } from "@tolgee/react";
@@ -19,7 +19,7 @@ const LoadingCard = () => {
             <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
               <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                {t("environments.project.api-keys.api_key")}
+                {t("environments.project.api_keys.api_key")}
               </div>
               <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
             </div>
@@ -38,15 +38,17 @@ const LoadingCard = () => {
   );
 };
 
-export const APIKeysLoading = () => {
+const Loading = ({ isFormbricksCloud }: { isFormbricksCloud: boolean }) => {
   const { t } = useTranslate();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.project_configuration")}>
-        <ProjectConfigNavigation activeId="api-keys" loading />
+      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+        <OrganizationSettingsNavbar isFormbricksCloud={isFormbricksCloud} activeId="api-keys" loading />
       </PageHeader>
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
       <LoadingCard />
     </PageContentWrapper>
   );
 };
+
+export default Loading;

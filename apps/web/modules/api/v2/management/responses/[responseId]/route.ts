@@ -1,13 +1,13 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import {
   deleteResponse,
   getResponse,
   updateResponse,
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { responseIdSchema, responseUpdateSchema } from "./types/responses";
 
@@ -33,13 +33,10 @@ export const GET = async (request: Request, props: { params: Promise<{ responseI
         return handleApiError(request, environmentIdResult.error);
       }
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: environmentIdResult.data,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "GET")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       const response = await getResponse(params.responseId);
@@ -73,13 +70,10 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
         return handleApiError(request, environmentIdResult.error);
       }
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: environmentIdResult.data,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "DELETE")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       const response = await deleteResponse(params.responseId);
@@ -115,13 +109,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
         return handleApiError(request, environmentIdResult.error);
       }
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId: environmentIdResult.data,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentIdResult.data, "PUT")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       const response = await updateResponse(params.responseId, body);

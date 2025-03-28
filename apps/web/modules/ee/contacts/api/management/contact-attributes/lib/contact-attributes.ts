@@ -5,13 +5,15 @@ import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { DatabaseError } from "@formbricks/types/errors";
 
-export const getContactAttributes = reactCache((environmentId: string) =>
+export const getContactAttributes = reactCache((environmentIds: string[]) =>
   cache(
     async () => {
       try {
         const contactAttributeKeys = await prisma.contactAttribute.findMany({
           where: {
-            attributeKey: { environmentId },
+            attributeKey: {
+              environmentId: { in: environmentIds },
+            },
           },
         });
 
@@ -23,9 +25,9 @@ export const getContactAttributes = reactCache((environmentId: string) =>
         throw error;
       }
     },
-    [`getContactAttributes-contact-attributes-management-api-${environmentId}`],
+    environmentIds.map((id) => `getContactAttributes-contact-attributes-management-api-${id}`),
     {
-      tags: [contactAttributeCache.tag.byEnvironmentId(environmentId)],
+      tags: environmentIds.map((id) => contactAttributeCache.tag.byEnvironmentId(id)),
     }
   )()
 );

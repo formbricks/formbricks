@@ -1,25 +1,34 @@
-import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
 import { responses } from "@/app/lib/api/response";
 import { hashApiKey } from "@/modules/api/v2/management/lib/utils";
+import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const authenticateRequest = async (request: Request): Promise<TAuthenticationApiKey | null> => {
   const apiKey = request.headers.get("x-api-key");
-  if (apiKey) {
-    const environmentId = await getEnvironmentIdFromApiKey(apiKey);
-    if (environmentId) {
-      const hashedApiKey = hashApiKey(apiKey);
-      const authentication: TAuthenticationApiKey = {
-        type: "apiKey",
-        environmentId,
-        hashedApiKey,
-      };
-      return authentication;
-    }
-    return null;
-  }
-  return null;
+  if (!apiKey) return null;
+
+  // Get API key with permissions
+  const apiKeyData = await getApiKeyWithPermissions(apiKey);
+  if (!apiKeyData) return null;
+
+  // In the route handlers, we'll do more specific permission checks
+  const environmentIds = apiKeyData.apiKeyEnvironments.map((env) => env.environmentId);
+  if (environmentIds.length === 0) return null;
+
+  const hashedApiKey = hashApiKey(apiKey);
+  const authentication: TAuthenticationApiKey = {
+    type: "apiKey",
+    environmentPermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
+      environmentId: env.environmentId,
+      permission: env.permission,
+    })),
+    hashedApiKey,
+    apiKeyId: apiKeyData.id,
+    organizationId: apiKeyData.organizationId,
+  };
+
+  return authentication;
 };
 
 export const handleErrorResponse = (error: any): Response => {

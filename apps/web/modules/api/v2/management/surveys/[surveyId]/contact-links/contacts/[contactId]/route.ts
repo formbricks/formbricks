@@ -1,12 +1,12 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getContact } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/contacts";
 import { getResponse } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/response";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/surveys";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 
@@ -43,13 +43,10 @@ export const GET = async (
 
       const environmentId = environmentIdResult.data;
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       const surveyResult = await getSurvey(params.surveyId);
