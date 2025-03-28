@@ -19,6 +19,10 @@ tags:
     description: Operations for managing surveys.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
+  - name: Management API > Roles
+    description: Operations for managing roles.
+security:
+  - apiKeyAuth: []
 paths:
   /responses/{responseId}:
     put:
@@ -521,8 +525,6 @@ paths:
           description: Formbricks API Server
   /responses:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getResponses
       summary: Get responses
       description: Gets responses from the database.
@@ -546,7 +548,7 @@ paths:
           name: sortBy
           schema:
             type: string
-            enum:
+            enum: &a6
               - createdAt
               - updatedAt
             default: createdAt
@@ -554,7 +556,7 @@ paths:
           name: order
           schema:
             type: string
-            enum:
+            enum: &a7
               - asc
               - desc
             default: desc
@@ -730,8 +732,6 @@ paths:
                         offset:
                           type: number
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createResponse
       summary: Create a response
       description: Creates a response in the database.
@@ -955,8 +955,6 @@ paths:
                     description: The display ID of the response
   /responses/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getResponse
       summary: Get a response
       description: Gets a response from the database.
@@ -1084,8 +1082,6 @@ paths:
                       - "null"
                     description: The display ID of the response
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateResponse
       summary: Update a response
       description: Updates a response in the database.
@@ -1296,8 +1292,6 @@ paths:
                       - "null"
                     description: The display ID of the response
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteResponse
       summary: Delete a response
       description: Deletes a response from the database.
@@ -1426,8 +1420,6 @@ paths:
                     description: The display ID of the response
   /contacts:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContacts
       summary: Get contacts
       description: Gets contacts from the database.
@@ -1481,8 +1473,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/contact"
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContact
       summary: Create a contact
       description: Creates a contact in the database.
@@ -1504,8 +1494,6 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contacts/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContact
       summary: Get a contact
       description: Gets a contact from the database.
@@ -1525,8 +1513,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContact
       summary: Update a contact
       description: Updates a contact in the database.
@@ -1553,8 +1539,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contact"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContact
       summary: Delete a contact
       description: Deletes a contact from the database.
@@ -1575,8 +1559,6 @@ paths:
                 $ref: "#/components/schemas/contact"
   /contact-attributes:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributes
       summary: Get contact attributes
       description: Gets contact attributes from the database.
@@ -1650,8 +1632,6 @@ paths:
                     - contactId
                     - value
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContactAttribute
       summary: Create a contact attribute
       description: Creates a contact attribute in the database.
@@ -1669,8 +1649,6 @@ paths:
           description: Contact attribute created successfully.
   /contact-attributes/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttribute
       summary: Get a contact attribute
       description: Gets a contact attribute from the database.
@@ -1690,8 +1668,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContactAttribute
       summary: Update a contact attribute
       description: Updates a contact attribute in the database.
@@ -1718,8 +1694,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttribute"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContactAttribute
       summary: Delete a contact attribute
       description: Deletes a contact attribute from the database.
@@ -1740,8 +1714,6 @@ paths:
                 $ref: "#/components/schemas/contactAttribute"
   /contact-attribute-keys:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database.
@@ -1832,8 +1804,6 @@ paths:
                     - type
                     - environmentId
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database.
@@ -1851,8 +1821,6 @@ paths:
           description: Contact attribute key created successfully.
   /contact-attribute-keys/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getContactAttributeKey
       summary: Get a contact attribute key
       description: Gets a contact attribute key from the database.
@@ -1872,8 +1840,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
       description: Updates a contact attribute key in the database.
@@ -1900,8 +1866,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/contactAttributeKey"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
       description: Deletes a contact attribute key from the database.
@@ -1922,8 +1886,6 @@ paths:
                 $ref: "#/components/schemas/contactAttributeKey"
   /surveys:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getSurveys
       summary: Get surveys
       description: Gets surveys from the database.
@@ -1994,8 +1956,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/survey"
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createSurvey
       summary: Create a survey
       description: Creates a survey in the database.
@@ -2017,8 +1977,6 @@ paths:
                 $ref: "#/components/schemas/survey"
   /surveys/{id}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getSurvey
       summary: Get a survey
       description: Gets a survey from the database.
@@ -2039,8 +1997,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateSurvey
       summary: Update a survey
       description: Updates a survey in the database.
@@ -2068,8 +2024,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteSurvey
       summary: Delete a survey
       description: Deletes a survey from the database.
@@ -2091,8 +2045,6 @@ paths:
                 $ref: "#/components/schemas/survey"
   /webhooks:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getWebhooks
       summary: Get webhooks
       description: Gets webhooks from the database.
@@ -2116,17 +2068,13 @@ paths:
           name: sortBy
           schema:
             type: string
-            enum:
-              - createdAt
-              - updatedAt
+            enum: *a6
             default: createdAt
         - in: query
           name: order
           schema:
             type: string
-            enum:
-              - asc
-              - desc
+            enum: *a7
             default: desc
         - in: query
           name: startDate
@@ -2182,7 +2130,7 @@ paths:
                             description: The URL of the webhook
                           source:
                             type: string
-                            enum: &a6
+                            enum: &a8
                               - user
                               - zapier
                               - make
@@ -2195,7 +2143,7 @@ paths:
                             type: array
                             items:
                               type: string
-                              enum: &a7
+                              enum: &a9
                                 - responseFinished
                                 - responseCreated
                                 - responseUpdated
@@ -2215,8 +2163,6 @@ paths:
                         offset:
                           type: number
     post:
-      security:
-        - apiKeyAuth: []
       operationId: createWebhook
       summary: Create a webhook
       description: Creates a webhook in the database.
@@ -2241,7 +2187,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a6
+                  enum: *a8
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2250,7 +2196,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a7
+                    enum: *a9
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2294,7 +2240,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a6
+                    enum: *a8
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2303,7 +2249,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a7
+                      enum: *a9
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2312,8 +2258,6 @@ paths:
                     description: "The IDs of the surveys "
   /webhooks/{webhookId}:
     get:
-      security:
-        - apiKeyAuth: []
       operationId: getWebhook
       summary: Get a webhook
       description: Gets a webhook from the database.
@@ -2356,7 +2300,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a6
+                    enum: *a8
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2365,7 +2309,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a7
+                      enum: *a9
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2373,8 +2317,6 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
     put:
-      security:
-        - apiKeyAuth: []
       operationId: updateWebhook
       summary: Update a webhook
       description: Updates a webhook in the database.
@@ -2406,7 +2348,7 @@ paths:
                   description: The URL of the webhook
                 source:
                   type: string
-                  enum: *a6
+                  enum: *a8
                   description: The source of the webhook
                 environmentId:
                   type: string
@@ -2415,7 +2357,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: *a7
+                    enum: *a9
                   description: The triggers of the webhook
                 surveyIds:
                   type: array
@@ -2459,7 +2401,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a6
+                    enum: *a8
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2468,7 +2410,7 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a7
+                      enum: *a9
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
@@ -2476,8 +2418,6 @@ paths:
                       type: string
                     description: "The IDs of the surveys "
     delete:
-      security:
-        - apiKeyAuth: []
       operationId: deleteWebhook
       summary: Delete a webhook
       description: Deletes a webhook from the database.
@@ -2520,7 +2460,7 @@ paths:
                     description: The URL of the webhook
                   source:
                     type: string
-                    enum: *a6
+                    enum: *a8
                     description: The source of the webhook
                   environmentId:
                     type: string
@@ -2529,13 +2469,29 @@ paths:
                     type: array
                     items:
                       type: string
-                      enum: *a7
+                      enum: *a9
                     description: The triggers of the webhook
                   surveyIds:
                     type: array
                     items:
                       type: string
                     description: "The IDs of the surveys "
+  /roles:
+    get:
+      operationId: getRoles
+      summary: Get roles
+      description: Gets roles from the database.
+      tags:
+        - Management API > Roles
+      responses:
+        "200":
+          description: Roles retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 components:
   securitySchemes:
     apiKeyAuth:
@@ -2937,7 +2893,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a9 []
+          default: &a11 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3005,7 +2961,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a10
+          enum: &a12
             - displayOnce
             - displayMultiple
             - displaySome
@@ -3084,7 +3040,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a12
+              enum: &a14
                 - bottomLeft
                 - bottomRight
                 - topLeft
@@ -3239,13 +3195,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a8
+                  enum: &a10
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a8
+                  enum: *a10
               required:
                 - linkSurveys
                 - appSurveys
@@ -3262,7 +3218,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a11
+                  enum: &a13
                     - animation
                     - color
                     - image
@@ -3392,7 +3348,7 @@ components:
           description: The URL of the webhook
         source:
           type: string
-          enum: *a6
+          enum: *a8
           description: The source of the webhook
         environmentId:
           type: string
@@ -3401,7 +3357,7 @@ components:
           type: array
           items:
             type: string
-            enum: *a7
+            enum: *a9
           description: The triggers of the webhook
         surveyIds:
           type: array
@@ -3418,6 +3374,10 @@ components:
         - environmentId
         - triggers
         - surveyIds
+    role:
+      type: array
+      items:
+        type: string
     responseId:
       type: string
       description: The ID of the response
@@ -3563,7 +3523,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a9
+          default: *a11
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3629,7 +3589,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a10
+          enum: *a12
           description: Display options for the survey
         recontactDays:
           type:
@@ -3889,10 +3849,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a8
+                  enum: *a10
                 appSurveys:
                   type: string
-                  enum: *a8
+                  enum: *a10
               required:
                 - linkSurveys
                 - appSurveys
@@ -3909,7 +3869,7 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a11
+                  enum: *a13
                 brightness:
                   type:
                     - number
@@ -3942,7 +3902,7 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a12
+              enum: *a14
             clickOutsideClose:
               type:
                 - boolean
