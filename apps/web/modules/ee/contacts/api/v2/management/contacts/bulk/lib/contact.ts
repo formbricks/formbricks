@@ -253,54 +253,46 @@ export const upsertBulkContacts = async (
         }
       }
 
-      // Create missing attribute keys if needed
-      if (missingKeysMap.size > 0) {
-        const missingKeysArray = Array.from(missingKeysMap.values());
+      // Handle both missing keys and name updates in a single batch operation
+      const keysToUpsert = new Map<string, { key: string; name: string }>();
 
-        // Batch this, not sure if we need to do this.
-        // Generally, the number of attribute keys that are missing shouldn't be that high.
-        const BATCH_SIZE = 10000;
-        for (let i = 0; i < missingKeysArray.length; i += BATCH_SIZE) {
-          const batch = missingKeysArray.slice(i, i + BATCH_SIZE);
-
-          const newAttributeKeys = await tx.contactAttributeKey.createManyAndReturn({
-            data: batch.map((keyObj) => ({
-              key: keyObj.key,
-              name: keyObj.name,
-              environmentId,
-            })),
-            select: { key: true, id: true },
-            skipDuplicates: true,
-          });
-
-          // Refresh the attribute key map for the missing keys
-          for (const attrKey of newAttributeKeys) {
-            attributeKeyMap[attrKey.key] = attrKey.id;
-          }
-        }
+      // Collect all keys that need to be created or updated
+      for (const [key, value] of missingKeysMap) {
+        keysToUpsert.set(key, value);
       }
 
-      // Update names of existing attribute keys if they've changed
-      if (attributeKeyNameUpdates.size > 0) {
-        const nameUpdatesArray = Array.from(attributeKeyNameUpdates.values());
+      for (const [key, value] of attributeKeyNameUpdates) {
+        keysToUpsert.set(key, value);
+      }
+
+      if (keysToUpsert.size > 0) {
+        const keysArray = Array.from(keysToUpsert.values());
         const BATCH_SIZE = 10000;
 
-        for (let i = 0; i < nameUpdatesArray.length; i += BATCH_SIZE) {
-          const batch = nameUpdatesArray.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < keysArray.length; i += BATCH_SIZE) {
+          const batch = keysArray.slice(i, i + BATCH_SIZE);
 
-          await Promise.all(
-            batch.map((keyObj) =>
-              tx.contactAttributeKey.update({
-                where: {
-                  key_environmentId: {
-                    key: keyObj.key,
-                    environmentId,
-                  },
-                },
-                data: { name: keyObj.name },
-              })
-            )
-          );
+          // Use raw query to perform upsert
+          const upsertedKeys = await tx.$queryRaw<Array<{ id: string; key: string }>>`
+            INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "created_at", "updated_at")
+            SELECT 
+              unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.key)}]`}),
+              unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.name)}]`}),
+              ${environmentId},
+              NOW(),
+              NOW()
+            ON CONFLICT ("key", "environmentId") 
+            DO UPDATE SET 
+              "name" = EXCLUDED."name",
+              "updated_at" = NOW()
+            RETURNING "id", "key"
+          `;
+
+          // Update attribute key map with upserted keys
+          for (const key of upsertedKeys) {
+            attributeKeyMap[key.key] = key.id;
+          }
         }
       }
 
