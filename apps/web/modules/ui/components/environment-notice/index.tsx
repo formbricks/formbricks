@@ -1,4 +1,4 @@
-import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { getTranslate } from "@/tolgee/server";
 import Link from "next/link";
 import { WEBAPP_URL } from "@formbricks/lib/constants";

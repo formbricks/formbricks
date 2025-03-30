@@ -58,7 +58,7 @@ const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
 >(({ className, variant, size, ...props }, ref) => {
-  const variantIcon = variant ? (variant !== "default" ? alertVariantIcons[variant] : null) : null;
+  const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
   return (
     <AlertContext.Provider value={{ variant, size }}>
@@ -78,8 +78,8 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
       <h5
         ref={ref}
         className={cn(
-          "col-start-1 row-start-1 font-medium leading-none tracking-tight",
-          size === "small" ? "truncate-x min-w-0 flex-shrink" : "col-start-1 row-start-1",
+          "col-start-1 row-start-1 font-medium tracking-tight",
+          size === "small" ? "flex-shrink truncate" : "col-start-1 row-start-1",
           className
         )}
         {...props}
@@ -99,9 +99,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
         ref={ref}
         className={cn(
           "[&_p]:leading-relaxed",
-          size === "small"
-            ? "truncate-x hidden min-w-0 flex-shrink flex-grow opacity-80 sm:block"
-            : "col-start-1 row-start-2",
+          size === "small" ? "flex-shrink flex-grow-0 truncate" : "col-start-1 row-start-2",
           className
         )}
         {...props}
