@@ -11,7 +11,8 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
@@ -32,6 +33,7 @@ export const SurveysPage = async ({
   params: paramsProps,
   searchParams: searchParamsProps,
 }: SurveyTemplateProps) => {
+  const surveyDomain = getSurveyDomain();
   const searchParams = await searchParamsProps;
   const params = await paramsProps;
   const t = await getTranslate();
@@ -79,7 +81,7 @@ export const SurveysPage = async ({
         <SurveysList
           environmentId={environment.id}
           isReadOnly={isReadOnly}
-          WEBAPP_URL={WEBAPP_URL}
+          surveyDomain={surveyDomain}
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}

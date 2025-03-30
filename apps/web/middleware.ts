@@ -24,8 +24,15 @@ import { ipAddress } from "@vercel/functions";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
-import { E2E_TESTING, IS_PRODUCTION, RATE_LIMITING_DISABLED, WEBAPP_URL } from "@formbricks/lib/constants";
+import {
+  E2E_TESTING,
+  IS_PRODUCTION,
+  RATE_LIMITING_DISABLED,
+  SURVEY_URL,
+  WEBAPP_URL,
+} from "@formbricks/lib/constants";
 import { isValidCallbackUrl } from "@formbricks/lib/utils/url";
+import { logger } from "@formbricks/logger";
 
 const enforceHttps = (request: NextRequest): Response | null => {
   const forwardedProto = request.headers.get("x-forwarded-proto") ?? "http";
@@ -78,7 +85,34 @@ const applyRateLimiting = (request: NextRequest, ip: string) => {
   }
 };
 
+const handleSurveyDomain = (request: NextRequest): Response | null => {
+  try {
+    if (!SURVEY_URL) return null;
+
+    const host = request.headers.get("host") || "";
+    const surveyDomain = SURVEY_URL ? new URL(SURVEY_URL).host : "";
+    if (host !== surveyDomain) return null;
+
+    return new NextResponse(null, { status: 404 });
+  } catch (error) {
+    logger.error(error, "Error handling survey domain");
+    return new NextResponse(null, { status: 404 });
+  }
+};
+
+const isSurveyRoute = (request: NextRequest) => {
+  return request.nextUrl.pathname.startsWith("/c/") || request.nextUrl.pathname.startsWith("/s/");
+};
+
 export const middleware = async (originalRequest: NextRequest) => {
+  if (isSurveyRoute(originalRequest)) {
+    return NextResponse.next();
+  }
+
+  // Handle survey domain routing.
+  const surveyResponse = handleSurveyDomain(originalRequest);
+  if (surveyResponse) return surveyResponse;
+
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {
     headers: new Headers(originalRequest.headers),
@@ -88,6 +122,7 @@ export const middleware = async (originalRequest: NextRequest) => {
   request.headers.set("x-start-time", Date.now().toString());
 
   // Create a new NextResponse object to forward the new request with headers
+
   const nextResponseWithCustomHeader = NextResponse.next({
     request: {
       headers: request.headers,
@@ -132,20 +167,6 @@ export const middleware = async (originalRequest: NextRequest) => {
 
 export const config = {
   matcher: [
-    "/api/auth/callback/credentials",
-    "/api/(.*)/client/:path*",
-    "/api/v1/js/actions",
-    "/api/v1/client/storage",
-    "/share/(.*)/:path",
-    "/environments/:path*",
-    "/setup/organization/:path*",
-    "/api/auth/signout",
-    "/auth/login",
-    "/auth/signup",
-    "/api/packages/:path*",
-    "/auth/verification-requested",
-    "/auth/forgot-password",
-    "/api/v1/management/:path*",
-    "/api/v2/management/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|js|css|images|fonts|icons|public|api/v1/og).*)", // Exclude the Open Graph image generation route from middleware
   ],
 };
