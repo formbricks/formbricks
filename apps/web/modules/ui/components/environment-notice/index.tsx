@@ -1,6 +1,6 @@
-import { Alert } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { getTranslate } from "@/tolgee/server";
-import { LightbulbIcon } from "lucide-react";
+import Link from "next/link";
 import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 
@@ -21,7 +21,7 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
 
   return (
     <div>
-      <div className="mt-4 flex max-w-4xl items-center space-y-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
+      {/* <div className="mt-4 flex max-w-4xl items-center space-y-4 rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base">
         <LightbulbIcon className="mr-3 h-4 w-4 text-blue-400" />
         <p className="text-sm">
           {t("common.environment_notice", { environment: environment.type })}
@@ -34,18 +34,19 @@ export const EnvironmentNotice = async ({ environmentId, subPageUrl }: Environme
             .
           </a>
         </p>
-      </div>
-      <Alert
-        variant="info"
-        className="max-w-4xl"
-        title={t("common.environment_notice", { environment: environment.type })}
-        button={{
-          label: t("common.switch_to", {
-            environment: environment.type === "production" ? "Development" : "Production",
-          }),
-          // onClick: () => alert("Button clicked"),
-        }}
-      />
+      </div> */}
+      <Alert variant="info" size="small" className="max-w-4xl">
+        <AlertTitle>{t("common.environment_notice", { environment: environment.type })}</AlertTitle>
+        <AlertButton>
+          <Link
+            href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
+            className="ml-1 cursor-pointer underline">
+            {t("common.switch_to", {
+              environment: environment.type === "production" ? "Development" : "Production",
+            })}
+          </Link>
+        </AlertButton>
+      </Alert>
     </div>
   );
 };
