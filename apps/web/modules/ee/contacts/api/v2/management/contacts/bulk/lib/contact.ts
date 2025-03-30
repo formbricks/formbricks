@@ -273,7 +273,7 @@ export const upsertBulkContacts = async (
           const batch = keysArray.slice(i, i + BATCH_SIZE);
 
           // Use raw query to perform upsert
-          const upsertedKeys = await tx.$queryRaw<Array<{ id: string; key: string }>>`
+          const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
             INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "created_at", "updated_at")
             SELECT 
               unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
