@@ -1,7 +1,8 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import jwt from "jsonwebtoken";
-import { ENCRYPTION_KEY, WEBAPP_URL } from "@formbricks/lib/constants";
+import { ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 // Creates an encrypted personalized survey link for a contact
@@ -41,7 +42,7 @@ export const getContactSurveyLink = (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return ok(`${WEBAPP_URL}/c/${token}`);
+  return ok(`${getSurveyDomain()}/c/${token}`);
 };
 
 // Validates and decrypts a contact survey JWT token
