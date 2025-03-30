@@ -15,7 +15,7 @@ import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
   survey: TSurvey;
-  webAppUrl: string;
+  surveyDomain: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
   locale: TUserLocale;
@@ -23,8 +23,8 @@ interface ShareSurveyLinkProps {
 
 export const ShareSurveyLink = ({
   survey,
-  webAppUrl,
   surveyUrl,
+  surveyDomain,
   setSurveyUrl,
   locale,
 }: ShareSurveyLinkProps) => {
@@ -32,7 +32,7 @@ export const ShareSurveyLink = ({
   const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
-    let url = `${webAppUrl}/s/${survey.id}`;
+    let url = `${surveyDomain}/s/${survey.id}`;
     const queryParams: string[] = [];
 
     if (survey.singleUse?.enabled) {
@@ -58,7 +58,9 @@ export const ShareSurveyLink = ({
     }
 
     setSurveyUrl(url);
-  }, [survey, webAppUrl, language]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [survey, surveyDomain, language]);
 
   const generateNewSingleUseLink = () => {
     getUrl();

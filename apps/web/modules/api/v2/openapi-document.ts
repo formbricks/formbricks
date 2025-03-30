@@ -2,6 +2,7 @@ import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-at
 import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
+import { rolePaths } from "@/modules/api/v2/management/roles/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
@@ -32,6 +33,7 @@ const document = createDocument({
     ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...webhookPaths,
+    ...rolePaths,
   },
   servers: [
     {
@@ -64,6 +66,10 @@ const document = createDocument({
       name: "Management API > Webhooks",
       description: "Operations for managing webhooks.",
     },
+    {
+      name: "Management API > Roles",
+      description: "Operations for managing roles.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -81,6 +87,7 @@ const document = createDocument({
       contactAttributeKey: ZContactAttributeKey,
       survey: ZSurveyWithoutQuestionType,
       webhook: ZWebhook,
+      role: z.array(z.string()),
     },
   },
   security: [

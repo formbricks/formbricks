@@ -181,6 +181,12 @@ module "eks" {
   subnet_ids               = module.vpc.private_subnets
   control_plane_subnet_ids = module.vpc.intra_subnets
 
+  eks_managed_node_group_defaults = {
+    iam_role_additional_policies = {
+      AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    }
+  }
+
   eks_managed_node_groups = {
     system = {
       ami_type       = "BOTTLEROCKET_ARM_64"
