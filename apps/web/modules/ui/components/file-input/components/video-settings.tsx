@@ -5,7 +5,6 @@ import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";

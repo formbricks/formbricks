@@ -6,7 +6,6 @@ import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangleIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 interface MemberModalProps {
