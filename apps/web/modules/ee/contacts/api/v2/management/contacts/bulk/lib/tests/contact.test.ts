@@ -26,6 +26,7 @@ vi.mock("@formbricks/database", () => ({
     },
     $transaction: vi.fn((callback) => callback(prisma)),
     $executeRaw: vi.fn(),
+    $queryRaw: vi.fn(),
   },
 }));
 
@@ -362,18 +363,11 @@ describe("upsertBulkContacts", () => {
     // Mock: only "email" exists; new keys are missing
     const mockAttributeKeys = [
       { id: "attr-key-email", key: "email", environmentId: mockEnvironmentId, name: "Email" },
+      { id: "attr-key-newKey1", key: "newKey1", environmentId: mockEnvironmentId, name: "New Key 1" },
+      { id: "attr-key-newKey2", key: "newKey2", environmentId: mockEnvironmentId, name: "New Key 2" },
     ];
 
     vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce(mockAttributeKeys);
-
-    // Mock: creation of new attribute keys returns new keys
-    const mockNewAttributeKeys = [
-      { id: "attr-key-newKey1", key: "newKey1" },
-      { id: "attr-key-newKey2", key: "newKey2" },
-    ];
-    vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValueOnce(
-      mockNewAttributeKeys as any
-    );
 
     // Mock: no existing contacts for update
     vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
@@ -381,26 +375,15 @@ describe("upsertBulkContacts", () => {
     // Execute the function
     const result = await upsertBulkContacts(mockContacts, mockEnvironmentId, mockParsedEmails);
 
+    // creation of new attribute keys now happens with a raw query
+    // so we need to mock that
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { id: "attr-key-newKey1", key: "newKey1" },
+      { id: "attr-key-newKey2", key: "newKey2" },
+    ]);
+
     if (!result.ok) throw new Error("Expected result.ok to be true");
     expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
-
-    // Verify that attribute keys were fetched for all keys
-    expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
-      where: {
-        key: { in: ["email", "newKey1", "newKey2"] },
-        environmentId: mockEnvironmentId,
-      },
-    });
-
-    // Verify that missing attribute keys were created
-    expect(prisma.contactAttributeKey.createManyAndReturn).toHaveBeenCalledWith({
-      data: [
-        { key: "newKey1", name: "New Key 1", environmentId: mockEnvironmentId },
-        { key: "newKey2", name: "New Key 2", environmentId: mockEnvironmentId },
-      ],
-      select: { key: true, id: true },
-      skipDuplicates: true,
-    });
 
     // Verify that new contacts were created
     expect(prisma.contact.createMany).toHaveBeenCalledWith({
@@ -465,14 +448,11 @@ describe("upsertBulkContacts", () => {
 
     // Mock the transaction
     const mockTransaction = {
-      contactAttributeKey: {
-        createManyAndReturn: vi.fn().mockResolvedValue([]),
-        update: vi.fn().mockResolvedValue({ id: "attr-key-name", key: "name", name: "Full Name" }),
-      },
       contact: {
         createMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       $executeRaw: vi.fn().mockResolvedValue({ count: 0 }),
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "attr-key-name", key: "name", name: "Full Name" }]),
     };
 
     vi.mocked(prisma.$transaction).mockImplementationOnce((callback) => {
@@ -485,16 +465,8 @@ describe("upsertBulkContacts", () => {
     if (!result.ok) throw new Error("Expected result.ok to be true");
     expect(result.data).toEqual({ contactIdxWithConflictingUserIds: [] });
 
-    // Verify that the attribute key name was updated
-    expect(mockTransaction.contactAttributeKey.update).toHaveBeenCalledWith({
-      where: {
-        key_environmentId: {
-          key: "name",
-          environmentId: mockEnvironmentId,
-        },
-      },
-      data: { name: "Full Name" },
-    });
+    // Verify that the raw SQL query was executed for updating attribute keys
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([{ id: "attr-key-name", key: "name", name: "Full Name" }]);
 
     // Verify that caches were revalidated
     expect(contactAttributeKeyCache.revalidate).toHaveBeenCalledWith({
