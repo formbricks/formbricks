@@ -13,6 +13,7 @@ import {
   RESPONSES_PER_PAGE,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
@@ -47,6 +48,7 @@ const Page = async (props) => {
   });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
   const locale = await findMatchingLocale();
+  const surveyDomain = getSurveyDomain();
 
   return (
     <PageContentWrapper>
@@ -57,8 +59,8 @@ const Page = async (props) => {
             environment={environment}
             survey={survey}
             isReadOnly={isReadOnly}
-            webAppUrl={WEBAPP_URL}
             user={user}
+            surveyDomain={surveyDomain}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

@@ -10,6 +10,7 @@ import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
@@ -98,11 +99,13 @@ export const renderSurvey = async ({
   const languageCode = getLanguageCode();
   const isSurveyPinProtected = Boolean(survey.pin);
   const responseCount = await getResponseCountBySurveyId(survey.id);
+  const surveyDomain = getSurveyDomain();
 
   if (isSurveyPinProtected) {
     return (
       <PinScreen
         surveyId={survey.id}
+        surveyDomain={surveyDomain}
         project={project}
         emailVerificationStatus={emailVerificationStatus}
         singleUseId={singleUseId}
@@ -125,6 +128,7 @@ export const renderSurvey = async ({
     <LinkSurvey
       survey={survey}
       project={project}
+      surveyDomain={surveyDomain}
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}

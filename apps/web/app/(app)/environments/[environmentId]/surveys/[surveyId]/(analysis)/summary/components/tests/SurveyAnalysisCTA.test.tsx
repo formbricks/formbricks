@@ -78,7 +78,7 @@ const dummySurvey = {
 } as unknown as TSurvey;
 const dummyEnvironment = { id: "env123", appSetupCompleted: true } as TEnvironment;
 const dummyUser = { id: "user123", name: "Test User" } as TUser;
-const webAppUrl = "http://example.com";
+const surveyDomain = "https://surveys.test.formbricks.com";
 
 describe("SurveyAnalysisCTA - handleCopyLink", () => {
   afterEach(() => {
@@ -91,7 +91,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        webAppUrl={webAppUrl}
+        surveyDomain={surveyDomain}
         user={dummyUser}
       />
     );
@@ -101,7 +101,9 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
 
     await waitFor(() => {
       expect(refreshSingleUseIdSpy).toHaveBeenCalled();
-      expect(writeTextMock).toHaveBeenCalledWith("http://example.com/s/survey123?id=newSingleUseId");
+      expect(writeTextMock).toHaveBeenCalledWith(
+        "https://surveys.test.formbricks.com/s/survey123?id=newSingleUseId"
+      );
       expect(toast.success).toHaveBeenCalledWith("common.copied_to_clipboard");
     });
   });
@@ -113,7 +115,7 @@ describe("SurveyAnalysisCTA - handleCopyLink", () => {
         survey={dummySurvey}
         environment={dummyEnvironment}
         isReadOnly={false}
-        webAppUrl={webAppUrl}
+        surveyDomain={surveyDomain}
         user={dummyUser}
       />
     );

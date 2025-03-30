@@ -1,7 +1,7 @@
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { getProjectByEnvironmentId } from "@/modules/survey/link/lib/project";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, SURVEY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { COLOR_DEFAULTS } from "@formbricks/lib/styling/constants";
 import { TSurvey, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
 import {
@@ -24,6 +24,7 @@ vi.mock("@/modules/survey/link/lib/project", () => ({
 vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: vi.fn(() => false),
   WEBAPP_URL: "https://test.formbricks.com",
+  SURVEY_URL: "https://surveys.test.formbricks.com",
 }));
 
 vi.mock("@formbricks/lib/styling/constants", () => ({
@@ -170,7 +171,7 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(WEBAPP_URL),
+        metadataBase: new URL(SURVEY_URL),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",
