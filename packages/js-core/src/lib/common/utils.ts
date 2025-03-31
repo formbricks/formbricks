@@ -1,3 +1,4 @@
+import { Logger } from "@/lib/common/logger";
 import type {
   TEnvironmentState,
   TEnvironmentStateActionClass,
@@ -8,7 +9,11 @@ import type {
   TUserState,
 } from "@/types/config";
 import type { Result } from "@/types/error";
-import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@/types/survey";
+import {
+  type TActionClassNoCodeConfig,
+  type TActionClassPageUrlRule,
+  type TTrackProperties,
+} from "@/types/survey";
 
 // Helper function to calculate difference in days between two dates
 export const diffInDays = (date1: Date, date2: Date): number => {
@@ -223,6 +228,38 @@ export const handleUrlFilters = (urlFilters: TActionClassNoCodeConfig["urlFilter
   });
 
   return isMatch;
+};
+
+export const handleHiddenFields = (
+  hiddenFieldsConfig: TEnvironmentStateSurvey["hiddenFields"],
+  hiddenFields?: TTrackProperties["hiddenFields"]
+): TTrackProperties["hiddenFields"] => {
+  const logger = Logger.getInstance();
+  const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig;
+
+  let hiddenFieldsObject: TTrackProperties["hiddenFields"] = {};
+
+  if (!enabledHiddenFields) {
+    logger.error("Hidden fields are not enabled for this survey");
+  } else if (hiddenFieldIds && hiddenFields) {
+    const unknownHiddenFields: string[] = [];
+    hiddenFieldsObject = Object.keys(hiddenFields).reduce<TTrackProperties["hiddenFields"]>((acc, key) => {
+      if (hiddenFieldIds.includes(key)) {
+        acc[key] = hiddenFields[key];
+      } else {
+        unknownHiddenFields.push(key);
+      }
+      return acc;
+    }, {});
+
+    if (unknownHiddenFields.length > 0) {
+      logger.error(
+        `Unknown hidden fields: ${unknownHiddenFields.join(", ")}. Please add them to the survey hidden fields.`
+      );
+    }
+  }
+
+  return hiddenFieldsObject;
 };
 
 export const evaluateNoCodeConfigClick = (

@@ -4,9 +4,13 @@ import { checkSetup } from "@/lib/common/setup";
 import { wrapThrowsAsync } from "@/lib/common/utils";
 import type { Result } from "@/types/error";
 
+export type TCommandQueueCommand = (
+  ...args: any[]
+) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
+
 export class CommandQueue {
   private queue: {
-    command: (...args: any[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>;
+    command: TCommandQueueCommand;
     checkSetup: boolean;
     commandArgs: any[];
   }[] = [];
@@ -14,11 +18,7 @@ export class CommandQueue {
   private resolvePromise: (() => void) | null = null;
   private commandPromise: Promise<void> | null = null;
 
-  public add<A>(
-    command: (...args: A[]) => Promise<Result<void, unknown>> | Result<void, unknown> | Promise<void>,
-    shouldCheckSetup = true,
-    ...args: A[]
-  ): void {
+  public add<A>(command: TCommandQueueCommand, shouldCheckSetup = true, ...args: A[]): void {
     this.queue.push({ command, checkSetup: shouldCheckSetup, commandArgs: args });
 
     if (!this.running) {

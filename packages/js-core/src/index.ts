@@ -7,6 +7,7 @@ import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
+import { type TTrackProperties } from "@/types/survey";
 
 const queue = new CommandQueue();
 
@@ -67,8 +68,12 @@ const logout = async (): Promise<void> => {
   await queue.wait();
 };
 
-const track = async (code: string): Promise<void> => {
-  queue.add(Action.trackCodeAction, true, code);
+/**
+ * @param code - The code of the action to track
+ * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
+ */
+const track = async (code: string, properties?: TTrackProperties): Promise<void> => {
+  queue.add(Action.trackCodeAction, true, code, properties as unknown);
   await queue.wait();
 };
 
