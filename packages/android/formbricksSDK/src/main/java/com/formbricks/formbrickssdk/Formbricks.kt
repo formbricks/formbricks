@@ -11,6 +11,7 @@ import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
 import com.formbricks.formbrickssdk.manager.UserManager
 import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
 import java.io.InputStream
 
@@ -20,6 +21,7 @@ interface FormbricksCallback {
     fun onSurveyFinished()
     fun onSurveyClosed()
     fun onError(error: Exception)
+    fun onSuccess(successType: SuccessType)
 }
 
 @Keep
@@ -56,7 +58,7 @@ object Formbricks {
      *
      */
     fun setup(context: Context, config: FormbricksConfig, forceRefresh: Boolean = false) {
-        if (isInitialized) {
+        if (isInitialized && !forceRefresh) {
             val error = SDKError.sdkIsAlreadyInitialized
             callback?.onError(error)
             Logger.e(error)
@@ -203,6 +205,7 @@ object Formbricks {
             return
         }
 
+        callback?.onSuccess(SuccessType.LOGOUT_SUCCESS)
         UserManager.logout()
     }
 

@@ -9,6 +9,7 @@ import com.formbricks.formbrickssdk.extensions.guard
 import com.formbricks.formbrickssdk.extensions.lastDisplayAt
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.formbricks.formbrickssdk.network.queue.UpdateQueue
 import com.google.gson.Gson
@@ -140,6 +141,7 @@ object UserManager {
                 UpdateQueue.current.reset()
                 SurveyManager.filterSurveys()
                 startSyncTimer()
+                Formbricks.callback?.onSuccess(SuccessType.SET_USER_SUCCESS)
             } catch (e: Exception) {
                 val error = SDKError.unableToPostResponse
                 Formbricks.callback?.onError(error)

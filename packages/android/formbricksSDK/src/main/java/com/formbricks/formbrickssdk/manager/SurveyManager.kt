@@ -9,6 +9,7 @@ import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.model.environment.EnvironmentDataHolder
 import com.formbricks.formbrickssdk.model.environment.Survey
 import com.formbricks.formbrickssdk.model.error.SDKError
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.model.user.Display
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
@@ -106,6 +107,7 @@ object SurveyManager {
                 if (it.after(Date())) {
                     Logger.d("Environment state is still valid until $it")
                     filterSurveys()
+                    Formbricks.callback?.onSuccess(SuccessType.GET_ENVIRONMENT_SUCCESS)
                     return
                 }
             }
@@ -117,6 +119,7 @@ object SurveyManager {
                 startRefreshTimer(environmentDataHolder?.expiresAt())
                 filterSurveys()
                 hasApiError = false
+                Formbricks.callback?.onSuccess(SuccessType.GET_ENVIRONMENT_SUCCESS)
             } catch (e: Exception) {
                 hasApiError = true
                 val error = SDKError.unableToRefreshEnvironment
@@ -153,6 +156,8 @@ object SurveyManager {
 
                 }, Date(System.currentTimeMillis() + timeout.toLong() * 1000))
             }
+        } else {
+            Formbricks.callback?.onError(SDKError.surveyNotDisplayedError)
         }
     }
 
