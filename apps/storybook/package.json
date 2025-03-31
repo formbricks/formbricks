@@ -20,7 +20,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@storybook/addon-a11y": "8.4.7",
     "@storybook/addon-essentials": "8.4.7",
-    "@storybook/addon-interactions": "8.4.7",
+    "@storybook/addon-interactions": "8.6.11",
     "@storybook/addon-links": "8.4.7",
     "@storybook/addon-onboarding": "8.4.7",
     "@storybook/blocks": "8.4.7",
