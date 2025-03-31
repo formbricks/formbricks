@@ -40,6 +40,7 @@ vi.mock("@/lib/common/utils", () => ({
   getStyling: vi.fn(),
   shouldDisplayBasedOnPercentage: vi.fn(),
   wrapThrowsAsync: vi.fn(),
+  handleHiddenFields: vi.fn(),
 }));
 
 describe("widget-file", () => {
