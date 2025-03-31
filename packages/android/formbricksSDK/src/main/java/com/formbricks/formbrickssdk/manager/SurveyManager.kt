@@ -141,6 +141,9 @@ object SurveyManager {
             val triggers = survey.triggers ?: listOf()
             triggers.firstOrNull { it.actionClass?.name.equals(actionClass?.name) } != null
         }
+        if (firstSurveyWithActionClass == null) {
+            Formbricks.callback?.onError(SDKError.surveyNotFoundError)
+        }
 
         val shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
 
