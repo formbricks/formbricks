@@ -2,7 +2,6 @@ package com.formbricks.formbrickssdk.helper
 
 import androidx.annotation.Keep
 import androidx.fragment.app.FragmentManager
-import java.io.InputStream
 
 /**
  * Configuration options for the SDK
@@ -16,15 +15,13 @@ class FormbricksConfig private constructor(
     val userId: String?,
     val attributes: Map<String,String>?,
     val loggingEnabled: Boolean,
-    val fragmentManager: FragmentManager?,
-    val certificateInputStreams: List<InputStream>?
+    val fragmentManager: FragmentManager?
 ) {
     class Builder(private val appUrl: String, private val environmentId: String) {
         private var userId: String? = null
         private var attributes: MutableMap<String,String> = mutableMapOf()
         private var loggingEnabled = false
         private var fragmentManager: FragmentManager? = null
-        private var certificateInputStreams: MutableList<InputStream> = mutableListOf()
 
         fun setUserId(userId: String): Builder {
             this.userId = userId
@@ -51,11 +48,6 @@ class FormbricksConfig private constructor(
             return this
         }
 
-        fun addCertificateInputStream(inputStream: InputStream): Builder {
-            this.certificateInputStreams.add(inputStream)
-            return this
-        }
-
         fun build(): FormbricksConfig {
             return FormbricksConfig(
                 appUrl = appUrl,
@@ -63,8 +55,7 @@ class FormbricksConfig private constructor(
                 userId = userId,
                 attributes = attributes,
                 loggingEnabled = loggingEnabled,
-                fragmentManager = fragmentManager,
-                certificateInputStreams = certificateInputStreams
+                fragmentManager = fragmentManager
             )
         }
     }

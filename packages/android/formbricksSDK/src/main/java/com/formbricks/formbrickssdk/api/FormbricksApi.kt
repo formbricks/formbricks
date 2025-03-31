@@ -30,7 +30,6 @@ object FormbricksApi {
         service.initialize(
             appUrl = Formbricks.appUrl,
             isLoggingEnabled = Formbricks.loggingEnabled,
-            certificates = Formbricks.certificates
         )
     }
 

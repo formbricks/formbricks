@@ -12,14 +12,13 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonObject
 import retrofit2.Call
 import retrofit2.Retrofit
-import java.io.InputStream
 
 open class FormbricksApiService {
 
     private lateinit var retrofit: Retrofit
 
-    fun initialize(appUrl: String, isLoggingEnabled: Boolean, certificates: MutableList<InputStream>) {
-        retrofit = FormbricksRetrofitBuilder(appUrl, isLoggingEnabled, certificates)
+    fun initialize(appUrl: String, isLoggingEnabled: Boolean) {
+        retrofit = FormbricksRetrofitBuilder(appUrl, isLoggingEnabled)
             .getBuilder()
             .build()
     }

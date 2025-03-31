@@ -1,27 +1,15 @@
 package com.formbricks.formbrickssdk.network
 
-import com.formbricks.formbrickssdk.network.utils.UnsafeOkHttpClient
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
-class FormbricksRetrofitBuilder(
-    private val baseUrl: String,
-    private val loggingEnabled: Boolean,
-    private val certificates: MutableList<InputStream>
-) {
+class FormbricksRetrofitBuilder(private val baseUrl: String, private val loggingEnabled: Boolean) {
 
     fun getBuilder(): Retrofit.Builder {
-        val okHttpClient = if (certificates.isNotEmpty()) {
-            UnsafeOkHttpClient.getClient(certificates).newBuilder()
-
-        } else {
-            OkHttpClient.Builder()
-        }
-        val clientBuilder = okHttpClient
+        val clientBuilder = OkHttpClient.Builder()
             .connectTimeout(CONNECT_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
             .readTimeout(READ_TIMEOUT_MS.toLong(), TimeUnit.MILLISECONDS)
             .followSslRedirects(true)

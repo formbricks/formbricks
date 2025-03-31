@@ -13,7 +13,6 @@ import com.formbricks.formbrickssdk.manager.UserManager
 import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.model.enums.SuccessType
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
-import java.io.InputStream
 
 @Keep
 interface FormbricksCallback {
@@ -32,7 +31,6 @@ object Formbricks {
     internal lateinit var appUrl: String
     internal var language: String = "default"
     internal var loggingEnabled: Boolean = true
-    internal lateinit var certificates: MutableList<InputStream>
     private var fragmentManager: FragmentManager? = null
     internal var isInitialized = false
     var callback: FormbricksCallback? = null
@@ -71,7 +69,6 @@ object Formbricks {
         environmentId = config.environmentId
         loggingEnabled = config.loggingEnabled
         fragmentManager = config.fragmentManager
-        certificates = config.certificateInputStreams?.toMutableList() ?: mutableListOf()
         config.userId?.let { UserManager.set(it) }
         config.attributes?.let { UserManager.setAttributes(it) }
         config.attributes?.get("language")?.let { UserManager.setLanguage(it) }

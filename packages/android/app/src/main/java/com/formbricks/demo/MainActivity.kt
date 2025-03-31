@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.formbricks.formbrickssdk.Formbricks
 import com.formbricks.formbrickssdk.FormbricksCallback
 import com.formbricks.formbrickssdk.helper.FormbricksConfig
+import com.formbricks.formbrickssdk.model.enums.SuccessType
 import java.util.UUID
 
 class MainActivity : AppCompatActivity() {
@@ -32,6 +33,10 @@ class MainActivity : AppCompatActivity() {
 
             override fun onError(error: Exception) {
                 Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
+            }
+
+            override fun onSuccess(successType: SuccessType) {
+                Log.d("FormbricksCallback", "onSuccess: ${successType.name}")
             }
 
         }
