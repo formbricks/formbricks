@@ -27,7 +27,7 @@ export const ResponseOptionsCard = ({
   responseCount,
 }: ResponseOptionsCardProps) => {
   const { t } = useTranslate();
-  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
+  const [open, setOpen] = useState(false);
   const autoComplete = localSurvey.autoComplete !== null;
   const [runOnDateToggle, setRunOnDateToggle] = useState(false);
   const [closeOnDateToggle, setCloseOnDateToggle] = useState(false);

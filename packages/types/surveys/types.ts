@@ -873,6 +873,7 @@ export const ZSurvey = z
     resultShareKey: z.string().nullable(),
     displayPercentage: z.number().min(0.01).max(100).nullable(),
     languages: z.array(ZSurveyLanguage),
+    public: z.boolean().optional(),
   })
   .superRefine((survey, ctx) => {
     const { questions, languages, welcomeCard, endings, isBackButtonHidden } = survey;

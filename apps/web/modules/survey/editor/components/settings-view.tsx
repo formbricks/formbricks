@@ -4,6 +4,7 @@ import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-ca
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
+import { SurveyVisibilityCard } from "@/modules/survey/editor/components/survey-visibility-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
@@ -42,6 +43,8 @@ export const SettingsView = ({
 
   return (
     <div className="mt-12 space-y-3 p-5">
+      <SurveyVisibilityCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+
       <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} environment={environment} />
 
       {localSurvey.type === "app" ? (

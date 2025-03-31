@@ -419,6 +419,8 @@ model Survey {
   documents                       Document[]
   followUps                       SurveyFollowUp[]
 
+  public Boolean @default(true)
+
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }

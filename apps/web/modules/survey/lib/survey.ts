@@ -85,6 +85,7 @@ export const selectSurvey = {
     },
   },
   followUps: true,
+  public: true,
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(

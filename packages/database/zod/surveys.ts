@@ -217,6 +217,9 @@ const ZSurveyBase = z.object({
   displayPercentage: z.number().nullable().openapi({
     description: "The display percentage of the survey",
   }) as z.ZodType<Survey["displayPercentage"]>,
+  public: z.boolean().openapi({
+    description: "Whether it is publicly searchable",
+  }),
 });
 
 export const ZSurvey = ZSurveyBase satisfies z.ZodType<Survey>;
