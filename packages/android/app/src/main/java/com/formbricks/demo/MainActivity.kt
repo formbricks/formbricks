@@ -31,6 +31,10 @@ class MainActivity : AppCompatActivity() {
                 Log.d("FormbricksCallback", "onSurveyClosed")
             }
 
+            override fun onPageCommitVisible() {
+                Log.d("FormbricksCallback", "onPageCommitVisible")
+            }
+
             override fun onError(error: Exception) {
                 Log.d("FormbricksCallback", "onError: ${error.localizedMessage}")
             }

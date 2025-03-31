@@ -206,6 +206,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
 
                 override fun onPageCommitVisible(view: WebView?, url: String?) {
                     dialog?.window?.setDimAmount(0.5f)
+                    Formbricks.callback?.onSurveyStarted()
                     super.onPageCommitVisible(view, url)
                 }
             }

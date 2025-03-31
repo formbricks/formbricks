@@ -19,6 +19,7 @@ interface FormbricksCallback {
     fun onSurveyStarted()
     fun onSurveyFinished()
     fun onSurveyClosed()
+    fun onPageCommitVisible()
     fun onError(error: Exception)
     fun onSuccess(successType: SuccessType)
 }

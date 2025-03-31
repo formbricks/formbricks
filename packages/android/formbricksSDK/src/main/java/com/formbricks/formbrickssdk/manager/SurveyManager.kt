@@ -123,6 +123,7 @@ object SurveyManager {
             } catch (e: Exception) {
                 hasApiError = true
                 val error = SDKError.unableToRefreshEnvironment
+                Formbricks.callback?.onError(error)
                 Logger.e(error)
                 startErrorTimer()
             }
