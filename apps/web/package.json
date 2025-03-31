@@ -155,7 +155,7 @@
     "@types/qrcode": "1.5.5",
     "@types/testing-library__react": "10.2.0",
     "@vitest/coverage-v8": "2.1.8",
-    "vite": "6.2.3",
+    "vite": "6.0.13",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.0.7",
     "vitest-mock-extended": "2.0.2"
