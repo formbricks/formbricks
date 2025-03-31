@@ -38,7 +38,7 @@ export const getFile = async (
         "Cache-Control":
           accessType === "public"
             ? `public, max-age=3600, s-maxage=3600, stale-while-revalidate=300`
-            : `public, max-age=600, s-maxage=3600, stale-while-revalidate=300`,
+            : `public, max-age=300, s-maxage=300, stale-while-revalidate=300`,
       },
     });
   } catch (error: unknown) {
