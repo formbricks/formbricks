@@ -1250,7 +1250,7 @@ export const ZSurvey = z
           ctx.addIssue(multiLangIssueInHeadline);
         }
 
-        if (ending.subheader) {
+        if (ending.subheader && ending.subheader.default.trim() !== "") {
           const multiLangIssueInSubheader = validateCardFieldsForAllLanguages(
             "subheader",
             ending.subheader,
