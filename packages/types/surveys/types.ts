@@ -496,6 +496,18 @@ export const ZSurveyLogic = z.object({
 
 export type TSurveyLogic = z.infer<typeof ZSurveyLogic>;
 
+export const ZSurveyReward = z.object({
+  chainId: z.number(),
+  contractAddress: z.string(),
+  amount: z.string(),
+  decimals: z.number(),
+  name: z.string(),
+  logo: z.string(),
+  verificationRequired: z.boolean().optional(),
+});
+
+export type TSurveyReward = z.infer<typeof ZSurveyReward>;
+
 export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
   type: z.string(),

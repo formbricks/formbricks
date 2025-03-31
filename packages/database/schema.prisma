@@ -421,6 +421,9 @@ model Survey {
 
   public Boolean @default(true)
 
+  /// [SurveyReward]
+  reward Json?
+
   @@index([environmentId, updatedAt])
   @@index([segmentId])
 }

@@ -12,6 +12,7 @@ import {
   type TSurveyHiddenFields,
   type TSurveyProjectOverwrites,
   type TSurveyQuestions,
+  type TSurveyReward,
   type TSurveySingleUse,
   type TSurveyStyling,
   type TSurveyVariables,
@@ -45,5 +46,6 @@ declare global {
     export type Locale = TUserLocale;
     export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
     export type SurveyFollowUpAction = TSurveyFollowUpAction;
+    export type SurveyReward = TSurveyReward;
   }
 }
