@@ -6,208 +6,6 @@
   },
   "openapi": "3.0.0",
   "paths": {
-    "/api/v1/client/responses/{responseId}": {
-      "put": {
-        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "responseId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "data": {
-                    "hs8yd14l9h8u353tjmv6rzawqqq": "clicked",
-                    "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
-                  },
-                  "finished": true
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {}
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 08:09:19 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "nonexistentid",
-                    "resource_type": "Response"
-                  },
-                  "message": "Response not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 08:13:50 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update Response",
-        "tags": ["Client API > Response"]
-      }
-    },
     "/api/v1/client/{environmentId}/contacts/{userId}/attributes": {
       "put": {
         "description": "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks.",
@@ -1711,6 +1509,208 @@
           }
         },
         "summary": "Create Response",
+        "tags": ["Client API > Response"]
+      }
+    },
+    "/api/v1/client/{environmentId}/responses/{responseId}": {
+      "put": {
+        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "responseId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "data": {
+                    "hs8yd14l9h8u353tjmv6rzawqqq": "clicked",
+                    "tcgls0063n8ri7dtrbnepcmz": "Who? Who? Who?"
+                  },
+                  "finished": true
+                },
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": {}
+                },
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Access-Control-Allow-Credentials": {
+                "schema": {
+                  "example": "true",
+                  "type": "boolean"
+                }
+              },
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "example": "*",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 08:09:19 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-headers": {
+                "schema": {
+                  "example": "Content-Type, Authorization",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-methods": {
+                "schema": {
+                  "example": "GET, POST, PUT, DELETE, OPTIONS",
+                  "type": "string"
+                }
+              },
+              "cache-control": {
+                "schema": {
+                  "example": "private, no-store",
+                  "type": "string"
+                }
+              },
+              "content-type": {
+                "schema": {
+                  "example": "application/json",
+                  "type": "string"
+                }
+              },
+              "vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "not_found",
+                  "details": {
+                    "resource_id": "nonexistentid",
+                    "resource_type": "Response"
+                  },
+                  "message": "Response not found"
+                },
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Not Found",
+            "headers": {
+              "Access-Control-Allow-Credentials": {
+                "schema": {
+                  "example": "true",
+                  "type": "boolean"
+                }
+              },
+              "Access-Control-Allow-Origin": {
+                "schema": {
+                  "example": "*",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 08:13:50 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-headers": {
+                "schema": {
+                  "example": "Content-Type, Authorization",
+                  "type": "string"
+                }
+              },
+              "access-control-allow-methods": {
+                "schema": {
+                  "example": "GET, POST, PUT, DELETE, OPTIONS",
+                  "type": "string"
+                }
+              },
+              "cache-control": {
+                "schema": {
+                  "example": "private, no-store",
+                  "type": "string"
+                }
+              },
+              "content-type": {
+                "schema": {
+                  "example": "application/json",
+                  "type": "string"
+                }
+              },
+              "vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update Response",
         "tags": ["Client API > Response"]
       }
     },

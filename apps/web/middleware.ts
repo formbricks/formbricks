@@ -39,7 +39,12 @@ const enforceHttps = (request: NextRequest): Response | null => {
   if (IS_PRODUCTION && !E2E_TESTING && forwardedProto !== "https") {
     const apiError: ApiErrorResponseV2 = {
       type: "forbidden",
-      details: [{ field: "", issue: "Only HTTPS connections are allowed on the management endpoint." }],
+      details: [
+        {
+          field: "",
+          issue: "Only HTTPS connections are allowed on the management and contacts bulk endpoints.",
+        },
+      ],
     };
     logApiError(request, apiError);
     return NextResponse.json(apiError, { status: 403 });
