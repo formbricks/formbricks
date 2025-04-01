@@ -219,7 +219,6 @@ const renderHtml = (options: Partial<SurveyContainerProps> & { appUrl?: string }
     <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0">
     <head>
       <title>Formbricks WebView Survey</title>
-      <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body style="overflow: hidden; height: 100vh; margin: 0;">
     </body>
