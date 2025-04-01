@@ -23,19 +23,19 @@ import { PanelInfoView } from "./shareEmbedModal/PanelInfoView";
 
 interface ShareEmbedSurveyProps {
   survey: TSurvey;
+  surveyDomain: string;
   open: boolean;
   modalView: "start" | "embed" | "panel";
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  webAppUrl: string;
   user: TUser;
 }
 
 export const ShareEmbedSurvey = ({
   survey,
+  surveyDomain,
   open,
   modalView,
   setOpen,
-  webAppUrl,
   user,
 }: ShareEmbedSurveyProps) => {
   const router = useRouter();
@@ -104,8 +104,8 @@ export const ShareEmbedSurvey = ({
               <DialogDescription className="hidden" />
               <ShareSurveyLink
                 survey={survey}
-                webAppUrl={webAppUrl}
                 surveyUrl={surveyUrl}
+                surveyDomain={surveyDomain}
                 setSurveyUrl={setSurveyUrl}
                 locale={user.locale}
               />
@@ -159,8 +159,8 @@ export const ShareEmbedSurvey = ({
             survey={survey}
             email={email}
             surveyUrl={surveyUrl}
+            surveyDomain={surveyDomain}
             setSurveyUrl={setSurveyUrl}
-            webAppUrl={webAppUrl}
             locale={user.locale}
           />
         ) : showView === "panel" ? (

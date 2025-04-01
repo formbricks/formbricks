@@ -1,6 +1,7 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { NextRequest } from "next/server";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { generateSurveySingleUseIds } from "@formbricks/lib/utils/singleUseSurveys";
 
@@ -36,9 +37,10 @@ export const GET = async (
 
     const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
 
+    const surveyDomain = getSurveyDomain();
     // map single use ids to survey links
     const surveyLinks = singleUseIds.map(
-      (singleUseId) => `${process.env.WEBAPP_URL}/s/${survey.id}?suId=${singleUseId}`
+      (singleUseId) => `${surveyDomain}/s/${survey.id}?suId=${singleUseId}`
     );
 
     return responses.successResponse(surveyLinks);
