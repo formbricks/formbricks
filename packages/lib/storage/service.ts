@@ -111,7 +111,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
 
   try {
     const s3Client = getS3Client();
-    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 300 });
+    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 30 * 60 });
   } catch (err) {
     throw err;
   }
