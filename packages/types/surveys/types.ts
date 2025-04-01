@@ -500,6 +500,7 @@ export const ZSurveyQuestionBase = z.object({
   id: ZSurveyQuestionId,
   type: z.string(),
   headline: ZI18nString,
+  tooltip: ZI18nString.optional(),
   subheader: ZI18nString.optional(),
   imageUrl: z.string().optional(),
   videoUrl: z.string().optional(),
