@@ -156,6 +156,7 @@ export const setup = async (
   addWidgetContainer();
 
   if (
+    !isDebug &&
     existingConfig?.environment &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.appUrl === configInput.appUrl
