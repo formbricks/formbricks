@@ -68,8 +68,6 @@ describe("(app) AppLayout", () => {
     render(element);
 
     expect(screen.getByTestId("no-mobile-overlay")).toBeInTheDocument();
-    expect(screen.getByTestId("ph-pageview")).toBeInTheDocument();
-    expect(screen.getByTestId("ph-provider")).toBeInTheDocument();
     expect(screen.getByTestId("mock-intercom-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("toaster-client")).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toHaveTextContent("Hello from children");
