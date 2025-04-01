@@ -19,7 +19,7 @@ export const getFile = async (
         headers: {
           "Content-Type": metaData.contentType,
           "Content-Disposition": "attachment",
-          "Cache-Control": "public, max-age=1200, s-maxage=1200, stale-while-revalidate=300",
+          "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
           Vary: "Accept-Encoding",
         },
       });
@@ -35,10 +35,7 @@ export const getFile = async (
       status: 302,
       headers: {
         Location: signedUrl,
-        "Cache-Control":
-          accessType === "public"
-            ? `public, max-age=3600, s-maxage=3600, stale-while-revalidate=300`
-            : `public, max-age=300, s-maxage=300, stale-while-revalidate=300`,
+        "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=300",
       },
     });
   } catch (error: unknown) {
