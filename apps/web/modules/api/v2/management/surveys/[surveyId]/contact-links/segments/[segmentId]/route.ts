@@ -54,7 +54,8 @@ export const GET = async (
         params.surveyId,
         params.segmentId,
         query?.limit || 10,
-        query?.skip || 0
+        query?.skip || 0,
+        query?.attributeKeys
       );
 
       if (!contactsResult.ok) {
@@ -74,25 +75,25 @@ export const GET = async (
       // Generate survey links for each contact
       const contactLinks = contacts
         .map((contact) => {
+          const { contactId, attributes } = contact;
+
           const surveyUrlResult = getContactSurveyLink(
-            contact.id,
+            contactId,
             params.surveyId,
             query?.expirationDays || undefined
           );
 
           if (!surveyUrlResult.ok) {
             logger.error(
-              { error: surveyUrlResult.error, contactId: contact.id, surveyId: params.surveyId },
+              { error: surveyUrlResult.error, contactId: contactId, surveyId: params.surveyId },
               "Failed to generate survey URL for contact"
             );
             return null;
           }
 
-          const { id, ...attributes } = contact;
-
           return {
-            contactId: id,
-            ...attributes,
+            contactId,
+            attributes,
             surveyUrl: surveyUrlResult.data,
             expiresAt,
           };

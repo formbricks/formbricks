@@ -36,33 +36,41 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: &a6
               - createdAt
               - updatedAt
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: &a7
               - asc
               - desc
             default: desc
+            description: Sort order
         - in: query
           name: startDate
           schema:
@@ -921,6 +929,103 @@ paths:
                       - string
                       - "null"
                     description: The display ID of the response
+  /contacts/bulk:
+    put:
+      operationId: uploadBulkContacts
+      summary: Upload Bulk Contacts
+      description: Uploads contacts in bulk
+      tags:
+        - Management API > Contacts
+      requestBody:
+        required: true
+        description: The contacts to upload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      attributes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            attributeKey:
+                              type: object
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - key
+                                - name
+                            value:
+                              type: string
+                          required:
+                            - attributeKey
+                            - value
+                    required:
+                      - attributes
+                  maxItems: 1000
+              required:
+                - contacts
+      responses:
+        "200":
+          description: Contacts uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - status
+                      - message
+                required:
+                  - data
+        "207":
+          description: Contacts uploaded partially successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      message:
+                        type: string
+                      skippedContacts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            index:
+                              type: number
+                            userId:
+                              type: string
+                          required:
+                            - index
+                            - userId
+                    required:
+                      - status
+                      - message
+                      - skippedContacts
+                required:
+                  - data
   /contacts:
     get:
       operationId: getContacts
@@ -1569,6 +1674,23 @@ paths:
             description: The ID of the segment
           required: true
         - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
           name: expirationDays
           description: Number of days until the generated JWT expires. If not provided,
             there is no expiration.
@@ -1582,60 +1704,53 @@ paths:
             description: Number of days until the generated JWT expires. If not provided,
               there is no expiration.
         - in: query
-          name: limit
-          description: Number of items to return
+          name: attributeKeys
           schema:
-            type: number
-            minimum: 1
-            maximum: 10
-            default: 10
-            description: Number of items to return
-        - in: query
-          name: skip
-          description: Number of items to skip
-          schema:
-            type: number
-            minimum: 0
-            default: 0
-            description: Number of items to skip
+            type: string
+            description: Comma-separated list of contact attribute keys to include in the
+              response. You can have max 20 keys. If not provided, no attributes
+              will be included.
       responses:
         "200":
           description: Contact links generated successfully.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          contactId:
+                            type: string
+                            description: The ID of the contact
+                          surveyUrl:
+                            type: string
+                            format: uri
+                            description: Personalized survey link
+                          expiresAt:
+                            type:
+                              - string
+                              - "null"
+                            description: The date and time the link expires, null if no expiration
+                          attributes:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: The attributes of the contact
+                    meta:
                       type: object
                       properties:
-                        contactId:
-                          type: string
-                        surveyUrl:
-                          type: string
-                          format: uri
-                        expiresAt:
-                          type:
-                            - string
-                            - "null"
-                      required:
-                        - contactId
-                        - surveyUrl
-                        - expiresAt
-                      additionalProperties:
-                        type: string
-                  meta:
-                    type: object
-                    properties:
-                      total:
-                        type: number
-                    required:
-                      - total
-                required:
-                  - data
-                  - meta
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
   /webhooks:
     get:
       operationId: getWebhooks
@@ -1646,29 +1761,37 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: *a6
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: *a7
             default: desc
+            description: Sort order
         - in: query
           name: startDate
           schema:
@@ -3529,3 +3652,4 @@ components:
     webhookId:
       type: string
       description: The ID of the webhook
+

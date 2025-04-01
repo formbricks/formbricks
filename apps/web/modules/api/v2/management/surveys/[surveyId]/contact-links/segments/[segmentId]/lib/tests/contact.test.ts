@@ -172,6 +172,94 @@ describe("getContactsInSegment", () => {
     }
   });
 
+  test("should filter contact attributes when fields parameter is provided", async () => {
+    vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "email");
+
+    const whereClause = {
+      AND: [
+        {
+          environmentId: "env-789",
+        },
+        {
+          AND: [
+            {
+              attributes: {
+                some: {
+                  attributeKey: {
+                    key: "email",
+                  },
+                  value: { equals: "test@example.com", mode: "insensitive" },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
+    expect(getSegment).toHaveBeenCalledWith(mockSegmentId);
+
+    expect(prisma.contact.count).toHaveBeenCalledWith({
+      where: whereClause,
+    });
+    expect(prisma.contact.findMany).toHaveBeenCalledWith({
+      where: whereClause,
+      select: {
+        id: true,
+        attributes: {
+          select: {
+            attributeKey: {
+              select: {
+                key: true,
+              },
+            },
+            value: true,
+          },
+        },
+      },
+      take: mockLimit,
+      skip: mockSkip,
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({
+        data: [
+          { id: "contact-1", email: "test@example.com" },
+          { id: "contact-2", email: "another@example.com" },
+        ],
+        meta: {
+          total: 2,
+        },
+      });
+    }
+  });
+
+  test("should handle multiple fields when fields parameter has comma-separated values", async () => {
+    vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "email,name");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({
+        data: [
+          { id: "contact-1", email: "test@example.com", name: "Test User" },
+          { id: "contact-2", email: "another@example.com", name: "Another User" },
+        ],
+        meta: {
+          total: 2,
+        },
+      });
+    }
+  });
+
   test("should return error when survey is not a link survey", async () => {
     const surveyError: ApiErrorResponseV2 = {
       type: "forbidden",

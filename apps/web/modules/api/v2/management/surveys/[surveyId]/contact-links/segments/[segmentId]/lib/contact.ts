@@ -1,7 +1,9 @@
 import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/surveys";
-import { TGetSegmentContactsResponseData } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
+import { sanitizeFields } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/utils";
+import { TContactWithAttributes } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { segmentFilterToPrismaQuery } from "@/modules/ee/contacts/segments/lib/filter/prisma-query";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -11,8 +13,9 @@ export const getContactsInSegment = async (
   surveyId: string,
   segmentId: string,
   limit: number,
-  skip: number
-): Promise<Result<TGetSegmentContactsResponseData, ApiErrorResponseV2>> => {
+  skip: number,
+  attributeKeys?: string
+): Promise<Result<ApiResponseWithMeta<TContactWithAttributes[]>, ApiErrorResponseV2>> => {
   try {
     const surveyResult = await getSurvey(surveyId);
     if (!surveyResult.ok) {
@@ -65,6 +68,9 @@ export const getContactsInSegment = async (
 
     const { whereClause } = segmentFilterToPrismaQueryResult.data;
 
+    const attributesToInclude = sanitizeFields(attributeKeys);
+    const allowedAttributes = attributesToInclude.slice(0, 20);
+
     const [totalContacts, contacts] = await prisma.$transaction([
       prisma.contact.count({
         where: whereClause,
@@ -75,6 +81,13 @@ export const getContactsInSegment = async (
         select: {
           id: true,
           attributes: {
+            where: {
+              attributeKey: {
+                key: {
+                  in: allowedAttributes,
+                },
+              },
+            },
             select: {
               attributeKey: {
                 select: {
@@ -94,15 +107,16 @@ export const getContactsInSegment = async (
     ]);
 
     const contactsWithAttributes = contacts.map((contact) => {
+      const attributes = contact.attributes.reduce(
+        (acc, attr) => {
+          acc[attr.attributeKey.key] = attr.value;
+          return acc;
+        },
+        {} as Record<string, string>
+      );
       return {
-        id: contact.id,
-        ...contact.attributes.reduce(
-          (acc, attr) => {
-            acc[attr.attributeKey.key] = attr.value;
-            return acc;
-          },
-          {} as Record<string, string>
-        ),
+        contactId: contact.id,
+        ...(Object.keys(attributes).length > 0 ? { attributes } : {}),
       };
     });
 
@@ -110,6 +124,8 @@ export const getContactsInSegment = async (
       data: contactsWithAttributes,
       meta: {
         total: totalContacts,
+        limit: limit,
+        offset: skip,
       },
     });
   } catch (error) {

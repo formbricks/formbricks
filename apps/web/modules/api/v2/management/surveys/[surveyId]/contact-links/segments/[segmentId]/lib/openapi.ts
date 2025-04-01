@@ -1,24 +1,11 @@
 import {
+  ZContactLinkResponse,
   ZContactLinksBySegmentParams,
   ZContactLinksBySegmentQuery,
 } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
+import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
-
-const ZContactLinkResponse = z
-  .object({
-    contactId: z.string(),
-    surveyUrl: z.string().url(),
-    expiresAt: z.string().nullable(),
-  })
-  .catchall(z.string());
-
-const ZContactLinksResponse = z.object({
-  data: z.array(ZContactLinkResponse),
-  meta: z.object({
-    total: z.number(),
-  }),
-});
 
 export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
   operationId: "getContactLinksBySegment",
@@ -34,7 +21,7 @@ export const getContactLinksBySegmentEndpoint: ZodOpenApiOperationObject = {
       description: "Contact links generated successfully.",
       content: {
         "application/json": {
-          schema: ZContactLinksResponse,
+          schema: z.array(responseWithMetaSchema(makePartialSchema(ZContactLinkResponse))),
         },
       },
     },
