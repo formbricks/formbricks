@@ -53,7 +53,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
     }
 
     for (const projectId of validProjectIds) {
-      teamCache.revalidate({ id: projectId });
+      projectCache.revalidate({ id: projectId });
     }
 
     for (const teamId of validTeamIds) {
@@ -63,6 +63,7 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
     teamCache.revalidate({ userId, organizationId: invite.organizationId });
     projectCache.revalidate({ userId, organizationId: invite.organizationId });
   } catch (error) {
+    logger.error(error, `Error creating team membership ${invite.organizationId} ${userId}`);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -71,15 +72,15 @@ export const createTeamMembership = async (invite: CreateMembershipInvite, userI
   }
 };
 
-const getDefaultTeam = reactCache(
-  async (): Promise<Team> =>
+const getTeamByTeamIdOrganizationId = reactCache(
+  async (teamId: string, organizationId: string): Promise<Team> =>
     cache(
       async () => {
         try {
           const team = await prisma.team.findUnique({
             where: {
-              id: DEFAULT_TEAM_ID,
-              organizationId: DEFAULT_ORGANIZATION_ID,
+              id: teamId,
+              organizationId: organizationId,
             },
           });
 
@@ -89,13 +90,13 @@ const getDefaultTeam = reactCache(
 
           return team;
         } catch (error) {
-          logger.error("Team not found");
+          logger.error(error, `Team not found ${teamId} ${organizationId}`);
           throw error;
         }
       },
-      ["defaultTeam"],
+      [`getTeamByTeamIdOrganizationId-${teamId}-${organizationId}`],
       {
-        tags: [teamCache.tag.byId(DEFAULT_TEAM_ID || "")],
+        tags: [teamCache.tag.byId(teamId), teamCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );
@@ -103,13 +104,19 @@ const getDefaultTeam = reactCache(
 export const createDefaultTeamMembership = async (userId: string) => {
   try {
     const defaultTeamId = DEFAULT_TEAM_ID;
+    const defaultOrganizationId = DEFAULT_ORGANIZATION_ID;
 
     if (!defaultTeamId) {
       logger.error("Default team ID not found");
       return;
     }
 
-    const defaultTeam = await getDefaultTeam();
+    if (!defaultOrganizationId) {
+      logger.error("Default organization ID not found");
+      return;
+    }
+
+    const defaultTeam = await getTeamByTeamIdOrganizationId(defaultTeamId, defaultOrganizationId);
 
     if (!defaultTeam) {
       logger.error("Default team not found");

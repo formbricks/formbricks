@@ -1,7 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import { createDefaultTeamMembership } from "@/modules/auth/signup/lib/team";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
@@ -145,14 +145,7 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
       });
 
       if (DEFAULT_TEAM_ID) {
-        await createTeamMembership(
-          {
-            organizationId: organization.id,
-            role: role,
-            teamIds: [DEFAULT_TEAM_ID || ""],
-          },
-          userProfile.id
-        );
+        await createDefaultTeamMembership(userProfile.id);
       }
 
       const updatedNotificationSettings: TUserNotificationSettings = {
