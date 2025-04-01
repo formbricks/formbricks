@@ -75,3 +75,7 @@ export type TActionClassNoCodeConfig =
         rule: TActionClassPageUrlRule;
       }[];
     };
+
+export interface TTrackProperties {
+  hiddenFields: Record<string, string | number | string[]>;
+}
