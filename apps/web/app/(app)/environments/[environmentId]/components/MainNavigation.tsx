@@ -54,6 +54,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
 import packageJson from "../../../../../package.json";
+import { WalletButton } from "@/modules/alchemy-wallet";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -307,6 +308,9 @@ export const MainNavigation = ({
                 </p>
               </Link>
             )}
+
+            {/* Alchemy Wallet Login */}
+            {!isCollapsed && <WalletButton/>}
 
             {/* Project Switch */}
             {!isBilling && (

@@ -1,6 +1,9 @@
 const colors = require("tailwindcss/colors");
+import { withAccountKitUi, createColorSet } from "@account-kit/react/tailwind";
+import forms from "@tailwindcss/forms";
+import typography from "@tailwindcss/typography";
 
-module.exports = {
+ const config = {
   content: [
     // app content
     "./app/**/*.{js,ts,jsx,tsx}", // Note the addition of the `app` directory.
@@ -154,5 +157,13 @@ module.exports = {
   },
   safelist: [{ pattern: /max-w-./, variants: "sm" }],
   darkMode: "class", // Set dark mode to use the 'class' strategy
-  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
+  plugins: [forms, typography],
 };
+
+const accountKitConfig = {
+  colors: {
+    "btn-primary": createColorSet("#00c4b8", "#00e6ca"),
+    "fg-accent-brand": createColorSet("#00c4b8", "#00e6ca"),
+  }
+}
+export default withAccountKitUi(config, accountKitConfig);
