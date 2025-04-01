@@ -73,7 +73,7 @@ const logout = async (): Promise<void> => {
  * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
  */
 const track = async (code: string, properties?: TTrackProperties): Promise<void> => {
-  queue.add(Action.trackCodeAction, true, code, properties as unknown);
+  queue.add<string | TTrackProperties | undefined>(Action.trackCodeAction, true, code, properties);
   await queue.wait();
 };
 
@@ -96,5 +96,6 @@ const formbricks = {
   registerRouteChange,
 };
 
-export type TFormbricks = typeof formbricks;
+type TFormbricks = typeof formbricks;
+export type { TFormbricks };
 export default formbricks;

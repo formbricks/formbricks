@@ -235,16 +235,16 @@ export const handleHiddenFields = (
   hiddenFields?: TTrackProperties["hiddenFields"]
 ): TTrackProperties["hiddenFields"] => {
   const logger = Logger.getInstance();
-  const { enabled: enabledHiddenFields, fieldIds: hiddenFieldIds } = hiddenFieldsConfig;
+  const { enabled: enabledHiddenFields, fieldIds: surveyHiddenFieldIds } = hiddenFieldsConfig;
 
   let hiddenFieldsObject: TTrackProperties["hiddenFields"] = {};
 
   if (!enabledHiddenFields) {
     logger.error("Hidden fields are not enabled for this survey");
-  } else if (hiddenFieldIds && hiddenFields) {
+  } else if (surveyHiddenFieldIds && hiddenFields) {
     const unknownHiddenFields: string[] = [];
     hiddenFieldsObject = Object.keys(hiddenFields).reduce<TTrackProperties["hiddenFields"]>((acc, key) => {
-      if (hiddenFieldIds.includes(key)) {
+      if (surveyHiddenFieldIds.includes(key)) {
         acc[key] = hiddenFields[key];
       } else {
         unknownHiddenFields.push(key);
