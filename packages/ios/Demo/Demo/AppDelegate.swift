@@ -8,6 +8,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
             .setLogLevel(.debug)
             .build()
         
+        Formbricks.delegate = self
+        
         Formbricks.setup(with: config)
         
         Formbricks.logout()
@@ -16,4 +18,26 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 
+}
+
+extension AppDelegate: FormbricksDelegate {
+    func onSurveyStarted() {
+        print("survey started")
+    }
+    
+    func onSurveyFinished() {
+        print("survey finished")
+    }
+    
+    func onSurveyClosed() {
+        print("survey closed")
+    }
+    
+    func onError(_ error: any Error) {
+        print("survey error")
+        if let error = error as? FormbricksSDKError {
+            print(error.message)
+        }
+    }
+    
 }

@@ -57,7 +57,9 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                 switch httpStatus.responseType {
                 case .success:
                     guard let data = data else {
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                         return
                     }
                     if let responseString = String(data: data, encoding: .utf8) {
@@ -86,42 +88,55 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                     catch let DecodingError.dataCorrupted(context) {
                         responseLogMessage.append("Data corrupted \(context)\n")
                         Formbricks.logger.error(responseLogMessage)
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                     }
                     catch let DecodingError.keyNotFound(key, context) {
                         responseLogMessage.append("Key '\(key)' not found: \(context.debugDescription)\n")
                         responseLogMessage.append("codingPath: \(context.codingPath)")
                         Formbricks.logger.error(responseLogMessage)
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                     }
                     catch let DecodingError.valueNotFound(value, context) {
                         responseLogMessage.append("Value '\(value)' not found: \(context.debugDescription)\n")
                         responseLogMessage.append("codingPath: \(context.codingPath)")
                         Formbricks.logger.error(responseLogMessage)
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                     }
                     catch let DecodingError.typeMismatch(type, context)  {
                         responseLogMessage.append("Type '\(type)' mismatch: \(context.debugDescription)\n")
                         responseLogMessage.append("codingPath: \(context.codingPath)")
                         Formbricks.logger.error(responseLogMessage)
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                     }
                     catch {
                         responseLogMessage.append("error: \(error.message)")
                         Formbricks.logger.error(responseLogMessage)
-                        self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
+                        let error = FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
+                        self.completion?(.failure(error))
                     }
                     
                 default:
                     if let error = error {
+                        Formbricks.delegate?.onError(error)
                         responseLogMessage.append("\nError: \(error.localizedDescription)")
                         Formbricks.logger.error(responseLogMessage)
                         self.completion?(.failure(error))
                     } else if let data = data, let apiError = try? self.request.decoder.decode(FormbricksAPIError.self, from: data) {
+                        Formbricks.delegate?.onError(apiError)
                         Formbricks.logger.error("\(responseLogMessage)\n\(apiError.getDetailedErrorMessage())")
                         self.completion?(.failure(apiError))
                     } else {
                         let error = FormbricksAPIClientError(type: .responseError, statusCode: httpStatus.rawValue)
+                        Formbricks.delegate?.onError(error)
                         Formbricks.logger.error("\(responseLogMessage)\n\(error.message)")
                         self.completion?(.failure(error))
                     }
@@ -129,6 +144,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
             }
             else {
                 let error = FormbricksAPIClientError(type: .invalidResponse)
+                Formbricks.delegate?.onError(error)
                 Formbricks.logger.error("ERROR \(error.message)")
                 self.completion?(.failure(error))
             }
