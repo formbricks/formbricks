@@ -15,13 +15,14 @@ export class Client {
   environment: EnvironmentAPI;
 
   constructor(options: ApiConfig) {
-    const { appUrl, environmentId } = options;
+    const { appUrl, environmentId, isDebug } = options;
+    const isDebugMode = isDebug ?? false;
 
-    this.response = new ResponseAPI(appUrl, environmentId);
-    this.display = new DisplayAPI(appUrl, environmentId);
-    this.attribute = new AttributeAPI(appUrl, environmentId);
+    this.response = new ResponseAPI(appUrl, environmentId, isDebugMode);
+    this.display = new DisplayAPI(appUrl, environmentId, isDebugMode);
+    this.attribute = new AttributeAPI(appUrl, environmentId, isDebugMode);
     this.storage = new StorageAPI(appUrl, environmentId);
-    this.user = new UserAPI(appUrl, environmentId);
-    this.environment = new EnvironmentAPI(appUrl, environmentId);
+    this.user = new UserAPI(appUrl, environmentId, isDebugMode);
+    this.environment = new EnvironmentAPI(appUrl, environmentId, isDebugMode);
   }
 }

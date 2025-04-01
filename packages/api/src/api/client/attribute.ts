@@ -6,10 +6,11 @@ import { makeRequest } from "../../utils/make-request";
 export class AttributeAPI {
   private appUrl: string;
   private environmentId: string;
-
-  constructor(appUrl: string, environmentId: string) {
+  private isDebug: boolean;
+  constructor(appUrl: string, environmentId: string, isDebug: boolean) {
     this.appUrl = appUrl;
     this.environmentId = environmentId;
+    this.isDebug = isDebug;
   }
 
   async update(
@@ -25,7 +26,8 @@ export class AttributeAPI {
       this.appUrl,
       `/api/v1/client/${this.environmentId}/contacts/${attributeUpdateInput.userId}/attributes`,
       "PUT",
-      { attributes }
+      { attributes },
+      this.isDebug
     );
   }
 }

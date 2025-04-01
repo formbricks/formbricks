@@ -6,16 +6,17 @@ export const makeRequest = async <T>(
   appUrl: string,
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE",
-  data?: unknown
+  data?: unknown,
+  isDebug?: boolean
 ): Promise<Result<T, ApiErrorResponse>> => {
   const url = new URL(appUrl + endpoint);
   const body = data ? JSON.stringify(data) : undefined;
-
   const res = await wrapThrowsAsync(fetch)(url.toString(), {
     method,
     headers: {
       "Content-Type": "application/json",
     },
+    ...(isDebug && { cache: "no-store" }),
     body,
   });
 
