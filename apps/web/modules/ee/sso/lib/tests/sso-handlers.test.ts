@@ -45,6 +45,7 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/modules/auth/signup/lib/team", () => ({
   createTeamMembership: vi.fn(),
+  createDefaultTeamMembership: vi.fn(),
 }));
 
 vi.mock("@formbricks/lib/account/service", () => ({

@@ -40,6 +40,7 @@ const setupMocks = () => {
       revalidate: vi.fn(),
       tag: {
         byId: vi.fn().mockReturnValue("tag-id"),
+        byOrganizationId: vi.fn().mockReturnValue("tag-org-id"),
       },
     },
   }));
@@ -111,7 +112,7 @@ describe("Team Management", () => {
           },
         });
 
-        expect(teamCache.revalidate).toHaveBeenCalledWith({ id: MOCK_IDS.projectId });
+        expect(projectCache.revalidate).toHaveBeenCalledWith({ id: MOCK_IDS.projectId });
         expect(teamCache.revalidate).toHaveBeenCalledWith({ id: MOCK_IDS.teamId });
         expect(teamCache.revalidate).toHaveBeenCalledWith({
           userId: MOCK_IDS.userId,
