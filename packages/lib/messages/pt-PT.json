@@ -1,12 +1,6 @@
 {
   "auth": {
-    "continue_with_azure": "Continuar com Azure",
     "continue_with_email": "Continuar com Email",
-    "continue_with_github": "Continuar com GitHub",
-    "continue_with_google": "Continuar com Google",
-    "continue_with_oidc": "Continuar com {oidcDisplayName}",
-    "continue_with_openid": "Continuar com OpenID",
-    "continue_with_saml": "Continuar com SAML SSO",
     "forgot-password": {
       "back_to_login": "Voltar ao login",
       "email-sent": {

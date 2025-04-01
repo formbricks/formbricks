@@ -228,7 +228,6 @@ export const mockOrganizationOutput: TOrganization = {
   name: "mock Organization",
   createdAt: currentDate,
   updatedAt: currentDate,
-  isAIEnabled: false,
   billing: {
     stripeCustomerId: null,
     plan: "free",

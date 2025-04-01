@@ -27,7 +27,6 @@ export const select: Prisma.OrganizationSelect = {
   updatedAt: true,
   name: true,
   billing: true,
-  isAIEnabled: true,
   whitelabel: true,
 };
 

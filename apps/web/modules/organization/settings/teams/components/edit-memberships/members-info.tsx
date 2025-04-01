@@ -17,7 +17,6 @@ interface MembersInfoProps {
   invites: TInvite[];
   currentUserRole: TOrganizationRole;
   currentUserId: string;
-  isFormbricksCloud: boolean;
 }
 
 // Type guard to check if member is an invitee
@@ -31,7 +30,6 @@ export const MembersInfo = ({
   currentUserRole,
   members,
   currentUserId,
-  isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
   const { t } = useTranslate();

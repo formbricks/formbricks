@@ -24,7 +24,6 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getIsAIEnabled } from "../utils/ai";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
 import { doesSurveyHasOpenTextQuestion, getInsightsEnabled, transformPrismaSurvey } from "./utils";
@@ -570,68 +569,15 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
-          (question) => question.type === "openText"
-        );
-
-        // find the questions that have been updated or added
-        const questionsToCheckForInsights: TSurveyQuestions = [];
-
-        for (const question of openTextQuestions) {
-          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
-            | TSurveyOpenTextQuestion
-            | undefined;
-          const isExistingQuestion = !!existingQuestion;
-
-          if (
-            isExistingQuestion &&
-            question.headline.default === existingQuestion.headline.default &&
-            existingQuestion.insightsEnabled !== undefined
-          ) {
-            continue;
-          } else {
-            questionsToCheckForInsights.push(question);
-          }
-        }
-
-        if (questionsToCheckForInsights.length > 0) {
-          const insightsEnabledValues = await Promise.all(
-            questionsToCheckForInsights.map(async (question) => {
-              const insightsEnabled = await getInsightsEnabled(question);
-
-              return { id: question.id, insightsEnabled };
-            })
-          );
-
-          data.questions = data.questions?.map((question) => {
-            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-            if (index !== -1) {
-              return {
-                ...question,
-                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-              };
-            }
-
-            return question;
-          });
-        }
-      }
-    } else {
-      // check if an existing question got changed that had insights enabled
-      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText" && question.insightsEnabled !== undefined
-      );
-      // if question headline changed, remove insightsEnabled
-      for (const question of insightsEnabledOpenTextQuestions) {
-        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
-        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
-          updatedQuestion.insightsEnabled = undefined;
-        }
+    // check if an existing question got changed that had insights enabled
+    const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
+      (question) => question.type === "openText" && question.insightsEnabled !== undefined
+    );
+    // if question headline changed, remove insightsEnabled
+    for (const question of insightsEnabledOpenTextQuestions) {
+      const updatedQuestion = data.questions?.find((q) => q.id === question.id);
+      if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
+        updatedQuestion.insightsEnabled = undefined;
       }
     }
 
@@ -737,33 +683,6 @@ export const createSurvey = async (
     const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
-    }
-
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const insightsEnabledValues = await Promise.all(
-          openTextQuestions.map(async (question) => {
-            const insightsEnabled = await getInsightsEnabled(question);
-
-            return { id: question.id, insightsEnabled };
-          })
-        );
-
-        data.questions = data.questions?.map((question) => {
-          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-          if (index !== -1) {
-            return {
-              ...question,
-              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-            };
-          }
-
-          return question;
-        });
-      }
     }
 
     // Survey follow-ups

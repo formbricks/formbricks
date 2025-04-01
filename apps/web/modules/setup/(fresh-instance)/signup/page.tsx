@@ -2,20 +2,12 @@ import { SignupForm } from "@/modules/auth/signup/components/signup-form";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import {
-  AZURE_OAUTH_ENABLED,
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
-  GITHUB_OAUTH_ENABLED,
-  GOOGLE_OAUTH_ENABLED,
   IS_TURNSTILE_CONFIGURED,
-  OIDC_DISPLAY_NAME,
-  OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
-  SAML_OAUTH_ENABLED,
-  SAML_PRODUCT,
-  SAML_TENANT,
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
@@ -29,10 +21,6 @@ export const metadata: Metadata = {
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
 
-  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([false, false]);
-
-  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
-
   const t = await getTranslate();
   return (
     <div className="flex flex-col items-center">
@@ -45,19 +33,10 @@ export const SignupPage = async () => {
         privacyUrl={PRIVACY_URL}
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
-        googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-        githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-        azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-        oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
-        oidcDisplayName={OIDC_DISPLAY_NAME}
         userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-        isSsoEnabled={isSsoEnabled}
-        samlSsoEnabled={samlSsoEnabled}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
-        samlTenant={SAML_TENANT}
-        samlProduct={SAML_PRODUCT}
       />
     </div>
   );

@@ -6,7 +6,7 @@ import { replaceAttributeRecall } from "@/app/api/v1/client/[environmentId]/app/
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { contactCache } from "@/lib/cache/contact";
-import { NextRequest, userAgent } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
@@ -40,8 +40,6 @@ export const GET = async (
 ): Promise<Response> => {
   const params = await props.params;
   try {
-    const { device } = userAgent(request);
-
     // validate using zod
     const inputValidation = ZJsPeopleUserIdInput.safeParse({
       environmentId: params.environmentId,
@@ -149,12 +147,7 @@ export const GET = async (
     }, {}) as Record<string, string>;
 
     const [surveys, actionClasses] = await Promise.all([
-      getSyncSurveys(
-        environmentId,
-        contact.id,
-        contactAttributes,
-        device.type === "mobile" ? "phone" : "desktop"
-      ),
+      getSyncSurveys(environmentId, contact.id),
       getActionClasses(environmentId),
     ]);
 

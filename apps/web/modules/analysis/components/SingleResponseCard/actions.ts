@@ -7,9 +7,6 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromResponseId,
   getOrganizationIdFromResponseNoteId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromResponseId,
-  getProjectIdFromResponseNoteId,
 } from "@/lib/utils/helper";
 import { getTag } from "@/lib/utils/services";
 import { z } from "zod";
@@ -38,11 +35,6 @@ export const createTagAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-          minPermission: "readWrite",
         },
       ],
     });
@@ -77,11 +69,6 @@ export const createTagToResponseAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
-          minPermission: "readWrite",
-        },
       ],
     });
 
@@ -115,11 +102,6 @@ export const deleteTagOnResponseAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(responseEnvironmentId),
-          minPermission: "readWrite",
-        },
       ],
     });
 
@@ -140,11 +122,6 @@ export const deleteResponseAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
-          minPermission: "readWrite",
         },
       ],
     });
@@ -168,11 +145,6 @@ export const updateResponseNoteAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromResponseNoteId(parsedInput.responseNoteId),
-          minPermission: "readWrite",
-        },
       ],
     });
 
@@ -193,11 +165,6 @@ export const resolveResponseNoteAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromResponseNoteId(parsedInput.responseNoteId),
-          minPermission: "readWrite",
         },
       ],
     });
@@ -221,11 +188,6 @@ export const createResponseNoteAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
-          minPermission: "readWrite",
-        },
       ],
     });
 
@@ -246,11 +208,6 @@ export const getResponseAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromResponseId(parsedInput.responseId),
         },
       ],
     });

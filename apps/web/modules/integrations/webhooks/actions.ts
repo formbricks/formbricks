@@ -2,12 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromWebhookId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromWebhookId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getOrganizationIdFromWebhookId } from "@/lib/utils/helper";
 import {
   createWebhook,
   deleteWebhook,
@@ -34,11 +29,6 @@ export const createWebhookAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
       ],
     });
 
@@ -59,11 +49,6 @@ export const deleteWebhookAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromWebhookId(parsedInput.id),
         },
       ],
     });
@@ -86,11 +71,6 @@ export const updateWebhookAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
         },
       ],
     });

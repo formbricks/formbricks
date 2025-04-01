@@ -28,35 +28,7 @@ export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
-export const GOOGLE_OAUTH_ENABLED = env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? true : false;
-export const GITHUB_OAUTH_ENABLED = env.GITHUB_ID && env.GITHUB_SECRET ? true : false;
-export const AZURE_OAUTH_ENABLED =
-  env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET && env.AZUREAD_TENANT_ID ? true : false;
-export const OIDC_OAUTH_ENABLED =
-  env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER ? true : false;
-export const SAML_OAUTH_ENABLED = env.SAML_DATABASE_URL ? true : false;
 export const SAML_XML_DIR = "./saml-connection";
-
-export const GITHUB_ID = env.GITHUB_ID;
-export const GITHUB_SECRET = env.GITHUB_SECRET;
-export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
-export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
-
-export const AZUREAD_CLIENT_ID = env.AZUREAD_CLIENT_ID;
-export const AZUREAD_CLIENT_SECRET = env.AZUREAD_CLIENT_SECRET;
-export const AZUREAD_TENANT_ID = env.AZUREAD_TENANT_ID;
-
-export const OIDC_CLIENT_ID = env.OIDC_CLIENT_ID;
-export const OIDC_CLIENT_SECRET = env.OIDC_CLIENT_SECRET;
-export const OIDC_ISSUER = env.OIDC_ISSUER;
-export const OIDC_DISPLAY_NAME = env.OIDC_DISPLAY_NAME;
-export const OIDC_SIGNING_ALGORITHM = env.OIDC_SIGNING_ALGORITHM;
-
-export const SAML_DATABASE_URL = env.SAML_DATABASE_URL;
-export const SAML_TENANT = "formbricks.com";
-export const SAML_PRODUCT = "formbricks";
-export const SAML_AUDIENCE = "https://saml.formbricks.com";
-export const SAML_PATH = "/api/auth/saml/callback";
 
 export const SIGNUP_ENABLED = env.SIGNUP_DISABLED !== "1";
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
@@ -196,9 +168,6 @@ export const SYNC_USER_IDENTIFICATION_RATE_LIMIT = {
 
 export const DEBUG = env.DEBUG === "1";
 export const E2E_TESTING = env.E2E_TESTING === "1";
-
-// Enterprise License constant
-export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;

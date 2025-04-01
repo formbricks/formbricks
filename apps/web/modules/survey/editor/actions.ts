@@ -6,8 +6,6 @@ import {
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromProjectId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { updateSurvey } from "@/modules/survey/editor/lib/survey";
@@ -76,11 +74,6 @@ export const refetchProjectAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: parsedInput.projectId,
         },
       ],
     });
@@ -181,11 +174,6 @@ export const createActionClassAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.action.environmentId),
         },
       ],
     });

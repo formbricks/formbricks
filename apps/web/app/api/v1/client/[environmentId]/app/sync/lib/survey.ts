@@ -18,12 +18,7 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const getSyncSurveys = reactCache(
-  (
-    environmentId: string,
-    contactId: string,
-    contactAttributes: Record<string, string | number>,
-    deviceType: "phone" | "desktop" = "desktop"
-  ): Promise<TSurvey[]> =>
+  (environmentId: string, contactId: string): Promise<TSurvey[]> =>
     cache(
       async () => {
         validateInputs([environmentId, ZId]);

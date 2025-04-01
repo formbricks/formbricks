@@ -38,7 +38,7 @@ export const getOrganizationIdFromEnvironmentId = reactCache(
 );
 
 export const getOrganizationAIKeys = reactCache(
-  async (organizationId: string): Promise<Pick<Organization, "isAIEnabled" | "billing"> | null> =>
+  async (organizationId: string): Promise<Pick<Organization, "billing"> | null> =>
     cache(
       async () => {
         try {
@@ -47,7 +47,6 @@ export const getOrganizationAIKeys = reactCache(
               id: organizationId,
             },
             select: {
-              isAIEnabled: true,
               billing: true,
             },
           });

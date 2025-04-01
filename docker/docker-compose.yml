@@ -33,7 +33,6 @@ x-environment: &environment
 
     # Enterprise License Key (More info at: https://formbricks.com/docs/self-hosting/license)
     # Required to access Enterprise-only features
-    # ENTERPRISE_LICENSE_KEY:
 
     ############################################# OPTIONAL (EMAIL CONFIGURATION) #############################################
 
@@ -100,29 +99,6 @@ x-environment: &environment
     # Set the below from Cloudflare Turnstile if you want to enable turnstile in signups
     # NEXT_PUBLIC_TURNSTILE_SITE_KEY:
     # TURNSTILE_SECRET_KEY:
-
-    # Set the below from GitHub if you want to enable GitHub OAuth
-    # GITHUB_ID:
-    # GITHUB_SECRET:
-
-    # Set the below from Google if you want to enable Google OAuth
-    # GOOGLE_CLIENT_ID:
-    # GOOGLE_CLIENT_SECRET:
-
-    # Set the below from Azure Active Directory Login if you want to enable Azure AD OAuth
-    # AZUREAD_CLIENT_ID:
-    # AZUREAD_CLIENT_SECRET:
-    # AZUREAD_TENANT_ID:
-
-    # Set the below to OpenID Connect Provider if you want to enable OIDC
-    # OIDC_CLIENT_ID:
-    # OIDC_CLIENT_SECRET:
-    # OIDC_ISSUER:
-    # OIDC_DISPLAY_NAME:
-    # OIDC_SIGNING_ALGORITHM:
-
-    # Set the below to SAML Provider if you want to enable SAML
-    # SAML_DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks-saml?sslmode=disable"
 
     ########################################## OPTIONAL (THIRD PARTY INTEGRATIONS) ###########################################
 

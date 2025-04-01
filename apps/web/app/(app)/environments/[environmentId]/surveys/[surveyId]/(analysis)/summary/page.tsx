@@ -17,7 +17,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, environment, organization, isReadOnly } = await getEnvironmentAuth(params.environmentId);
+  const { session, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const surveyId = params.surveyId;
 

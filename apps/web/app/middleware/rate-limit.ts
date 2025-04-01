@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache";
-import { ENTERPRISE_LICENSE_KEY, REDIS_HTTP_URL } from "@formbricks/lib/constants";
+import { REDIS_HTTP_URL } from "@formbricks/lib/constants";
 import { logger } from "@formbricks/logger";
 
 interface Options {
@@ -45,7 +45,7 @@ const redisRateLimiter = (options: Options) => async (token: string) => {
 };
 
 export const rateLimit = (options: Options) => {
-  if (REDIS_HTTP_URL && ENTERPRISE_LICENSE_KEY) {
+  if (REDIS_HTTP_URL) {
     return redisRateLimiter(options);
   } else {
     return inMemoryRateLimiter(options);

@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { getSpreadsheetNameById } from "@formbricks/lib/googleSheet/service";
 import { ZIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
@@ -23,11 +23,6 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-          minPermission: "readWrite",
         },
       ],
     });

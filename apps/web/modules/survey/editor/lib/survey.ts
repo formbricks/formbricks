@@ -252,20 +252,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    //AI Insights
-    const isAIEnabled = false;
-    // check if an existing question got changed that had insights enabled
-    const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-      (question) => question.type === "openText" && question.insightsEnabled !== undefined
-    );
-    // if question headline changed, remove insightsEnabled
-    for (const question of insightsEnabledOpenTextQuestions) {
-      const updatedQuestion = data.questions?.find((q) => q.id === question.id);
-      if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
-        updatedQuestion.insightsEnabled = undefined;
-      }
-    }
-
     surveyData.updatedAt = new Date();
 
     data = {

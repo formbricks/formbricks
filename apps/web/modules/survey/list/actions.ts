@@ -2,12 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromSurveyId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromSurveyId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
 import { getUserProjects } from "@/modules/survey/list/lib/project";
 import {
@@ -35,11 +30,6 @@ export const getSurveyAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -74,11 +64,6 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: sourceEnvironmentProjectId,
-        },
       ],
     });
 
@@ -89,11 +74,6 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: targetEnvironmentProjectId,
         },
       ],
     });
@@ -122,11 +102,6 @@ export const getProjectsByEnvironmentIdAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
       ],
     });
 
@@ -147,11 +122,6 @@ export const deleteSurveyAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
         },
       ],
     });
@@ -174,11 +144,6 @@ export const generateSingleUseIdAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
         },
       ],
     });
@@ -205,11 +170,6 @@ export const getSurveysAction = authenticatedActionClient
           schema: ZSurveyFilterCriteria,
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

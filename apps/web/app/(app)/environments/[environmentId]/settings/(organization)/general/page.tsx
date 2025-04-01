@@ -1,5 +1,4 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -13,13 +12,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, currentUserMembership, organization, isOwner, isManager } = await getEnvironmentAuth(
-    params.environmentId
-  );
-
-  const isOwnerOrManager = isManager || isOwner;
-
-  const isOrganizationAIReady = false;
+  const { currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
 
   return (
     <PageContentWrapper>
@@ -40,17 +33,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           membershipRole={currentUserMembership?.role}
         />
       </SettingsCard>
-      {isOrganizationAIReady && (
-        <SettingsCard
-          title={t("environments.settings.general.formbricks_ai")}
-          description={t("environments.settings.general.formbricks_ai_description")}>
-          <AIToggle
-            environmentId={params.environmentId}
-            organization={organization}
-            isOwnerOrManager={isOwnerOrManager}
-          />
-        </SettingsCard>
-      )}
       <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
     </PageContentWrapper>
   );

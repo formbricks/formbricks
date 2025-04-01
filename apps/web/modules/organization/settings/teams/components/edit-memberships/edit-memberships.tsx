@@ -2,7 +2,6 @@ import { MembersInfo } from "@/modules/organization/settings/teams/components/ed
 import { getInvitesByOrganizationId } from "@/modules/organization/settings/teams/lib/invite";
 import { getMembershipByOrganizationId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -34,7 +33,6 @@ export const EditMemberships = async ({ organization, currentUserId, role }: Edi
             invites={invites ?? []}
             members={members ?? []}
             currentUserRole={role}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           />
         )}
       </div>

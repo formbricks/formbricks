@@ -2,12 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import {
-  getOrganizationIdFromApiKeyId,
-  getOrganizationIdFromEnvironmentId,
-  getProjectIdFromApiKeyId,
-  getProjectIdFromEnvironmentId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromApiKeyId, getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createApiKey, deleteApiKey } from "@/modules/projects/settings/api-keys/lib/api-key";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
@@ -27,11 +22,6 @@ export const deleteApiKeyAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "manage",
-          projectId: await getProjectIdFromApiKeyId(parsedInput.id),
         },
       ],
     });
@@ -54,11 +44,6 @@ export const createApiKeyAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "manage",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
         },
       ],
     });

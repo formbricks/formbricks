@@ -2,20 +2,12 @@ import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
 import { notFound } from "next/navigation";
 import {
-  AZURE_OAUTH_ENABLED,
   DEFAULT_ORGANIZATION_ID,
   DEFAULT_ORGANIZATION_ROLE,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
-  GITHUB_OAUTH_ENABLED,
-  GOOGLE_OAUTH_ENABLED,
   IS_TURNSTILE_CONFIGURED,
-  OIDC_DISPLAY_NAME,
-  OIDC_OAUTH_ENABLED,
   PRIVACY_URL,
-  SAML_OAUTH_ENABLED,
-  SAML_PRODUCT,
-  SAML_TENANT,
   SIGNUP_ENABLED,
   TERMS_URL,
   WEBAPP_URL,
@@ -26,9 +18,7 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([false, false, false]);
-
-  const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
+  const [isMultOrgEnabled] = await Promise.all([false]);
 
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
@@ -49,20 +39,11 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             privacyUrl={PRIVACY_URL}
             emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
             emailAuthEnabled={EMAIL_AUTH_ENABLED}
-            googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
-            githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
-            azureOAuthEnabled={AZURE_OAUTH_ENABLED}
-            oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
-            oidcDisplayName={OIDC_DISPLAY_NAME}
             userLocale={locale}
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
-            isSsoEnabled={isSsoEnabled}
-            samlSsoEnabled={samlSsoEnabled}
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
-            samlTenant={SAML_TENANT}
-            samlProduct={SAML_PRODUCT}
           />
         </FormWrapper>
       </div>

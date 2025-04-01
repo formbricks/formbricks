@@ -3,7 +3,7 @@
 import { generateInsightsForSurvey } from "@/app/api/(internal)/insights/lib/utils";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getResponseCountBySurveyId, getResponses } from "@formbricks/lib/response/service";
@@ -35,11 +35,6 @@ export const getResponsesAction = authenticatedActionClient
           data: parsedInput.filterCriteria,
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-        },
       ],
     });
 
@@ -69,11 +64,6 @@ export const getSurveySummaryAction = authenticatedActionClient
           data: parsedInput.filterCriteria,
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-        },
       ],
     });
 
@@ -98,11 +88,6 @@ export const getResponseCountAction = authenticatedActionClient
           data: parsedInput.filterCriteria,
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-        },
       ],
     });
 
@@ -125,11 +110,6 @@ export const generateInsightsForSurveyAction = authenticatedActionClient
           schema: ZGenerateInsightsForSurveyAction,
           data: parsedInput,
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
         },
       ],
     });

@@ -68,7 +68,6 @@ export const createMockOrganization = (plan: TOrganization["billing"]["plan"]): 
   },
   createdAt: new Date(),
   updatedAt: new Date(),
-  isAIEnabled: false,
 });
 
 export const mockOrganization = createMockOrganization("scale");

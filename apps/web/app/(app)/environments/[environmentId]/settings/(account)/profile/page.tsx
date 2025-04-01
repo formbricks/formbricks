@@ -1,10 +1,8 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
-import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
-import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
@@ -15,7 +13,6 @@ import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const isTwoFactorAuthEnabled = false;
   const isMultiOrgEnabled = false;
   const params = await props.params;
   const t = await getTranslate();
@@ -54,37 +51,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               />
             )}
           </SettingsCard>
-          {user.identityProvider === "email" && (
-            <SettingsCard
-              title={t("common.security")}
-              description={t("environments.settings.profile.security_description")}>
-              {!isTwoFactorAuthEnabled && !user.twoFactorEnabled ? (
-                <UpgradePrompt
-                  title={t("environments.settings.profile.unlock_two_factor_authentication")}
-                  description={t("environments.settings.profile.two_factor_authentication_description")}
-                  buttons={[
-                    {
-                      text: IS_FORMBRICKS_CLOUD
-                        ? t("common.start_free_trial")
-                        : t("common.request_trial_license"),
-                      href: IS_FORMBRICKS_CLOUD
-                        ? `/environments/${params.environmentId}/settings/billing`
-                        : "https://formbricks.com/upgrade-self-hosting-license",
-                    },
-                    {
-                      text: t("common.learn_more"),
-                      href: IS_FORMBRICKS_CLOUD
-                        ? `/environments/${params.environmentId}/settings/billing`
-                        : "https://formbricks.com/learn-more-self-hosting-license",
-                    },
-                  ]}
-                />
-              ) : (
-                <AccountSecurity user={user} />
-              )}
-            </SettingsCard>
-          )}
-
           <SettingsCard
             title={t("environments.settings.profile.delete_account")}
             description={t("environments.settings.profile.confirm_delete_account")}>

@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -31,11 +31,6 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
-        },
       ],
     });
 
@@ -62,11 +57,6 @@ export const getSurveyFilterDataAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -111,11 +101,6 @@ export const updateSurveyAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.id),
-          minPermission: "readWrite",
         },
       ],
     });

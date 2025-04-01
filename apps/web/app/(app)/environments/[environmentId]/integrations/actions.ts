@@ -2,12 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import {
-  getOrganizationIdFromEnvironmentId,
-  getOrganizationIdFromIntegrationId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromIntegrationId,
-} from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getOrganizationIdFromIntegrationId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { createOrUpdateIntegration, deleteIntegration } from "@formbricks/lib/integration/service";
 import { ZId } from "@formbricks/types/common";
@@ -29,11 +24,6 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
       ],
     });
 
@@ -54,11 +44,6 @@ export const deleteIntegrationAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          projectId: await getProjectIdFromIntegrationId(parsedInput.integrationId),
-          minPermission: "readWrite",
         },
       ],
     });

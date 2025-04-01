@@ -1,4 +1,3 @@
-import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -38,12 +37,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const mode = searchParams.mode ?? "surveys";
   const projects = await getUserProjects(session.user.id, params.organizationId);
 
-  const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
-
-  if (!organizationTeams) {
-    throw new Error(t("common.organization_teams_not_found"));
-  }
-
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header
@@ -56,7 +49,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
         channel={channel}
         industry={industry}
         defaultBrandColor={DEFAULT_BRAND_COLOR}
-        organizationTeams={organizationTeams}
         userProjectsCount={projects.length}
       />
       {projects.length >= 1 && (

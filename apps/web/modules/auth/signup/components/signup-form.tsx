@@ -39,21 +39,12 @@ interface SignupFormProps {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
   emailAuthEnabled: boolean;
-  googleOAuthEnabled: boolean;
-  githubOAuthEnabled: boolean;
-  azureOAuthEnabled: boolean;
-  oidcOAuthEnabled: boolean;
-  oidcDisplayName?: string;
   userLocale: TUserLocale;
   emailFromSearchParams?: string;
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
   defaultOrganizationRole?: TOrganizationRole;
-  isSsoEnabled: boolean;
-  samlSsoEnabled: boolean;
   isTurnstileConfigured: boolean;
-  samlTenant: string;
-  samlProduct: string;
 }
 
 export const SignupForm = ({
@@ -61,21 +52,12 @@ export const SignupForm = ({
   privacyUrl,
   termsUrl,
   emailAuthEnabled,
-  googleOAuthEnabled,
-  githubOAuthEnabled,
-  azureOAuthEnabled,
-  oidcOAuthEnabled,
-  oidcDisplayName,
   userLocale,
   emailFromSearchParams,
   emailVerificationDisabled,
   defaultOrganizationId,
   defaultOrganizationRole,
-  isSsoEnabled,
-  samlSsoEnabled,
   isTurnstileConfigured,
-  samlTenant,
-  samlProduct,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();

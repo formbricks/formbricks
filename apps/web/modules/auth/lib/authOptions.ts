@@ -3,11 +3,7 @@ import { verifyPassword } from "@/modules/auth/lib/utils";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
-import {
-  EMAIL_VERIFICATION_DISABLED,
-  ENCRYPTION_KEY,
-  ENTERPRISE_LICENSE_KEY,
-} from "@formbricks/lib/constants";
+import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY } from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
 import { logger } from "@formbricks/logger";

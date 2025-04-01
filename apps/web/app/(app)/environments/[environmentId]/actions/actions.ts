@@ -2,7 +2,7 @@
 
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromActionClassId, getProjectIdFromActionClassId } from "@/lib/utils/helper";
+import { getOrganizationIdFromActionClassId } from "@/lib/utils/helper";
 import { z } from "zod";
 import { deleteActionClass, getActionClass, updateActionClass } from "@formbricks/lib/actionClass/service";
 import { cache } from "@formbricks/lib/cache";
@@ -25,11 +25,6 @@ export const deleteActionClassAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
     });
@@ -58,11 +53,6 @@ export const updateActionClassAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
-        },
       ],
     });
 
@@ -87,11 +77,6 @@ export const getActiveInactiveSurveysAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "read",
-          projectId: await getProjectIdFromActionClassId(parsedInput.actionClassId),
         },
       ],
     });

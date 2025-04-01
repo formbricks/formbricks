@@ -53,7 +53,7 @@ runs:
       run: cp .env.example .env
       shell: bash
 
-    - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+    - name: Fill ENCRYPTION_KEY and E2E_TESTING in .env
       run: |
         RANDOM_KEY=$(openssl rand -hex 32)
         sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env

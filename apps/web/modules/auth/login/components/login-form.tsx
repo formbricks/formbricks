@@ -30,32 +30,14 @@ interface LoginFormProps {
   emailAuthEnabled: boolean;
   publicSignUpEnabled: boolean;
   passwordResetEnabled: boolean;
-  googleOAuthEnabled: boolean;
-  githubOAuthEnabled: boolean;
-  azureOAuthEnabled: boolean;
-  oidcOAuthEnabled: boolean;
-  oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
-  isSsoEnabled: boolean;
-  samlSsoEnabled: boolean;
-  samlTenant: string;
-  samlProduct: string;
 }
 
 export const LoginForm = ({
   emailAuthEnabled,
   publicSignUpEnabled,
   passwordResetEnabled,
-  googleOAuthEnabled,
-  githubOAuthEnabled,
-  azureOAuthEnabled,
-  oidcOAuthEnabled,
-  oidcDisplayName,
   isMultiOrgEnabled,
-  isSsoEnabled,
-  samlSsoEnabled,
-  samlTenant,
-  samlProduct,
 }: LoginFormProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();

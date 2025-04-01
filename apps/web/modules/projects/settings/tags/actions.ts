@@ -6,8 +6,6 @@ import {
   getEnvironmentIdFromTagId,
   getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromTagId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromTagId,
 } from "@/lib/utils/helper";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/projects/settings/lib/tag";
 import { z } from "zod";
@@ -27,11 +25,6 @@ export const deleteTagAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromTagId(parsedInput.tagId),
         },
       ],
     });
@@ -54,11 +47,6 @@ export const updateTagNameAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromTagId(parsedInput.tagId),
         },
       ],
     });
@@ -88,11 +76,6 @@ export const mergeTagsAction = authenticatedActionClient
         {
           type: "organization",
           roles: ["owner", "manager"],
-        },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(newTagEnvironmentId),
         },
       ],
     });
