@@ -70,6 +70,7 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "2.27.10"
+    "@changesets/cli": "2.27.10",
+    "pino": "^8.0.0"
   }
 }
