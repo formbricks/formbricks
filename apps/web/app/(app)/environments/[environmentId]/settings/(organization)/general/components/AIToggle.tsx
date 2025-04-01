@@ -1,7 +1,6 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { updateOrganizationAIEnabledAction } from "@/modules/ee/insights/actions";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -26,23 +25,6 @@ export const AIToggle = ({ organization, isOwnerOrManager }: AIToggleProps) => {
     try {
       setIsAIEnabled(data.enabled);
       setIsSubmitting(true);
-      const updatedOrganizationResponse = await updateOrganizationAIEnabledAction({
-        organizationId: organization.id,
-        data: {
-          isAIEnabled: data.enabled,
-        },
-      });
-
-      if (updatedOrganizationResponse?.data) {
-        if (data.enabled) {
-          toast.success(t("environments.settings.general.formbricks_ai_enable_success_message"));
-        } else {
-          toast.success(t("environments.settings.general.formbricks_ai_disable_success_message"));
-        }
-      } else {
-        const errorMessage = getFormattedErrorMessage(updatedOrganizationResponse);
-        toast.error(errorMessage);
-      }
     } catch (err) {
       toast.error(`Error: ${err.message}`);
     } finally {

@@ -2,9 +2,6 @@
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
-import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
-import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
-import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -145,14 +142,6 @@ export const LoginForm = ({
   }, [totpBackup, totpLogin]);
 
   const TwoFactorComponent = useMemo(() => {
-    if (totpBackup) {
-      return <TwoFactorBackup form={form} />;
-    }
-
-    if (totpLogin) {
-      return <TwoFactor form={form} />;
-    }
-
     return null;
   }, [totpBackup, totpLogin]);
 
@@ -245,19 +234,6 @@ export const LoginForm = ({
               </Button>
             )}
           </form>
-          {isSsoEnabled && (
-            <SSOOptions
-              googleOAuthEnabled={googleOAuthEnabled}
-              githubOAuthEnabled={githubOAuthEnabled}
-              azureOAuthEnabled={azureOAuthEnabled}
-              oidcOAuthEnabled={oidcOAuthEnabled}
-              oidcDisplayName={oidcDisplayName}
-              samlSsoEnabled={samlSsoEnabled}
-              samlTenant={samlTenant}
-              samlProduct={samlProduct}
-              callbackUrl={callbackUrl}
-            />
-          )}
         </div>
 
         {publicSignUpEnabled && !totpLogin && isMultiOrgEnabled && (

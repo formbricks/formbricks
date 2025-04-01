@@ -1,6 +1,5 @@
 "use client";
 
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { QuestionsView } from "@/modules/survey/editor/components/questions-view";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
@@ -20,13 +19,13 @@ import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { refetchProjectAction } from "../actions";
+import { RewardsView } from "./rewards-view";
 
 interface SurveyEditorProps {
   survey: TSurvey;
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   actionClasses: ActionClass[];
-  contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
   responseCount: number;
   membershipRole?: OrganizationRole;
@@ -38,7 +37,6 @@ interface SurveyEditorProps {
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   locale: TUserLocale;
-  projectPermission: TTeamPermission | null;
   mailFrom: string;
   projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
@@ -51,7 +49,6 @@ export const SurveyEditor = ({
   projectLanguages,
   environment,
   actionClasses,
-  contactAttributeKeys,
   segments,
   responseCount,
   membershipRole,
@@ -63,7 +60,6 @@ export const SurveyEditor = ({
   plan,
   isCxMode = false,
   locale,
-  projectPermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
@@ -206,18 +202,32 @@ export const SurveyEditor = ({
             />
           )}
 
+          {activeView === "rewards" && project.styling.allowStyleOverwrite && (
+            <RewardsView
+              colors={colors}
+              environmentId={environment.id}
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              project={localProject}
+              styling={styling ?? null}
+              setStyling={setStyling}
+              localStylingChanges={localStylingChanges}
+              setLocalStylingChanges={setLocalStylingChanges}
+              isUnsplashConfigured={isUnsplashConfigured}
+              isCxMode={isCxMode}
+            />
+          )}
+
           {activeView === "settings" && (
             <SettingsView
               environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}
-              contactAttributeKeys={contactAttributeKeys}
               segments={segments}
               responseCount={responseCount}
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
-              projectPermission={projectPermission}
               isFormbricksCloud={isFormbricksCloud}
             />
           )}

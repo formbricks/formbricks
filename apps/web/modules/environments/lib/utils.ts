@@ -1,6 +1,4 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { cache } from "react";
@@ -51,11 +49,7 @@ export const getEnvironmentAuth = cache(async (environmentId: string): Promise<T
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership?.role);
 
-  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
-
-  const { hasReadAccess, hasReadWriteAccess, hasManageAccess } = getTeamPermissionFlags(projectPermission);
-
-  const isReadOnly = isMember && hasReadAccess;
+  const isReadOnly = isMember;
 
   return {
     environment,
@@ -63,14 +57,13 @@ export const getEnvironmentAuth = cache(async (environmentId: string): Promise<T
     organization,
     session,
     currentUserMembership,
-    projectPermission,
     isMember,
     isOwner,
     isManager,
     isBilling,
-    hasReadAccess,
-    hasReadWriteAccess,
-    hasManageAccess,
+    hasReadAccess: true,
+    hasReadWriteAccess: true,
+    hasManageAccess: true,
     isReadOnly,
   };
 });

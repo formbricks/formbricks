@@ -1,7 +1,6 @@
 "use server";
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createProject } from "@/modules/projects/settings/lib/project";
 import { z } from "zod";
 import { createMembership } from "@formbricks/lib/membership/service";
@@ -17,7 +16,7 @@ const ZCreateOrganizationAction = z.object({
 export const createOrganizationAction = authenticatedActionClient
   .schema(ZCreateOrganizationAction)
   .action(async ({ ctx, parsedInput }) => {
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    const isMultiOrgEnabled = false;
     if (!isMultiOrgEnabled)
       throw new OperationNotAllowedError(
         "Creating Multiple organization is restricted on your instance of Formbricks"

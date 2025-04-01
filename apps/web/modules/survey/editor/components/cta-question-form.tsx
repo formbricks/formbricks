@@ -1,6 +1,5 @@
 "use client";
 
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
@@ -58,25 +57,6 @@ export const CTAQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
       />
-
-      <div className="mt-3">
-        <Label htmlFor="subheader">{t("common.description")}</Label>
-        <div className="mt-2">
-          <LocalizedEditor
-            id="subheader"
-            value={question.html}
-            localSurvey={localSurvey}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            questionIdx={questionIdx}
-            locale={locale}
-          />
-        </div>
-      </div>
       <div className="mt-3">
         <OptionsSwitch
           options={options}

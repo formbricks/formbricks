@@ -1,6 +1,5 @@
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/projects/new/settings/components/ProjectSettings";
-import { getRoleManagementPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
@@ -28,7 +27,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, organization } = await getOrganizationAuth(params.organizationId);
+  const { session } = await getOrganizationAuth(params.organizationId);
 
   if (!session?.user) {
     return redirect(`/auth/login`);
@@ -40,8 +39,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const projects = await getUserProjects(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
-
-  const canDoRoleManagement = await getRoleManagementPermission(organization.billing.plan);
 
   if (!organizationTeams) {
     throw new Error(t("common.organization_teams_not_found"));
@@ -60,7 +57,6 @@ const Page = async (props: ProjectSettingsPageProps) => {
         industry={industry}
         defaultBrandColor={DEFAULT_BRAND_COLOR}
         organizationTeams={organizationTeams}
-        canDoRoleManagement={canDoRoleManagement}
         userProjectsCount={projects.length}
       />
       {projects.length >= 1 && (

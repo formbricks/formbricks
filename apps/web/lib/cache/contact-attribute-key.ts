@@ -12,7 +12,7 @@ export const contactAttributeKeyCache = {
       return `contactAttributeKey-${id}`;
     },
     byEnvironmentId(environmentId: string) {
-      return `environments-${environmentId}-contactAttributeKeys`;
+      return `environments-${environmentId}`;
     },
     byEnvironmentIdAndKey(environmentId: string, key: string) {
       return `contactAttributeKey-environment-${environmentId}-key-${key}`;

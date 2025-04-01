@@ -1,7 +1,6 @@
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
@@ -67,7 +66,7 @@ export const POST = async (request: Request): Promise<Response> => {
     }
 
     if (surveyData.languages && surveyData.languages.length) {
-      const isMultiLanguageEnabled = await getMultiLanguagePermission(organization.billing.plan);
+      const isMultiLanguageEnabled = false;
       if (!isMultiLanguageEnabled) {
         return responses.forbiddenResponse("Multi language is not enabled for this organization");
       }

@@ -1,4 +1,3 @@
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -254,67 +253,16 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     }
 
     //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const currentSurveyOpenTextQuestions = currentSurvey.questions?.filter(
-          (question) => question.type === "openText"
-        );
-
-        // find the questions that have been updated or added
-        const questionsToCheckForInsights: Survey["questions"] = [];
-
-        for (const question of openTextQuestions) {
-          const existingQuestion = currentSurveyOpenTextQuestions?.find((ques) => ques.id === question.id) as
-            | TSurveyOpenTextQuestion
-            | undefined;
-          const isExistingQuestion = !!existingQuestion;
-
-          if (
-            isExistingQuestion &&
-            question.headline.default === existingQuestion.headline.default &&
-            existingQuestion.insightsEnabled !== undefined
-          ) {
-            continue;
-          } else {
-            questionsToCheckForInsights.push(question);
-          }
-        }
-
-        if (questionsToCheckForInsights.length > 0) {
-          const insightsEnabledValues = await Promise.all(
-            questionsToCheckForInsights.map(async (question) => {
-              const insightsEnabled = await getInsightsEnabled(question);
-
-              return { id: question.id, insightsEnabled };
-            })
-          );
-
-          data.questions = data.questions?.map((question) => {
-            const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-            if (index !== -1) {
-              return {
-                ...question,
-                insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-              };
-            }
-
-            return question;
-          });
-        }
-      }
-    } else {
-      // check if an existing question got changed that had insights enabled
-      const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
-        (question) => question.type === "openText" && question.insightsEnabled !== undefined
-      );
-      // if question headline changed, remove insightsEnabled
-      for (const question of insightsEnabledOpenTextQuestions) {
-        const updatedQuestion = data.questions?.find((q) => q.id === question.id);
-        if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
-          updatedQuestion.insightsEnabled = undefined;
-        }
+    const isAIEnabled = false;
+    // check if an existing question got changed that had insights enabled
+    const insightsEnabledOpenTextQuestions = currentSurvey.questions?.filter(
+      (question) => question.type === "openText" && question.insightsEnabled !== undefined
+    );
+    // if question headline changed, remove insightsEnabled
+    for (const question of insightsEnabledOpenTextQuestions) {
+      const updatedQuestion = data.questions?.find((q) => q.id === question.id);
+      if (updatedQuestion && updatedQuestion.headline.default !== question.headline.default) {
+        updatedQuestion.insightsEnabled = undefined;
       }
     }
 

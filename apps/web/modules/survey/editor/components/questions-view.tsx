@@ -1,7 +1,6 @@
 "use client";
 
 import { getDefaultEndingCard } from "@/app/lib/templates";
-import { MultiLanguageCard } from "@/modules/ee/multi-language-surveys/components/multi-language-card";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { AddQuestionButton } from "@/modules/survey/editor/components/add-question-button";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
@@ -515,18 +514,6 @@ export const QuestionsView = ({
               setLocalSurvey={setLocalSurvey}
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
-            />
-
-            <MultiLanguageCard
-              localSurvey={localSurvey}
-              projectLanguages={projectLanguages}
-              setLocalSurvey={setLocalSurvey}
-              setActiveQuestionId={setActiveQuestionId}
-              activeQuestionId={activeQuestionId}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
-              isFormbricksCloud={isFormbricksCloud}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
             />
           </>
         )}

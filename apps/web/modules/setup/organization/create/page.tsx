@@ -1,5 +1,4 @@
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
 import { ClientLogout } from "@/modules/ui/components/client-logout";
 import { getTranslate } from "@/tolgee/server";
@@ -30,7 +29,7 @@ export const CreateOrganizationPage = async () => {
   }
 
   const hasNoOrganizations = await gethasNoOrganizations();
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const isMultiOrgEnabled = false;
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
   if (hasNoOrganizations || isMultiOrgEnabled) {

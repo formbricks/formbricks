@@ -1,10 +1,5 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import {
-  getIsMultiOrgEnabled,
-  getIsSamlSsoEnabled,
-  getisSsoEnabled,
-} from "@/modules/ee/license-check/lib/utils";
 import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
@@ -27,11 +22,7 @@ export const metadata: Metadata = {
 };
 
 export const LoginPage = async () => {
-  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
-    getIsMultiOrgEnabled(),
-    getisSsoEnabled(),
-    getIsSamlSsoEnabled(),
-  ]);
+  const [isMultiOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([false, false, false]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
   return (

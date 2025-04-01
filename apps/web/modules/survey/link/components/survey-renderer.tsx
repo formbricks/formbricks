@@ -1,4 +1,3 @@
-import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -49,7 +48,7 @@ export const renderSurvey = async ({
   if (!organizationBilling) {
     throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
+  const isMultiLanguageAllowed = false;
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (

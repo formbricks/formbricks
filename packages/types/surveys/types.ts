@@ -2373,7 +2373,7 @@ export interface TSurveyDates {
 
 export type TSurveyCreateInput = z.input<typeof ZSurveyCreateInput>;
 
-export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps";
+export type TSurveyEditorTabs = "questions" | "settings" | "styling" | "followUps" | "rewards";
 
 export const ZSurveyQuestionSummaryOpenText = z.object({
   type: z.literal("openText"),

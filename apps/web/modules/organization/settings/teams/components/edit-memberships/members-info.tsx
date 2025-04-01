@@ -1,6 +1,5 @@
 "use client";
 
-import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import { isInviteExpired } from "@/modules/organization/settings/teams/lib/utilts";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
@@ -18,7 +17,6 @@ interface MembersInfoProps {
   invites: TInvite[];
   currentUserRole: TOrganizationRole;
   currentUserId: string;
-  canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
 }
 
@@ -33,7 +31,6 @@ export const MembersInfo = ({
   currentUserRole,
   members,
   currentUserId,
-  canDoRoleManagement,
   isFormbricksCloud,
 }: MembersInfoProps) => {
   const allMembers = [...members, ...invites];
@@ -98,21 +95,6 @@ export const MembersInfo = ({
             {member.email}
           </div>
 
-          <div className="ph-no-capture col-span-1 flex flex-col items-center justify-center break-all">
-            {canDoRoleManagement && allMembers?.length > 0 && (
-              <EditMembershipRole
-                currentUserRole={currentUserRole}
-                memberRole={member.role}
-                memberId={!isInvitee(member) ? member.userId : ""}
-                organizationId={organization.id}
-                userId={currentUserId}
-                memberAccepted={!isInvitee(member) ? member.accepted : undefined}
-                inviteId={isInvitee(member) ? member.id : ""}
-                doesOrgHaveMoreThanOneOwner={doesOrgHaveMoreThanOneOwner}
-                isFormbricksCloud={isFormbricksCloud}
-              />
-            )}
-          </div>
           <div className="col-span-1 flex items-center justify-center">{getMembershipBadge(member)}</div>
           <div className="col-span-1 flex items-center justify-end gap-x-4 pr-4">
             <MemberActions

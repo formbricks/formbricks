@@ -1,7 +1,5 @@
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
-import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
-import { handleSSOCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
@@ -170,8 +168,6 @@ export const authOptions: NextAuthOptions = {
         return user;
       },
     }),
-    // Conditionally add enterprise SSO providers
-    ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
     maxAge: 3600,
@@ -204,9 +200,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email Verification is Pending");
         }
         return true;
-      }
-      if (ENTERPRISE_LICENSE_KEY) {
-        return handleSSOCallback({ user, account });
       }
       return true;
     },

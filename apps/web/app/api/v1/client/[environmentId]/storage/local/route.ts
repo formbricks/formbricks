@@ -2,7 +2,6 @@
 // body -> should be a valid file object (buffer)
 // method -> PUT (to be the same as the signedUrl method)
 import { responses } from "@/app/lib/api/response";
-import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
 import { ENCRYPTION_KEY, UPLOADS_DIR } from "@formbricks/lib/constants";
 import { validateLocalSignedUrl } from "@formbricks/lib/crypto";
@@ -112,7 +111,7 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   }
 
   try {
-    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.billing.plan);
+    const isBiggerFileUploadAllowed = false;
     const bytes = await file.arrayBuffer();
     const fileBuffer = Buffer.from(bytes);
 

@@ -4,7 +4,6 @@ import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/s
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
-import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
 import { customAlphabet } from "nanoid";
 import { z } from "zod";
@@ -20,7 +19,7 @@ export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
   .schema(ZSendEmbedSurveyPreviewEmailAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+    const organizationLogoUrl = "";
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,

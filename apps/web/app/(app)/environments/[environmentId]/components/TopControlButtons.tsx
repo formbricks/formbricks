@@ -1,8 +1,6 @@
 "use client";
 
 import { EnvironmentSwitch } from "@/app/(app)/environments/[environmentId]/components/EnvironmentSwitch";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { useTranslate } from "@tolgee/react";
@@ -17,21 +15,14 @@ interface TopControlButtonsProps {
   environment: TEnvironment;
   environments: TEnvironment[];
   membershipRole?: TOrganizationRole;
-  projectPermission: TTeamPermission | null;
 }
 
-export const TopControlButtons = ({
-  environment,
-  environments,
-  membershipRole,
-  projectPermission,
-}: TopControlButtonsProps) => {
+export const TopControlButtons = ({ environment, environments, membershipRole }: TopControlButtonsProps) => {
   const { t } = useTranslate();
   const router = useRouter();
 
   const { isMember, isBilling } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
-  const isReadOnly = isMember && hasReadAccess;
+  const isReadOnly = isMember;
 
   return (
     <div className="z-50 flex items-center space-x-2">

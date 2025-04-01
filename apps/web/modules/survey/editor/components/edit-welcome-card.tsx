@@ -1,6 +1,5 @@
 "use client";
 
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { FileInput } from "@/modules/ui/components/file-input";
 import { Label } from "@/modules/ui/components/label";
@@ -135,24 +134,6 @@ export const EditWelcomeCard = ({
                 setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
               />
-            </div>
-            <div className="mt-3">
-              <Label htmlFor="subheader">{t("environments.surveys.edit.welcome_message")}</Label>
-              <div className="mt-2">
-                <LocalizedEditor
-                  id="html"
-                  value={localSurvey.welcomeCard.html}
-                  localSurvey={localSurvey}
-                  isInvalid={isInvalid}
-                  updateQuestion={updateSurvey}
-                  selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  firstRender={firstRender}
-                  setFirstRender={setFirstRender}
-                  questionIdx={-1}
-                  locale={locale}
-                />
-              </div>
             </div>
 
             <div className="mt-3 flex justify-between gap-8">

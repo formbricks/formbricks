@@ -1,5 +1,4 @@
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Header } from "@/modules/ui/components/header";
 import { getTranslate } from "@/tolgee/server";
@@ -22,9 +21,7 @@ const Page = async (props) => {
 
   const organizations = await getOrganizationsByUserId(session.user.id);
 
-  const { features } = await getEnterpriseLicense();
-
-  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+  const isMultiOrgEnabled = false;
 
   return (
     <div className="flex min-h-full min-w-full flex-row">

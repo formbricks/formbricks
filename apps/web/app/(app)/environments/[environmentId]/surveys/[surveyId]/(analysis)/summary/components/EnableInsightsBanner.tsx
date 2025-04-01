@@ -1,6 +1,5 @@
 "use client";
 
-import { generateInsightsForSurveyAction } from "@/modules/ee/insights/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -30,7 +29,6 @@ export const EnableInsightsBanner = ({
     });
     setIsGeneratingInsights(true);
     toast.success(t("environments.surveys.summary.enable_ai_insights_banner_success"));
-    generateInsightsForSurveyAction({ surveyId });
   };
 
   if (isGeneratingInsights) {

@@ -3,7 +3,6 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
-import { checkMultiLanguagePermission } from "@/modules/ee/multi-language-surveys/lib/actions";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -48,20 +47,11 @@ export const createSurveyAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
       ],
     });
 
     if (parsedInput.surveyBody.followUps?.length) {
       await checkSurveyFollowUpsPermission(organizationId);
-    }
-
-    if (parsedInput.surveyBody.languages?.length) {
-      await checkMultiLanguagePermission(organizationId);
     }
 
     return await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);

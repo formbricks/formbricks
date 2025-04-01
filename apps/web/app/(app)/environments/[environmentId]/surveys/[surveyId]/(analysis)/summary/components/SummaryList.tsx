@@ -39,7 +39,6 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   totalResponseCount: number;
-  isAIEnabled: boolean;
   documentsPerPage?: number;
   locale: TUserLocale;
 }
@@ -50,7 +49,6 @@ export const SummaryList = ({
   responseCount,
   survey,
   totalResponseCount,
-  isAIEnabled,
   documentsPerPage,
   locale,
 }: SummaryListProps) => {
@@ -134,7 +132,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                isAIEnabled={isAIEnabled}
                 documentsPerPage={documentsPerPage}
                 locale={locale}
               />

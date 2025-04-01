@@ -1,7 +1,6 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { inviteUserAction, leaveOrganizationAction } from "@/modules/organization/settings/teams/actions";
 import { InviteMemberModal } from "@/modules/organization/settings/teams/components/invite-member/invite-member-modal";
 import { TInvitee } from "@/modules/organization/settings/teams/types/invites";
@@ -22,9 +21,7 @@ interface OrganizationActionsProps {
   membershipRole?: TOrganizationRole;
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
-  teams: TOrganizationTeam[];
   isInviteDisabled: boolean;
-  canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
@@ -34,10 +31,8 @@ export const OrganizationActions = ({
   role,
   organization,
   membershipRole,
-  teams,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
-  canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
@@ -144,10 +139,8 @@ export const OrganizationActions = ({
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
-        canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
-        teams={teams}
       />
 
       <CustomDialog

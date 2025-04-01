@@ -26,8 +26,6 @@ import {
 } from "./__mocks__/actions.mock";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { sendInviteMemberEmail } from "@/modules/email";
 import { OrganizationRole } from "@prisma/client";
 import { getServerSession } from "next-auth";
@@ -90,14 +88,6 @@ vi.mock("@formbricks/lib/membership/service", () => ({
 
 vi.mock("@formbricks/lib/membership/utils", () => ({
   getAccessFlags: vi.fn(),
-}));
-
-vi.mock("@/modules/ee/role-management/actions", () => ({
-  checkRoleManagementPermission: vi.fn(),
-}));
-
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsMultiOrgEnabled: vi.fn(),
 }));
 
 // Mock constants without importing the actual module
@@ -391,8 +381,6 @@ describe("Organization Settings Teams Actions", () => {
       ).toStrictEqual({
         data: mockInviteId,
       });
-
-      expect(checkRoleManagementPermission).toHaveBeenCalledWith(mockOrganizationId);
     });
   });
 
@@ -405,7 +393,6 @@ describe("Organization Settings Teams Actions", () => {
       vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(true);
 
       vi.mocked(getAccessFlags).mockReturnValueOnce(mockNonOwnerAccessFlags);
-      vi.mocked(getIsMultiOrgEnabled).mockResolvedValueOnce(true);
       vi.mocked(getMembershipsByUserId).mockResolvedValueOnce(mockMultipleMemberships);
       vi.mocked(deleteMembership).mockResolvedValueOnce([mockDeletedMemberMembership]);
 
@@ -442,7 +429,6 @@ describe("Organization Settings Teams Actions", () => {
       vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValueOnce(mockMemberMembership);
 
       vi.mocked(getAccessFlags).mockReturnValueOnce(mockNonOwnerAccessFlags);
-      vi.mocked(getIsMultiOrgEnabled).mockResolvedValueOnce(true);
       vi.mocked(getMembershipsByUserId).mockResolvedValueOnce(mockSingleMembership);
 
       expect(

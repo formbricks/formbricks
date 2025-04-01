@@ -3,7 +3,6 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAIKeys } from "@/modules/survey/lib/organization";
 import { createSurvey } from "@/modules/survey/templates/lib/survey";
 import { createId } from "@paralleldrive/cuid2";
@@ -44,10 +43,7 @@ export const createAISurveyAction = authenticatedActionClient
       throw new Error("Organization not found");
     }
 
-    const isAIEnabled = await getIsAIEnabled({
-      isAIEnabled: organization.isAIEnabled,
-      billing: organization.billing,
-    });
+    const isAIEnabled = false;
 
     if (!isAIEnabled) {
       throw new Error("AI is not enabled for this organization");

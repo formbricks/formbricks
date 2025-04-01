@@ -1,5 +1,4 @@
 import { SignupForm } from "@/modules/auth/signup/components/signup-form";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import {
@@ -30,7 +29,7 @@ export const metadata: Metadata = {
 export const SignupPage = async () => {
   const locale = await findMatchingLocale();
 
-  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([getisSsoEnabled(), getIsSamlSsoEnabled()]);
+  const [isSsoEnabled, isSamlSsoEnabled] = await Promise.all([false, false]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 

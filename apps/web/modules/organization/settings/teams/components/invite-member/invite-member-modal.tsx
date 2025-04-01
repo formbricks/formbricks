@@ -1,6 +1,5 @@
 "use client";
 
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Modal } from "@/modules/ui/components/modal";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 import { H4, Muted } from "@/modules/ui/components/typography";
@@ -16,8 +15,6 @@ interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  teams: TOrganizationTeam[];
-  canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
@@ -27,8 +24,6 @@ export const InviteMemberModal = ({
   open,
   setOpen,
   onSubmit,
-  teams,
-  canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
   membershipRole,
@@ -43,20 +38,11 @@ export const InviteMemberModal = ({
         setOpen={setOpen}
         environmentId={environmentId}
         onSubmit={onSubmit}
-        canDoRoleManagement={canDoRoleManagement}
         isFormbricksCloud={isFormbricksCloud}
-        teams={teams}
         membershipRole={membershipRole}
       />
     ),
-    bulk: (
-      <BulkInviteTab
-        setOpen={setOpen}
-        onSubmit={onSubmit}
-        canDoRoleManagement={canDoRoleManagement}
-        isFormbricksCloud={isFormbricksCloud}
-      />
-    ),
+    bulk: <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} isFormbricksCloud={isFormbricksCloud} />,
   };
 
   return (

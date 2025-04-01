@@ -1,6 +1,3 @@
-import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
-import { getIsContactsEnabled, getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
@@ -33,17 +30,16 @@ export const SurveyEditorPage = async (props) => {
   const searchParams = await props.searchParams;
   const params = await props.params;
 
-  const { session, isMember, environment, hasReadAccess, currentUserMembership, projectPermission } =
-    await getEnvironmentAuth(params.environmentId);
+  const { session, isMember, environment, hasReadAccess, currentUserMembership } = await getEnvironmentAuth(
+    params.environmentId
+  );
 
   const t = await getTranslate();
-  const [survey, project, actionClasses, contactAttributeKeys, responseCount, segments] = await Promise.all([
+  const [survey, project, actionClasses, responseCount] = await Promise.all([
     getSurvey(params.surveyId),
     getProjectByEnvironmentId(params.environmentId),
     getActionClasses(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
     getResponseCountBySurveyId(params.surveyId),
-    getSegments(params.environmentId),
   ]);
 
   if (!project) {
@@ -58,10 +54,9 @@ export const SurveyEditorPage = async (props) => {
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
   const locale = session.user.id ? await getUserLocale(session.user.id) : undefined;
 
-  const isUserTargetingAllowed = await getIsContactsEnabled();
-  const isMultiLanguageAllowed = await getMultiLanguagePermission(organizationBilling.plan);
-  const isSurveyFollowUpsAllowed = await getSurveyFollowUpsPermission(organizationBilling.plan);
-
+  const isUserTargetingAllowed = false;
+  const isMultiLanguageAllowed = false;
+  const isSurveyFollowUpsAllowed = false;
   const userEmail = await getUserEmail(session.user.id);
 
   const projectLanguages = await getProjectLanguages(project.id);
@@ -70,7 +65,6 @@ export const SurveyEditorPage = async (props) => {
     !survey ||
     !environment ||
     !actionClasses ||
-    !contactAttributeKeys ||
     !project ||
     !userEmail ||
     isSurveyCreationDeletionDisabled
@@ -86,12 +80,9 @@ export const SurveyEditorPage = async (props) => {
       project={project}
       environment={environment}
       actionClasses={actionClasses}
-      contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
       membershipRole={currentUserMembership.role}
-      projectPermission={projectPermission}
       colors={SURVEY_BG_COLORS}
-      segments={segments}
       isUserTargetingAllowed={isUserTargetingAllowed}
       isMultiLanguageAllowed={isMultiLanguageAllowed}
       projectLanguages={projectLanguages}

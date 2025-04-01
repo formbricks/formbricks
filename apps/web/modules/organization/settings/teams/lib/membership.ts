@@ -2,7 +2,6 @@ import "server-only";
 import { membershipCache } from "@/lib/cache/membership";
 import { organizationCache } from "@/lib/cache/organization";
 import { teamCache } from "@/lib/cache/team";
-import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -194,50 +193,6 @@ export const getMembershipsByUserId = reactCache(
       [`getMembershipsByUserId-${userId}-${page}`],
       {
         tags: [membershipCache.tag.byUserId(userId)],
-      }
-    )()
-);
-
-export const getMembersByOrganizationId = reactCache(
-  async (organizationId: string): Promise<TOrganizationMember[]> =>
-    cache(
-      async () => {
-        validateInputs([organizationId, ZString]);
-
-        try {
-          const membersData = await prisma.membership.findMany({
-            where: { organizationId },
-            select: {
-              user: {
-                select: {
-                  name: true,
-                },
-              },
-              role: true,
-              userId: true,
-            },
-          });
-
-          const members = membersData.map((member) => {
-            return {
-              id: member.userId,
-              name: member.user?.name || "",
-              role: member.role,
-            };
-          });
-
-          return members;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getMembersByOrganizationId-${organizationId}`],
-      {
-        tags: [membershipCache.tag.byOrganizationId(organizationId)],
       }
     )()
 );

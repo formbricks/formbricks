@@ -1,7 +1,4 @@
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { getTeamsByOrganizationId } from "@/modules/ee/teams/team-list/lib/team";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { EditMemberships } from "@/modules/organization/settings/teams/components/edit-memberships";
 import { OrganizationActions } from "@/modules/organization/settings/teams/components/edit-memberships/organization-actions";
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
@@ -16,7 +13,6 @@ interface MembersViewProps {
   organization: TOrganization;
   currentUserId: string;
   environmentId: string;
-  canDoRoleManagement: boolean;
 }
 
 const MembersLoading = () => (
@@ -34,23 +30,13 @@ export const MembersView = async ({
   organization,
   currentUserId,
   environmentId,
-  canDoRoleManagement,
 }: MembersViewProps) => {
   const t = await getTranslate();
 
   const userMemberships = await getMembershipsByUserId(currentUserId);
   const isLeaveOrganizationDisabled = userMemberships.length <= 1;
 
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-
-  let teams: TOrganizationTeam[] = [];
-
-  if (canDoRoleManagement) {
-    teams = (await getTeamsByOrganizationId(organization.id)) ?? [];
-    if (!teams) {
-      throw new Error(t("common.teams_not_found"));
-    }
-  }
+  const isMultiOrgEnabled = false;
 
   return (
     <SettingsCard
@@ -63,22 +49,15 @@ export const MembersView = async ({
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}
-          canDoRoleManagement={canDoRoleManagement}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          teams={teams}
         />
       )}
 
       {membershipRole && (
         <Suspense fallback={<MembersLoading />}>
-          <EditMemberships
-            canDoRoleManagement={canDoRoleManagement}
-            organization={organization}
-            currentUserId={currentUserId}
-            role={membershipRole}
-          />
+          <EditMemberships organization={organization} currentUserId={currentUserId} role={membershipRole} />
         </Suspense>
       )}
     </SettingsCard>

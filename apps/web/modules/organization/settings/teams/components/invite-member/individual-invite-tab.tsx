@@ -1,14 +1,9 @@
 "use client";
 
-import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { Small } from "@/modules/ui/components/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
@@ -21,8 +16,6 @@ import { ZUserName } from "@formbricks/types/user";
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  teams: TOrganizationTeam[];
-  canDoRoleManagement: boolean;
   isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
@@ -31,11 +24,8 @@ interface IndividualInviteTabProps {
 export const IndividualInviteTab = ({
   setOpen,
   onSubmit,
-  teams,
-  canDoRoleManagement,
   isFormbricksCloud,
   environmentId,
-  membershipRole,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
@@ -49,7 +39,7 @@ export const IndividualInviteTab = ({
   const form = useForm<TFormData>({
     resolver: zodResolver(ZFormSchema),
     defaultValues: {
-      role: canDoRoleManagement ? "member" : "owner",
+      role: "owner",
       teamIds: [],
     },
   });
@@ -71,11 +61,6 @@ export const IndividualInviteTab = ({
     setOpen(false);
     reset();
   };
-
-  const teamOptions = teams.map((team) => ({
-    label: team.name,
-    value: team.id,
-  }));
 
   return (
     <FormProvider {...form}>
@@ -100,12 +85,6 @@ export const IndividualInviteTab = ({
           {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>}
         </div>
         <div>
-          <AddMemberRole
-            control={control}
-            canDoRoleManagement={canDoRoleManagement}
-            isFormbricksCloud={isFormbricksCloud}
-            membershipRole={membershipRole}
-          />
           {watch("role") === "member" && (
             <Alert className="mt-2" variant="info">
               <AlertDescription>{t("environments.settings.teams.member_role_info_message")}</AlertDescription>
@@ -113,49 +92,21 @@ export const IndividualInviteTab = ({
           )}
         </div>
 
-        {canDoRoleManagement && (
-          <FormField
-            control={control}
-            name="teamIds"
-            render={({ field }) => (
-              <FormItem className="flex flex-col space-y-2">
-                <FormLabel>{t("common.add_to_team")} </FormLabel>
-                <div className="space-y-2">
-                  <MultiSelect
-                    value={field.value}
-                    options={teamOptions}
-                    placeholder={t("environments.settings.teams.team_select_placeholder")}
-                    disabled={!teamOptions.length}
-                    onChange={(val) => field.onChange(val)}
-                  />
-                  {!teamOptions.length && (
-                    <Small className="italic">
-                      {t("environments.settings.teams.create_first_team_message")}
-                    </Small>
-                  )}
-                </div>
-              </FormItem>
-            )}
-          />
-        )}
-
-        {!canDoRoleManagement && (
-          <Alert>
-            <AlertDescription className="flex">
-              {t("environments.settings.teams.upgrade_plan_notice_message")}
-              <Link
-                className="ml-1 underline"
-                target="_blank"
-                href={
-                  isFormbricksCloud
-                    ? `/environments/${environmentId}/settings/billing`
-                    : "https://formbricks.com/upgrade-self-hosting-license"
-                }>
-                {t("common.start_free_trial")}
-              </Link>
-            </AlertDescription>
-          </Alert>
-        )}
+        <Alert>
+          <AlertDescription className="flex">
+            {t("environments.settings.teams.upgrade_plan_notice_message")}
+            <Link
+              className="ml-1 underline"
+              target="_blank"
+              href={
+                isFormbricksCloud
+                  ? `/environments/${environmentId}/settings/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license"
+              }>
+              {t("common.start_free_trial")}
+            </Link>
+          </AlertDescription>
+        </Alert>
 
         <div className="flex justify-between">
           <Button

@@ -3,8 +3,6 @@
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
   deleteMembership,
@@ -213,10 +211,6 @@ export const inviteUserAction = authenticatedActionClient
       throw new OperationNotAllowedError("Managers can only invite users as members");
     }
 
-    if (parsedInput.role !== "owner" || parsedInput.teamIds.length > 0) {
-      await checkRoleManagementPermission(parsedInput.organizationId);
-    }
-
     const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
       invitee: {
@@ -268,7 +262,7 @@ export const leaveOrganizationAction = authenticatedActionClient
 
     const { isOwner } = getAccessFlags(membership.role);
 
-    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+    const isMultiOrgEnabled = false;
 
     if (isOwner) {
       throw new OperationNotAllowedError("You cannot leave an organization you own");

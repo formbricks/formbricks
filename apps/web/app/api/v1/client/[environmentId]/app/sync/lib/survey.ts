@@ -1,7 +1,6 @@
 import "server-only";
 import { contactCache } from "@/lib/cache/contact";
 import { contactAttributeCache } from "@/lib/cache/contact-attribute";
-import { evaluateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
@@ -11,12 +10,11 @@ import { projectCache } from "@formbricks/lib/project/cache";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { anySurveyHasFilters } from "@formbricks/lib/survey/utils";
 import { diffInDays } from "@formbricks/lib/utils/datetime";
 import { validateInputs } from "@formbricks/lib/utils/validate";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const getSyncSurveys = reactCache(
@@ -114,40 +112,6 @@ export const getSyncSurveys = reactCache(
             return [];
           }
 
-          // if no surveys have segment filters, return the surveys
-          if (!anySurveyHasFilters(surveys)) {
-            return surveys;
-          }
-
-          // the surveys now have segment filters, so we need to evaluate them
-          const surveyPromises = surveys.map(async (survey) => {
-            const { segment } = survey;
-            // if the survey has no segment, or the segment has no filters, we return the survey
-            if (!segment || !segment.filters?.length) {
-              return survey;
-            }
-
-            // Evaluate the segment filters
-            const result = await evaluateSegment(
-              {
-                attributes: contactAttributes ?? {},
-                deviceType,
-                environmentId,
-                contactId,
-                userId: String(contactAttributes.userId),
-              },
-              segment.filters
-            );
-
-            return result ? survey : null;
-          });
-
-          const resolvedSurveys = await Promise.all(surveyPromises);
-          surveys = resolvedSurveys.filter((survey) => !!survey) as TSurvey[];
-
-          if (!surveys) {
-            throw new ResourceNotFoundError("Survey", environmentId);
-          }
           return surveys;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {

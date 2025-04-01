@@ -1,6 +1,5 @@
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -16,8 +15,8 @@ import { EditProfileAvatarForm } from "./components/EditProfileAvatarForm";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
-  const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+  const isTwoFactorAuthEnabled = false;
+  const isMultiOrgEnabled = false;
   const params = await props.params;
   const t = await getTranslate();
   const { environmentId } = params;

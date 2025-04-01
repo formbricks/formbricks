@@ -1,4 +1,3 @@
-import { getIsAIEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeOrganizationMembersToSurveyResponses } from "@/modules/survey/components/template-list/lib/organization";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
@@ -50,33 +49,6 @@ export const createSurvey = async (
     const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
-    }
-
-    //AI Insights
-    const isAIEnabled = await getIsAIEnabled(organization);
-    if (isAIEnabled) {
-      if (doesSurveyHasOpenTextQuestion(data.questions ?? [])) {
-        const openTextQuestions = data.questions?.filter((question) => question.type === "openText") ?? [];
-        const insightsEnabledValues = await Promise.all(
-          openTextQuestions.map(async (question) => {
-            const insightsEnabled = await getInsightsEnabled(question);
-
-            return { id: question.id, insightsEnabled };
-          })
-        );
-
-        data.questions = data.questions?.map((question) => {
-          const index = insightsEnabledValues.findIndex((item) => item.id === question.id);
-          if (index !== -1) {
-            return {
-              ...question,
-              insightsEnabled: insightsEnabledValues[index].insightsEnabled,
-            };
-          }
-
-          return question;
-        });
-      }
     }
 
     // Survey follow-ups

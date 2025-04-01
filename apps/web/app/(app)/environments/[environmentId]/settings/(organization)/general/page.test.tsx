@@ -1,8 +1,3 @@
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
@@ -53,12 +48,6 @@ vi.mock("@/modules/environments/lib/utils", () => ({
   getEnvironmentAuth: vi.fn(),
 }));
 
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsMultiOrgEnabled: vi.fn(),
-  getIsOrganizationAIReady: vi.fn(),
-  getWhiteLabelPermission: vi.fn(),
-}));
-
 describe("Page", () => {
   let mockEnvironmentAuth = {
     session: { user: { id: "test-user-id" } },
@@ -75,9 +64,6 @@ describe("Page", () => {
     vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUser).mockResolvedValue(mockUser);
     vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
-    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
-    vi.mocked(getIsOrganizationAIReady).mockResolvedValue(true);
-    vi.mocked(getWhiteLabelPermission).mockResolvedValue(true);
   });
 
   it("renders the page with organization settings", async () => {

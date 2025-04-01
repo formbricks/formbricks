@@ -3,8 +3,6 @@
 import { createProjectAction } from "@/app/(app)/environments/[environmentId]/actions";
 import { previewSurvey } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationTeam } from "@/modules/ee/teams/project-teams/types/team";
-import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import {
@@ -17,7 +15,6 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useTranslate } from "@tolgee/react";
@@ -41,8 +38,6 @@ interface ProjectSettingsProps {
   channel: TProjectConfigChannel;
   industry: TProjectConfigIndustry;
   defaultBrandColor: string;
-  organizationTeams: TOrganizationTeam[];
-  canDoRoleManagement: boolean;
   userProjectsCount: number;
 }
 
@@ -52,12 +47,7 @@ export const ProjectSettings = ({
   channel,
   industry,
   defaultBrandColor,
-  organizationTeams,
-  canDoRoleManagement = false,
-  userProjectsCount,
 }: ProjectSettingsProps) => {
-  const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
-
   const router = useRouter();
   const { t } = useTranslate();
   const addProject = async (data: TProjectUpdateInput) => {
@@ -112,11 +102,6 @@ export const ProjectSettings = ({
   const logoUrl = form.watch("logo.url");
   const brandColor = form.watch("styling.brandColor.light") ?? defaultBrandColor;
   const { isSubmitting } = form.formState;
-
-  const organizationTeamsOptions = organizationTeams.map((team) => ({
-    label: team.name,
-    value: team.id,
-  }));
 
   return (
     <div className="mt-6 flex w-5/6 space-x-10 lg:w-2/3 2xl:w-1/2">
@@ -174,41 +159,6 @@ export const ProjectSettings = ({
               )}
             />
 
-            {canDoRoleManagement && userProjectsCount > 0 && (
-              <FormField
-                control={form.control}
-                name="teamIds"
-                render={({ field, fieldState: { error } }) => (
-                  <FormItem className="w-full space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <FormLabel>{t("common.teams")}</FormLabel>
-                        <FormDescription>
-                          {t("organizations.projects.new.settings.team_description")}
-                        </FormDescription>
-                      </div>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        type="button"
-                        onClick={() => setCreateTeamModalOpen(true)}>
-                        {t("organizations.projects.new.settings.create_new_team")}
-                      </Button>
-                    </div>
-                    <FormControl>
-                      <div>
-                        <MultiSelect
-                          value={field.value}
-                          options={organizationTeamsOptions}
-                          onChange={(teamIds) => field.onChange(teamIds)}
-                        />
-                        {error?.message && <FormError className="text-left">{error.message}</FormError>}
-                      </div>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
             <div className="flex w-full justify-end">
               <Button loading={isSubmitting} type="submit" id="form-next-button">
                 {t("common.next")}
@@ -241,14 +191,6 @@ export const ProjectSettings = ({
           />
         </div>
       </div>
-      <CreateTeamModal
-        open={createTeamModalOpen}
-        setOpen={setCreateTeamModalOpen}
-        organizationId={organizationId}
-        onCreate={(teamId) => {
-          form.setValue("teamIds", [...(form.getValues("teamIds") || []), teamId]);
-        }}
-      />
     </div>
   );
 };

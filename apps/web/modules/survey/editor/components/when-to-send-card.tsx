@@ -1,8 +1,6 @@
 "use client";
 
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
@@ -22,7 +20,6 @@ interface WhenToSendCardProps {
   environmentId: string;
   propActionClasses: ActionClass[];
   membershipRole?: OrganizationRole;
-  projectPermission: TTeamPermission | null;
 }
 
 export const WhenToSendCard = ({
@@ -31,7 +28,6 @@ export const WhenToSendCard = ({
   setLocalSurvey,
   propActionClasses,
   membershipRole,
-  projectPermission,
 }: WhenToSendCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
@@ -40,9 +36,8 @@ export const WhenToSendCard = ({
   const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
 
   const { isMember } = getAccessFlags(membershipRole);
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
 
-  const isReadOnly = isMember && hasReadAccess;
+  const isReadOnly = isMember;
 
   const autoClose = localSurvey.autoClose !== null;
   const delay = localSurvey.delay !== 0;

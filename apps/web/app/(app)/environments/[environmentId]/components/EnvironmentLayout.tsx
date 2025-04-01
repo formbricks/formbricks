@@ -1,7 +1,5 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
-import { getEnterpriseLicense, getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
@@ -58,17 +56,8 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
   const membershipRole = currentUserMembership?.role;
-  const { isMember } = getAccessFlags(membershipRole);
 
-  const { features, lastChecked, isPendingDowngrade, active } = await getEnterpriseLicense();
-
-  const projectPermission = await getProjectPermissionByUserId(session.user.id, environment.projectId);
-
-  if (isMember && !projectPermission) {
-    throw new Error(t("common.project_permission_not_found"));
-  }
-
-  const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
+  const isMultiOrgEnabled = false;
 
   let peopleCount = 0;
   let responseCount = 0;
@@ -80,7 +69,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
     ]);
   }
 
-  const organizationProjectsLimit = await getOrganizationProjectsLimit(organization.billing.limits);
+  const organizationProjectsLimit = 10;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
@@ -95,13 +84,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
         />
       )}
 
-      <PendingDowngradeBanner
-        lastChecked={lastChecked}
-        isPendingDowngrade={isPendingDowngrade ?? false}
-        active={active}
-        environmentId={environment.id}
-      />
-
       <div className="flex h-full">
         <MainNavigation
           environment={environment}
@@ -113,14 +95,13 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isLicenseActive={active}
+          isLicenseActive={false}
         />
         <div id="mainContent" className="flex-1 overflow-y-auto bg-slate-50">
           <TopControlBar
             environment={environment}
             environments={environments}
             membershipRole={membershipRole}
-            projectPermission={projectPermission}
           />
           <div className="mt-14">{children}</div>
         </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { LocalizedEditor } from "@/modules/ee/multi-language-surveys/components/localized-editor";
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
 import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
@@ -45,26 +44,6 @@ export const ConsentQuestionForm = ({
         setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
       />
-
-      <div className="mt-3">
-        <Label htmlFor="subheader">{t("common.description")}</Label>
-        <div className="mt-2">
-          <LocalizedEditor
-            id="subheader"
-            value={question.html}
-            localSurvey={localSurvey}
-            isInvalid={isInvalid}
-            updateQuestion={updateQuestion}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            firstRender={firstRender}
-            setFirstRender={setFirstRender}
-            questionIdx={questionIdx}
-            locale={locale}
-          />
-        </div>
-      </div>
-
       <QuestionFormInput
         id="label"
         label={t("environments.surveys.edit.checkbox_label") + "*"}

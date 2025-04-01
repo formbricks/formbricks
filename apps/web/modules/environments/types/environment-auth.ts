@@ -1,4 +1,3 @@
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { z } from "zod";
 import { ZEnvironment } from "@formbricks/types/environment";
 import { ZMembership } from "@formbricks/types/memberships";
@@ -15,7 +14,6 @@ export const ZEnvironmentAuth = z.object({
     expires: z.string(),
   }),
   currentUserMembership: ZMembership,
-  projectPermission: ZTeamPermission.nullable(),
   isMember: z.boolean(),
   isOwner: z.boolean(),
   isManager: z.boolean(),

@@ -1,10 +1,5 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
-import {
-  getIsMultiOrgEnabled,
-  getIsSamlSsoEnabled,
-  getisSsoEnabled,
-} from "@/modules/ee/license-check/lib/utils";
 import { notFound } from "next/navigation";
 import {
   AZURE_OAUTH_ENABLED,
@@ -31,11 +26,7 @@ import { SignupForm } from "./components/signup-form";
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const searchParams = await searchParamsProps;
   const inviteToken = searchParams["inviteToken"] ?? null;
-  const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([
-    getIsMultiOrgEnabled(),
-    getisSsoEnabled(),
-    getIsSamlSsoEnabled(),
-  ]);
+  const [isMultOrgEnabled, isSsoEnabled, isSamlSsoEnabled] = await Promise.all([false, false, false]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
 

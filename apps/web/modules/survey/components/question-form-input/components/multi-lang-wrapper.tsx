@@ -1,6 +1,5 @@
 "use client";
 
-import { LanguageIndicator } from "@/modules/ee/multi-language-surveys/components/language-indicator";
 import { useTranslate } from "@tolgee/react";
 import { ReactNode, useMemo } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
@@ -65,15 +64,7 @@ export const MultiLangWrapper = ({
         {render({
           value,
           onChange: handleChange,
-          children:
-            enabledLanguages.length > 1 ? (
-              <LanguageIndicator
-                selectedLanguageCode={usedLanguageCode}
-                surveyLanguages={localSurvey.languages}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
-              />
-            ) : null,
+          children: null,
         })}
       </div>
 

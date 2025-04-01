@@ -1,20 +1,12 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { AIToggle } from "@/app/(app)/environments/[environmentId]/settings/(organization)/general/components/AIToggle";
-import {
-  getIsMultiOrgEnabled,
-  getIsOrganizationAIReady,
-  getWhiteLabelPermission,
-} from "@/modules/ee/license-check/lib/utils";
-import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { getUser } from "@formbricks/lib/user/service";
+import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { SettingsCard } from "../../components/SettingsCard";
-import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
@@ -25,17 +17,9 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     params.environmentId
   );
 
-  const user = session?.user?.id ? await getUser(session.user.id) : null;
-
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.billing.plan);
-
-  const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
-  const currentUserRole = currentUserMembership?.role;
-
   const isOwnerOrManager = isManager || isOwner;
 
-  const isOrganizationAIReady = await getIsOrganizationAIReady(organization.billing.plan);
+  const isOrganizationAIReady = false;
 
   return (
     <PageContentWrapper>
@@ -67,27 +51,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           />
         </SettingsCard>
       )}
-      <EmailCustomizationSettings
-        organization={organization}
-        hasWhiteLabelPermission={hasWhiteLabelPermission}
-        environmentId={params.environmentId}
-        isReadOnly={!isOwnerOrManager}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-        fbLogoUrl={FB_LOGO_URL}
-        user={user}
-      />
-      {isMultiOrgEnabled && (
-        <SettingsCard
-          title={t("environments.settings.general.delete_organization")}
-          description={t("environments.settings.general.delete_organization_description")}>
-          <DeleteOrganization
-            organization={organization}
-            isDeleteDisabled={isDeleteDisabled}
-            isUserOwner={currentUserRole === "owner"}
-          />
-        </SettingsCard>
-      )}
-
       <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
     </PageContentWrapper>
   );
