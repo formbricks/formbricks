@@ -1652,6 +1652,7 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Vous devez avoir deux langues ou plus configurées dans votre projet pour travailler avec des traductions.",
         "your_description_here_recall_information_with": "Votre description ici. Rappelez-vous des informations avec @",
         "your_question_here_recall_information_with": "Votre question ici. Rappelez-vous des informations avec @",
+        "your_tooltip_here_recall_information_with": "Votre info-bulle ici. Rappelez-vous des informations avec @",
         "your_web_app": "Votre application web",
         "zip": "Zip"
       },

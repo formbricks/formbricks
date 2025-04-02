@@ -1652,6 +1652,7 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "您需要在您的專案中設定兩個或更多語言，才能使用翻譯。",
         "your_description_here_recall_information_with": "您的描述在這裡。使用 @ 回憶資訊",
         "your_question_here_recall_information_with": "您的問題在這裡。使用 @ 回憶資訊",
+        "your_tooltip_here_recall_information_with": "您的工具提示在這裡。使用 @ 召回信息",
         "your_web_app": "您的 Web 應用程式",
         "zip": "郵遞區號"
       },
