@@ -156,7 +156,6 @@ export const setup = async (
   addWidgetContainer();
 
   if (
-    !isDebug &&
     existingConfig?.environment &&
     existingConfig.environmentId === configInput.environmentId &&
     existingConfig.appUrl === configInput.appUrl
@@ -180,7 +179,11 @@ export const setup = async (
       let environmentState: TEnvironmentState = existingConfig.environment;
       let userState: TUserState = existingConfig.user;
 
-      if (isEnvironmentStateExpired) {
+      if (isEnvironmentStateExpired || isDebug) {
+        if (isDebug) {
+          logger.debug("Debug mode is active, refetching environment state");
+        }
+
         const environmentStateResponse = await fetchEnvironmentState({
           appUrl: configInput.appUrl,
           environmentId: configInput.environmentId,
