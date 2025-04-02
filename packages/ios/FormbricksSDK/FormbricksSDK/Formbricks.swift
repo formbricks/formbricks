@@ -1,12 +1,23 @@
 import Foundation
 import Network
 
+/// Enum representing success actions
+public enum SuccessAction: Codable {
+    case onFinishedSetup
+    case onFinishedRefreshEnvironment
+    case onFinishedLogout
+    case onFinishedSetUserID
+    case onFoundSurvey
+}
+
 /// Formbricks SDK delegate protocol. It contains the main methods to interact with the SDK.
 public protocol FormbricksDelegate: AnyObject {
     func onSurveyStarted()
     func onSurveyFinished()
     func onSurveyClosed()
+    func onSurveyDisplayed()
     func onError(_ error: Error)
+    func onSuccess (_ successAction: SuccessAction)
 }
 
 /// The main class of the Formbricks SDK. It contains the main methods to interact with the SDK.
@@ -22,6 +33,7 @@ public protocol FormbricksDelegate: AnyObject {
     static internal var service = FormbricksService()
     
     public static weak var delegate: FormbricksDelegate?
+    static internal var securityCertData: Data?
     
     // make this class not instantiatable outside of the SDK
     internal override init() {}
@@ -40,7 +52,13 @@ public protocol FormbricksDelegate: AnyObject {
      Formbricks.setup(with: config)
      ```
      */
-    @objc public static func setup(with config: FormbricksConfig) {
+    @objc public static func setup(with config: FormbricksConfig,
+                                   force: Bool = false,
+                                   certData: Data? = nil) {
+        if (force == true) {
+            isInitialized = false
+        }
+        
         guard !isInitialized else {
             let error = FormbricksSDKError(type: .sdkIsAlreadyInitialized)
             delegate?.onError(error)
@@ -51,6 +69,7 @@ public protocol FormbricksDelegate: AnyObject {
         self.appUrl = config.appUrl
         self.environmentId = config.environmentId
         self.logger.logLevel = config.logLevel
+        self.securityCertData = certData
         
         if let userId = config.userId {
             UserManager.shared.set(userId: userId)
@@ -63,9 +82,9 @@ public protocol FormbricksDelegate: AnyObject {
             self.language = language
         }
         
-        SurveyManager.shared.refreshEnvironmentIfNeeded()
+        SurveyManager.shared.refreshEnvironmentIfNeeded(force: force,
+                                                        isInitial: true)
         UserManager.shared.syncUserStateIfNeeded()
-        
         
         self.isInitialized = true
     }
@@ -196,6 +215,7 @@ public protocol FormbricksDelegate: AnyObject {
         }
 
         UserManager.shared.logout()
+        Formbricks.delegate?.onSuccess(.onFinishedLogout)
     }
 }
 

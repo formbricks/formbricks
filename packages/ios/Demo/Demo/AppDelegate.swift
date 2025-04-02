@@ -4,23 +4,45 @@ import FormbricksSDK
 class AppDelegate: NSObject, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
+        setupFormbrick()
+        return true
+    }
+    
+    func setupFormbrick() {
         let config = FormbricksConfig.Builder(appUrl: "[appUrl]", environmentId: "[environmentId]")
             .setLogLevel(.debug)
             .build()
         
         Formbricks.delegate = self
         
-        Formbricks.setup(with: config)
+        Formbricks.setup(with: config,
+                         force: true,
+                         certData: loadCertData())
         
         Formbricks.logout()
         Formbricks.setUserId(UUID().uuidString)
-        
-        return true
     }
-
+    
+    func loadCertData() -> Data? {
+        guard let certificatePath = Bundle.main.path(forResource: "example.com", ofType: "der") else {
+            return nil
+        }
+        
+        return try? Data(contentsOf: URL(fileURLWithPath: certificatePath))
+    }
 }
 
 extension AppDelegate: FormbricksDelegate {
+    func onSurveyDisplayed() {
+        
+    }
+    
+    func onSuccess(_ successAction: FormbricksSDK.SuccessAction) {
+//        if (successAction == .onFinishedSetup) {
+//            Formbricks.track("[action_key]]")
+//        }
+    }
+    
     func onSurveyStarted() {
         print("survey started")
     }
@@ -35,6 +57,7 @@ extension AppDelegate: FormbricksDelegate {
     
     func onError(_ error: any Error) {
         print("survey error")
+        print(error.message)
         if let error = error as? FormbricksSDKError {
             print(error.message)
         }

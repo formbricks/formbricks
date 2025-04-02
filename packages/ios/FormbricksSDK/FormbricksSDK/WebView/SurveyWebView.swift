@@ -25,7 +25,9 @@ struct SurveyWebView: UIViewRepresentable {
         webView.configuration.defaultWebpagePreferences.allowsContentJavaScript = true
         webView.isOpaque = false
         webView.backgroundColor = UIColor.clear
-        webView.isInspectable = true
+        if #available(iOS 16.4, *) {
+            webView.isInspectable = true
+        }
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
         return webView
@@ -66,6 +68,12 @@ extension SurveyWebView {
                 completionHandler(.useCredential, URLCredential(trust: serverTrust))
             } else {
                  completionHandler(.useCredential, nil)
+            }
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            UIView.animate(withDuration: 1.0) {
+                webView.parentViewController?.view.backgroundColor = UIColor.gray.withAlphaComponent(0.6)
             }
         }
     }
@@ -114,6 +122,7 @@ final class JsMessageHandler: NSObject, WKScriptMessageHandler {
                 
             /// Happens when the survey library fails to load.
             case .onSurveyLibraryLoadError:
+                Formbricks.delegate?.onError(FormbricksSDKError(type: .surveyLibraryLoadError))
                 SurveyManager.shared.dismissSurveyWebView()
             }
             
@@ -162,5 +171,18 @@ private extension SurveyWebView {
             log("💥", "Uncaught", [`${e.message} at ${e.filename}:${e.lineno}:${e.colno}`])
         })
     """
+    }
+}
+
+public extension UIView {
+    var parentViewController: UIViewController? {
+        var responder: UIResponder? = self
+        while let nextResponder = responder?.next {
+            if let viewController = nextResponder as? UIViewController {
+                return viewController
+            }
+            responder = nextResponder
+        }
+        return nil
     }
 }

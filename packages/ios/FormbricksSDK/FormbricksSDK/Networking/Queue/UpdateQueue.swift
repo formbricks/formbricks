@@ -66,5 +66,6 @@ private extension UpdateQueue {
         
         Formbricks.logger.debug("UpdateQueue - commit() called on UpdateQueue with \(userId) and \(attributes ?? [:])")
         UserManager.shared.syncUser(withId: userId, attributes: attributes)
+        Formbricks.delegate?.onSuccess(.onFinishedSetUserID)
     }
 }
