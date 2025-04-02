@@ -3,7 +3,6 @@
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
-import { WalletButton } from "@/modules/alchemy-wallet";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
@@ -36,6 +35,7 @@ import {
   UserCircleIcon,
   UserIcon,
   UsersIcon,
+  WalletMinimalIcon,
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Image from "next/image";
@@ -175,6 +175,13 @@ export const MainNavigation = ({
         icon: Cog,
         isActive: pathname?.includes("/project"),
       },
+      {
+        name: t("common.wallet"),
+        href: `/environments/${environment.id}/wallet`,
+        icon: WalletMinimalIcon,
+        isActive: pathname?.includes("/wallet"),
+        isHidden: false,
+      }
     ],
     [t, environment.id, pathname]
   );
@@ -260,9 +267,6 @@ export const MainNavigation = ({
           </div>
 
           <div>
-            {/* Alchemy Wallet Login */}
-            {!isCollapsed && <WalletButton />}
-
             {/* Project Switch */}
             {!isBilling && (
               <ProjectSwitcher
