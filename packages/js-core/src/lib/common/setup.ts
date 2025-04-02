@@ -205,9 +205,13 @@ export const setup = async (
         }
       }
 
-      if (isUserStateExpired) {
+      if (isUserStateExpired || isDebug) {
         // If the existing person state (expired) has a userId, we need to fetch the person state
         // If the existing person state (expired) has no userId, we need to set the person state to the default
+
+        if (isDebug) {
+          logger.debug("Debug mode is active, refetching user state");
+        }
 
         if (userState.data.userId) {
           const updatesResponse = await sendUpdatesToBackend({
@@ -234,7 +238,7 @@ export const setup = async (
               responseMessage: "Unknown error",
             });
           }
-        } else {
+        } else if (!isDebug) {
           userState = DEFAULT_USER_STATE_NO_USER_ID;
         }
       }
@@ -275,7 +279,6 @@ export const setup = async (
         throw environmentStateResponse.error;
       }
 
-      // const personState = DEFAULT_USER_STATE_NO_USER_ID;
       let userState: TUserState = DEFAULT_USER_STATE_NO_USER_ID;
 
       if ("userId" in configInput && configInput.userId) {
