@@ -665,8 +665,8 @@ importers:
         specifier: 10.1.1
         version: 10.1.1(eslint@8.57.0)
       eslint-config-turbo:
-        specifier: 2.4.4
-        version: 2.4.4(eslint@8.57.0)(turbo@2.4.4)
+        specifier: 2.3.3
+        version: 2.3.3(eslint@8.57.0)
       eslint-plugin-i18n-json:
         specifier: 4.0.1
         version: 4.0.1(eslint@8.57.0)
@@ -8133,11 +8133,10 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-config-turbo@2.4.4:
-    resolution: {integrity: sha512-4w/heWywWkFw09a5MY5lCvb9suJlhBSkzNtGTwM5+zRif4rksubaMYy1pD0++5rqoDVcQax25jCrtii9ptsNDw==}
+  eslint-config-turbo@2.3.3:
+    resolution: {integrity: sha512-cM9wSBYowQIrjx2MPCzFE6jTnG4vpTPJKZ/O+Ps3CqrmGK/wtNOsY6WHGMwLtKY/nNbgRahAJH6jGVF6k2coOg==}
     peerDependencies:
       eslint: '>6.6.0'
-      turbo: '>2.0.0'
 
   eslint-import-resolver-alias@1.1.2:
     resolution: {integrity: sha512-WdviM1Eu834zsfjHtcGHtGfcu+F30Od3V7I9Fi57uhBEwPkjDcii7/yW8jAT+gOhn4P/vOxxNAXbFAKsrrc15w==}
@@ -8271,11 +8270,10 @@ packages:
   eslint-plugin-tsdoc@0.2.17:
     resolution: {integrity: sha512-xRmVi7Zx44lOBuYqG8vzTXuL6IdGOeF9nHX17bjJ8+VE6fsxpdGem0/SBTmAwgYMKYB1WBkqRJVQ+n8GK041pA==}
 
-  eslint-plugin-turbo@2.4.4:
-    resolution: {integrity: sha512-myEnQTjr3FkI0j1Fu0Mqnv1z8n0JW5iFTOUNzHaEevjzl+1uzMSsFwks/x8i3rGmI3EYtC1BY8K2B2pS0Vfx6w==}
+  eslint-plugin-turbo@2.3.3:
+    resolution: {integrity: sha512-j8UEA0Z+NNCsjZep9G5u5soDQHcXq/x4amrwulk6eHF1U91H2qAjp5I4jQcvJewmccCJbVp734PkHHTRnosjpg==}
     peerDependencies:
       eslint: '>6.6.0'
-      turbo: '>2.0.0'
 
   eslint-plugin-unicorn@51.0.1:
     resolution: {integrity: sha512-MuR/+9VuB0fydoI0nIn2RDA5WISRn4AsJyNSaNKLVwie9/ONvQhxOBbkfSICBPnzKrB77Fh6CZZXjgTt/4Latw==}
@@ -23766,11 +23764,10 @@ snapshots:
     dependencies:
       eslint: 8.57.0
 
-  eslint-config-turbo@2.4.4(eslint@8.57.0)(turbo@2.4.4):
+  eslint-config-turbo@2.3.3(eslint@8.57.0):
     dependencies:
       eslint: 8.57.0
-      eslint-plugin-turbo: 2.4.4(eslint@8.57.0)(turbo@2.4.4)
-      turbo: 2.4.4
+      eslint-plugin-turbo: 2.3.3(eslint@8.57.0)
 
   eslint-import-resolver-alias@1.1.2(eslint-plugin-import@2.31.0):
     dependencies:
@@ -23991,11 +23988,10 @@ snapshots:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
 
-  eslint-plugin-turbo@2.4.4(eslint@8.57.0)(turbo@2.4.4):
+  eslint-plugin-turbo@2.3.3(eslint@8.57.0):
     dependencies:
       dotenv: 16.0.3
       eslint: 8.57.0
-      turbo: 2.4.4
 
   eslint-plugin-unicorn@51.0.1(eslint@8.57.0):
     dependencies:
