@@ -30,7 +30,7 @@ export const EditMemberships = async ({
           <div className="w-1/2 overflow-hidden">{t("common.full_name")}</div>
           <div className="w-1/2 overflow-hidden">{t("common.email")}</div>
 
-          {!canDoRoleManagement && <div className="min-w-[100px] whitespace-nowrap">{t("common.role")}</div>}
+          {canDoRoleManagement && <div className="min-w-[100px] whitespace-nowrap">{t("common.role")}</div>}
 
           <div className="min-w-[80px] whitespace-nowrap">{t("common.status")}</div>
 

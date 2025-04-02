@@ -99,7 +99,7 @@ export const MembersInfo = ({
             <p className="w-full truncate"> {member.email}</p>
           </div>
 
-          {!canDoRoleManagement && allMembers?.length > 0 && (
+          {canDoRoleManagement && allMembers?.length > 0 && (
             <div className="ph-no-capture min-w-[100px]">
               <EditMembershipRole
                 currentUserRole={currentUserRole}
