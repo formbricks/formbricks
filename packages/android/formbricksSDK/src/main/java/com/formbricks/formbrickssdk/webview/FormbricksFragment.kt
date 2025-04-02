@@ -178,7 +178,9 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                     consoleMessage?.let { cm ->
                         if (cm.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
                             Formbricks.callback?.onError(SDKError.surveyDisplayFetchError)
-                            dismiss()
+                            if (Formbricks.autoDismissErrors) {
+                                dismiss()
+                            }
                         }
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
                         Logger.d(log)
