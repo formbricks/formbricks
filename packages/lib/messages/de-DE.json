@@ -793,6 +793,7 @@
         "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
       },
       "api_keys": {
+        "access_control": "Zugriffskontrolle",
         "add_api_key": "API-Schlüssel hinzufügen",
         "add_env_api_key": "{environmentType} API-Schlüssel hinzufügen",
         "api_key": "API-Schlüssel",
@@ -803,11 +804,14 @@
         "api_key_security_warning": "Aus Sicherheitsgründen wird der API-Schlüssel nur einmal nach der Erstellung angezeigt. Bitte kopiere ihn sofort an einen sicheren Ort.",
         "dev_api_keys": "API-Schlüssel (Dev)",
         "dev_api_keys_description": "API-Schlüssel für deine Entwicklungsumgebung hinzufügen und entfernen.",
+        "duplicate_access": "Doppelter Projektzugriff nicht erlaubt",
         "duplicate_permissions": "Doppelte Berechtigungen sind nicht erlaubt",
         "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
+        "organization_access": "Organisationszugang",
         "permissions": "Berechtigungen",
         "prod_api_keys": "API-Schlüssel (Prod)",
         "prod_api_keys_description": "API-Schlüssel für deine Produktionsumgebung hinzufügen und entfernen.",
+        "project_access": "Projektzugriff",
         "secret": "Geheimnis",
         "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
       },

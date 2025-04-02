@@ -793,6 +793,7 @@
         "unable_to_delete_api_key": "無法刪除 API 金鑰"
       },
       "api_keys": {
+        "access_control": "存取控制",
         "add_api_key": "新增 API 金鑰",
         "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
         "api_key": "API 金鑰",
@@ -803,11 +804,14 @@
         "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",
         "dev_api_keys": "開發環境金鑰",
         "dev_api_keys_description": "為您的開發環境新增和移除 API 金鑰。",
+        "duplicate_access": "不允許重複的 project 存取",
         "duplicate_permissions": "不允許重複權限",
         "no_api_keys_yet": "您還沒有任何 API 金鑰",
+        "organization_access": "組織 Access",
         "permissions": "權限",
         "prod_api_keys": "生產環境金鑰",
         "prod_api_keys_description": "為您的生產環境新增和移除 API 金鑰。",
+        "project_access": "專案存取",
         "secret": "密碼",
         "unable_to_delete_api_key": "無法刪除 API 金鑰"
       },

@@ -1,6 +1,7 @@
 import { ApiKeyPermission } from "@prisma/client";
 import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
+import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TProject } from "@formbricks/types/project";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
@@ -13,32 +14,26 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
-const baseProject = {
-  id: "project1",
-  name: "Project 1",
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  organizationId: "org1",
-  styling: {
-    allowStyleOverwrite: true,
-    brandColor: { light: "#000000" },
-  },
-  recontactDays: 0,
-  inAppSurveyBranding: false,
-  linkSurveyBranding: false,
-  config: {
-    channel: "link" as const,
-    industry: "saas" as const,
-  },
-  placement: "bottomLeft" as const,
-  clickOutsideClose: true,
-  darkOverlay: false,
-  languages: [],
-};
+// Base project setup
+const baseProject = {};
 
+// Example project data
 const mockProjects: TProject[] = [
   {
     ...baseProject,
+    id: "project1",
+    name: "Project 1",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    organizationId: "org1",
+    styling: {
+      allowStyleOverwrite: true,
+      brandColor: { light: "#000000" },
+    },
+    config: {
+      channel: "link" as const,
+      industry: "saas" as const,
+    },
     environments: [
       {
         id: "env1",
@@ -57,17 +52,20 @@ const mockProjects: TProject[] = [
         appSetupCompleted: true,
       },
     ],
-  },
+  } as TProject,
 ];
 
+// Example API key with permissions
 const mockApiKey: TApiKeyWithEnvironmentPermission = {
   id: "key1",
-  hashedKey: "hashed1",
   label: "Test Key 1",
   createdAt: new Date(),
-  lastUsedAt: null,
-  organizationId: "org1",
-  createdBy: "user1",
+  organizationAccess: {
+    accessControl: {
+      read: true,
+      write: false,
+    },
+  },
   apiKeyEnvironments: [
     {
       environmentId: "env1",
@@ -80,6 +78,21 @@ const mockApiKey: TApiKeyWithEnvironmentPermission = {
   ],
 };
 
+// API key with additional organization access
+const mockApiKeyWithOrgAccess = {
+  ...mockApiKey,
+  organizationAccess: {
+    accessControl: { read: true, write: false },
+    otherAccess: { read: false, write: true },
+  },
+};
+
+// API key with no environment permissions
+const apiKeyWithoutPermissions = {
+  ...mockApiKey,
+  apiKeyEnvironments: [],
+};
+
 describe("ViewPermissionModal", () => {
   afterEach(() => {
     cleanup();
@@ -89,22 +102,21 @@ describe("ViewPermissionModal", () => {
   const defaultProps = {
     open: true,
     setOpen: vi.fn(),
-    apiKey: mockApiKey,
     projects: mockProjects,
+    apiKey: mockApiKey,
   };
 
   it("renders the modal with correct title", () => {
     render(<ViewPermissionModal {...defaultProps} />);
-
+    // Check the localized text for the modal's title
     expect(screen.getByText("environments.project.api_keys.api_key")).toBeInTheDocument();
   });
 
   it("renders all permissions for the API key", () => {
     render(<ViewPermissionModal {...defaultProps} />);
-
-    // Check if both permissions are rendered
+    // The same key has two environment permissions
     const projectNames = screen.getAllByText("Project 1");
-    expect(projectNames).toHaveLength(2); // Should appear twice, once for each permission
+    expect(projectNames).toHaveLength(2); // once for each permission
     expect(screen.getByText("production")).toBeInTheDocument();
     expect(screen.getByText("development")).toBeInTheDocument();
     expect(screen.getByText("read")).toBeInTheDocument();
@@ -113,35 +125,36 @@ describe("ViewPermissionModal", () => {
 
   it("displays correct project and environment names", () => {
     render(<ViewPermissionModal {...defaultProps} />);
-
-    // Check if project name is displayed correctly for each permission
+    // Check for 'Project 1', 'production', 'development'
     const projectNames = screen.getAllByText("Project 1");
-    expect(projectNames).toHaveLength(2); // Should appear twice, once for each permission
-
-    // Check if environment types are displayed correctly
+    expect(projectNames).toHaveLength(2);
     expect(screen.getByText("production")).toBeInTheDocument();
     expect(screen.getByText("development")).toBeInTheDocument();
   });
 
   it("displays correct permission levels", () => {
     render(<ViewPermissionModal {...defaultProps} />);
-
-    // Check if permission levels are displayed correctly
+    // Check if permission levels 'read' and 'write' appear
     expect(screen.getByText("read")).toBeInTheDocument();
     expect(screen.getByText("write")).toBeInTheDocument();
   });
 
   it("handles API key with no permissions", () => {
-    const apiKeyWithoutPermissions = {
-      ...mockApiKey,
-      apiKeyEnvironments: [],
-    };
-
     render(<ViewPermissionModal {...defaultProps} apiKey={apiKeyWithoutPermissions} />);
-
-    // Check if the permissions section is empty
+    // Ensure environment/permission section is empty
     expect(screen.queryByText("Project 1")).not.toBeInTheDocument();
     expect(screen.queryByText("production")).not.toBeInTheDocument();
     expect(screen.queryByText("development")).not.toBeInTheDocument();
+  });
+
+  it("displays organizationAccess toggles", () => {
+    render(<ViewPermissionModal {...defaultProps} apiKey={mockApiKeyWithOrgAccess} />);
+
+    expect(screen.getByTestId("organization-access-accessControl-read")).toBeChecked();
+    expect(screen.getByTestId("organization-access-accessControl-read")).toBeDisabled();
+    expect(screen.getByTestId("organization-access-accessControl-write")).not.toBeChecked();
+    expect(screen.getByTestId("organization-access-accessControl-write")).toBeDisabled();
+    expect(screen.getByTestId("organization-access-otherAccess-read")).not.toBeChecked();
+    expect(screen.getByTestId("organization-access-otherAccess-write")).toBeChecked();
   });
 });

@@ -14,6 +14,7 @@ import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
@@ -33,9 +34,8 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   const [apiKeysLocal, setApiKeysLocal] =
     useState<(TApiKeyWithEnvironmentPermission & { actualKey?: string })[]>(apiKeys);
   const [activeKey, setActiveKey] = useState<TApiKeyWithEnvironmentPermission | null>(null);
-  const [isCreatingAPIKey, setIsCreatingAPIKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
-  const [isDeletingAPIKey, setIsDeletingAPIKey] = useState(false);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
     e.preventDefault();
@@ -45,41 +45,43 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
 
   const handleDeleteKey = async () => {
     if (!activeKey) return;
-    setIsDeletingAPIKey(true);
+    setIsLoading(true);
     const deleteApiKeyResponse = await deleteApiKeyAction({ id: activeKey.id });
     if (deleteApiKeyResponse?.data) {
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success(t("environments.project.api_keys.api_key_deleted"));
       setIsDeleteKeyModalOpen(false);
-      setIsDeletingAPIKey(false);
+      setIsLoading(false);
     } else {
       toast.error(t("environments.project.api_keys.unable_to_delete_api_key"));
       setIsDeleteKeyModalOpen(false);
-      setIsDeletingAPIKey(false);
+      setIsLoading(false);
     }
   };
 
   const handleAddAPIKey = async (data: {
     label: string;
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
-  }) => {
-    setIsCreatingAPIKey(true);
+    organizationAccess: TOrganizationAccess;
+  }): Promise<void> => {
+    setIsLoading(true);
     const createApiKeyResponse = await createApiKeyAction({
       organizationId: organizationId,
       apiKeyData: {
         label: data.label,
         environmentPermissions: data.environmentPermissions,
+        organizationAccess: data.organizationAccess,
       },
     });
 
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
-      setIsCreatingAPIKey(false);
+      setIsLoading(false);
       toast.success(t("environments.project.api_keys.api_key_created"));
     } else {
-      setIsCreatingAPIKey(false);
+      setIsLoading(false);
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
       toast.error(errorMessage);
     }
@@ -147,7 +149,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                   }
                 }}
                 tabIndex={0}
-                key={apiKey.hashedKey}>
+                key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.actualKey} />
@@ -190,7 +192,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         projects={projects}
-        isCreatingAPIKey={isCreatingAPIKey}
+        isCreatingAPIKey={isLoading}
       />
       {activeKey && (
         <ViewPermissionModal
@@ -205,7 +207,7 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         setOpen={setIsDeleteKeyModalOpen}
         deleteWhat={t("environments.project.api_keys.api_key")}
         onDelete={handleDeleteKey}
-        isDeleting={isDeletingAPIKey}
+        isDeleting={isLoading}
       />
     </div>
   );

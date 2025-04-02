@@ -793,6 +793,7 @@
         "unable_to_delete_api_key": "Impossible de supprimer la clé API"
       },
       "api_keys": {
+        "access_control": "Contrôle d'accès",
         "add_api_key": "Ajouter une clé API",
         "add_env_api_key": "Ajouter la clé API {environmentType}",
         "api_key": "Clé API",
@@ -803,11 +804,14 @@
         "api_key_security_warning": "Pour des raisons de sécurité, la clé API ne sera affichée qu'une seule fois après sa création. Veuillez la copier immédiatement à votre destination.",
         "dev_api_keys": "Clés de l'environnement de développement",
         "dev_api_keys_description": "Ajoutez et supprimez des clés API pour votre environnement de développement.",
+        "duplicate_access": "L'accès en double au projet n'est pas autorisé",
         "duplicate_permissions": "Les autorisations en double ne sont pas autorisées",
         "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
+        "organization_access": "Accès à l'organisation",
         "permissions": "Permissions",
         "prod_api_keys": "Clés de l'environnement de production",
         "prod_api_keys_description": "Ajoutez et supprimez des clés API pour votre environnement de production.",
+        "project_access": "Accès au projet",
         "secret": "Secret",
         "unable_to_delete_api_key": "Impossible de supprimer la clé API"
       },

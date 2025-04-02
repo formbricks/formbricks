@@ -1,5 +1,6 @@
 "use client";
 
+import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import {
   TApiKeyWithEnvironmentPermission,
   TOrganizationProject,
@@ -7,7 +8,10 @@ import {
 import { DropdownMenu, DropdownMenuTrigger } from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { Switch } from "@/modules/ui/components/switch";
 import { useTranslate } from "@tolgee/react";
+import { Fragment } from "react";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 
 interface ViewPermissionModalProps {
   open: boolean;
@@ -18,6 +22,7 @@ interface ViewPermissionModalProps {
 
 export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPermissionModalProps) => {
   const { t } = useTranslate();
+  const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
 
   const getProjectName = (environmentId: string) => {
     return projects.find((project) => project.environments.find((env) => env.id === environmentId))?.name;
@@ -104,6 +109,37 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
                       </div>
                     );
                   })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[auto_100px_100px] gap-4">
+                    <div></div>
+                    <span className="flex items-center justify-center text-sm font-medium">Read</span>
+                    <span className="flex items-center justify-center text-sm font-medium">Write</span>
+
+                    {Object.keys(organizationAccess).map((key) => (
+                      <Fragment key={key}>
+                        <div className="py-1 text-sm">{t(getOrganizationAccessKeyDisplayName(key))}</div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            disabled={true}
+                            data-testid={`organization-access-${key}-read`}
+                            checked={organizationAccess[key].read}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            disabled={true}
+                            data-testid={`organization-access-${key}-write`}
+                            checked={organizationAccess[key].write}
+                          />
+                        </div>
+                      </Fragment>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

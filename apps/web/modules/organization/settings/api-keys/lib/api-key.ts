@@ -11,6 +11,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 
@@ -25,7 +26,11 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
             where: {
               organizationId,
             },
-            include: {
+            select: {
+              id: true,
+              label: true,
+              createdAt: true,
+              organizationAccess: true,
               apiKeyEnvironments: {
                 select: {
                   environmentId: true,
@@ -122,6 +127,7 @@ export const createApiKey = async (
   userId: string,
   apiKeyData: TApiKeyCreateInput & {
     environmentPermissions?: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    organizationAccess: TOrganizationAccess;
   }
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
   validateInputs([organizationId, ZId], [apiKeyData, ZApiKeyCreateInput]);
@@ -130,7 +136,7 @@ export const createApiKey = async (
     const hashedKey = hashApiKey(key);
 
     // Extract environmentPermissions from apiKeyData
-    const { environmentPermissions, ...apiKeyDataWithoutPermissions } = apiKeyData;
+    const { environmentPermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
 
     // Create the API key
     const result = await prisma.apiKey.create({
@@ -139,6 +145,7 @@ export const createApiKey = async (
         hashedKey,
         createdBy: userId,
         organization: { connect: { id: organizationId } },
+        organizationAccess,
         ...(environmentPermissions && environmentPermissions.length > 0
           ? {
               apiKeyEnvironments: {

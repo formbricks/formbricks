@@ -40,3 +40,12 @@ export const hasPermission = (
       return false;
   }
 };
+
+export const getOrganizationAccessKeyDisplayName = (key: string) => {
+  switch (key) {
+    case "accessControl":
+      return "environments.project.api_keys.access_control";
+    default:
+      return key;
+  }
+};

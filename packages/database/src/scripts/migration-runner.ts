@@ -1,8 +1,8 @@
+import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
-import { type Prisma, PrismaClient } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 
 const execAsync = promisify(exec);
@@ -35,6 +35,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   await execAsync(`rm -rf ${PRISMA_MIGRATIONS_DIR}/*`);
 
   for (let index = 0; index < migrations.length; index++) {
+    console.log(migrations[index]);
     await runSingleMigration(migrations[index], index);
   }
 
@@ -56,6 +57,8 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
             WHERE id = ${migration.id}
           `;
 
+          console.log(existingMigration);
+
           if (existingMigration?.[0]?.status === "pending") {
             logger.info(`Data migration ${migration.name} is pending.`);
             logger.info("Either there is another migration which is currently running or this is an error.");
@@ -74,6 +77,8 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
           if (existingMigration?.[0]?.status === "failed") {
             logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
           } else {
+            console.log(migration.id);
+
             // create a new data migration entry with pending status
             await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
           }
@@ -266,6 +271,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 export async function applyMigrations(): Promise<void> {
   try {
     const allMigrations = await loadMigrations();
+    console.log(allMigrations);
     logger.info(`Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR}`);
     await runMigrations(allMigrations);
   } catch (error) {

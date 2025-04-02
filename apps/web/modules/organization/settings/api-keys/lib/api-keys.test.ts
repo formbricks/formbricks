@@ -14,6 +14,12 @@ const mockApiKey: ApiKey = {
   createdBy: "user123",
   organizationId: "org123",
   lastUsedAt: null,
+  organizationAccess: {
+    accessControl: {
+      read: false,
+      write: false,
+    },
+  },
 };
 
 const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
@@ -66,20 +72,24 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments]);
       vi.mocked(apiKeyCache.tag.byOrganizationId).mockReturnValue("org-tag");
 
-      const result = await getApiKeysWithEnvironmentPermissions("org123");
+      const result = await getApiKeysWithEnvironmentPermissions("clj28r6va000409j3ep7h8xzk");
 
       expect(result).toEqual([mockApiKeyWithEnvironments]);
       expect(prisma.apiKey.findMany).toHaveBeenCalledWith({
         where: {
-          organizationId: "org123",
+          organizationId: "clj28r6va000409j3ep7h8xzk",
         },
-        include: {
+        select: {
           apiKeyEnvironments: {
             select: {
               environmentId: true,
               permission: true,
             },
           },
+          createdAt: true,
+          id: true,
+          label: true,
+          organizationAccess: true,
         },
       });
     });
@@ -125,6 +135,12 @@ describe("API Key Management", () => {
   describe("createApiKey", () => {
     const mockApiKeyData = {
       label: "Test API Key",
+      organizationAccess: {
+        accessControl: {
+          read: false,
+          write: false,
+        },
+      },
     };
 
     const mockApiKeyWithEnvironments = {

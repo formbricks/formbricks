@@ -58,7 +58,7 @@ export const GET = async () => {
         },
       });
     } else {
-      return new Response("Kindly use v2 management API", {
+      return new Response("You can't use this method with this API key", {
         status: 400,
       });
     }
