@@ -17,6 +17,8 @@
     "generate-and-merge-api-specs": "npm run generate-api-specs && npm run merge-client-endpoints"
   },
   "dependencies": {
+    "@account-kit/infra": "4.21.0",
+    "@account-kit/react": "4.21.0",
     "@ai-sdk/azure": "1.1.9",
     "@boxyhq/saml-jackson": "1.37.1",
     "@dnd-kit/core": "6.3.1",
@@ -28,8 +30,8 @@
     "@formbricks/js": "workspace:*",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/lib": "workspace:*",
-    "@formbricks/surveys": "workspace:*",
     "@formbricks/logger": "workspace:*",
+    "@formbricks/surveys": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@hookform/resolvers": "3.9.1",
     "@intercom/messenger-js-sdk": "0.0.14",
@@ -72,6 +74,7 @@
     "@sentry/nextjs": "8.52.0",
     "@tailwindcss/forms": "0.5.9",
     "@tailwindcss/typography": "0.5.15",
+    "@tanstack/react-query": "5.71.1",
     "@tanstack/react-table": "8.20.6",
     "@testing-library/jest-dom": "6.6.3",
     "@tolgee/cli": "2.8.1",
