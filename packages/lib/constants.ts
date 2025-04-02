@@ -174,8 +174,8 @@ export const MANAGEMENT_API_RATE_LIMIT = {
 };
 
 export const SHARE_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 100,
+  interval: 60 * 1, // 1 minutes
+  allowedPerInterval: 30,
 };
 export const FORGET_PASSWORD_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
