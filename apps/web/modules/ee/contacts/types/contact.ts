@@ -123,6 +123,7 @@ export const ZContactBulkUploadContact = z.object({
 export type TContactBulkUploadContact = z.infer<typeof ZContactBulkUploadContact>;
 
 export const ZContactBulkUploadRequest = z.object({
+  environmentId: z.string().cuid2(),
   contacts: z
     .array(ZContactBulkUploadContact)
     .max(1000, { message: "Maximum 1000 contacts allowed at a time." })

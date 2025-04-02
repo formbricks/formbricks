@@ -1,5 +1,6 @@
 import { type ApiKey, type ApiKeyEnvironment, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
+import { ZOrganizationAccess } from "../../types/api-key";
 
 export const ZApiKeyPermission = z.nativeEnum(ApiKeyPermission);
 
@@ -20,6 +21,7 @@ export const ZApiKey = z.object({
   label: z.string(),
   hashedKey: z.string(),
   organizationId: z.string().cuid2(),
+  organizationAccess: ZOrganizationAccess,
 }) satisfies z.ZodType<ApiKey>;
 
 export const ZApiKeyCreateInput = z.object({
