@@ -3,16 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@next/eslint-plugin-next": "15.1.0",
-    "@typescript-eslint/eslint-plugin": "8.18.0",
-    "@typescript-eslint/parser": "8.18.0",
+    "@next/eslint-plugin-next": "15.2.4",
+    "@typescript-eslint/eslint-plugin": "8.29.0",
+    "@typescript-eslint/parser": "8.29.0",
     "@vercel/style-guide": "6.0.0",
-    "eslint-config-next": "15.1.0",
-    "eslint-config-prettier": "9.1.0",
-    "eslint-config-turbo": "2.3.3",
-    "eslint-plugin-i18n-json": "4.0.0",
-    "eslint-plugin-react": "7.37.2",
-    "eslint-plugin-react-hooks": "5.1.0",
-    "eslint-plugin-react-refresh": "0.4.16"
+    "eslint-config-next": "15.2.4",
+    "eslint-config-prettier": "10.1.1",
+    "eslint-config-turbo": "2.4.4",
+    "eslint-plugin-i18n-json": "4.0.1",
+    "eslint-plugin-react": "7.37.4",
+    "eslint-plugin-react-hooks": "5.2.0",
+    "eslint-plugin-react-refresh": "0.4.19"
   }
 }
