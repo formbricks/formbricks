@@ -12,7 +12,6 @@ import { TUser } from "@formbricks/types/user";
 
 export const DeleteAccount = ({
   session,
-  IS_FORMBRICKS_CLOUD,
   user,
   organizationsWithSingleOwner,
   isMultiOrgEnabled,
@@ -36,7 +35,6 @@ export const DeleteAccount = ({
         open={isModalOpen}
         setOpen={setModalOpen}
         user={user}
-        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         formbricksLogout={formbricksLogout}
         organizationsWithSingleOwner={organizationsWithSingleOwner}
       />

@@ -10,7 +10,6 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect, useState } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyCalQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface CalQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,9 +18,7 @@ interface CalQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCalQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const CalQuestionForm = ({
@@ -30,9 +27,7 @@ export const CalQuestionForm = ({
   questionIdx,
   updateQuestion,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   isInvalid,
-  locale,
 }: CalQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const [isCalHostEnabled, setIsCalHostEnabled] = useState(!!question.calHost);
@@ -58,8 +53,6 @@ export const CalQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div>
         {question.subheader !== undefined && (
@@ -74,8 +67,6 @@ export const CalQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>

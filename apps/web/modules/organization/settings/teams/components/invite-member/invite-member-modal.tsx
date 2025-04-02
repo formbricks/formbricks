@@ -15,7 +15,6 @@ interface InviteMemberModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
 }
@@ -24,7 +23,6 @@ export const InviteMemberModal = ({
   open,
   setOpen,
   onSubmit,
-  isFormbricksCloud,
   environmentId,
   membershipRole,
 }: InviteMemberModalProps) => {
@@ -38,11 +36,10 @@ export const InviteMemberModal = ({
         setOpen={setOpen}
         environmentId={environmentId}
         onSubmit={onSubmit}
-        isFormbricksCloud={isFormbricksCloud}
         membershipRole={membershipRole}
       />
     ),
-    bulk: <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} isFormbricksCloud={isFormbricksCloud} />,
+    bulk: <BulkInviteTab setOpen={setOpen} onSubmit={onSubmit} />,
   };
 
   return (

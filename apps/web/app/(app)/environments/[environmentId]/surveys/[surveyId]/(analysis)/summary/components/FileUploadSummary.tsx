@@ -10,22 +10,15 @@ import { getOriginalFileNameFromUrl } from "@formbricks/lib/storage/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryFileUpload } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface FileUploadSummaryProps {
   questionSummary: TSurveyQuestionSummaryFileUpload;
   environmentId: string;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
-export const FileUploadSummary = ({
-  questionSummary,
-  environmentId,
-  survey,
-  locale,
-}: FileUploadSummaryProps) => {
+export const FileUploadSummary = ({ questionSummary, environmentId, survey }: FileUploadSummaryProps) => {
   const [visibleResponses, setVisibleResponses] = useState(10);
   const { t } = useTranslate();
   const handleLoadMore = () => {
@@ -104,7 +97,7 @@ export const FileUploadSummary = ({
               </div>
 
               <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                {timeSince(new Date(response.updatedAt).toISOString())}
               </div>
             </div>
           ))}

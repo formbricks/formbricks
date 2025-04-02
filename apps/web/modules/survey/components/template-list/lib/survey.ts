@@ -3,7 +3,6 @@ import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
 import { selectSurvey } from "@/modules/survey/lib/survey";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled } from "@/modules/survey/lib/utils";
 import { ActionClass, Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { segmentCache } from "@formbricks/lib/cache/segment";

@@ -1,6 +1,5 @@
 import { formatDistance, intlFormat } from "date-fns";
 import { de, enUS, fr, pt, ptBR, zhTW } from "date-fns/locale";
-import { TUserLocale } from "@formbricks/types/user";
 
 export const convertDateString = (dateString: string) => {
   if (!dateString) {
@@ -76,28 +75,29 @@ export const convertTimeString = (dateString: string) => {
   );
 };
 
-const getLocaleForTimeSince = (locale: TUserLocale) => {
-  switch (locale) {
-    case "de-DE":
-      return de;
-    case "en-US":
-      return enUS;
-    case "pt-BR":
-      return ptBR;
-    case "fr-FR":
-      return fr;
-    case "zh-Hant-TW":
-      return zhTW;
-    case "pt-PT":
-      return pt;
-  }
+const getLocaleForTimeSince = () => {
+  return enUS;
+  // switch (locale) {
+  //   case "de-DE":
+  //     return de;
+  //   case "en-US":
+  //     return enUS;
+  //   case "pt-BR":
+  //     return ptBR;
+  //   case "fr-FR":
+  //     return fr;
+  //   case "zh-Hant-TW":
+  //     return zhTW;
+  //   case "pt-PT":
+  //     return pt;
+  // }
 };
 
-export const timeSince = (dateString: string, locale: TUserLocale) => {
+export const timeSince = (dateString: string) => {
   const date = new Date(dateString);
   return formatDistance(date, new Date(), {
     addSuffix: true,
-    locale: getLocaleForTimeSince(locale),
+    locale: getLocaleForTimeSince(),
   });
 };
 

@@ -7,11 +7,10 @@ import { LockIcon } from "lucide-react";
 import { useState } from "react";
 
 interface TargetingLockedCardProps {
-  isFormbricksCloud: boolean;
   environmentId: string;
 }
 
-export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: TargetingLockedCardProps) => {
+export const TargetingLockedCard = ({ environmentId }: TargetingLockedCardProps) => {
   const { t } = useTranslate();
   const [open, setOpen] = useState(false);
 
@@ -43,16 +42,12 @@ export const TargetingLockedCard = ({ isFormbricksCloud, environmentId }: Target
             description={t("environments.surveys.edit.unlock_targeting_description")}
             buttons={[
               {
-                text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
-                href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                text: t("common.request_trial_license"),
+                href: "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
-                href: isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}
           />

@@ -2141,10 +2141,10 @@ export const iso639Languages: TIso639Language[] = [
 
 export const iso639Identifiers = iso639Languages.map((language) => language.alpha2);
 
-export const getLanguageLabel = (languageCode: string, locale: string): string | undefined => {
+export const getLanguageLabel = (languageCode: string): string | undefined => {
   const language = iso639Languages.find((lang) => lang.alpha2 === languageCode);
   // Type assertion to tell TypeScript that we know the structure of label
-  return language?.label[locale as keyof typeof language.label];
+  return language?.label["en-US"];
 };
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)

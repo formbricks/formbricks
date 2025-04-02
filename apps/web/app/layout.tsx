@@ -1,6 +1,5 @@
 import { SentryProvider } from "@/app/sentry/SentryProvider";
 import { TolgeeNextProvider } from "@/tolgee/client";
-import { getLocale } from "@/tolgee/language";
 import { getTolgee } from "@/tolgee/server";
 import { TolgeeStaticData } from "@tolgee/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -18,13 +17,13 @@ export const metadata: Metadata = {
 };
 
 const RootLayout = async ({ children }: { children: React.ReactNode }) => {
-  const locale = await getLocale();
+  const locale = "en-US";
   const tolgee = await getTolgee();
   // serializable data that are passed to client components
   const staticData = await tolgee.loadRequired();
 
   return (
-    <html lang={locale} translate="no">
+    <html lang={"en-US"} translate="no">
       <body className="flex h-dvh flex-col transition-all ease-in-out">
         {process.env.VERCEL === "1" && <SpeedInsights sampleRate={0.1} />}
         <SentryProvider sentryDsn={SENTRY_DSN}>

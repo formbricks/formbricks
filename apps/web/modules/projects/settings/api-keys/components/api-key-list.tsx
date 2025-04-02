@@ -2,17 +2,15 @@ import { getApiKeys } from "@/modules/projects/settings/api-keys/lib/api-key";
 import { getTranslate } from "@/tolgee/server";
 import { getEnvironments } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
-import { TUserLocale } from "@formbricks/types/user";
 import { EditAPIKeys } from "./edit-api-keys";
 
 interface ApiKeyListProps {
   environmentId: string;
   environmentType: string;
-  locale: TUserLocale;
   isReadOnly: boolean;
 }
 
-export const ApiKeyList = async ({ environmentId, environmentType, locale, isReadOnly }: ApiKeyListProps) => {
+export const ApiKeyList = async ({ environmentId, environmentType, isReadOnly }: ApiKeyListProps) => {
   const t = await getTranslate();
   const findEnvironmentByType = (environments, targetType) => {
     for (const environment of environments) {
@@ -38,7 +36,6 @@ export const ApiKeyList = async ({ environmentId, environmentType, locale, isRea
       environmentType={environmentType}
       apiKeys={apiKeys}
       environmentId={environmentId}
-      locale={locale}
       isReadOnly={isReadOnly}
     />
   );

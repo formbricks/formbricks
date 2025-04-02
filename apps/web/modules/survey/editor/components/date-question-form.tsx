@@ -10,7 +10,6 @@ import { PlusIcon } from "lucide-react";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyDateQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface IDateQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,9 +18,7 @@ interface IDateQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyDateQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 const dateOptions = [
@@ -46,8 +43,6 @@ export const DateQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: IDateQuestionFormProps): JSX.Element => {
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
@@ -63,8 +58,6 @@ export const DateQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -79,8 +72,6 @@ export const DateQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>

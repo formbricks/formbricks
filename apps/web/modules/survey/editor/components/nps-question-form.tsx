@@ -9,7 +9,6 @@ import { PlusIcon } from "lucide-react";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyNPSQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface NPSQuestionFormProps {
   localSurvey: TSurvey;
@@ -18,9 +17,7 @@ interface NPSQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyNPSQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const NPSQuestionForm = ({
@@ -31,8 +28,6 @@ export const NPSQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: NPSQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -50,8 +45,6 @@ export const NPSQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
 
       <div ref={parent}>
@@ -67,8 +60,6 @@ export const NPSQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -102,8 +93,6 @@ export const NPSQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
         <div className="w-full">
@@ -116,8 +105,6 @@ export const NPSQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
       </div>
@@ -135,8 +122,6 @@ export const NPSQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
       )}

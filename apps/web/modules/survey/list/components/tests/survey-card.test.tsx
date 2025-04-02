@@ -49,7 +49,6 @@ describe("SurveyCard", () => {
         WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
-        locale="en-US"
       />
     );
     // Draft survey => link should point to edit
@@ -66,7 +65,6 @@ describe("SurveyCard", () => {
         WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
-        locale="en-US"
       />
     );
     // When it's read only and draft, we expect no link
@@ -83,7 +81,6 @@ describe("SurveyCard", () => {
         WEBAPP_URL={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
-        locale="en-US"
       />
     );
     // For non-draft => link to summary

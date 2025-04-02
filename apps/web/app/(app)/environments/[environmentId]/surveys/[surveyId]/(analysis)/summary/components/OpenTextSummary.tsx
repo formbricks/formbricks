@@ -10,7 +10,6 @@ import { useState } from "react";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryOpenText } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface OpenTextSummaryProps {
@@ -18,10 +17,9 @@ interface OpenTextSummaryProps {
   environmentId: string;
   survey: TSurvey;
   documentsPerPage?: number;
-  locale: TUserLocale;
 }
 
-export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({ questionSummary, environmentId, survey }: OpenTextSummaryProps) => {
   const { t } = useTranslate();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -75,9 +73,7 @@ export const OpenTextSummary = ({ questionSummary, environmentId, survey, locale
                       ? renderHyperlinkedContent(response.value)
                       : response.value}
                   </TableCell>
-                  <TableCell width={120}>
-                    {timeSince(new Date(response.updatedAt).toISOString(), locale)}
-                  </TableCell>
+                  <TableCell width={120}>{timeSince(new Date(response.updatedAt).toISOString())}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -30,7 +30,6 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TI18nString, TSurveyQuestionId, TSurveySummary } from "@formbricks/types/surveys/types";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { AddressSummary } from "./AddressSummary";
 
 interface SummaryListProps {
@@ -40,7 +39,6 @@ interface SummaryListProps {
   survey: TSurvey;
   totalResponseCount: number;
   documentsPerPage?: number;
-  locale: TUserLocale;
 }
 
 export const SummaryList = ({
@@ -50,7 +48,6 @@ export const SummaryList = ({
   survey,
   totalResponseCount,
   documentsPerPage,
-  locale,
 }: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslate();
@@ -133,7 +130,6 @@ export const SummaryList = ({
                 environmentId={environment.id}
                 survey={survey}
                 documentsPerPage={documentsPerPage}
-                locale={locale}
               />
             );
           }
@@ -208,7 +204,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -219,7 +214,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -250,7 +244,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }
@@ -270,7 +263,6 @@ export const SummaryList = ({
                 key={questionSummary.id}
                 questionSummary={questionSummary}
                 environment={environment}
-                locale={locale}
               />
             );
           }
@@ -281,7 +273,6 @@ export const SummaryList = ({
                 questionSummary={questionSummary}
                 environmentId={environment.id}
                 survey={survey}
-                locale={locale}
               />
             );
           }

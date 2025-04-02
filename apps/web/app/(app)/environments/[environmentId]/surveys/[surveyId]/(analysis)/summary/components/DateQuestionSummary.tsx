@@ -9,22 +9,15 @@ import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { formatDateWithOrdinal } from "@formbricks/lib/utils/datetime";
 import { TSurvey, TSurveyQuestionSummaryDate } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface DateQuestionSummary {
   questionSummary: TSurveyQuestionSummaryDate;
   environmentId: string;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
-export const DateQuestionSummary = ({
-  questionSummary,
-  environmentId,
-  survey,
-  locale,
-}: DateQuestionSummary) => {
+export const DateQuestionSummary = ({ questionSummary, environmentId, survey }: DateQuestionSummary) => {
   const { t } = useTranslate();
   const [visibleResponses, setVisibleResponses] = useState(10);
 
@@ -74,7 +67,7 @@ export const DateQuestionSummary = ({
                 {formatDateWithOrdinal(new Date(response.value as string))}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
-                {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                {timeSince(new Date(response.updatedAt).toISOString())}
               </div>
             </div>
           ))}

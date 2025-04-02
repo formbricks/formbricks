@@ -16,7 +16,6 @@ import {
   TSurveyOpenTextQuestion,
   TSurveyOpenTextQuestionInputType,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface OpenQuestionFormProps {
   localSurvey: TSurvey;
@@ -25,9 +24,7 @@ interface OpenQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyOpenTextQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const OpenQuestionForm = ({
@@ -37,8 +34,6 @@ export const OpenQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: OpenQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const questionTypes = [
@@ -89,9 +84,7 @@ export const OpenQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         label={t("environments.surveys.edit.question") + "*"}
-        locale={locale}
       />
 
       <div ref={parent}>
@@ -106,9 +99,7 @@ export const OpenQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 label={t("common.description")}
-                locale={locale}
               />
             </div>
           </div>
@@ -142,9 +133,7 @@ export const OpenQuestionForm = ({
           isInvalid={isInvalid}
           updateQuestion={updateQuestion}
           selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           label={t("common.placeholder")}
-          locale={locale}
         />
       </div>
 

@@ -4,17 +4,15 @@ import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useTranslate } from "@tolgee/react";
 import Link from "next/link";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface LinkTabProps {
   survey: TSurvey;
   surveyUrl: string;
   surveyDomain: string;
   setSurveyUrl: (url: string) => void;
-  locale: TUserLocale;
 }
 
-export const LinkTab = ({ survey, surveyUrl, surveyDomain, setSurveyUrl, locale }: LinkTabProps) => {
+export const LinkTab = ({ survey, surveyUrl, surveyDomain, setSurveyUrl }: LinkTabProps) => {
   const { t } = useTranslate();
 
   const docsLinks = [
@@ -46,7 +44,6 @@ export const LinkTab = ({ survey, surveyUrl, surveyDomain, setSurveyUrl, locale 
           surveyUrl={surveyUrl}
           surveyDomain={surveyDomain}
           setSurveyUrl={setSurveyUrl}
-          locale={locale}
         />
       </div>
 

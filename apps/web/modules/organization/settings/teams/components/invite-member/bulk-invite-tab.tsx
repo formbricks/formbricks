@@ -15,10 +15,9 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 interface BulkInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  isFormbricksCloud: boolean;
 }
 
-export const BulkInviteTab = ({ setOpen, onSubmit, isFormbricksCloud }: BulkInviteTabProps) => {
+export const BulkInviteTab = ({ setOpen, onSubmit }: BulkInviteTabProps) => {
   const { t } = useTranslate();
   const [csvFile, setCSVFile] = useState<File>();
 
@@ -36,12 +35,9 @@ export const BulkInviteTab = ({ setOpen, onSubmit, isFormbricksCloud }: BulkInvi
       comments: "Full Name,Email Address,Role",
       complete: (results: ParseResult<string[]>) => {
         const members = results.data.map((csv) => {
-          const [name, email, role] = csv;
+          const [name, email] = csv;
 
-          let orgRole = "owner";
-          if (!isFormbricksCloud) {
-            orgRole = orgRole === "billing" ? "owner" : orgRole;
-          }
+          const orgRole = "owner";
 
           return {
             name: name.trim(),

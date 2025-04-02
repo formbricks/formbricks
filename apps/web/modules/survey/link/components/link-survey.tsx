@@ -29,7 +29,6 @@ interface LinkSurveyProps {
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
-  locale: string;
   isPreview: boolean;
   contactId?: string;
 }
@@ -49,7 +48,6 @@ export const LinkSurvey = ({
   IMPRINT_URL,
   PRIVACY_URL,
   IS_FORMBRICKS_CLOUD,
-  locale,
   isPreview,
   contactId,
 }: LinkSurveyProps) => {
@@ -127,7 +125,6 @@ export const LinkSurvey = ({
           isErrorComponent={true}
           languageCode={languageCode}
           styling={project.styling}
-          locale={locale}
         />
       );
     }
@@ -138,7 +135,6 @@ export const LinkSurvey = ({
         survey={survey}
         languageCode={languageCode}
         styling={project.styling}
-        locale={locale}
       />
     );
   }

@@ -7,7 +7,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { DEFAULT_LOCALE, DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { DOCUMENTS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
@@ -73,7 +73,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         totalResponseCount={totalResponseCount}
         documentsPerPage={DOCUMENTS_PER_PAGE}
         isReadOnly={isReadOnly}
-        locale={user.locale ?? DEFAULT_LOCALE}
       />
 
       <SettingsId title={t("common.survey_id")} id={surveyId}></SettingsId>

@@ -10,7 +10,6 @@ import { useTranslate } from "@tolgee/react";
 import { HashIcon, PlusIcon, SmileIcon, StarIcon } from "lucide-react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyRatingQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface RatingQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,9 +18,7 @@ interface RatingQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: any) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const RatingQuestionForm = ({
@@ -31,8 +28,6 @@ export const RatingQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: RatingQuestionFormProps) => {
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -48,8 +43,6 @@ export const RatingQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
 
       <div ref={parent}>
@@ -65,8 +58,6 @@ export const RatingQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -140,8 +131,6 @@ export const RatingQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
         <div className="flex-1">
@@ -155,8 +144,6 @@ export const RatingQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
       </div>
@@ -174,8 +161,6 @@ export const RatingQuestionForm = ({
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
             />
           </div>
         )}

@@ -13,7 +13,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
 import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
 export const metadata: Metadata = {
@@ -55,7 +54,6 @@ export const SurveysPage = async ({
   const surveyCount = await getSurveyCount(params.environmentId);
 
   const currentProjectChannel = project.config.channel ?? null;
-  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
   const CreateSurveyButton = () => {
     return (
       <Button size="sm" asChild>
@@ -85,7 +83,6 @@ export const SurveysPage = async ({
           userId={session.user.id}
           surveysPerPage={SURVEYS_PER_PAGE}
           currentProjectChannel={currentProjectChannel}
-          locale={locale}
         />
       </>
     );

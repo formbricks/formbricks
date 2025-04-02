@@ -10,14 +10,12 @@ import { type Response } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { IMPRINT_URL, IS_FORMBRICKS_CLOUD, PRIVACY_URL, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 interface SurveyRendererProps {
   survey: TSurvey;
   searchParams: {
     verify?: string;
-    lang?: string;
     embed?: string;
     preview?: string;
   };
@@ -35,8 +33,6 @@ export const renderSurvey = async ({
   contactId,
   isPreview,
 }: SurveyRendererProps) => {
-  const locale = await findMatchingLocale();
-  const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
   if (survey.status === "draft" || survey.type !== "link") {
@@ -48,7 +44,6 @@ export const renderSurvey = async ({
   if (!organizationBilling) {
     throw new Error("Organization not found");
   }
-  const isMultiLanguageAllowed = false;
 
   if (survey.status !== "inProgress" && !isPreview) {
     return (
@@ -80,19 +75,7 @@ export const renderSurvey = async ({
   }
 
   const getLanguageCode = (): string => {
-    if (!langParam || !isMultiLanguageAllowed) return "default";
-    else {
-      const selectedLanguage = survey.languages.find((surveyLanguage) => {
-        return (
-          surveyLanguage.language.code === langParam.toLowerCase() ||
-          surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
-        );
-      });
-      if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
-        return "default";
-      }
-      return selectedLanguage.language.code;
-    }
+    return "default";
   };
 
   const languageCode = getLanguageCode();
@@ -116,7 +99,6 @@ export const renderSurvey = async ({
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
         isEmbed={isEmbed}
-        locale={locale}
         isPreview={isPreview}
         contactId={contactId}
       />
@@ -139,7 +121,6 @@ export const renderSurvey = async ({
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      locale={locale}
       isPreview={isPreview}
       contactId={contactId}
     />

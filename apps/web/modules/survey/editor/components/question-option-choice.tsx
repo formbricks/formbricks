@@ -17,7 +17,6 @@ import {
   TSurveyQuestionChoice,
   TSurveyRankingQuestion,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface ChoiceProps {
@@ -30,7 +29,6 @@ interface ChoiceProps {
   isInvalid: boolean;
   localSurvey: TSurvey;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
   question: TSurveyMultipleChoiceQuestion | TSurveyRankingQuestion;
   updateQuestion: (
@@ -38,7 +36,6 @@ interface ChoiceProps {
     updatedAttributes: Partial<TSurveyMultipleChoiceQuestion> | Partial<TSurveyRankingQuestion>
   ) => void;
   surveyLanguageCodes: string[];
-  locale: TUserLocale;
 }
 
 export const QuestionOptionChoice = ({
@@ -50,13 +47,11 @@ export const QuestionOptionChoice = ({
   localSurvey,
   questionIdx,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   surveyLanguages,
   updateChoice,
   question,
   surveyLanguageCodes,
   updateQuestion,
-  locale,
 }: ChoiceProps) => {
   const { t } = useTranslate();
   const isDragDisabled = choice.id === "other";
@@ -92,12 +87,10 @@ export const QuestionOptionChoice = ({
           value={choice.label}
           updateChoice={updateChoice}
           selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
             isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
           }
           className={`${choice.id === "other" ? "border border-dashed" : ""} mt-0`}
-          locale={locale}
         />
         {choice.id === "other" && (
           <QuestionFormInput
@@ -113,12 +106,10 @@ export const QuestionOptionChoice = ({
             }
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={
               isInvalid && !isLabelValidForAllLanguages(question.choices[choiceIdx].label, surveyLanguages)
             }
             className="border border-dashed"
-            locale={locale}
           />
         )}
       </div>

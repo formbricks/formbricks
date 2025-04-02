@@ -20,7 +20,7 @@ import { useIntervalWhenFocused } from "@formbricks/lib/utils/hooks/useIntervalW
 import { replaceHeadlineRecall } from "@formbricks/lib/utils/recall";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveySummary } from "@formbricks/types/surveys/types";
-import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 import { SummaryList } from "./SummaryList";
 import { SummaryMetadata } from "./SummaryMetadata";
 
@@ -47,7 +47,6 @@ interface SummaryPageProps {
   user?: TUser;
   totalResponseCount: number;
   documentsPerPage?: number;
-  locale: TUserLocale;
   isReadOnly: boolean;
 }
 
@@ -58,7 +57,6 @@ export const SummaryPage = ({
   webAppUrl,
   totalResponseCount,
   documentsPerPage,
-  locale,
   isReadOnly,
 }: SummaryPageProps) => {
   const params = useParams();
@@ -183,7 +181,6 @@ export const SummaryPage = ({
         environment={environment}
         totalResponseCount={totalResponseCount}
         documentsPerPage={documentsPerPage}
-        locale={locale}
       />
     </>
   );

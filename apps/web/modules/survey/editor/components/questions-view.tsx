@@ -20,7 +20,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Project } from "@prisma/client";
+import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
@@ -38,7 +38,6 @@ import {
 } from "@formbricks/types/surveys/types";
 import { TSurvey, TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { findQuestionsWithCyclicLogic } from "@formbricks/types/surveys/validation";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   isEndingCardValid,
   isWelcomeCardValid,
@@ -52,16 +51,11 @@ interface QuestionsViewProps {
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   project: Project;
-  projectLanguages: Language[];
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
-  isMultiLanguageAllowed?: boolean;
-  isFormbricksCloud: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
-  locale: TUserLocale;
 }
 
 export const QuestionsView = ({
@@ -70,16 +64,11 @@ export const QuestionsView = ({
   localSurvey,
   setLocalSurvey,
   project,
-  projectLanguages,
   invalidQuestions,
   setInvalidQuestions,
-  setSelectedLanguageCode,
   selectedLanguageCode,
-  isMultiLanguageAllowed,
-  isFormbricksCloud,
   plan,
   isCxMode,
-  locale,
 }: QuestionsViewProps) => {
   const { t } = useTranslate();
   const internalQuestionIdMap = useMemo(() => {
@@ -431,9 +420,7 @@ export const QuestionsView = ({
             setActiveQuestionId={setActiveQuestionId}
             activeQuestionId={activeQuestionId}
             isInvalid={invalidQuestions ? invalidQuestions.includes("start") : false}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             selectedLanguageCode={selectedLanguageCode}
-            locale={locale}
           />
         </div>
       )}
@@ -450,15 +437,12 @@ export const QuestionsView = ({
           updateQuestion={updateQuestion}
           duplicateQuestion={duplicateQuestion}
           selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           deleteQuestion={deleteQuestion}
           activeQuestionId={activeQuestionId}
           setActiveQuestionId={setActiveQuestionId}
           invalidQuestions={invalidQuestions}
           addQuestion={addQuestion}
-          isFormbricksCloud={isFormbricksCloud}
           isCxMode={isCxMode}
-          locale={locale}
         />
       </DndContext>
 
@@ -481,12 +465,9 @@ export const QuestionsView = ({
                   setActiveQuestionId={setActiveQuestionId}
                   activeQuestionId={activeQuestionId}
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
                   selectedLanguageCode={selectedLanguageCode}
                   plan={plan}
                   addEndingCard={addEndingCard}
-                  isFormbricksCloud={isFormbricksCloud}
-                  locale={locale}
                 />
               );
             })}

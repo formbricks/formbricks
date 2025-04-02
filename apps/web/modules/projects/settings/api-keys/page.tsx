@@ -5,7 +5,6 @@ import { EnvironmentNotice } from "@/modules/ui/components/environment-notice";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { ApiKeyList } from "./components/api-key-list";
 
 export const APIKeysPage = async (props) => {
@@ -14,8 +13,6 @@ export const APIKeysPage = async (props) => {
 
   // Use the new utility to get all required data with authorization checks
   const { environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
-
-  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -30,7 +27,6 @@ export const APIKeysPage = async (props) => {
           <ApiKeyList
             environmentId={params.environmentId}
             environmentType="development"
-            locale={locale}
             isReadOnly={isReadOnly}
           />
         </SettingsCard>
@@ -41,7 +37,6 @@ export const APIKeysPage = async (props) => {
           <ApiKeyList
             environmentId={params.environmentId}
             environmentType="production"
-            locale={locale}
             isReadOnly={isReadOnly}
           />
         </SettingsCard>

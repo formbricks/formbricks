@@ -20,7 +20,7 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { env } from "@formbricks/lib/env";
 import { TOrganizationRole } from "@formbricks/types/memberships";
-import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
+import { ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
@@ -39,7 +39,6 @@ interface SignupFormProps {
   privacyUrl: string | undefined;
   termsUrl: string | undefined;
   emailAuthEnabled: boolean;
-  userLocale: TUserLocale;
   emailFromSearchParams?: string;
   emailVerificationDisabled: boolean;
   defaultOrganizationId?: string;
@@ -52,7 +51,6 @@ export const SignupForm = ({
   privacyUrl,
   termsUrl,
   emailAuthEnabled,
-  userLocale,
   emailFromSearchParams,
   emailVerificationDisabled,
   defaultOrganizationId,
@@ -95,7 +93,7 @@ export const SignupForm = ({
         name: data.name,
         email: data.email,
         password: data.password,
-        userLocale,
+        userLocale: "en-US",
         inviteToken: inviteToken || "",
         emailVerificationDisabled,
         defaultOrganizationId,

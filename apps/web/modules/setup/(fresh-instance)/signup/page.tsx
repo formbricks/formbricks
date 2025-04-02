@@ -11,7 +11,6 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const metadata: Metadata = {
   title: "Sign up",
@@ -19,8 +18,6 @@ export const metadata: Metadata = {
 };
 
 export const SignupPage = async () => {
-  const locale = await findMatchingLocale();
-
   const t = await getTranslate();
   return (
     <div className="flex flex-col items-center">
@@ -33,7 +30,6 @@ export const SignupPage = async () => {
         privacyUrl={PRIVACY_URL}
         emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
         emailAuthEnabled={EMAIL_AUTH_ENABLED}
-        userLocale={locale}
         defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
         defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}
         isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}

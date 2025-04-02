@@ -15,7 +15,6 @@ import {
 } from "@formbricks/lib/constants";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
 import { getNotionDatabases } from "@formbricks/lib/notion/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationNotion, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 
 const Page = async (props) => {
@@ -39,7 +38,6 @@ const Page = async (props) => {
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
     databasesArray = (await getNotionDatabases(environment.id)) ?? [];
   }
-  const locale = await findMatchingLocale();
 
   if (isReadOnly) {
     redirect("./");
@@ -56,7 +54,6 @@ const Page = async (props) => {
         notionIntegration={notionIntegration as TIntegrationNotion}
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
-        locale={locale}
       />
     </PageContentWrapper>
   );

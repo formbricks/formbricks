@@ -13,7 +13,6 @@ import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;
@@ -23,7 +22,6 @@ interface ManageIntegrationProps {
   setSelectedIntegration: React.Dispatch<
     React.SetStateAction<(TIntegrationNotionConfigData & { index: number }) | null>
   >;
-  locale: TUserLocale;
   handleNotionAuthorization: () => void;
 }
 
@@ -33,7 +31,6 @@ export const ManageIntegration = ({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
-  locale,
   handleNotionAuthorization,
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
@@ -129,9 +126,7 @@ export const ManageIntegration = ({
                     }}>
                     <div className="col-span-2 text-center">{data.surveyName}</div>
                     <div className="col-span-2 text-center">{data.databaseName}</div>
-                    <div className="col-span-2 text-center">
-                      {timeSince(data.createdAt.toString(), locale)}
-                    </div>
+                    <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
                   </div>
                 );
               })}

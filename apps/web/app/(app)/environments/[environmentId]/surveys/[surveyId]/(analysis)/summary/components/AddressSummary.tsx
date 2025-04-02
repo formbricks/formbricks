@@ -7,17 +7,15 @@ import Link from "next/link";
 import { timeSince } from "@formbricks/lib/time";
 import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TSurvey, TSurveyQuestionSummaryAddress } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { QuestionSummaryHeader } from "./QuestionSummaryHeader";
 
 interface AddressSummaryProps {
   questionSummary: TSurveyQuestionSummaryAddress;
   environmentId: string;
   survey: TSurvey;
-  locale: TUserLocale;
 }
 
-export const AddressSummary = ({ questionSummary, environmentId, survey, locale }: AddressSummaryProps) => {
+export const AddressSummary = ({ questionSummary, environmentId, survey }: AddressSummaryProps) => {
   const { t } = useTranslate();
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -60,7 +58,7 @@ export const AddressSummary = ({ questionSummary, environmentId, survey, locale 
                 </div>
 
                 <div className="px-4 text-slate-500 md:px-6">
-                  {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                  {timeSince(new Date(response.updatedAt).toISOString())}
                 </div>
               </div>
             );

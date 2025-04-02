@@ -13,7 +13,6 @@ import {
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 
 const Page = async (props) => {
@@ -32,8 +31,6 @@ const Page = async (props) => {
     (integration): integration is TIntegrationGoogleSheets => integration.type === "googleSheets"
   );
 
-  const locale = await findMatchingLocale();
-
   if (isReadOnly) {
     redirect("./");
   }
@@ -49,7 +46,6 @@ const Page = async (props) => {
           surveys={surveys}
           googleSheetIntegration={googleSheetIntegration}
           webAppUrl={WEBAPP_URL}
-          locale={locale}
         />
       </div>
     </PageContentWrapper>

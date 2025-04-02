@@ -11,7 +11,6 @@ import { PlusIcon, TrashIcon } from "lucide-react";
 import type { JSX } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TI18nString, TSurvey, TSurveyMatrixQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixQuestionFormProps {
@@ -21,9 +20,7 @@ interface MatrixQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMatrixQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const MatrixQuestionForm = ({
@@ -33,8 +30,6 @@ export const MatrixQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: MatrixQuestionFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslate();
@@ -114,8 +109,6 @@ export const MatrixQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -130,8 +123,6 @@ export const MatrixQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -170,11 +161,9 @@ export const MatrixQuestionForm = ({
                   value={question.rows[index]}
                   updateMatrixLabel={updateMatrixLabel}
                   selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.rows[index], localSurvey.languages)
                   }
-                  locale={locale}
                 />
                 {question.rows.length > 2 && (
                   <TooltipRenderer tooltipContent={t("common.delete")}>
@@ -222,11 +211,9 @@ export const MatrixQuestionForm = ({
                   value={question.columns[index]}
                   updateMatrixLabel={updateMatrixLabel}
                   selectedLanguageCode={selectedLanguageCode}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
                   isInvalid={
                     isInvalid && !isLabelValidForAllLanguages(question.columns[index], localSurvey.languages)
                   }
-                  locale={locale}
                 />
                 {question.columns.length > 2 && (
                   <TooltipRenderer tooltipContent={t("common.delete")}>

@@ -16,7 +16,6 @@ import { extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { createI18nString } from "@formbricks/lib/i18n/utils";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/common";
 import { TSurvey, TSurveyFileUploadQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
@@ -26,10 +25,7 @@ interface FileUploadFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyFileUploadQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  isFormbricksCloud: boolean;
-  locale: TUserLocale;
 }
 
 export const FileUploadQuestionForm = ({
@@ -40,9 +36,6 @@ export const FileUploadQuestionForm = ({
   isInvalid,
   project,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  isFormbricksCloud,
-  locale,
 }: FileUploadFormProps): JSX.Element => {
   const [extension, setExtension] = useState("");
   const { t } = useTranslate();
@@ -119,7 +112,7 @@ export const FileUploadQuestionForm = ({
   }, [billingInfo, billingInfoError, billingInfoLoading]);
 
   const handleMaxSizeInMBToggle = (checked: boolean) => {
-    const defaultMaxSizeInMB = isFormbricksCloud ? maxSizeInMBLimit : 1024;
+    const defaultMaxSizeInMB = 1024;
 
     updateQuestion(questionIdx, { maxSizeInMB: checked ? defaultMaxSizeInMB : undefined });
   };
@@ -137,8 +130,6 @@ export const FileUploadQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -153,8 +144,6 @@ export const FileUploadQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -204,7 +193,7 @@ export const FileUploadQuestionForm = ({
                 onChange={(e) => {
                   const parsedValue = parseInt(e.target.value, 10);
 
-                  if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
+                  if (parsedValue > maxSizeInMBLimit) {
                     toast.error(
                       `${t("environments.surveys.edit.max_file_size_limit_is")} ${maxSizeInMBLimit} MB`
                     );

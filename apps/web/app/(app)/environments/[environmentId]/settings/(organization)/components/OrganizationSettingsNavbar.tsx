@@ -8,7 +8,6 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 
 interface OrganizationSettingsNavbarProps {
   environmentId?: string;
-  isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
   activeId: string;
   loading?: boolean;
@@ -16,7 +15,6 @@ interface OrganizationSettingsNavbarProps {
 
 export const OrganizationSettingsNavbar = ({
   environmentId,
-  isFormbricksCloud,
   membershipRole,
   activeId,
   loading,
@@ -35,24 +33,10 @@ export const OrganizationSettingsNavbar = ({
       hidden: false,
     },
     {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/environments/${environmentId}/settings/billing`,
-      hidden: !isFormbricksCloud || loading,
-      current: pathname?.includes("/billing"),
-    },
-    {
       id: "teams",
       label: t("common.teams"),
       href: `/environments/${environmentId}/settings/teams`,
       current: pathname?.includes("/teams"),
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/environments/${environmentId}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
-      current: pathname?.includes("/enterprise"),
     },
   ];
 

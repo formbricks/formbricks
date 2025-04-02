@@ -4,7 +4,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { notFound } from "next/navigation";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@formbricks/lib/constants";
+import { WEBAPP_URL } from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
@@ -67,7 +67,6 @@ const Page = async (props: SummaryPageProps) => {
           webAppUrl={WEBAPP_URL}
           totalResponseCount={totalResponseCount}
           isReadOnly={true}
-          locale={DEFAULT_LOCALE}
         />
       </PageContentWrapper>
     </div>

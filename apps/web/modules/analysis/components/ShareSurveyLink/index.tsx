@@ -6,11 +6,9 @@ import { generateSingleUseIdAction } from "@/modules/survey/list/actions";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { Copy, QrCode, RefreshCcw, SquareArrowOutUpRight } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
-import { LanguageDropdown } from "./components/LanguageDropdown";
 import { SurveyLinkDisplay } from "./components/SurveyLinkDisplay";
 
 interface ShareSurveyLinkProps {
@@ -18,18 +16,10 @@ interface ShareSurveyLinkProps {
   surveyDomain: string;
   surveyUrl: string;
   setSurveyUrl: (url: string) => void;
-  locale: TUserLocale;
 }
 
-export const ShareSurveyLink = ({
-  survey,
-  surveyUrl,
-  surveyDomain,
-  setSurveyUrl,
-  locale,
-}: ShareSurveyLinkProps) => {
+export const ShareSurveyLink = ({ survey, surveyUrl, surveyDomain, setSurveyUrl }: ShareSurveyLinkProps) => {
   const { t } = useTranslate();
-  const [language, setLanguage] = useState("default");
 
   const getUrl = useCallback(async () => {
     let url = `${surveyDomain}/s/${survey.id}`;
@@ -49,10 +39,6 @@ export const ShareSurveyLink = ({
       }
     }
 
-    if (language !== "default") {
-      queryParams.push(`lang=${language}`);
-    }
-
     if (queryParams.length) {
       url += `?${queryParams.join("&")}`;
     }
@@ -60,7 +46,7 @@ export const ShareSurveyLink = ({
     setSurveyUrl(url);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [survey, surveyDomain, language]);
+  }, [survey, surveyDomain]);
 
   const generateNewSingleUseLink = () => {
     getUrl();
@@ -69,7 +55,7 @@ export const ShareSurveyLink = ({
 
   useEffect(() => {
     getUrl();
-  }, [survey, getUrl, language]);
+  }, [survey, getUrl]);
 
   const { downloadQRCode } = useSurveyQRCode(surveyUrl);
 
@@ -78,7 +64,6 @@ export const ShareSurveyLink = ({
       className={`flex max-w-full flex-col items-center justify-center space-x-2 ${survey.singleUse?.enabled ? "flex-col" : "lg:flex-row"}`}>
       <SurveyLinkDisplay surveyUrl={surveyUrl} key={surveyUrl} />
       <div className="mt-2 flex items-center justify-center space-x-2">
-        <LanguageDropdown survey={survey} setLanguage={setLanguage} locale={locale} />
         <Button
           title={t("environments.surveys.preview_survey_in_a_new_tab")}
           aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}

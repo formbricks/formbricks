@@ -13,7 +13,7 @@ import { getContactIdentifier } from "@formbricks/lib/utils/contact";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 import { isSubmissionTimeMoreThan5Minutes } from "../util";
 
 interface TooltipRendererProps {
@@ -30,7 +30,6 @@ interface SingleResponseCardHeaderProps {
   user?: TUser;
   isReadOnly: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
-  locale: TUserLocale;
 }
 
 export const SingleResponseCardHeader = ({
@@ -41,7 +40,6 @@ export const SingleResponseCardHeader = ({
   user,
   isReadOnly,
   setDeleteDialogOpen,
-  locale,
 }: SingleResponseCardHeaderProps) => {
   const displayIdentifier = response.contact
     ? getContactIdentifier(response.contact, response.contactAttributes)
@@ -201,15 +199,15 @@ export const SingleResponseCardHeader = ({
           )}
           {response.language && response.language !== "default" && (
             <div className="flex space-x-2 rounded-full bg-slate-700 px-2 py-1 text-xs text-white">
-              <div>{getLanguageLabel(response.language, locale)}</div>
+              <div>{getLanguageLabel(response.language)}</div>
               <LanguagesIcon className="h-4 w-4" />
             </div>
           )}
         </div>
 
         <div className="flex items-center space-x-4 text-sm">
-          <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString(), locale)}>
-            {timeSince(response.createdAt.toISOString(), locale)}
+          <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString())}>
+            {timeSince(response.createdAt.toISOString())}
           </time>
           {user &&
             !isReadOnly &&

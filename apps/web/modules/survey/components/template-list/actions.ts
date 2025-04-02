@@ -2,7 +2,7 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { createSurvey } from "@/modules/survey/components/template-list/lib/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";

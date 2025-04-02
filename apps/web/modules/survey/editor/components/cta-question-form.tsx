@@ -6,9 +6,8 @@ import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
+import { type JSX } from "react";
 import { TSurvey, TSurveyCTAQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface CTAQuestionFormProps {
   localSurvey: TSurvey;
@@ -17,9 +16,7 @@ interface CTAQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyCTAQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const CTAQuestionForm = ({
@@ -30,8 +27,6 @@ export const CTAQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: CTAQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const options = [
@@ -41,7 +36,6 @@ export const CTAQuestionForm = ({
     },
     { value: "external", label: t("environments.surveys.edit.button_to_link_to_external_url") },
   ];
-  const [firstRender, setFirstRender] = useState(true);
   const [parent] = useAutoAnimate();
   return (
     <form ref={parent}>
@@ -54,8 +48,6 @@ export const CTAQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div className="mt-3">
         <OptionsSwitch
@@ -78,8 +70,6 @@ export const CTAQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
 
           {questionIdx !== 0 && (
@@ -94,8 +84,6 @@ export const CTAQuestionForm = ({
               isInvalid={isInvalid}
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
             />
           )}
         </div>
@@ -128,8 +116,6 @@ export const CTAQuestionForm = ({
             isInvalid={isInvalid}
             updateQuestion={updateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            locale={locale}
           />
         </div>
       )}

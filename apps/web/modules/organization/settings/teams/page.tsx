@@ -4,7 +4,6 @@ import { MembersView } from "@/modules/organization/settings/teams/components/me
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 export const TeamsPage = async (props) => {
   const params = await props.params;
@@ -17,7 +16,6 @@ export const TeamsPage = async (props) => {
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="teams"
         />

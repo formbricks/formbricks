@@ -1,9 +1,9 @@
 "use client";
 
-import { getLatestStableFbReleaseAction } from "@/app/(app)/environments/[environmentId]/actions/actions";
 import { NavigationLink } from "@/app/(app)/environments/[environmentId]/components/NavigationLink";
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
+import { WalletButton } from "@/modules/alchemy-wallet";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
@@ -27,15 +27,12 @@ import {
   BlocksIcon,
   ChevronRightIcon,
   Cog,
-  CreditCardIcon,
-  KeyIcon,
   LogOutIcon,
   MessageCircle,
   MousePointerClick,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
-  RocketIcon,
   UserCircleIcon,
   UserIcon,
   UsersIcon,
@@ -53,8 +50,6 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TProject } from "@formbricks/types/project";
 import { TUser } from "@formbricks/types/user";
-import packageJson from "../../../../../package.json";
-import { WalletButton } from "@/modules/alchemy-wallet";
 
 interface NavigationProps {
   environment: TEnvironment;
@@ -63,7 +58,6 @@ interface NavigationProps {
   organization: TOrganization;
   projects: TProject[];
   isMultiOrgEnabled: boolean;
-  isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
@@ -77,7 +71,6 @@ export const MainNavigation = ({
   projects,
   isMultiOrgEnabled,
   membershipRole,
-  isFormbricksCloud,
   organizationProjectsLimit,
   isLicenseActive,
 }: NavigationProps) => {
@@ -89,13 +82,11 @@ export const MainNavigation = ({
   const [showCreateOrganizationModal, setShowCreateOrganizationModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isTextVisible, setIsTextVisible] = useState(true);
-  const [latestVersion, setLatestVersion] = useState("");
 
   const project = projects.find((project) => project.id === environment.projectId);
-  const { isManager, isOwner, isMember, isBilling } = getAccessFlags(membershipRole);
+  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
 
   const isOwnerOrManager = isManager || isOwner;
-  const isPricingDisabled = isMember;
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -200,39 +191,12 @@ export const MainNavigation = ({
       icon: UsersIcon,
     },
     {
-      label: t("common.billing"),
-      href: `/environments/${environment.id}/settings/billing`,
-      hidden: !isFormbricksCloud,
-      icon: CreditCardIcon,
-    },
-    {
-      label: t("common.license"),
-      href: `/environments/${environment.id}/settings/enterprise`,
-      hidden: isFormbricksCloud || isPricingDisabled,
-      icon: KeyIcon,
-    },
-    {
       label: t("common.documentation"),
       href: "https://formbricks.com/docs",
       target: "_blank",
       icon: ArrowUpRightIcon,
     },
   ];
-
-  useEffect(() => {
-    async function loadReleases() {
-      const res = await getLatestStableFbReleaseAction();
-      if (res?.data) {
-        const latestVersionTag = res.data;
-        const currentVersionTag = `v${packageJson.version}`;
-
-        if (currentVersionTag !== latestVersionTag) {
-          setLatestVersion(latestVersionTag);
-        }
-      }
-    }
-    if (isOwnerOrManager) loadReleases();
-  }, [isOwnerOrManager]);
 
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
 
@@ -296,21 +260,8 @@ export const MainNavigation = ({
           </div>
 
           <div>
-            {/* New Version Available */}
-            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
-              <Link
-                href="https://github.com/formbricks/formbricks/releases"
-                target="_blank"
-                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                <p className="flex items-center justify-center gap-x-2 text-xs">
-                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
-                  {t("common.new_version_available", { version: latestVersion })}
-                </p>
-              </Link>
-            )}
-
             {/* Alchemy Wallet Login */}
-            {!isCollapsed && <WalletButton/>}
+            {!isCollapsed && <WalletButton />}
 
             {/* Project Switch */}
             {!isBilling && (
@@ -319,7 +270,6 @@ export const MainNavigation = ({
                 projects={sortedProjects}
                 project={project}
                 isCollapsed={isCollapsed}
-                isFormbricksCloud={isFormbricksCloud}
                 isLicenseActive={isLicenseActive}
                 isOwnerOrManager={isOwnerOrManager}
                 isTextVisible={isTextVisible}
@@ -372,21 +322,18 @@ export const MainNavigation = ({
                   align="end">
                   {/* Dropdown Items */}
 
-                  {dropdownNavigation.map(
-                    (link) =>
-                      !link.hidden && (
-                        <Link
-                          href={link.href}
-                          target={link.target}
-                          className="flex w-full items-center"
-                          key={link.label}>
-                          <DropdownMenuItem>
-                            <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                            {link.label}
-                          </DropdownMenuItem>
-                        </Link>
-                      )
-                  )}
+                  {dropdownNavigation.map((link) => (
+                    <Link
+                      href={link.href}
+                      target={link.target}
+                      className="flex w-full items-center"
+                      key={link.label}>
+                      <DropdownMenuItem>
+                        <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        {link.label}
+                      </DropdownMenuItem>
+                    </Link>
+                  ))}
 
                   {/* Logout */}
 

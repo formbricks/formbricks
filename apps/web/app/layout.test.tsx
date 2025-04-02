@@ -1,4 +1,3 @@
-import { getLocale } from "@/tolgee/language";
 import { getTolgee } from "@/tolgee/server";
 import { cleanup, render, screen } from "@testing-library/react";
 import { TolgeeInstance } from "@tolgee/react";
@@ -17,10 +16,6 @@ vi.mock("@formbricks/lib/constants", () => ({
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
   SENTRY_DSN: "mock-sentry-dsn",
-}));
-
-vi.mock("@/tolgee/language", () => ({
-  getLocale: vi.fn(),
 }));
 
 vi.mock("@/tolgee/server", () => ({
@@ -73,10 +68,6 @@ describe("RootLayout", () => {
   });
 
   it("renders the layout with the correct structure and providers", async () => {
-    const fakeLocale = "en-US";
-    // Mock getLocale to resolve to a fake locale
-    vi.mocked(getLocale).mockResolvedValue(fakeLocale);
-
     const fakeStaticData = { key: "value" };
     const fakeTolgee = {
       loadRequired: vi.fn().mockResolvedValue(fakeStaticData),

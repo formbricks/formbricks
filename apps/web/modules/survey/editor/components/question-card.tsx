@@ -38,7 +38,6 @@ import {
   TSurveyQuestionId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionCardProps {
   localSurvey: TSurvey;
@@ -53,12 +52,9 @@ interface QuestionCardProps {
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   addQuestion: (question: any, index?: number) => void;
-  isFormbricksCloud: boolean;
   isCxMode: boolean;
-  locale: TUserLocale;
 }
 
 export const QuestionCard = ({
@@ -74,12 +70,9 @@ export const QuestionCard = ({
   setActiveQuestionId,
   lastQuestion,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   isInvalid,
   addQuestion,
-  isFormbricksCloud,
   isCxMode,
-  locale,
 }: QuestionCardProps) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: question.id,
@@ -265,9 +258,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ? (
             <MultipleChoiceQuestionForm
@@ -277,9 +268,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti ? (
             <MultipleChoiceQuestionForm
@@ -289,9 +278,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.NPS ? (
             <NPSQuestionForm
@@ -301,9 +288,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.CTA ? (
             <CTAQuestionForm
@@ -313,9 +298,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Rating ? (
             <RatingQuestionForm
@@ -325,9 +308,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Consent ? (
             <ConsentQuestionForm
@@ -336,9 +317,7 @@ export const QuestionCard = ({
               questionIdx={questionIdx}
               updateQuestion={updateQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Date ? (
             <DateQuestionForm
@@ -348,9 +327,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.PictureSelection ? (
             <PictureSelectionForm
@@ -360,9 +337,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.FileUpload ? (
             <FileUploadQuestionForm
@@ -373,10 +348,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              isFormbricksCloud={isFormbricksCloud}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Cal ? (
             <CalQuestionForm
@@ -386,9 +358,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Matrix ? (
             <MatrixQuestionForm
@@ -398,9 +368,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Address ? (
             <AddressQuestionForm
@@ -410,9 +378,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.Ranking ? (
             <RankingQuestionForm
@@ -422,9 +388,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : question.type === TSurveyQuestionTypeEnum.ContactInfo ? (
             <ContactInfoQuestionForm
@@ -434,9 +398,7 @@ export const QuestionCard = ({
               updateQuestion={updateQuestion}
               lastQuestion={lastQuestion}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isInvalid={isInvalid}
-              locale={locale}
             />
           ) : null}
           <div className="mt-4">
@@ -469,7 +431,6 @@ export const QuestionCard = ({
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
-                        setSelectedLanguageCode={setSelectedLanguageCode}
                         onBlur={(e) => {
                           if (!question.buttonLabel) return;
                           let translatedNextButtonLabel = {
@@ -484,7 +445,6 @@ export const QuestionCard = ({
                             localSurvey.questions.length - 1
                           );
                         }}
-                        locale={locale}
                       />
                     </div>
                     {questionIdx !== 0 && (
@@ -499,8 +459,6 @@ export const QuestionCard = ({
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
-                        setSelectedLanguageCode={setSelectedLanguageCode}
-                        locale={locale}
                         onBlur={(e) => {
                           if (!question.backButtonLabel) return;
                           let translatedBackButtonLabel = {
@@ -528,8 +486,6 @@ export const QuestionCard = ({
                         isInvalid={isInvalid}
                         updateQuestion={updateQuestion}
                         selectedLanguageCode={selectedLanguageCode}
-                        setSelectedLanguageCode={setSelectedLanguageCode}
-                        locale={locale}
                       />
                     </div>
                   )}

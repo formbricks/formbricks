@@ -9,11 +9,10 @@ import { useState } from "react";
 import { TUser } from "@formbricks/types/user";
 
 interface RemovedFromOrganizationProps {
-  isFormbricksCloud: boolean;
   user: TUser;
 }
 
-export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
+export const RemovedFromOrganization = ({ user }: RemovedFromOrganizationProps) => {
   const { t } = useTranslate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
@@ -28,7 +27,6 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
         open={isModalOpen}
         setOpen={setIsModalOpen}
         user={user}
-        isFormbricksCloud={isFormbricksCloud}
         formbricksLogout={formbricksLogout}
         organizationsWithSingleOwner={[]}
       />

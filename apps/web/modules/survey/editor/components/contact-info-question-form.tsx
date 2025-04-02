@@ -9,7 +9,6 @@ import { PlusIcon } from "lucide-react";
 import { type JSX, useEffect } from "react";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyContactInfoQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ContactInfoQuestionFormProps {
   localSurvey: TSurvey;
@@ -19,8 +18,6 @@ interface ContactInfoQuestionFormProps {
   lastQuestion: boolean;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
-  locale: TUserLocale;
 }
 
 export const ContactInfoQuestionForm = ({
@@ -30,8 +27,6 @@ export const ContactInfoQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: ContactInfoQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages ?? []);
@@ -94,8 +89,6 @@ export const ContactInfoQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
 
       <div ref={parent}>
@@ -111,8 +104,6 @@ export const ContactInfoQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -141,8 +132,6 @@ export const ContactInfoQuestionForm = ({
           isInvalid={isInvalid}
           updateQuestion={updateQuestion}
           selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
-          locale={locale}
         />
       </div>
     </form>

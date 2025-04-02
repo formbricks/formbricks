@@ -5,15 +5,13 @@ import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { getLanguageLabel } from "@formbricks/lib/i18n/utils";
 import { useClickOutside } from "@formbricks/lib/utils/hooks/useClickOutside";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface LanguageDropdownProps {
   survey: TSurvey;
   setLanguage: (language: string) => void;
-  locale: TUserLocale;
 }
 
-export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdownProps) => {
+export const LanguageDropdown = ({ survey, setLanguage }: LanguageDropdownProps) => {
   const [showLanguageSelect, setShowLanguageSelect] = useState(false);
   const languageDropdownRef = useRef(null);
   const enabledLanguages = getEnabledLanguages(survey.languages ?? []);
@@ -35,7 +33,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
                   setLanguage(surveyLanguage.language.code);
                   setShowLanguageSelect(false);
                 }}>
-                {getLanguageLabel(surveyLanguage.language.code, locale)}
+                {getLanguageLabel(surveyLanguage.language.code)}
               </div>
             ))}
           </div>

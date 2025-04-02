@@ -3,7 +3,6 @@ import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmen
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 
 const Loading = async () => {
   const t = await getTranslate();
@@ -24,7 +23,7 @@ const Loading = async () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar isFormbricksCloud={IS_FORMBRICKS_CLOUD} activeId="general" loading />
+        <OrganizationSettingsNavbar activeId="general" loading />
       </PageHeader>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />

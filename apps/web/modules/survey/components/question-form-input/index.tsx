@@ -23,7 +23,6 @@ import {
   TSurveyQuestionChoice,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import {
   determineImageUploaderVisibility,
   getChoiceLabel,
@@ -46,14 +45,12 @@ interface QuestionFormInputProps {
   updateMatrixLabel?: (index: number, type: "row" | "column", data: Partial<TSurveyQuestion>) => void;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   label: string;
   maxLength?: number;
   placeholder?: string;
   ref?: RefObject<HTMLInputElement | null>;
   onBlur?: React.FocusEventHandler<HTMLInputElement>;
   className?: string;
-  locale: TUserLocale;
 }
 
 export const QuestionFormInput = ({
@@ -68,12 +65,10 @@ export const QuestionFormInput = ({
   isInvalid,
   label,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   maxLength,
   placeholder,
   onBlur,
   className,
-  locale,
 }: QuestionFormInputProps) => {
   const { t } = useTranslate();
   const defaultLanguageCode =
@@ -274,8 +269,6 @@ export const QuestionFormInput = ({
         value={text}
         localSurvey={localSurvey}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
         key={selectedLanguageCode}
         onChange={(updatedText) => {
           setText(updatedText);

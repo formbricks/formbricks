@@ -27,7 +27,6 @@ interface PreviewEmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
   styling: TSurveyStyling;
-  locale: string;
   t: TFnType;
 }
 
@@ -35,15 +34,11 @@ export const getPreviewEmailTemplateHtml = async (
   survey: TSurvey,
   surveyUrl: string,
   styling: TSurveyStyling,
-  locale: string,
   t: TFnType
 ): Promise<string> => {
-  return render(
-    <PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} locale={locale} t={t} />,
-    {
-      pretty: true,
-    }
-  );
+  return render(<PreviewEmailTemplate styling={styling} survey={survey} surveyUrl={surveyUrl} t={t} />, {
+    pretty: true,
+  });
 };
 
 export async function PreviewEmailTemplate({

@@ -11,7 +11,6 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@formbricks/lib/localStorage"
 import { wrapThrows } from "@formbricks/types/error-handlers";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TSurveyFilters } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { SurveyCard } from "./survey-card";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
@@ -23,7 +22,6 @@ interface SurveysListProps {
   userId: string;
   surveysPerPage: number;
   currentProjectChannel: TProjectConfigChannel;
-  locale: TUserLocale;
 }
 
 export const initialFilters: TSurveyFilters = {
@@ -41,7 +39,6 @@ export const SurveysList = ({
   userId,
   surveysPerPage: surveysLimit,
   currentProjectChannel,
-  locale,
 }: SurveysListProps) => {
   const [surveys, setSurveys] = useState<TSurvey[]>([]);
   const [isFetching, setIsFetching] = useState(true);
@@ -159,7 +156,6 @@ export const SurveysList = ({
                   surveyDomain={surveyDomain}
                   duplicateSurvey={handleDuplicateSurvey}
                   deleteSurvey={handleDeleteSurvey}
-                  locale={locale}
                 />
               );
             })}

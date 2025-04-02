@@ -3,7 +3,6 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Project } from "@prisma/client";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionsDraggableProps {
   localSurvey: TSurvey;
@@ -15,12 +14,9 @@ interface QuestionsDraggableProps {
   activeQuestionId: TSurveyQuestionId | null;
   setActiveQuestionId: (questionId: TSurveyQuestionId | null) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidQuestions: string[] | null;
   addQuestion: (question: any, index?: number) => void;
-  isFormbricksCloud: boolean;
   isCxMode: boolean;
-  locale: TUserLocale;
 }
 
 export const QuestionsDroppable = ({
@@ -33,12 +29,9 @@ export const QuestionsDroppable = ({
   project,
   selectedLanguageCode,
   setActiveQuestionId,
-  setSelectedLanguageCode,
   updateQuestion,
   addQuestion,
-  isFormbricksCloud,
   isCxMode,
-  locale,
 }: QuestionsDraggableProps) => {
   const [parent] = useAutoAnimate();
 
@@ -56,16 +49,13 @@ export const QuestionsDroppable = ({
             updateQuestion={updateQuestion}
             duplicateQuestion={duplicateQuestion}
             selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             deleteQuestion={deleteQuestion}
             activeQuestionId={activeQuestionId}
             setActiveQuestionId={setActiveQuestionId}
             lastQuestion={questionIdx === localSurvey.questions.length - 1}
             isInvalid={invalidQuestions ? invalidQuestions.includes(question.id) : false}
             addQuestion={addQuestion}
-            isFormbricksCloud={isFormbricksCloud}
             isCxMode={isCxMode}
-            locale={locale}
           />
         ))}
       </SortableContext>

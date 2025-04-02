@@ -24,7 +24,6 @@ interface PinScreenProps {
   verifiedEmail?: string;
   languageCode: string;
   isEmbed: boolean;
-  locale: string;
   isPreview: boolean;
   contactId?: string;
 }
@@ -44,7 +43,6 @@ export const PinScreen = (props: PinScreenProps) => {
     verifiedEmail,
     languageCode,
     isEmbed,
-    locale,
     isPreview,
     contactId,
   } = props;
@@ -128,7 +126,6 @@ export const PinScreen = (props: PinScreenProps) => {
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      locale={locale}
       isPreview={isPreview}
       contactId={contactId}
     />

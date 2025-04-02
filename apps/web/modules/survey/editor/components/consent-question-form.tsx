@@ -1,11 +1,9 @@
 "use client";
 
 import { QuestionFormInput } from "@/modules/survey/components/question-form-input";
-import { Label } from "@/modules/ui/components/label";
 import { useTranslate } from "@tolgee/react";
-import { type JSX, useState } from "react";
+import { type JSX } from "react";
 import { TSurvey, TSurveyConsentQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ConsentQuestionFormProps {
   localSurvey: TSurvey;
@@ -13,9 +11,7 @@ interface ConsentQuestionFormProps {
   questionIdx: number;
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyConsentQuestion>) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const ConsentQuestionForm = ({
@@ -25,10 +21,7 @@ export const ConsentQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: ConsentQuestionFormProps): JSX.Element => {
-  const [firstRender, setFirstRender] = useState(true);
   const { t } = useTranslate();
   return (
     <form>
@@ -41,8 +34,6 @@ export const ConsentQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <QuestionFormInput
         id="label"
@@ -54,8 +45,6 @@ export const ConsentQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
     </form>
   );

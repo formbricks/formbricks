@@ -10,7 +10,6 @@ import { TrashIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FollowUpItemProps {
   followUp: TSurveyFollowUp;
@@ -19,7 +18,6 @@ interface FollowUpItemProps {
   mailFrom: string;
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  locale: TUserLocale;
 }
 
 export const FollowUpItem = ({
@@ -29,7 +27,6 @@ export const FollowUpItem = ({
   selectedLanguageCode,
   userEmail,
   setLocalSurvey,
-  locale,
 }: FollowUpItemProps) => {
   const { t } = useTranslate();
   const [editFollowUpModalOpen, setEditFollowUpModalOpen] = useState(false);
@@ -139,7 +136,6 @@ export const FollowUpItem = ({
         }}
         mode="edit"
         userEmail={userEmail}
-        locale={locale}
       />
 
       <ConfirmationModal

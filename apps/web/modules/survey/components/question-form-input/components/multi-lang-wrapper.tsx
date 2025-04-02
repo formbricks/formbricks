@@ -5,7 +5,6 @@ import { ReactNode, useMemo } from "react";
 import { getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { headlineToRecall, recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TI18nString, TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface MultiLangWrapperRenderProps {
   value: TI18nString;
@@ -19,8 +18,6 @@ interface MultiLangWrapperProps {
   onChange: (value: TI18nString) => void;
   localSurvey: TSurvey;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (code: string) => void;
-  locale: TUserLocale;
   render: (props: MultiLangWrapperRenderProps) => ReactNode;
 }
 
@@ -29,8 +26,6 @@ export const MultiLangWrapper = ({
   value,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
   render,
   onChange,
 }: MultiLangWrapperProps) => {

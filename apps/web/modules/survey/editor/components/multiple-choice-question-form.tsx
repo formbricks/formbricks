@@ -22,7 +22,6 @@ import {
   TSurveyMultipleChoiceQuestion,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface MultipleChoiceQuestionFormProps {
   localSurvey: TSurvey;
@@ -31,9 +30,7 @@ interface MultipleChoiceQuestionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyMultipleChoiceQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const MultipleChoiceQuestionForm = ({
@@ -43,8 +40,6 @@ export const MultipleChoiceQuestionForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: MultipleChoiceQuestionFormProps): JSX.Element => {
   const { t } = useTranslate();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -176,8 +171,6 @@ export const MultipleChoiceQuestionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
 
       <div ref={parent}>
@@ -193,8 +186,6 @@ export const MultipleChoiceQuestionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>
@@ -257,12 +248,10 @@ export const MultipleChoiceQuestionForm = ({
                       isInvalid={isInvalid}
                       localSurvey={localSurvey}
                       selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
                       surveyLanguages={surveyLanguages}
                       question={question}
                       updateQuestion={updateQuestion}
                       surveyLanguageCodes={surveyLanguageCodes}
-                      locale={locale}
                     />
                   ))}
               </div>

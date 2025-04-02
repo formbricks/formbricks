@@ -9,7 +9,6 @@ import {
   TSurveyAddressQuestion,
   TSurveyContactInfoQuestion,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface QuestionToggleTableProps {
   type: "address" | "contact";
@@ -28,8 +27,6 @@ interface QuestionToggleTableProps {
     updatedAttributes: Partial<TSurveyContactInfoQuestion | TSurveyAddressQuestion>
   ) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
-  locale: TUserLocale;
 }
 
 export const QuestionToggleTable = ({
@@ -40,8 +37,6 @@ export const QuestionToggleTable = ({
   isInvalid,
   updateQuestion,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: QuestionToggleTableProps) => {
   const onShowToggle = (
     field: { id: string; show: boolean; required: boolean; placeholder: TI18nString },
@@ -119,8 +114,6 @@ export const QuestionToggleTable = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </td>
           </tr>

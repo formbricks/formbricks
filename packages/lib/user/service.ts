@@ -196,36 +196,3 @@ export const getUsersWithOrganization = async (organizationId: string): Promise<
     throw error;
   }
 };
-
-export const getUserLocale = reactCache(
-  async (id: string): Promise<TUserLocale | undefined> =>
-    cache(
-      async () => {
-        validateInputs([id, ZId]);
-
-        try {
-          const user = await prisma.user.findUnique({
-            where: {
-              id,
-            },
-            select: responseSelection,
-          });
-
-          if (!user) {
-            return undefined;
-          }
-          return user.locale;
-        } catch (error) {
-          if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            throw new DatabaseError(error.message);
-          }
-
-          throw error;
-        }
-      },
-      [`getUserLocale-${id}`],
-      {
-        tags: [userCache.tag.byId(id)],
-      }
-    )()
-);

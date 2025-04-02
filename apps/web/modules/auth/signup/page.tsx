@@ -12,7 +12,6 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
 export const SignupPage = async ({ searchParams: searchParamsProps }) => {
@@ -20,7 +19,6 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   const inviteToken = searchParams["inviteToken"] ?? null;
   const [isMultOrgEnabled] = await Promise.all([false]);
 
-  const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }
@@ -39,7 +37,6 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             privacyUrl={PRIVACY_URL}
             emailVerificationDisabled={EMAIL_VERIFICATION_DISABLED}
             emailAuthEnabled={EMAIL_AUTH_ENABLED}
-            userLocale={locale}
             emailFromSearchParams={emailFromSearchParams}
             defaultOrganizationId={DEFAULT_ORGANIZATION_ID}
             defaultOrganizationRole={DEFAULT_ORGANIZATION_ROLE}

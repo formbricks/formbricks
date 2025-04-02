@@ -27,7 +27,6 @@ interface ProjectSwitcherProps {
   projects: TProject[];
   organization: TOrganization;
   organizationProjectsLimit: number;
-  isFormbricksCloud: boolean;
   isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
@@ -40,7 +39,6 @@ export const ProjectSwitcher = ({
   project,
   projects,
   organizationProjectsLimit,
-  isFormbricksCloud,
   isLicenseActive,
   environmentId,
   isOwnerOrManager,
@@ -64,58 +62,21 @@ export const ProjectSwitcher = ({
   };
 
   const LimitModalButtons = (): [ModalButton, ModalButton] => {
-    if (isFormbricksCloud && organization.billing.plan !== "enterprise") {
-      return [
-        {
-          text:
-            organization.billing.plan === "free"
-              ? t("common.start_free_trial")
-              : t("environments.settings.billing.upgrade"),
-          onClick: () => {
-            setOpenLimitModal(false);
-            router.push(`/environments/${environmentId}/settings/billing`);
-          },
-        },
-        {
-          text: t("common.learn_more"),
-          onClick: () => {
-            setOpenLimitModal(false);
-            router.push(`/environments/${environmentId}/settings/billing`);
-          },
-        },
-      ];
-    } else {
-      if (isLicenseActive) {
-        return [
-          {
-            text: t("environments.settings.billing.get_in_touch"),
-            href: "https://formbricks.com/upgrade-self-hosting-license",
-            onClick: () => setOpenLimitModal(false),
-          },
-          {
-            text: t("common.learn_more"),
-            href: "https://formbricks.com/learn-more-self-hosting-license",
-            onClick: () => setOpenLimitModal(false),
-          },
-        ];
-      }
-
-      return [
-        {
-          text:
-            organization.billing.plan === "free"
-              ? t("common.start_free_trial")
-              : t("environments.settings.billing.get_in_touch"),
-          href: "https://formbricks.com/upgrade-self-hosting-license",
-          onClick: () => setOpenLimitModal(false),
-        },
-        {
-          text: t("common.learn_more"),
-          href: "https://formbricks.com/learn-more-self-hosting-license",
-          onClick: () => setOpenLimitModal(false),
-        },
-      ];
-    }
+    return [
+      {
+        text:
+          organization.billing.plan === "free"
+            ? t("common.start_free_trial")
+            : t("environments.settings.billing.get_in_touch"),
+        href: "https://formbricks.com/upgrade-self-hosting-license",
+        onClick: () => setOpenLimitModal(false),
+      },
+      {
+        text: t("common.learn_more"),
+        href: "https://formbricks.com/learn-more-self-hosting-license",
+        onClick: () => setOpenLimitModal(false),
+      },
+    ];
   };
 
   return (

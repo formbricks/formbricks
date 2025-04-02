@@ -4,7 +4,7 @@ import { OrganizationActions } from "@/modules/organization/settings/teams/compo
 import { getMembershipsByUserId } from "@/modules/organization/settings/teams/lib/membership";
 import { getTranslate } from "@/tolgee/server";
 import { Suspense } from "react";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
@@ -49,7 +49,6 @@ export const MembersView = async ({
           role={membershipRole}
           isLeaveOrganizationDisabled={isLeaveOrganizationDisabled}
           isInviteDisabled={INVITE_DISABLED}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
         />

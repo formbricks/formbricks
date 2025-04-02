@@ -13,11 +13,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { refetchProjectAction } from "../actions";
 import { RewardsView } from "./rewards-view";
 
@@ -30,15 +28,10 @@ interface SurveyEditorProps {
   responseCount: number;
   membershipRole?: OrganizationRole;
   colors: string[];
-  isUserTargetingAllowed?: boolean;
-  isMultiLanguageAllowed?: boolean;
-  isFormbricksCloud: boolean;
   isUnsplashConfigured: boolean;
   plan: TOrganizationBillingPlan;
   isCxMode: boolean;
-  locale: TUserLocale;
   mailFrom: string;
-  projectLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
 }
@@ -46,20 +39,15 @@ interface SurveyEditorProps {
 export const SurveyEditor = ({
   survey,
   project,
-  projectLanguages,
   environment,
   actionClasses,
   segments,
   responseCount,
   membershipRole,
   colors,
-  isMultiLanguageAllowed,
-  isUserTargetingAllowed = false,
-  isFormbricksCloud,
   isUnsplashConfigured,
   plan,
   isCxMode = false,
-  locale,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
@@ -68,7 +56,7 @@ export const SurveyEditor = ({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidQuestions, setInvalidQuestions] = useState<string[] | null>(null);
-  const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
+  const [selectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
 
@@ -125,14 +113,6 @@ export const SurveyEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSurvey?.type, survey?.questions]);
 
-  useEffect(() => {
-    if (!localSurvey?.languages) return;
-    const enabledLanguageCodes = extractLanguageCodes(getEnabledLanguages(localSurvey.languages ?? []));
-    if (!enabledLanguageCodes.includes(selectedLanguageCode)) {
-      setSelectedLanguageCode("default");
-    }
-  }, [localSurvey?.languages, selectedLanguageCode]);
-
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
@@ -150,9 +130,7 @@ export const SurveyEditor = ({
         project={localProject}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         isCxMode={isCxMode}
-        locale={locale}
       />
       <div className="relative z-0 flex flex-1 overflow-hidden">
         <main
@@ -173,16 +151,11 @@ export const SurveyEditor = ({
               activeQuestionId={activeQuestionId}
               setActiveQuestionId={setActiveQuestionId}
               project={localProject}
-              projectLanguages={projectLanguages}
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
               selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              isMultiLanguageAllowed={isMultiLanguageAllowed}
-              isFormbricksCloud={isFormbricksCloud}
               plan={plan}
               isCxMode={isCxMode}
-              locale={locale}
             />
           )}
 
@@ -227,8 +200,6 @@ export const SurveyEditor = ({
               segments={segments}
               responseCount={responseCount}
               membershipRole={membershipRole}
-              isUserTargetingAllowed={isUserTargetingAllowed}
-              isFormbricksCloud={isFormbricksCloud}
             />
           )}
 
@@ -240,7 +211,6 @@ export const SurveyEditor = ({
               mailFrom={mailFrom}
               isSurveyFollowUpsAllowed={isSurveyFollowUpsAllowed}
               userEmail={userEmail}
-              locale={locale}
             />
           )}
         </main>

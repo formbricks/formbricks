@@ -11,7 +11,6 @@ import {
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 import { AddIntegrationModal } from "./AddIntegrationModal";
 
 interface GoogleSheetWrapperProps {
@@ -20,7 +19,6 @@ interface GoogleSheetWrapperProps {
   surveys: TSurvey[];
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
-  locale: TUserLocale;
 }
 
 export const GoogleSheetWrapper = ({
@@ -29,7 +27,6 @@ export const GoogleSheetWrapper = ({
   surveys,
   googleSheetIntegration,
   webAppUrl,
-  locale,
 }: GoogleSheetWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
@@ -65,7 +62,6 @@ export const GoogleSheetWrapper = ({
             setOpenAddIntegrationModal={setModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}
-            locale={locale}
           />
         </>
       ) : (

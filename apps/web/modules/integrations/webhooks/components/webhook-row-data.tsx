@@ -6,7 +6,6 @@ import { TFnType, useTranslate } from "@tolgee/react";
 import { timeSince } from "@formbricks/lib/time";
 import { capitalizeFirstLetter } from "@formbricks/lib/utils/strings";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 const renderSelectedSurveysText = (webhook: Webhook, allSurveys: TSurvey[]) => {
   if (webhook.surveyIds.length === 0) {
@@ -55,15 +54,7 @@ const renderSelectedTriggersText = (webhook: Webhook, t: TFnType) => {
   }
 };
 
-export const WebhookRowData = ({
-  webhook,
-  surveys,
-  locale,
-}: {
-  webhook: Webhook;
-  surveys: TSurvey[];
-  locale: TUserLocale;
-}) => {
+export const WebhookRowData = ({ webhook, surveys }: { webhook: Webhook; surveys: TSurvey[] }) => {
   const { t } = useTranslate();
   return (
     <div className="mt-2 grid h-auto grid-cols-12 content-center rounded-lg py-2 hover:bg-slate-100">
@@ -91,7 +82,7 @@ export const WebhookRowData = ({
         {renderSelectedTriggersText(webhook, t)}
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSince(webhook.createdAt.toString(), locale)}
+        {timeSince(webhook.createdAt.toString())}
       </div>
       <div className="text-center"></div>
     </div>

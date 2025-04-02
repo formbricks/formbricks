@@ -15,7 +15,6 @@ import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
 } from "@formbricks/types/integration/google-sheet";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface ManageIntegrationProps {
   environment: TEnvironment;
@@ -23,7 +22,6 @@ interface ManageIntegrationProps {
   setOpenAddIntegrationModal: (v: boolean) => void;
   setIsConnected: (v: boolean) => void;
   setSelectedIntegration: (v: (TIntegrationGoogleSheetsConfigData & { index: number }) | null) => void;
-  locale: TUserLocale;
 }
 
 export const ManageIntegration = ({
@@ -32,7 +30,6 @@ export const ManageIntegration = ({
   setOpenAddIntegrationModal,
   setIsConnected,
   setSelectedIntegration,
-  locale,
 }: ManageIntegrationProps) => {
   const { t } = useTranslate();
   const [isDeleteIntegrationModalOpen, setIsDeleteIntegrationModalOpen] = useState(false);
@@ -121,9 +118,7 @@ export const ManageIntegration = ({
                     <div className="col-span-2 text-center">{data.surveyName}</div>
                     <div className="col-span-2 text-center">{data.spreadsheetName}</div>
                     <div className="col-span-2 text-center">{data.questions}</div>
-                    <div className="col-span-2 text-center">
-                      {timeSince(data.createdAt.toString(), locale)}
-                    </div>
+                    <div className="col-span-2 text-center">{timeSince(data.createdAt.toString())}</div>
                   </div>
                 );
               })}

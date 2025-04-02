@@ -10,7 +10,6 @@ import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getActionClasses } from "@formbricks/lib/actionClass/service";
 import { getEnvironments } from "@formbricks/lib/environment/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const metadata: Metadata = {
   title: "Actions",
@@ -25,7 +24,6 @@ const Page = async (props) => {
 
   const [actionClasses] = await Promise.all([getActionClasses(params.environmentId)]);
 
-  const locale = await findMatchingLocale();
   const environments = await getEnvironments(project.id);
 
   const otherEnvironment = environments.filter((env) => env.id !== params.environmentId)[0];
@@ -56,7 +54,7 @@ const Page = async (props) => {
         isReadOnly={isReadOnly}>
         <ActionTableHeading />
         {actionClasses.map((actionClass) => (
-          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} locale={locale} />
+          <ActionClassDataRow key={actionClass.id} actionClass={actionClass} />
         ))}
       </ActionClassesTable>
     </PageContentWrapper>

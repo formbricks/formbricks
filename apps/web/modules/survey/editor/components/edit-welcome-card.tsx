@@ -8,10 +8,8 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { useTranslate } from "@tolgee/react";
 import { Hand } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { TSurvey, TSurveyQuestionId, TSurveyWelcomeCard } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EditWelcomeCardProps {
   localSurvey: TSurvey;
@@ -20,8 +18,6 @@ interface EditWelcomeCardProps {
   activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
-  locale: TUserLocale;
 }
 
 export const EditWelcomeCard = ({
@@ -31,11 +27,8 @@ export const EditWelcomeCard = ({
   activeQuestionId,
   isInvalid,
   selectedLanguageCode,
-  setSelectedLanguageCode,
-  locale,
 }: EditWelcomeCardProps) => {
   const { t } = useTranslate();
-  const [firstRender, setFirstRender] = useState(true);
   const path = usePathname();
   const environmentId = path?.split("/environments/")[1]?.split("/")[0];
 
@@ -44,7 +37,6 @@ export const EditWelcomeCard = ({
   const setOpen = (e) => {
     if (e) {
       setActiveQuestionId("start");
-      setFirstRender(true);
     } else {
       setActiveQuestionId(null);
     }
@@ -131,8 +123,6 @@ export const EditWelcomeCard = ({
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
 
@@ -149,9 +139,7 @@ export const EditWelcomeCard = ({
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
                     selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     label={t("environments.surveys.edit.next_button_label")}
-                    locale={locale}
                   />
                 </div>
               </div>

@@ -15,7 +15,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, organization } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const project = await getProjectByEnvironmentId(params.environmentId);
 

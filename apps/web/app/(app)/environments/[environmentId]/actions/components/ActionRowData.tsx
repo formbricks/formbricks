@@ -1,15 +1,8 @@
 import { ACTION_TYPE_ICON_LOOKUP } from "@/app/(app)/environments/[environmentId]/actions/utils";
 import { timeSince } from "@formbricks/lib/time";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { TUserLocale } from "@formbricks/types/user";
 
-export const ActionClassDataRow = ({
-  actionClass,
-  locale,
-}: {
-  actionClass: TActionClass;
-  locale: TUserLocale;
-}) => {
+export const ActionClassDataRow = ({ actionClass }: { actionClass: TActionClass }) => {
   return (
     <div className="m-2 grid h-16 grid-cols-6 content-center rounded-lg transition-colors ease-in-out hover:bg-slate-100">
       <div className="col-span-4 flex items-center pl-6 text-sm">
@@ -24,7 +17,7 @@ export const ActionClassDataRow = ({
         </div>
       </div>
       <div className="col-span-2 my-auto whitespace-nowrap text-center text-sm text-slate-500">
-        {timeSince(actionClass.createdAt.toString(), locale)}
+        {timeSince(actionClass.createdAt.toString())}
       </div>
       <div className="text-center"></div>
     </div>

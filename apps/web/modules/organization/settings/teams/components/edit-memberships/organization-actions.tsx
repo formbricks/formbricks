@@ -22,7 +22,6 @@ interface OrganizationActionsProps {
   isLeaveOrganizationDisabled: boolean;
   organization: TOrganization;
   isInviteDisabled: boolean;
-  isFormbricksCloud: boolean;
   environmentId: string;
   isMultiOrgEnabled: boolean;
 }
@@ -33,7 +32,6 @@ export const OrganizationActions = ({
   membershipRole,
   isLeaveOrganizationDisabled,
   isInviteDisabled,
-  isFormbricksCloud,
   environmentId,
   isMultiOrgEnabled,
 }: OrganizationActionsProps) => {
@@ -139,7 +137,6 @@ export const OrganizationActions = ({
         setOpen={setInviteMemberModalOpen}
         onSubmit={handleAddMembers}
         membershipRole={membershipRole}
-        isFormbricksCloud={isFormbricksCloud}
         environmentId={environmentId}
       />
 

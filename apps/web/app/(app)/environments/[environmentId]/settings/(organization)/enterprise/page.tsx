@@ -89,7 +89,6 @@ const Page = async (props) => {
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="enterprise"
         />

@@ -90,7 +90,6 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           projects={projects}
           organizationProjectsLimit={organizationProjectsLimit}
           user={user}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isLicenseActive={false}

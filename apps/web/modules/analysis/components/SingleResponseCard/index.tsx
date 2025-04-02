@@ -12,7 +12,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser } from "@formbricks/types/user";
-import { TUserLocale } from "@formbricks/types/user";
 import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseNotes } from "./components/ResponseNote";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
@@ -31,7 +30,6 @@ interface SingleResponseCardProps {
   deleteResponses?: (responseIds: string[]) => void;
   isReadOnly: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
-  locale: TUserLocale;
 }
 
 export const SingleResponseCard = ({
@@ -45,7 +43,6 @@ export const SingleResponseCard = ({
   deleteResponses,
   isReadOnly,
   setSelectedResponseId,
-  locale,
 }: SingleResponseCardProps) => {
   const { t } = useTranslate();
   const environmentId = survey.environmentId;
@@ -137,7 +134,6 @@ export const SingleResponseCard = ({
           user={user}
           isReadOnly={isReadOnly}
           setDeleteDialogOpen={setDeleteDialogOpen}
-          locale={locale}
         />
 
         <SingleResponseCardBody survey={survey} response={response} skippedQuestions={skippedQuestions} />
@@ -168,7 +164,6 @@ export const SingleResponseCard = ({
           isOpen={isOpen}
           setIsOpen={setIsOpen}
           updateFetchedResponses={updateFetchedResponses}
-          locale={locale}
         />
       )}
     </div>

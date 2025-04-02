@@ -24,7 +24,7 @@ import type { TLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserEmail, TUserLocale } from "@formbricks/types/user";
+import { TUserEmail } from "@formbricks/types/user";
 import type { TWeeklySummaryNotificationResponse } from "@formbricks/types/weekly-summary";
 import { ForgotPasswordEmail } from "./emails/auth/forgot-password-email";
 import { PasswordResetNotifyEmail } from "./emails/auth/password-reset-notify-email";
@@ -111,11 +111,7 @@ export const sendVerificationEmail = async ({
   }
 };
 
-export const sendForgotPasswordEmail = async (user: {
-  id: string;
-  email: TUserEmail;
-  locale: TUserLocale;
-}): Promise<boolean> => {
+export const sendForgotPasswordEmail = async (user: { id: string; email: TUserEmail }): Promise<boolean> => {
   const t = await getTranslate();
   const token = createToken(user.id, user.email, {
     expiresIn: "1d",

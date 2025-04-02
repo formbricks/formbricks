@@ -15,7 +15,6 @@ interface DeleteAccountModalProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   user: TUser;
-  isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
   formbricksLogout: () => Promise<void>;
 }
@@ -24,7 +23,6 @@ export const DeleteAccountModal = ({
   setOpen,
   open,
   user,
-  isFormbricksCloud,
   formbricksLogout,
   organizationsWithSingleOwner,
 }: DeleteAccountModalProps) => {
@@ -40,13 +38,7 @@ export const DeleteAccountModal = ({
       setDeleting(true);
       await deleteUserAction();
       await formbricksLogout();
-      // redirect to account deletion survey in Formbricks Cloud
-      if (isFormbricksCloud) {
-        await signOut({ redirect: true });
-        window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
-      } else {
-        await signOut({ callbackUrl: "/auth/login" });
-      }
+      await signOut({ callbackUrl: "/auth/login" });
     } catch (error) {
       toast.error("Something went wrong");
     } finally {

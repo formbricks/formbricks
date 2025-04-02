@@ -8,7 +8,6 @@ import { getTranslate } from "@/tolgee/server";
 import { redirect } from "next/navigation";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getIntegrationByType } from "@formbricks/lib/integration/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 
 const Page = async (props) => {
@@ -23,8 +22,6 @@ const Page = async (props) => {
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "slack"),
   ]);
-
-  const locale = await findMatchingLocale();
 
   if (isReadOnly) {
     redirect("./");
@@ -41,7 +38,6 @@ const Page = async (props) => {
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
-          locale={locale}
         />
       </div>
     </PageContentWrapper>

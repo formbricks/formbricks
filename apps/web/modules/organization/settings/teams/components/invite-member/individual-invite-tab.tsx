@@ -16,17 +16,11 @@ import { ZUserName } from "@formbricks/types/user";
 interface IndividualInviteTabProps {
   setOpen: (v: boolean) => void;
   onSubmit: (data: { name: string; email: string; role: TOrganizationRole }[]) => void;
-  isFormbricksCloud: boolean;
   environmentId: string;
   membershipRole?: TOrganizationRole;
 }
 
-export const IndividualInviteTab = ({
-  setOpen,
-  onSubmit,
-  isFormbricksCloud,
-  environmentId,
-}: IndividualInviteTabProps) => {
+export const IndividualInviteTab = ({ setOpen, onSubmit, environmentId }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
@@ -49,7 +43,6 @@ export const IndividualInviteTab = ({
     getValues,
     handleSubmit,
     reset,
-    control,
     watch,
     formState: { isSubmitting, errors },
   } = form;
@@ -91,22 +84,6 @@ export const IndividualInviteTab = ({
             </Alert>
           )}
         </div>
-
-        <Alert>
-          <AlertDescription className="flex">
-            {t("environments.settings.teams.upgrade_plan_notice_message")}
-            <Link
-              className="ml-1 underline"
-              target="_blank"
-              href={
-                isFormbricksCloud
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license"
-              }>
-              {t("common.start_free_trial")}
-            </Link>
-          </AlertDescription>
-        </Alert>
 
         <div className="flex justify-between">
           <Button

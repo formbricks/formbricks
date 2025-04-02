@@ -7,7 +7,7 @@ import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
-import { TUser, TUserLocale } from "@formbricks/types/user";
+import { TUser } from "@formbricks/types/user";
 
 interface ResponseCardModalProps {
   responses: TResponse[];
@@ -22,7 +22,6 @@ interface ResponseCardModalProps {
   isReadOnly: boolean;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  locale: TUserLocale;
 }
 
 export const ResponseCardModal = ({
@@ -38,7 +37,6 @@ export const ResponseCardModal = ({
   isReadOnly,
   open,
   setOpen,
-  locale,
 }: ResponseCardModalProps) => {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
 
@@ -111,7 +109,6 @@ export const ResponseCardModal = ({
             updateResponse={updateResponse}
             deleteResponses={deleteResponses}
             setSelectedResponseId={setSelectedResponseId}
-            locale={locale}
           />
         </div>
       </div>

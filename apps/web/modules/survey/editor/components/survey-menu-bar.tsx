@@ -36,7 +36,6 @@ interface SurveyMenuBarProps {
   project: Project;
   responseCount: number;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (selectedLanguage: string) => void;
   isCxMode: boolean;
   locale: string;
 }

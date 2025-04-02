@@ -1,5 +1,4 @@
 import { createServerInstance } from "@tolgee/react/server";
-import { getLocale } from "./language";
 import { TolgeeBase } from "./shared";
 
 // Try to import branch.json, but handle the case where it doesn't exist
@@ -13,7 +12,7 @@ try {
 }
 
 export const { getTolgee, getTranslate, T } = createServerInstance({
-  getLocale: getLocale,
+  getLocale: async () => "en-US",
   createTolgee: async (language) => {
     return TolgeeBase().init({
       tagNewKeys: branchName ? [`draft:${branchName}`] : [],

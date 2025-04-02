@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 import { getAirtableTables } from "@formbricks/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@formbricks/lib/constants";
 import { getIntegrations } from "@formbricks/lib/integration/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 
@@ -34,8 +33,6 @@ const Page = async (props) => {
     airtableArray = await getAirtableTables(params.environmentId);
   }
 
-  const locale = await findMatchingLocale();
-
   if (isReadOnly) {
     redirect("./");
   }
@@ -53,7 +50,6 @@ const Page = async (props) => {
           surveys={surveys}
           environment={environment}
           webAppUrl={WEBAPP_URL}
-          locale={locale}
         />
       </div>
     </PageContentWrapper>

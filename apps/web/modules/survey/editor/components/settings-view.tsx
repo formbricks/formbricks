@@ -17,8 +17,6 @@ interface SettingsViewProps {
   segments: TSegment[];
   responseCount: number;
   membershipRole?: OrganizationRole;
-  isUserTargetingAllowed?: boolean;
-  isFormbricksCloud: boolean;
 }
 
 export const SettingsView = ({
@@ -28,8 +26,6 @@ export const SettingsView = ({
   actionClasses,
   responseCount,
   membershipRole,
-  isUserTargetingAllowed = false,
-  isFormbricksCloud,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 

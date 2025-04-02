@@ -1,6 +1,5 @@
 import { EndingCard } from "@/components/general/ending-card";
 import { FormbricksBranding } from "@/components/general/formbricks-branding";
-import { LanguageSwitch } from "@/components/general/language-switch";
 import { ProgressBar } from "@/components/general/progress-bar";
 import { QuestionConditional } from "@/components/general/question-conditional";
 import { ResponseErrorComponent } from "@/components/general/response-error-component";
@@ -176,9 +175,6 @@ export function Survey({
   const showProgressBar = !styling.hideProgressBar;
   const getShowSurveyCloseButton = (offset: number) => {
     return offset === 0 && localSurvey.type !== "link" && (clickOutside ?? true);
-  };
-  const getShowLanguageSwitch = (offset: number) => {
-    return localSurvey.showLanguageSwitch && localSurvey.languages.length > 0 && offset <= 0;
   };
 
   const onFileUploadApi = async (file: TJsFileUploadParams["file"], params?: TUploadFileConfig) => {
@@ -657,12 +653,6 @@ export function Survey({
             offset === 0 || cardArrangement === "simple" ? "fb-opacity-100" : "fb-opacity-0"
           )}>
           <div className="fb-flex fb-h-6 fb-justify-end fb-pr-2 fb-pt-2">
-            {getShowLanguageSwitch(offset) && (
-              <LanguageSwitch
-                surveyLanguages={localSurvey.languages}
-                setSelectedLanguageCode={setselectedLanguage}
-              />
-            )}
             {getShowSurveyCloseButton(offset) && <SurveyCloseButton onClose={onClose} />}
           </div>
           <div

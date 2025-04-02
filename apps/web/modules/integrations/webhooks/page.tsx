@@ -9,7 +9,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { getSurveys } from "@formbricks/lib/survey/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 export const WebhooksPage = async (props) => {
   const params = await props.params;
@@ -23,7 +22,6 @@ export const WebhooksPage = async (props) => {
   ]);
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
-  const locale = await findMatchingLocale();
 
   return (
     <PageContentWrapper>
@@ -32,7 +30,7 @@ export const WebhooksPage = async (props) => {
       <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys} isReadOnly={isReadOnly}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
-          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} locale={locale} />
+          <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
         ))}
       </WebhookTable>
     </PageContentWrapper>

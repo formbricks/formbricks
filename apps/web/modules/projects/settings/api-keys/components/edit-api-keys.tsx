@@ -9,7 +9,6 @@ import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
-import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
@@ -18,7 +17,6 @@ interface EditAPIKeysProps {
   environmentType: string;
   apiKeys: TApiKey[];
   environmentId: string;
-  locale: TUserLocale;
   isReadOnly: boolean;
 }
 
@@ -27,7 +25,6 @@ export const EditAPIKeys = ({
   environmentType,
   apiKeys,
   environmentId,
-  locale,
   isReadOnly,
 }: EditAPIKeysProps) => {
   const { t } = useTranslate();
@@ -118,9 +115,7 @@ export const EditAPIKeys = ({
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.apiKey} />
                 </div>
-                <div className="col-span-4 sm:col-span-2">
-                  {timeSince(apiKey.createdAt.toString(), locale)}
-                </div>
+                <div className="col-span-4 sm:col-span-2">{timeSince(apiKey.createdAt.toString())}</div>
                 {!isReadOnly && (
                   <div className="col-span-1 text-center">
                     <Button size="icon" variant="ghost" onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>

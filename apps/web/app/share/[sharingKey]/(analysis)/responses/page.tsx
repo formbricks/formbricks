@@ -10,7 +10,6 @@ import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey, getSurveyIdByResultShareKey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 type Params = Promise<{
   sharingKey: string;
@@ -47,7 +46,6 @@ const Page = async (props: ResponsesPageProps) => {
   }
 
   const totalResponseCount = await getResponseCountBySurveyId(surveyId);
-  const locale = await findMatchingLocale();
 
   return (
     <div className="flex w-full justify-center">
@@ -67,7 +65,6 @@ const Page = async (props: ResponsesPageProps) => {
           webAppUrl={WEBAPP_URL}
           environmentTags={tags}
           responsesPerPage={RESPONSES_PER_PAGE}
-          locale={locale}
           isReadOnly={true}
         />
       </PageContentWrapper>

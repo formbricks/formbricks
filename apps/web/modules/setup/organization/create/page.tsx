@@ -5,7 +5,6 @@ import { getTranslate } from "@/tolgee/server";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { gethasNoOrganizations } from "@formbricks/lib/instance/service";
 import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -37,7 +36,7 @@ export const CreateOrganizationPage = async () => {
   }
 
   if (userOrganizations.length === 0) {
-    return <RemovedFromOrganization user={user} isFormbricksCloud={IS_FORMBRICKS_CLOUD} />;
+    return <RemovedFromOrganization user={user} />;
   }
 
   return notFound();

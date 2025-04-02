@@ -13,7 +13,6 @@ import type { JSX } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@formbricks/lib/i18n/utils";
 import { TSurvey, TSurveyPictureSelectionQuestion } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface PictureSelectionFormProps {
   localSurvey: TSurvey;
@@ -22,9 +21,7 @@ interface PictureSelectionFormProps {
   updateQuestion: (questionIdx: number, updatedAttributes: Partial<TSurveyPictureSelectionQuestion>) => void;
   lastQuestion: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
-  locale: TUserLocale;
 }
 
 export const PictureSelectionForm = ({
@@ -33,9 +30,7 @@ export const PictureSelectionForm = ({
   questionIdx,
   updateQuestion,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   isInvalid,
-  locale,
 }: PictureSelectionFormProps): JSX.Element => {
   const environmentId = localSurvey.environmentId;
   const surveyLanguageCodes = extractLanguageCodes(localSurvey.languages);
@@ -82,8 +77,6 @@ export const PictureSelectionForm = ({
         isInvalid={isInvalid}
         updateQuestion={updateQuestion}
         selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
-        locale={locale}
       />
       <div ref={parent}>
         {question.subheader !== undefined && (
@@ -98,8 +91,6 @@ export const PictureSelectionForm = ({
                 isInvalid={isInvalid}
                 updateQuestion={updateQuestion}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
               />
             </div>
           </div>

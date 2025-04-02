@@ -71,7 +71,7 @@ export const env = createEnv({
     S3_ENDPOINT_URL: z.string().optional(),
     S3_FORCE_PATH_STYLE: z.enum(["1", "0"]).optional(),
     SENTRY_DSN: z.string().optional(),
-    SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
+    SIGNUP_DISABLED: z.enum(["0", "1"]).optional(),
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
     SMTP_HOST: z.string().min(1).optional(),

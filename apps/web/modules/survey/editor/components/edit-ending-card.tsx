@@ -24,7 +24,6 @@ import {
   TSurveyQuestionId,
   TSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface EditEndingCardProps {
   localSurvey: TSurvey;
@@ -34,11 +33,8 @@ interface EditEndingCardProps {
   activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
-  isFormbricksCloud: boolean;
-  locale: TUserLocale;
 }
 
 export const EditEndingCard = ({
@@ -49,17 +45,12 @@ export const EditEndingCard = ({
   activeQuestionId,
   isInvalid,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   plan,
   addEndingCard,
-  isFormbricksCloud,
-  locale,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];
   const { t } = useTranslate();
-  const isRedirectToUrlDisabled = isFormbricksCloud
-    ? plan === "free" && endingCard.type !== "redirectToUrl"
-    : false;
+  const isRedirectToUrlDisabled = false;
 
   const [openDeleteConfirmationModal, setOpenDeleteConfirmationModal] = useState(false);
 
@@ -258,10 +249,8 @@ export const EditEndingCard = ({
               endingCardIndex={endingCardIndex}
               isInvalid={isInvalid}
               selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               updateSurvey={updateSurvey}
               endingCard={endingCard}
-              locale={locale}
             />
           )}
           {endingCard.type === "redirectToUrl" && (

@@ -4,7 +4,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { SettingsCard } from "../../components/SettingsCard";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 
@@ -19,7 +18,6 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
           environmentId={params.environmentId}
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="general"
         />

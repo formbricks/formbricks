@@ -8,7 +8,6 @@ import { LockIcon, MailIcon } from "lucide-react";
 import { useState } from "react";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface FollowUpsViewProps {
   localSurvey: TSurvey;
@@ -17,7 +16,6 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
-  locale: TUserLocale;
 }
 
 export const FollowUpsView = ({
@@ -27,7 +25,6 @@ export const FollowUpsView = ({
   mailFrom,
   isSurveyFollowUpsAllowed,
   userEmail,
-  locale,
 }: FollowUpsViewProps) => {
   const { t } = useTranslate();
   const [addFollowUpModalOpen, setAddFollowUpModalOpen] = useState(false);
@@ -110,7 +107,6 @@ export const FollowUpsView = ({
               selectedLanguageCode={selectedLanguageCode}
               mailFrom={mailFrom}
               userEmail={userEmail}
-              locale={locale}
             />
           );
         })}
@@ -124,7 +120,6 @@ export const FollowUpsView = ({
         selectedLanguageCode={selectedLanguageCode}
         mailFrom={mailFrom}
         userEmail={userEmail}
-        locale={locale}
       />
     </div>
   );

@@ -11,7 +11,6 @@ import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getTagsByEnvironmentId } from "@formbricks/lib/tag/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 
 const Page = async (props) => {
   const params = await props.params;
@@ -35,7 +34,6 @@ const Page = async (props) => {
 
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
 
-  const locale = await findMatchingLocale();
   const surveyDomain = getSurveyDomain();
 
   return (
@@ -66,7 +64,6 @@ const Page = async (props) => {
         environmentTags={tags}
         user={user}
         responsesPerPage={RESPONSES_PER_PAGE}
-        locale={locale}
         isReadOnly={isReadOnly}
       />
     </PageContentWrapper>
