@@ -105,8 +105,14 @@ describe("getContactsInSegment", () => {
 
   test("should return contacts when all operations succeed", async () => {
     vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
-
-    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip);
+    const attributeKeys = "email,name";
+    const result = await getContactsInSegment(
+      mockSurveyId,
+      mockSegmentId,
+      mockLimit,
+      mockSkip,
+      attributeKeys
+    );
 
     const whereClause = {
       AND: [
@@ -149,6 +155,13 @@ describe("getContactsInSegment", () => {
             },
             value: true,
           },
+          where: {
+            attributeKey: {
+              key: {
+                in: ["email", "name"],
+              },
+            },
+          },
         },
       },
       take: mockLimit,
@@ -162,18 +175,43 @@ describe("getContactsInSegment", () => {
     if (result.ok) {
       expect(result.data).toEqual({
         data: [
-          { id: "contact-1", email: "test@example.com", name: "Test User" },
-          { id: "contact-2", email: "another@example.com", name: "Another User" },
+          {
+            contactId: "contact-1",
+            attributes: {
+              email: "test@example.com",
+              name: "Test User",
+            },
+          },
+          {
+            contactId: "contact-2",
+            attributes: {
+              email: "another@example.com",
+              name: "Another User",
+            },
+          },
         ],
         meta: {
           total: 2,
+          limit: 10,
+          offset: 0,
         },
       });
     }
   });
 
   test("should filter contact attributes when fields parameter is provided", async () => {
-    vi.mocked(prisma.$transaction).mockResolvedValue([mockContacts.length, mockContacts]);
+    const filteredMockContacts = [
+      {
+        id: "contact-1",
+        attributes: [{ attributeKey: { key: "email" }, value: "test@example.com" }],
+      },
+      {
+        id: "contact-2",
+        attributes: [{ attributeKey: { key: "email" }, value: "another@example.com" }],
+      },
+    ];
+
+    vi.mocked(prisma.$transaction).mockResolvedValue([filteredMockContacts.length, filteredMockContacts]);
 
     const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "email");
 
@@ -210,6 +248,13 @@ describe("getContactsInSegment", () => {
       select: {
         id: true,
         attributes: {
+          where: {
+            attributeKey: {
+              key: {
+                in: ["email"],
+              },
+            },
+          },
           select: {
             attributeKey: {
               select: {
@@ -231,11 +276,23 @@ describe("getContactsInSegment", () => {
     if (result.ok) {
       expect(result.data).toEqual({
         data: [
-          { id: "contact-1", email: "test@example.com" },
-          { id: "contact-2", email: "another@example.com" },
+          {
+            contactId: "contact-1",
+            attributes: {
+              email: "test@example.com",
+            },
+          },
+          {
+            contactId: "contact-2",
+            attributes: {
+              email: "another@example.com",
+            },
+          },
         ],
         meta: {
           total: 2,
+          limit: 10,
+          offset: 0,
         },
       });
     }
@@ -250,11 +307,53 @@ describe("getContactsInSegment", () => {
     if (result.ok) {
       expect(result.data).toEqual({
         data: [
-          { id: "contact-1", email: "test@example.com", name: "Test User" },
-          { id: "contact-2", email: "another@example.com", name: "Another User" },
+          {
+            contactId: "contact-1",
+            attributes: {
+              email: "test@example.com",
+              name: "Test User",
+            },
+          },
+          {
+            contactId: "contact-2",
+            attributes: {
+              email: "another@example.com",
+              name: "Another User",
+            },
+          },
         ],
         meta: {
           total: 2,
+          limit: 10,
+          offset: 0,
+        },
+      });
+    }
+  });
+
+  test("should return no attributes but still return contacts when fields parameter is empty", async () => {
+    const mockContactsWithoutAttributes = mockContacts.map((contact) => ({
+      ...contact,
+      attributes: [],
+    }));
+
+    vi.mocked(prisma.$transaction).mockResolvedValue([
+      mockContactsWithoutAttributes.length,
+      mockContactsWithoutAttributes,
+    ]);
+
+    const result = await getContactsInSegment(mockSurveyId, mockSegmentId, mockLimit, mockSkip, "");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({
+        data: mockContacts.map((contact) => ({
+          contactId: contact.id,
+        })),
+        meta: {
+          total: 2,
+          limit: 10,
+          offset: 0,
         },
       });
     }
