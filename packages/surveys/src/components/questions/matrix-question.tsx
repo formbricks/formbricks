@@ -129,6 +129,7 @@ export function MatrixQuestion({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            tooltipContent={getLocalizedValue(question.tooltip, languageCode)}
           />
           <Subheader
             subheader={getLocalizedValue(question.subheader, languageCode)}

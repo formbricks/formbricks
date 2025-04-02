@@ -58,6 +58,7 @@ export function CTAQuestion({
             headline={getLocalizedValue(question.headline, languageCode)}
             questionId={question.id}
             required={question.required}
+            tooltipContent={getLocalizedValue(question.tooltip, languageCode)}
           />
           <HtmlBody htmlString={getLocalizedValue(question.html, languageCode)} questionId={question.id} />
         </div>
