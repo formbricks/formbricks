@@ -1048,8 +1048,8 @@ importers:
         specifier: 3.24.1
         version: 3.24.1
       zod-openapi:
-        specifier: 4.2.3
-        version: 4.2.3(zod@3.24.1)
+        specifier: 4.2.4
+        version: 4.2.4(zod@3.24.1)
     devDependencies:
       '@formbricks/config-typescript':
         specifier: workspace:*
@@ -14362,6 +14362,12 @@ packages:
 
   zod-openapi@4.2.3:
     resolution: {integrity: sha512-i0SqpcdXfsvVWTIY1Jl3Tk421s9fBIkpXvaA86zDas+8FjfZjm+GX6ot6SPB2SyuHwUNTN02gE5uIVlYXlyrDQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.21.4
+
+  zod-openapi@4.2.4:
+    resolution: {integrity: sha512-tsrQpbpqFCXqVXUzi3TPwFhuMtLN3oNZobOtYnK6/5VkXsNdnIgyNr4r8no4wmYluaxzN3F7iS+8xCW8BmMQ8g==}
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.21.4
@@ -31103,6 +31109,10 @@ snapshots:
       readable-stream: 3.6.2
 
   zod-openapi@4.2.3(zod@3.24.1):
+    dependencies:
+      zod: 3.24.1
+
+  zod-openapi@4.2.4(zod@3.24.1):
     dependencies:
       zod: 3.24.1
 
