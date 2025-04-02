@@ -37,6 +37,7 @@ vi.mock("@/lib/common/logger", () => ({
 // Mock filterSurveys
 vi.mock("@/lib/common/utils", () => ({
   filterSurveys: vi.fn(),
+  getIsDebug: vi.fn(),
 }));
 
 // Mock Config
