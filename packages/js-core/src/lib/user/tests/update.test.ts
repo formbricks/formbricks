@@ -30,6 +30,7 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   filterSurveys: vi.fn(),
+  getIsDebug: vi.fn(),
 }));
 
 vi.mock("@formbricks/api", () => ({
