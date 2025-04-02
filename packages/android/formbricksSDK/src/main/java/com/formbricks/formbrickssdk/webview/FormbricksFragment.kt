@@ -91,9 +91,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         }
 
         override fun onSurveyLibraryLoadError() {
-            Handler(Looper.getMainLooper()).postDelayed({
-                Formbricks.callback?.onError(SDKError.unableToLoadFormbicksJs)
-            },300)
+            Formbricks.callback?.onError(SDKError.unableToLoadFormbicksJs)
             dismiss()
         }
     })
@@ -179,9 +177,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
                         if (cm.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
-                            Handler(Looper.getMainLooper()).postDelayed({
-                                Formbricks.callback?.onError(SDKError.surveyDisplayFetchError)
-                            }, 300)
+                            Formbricks.callback?.onError(SDKError.surveyDisplayFetchError)
                             dismiss()
                         }
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
