@@ -1055,8 +1055,8 @@ importers:
         specifier: workspace:*
         version: link:../config-eslint
       vite:
-        specifier: 6.0.12
-        version: 6.0.12(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.3)(yaml@2.7.0)
+        specifier: 6.2.4
+        version: 6.2.4(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.27.0)(terser@5.37.0)(tsx@4.19.3)(yaml@2.7.0)
 
 packages:
 
