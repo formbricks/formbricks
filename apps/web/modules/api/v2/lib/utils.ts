@@ -1,6 +1,6 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ZodError } from "zod";
+import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 
 export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
@@ -34,11 +34,16 @@ export const handleApiError = (request: Request, err: ApiErrorResponseV2): Respo
   }
 };
 
-export const formatZodError = (error: ZodError) => {
-  return error.issues.map((issue) => ({
-    field: issue.path.join("."),
-    issue: issue.message,
-  }));
+export const formatZodError = (error: { issues: (ZodIssue | ZodCustomIssue)[] }) => {
+  return error.issues.map((issue) => {
+    const issueParams = issue.code === "custom" ? issue.params : undefined;
+
+    return {
+      field: issue.path.join("."),
+      issue: issue.message ?? "An error occurred while processing your request. Please try again later.",
+      ...(issueParams && { meta: issueParams }),
+    };
+  });
 };
 
 export const logApiRequest = (request: Request, responseStatus: number): void => {

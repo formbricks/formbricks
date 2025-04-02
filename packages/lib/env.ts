@@ -81,6 +81,7 @@ export const env = createEnv({
     S3_ENDPOINT_URL: z.string().optional(),
     S3_FORCE_PATH_STYLE: z.enum(["1", "0"]).optional(),
     SAML_DATABASE_URL: z.string().optional(),
+    SENTRY_DSN: z.string().optional(),
     SIGNUP_DISABLED: z.enum(["1", "0"]).optional(),
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
@@ -93,6 +94,7 @@ export const env = createEnv({
     SMTP_REJECT_UNAUTHORIZED_TLS: z.enum(["1", "0"]).optional(),
     STRIPE_SECRET_KEY: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    SURVEY_URL: z.string().optional(),
     TELEMETRY_DISABLED: z.enum(["1", "0"]).optional(),
     TERMS_URL: z
       .string()
@@ -126,7 +128,6 @@ export const env = createEnv({
       .or(z.string().refine((str) => str === "")),
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
-    NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
   },
   /*
@@ -184,9 +185,9 @@ export const env = createEnv({
     NEXT_PUBLIC_FORMBRICKS_API_HOST: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: process.env.NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID,
+    SENTRY_DSN: process.env.SENTRY_DSN,
     POSTHOG_API_KEY: process.env.POSTHOG_API_KEY,
     POSTHOG_API_HOST: process.env.POSTHOG_API_HOST,
-    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
     OPENTELEMETRY_LISTENER_URL: process.env.OPENTELEMETRY_LISTENER_URL,
     INTERCOM_APP_ID: process.env.INTERCOM_APP_ID,
@@ -222,6 +223,7 @@ export const env = createEnv({
     SMTP_AUTHENTICATED: process.env.SMTP_AUTHENTICATED,
     STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+    SURVEY_URL: process.env.SURVEY_URL,
     TELEMETRY_DISABLED: process.env.TELEMETRY_DISABLED,
     TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,

@@ -173,6 +173,9 @@ export const authOptions: NextAuthOptions = {
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
+  session: {
+    maxAge: 3600,
+  },
   callbacks: {
     async jwt({ token }) {
       const existingUser = await getUserByEmail(token?.email!);

@@ -103,6 +103,9 @@ export const track = async (
 
     return trackAction(actionClass.name, code);
   } catch (error) {
+    const logger = Logger.getInstance();
+    logger.error(`Error tracking action ${error as string}`);
+
     return err({
       code: "error",
       message: "Error tracking action",

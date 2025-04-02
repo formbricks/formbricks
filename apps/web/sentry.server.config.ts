@@ -2,27 +2,34 @@
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 import * as Sentry from "@sentry/nextjs";
+import { SENTRY_DSN } from "@formbricks/lib/constants";
 
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+if (SENTRY_DSN) {
+  console.log("Sentry DSN found, enabling Sentry on the server");
 
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1,
+  Sentry.init({
+    dsn: SENTRY_DSN,
 
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+    // Adjust this value in production, or use tracesSampler for greater control
+    tracesSampleRate: 1,
 
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: process.env.NODE_ENV === 'development',
+    // Setting this option to true will print useful information to the console while you're setting up Sentry.
+    debug: false,
 
-  beforeSend(event, hint) {
-    const error = hint.originalException as Error;
+    // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+    // spotlight: process.env.NODE_ENV === 'development',
 
-    // @ts-expect-error
-    if (error && error.digest === "NEXT_NOT_FOUND") {
-      return null;
-    }
+    beforeSend(event, hint) {
+      const error = hint.originalException as Error;
 
-    return event;
-  },
-});
+      // @ts-expect-error
+      if (error && error.digest === "NEXT_NOT_FOUND") {
+        return null;
+      }
+
+      return event;
+    },
+  });
+} else {
+  console.warn("Sentry DSN not found, Sentry will be disabled on the server");
+}
