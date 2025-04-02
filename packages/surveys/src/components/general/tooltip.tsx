@@ -39,6 +39,11 @@ export function Tooltip({ children, content }: TooltipProps) {
         ref={triggerRef}
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
+        onFocus={() => setIsVisible(true)}
+        onBlur={() => setIsVisible(false)}
+        tabIndex={content ? 0 : -1}
+        role={content ? "button" : undefined}
+        aria-describedby={content && isVisible ? "tooltip" : undefined}
         className="z-100 relative inline-block">
         {children}
       </div>
