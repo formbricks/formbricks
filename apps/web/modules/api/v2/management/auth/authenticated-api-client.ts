@@ -1,4 +1,5 @@
-import { logApiRequest } from "@/modules/api/v2/lib/utils";
+import { handleApiError, logApiRequest } from "@/modules/api/v2/lib/utils";
+import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ExtendedSchemas, HandlerFn, ParsedSchemas, apiWrapper } from "./api-wrapper";
 
 export const authenticatedApiClient = async <S extends ExtendedSchemas>({
@@ -14,19 +15,28 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
 }): Promise<Response> => {
-  const startTime = Date.now();
+  try {
+    const response = await apiWrapper({
+      request,
+      schemas,
+      externalParams,
+      rateLimit,
+      handler,
+    });
 
-  const response = await apiWrapper({
-    request,
-    schemas,
-    externalParams,
-    rateLimit,
-    handler,
-  });
+    if (response.ok) {
+      logApiRequest(request, response.status);
+    }
 
-  const duration = Date.now() - startTime;
+    return response;
+  } catch (err) {
+    if ("type" in err) {
+      return handleApiError(request, err as ApiErrorResponseV2);
+    }
 
-  logApiRequest(request, response.status, duration);
-
-  return response;
+    return handleApiError(request, {
+      type: "internal_server_error",
+      details: [{ field: "error", issue: "An error occurred while processing your request." }],
+    });
+  }
 };

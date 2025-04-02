@@ -18,7 +18,7 @@ const nextConfig = {
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   output: "standalone",
   poweredByHeader: false,
-  serverExternalPackages: ["@aws-sdk"],
+  serverExternalPackages: ["@aws-sdk", "@opentelemetry/instrumentation", "pino", "pino-pretty"],
   outputFileTracingIncludes: {
     "app/api/packages": ["../../packages/js-core/dist/*", "../../packages/surveys/dist/*"],
   },
@@ -27,10 +27,7 @@ const nextConfig = {
     localeDetection: false,
     defaultLocale: "en-US",
   },
-  experimental: {
-    instrumentationHook: true,
-    serverComponentsExternalPackages: ["@opentelemetry/instrumentation"],
-  },
+  experimental: {},
   transpilePackages: ["@formbricks/database", "@formbricks/lib"],
   images: {
     remotePatterns: [
@@ -119,6 +116,15 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
+      },
       {
         // matching all API routes
         source: "/api/v1/client/:path*",
@@ -324,8 +330,6 @@ const sentryConfig = {
   disableLogger: true,
 };
 
-const exportConfig = process.env.NEXT_PUBLIC_SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryOptions)
-  : nextConfig;
+const exportConfig = process.env.SENTRY_DSN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
 
 export default nextConfig;

@@ -33,6 +33,9 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_CLIENT_SECRET: "test-oidc-client-secret",
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
+  IS_POSTHOG_CONFIGURED: true,
+  POSTHOG_API_HOST: "test-posthog-api-host",
+  POSTHOG_API_KEY: "test-posthog-api-key",
 }));
 
 vi.mock("@/app/(app)/components/FormbricksClient", () => ({
@@ -43,12 +46,6 @@ vi.mock("@/app/intercom/IntercomClientWrapper", () => ({
 }));
 vi.mock("@/modules/ui/components/no-mobile-overlay", () => ({
   NoMobileOverlay: () => <div data-testid="no-mobile-overlay" />,
-}));
-vi.mock("@/modules/ui/components/post-hog-client", () => ({
-  PHProvider: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="ph-provider">{children}</div>
-  ),
-  PostHogPageview: () => <div data-testid="ph-pageview" />,
 }));
 vi.mock("@/modules/ui/components/toaster-client", () => ({
   ToasterClient: () => <div data-testid="toaster-client" />,
@@ -71,8 +68,6 @@ describe("(app) AppLayout", () => {
     render(element);
 
     expect(screen.getByTestId("no-mobile-overlay")).toBeInTheDocument();
-    expect(screen.getByTestId("ph-pageview")).toBeInTheDocument();
-    expect(screen.getByTestId("ph-provider")).toBeInTheDocument();
     expect(screen.getByTestId("mock-intercom-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("toaster-client")).toBeInTheDocument();
     expect(screen.getByTestId("child-content")).toHaveTextContent("Hello from children");

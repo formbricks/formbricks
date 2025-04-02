@@ -5,6 +5,7 @@ import { segmentCache } from "@formbricks/lib/cache/segment";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { validateInputs } from "@formbricks/lib/utils/validate";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 
 export const deleteSurvey = async (surveyId: string) => {
@@ -67,7 +68,7 @@ export const deleteSurvey = async (surveyId: string) => {
     return deletedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error({ error, surveyId }, "Error deleting survey");
       throw new DatabaseError(error.message);
     }
 

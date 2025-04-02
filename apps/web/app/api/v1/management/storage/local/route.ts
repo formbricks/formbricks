@@ -12,6 +12,10 @@ import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { putFileToLocalStorage } from "@formbricks/lib/storage/service";
 
 export const POST = async (req: NextRequest): Promise<Response> => {
+  if (!ENCRYPTION_KEY) {
+    return responses.internalServerErrorResponse("Encryption key is not set");
+  }
+
   const accessType = "public"; // public files are accessible by anyone
   const headersList = await headers();
 

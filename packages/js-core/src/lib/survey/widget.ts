@@ -7,9 +7,11 @@ import {
   filterSurveys,
   getLanguageCode,
   getStyling,
+  handleHiddenFields,
   shouldDisplayBasedOnPercentage,
 } from "@/lib/common/utils";
 import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
+import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
@@ -17,7 +19,11 @@ export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
 
-export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: string): Promise<void> => {
+export const triggerSurvey = async (
+  survey: TEnvironmentStateSurvey,
+  action?: string,
+  properties?: TTrackProperties
+): Promise<void> => {
   const logger = Logger.getInstance();
 
   // Check if the survey should be displayed based on displayPercentage
@@ -29,10 +35,19 @@ export const triggerSurvey = async (survey: TEnvironmentStateSurvey, action?: st
     }
   }
 
-  await renderWidget(survey, action);
+  const hiddenFieldsObject: TTrackProperties["hiddenFields"] = handleHiddenFields(
+    survey.hiddenFields,
+    properties?.hiddenFields
+  );
+
+  await renderWidget(survey, action, hiddenFieldsObject);
 };
 
-export const renderWidget = async (survey: TEnvironmentStateSurvey, action?: string): Promise<void> => {
+export const renderWidget = async (
+  survey: TEnvironmentStateSurvey,
+  action?: string,
+  hiddenFieldsObject?: TTrackProperties["hiddenFields"]
+): Promise<void> => {
   const logger = Logger.getInstance();
   const config = Config.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
@@ -87,6 +102,7 @@ export const renderWidget = async (survey: TEnvironmentStateSurvey, action?: str
       languageCode,
       placement,
       styling: getStyling(project, survey),
+      hiddenFieldsRecord: hiddenFieldsObject,
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };

@@ -1,6 +1,7 @@
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { ZodError } from "zod";
+import { ZodCustomIssue, ZodIssue } from "zod";
+import { logger } from "@formbricks/logger";
 
 export const handleApiError = (request: Request, err: ApiErrorResponseV2): Response => {
   logApiError(request, err);
@@ -33,18 +34,24 @@ export const handleApiError = (request: Request, err: ApiErrorResponseV2): Respo
   }
 };
 
-export const formatZodError = (error: ZodError) => {
-  return error.issues.map((issue) => ({
-    field: issue.path.join("."),
-    issue: issue.message,
-  }));
+export const formatZodError = (error: { issues: (ZodIssue | ZodCustomIssue)[] }) => {
+  return error.issues.map((issue) => {
+    const issueParams = issue.code === "custom" ? issue.params : undefined;
+
+    return {
+      field: issue.path.join("."),
+      issue: issue.message ?? "An error occurred while processing your request. Please try again later.",
+      ...(issueParams && { meta: issueParams }),
+    };
+  });
 };
 
-export const logApiRequest = (request: Request, responseStatus: number, duration: number): void => {
+export const logApiRequest = (request: Request, responseStatus: number): void => {
   const method = request.method;
   const url = new URL(request.url);
   const path = url.pathname;
   const correlationId = request.headers.get("x-request-id") || "";
+  const startTime = request.headers.get("x-start-time") || "";
   const queryParams = Object.fromEntries(url.searchParams.entries());
 
   const sensitiveParams = ["apikey", "token", "secret"];
@@ -52,14 +59,25 @@ export const logApiRequest = (request: Request, responseStatus: number, duration
     Object.entries(queryParams).filter(([key]) => !sensitiveParams.includes(key.toLowerCase()))
   );
 
-  console.log(
-    `[API REQUEST DETAILS] ${method} ${path} - ${responseStatus} - ${duration}ms${correlationId ? `\n correlationId: ${correlationId}` : ""}\n queryParams: ${JSON.stringify(safeQueryParams)}`
-  );
+  // Info: Conveys general, operational messages about system progress and state.
+  logger
+    .withContext({
+      method,
+      path,
+      responseStatus,
+      duration: `${Date.now() - parseInt(startTime)} ms`,
+      correlationId,
+      queryParams: safeQueryParams,
+    })
+    .info("API Request Details");
 };
 
 export const logApiError = (request: Request, error: ApiErrorResponseV2): void => {
   const correlationId = request.headers.get("x-request-id") || "";
-  console.error(
-    `[API ERROR DETAILS]${correlationId ? `\n correlationId: ${correlationId}` : ""}\n error: ${JSON.stringify(error, null, 2)}`
-  );
+  logger
+    .withContext({
+      correlationId,
+      error,
+    })
+    .error("API Error Details");
 };

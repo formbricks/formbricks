@@ -24,7 +24,6 @@ private extension FormbricksViewModel {
             
             <head>
                 <title>Formbricks WebView Survey</title>
-                <script src="https://cdn.tailwindcss.com"></script>
             </head>
 
             <body style="overflow: hidden; height: 100vh; display: flex; flex-direction: column; justify-content: flex-end;">

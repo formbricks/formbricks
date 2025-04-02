@@ -1,16 +1,13 @@
 // vitest.config.ts
 import react from "@vitejs/plugin-react";
-import { loadEnv } from "vite";
+import { PluginOption, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/page.test.tsx", "node"], // page files use node environment because it uses server-side rendering
-      ["**/*.test.tsx", "jsdom"],
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["../../packages/lib/vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
@@ -28,15 +25,29 @@ export default defineConfig({
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
+        "modules/ui/components/post-hog-client/*.tsx",
+        "modules/ui/components/alert/*.tsx",
+        "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
-        "modules/ee/sso/lib/**/*.ts",
-        "modules/ee/contacts/lib/**/*.ts",
-        "modules/survey/link/lib/**/*.ts",
+        "app/(app)/environments/**/components/PosthogIdentify.tsx",
+        "app/(app)/(onboarding)/organizations/**/layout.tsx",
+        "app/(app)/(survey-editor)/environments/**/layout.tsx",
         "app/(auth)/layout.tsx",
         "app/(app)/layout.tsx",
+        "app/layout.tsx",
         "app/intercom/*.tsx",
+        "app/sentry/*.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
+        "modules/ee/sso/lib/**/*.ts",
+        "app/lib/**/*.ts",
+        "app/api/(internal)/insights/lib/**/*.ts",
         "modules/ee/role-management/*.ts",
         "modules/organization/settings/teams/actions.ts",
+        "modules/survey/hooks/*.tsx",
+        "modules/survey/lib/client-utils.ts",
+        "modules/survey/list/components/survey-card.tsx",
+        "modules/survey/list/components/survey-dropdown-menu.tsx",
+        "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
       ],
       exclude: [
         "**/.next/**",
@@ -49,5 +60,5 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [tsconfigPaths(), react()],
+  plugins: [tsconfigPaths(), react() as PluginOption],
 });

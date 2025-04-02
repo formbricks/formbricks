@@ -1,8 +1,10 @@
 import { responses } from "@/app/lib/api/response";
+import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { NextRequest } from "next/server";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
+import { ZUploadFileRequest } from "@formbricks/types/storage";
 import { uploadPrivateFile } from "./lib/uploadPrivateFile";
 
 interface Context {
@@ -25,19 +27,22 @@ export const POST = async (req: NextRequest, context: Context): Promise<Response
   const params = await context.params;
   const environmentId = params.environmentId;
 
-  const { fileName, fileType, surveyId } = await req.json();
+  const jsonInput = await req.json();
 
-  if (!surveyId) {
-    return responses.badRequestResponse("surveyId ID is required");
+  const inputValidation = ZUploadFileRequest.safeParse({
+    ...jsonInput,
+    environmentId,
+  });
+
+  if (!inputValidation.success) {
+    return responses.badRequestResponse(
+      "Invalid request",
+      transformErrorToDetails(inputValidation.error),
+      true
+    );
   }
 
-  if (!fileName) {
-    return responses.badRequestResponse("fileName is required");
-  }
-
-  if (!fileType) {
-    return responses.badRequestResponse("contentType is required");
-  }
+  const { fileName, fileType, surveyId } = inputValidation.data;
 
   const [survey, organization] = await Promise.all([
     getSurvey(surveyId),

@@ -8,6 +8,7 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { responseCache } from "@formbricks/lib/response/cache";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
@@ -77,7 +78,10 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     return ok(deletedResponse);
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === "P2016" || error.code === "P2025") {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
         return err({
           type: "not_found",
           details: [{ field: "response", issue: "not found" }],
@@ -116,7 +120,10 @@ export const updateResponse = async (
     return ok(updatedResponse);
   } catch (error) {
     if (error instanceof PrismaClientKnownRequestError) {
-      if (error.code === "P2016" || error.code === "P2025") {
+      if (
+        error.code === PrismaErrorType.RecordDoesNotExist ||
+        error.code === PrismaErrorType.RelatedRecordDoesNotExist
+      ) {
         return err({
           type: "not_found",
           details: [{ field: "response", issue: "not found" }],

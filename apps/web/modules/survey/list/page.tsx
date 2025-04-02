@@ -1,12 +1,7 @@
-import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
-import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { TemplateList } from "@/modules/survey/components/template-list";
-import { getMembershipRoleByUserIdOrganizationId } from "@/modules/survey/lib/membership";
 import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
-import { getEnvironment } from "@/modules/survey/list/lib/environment";
-import { getOrganizationIdByEnvironmentId } from "@/modules/survey/list/lib/organization";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -14,11 +9,10 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE, WEBAPP_URL } from "@formbricks/lib/constants";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
+import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getUserLocale } from "@formbricks/lib/user/service";
 import { TTemplateRole } from "@formbricks/types/templates";
 
@@ -39,42 +33,23 @@ export const SurveysPage = async ({
   params: paramsProps,
   searchParams: searchParamsProps,
 }: SurveyTemplateProps) => {
+  const surveyDomain = getSurveyDomain();
   const searchParams = await searchParamsProps;
   const params = await paramsProps;
-
-  const session = await getServerSession(authOptions);
-  const project = await getProjectByEnvironmentId(params.environmentId);
-  const organizationId = await getOrganizationIdByEnvironmentId(params.environmentId);
   const t = await getTranslate();
-  if (!session) {
-    throw new Error(t("common.session_not_found"));
-  }
+
+  const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
     throw new Error(t("common.project_not_found"));
   }
 
-  if (!organizationId) {
-    throw new Error(t("common.organization_not_found"));
-  }
+  const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   const prefilledFilters = [project?.config.channel, project.config.industry, searchParams.role ?? null];
 
-  const membershipRole = await getMembershipRoleByUserIdOrganizationId(session?.user.id, organizationId);
-  const { isMember, isBilling } = getAccessFlags(membershipRole);
-
-  const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
-  const { hasReadAccess } = getTeamPermissionFlags(projectPermission);
-
-  const isReadOnly = isMember && hasReadAccess;
-
   if (isBilling) {
     return redirect(`/environments/${params.environmentId}/settings/billing`);
-  }
-
-  const environment = await getEnvironment(params.environmentId);
-  if (!environment) {
-    throw new Error(t("common.environment_not_found"));
   }
 
   const surveyCount = await getSurveyCount(params.environmentId);
@@ -92,44 +67,55 @@ export const SurveysPage = async ({
     );
   };
 
-  return (
-    <PageContentWrapper>
-      {surveyCount > 0 ? (
-        <>
-          <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
-          <SurveysList
-            environmentId={environment.id}
-            isReadOnly={isReadOnly}
-            WEBAPP_URL={WEBAPP_URL}
-            userId={session.user.id}
-            surveysPerPage={SURVEYS_PER_PAGE}
-            currentProjectChannel={currentProjectChannel}
-            locale={locale}
-          />
-        </>
-      ) : isReadOnly ? (
-        <>
-          <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-            {t("environments.surveys.no_surveys_created_yet")}
-          </h1>
+  const projectWithRequiredProps = {
+    ...project,
+    brandColor: project.styling?.brandColor?.light ?? null,
+    highlightBorderColor: null,
+  };
 
-          <h2 className="px-6 text-lg font-medium text-slate-500">
-            {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-          </h2>
-        </>
-      ) : (
-        <>
-          <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-            {t("environments.surveys.all_set_time_to_create_first_survey")}
-          </h1>
-          <TemplateList
-            environmentId={environment.id}
-            project={project}
-            userId={session.user.id}
-            prefilledFilters={prefilledFilters}
-          />
-        </>
-      )}
-    </PageContentWrapper>
-  );
+  let content;
+  if (surveyCount > 0) {
+    content = (
+      <>
+        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
+        <SurveysList
+          environmentId={environment.id}
+          isReadOnly={isReadOnly}
+          surveyDomain={surveyDomain}
+          userId={session.user.id}
+          surveysPerPage={SURVEYS_PER_PAGE}
+          currentProjectChannel={currentProjectChannel}
+          locale={locale}
+        />
+      </>
+    );
+  } else if (isReadOnly) {
+    content = (
+      <>
+        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
+          {t("environments.surveys.no_surveys_created_yet")}
+        </h1>
+
+        <h2 className="px-6 text-lg font-medium text-slate-500">
+          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
+        </h2>
+      </>
+    );
+  } else {
+    content = (
+      <>
+        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
+          {t("environments.surveys.all_set_time_to_create_first_survey")}
+        </h1>
+        <TemplateList
+          environmentId={environment.id}
+          project={projectWithRequiredProps}
+          userId={session.user.id}
+          prefilledFilters={prefilledFilters}
+        />
+      </>
+    );
+  }
+
+  return <PageContentWrapper>{content}</PageContentWrapper>;
 };

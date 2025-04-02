@@ -15,14 +15,23 @@ module "rds-aurora" {
   source  = "terraform-aws-modules/rds-aurora/aws"
   version = "9.12.0"
 
-  name                        = "${local.name}-postgres"
-  engine                      = data.aws_rds_engine_version.postgresql.engine
-  engine_mode                 = "provisioned"
-  engine_version              = data.aws_rds_engine_version.postgresql.version
-  storage_encrypted           = true
-  master_username             = "formbricks"
-  master_password             = random_password.postgres.result
-  manage_master_user_password = false
+  name                              = "${local.name}-postgres"
+  engine                            = data.aws_rds_engine_version.postgresql.engine
+  engine_mode                       = "provisioned"
+  engine_version                    = data.aws_rds_engine_version.postgresql.version
+  storage_encrypted                 = true
+  master_username                   = "formbricks"
+  master_password                   = random_password.postgres.result
+  manage_master_user_password       = false
+  create_db_cluster_parameter_group = true
+  db_cluster_parameter_group_family = data.aws_rds_engine_version.postgresql.parameter_group_family
+  db_cluster_parameter_group_parameters = [
+    {
+      name         = "shared_preload_libraries"
+      value        = "pglogical"
+      apply_method = "pending-reboot"
+    }
+  ]
 
   vpc_id               = module.vpc.vpc_id
   db_subnet_group_name = module.vpc.database_subnet_group_name
@@ -33,14 +42,17 @@ module "rds-aurora" {
   }
   performance_insights_enabled = true
 
-  apply_immediately   = true
-  skip_final_snapshot = true
+  backup_retention_period = 7
+  apply_immediately       = true
+  skip_final_snapshot     = false
+
+  deletion_protection = true
 
   enable_http_endpoint = true
 
   serverlessv2_scaling_configuration = {
     min_capacity             = 0
-    max_capacity             = 10
+    max_capacity             = 50
     seconds_until_auto_pause = 3600
   }
 

@@ -2,7 +2,10 @@ import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-at
 import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
+import { rolePaths } from "@/modules/api/v2/management/roles/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
+import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
+import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
 import { createDocument, extendZodWithOpenApi } from "zod-openapi";
@@ -11,6 +14,7 @@ import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
+import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 extendZodWithOpenApi(z);
 
@@ -23,10 +27,13 @@ const document = createDocument({
   },
   paths: {
     ...responsePaths,
+    ...bulkContactPaths,
     ...contactPaths,
     ...contactAttributePaths,
     ...contactAttributeKeyPaths,
     ...surveyPaths,
+    ...webhookPaths,
+    ...rolePaths,
   },
   servers: [
     {
@@ -55,6 +62,14 @@ const document = createDocument({
       name: "Management API > Surveys",
       description: "Operations for managing surveys.",
     },
+    {
+      name: "Management API > Webhooks",
+      description: "Operations for managing webhooks.",
+    },
+    {
+      name: "Management API > Roles",
+      description: "Operations for managing roles.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -71,6 +86,8 @@ const document = createDocument({
       contactAttribute: ZContactAttribute,
       contactAttributeKey: ZContactAttributeKey,
       survey: ZSurveyWithoutQuestionType,
+      webhook: ZWebhook,
+      role: z.array(z.string()),
     },
   },
   security: [
@@ -80,4 +97,5 @@ const document = createDocument({
   ],
 });
 
+// do not replace this with logger.info
 console.log(yaml.stringify(document));
