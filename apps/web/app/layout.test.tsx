@@ -40,10 +40,6 @@ vi.mock("@/tolgee/server", () => ({
   getTolgee: vi.fn(),
 }));
 
-vi.mock("@vercel/speed-insights/next", () => ({
-  SpeedInsights: () => <div data-testid="speed-insights">SpeedInsights</div>,
-}));
-
 vi.mock("@/modules/ui/components/post-hog-client", () => ({
   PHProvider: ({ children, posthogEnabled }: { children: React.ReactNode; posthogEnabled: boolean }) => (
     <div data-testid="ph-provider">
