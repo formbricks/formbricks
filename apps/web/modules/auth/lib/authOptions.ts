@@ -61,6 +61,9 @@ export const authOptions: NextAuthOptions = {
         if (!user.password) {
           throw new Error("User has no password stored");
         }
+        if (user.isActive === false) {
+          throw new Error("Sorry, your account is inactive");
+        }
 
         const isValid = await verifyPassword(credentials.password, user.password);
 
@@ -162,6 +165,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Email already verified");
         }
 
+        if (user.isActive === false) {
+          throw new Error("Sorry, your account is inactive");
+        }
+
         user = await updateUser(user.id, { emailVerified: new Date() });
 
         // send new user to brevo after email verification
@@ -194,6 +201,8 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token?.id;
       // @ts-expect-error
       session.user = token.profile;
+      // @ts-expect-error
+      session.user.isActive = token.isActive;
 
       return session;
     },

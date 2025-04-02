@@ -53,6 +53,10 @@ export const MembersInfo = ({
       );
     }
 
+    if (!member.isActive) {
+      return <Badge type="gray" text="Inactive" size="tiny" />;
+    }
+
     return <Badge type="success" text="Active" size="tiny" />;
   };
 
