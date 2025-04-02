@@ -50,6 +50,10 @@ final class SurveyManager {
             return survey.triggers?.contains(where: { $0.actionClass?.name == actionClass?.name }) ?? false
         }
         
+        if (firstSurveyWithActionClass == nil) {
+            Formbricks.delegate?.onError(FormbricksSDKError(type: .surveyNotFoundError))
+        }
+        
         // Display percentage
         let shouldDisplay = shouldDisplayBasedOnPercentage(firstSurveyWithActionClass?.displayPercentage)
         
@@ -57,9 +61,13 @@ final class SurveyManager {
         if let surveyId = firstSurveyWithActionClass?.id, shouldDisplay {
             isShowingSurvey = true
             let timeout = firstSurveyWithActionClass?.delay ?? 0
-            DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) {
+            DispatchQueue.global().asyncAfter(deadline: .now() + Double(timeout)) { [weak self] in
+                guard let self = self else { return }
                 self.showSurvey(withId: surveyId)
+                Formbricks.delegate?.onSuccess(.onFoundSurvey)
             }
+        } else {
+            Formbricks.delegate?.onError(FormbricksSDKError(type: .surveyNotDisplayableError))
         }
     }
 }
@@ -67,11 +75,14 @@ final class SurveyManager {
 // MARK: - API calls -
 extension SurveyManager {
     /// Checks if the environment state needs to be refreshed based on its `expiresAt` property, and if so, refreshes it, starts the refresh timer, and filters the surveys.
-    func refreshEnvironmentIfNeeded(force: Bool = false) {
-        if let environmentResponse = environmentResponse, environmentResponse.data.expiresAt.timeIntervalSinceNow > 0, !force {
-            Formbricks.logger.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
-            filterSurveys()
-            return
+    func refreshEnvironmentIfNeeded(force: Bool = false,
+                                    isInitial: Bool = false) {
+        if (!force) {
+            if let environmentResponse = environmentResponse, environmentResponse.data.expiresAt.timeIntervalSinceNow > 0{
+                Formbricks.logger.debug("Environment state is still valid until \(environmentResponse.data.expiresAt)")
+                filterSurveys()
+                return
+            }
         }
         
         service.getEnvironmentState { [weak self] result in
@@ -81,9 +92,16 @@ extension SurveyManager {
                 self?.environmentResponse = response
                 self?.startRefreshTimer(expiresAt: response.data.expiresAt)
                 self?.filterSurveys()
+                if (isInitial) {
+                    Formbricks.delegate?.onSuccess(.onFinishedSetup)
+                } else {
+                    Formbricks.delegate?.onSuccess(.onFinishedRefreshEnvironment)
+                }
             case .failure:
                 self?.hasApiError = true
-                Formbricks.logger.error(FormbricksSDKError(type: .unableToRefreshEnvironment).message)
+                let error = FormbricksSDKError(type: .unableToRefreshEnvironment)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger.error(error.message)
                 self?.startErrorTimer()
             }
         }
@@ -97,6 +115,7 @@ extension SurveyManager {
     /// Creates a new display for the survey. It is called when the survey is displayed to the user.
     func onNewDisplay(surveyId: String) {
         UserManager.shared.onDisplay(surveyId: surveyId)
+        Formbricks.delegate?.onSurveyDisplayed()
     }
 }
 
@@ -168,7 +187,9 @@ extension SurveyManager {
                 if let data = UserDefaults.standard.data(forKey: SurveyManager.environmentResponseObjectKey) {
                     return try? JSONDecoder().decode(EnvironmentResponse.self, from: data)
                 } else {
-                    Formbricks.logger.error(FormbricksSDKError(type: .unableToRetrieveEnvironment).message)
+                    let error = FormbricksSDKError(type: .unableToRetrieveEnvironment)
+                    Formbricks.delegate?.onError(error)
+                    Formbricks.logger.error(error.message)
                     return nil
                 }
             }
@@ -177,7 +198,9 @@ extension SurveyManager {
                 UserDefaults.standard.set(data, forKey: SurveyManager.environmentResponseObjectKey)
                 backingEnvironmentResponse = newValue
             } else {
-                Formbricks.logger.error(FormbricksSDKError(type: .unableToPersistEnvironment).message)
+                let error = FormbricksSDKError(type: .unableToPersistEnvironment)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger.error(error.message)
             }
         }
     }
@@ -207,7 +230,9 @@ private extension SurveyManager {
                 }
                 
             default:
-                Formbricks.logger.error(FormbricksSDKError(type: .invalidDisplayOption).message)
+                let error = FormbricksSDKError(type: .invalidDisplayOption)
+                Formbricks.delegate?.onError(error)
+                Formbricks.logger.error(error.message)
                 return false
             }
             

@@ -7,6 +7,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.util.Base64
 import android.view.LayoutInflater
@@ -15,7 +17,11 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.FragmentManager
@@ -25,6 +31,7 @@ import com.formbricks.formbrickssdk.R
 import com.formbricks.formbrickssdk.databinding.FragmentFormbricksBinding
 import com.formbricks.formbrickssdk.logger.Logger
 import com.formbricks.formbrickssdk.manager.SurveyManager
+import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.model.javascript.FileUploadData
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -45,20 +52,28 @@ class FormbricksFragment : BottomSheetDialogFragment() {
 
     private var webAppInterface = WebAppInterface(object : WebAppInterface.WebAppCallback {
         override fun onClose() {
-            dismiss()
+            Handler(Looper.getMainLooper()).post {
+                Formbricks.callback?.onSurveyClosed()
+                dismiss()
+            }
         }
 
         override fun onFinished() {
-            closeTimer.schedule(object: TimerTask() {
-                override fun run() {
-                    dismiss()
-                }
+            Handler(Looper.getMainLooper()).post {
+                dialog?.window?.setDimAmount(0f)
+                Formbricks.callback?.onSurveyFinished()
+                closeTimer.schedule(object: TimerTask() {
+                    override fun run() {
+                        dismiss()
+                    }
 
-            }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
-            )
+                }, Date(System.currentTimeMillis() + CLOSING_TIMEOUT_IN_SECONDS * 1000)
+                )
+            }
         }
 
         override fun onDisplayCreated() {
+            Formbricks.callback?.onSurveyStarted()
             SurveyManager.onNewDisplay(surveyId)
         }
 
@@ -76,6 +91,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
         }
 
         override fun onSurveyLibraryLoadError() {
+            Formbricks.callback?.onError(SDKError.unableToLoadFormbicksJs)
             dismiss()
         }
     })
@@ -149,6 +165,7 @@ class FormbricksFragment : BottomSheetDialogFragment() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dialog?.window?.setDimAmount(0.0f)
         binding.formbricksWebview.setBackgroundColor(Color.TRANSPARENT)
         binding.formbricksWebview.let {
 
@@ -160,7 +177,10 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage?.let { cm ->
                         if (cm.messageLevel() == ConsoleMessage.MessageLevel.ERROR) {
-                            dismiss()
+                            Formbricks.callback?.onError(SDKError.surveyDisplayFetchError)
+                            if (Formbricks.autoDismissErrors) {
+                                dismiss()
+                            }
                         }
                         val log = "[CONSOLE:${cm.messageLevel()}] \"${cm.message()}\", source: ${cm.sourceId()} (${cm.lineNumber()})"
                         Logger.d(log)
@@ -174,6 +194,23 @@ class FormbricksFragment : BottomSheetDialogFragment() {
                 domStorageEnabled = true
                 loadWithOverviewMode = true
                 useWideViewPort = true
+            }
+
+            it.webViewClient = object : WebViewClient() {
+                override fun onReceivedError(
+                    view: WebView?,
+                    request: WebResourceRequest?,
+                    error: WebResourceError?
+                ) {
+                    super.onReceivedError(view, request, error)
+                    Logger.d("WebView Error: ${error?.description}")
+                }
+
+                override fun onPageCommitVisible(view: WebView?, url: String?) {
+                    dialog?.window?.setDimAmount(0.5f)
+                    Formbricks.callback?.onSurveyStarted()
+                    super.onPageCommitVisible(view, url)
+                }
             }
 
             it.setOnFocusChangeListener { _, hasFocus ->
