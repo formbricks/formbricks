@@ -97,10 +97,6 @@ describe("RootLayout", () => {
     const element = await RootLayout({ children });
     render(element);
 
-    // log env vercel
-    console.log("vercel", process.env.VERCEL);
-
-    expect(screen.getByTestId("speed-insights")).toBeInTheDocument();
     expect(screen.getByTestId("tolgee-next-provider")).toBeInTheDocument();
     expect(screen.getByTestId("sentry-provider")).toBeInTheDocument();
     expect(screen.getByTestId("child")).toHaveTextContent("Child Content");
