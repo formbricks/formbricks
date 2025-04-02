@@ -1,6 +1,6 @@
 import Foundation
 
-enum FormbricksSDKErrorType: Int {
+public enum FormbricksSDKErrorType: Int {
     case sdkIsNotInitialized
     case sdkIsAlreadyInitialized
     case invalidAppUrl
@@ -8,10 +8,13 @@ enum FormbricksSDKErrorType: Int {
     case unableToPersistEnvironment
     case unableToRetrieveEnvironment
     case invalidJavascriptMessage
+    case surveyLibraryLoadError
     case unableToRetrieveUser
     case unableToPersistUser
     case userIdIsNotSetYet
     case invalidDisplayOption
+    case surveyNotFoundError
+    case surveyNotDisplayableError
     case networkError
     
     var description: String {
@@ -38,15 +41,21 @@ enum FormbricksSDKErrorType: Int {
             return "Unable to commit user attributes because userId is not set."
         case .invalidDisplayOption:
             return "Invalid Display Option"
+        case .surveyNotFoundError:
+            return "Survey Not Found"
+        case .surveyLibraryLoadError:
+            return "Survey Library Load Error"
+        case .surveyNotDisplayableError:
+            return "Survey Not Displayable"
         case .networkError:
             return "No internet connection"
         }
     }
 }
 
-final class FormbricksSDKError:  LocalizedError {
-    let type: FormbricksSDKErrorType
-    var errorDescription: String
+public final class FormbricksSDKError:  LocalizedError {
+    public let type: FormbricksSDKErrorType
+    public var errorDescription: String
     
     init(type: FormbricksSDKErrorType) {
         self.type = type

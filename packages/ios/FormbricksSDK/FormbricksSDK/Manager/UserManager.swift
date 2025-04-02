@@ -96,6 +96,7 @@ final class UserManager {
                 SurveyManager.shared.filterSurveys()
                 self?.startSyncTimer()
             case .failure(let error):
+                Formbricks.delegate?.onError(error)
                 Formbricks.logger.error(error)
             }
         }

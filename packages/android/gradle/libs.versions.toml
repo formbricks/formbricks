@@ -6,7 +6,7 @@ coreKtx = "1.8.0"
 lifecycleRuntimeKtx = "2.6.1"
 
 junit = "1.1.2"
-junitVersion = "4.13.2"
+junitVersion = "1.1.3"
 espressoCore = "3.3.0"
 
 appcompat = "1.2.0"
