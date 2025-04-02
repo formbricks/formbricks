@@ -13,7 +13,6 @@ import { getUser } from "@formbricks/lib/user/service";
 const AppLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user?.id ? await getUser(session.user.id) : null;
-  console.log("user", user);
 
   if (user?.isActive === false) {
     return <ClientLogout />;
