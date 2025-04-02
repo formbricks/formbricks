@@ -48,7 +48,7 @@ test.describe("Invite, accept and remove organization member", async () => {
     await test.step("Copy invite Link", async () => {
       await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
-      const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
+      const lastMemberInfo = page.locator("#membersInfoWrapper > #singleMemberInfo:last-child");
       await expect(lastMemberInfo).toBeVisible();
 
       const pendingSpan = lastMemberInfo.locator("span").locator("span").filter({ hasText: "Pending" });
@@ -106,7 +106,7 @@ test.describe("Invite, accept and remove organization member", async () => {
 
   //   await expect(page.locator("#membersInfoWrapper")).toBeVisible();
 
-  //   const lastMemberInfo = page.locator("#membersInfoWrapper > .singleMemberInfo:last-child");
+  //   const lastMemberInfo = page.locator("#membersInfoWrapper > #singleMemberInfo:last-child");
   //   await expect(lastMemberInfo).toBeVisible();
 
   //   const deleteMemberButton = lastMemberInfo.locator("#deleteMemberButton");
