@@ -725,13 +725,15 @@ model Invite {
 model ApiKey {
   id                 String              @id @default(cuid())
   createdAt          DateTime            @default(now())
-  createdBy          String
+  createdBy          String?
   lastUsedAt         DateTime?
   label              String
   hashedKey          String              @unique
   organizationId     String
   organization       Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   apiKeyEnvironments ApiKeyEnvironment[]
+  /// [OrganizationAccess]
+  organizationAccess Json                @default("{}")
 
   @@index([organizationId])
 }

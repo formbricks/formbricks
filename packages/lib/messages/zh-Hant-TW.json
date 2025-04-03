@@ -792,24 +792,6 @@
         "secret": "密碼",
         "unable_to_delete_api_key": "無法刪除 API 金鑰"
       },
-      "api_keys": {
-        "add_api_key": "新增 API 金鑰",
-        "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
-        "api_key": "API 金鑰",
-        "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
-        "api_key_created": "API 金鑰已建立",
-        "api_key_deleted": "API 金鑰已刪除",
-        "api_key_label": "API 金鑰標籤",
-        "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",
-        "dev_api_keys": "開發環境金鑰",
-        "dev_api_keys_description": "為您的開發環境新增和移除 API 金鑰。",
-        "no_api_keys_yet": "您還沒有任何 API 金鑰",
-        "permissions": "權限",
-        "prod_api_keys": "生產環境金鑰",
-        "prod_api_keys_description": "為您的生產環境新增和移除 API 金鑰。",
-        "secret": "密碼",
-        "unable_to_delete_api_key": "無法刪除 API 金鑰"
-      },
       "app-connection": {
         "api_host_description": "這是您 Formbricks 後端的網址。",
         "app_connection": "應用程式連線",
@@ -1006,11 +988,6 @@
       "with_the_formbricks_sdk": "使用 Formbricks SDK"
     },
     "settings": {
-      "api_keys": {
-        "add_api_key": "新增 API 金鑰",
-        "add_permission": "新增權限",
-        "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API"
-      },
       "billing": {
         "10000_monthly_responses": "10000 個每月回應",
         "1500_monthly_responses": "1500 個每月回應",
@@ -1052,6 +1029,8 @@
         "monthly": "每月",
         "monthly_identified_users": "每月識別使用者",
         "multi_language_surveys": "多語言問卷",
+        "per_month": "每月",
+        "per_year": "每年",
         "plan_upgraded_successfully": "方案已成功升級",
         "premium_support_with_slas": "具有 SLA 的頂級支援",
         "priority_support": "優先支援",
@@ -1062,7 +1041,7 @@
         "startup": "啟動版",
         "startup_description": "免費方案中的所有功能以及其他功能。",
         "switch_plan": "切換方案",
-        "switch_plan_confirmation_text": "您確定要切換至 '{'plan'}' 方案嗎？您將每月被收取 '{'price'}'。",
+        "switch_plan_confirmation_text": "您確定要切換到 {plan} 計劃嗎？您將被收取 {price} {period}。",
         "team_access_roles": "團隊存取角色",
         "technical_onboarding": "技術新手上路",
         "unable_to_upgrade_plan": "無法升級方案",

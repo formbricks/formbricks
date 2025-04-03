@@ -19,6 +19,8 @@ tags:
     description: Operations for managing surveys.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
+  - name: Management API > Roles
+    description: Operations for managing roles.
   - name: Organizations API > Teams
     description: Operations for managing teams.
   - name: Organizations API > Project Teams

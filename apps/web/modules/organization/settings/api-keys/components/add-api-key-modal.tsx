@@ -1,5 +1,6 @@
 "use client";
 
+import { getOrganizationAccessKeyDisplayName } from "@/modules/organization/settings/api-keys/lib/utils";
 import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -11,11 +12,14 @@ import {
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
+import { Switch } from "@/modules/ui/components/switch";
 import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { AlertTriangleIcon, ChevronDownIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 
 interface AddApiKeyModalProps {
   open: boolean;
@@ -23,7 +27,8 @@ interface AddApiKeyModalProps {
   onSubmit: (data: {
     label: string;
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
-  }) => void;
+    organizationAccess: TOrganizationAccess;
+  }) => Promise<void>;
   projects: TOrganizationProject[];
   isCreatingAPIKey: boolean;
 }
@@ -57,6 +62,15 @@ export const AddApiKeyModal = ({
   const { t } = useTranslate();
   const { register, getValues, handleSubmit, reset, watch } = useForm<{ label: string }>();
   const apiKeyLabel = watch("label");
+  const defaultOrganizationAccess: TOrganizationAccess = {
+    accessControl: {
+      read: false,
+      write: false,
+    },
+  };
+
+  const [selectedOrganizationAccess, setSelectedOrganizationAccess] =
+    useState<TOrganizationAccess>(defaultOrganizationAccess);
 
   const getInitialPermissions = () => {
     console.log(projects);
@@ -94,10 +108,13 @@ export const AddApiKeyModal = ({
   const addPermission = () => {
     const newIndex = Object.keys(selectedPermissions).length;
     if (projects.length > 0 && projects[0].environments.length > 0) {
-      setSelectedPermissions({
-        ...selectedPermissions,
-        [`permission-${newIndex}`]: getInitialPermissions()[`permission-0`],
-      });
+      const initialPermission = getInitialPermissions()["permission-0"];
+      if (initialPermission) {
+        setSelectedPermissions({
+          ...selectedPermissions,
+          [`permission-${newIndex}`]: initialPermission,
+        });
+      }
     }
   };
 
@@ -133,8 +150,19 @@ export const AddApiKeyModal = ({
     }
   };
 
+  const checkForDuplicatePermissions = () => {
+    const permissions = Object.values(selectedPermissions);
+    const uniquePermissions = new Set(permissions.map((p) => `${p.projectId}-${p.environmentId}`));
+    return uniquePermissions.size !== permissions.length;
+  };
+
   const submitAPIKey = async () => {
     const data = getValues();
+
+    if (checkForDuplicatePermissions()) {
+      toast.error(t("environments.project.api_keys.duplicate_access"));
+      return;
+    }
 
     // Convert permissions to the format expected by the API
     const environmentPermissions = Object.values(selectedPermissions).map((permission) => ({
@@ -142,19 +170,43 @@ export const AddApiKeyModal = ({
       permission: permission.permission,
     }));
 
-    onSubmit({
+    await onSubmit({
       label: data.label,
       environmentPermissions,
+      organizationAccess: selectedOrganizationAccess,
     });
 
     reset();
     setSelectedPermissions(getInitialPermissions());
+    setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
   // Get environment options for a project
   const getEnvironmentOptionsForProject = (projectId: string) => {
     const project = projects.find((p) => p.id === projectId);
     return project?.environments || [];
+  };
+
+  const isSubmitDisabled = () => {
+    // Check if label is empty or only whitespace
+    if (!apiKeyLabel?.trim()) {
+      return true;
+    }
+    // Check if there are any valid permissions
+    if (Object.keys(selectedPermissions).length === 0) {
+      return true;
+    }
+    return false;
+  };
+
+  const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
+    setSelectedOrganizationAccess((prev) => ({
+      ...prev,
+      [key]: {
+        ...prev[key],
+        [accessType]: value,
+      },
+    }));
   };
 
   return (
@@ -181,7 +233,7 @@ export const AddApiKeyModal = ({
               </div>
 
               <div className="space-y-2">
-                <Label>{t("environments.project.api_keys.permissions")}</Label>
+                <Label>{t("environments.project.api_keys.project_access")}</Label>
                 <div className="space-y-2">
                   {/* Permission rows */}
                   {Object.keys(selectedPermissions).map((key) => {
@@ -305,6 +357,40 @@ export const AddApiKeyModal = ({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label>{t("environments.project.api_keys.organization_access")}</Label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[auto_100px_100px] gap-4">
+                    <div></div>
+                    <span className="flex items-center justify-center text-sm font-medium">Read</span>
+                    <span className="flex items-center justify-center text-sm font-medium">Write</span>
+
+                    {Object.keys(selectedOrganizationAccess).map((key) => (
+                      <Fragment key={key}>
+                        <div className="py-1 text-sm">{t(getOrganizationAccessKeyDisplayName(key))}</div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            data-testid={`organization-access-${key}-read`}
+                            checked={selectedOrganizationAccess[key].read}
+                            onCheckedChange={(newVal) =>
+                              setSelectedOrganizationAccessValue(key, "read", newVal)
+                            }
+                          />
+                        </div>
+                        <div className="flex items-center justify-center py-1">
+                          <Switch
+                            checked={selectedOrganizationAccess[key].write}
+                            onCheckedChange={(newVal) =>
+                              setSelectedOrganizationAccessValue(key, "write", newVal)
+                            }
+                          />
+                        </div>
+                      </Fragment>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
                 <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
                 <p>{t("environments.project.api_keys.api_key_security_warning")}</p>
@@ -325,7 +411,7 @@ export const AddApiKeyModal = ({
               </Button>
               <Button
                 type="submit"
-                disabled={apiKeyLabel === "" || isCreatingAPIKey}
+                disabled={isSubmitDisabled() || isCreatingAPIKey}
                 loading={isCreatingAPIKey}>
                 {t("environments.project.api_keys.add_api_key")}
               </Button>

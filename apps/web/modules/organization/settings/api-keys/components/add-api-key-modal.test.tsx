@@ -13,6 +13,7 @@ vi.mock("@tolgee/react", () => ({
   }),
 }));
 
+// Base project definition (customize as needed)
 const baseProject = {
   id: "project1",
   name: "Project 1",
@@ -57,7 +58,7 @@ const mockProjects: TProject[] = [
         appSetupCompleted: true,
       },
     ],
-  },
+  } as TProject,
   {
     ...baseProject,
     id: "project2",
@@ -80,16 +81,13 @@ const mockProjects: TProject[] = [
         appSetupCompleted: true,
       },
     ],
-  },
+  } as TProject,
 ];
 
 describe("AddApiKeyModal", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   const mockSetOpen = vi.fn();
   const mockOnSubmit = vi.fn();
+
   const defaultProps = {
     open: true,
     setOpen: mockSetOpen,
@@ -98,39 +96,42 @@ describe("AddApiKeyModal", () => {
     isCreatingAPIKey: false,
   };
 
+  afterEach(() => {
+    cleanup();
+    vi.clearAllMocks();
+  });
+
   it("renders the modal with initial state", () => {
     render(<AddApiKeyModal {...defaultProps} />);
-
-    // Check for modal title using the class and text content
     const modalTitle = screen.getByText("environments.project.api_keys.add_api_key", {
       selector: "div.text-xl",
     });
+
     expect(modalTitle).toBeInTheDocument();
     expect(screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack")).toBeInTheDocument();
-    expect(screen.getByText("environments.project.api_keys.permissions")).toBeInTheDocument();
+    expect(screen.getByText("environments.project.api_keys.project_access")).toBeInTheDocument();
   });
 
   it("handles label input", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
-
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
-    await userEvent.type(labelInput, "Test API Key");
 
+    await userEvent.type(labelInput, "Test API Key");
     expect(labelInput.value).toBe("Test API Key");
   });
 
   it("handles permission changes", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
-    // Open project dropdown
+    // Open project dropdown for the first permission row
     const projectDropdowns = screen.getAllByRole("button", { name: /Project 1/i });
     await userEvent.click(projectDropdowns[0]);
 
-    // Wait for dropdown content and select Project 2
+    // Wait for dropdown content and select 'Project 2'
     const project2Option = await screen.findByRole("menuitem", { name: "Project 2" });
     await userEvent.click(project2Option);
 
-    // Verify project selection by checking the button text
+    // Verify project selection by checking the updated button text
     const updatedButton = await screen.findByRole("button", { name: "Project 2" });
     expect(updatedButton).toBeInTheDocument();
   });
@@ -142,14 +143,14 @@ describe("AddApiKeyModal", () => {
     const addButton = screen.getByRole("button", { name: /add_permission/i });
     await userEvent.click(addButton);
 
-    // Check if new permission row is added
+    // Verify new permission row is added
     const deleteButtons = screen.getAllByRole("button", { name: "" }); // Trash icons
     expect(deleteButtons).toHaveLength(2);
 
-    // Remove permission
+    // Remove the new permission
     await userEvent.click(deleteButtons[1]);
 
-    // Check if permission is removed
+    // Check that only the original permission row remains
     expect(screen.getAllByRole("button", { name: "" })).toHaveLength(1);
   });
 
@@ -157,8 +158,42 @@ describe("AddApiKeyModal", () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
     // Fill in label
+    const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
+    await userEvent.type(labelInput, "Test API Key");
+
+    // Click submit
+    const submitButton = screen.getByRole("button", {
+      name: "environments.project.api_keys.add_api_key",
+    });
+    await userEvent.click(submitButton);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      label: "Test API Key",
+      environmentPermissions: [
+        {
+          environmentId: "env1",
+          permission: ApiKeyPermission.read,
+        },
+      ],
+      organizationAccess: {
+        accessControl: {
+          read: false,
+          write: false,
+        },
+      },
+    });
+  });
+
+  it("submits form with correct data including organization access toggles", async () => {
+    render(<AddApiKeyModal {...defaultProps} />);
+
+    // Fill in label
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
     await userEvent.type(labelInput, "Test API Key");
+
+    // Toggle the first switch (read) under organizationAccess
+    const readSwitch = screen.getByTestId("organization-access-accessControl-read"); // first is read, second is write
+    await userEvent.click(readSwitch); // toggle 'read' to true
 
     // Submit form
     const submitButton = screen.getByRole("button", {
@@ -174,35 +209,42 @@ describe("AddApiKeyModal", () => {
           permission: ApiKeyPermission.read,
         },
       ],
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
     });
   });
 
   it("disables submit button when label is empty", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
-
-    // Find submit button and check its disabled class
     const submitButton = screen.getByRole("button", {
       name: "environments.project.api_keys.add_api_key",
     });
-    expect(submitButton.className).toContain("disabled:opacity-50");
-
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack");
-    await userEvent.type(labelInput, "Test");
 
-    // After typing, button should be enabled
-    expect(submitButton.className).toContain("disabled:opacity-50");
+    // Initially disabled
+    expect(submitButton).toBeDisabled();
+
+    // After typing, it should be enabled
+    await userEvent.type(labelInput, "Test");
     expect(submitButton).not.toBeDisabled();
   });
 
   it("closes modal and resets form on cancel", async () => {
     render(<AddApiKeyModal {...defaultProps} />);
 
+    // Type something into the label
     const labelInput = screen.getByPlaceholderText("e.g. GitHub, PostHog, Slack") as HTMLInputElement;
     await userEvent.type(labelInput, "Test API Key");
 
+    // Click the cancel button
     const cancelButton = screen.getByRole("button", { name: "common.cancel" });
     await userEvent.click(cancelButton);
 
+    // Verify modal is closed and form is reset
     expect(mockSetOpen).toHaveBeenCalledWith(false);
     expect(labelInput.value).toBe("");
   });

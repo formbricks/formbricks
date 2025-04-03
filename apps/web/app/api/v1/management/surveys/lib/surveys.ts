@@ -31,8 +31,6 @@ export const getSurveys = reactCache(
             take: limit,
             skip: offset,
           });
-          console.log("surveysPrisma", surveysPrisma);
-
           return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {

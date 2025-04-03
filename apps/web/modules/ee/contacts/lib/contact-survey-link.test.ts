@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ENCRYPTION_KEY, WEBAPP_URL } from "@formbricks/lib/constants";
+import { ENCRYPTION_KEY, SURVEY_URL } from "@formbricks/lib/constants";
 import * as crypto from "@formbricks/lib/crypto";
 import * as contactSurveyLink from "./contact-survey-link";
 
@@ -15,7 +15,7 @@ vi.mock("jsonwebtoken", () => ({
 // Mock constants - MUST be a literal object without using variables
 vi.mock("@formbricks/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
-  WEBAPP_URL: "https://test.formbricks.com",
+  SURVEY_URL: "https://test.formbricks.com",
 }));
 
 vi.mock("@formbricks/lib/crypto", () => ({
@@ -73,7 +73,7 @@ describe("Contact Survey Link", () => {
       // Verify the returned URL
       expect(result).toEqual({
         ok: true,
-        data: `${WEBAPP_URL}/c/${mockToken}`,
+        data: `${SURVEY_URL}/c/${mockToken}`,
       });
     });
 
@@ -98,7 +98,7 @@ describe("Contact Survey Link", () => {
       // Re‑mock constants to simulate missing ENCRYPTION_KEY
       vi.doMock("@formbricks/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
-        WEBAPP_URL: "https://test.formbricks.com",
+        SURVEY_URL: "https://test.formbricks.com",
       }));
       // Re‑import the modules so they pick up the new mock
       const { getContactSurveyLink } = await import("./contact-survey-link");
@@ -172,7 +172,7 @@ describe("Contact Survey Link", () => {
       vi.resetModules();
       vi.doMock("@formbricks/lib/constants", () => ({
         ENCRYPTION_KEY: undefined,
-        WEBAPP_URL: "https://test.formbricks.com",
+        SURVEY_URL: "https://test.formbricks.com",
       }));
       const { verifyContactSurveyToken } = await import("./contact-survey-link");
       const result = verifyContactSurveyToken(mockToken);

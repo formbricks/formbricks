@@ -1,10 +1,10 @@
-import { fetch } from "@react-native-community/netinfo";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { SurveyStore } from "@/lib/survey/store";
 import type { TEnvironmentStateSurvey } from "@/types/config";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
+import { fetch } from "@react-native-community/netinfo";
 
 /**
  * Triggers the display of a survey if it meets the display percentage criteria
@@ -103,6 +103,9 @@ export const track = async (
 
     return trackAction(actionClass.name, code);
   } catch (error) {
+    const logger = Logger.getInstance();
+    logger.error(`Error tracking action ${error as string}`);
+
     return err({
       code: "error",
       message: "Error tracking action",

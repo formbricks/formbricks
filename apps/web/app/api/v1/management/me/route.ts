@@ -12,27 +12,56 @@ export const GET = async () => {
         hashedKey: hashApiKey(apiKey),
       },
       select: {
-        organization: {
-          select: {
-            id: true,
-          },
-        },
         apiKeyEnvironments: {
           select: {
             environment: {
-              select: { id: true },
+              select: {
+                id: true,
+                type: true,
+                createdAt: true,
+                updatedAt: true,
+                projectId: true,
+                widgetSetupCompleted: true,
+                project: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
             },
             permission: true,
           },
         },
       },
     });
+
     if (!apiKeyData) {
       return new Response("Not authenticated", {
         status: 401,
       });
     }
-    return Response.json(apiKeyData.organization);
+
+    if (
+      apiKeyData.apiKeyEnvironments.length === 1 &&
+      apiKeyData.apiKeyEnvironments[0].permission === "manage"
+    ) {
+      return Response.json({
+        id: apiKeyData.apiKeyEnvironments[0].environment.id,
+        type: apiKeyData.apiKeyEnvironments[0].environment.type,
+        createdAt: apiKeyData.apiKeyEnvironments[0].environment.createdAt,
+        updatedAt: apiKeyData.apiKeyEnvironments[0].environment.updatedAt,
+        widgetSetupCompleted: apiKeyData.apiKeyEnvironments[0].environment.widgetSetupCompleted,
+        project: {
+          id: apiKeyData.apiKeyEnvironments[0].environment.projectId,
+          name: apiKeyData.apiKeyEnvironments[0].environment.project.name,
+        },
+      });
+    } else {
+      return new Response("You can't use this method with this API key", {
+        status: 400,
+      });
+    }
   } else {
     const sessionUser = await getSessionUser();
     if (!sessionUser) {

@@ -1,3 +1,3 @@
-import APIKeys from "@/modules/organization/settings/api-keys/page";
+import { APIKeysPage } from "@/modules/organization/settings/api-keys/page";
 
-export default APIKeys;
+export default APIKeysPage;

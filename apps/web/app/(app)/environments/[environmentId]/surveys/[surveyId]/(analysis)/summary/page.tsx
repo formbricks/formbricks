@@ -16,6 +16,7 @@ import {
   MAX_RESPONSES_FOR_INSIGHT_GENERATION,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { getResponseCountBySurveyId } from "@formbricks/lib/response/service";
 import { getSurvey } from "@formbricks/lib/survey/service";
 import { getUser } from "@formbricks/lib/user/service";
@@ -54,6 +55,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
     billing: organization.billing,
   });
   const shouldGenerateInsights = needsInsightsGeneration(survey);
+  const surveyDomain = getSurveyDomain();
 
   return (
     <PageContentWrapper>
@@ -64,8 +66,8 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             environment={environment}
             survey={survey}
             isReadOnly={isReadOnly}
-            webAppUrl={WEBAPP_URL}
             user={user}
+            surveyDomain={surveyDomain}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

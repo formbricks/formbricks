@@ -1,22 +1,27 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TOrganizationProject } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
+import {
+  TApiKeyWithEnvironmentPermission,
+  TOrganizationProject,
+} from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import { ApiKey, ApiKeyPermission } from "@prisma/client";
+import { ApiKeyPermission } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
 import { FilesIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { timeSince } from "@formbricks/lib/time";
+import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { createApiKeyAction, deleteApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
 interface EditAPIKeysProps {
   organizationId: string;
-  apiKeys: ApiKey[];
+  apiKeys: TApiKeyWithEnvironmentPermission[];
   locale: TUserLocale;
   isReadOnly: boolean;
   projects: TOrganizationProject[];
@@ -26,9 +31,11 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   const { t } = useTranslate();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
-  const [apiKeysLocal, setApiKeysLocal] = useState<(ApiKey & { actualKey?: string })[]>(apiKeys);
-  const [activeKey, setActiveKey] = useState({} as any);
-  const [isCreatingAPIKey, setIsCreatingAPIKey] = useState(false);
+  const [apiKeysLocal, setApiKeysLocal] =
+    useState<(TApiKeyWithEnvironmentPermission & { actualKey?: string })[]>(apiKeys);
+  const [activeKey, setActiveKey] = useState<TApiKeyWithEnvironmentPermission | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
 
   const handleOpenDeleteKeyModal = (e, apiKey) => {
     e.preventDefault();
@@ -37,38 +44,44 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
   };
 
   const handleDeleteKey = async () => {
+    if (!activeKey) return;
+    setIsLoading(true);
     const deleteApiKeyResponse = await deleteApiKeyAction({ id: activeKey.id });
     if (deleteApiKeyResponse?.data) {
       const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
       setApiKeysLocal(updatedApiKeys);
       toast.success(t("environments.project.api_keys.api_key_deleted"));
       setIsDeleteKeyModalOpen(false);
+      setIsLoading(false);
     } else {
       toast.error(t("environments.project.api_keys.unable_to_delete_api_key"));
       setIsDeleteKeyModalOpen(false);
+      setIsLoading(false);
     }
   };
 
   const handleAddAPIKey = async (data: {
     label: string;
     environmentPermissions: Array<{ environmentId: string; permission: ApiKeyPermission }>;
-  }) => {
-    setIsCreatingAPIKey(true);
+    organizationAccess: TOrganizationAccess;
+  }): Promise<void> => {
+    setIsLoading(true);
     const createApiKeyResponse = await createApiKeyAction({
       organizationId: organizationId,
       apiKeyData: {
         label: data.label,
         environmentPermissions: data.environmentPermissions,
+        organizationAccess: data.organizationAccess,
       },
     });
 
     if (createApiKeyResponse?.data) {
       const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
       setApiKeysLocal(updatedApiKeys);
-      setIsCreatingAPIKey(false);
+      setIsLoading(false);
       toast.success(t("environments.project.api_keys.api_key_created"));
     } else {
-      setIsCreatingAPIKey(false);
+      setIsLoading(false);
       const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
       toast.error(errorMessage);
     }
@@ -92,7 +105,10 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         <div className="copyApiKeyIcon">
           <FilesIcon
             className="mx-2 h-4 w-4 cursor-pointer"
-            onClick={copyToClipboard}
+            onClick={(e) => {
+              e.stopPropagation();
+              copyToClipboard();
+            }}
             data-testid="copy-button"
           />
         </div>
@@ -119,8 +135,21 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
           ) : (
             apiKeysLocal?.map((apiKey) => (
               <div
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900"
-                key={apiKey.hashedKey}>
+                role="button"
+                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                onClick={() => {
+                  setActiveKey(apiKey);
+                  setViewPermissionsOpen(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setActiveKey(apiKey);
+                    setViewPermissionsOpen(true);
+                  }
+                }}
+                tabIndex={0}
+                key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden sm:col-span-5 sm:block">
                   <ApiKeyDisplay apiKey={apiKey.actualKey} />
@@ -130,7 +159,13 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
                 </div>
                 {!isReadOnly && (
                   <div className="col-span-1 text-center">
-                    <Button size="icon" variant="ghost" onClick={(e) => handleOpenDeleteKeyModal(e, apiKey)}>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={(e) => {
+                        handleOpenDeleteKeyModal(e, apiKey);
+                        e.stopPropagation();
+                      }}>
                       <TrashIcon />
                     </Button>
                   </div>
@@ -157,13 +192,22 @@ export const EditAPIKeys = ({ organizationId, apiKeys, locale, isReadOnly, proje
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         projects={projects}
-        isCreatingAPIKey={isCreatingAPIKey}
+        isCreatingAPIKey={isLoading}
       />
+      {activeKey && (
+        <ViewPermissionModal
+          open={viewPermissionsOpen}
+          setOpen={setViewPermissionsOpen}
+          apiKey={activeKey}
+          projects={projects}
+        />
+      )}
       <DeleteDialog
         open={isDeleteKeyModalOpen}
         setOpen={setIsDeleteKeyModalOpen}
         deleteWhat={t("environments.project.api_keys.api_key")}
         onDelete={handleDeleteKey}
+        isDeleting={isLoading}
       />
     </div>
   );

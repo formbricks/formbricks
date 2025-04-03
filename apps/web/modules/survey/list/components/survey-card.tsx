@@ -16,7 +16,7 @@ interface SurveyCardProps {
   survey: TSurvey;
   environmentId: string;
   isReadOnly: boolean;
-  WEBAPP_URL: string;
+  surveyDomain: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
   locale: TUserLocale;
@@ -25,7 +25,7 @@ export const SurveyCard = ({
   survey,
   environmentId,
   isReadOnly,
-  WEBAPP_URL,
+  surveyDomain,
   deleteSurvey,
   duplicateSurvey,
   locale,
@@ -102,7 +102,7 @@ export const SurveyCard = ({
           survey={survey}
           key={`surveys-${survey.id}`}
           environmentId={environmentId}
-          webAppUrl={WEBAPP_URL}
+          surveyDomain={surveyDomain}
           disabled={isDraftAndReadOnly}
           refreshSingleUseId={refreshSingleUseId}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
