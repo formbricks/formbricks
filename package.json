@@ -37,15 +37,15 @@
     "tolgee-pull": "BRANCH_NAME=$(node -p \"require('./branch.json').branchName\") && tolgee pull --tags \"draft:$BRANCH_NAME\" \"production\" && prettier --write ./packages/lib/messages/*.json"
   },
   "devDependencies": {
-    "@azure/microsoft-playwright-testing": "1.0.0-beta.6",
+    "@azure/microsoft-playwright-testing": "1.0.0-beta.7",
     "@formbricks/eslint-config": "workspace:*",
-    "@playwright/test": "1.49.1",
+    "@playwright/test": "1.51.1",
     "eslint": "8.57.0",
     "husky": "9.1.7",
-    "lint-staged": "15.2.11",
+    "lint-staged": "15.5.0",
     "rimraf": "6.0.1",
-    "tsx": "4.19.2",
-    "turbo": "2.3.3"
+    "tsx": "4.19.3",
+    "turbo": "2.4.4"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -70,6 +70,6 @@
     "showDetails": true
   },
   "dependencies": {
-    "@changesets/cli": "2.27.10"
+    "@changesets/cli": "2.28.1"
   }
 }
