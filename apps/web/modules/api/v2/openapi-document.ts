@@ -2,11 +2,11 @@ import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-at
 import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
 import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
-import { rolePaths } from "@/modules/api/v2/management/roles/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
-import { projectTeamPaths } from "@/modules/api/v2/organizations/project-teams/lib/openapi";
-import { teamPaths } from "@/modules/api/v2/organizations/teams/lib/openapi";
+import { projectTeamPaths } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/openapi";
+import { teamPaths } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/openapi";
+import { rolePaths } from "@/modules/api/v2/roles/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import * as yaml from "yaml";
 import { z } from "zod";
@@ -16,6 +16,7 @@ import { ZContactAttributeKey } from "@formbricks/database/zod/contact-attribute
 import { ZContactAttribute } from "@formbricks/database/zod/contact-attributes";
 import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 import { ZResponse } from "@formbricks/database/zod/responses";
+import { ZRoles } from "@formbricks/database/zod/roles";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
@@ -30,6 +31,7 @@ const document = createDocument({
     version: "2.0.0",
   },
   paths: {
+    ...rolePaths,
     ...responsePaths,
     ...bulkContactPaths,
     ...contactPaths,
@@ -39,7 +41,6 @@ const document = createDocument({
     ...webhookPaths,
     ...teamPaths,
     ...projectTeamPaths,
-    ...rolePaths,
   },
   servers: [
     {
@@ -48,6 +49,10 @@ const document = createDocument({
     },
   ],
   tags: [
+    {
+      name: "Management API > Roles",
+      description: "Operations for managing roles.",
+    },
     {
       name: "Management API > Responses",
       description: "Operations for managing responses.",
@@ -80,10 +85,6 @@ const document = createDocument({
       name: "Organizations API > Project Teams",
       description: "Operations for managing project teams.",
     },
-    {
-      name: "Management API > Roles",
-      description: "Operations for managing roles.",
-    },
   ],
   components: {
     securitySchemes: {
@@ -95,6 +96,7 @@ const document = createDocument({
       },
     },
     schemas: {
+      role: ZRoles,
       response: ZResponse,
       contact: ZContact,
       contactAttribute: ZContactAttribute,
@@ -103,7 +105,6 @@ const document = createDocument({
       webhook: ZWebhook,
       team: ZTeam,
       projectTeam: ZProjectTeam,
-      role: z.array(z.string()),
     },
   },
   security: [

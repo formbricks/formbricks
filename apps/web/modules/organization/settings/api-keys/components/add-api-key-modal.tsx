@@ -73,8 +73,6 @@ export const AddApiKeyModal = ({
     useState<TOrganizationAccess>(defaultOrganizationAccess);
 
   const getInitialPermissions = () => {
-    console.log(projects);
-
     if (projects.length > 0 && projects[0].environments.length > 0) {
       return {
         "permission-0": {

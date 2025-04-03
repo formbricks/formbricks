@@ -26,6 +26,7 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
     hashedApiKey,
     apiKeyId: apiKeyData.id,
     organizationId: apiKeyData.organizationId,
+    organizationAccess: apiKeyData.organizationAccess,
   };
 
   return authentication;

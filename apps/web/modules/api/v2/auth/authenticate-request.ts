@@ -24,6 +24,7 @@ export const authenticateRequest = async (
     hashedApiKey,
     apiKeyId: apiKeyData.id,
     organizationId: apiKeyData.organizationId,
+    organizationAccess: apiKeyData.organizationAccess,
   };
   return ok(authentication);
 };

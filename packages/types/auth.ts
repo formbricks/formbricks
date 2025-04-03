@@ -1,5 +1,6 @@
 import { ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
+import { ZOrganizationAccess } from "./api-key";
 import { ZUser } from "./user";
 
 export const ZAuthSession = z.object({
@@ -19,6 +20,7 @@ export const ZAuthenticationApiKey = z.object({
   hashedApiKey: z.string(),
   apiKeyId: z.string().optional(),
   organizationId: z.string().optional(),
+  organizationAccess: ZOrganizationAccess,
 });
 
 export type TAuthSession = z.infer<typeof ZAuthSession>;

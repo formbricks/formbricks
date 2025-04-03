@@ -7,6 +7,8 @@ servers:
   - url: https://app.formbricks.com/api/v2/management
     description: Formbricks Cloud
 tags:
+  - name: Management API > Roles
+    description: Operations for managing roles.
   - name: Management API > Responses
     description: Operations for managing responses.
   - name: Management API > Contacts
@@ -19,8 +21,6 @@ tags:
     description: Operations for managing surveys.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
-  - name: Management API > Roles
-    description: Operations for managing roles.
   - name: Organizations API > Teams
     description: Operations for managing teams.
   - name: Organizations API > Project Teams
@@ -527,6 +527,25 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks API Server
+  /roles:
+    get:
+      operationId: getRoles
+      summary: Get roles
+      description: Gets roles from the database.
+      tags:
+        - Roles
+      responses:
+        "200":
+          description: Roles retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: string
   /responses:
     get:
       operationId: getResponses
@@ -1422,6 +1441,106 @@ paths:
                       - string
                       - "null"
                     description: The display ID of the response
+  /contacts/bulk:
+    put:
+      operationId: uploadBulkContacts
+      summary: Upload Bulk Contacts
+      description: Uploads contacts in bulk
+      tags:
+        - Management API > Contacts
+      requestBody:
+        required: true
+        description: The contacts to upload
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                environmentId:
+                  type: string
+                contacts:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      attributes:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            attributeKey:
+                              type: object
+                              properties:
+                                key:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - key
+                                - name
+                            value:
+                              type: string
+                          required:
+                            - attributeKey
+                            - value
+                    required:
+                      - attributes
+                  maxItems: 1000
+              required:
+                - environmentId
+                - contacts
+      responses:
+        "200":
+          description: Contacts uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      message:
+                        type: string
+                    required:
+                      - status
+                      - message
+                required:
+                  - data
+        "207":
+          description: Contacts uploaded partially successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                      message:
+                        type: string
+                      skippedContacts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            index:
+                              type: number
+                            userId:
+                              type: string
+                          required:
+                            - index
+                            - userId
+                    required:
+                      - status
+                      - message
+                      - skippedContacts
+                required:
+                  - data
   /contacts:
     get:
       operationId: getContacts
@@ -3023,6 +3142,15 @@ components:
       name: x-api-key
       description: Use your Formbricks x-api-key to authenticate.
   schemas:
+    role:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: string
+      required:
+        - data
     response:
       type: object
       properties:
