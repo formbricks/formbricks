@@ -23,7 +23,6 @@ export function WalletBalance(): React.JSX.Element {
     fetchBalance();
   },[client, address])
 
-  console.log(balance);
   return (
     <div className="flex">
       {balance != undefined ? 
