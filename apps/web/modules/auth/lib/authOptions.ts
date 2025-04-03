@@ -1,4 +1,4 @@
-import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { getUserByEmail, updateUser, updateUserByEmail } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSSOCallback } from "@/modules/ee/sso/lib/sso-handlers";
@@ -116,8 +116,6 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
-        await updateUser(user.id, { lastLoginAt: new Date() });
-
         return {
           id: user.id,
           email: user.email,
@@ -169,8 +167,6 @@ export const authOptions: NextAuthOptions = {
         // send new user to brevo after email verification
         createBrevoCustomer({ id: user.id, email: user.email });
 
-        await updateUser(user.id, { lastLoginAt: new Date() });
-
         return user;
       },
     }),
@@ -207,11 +203,17 @@ export const authOptions: NextAuthOptions = {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
         }
+        await updateUserByEmail(user.email, { lastLoginAt: new Date() });
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY) {
-        return handleSSOCallback({ user, account });
+        const result = await handleSSOCallback({ user, account });
+        if (result) {
+          await updateUserByEmail(user.email, { lastLoginAt: new Date() });
+        }
+        return result;
       }
+      await updateUserByEmail(user.email, { lastLoginAt: new Date() });
       return true;
     },
   },

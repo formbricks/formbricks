@@ -5,7 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { userCache } from "@formbricks/lib/user/cache";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { mockUser } from "./mock-data";
-import { createUser, getUser, getUserByEmail, updateUser } from "./user";
+import { createUser, getUser, getUserByEmail, updateUser, updateUserByEmail } from "./user";
 
 const mockPrismaUser = {
   ...mockUser,
@@ -93,6 +93,29 @@ describe("User Management", () => {
       vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
 
       await expect(updateUser(mockUser.id, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
+    });
+  });
+
+  describe("updateUserByEmail", () => {
+    const mockUpdateData = { name: "Updated Name" };
+
+    it("updates a user successfully", async () => {
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockPrismaUser, name: mockUpdateData.name });
+
+      const result = await updateUserByEmail(mockUser.email, mockUpdateData);
+
+      expect(result).toEqual({ ...mockPrismaUser, name: mockUpdateData.name });
+      expect(userCache.revalidate).toHaveBeenCalled();
+    });
+
+    it("throws ResourceNotFoundError when user doesn't exist", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.RecordDoesNotExist,
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
+
+      await expect(updateUserByEmail(mockUser.email, mockUpdateData)).rejects.toThrow(ResourceNotFoundError);
     });
   });
 
