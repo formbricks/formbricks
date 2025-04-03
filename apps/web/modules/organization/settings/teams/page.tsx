@@ -9,19 +9,14 @@ export const TeamsPage = async (props) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { session, currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
+  const { session, organization } = await getEnvironmentAuth(params.environmentId);
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          membershipRole={currentUserMembership?.role}
-          activeId="teams"
-        />
+        <OrganizationSettingsNavbar environmentId={params.environmentId} activeId="teams" />
       </PageHeader>
       <MembersView
-        membershipRole={currentUserMembership?.role}
         organization={organization}
         currentUserId={session.user.id}
         environmentId={params.environmentId}

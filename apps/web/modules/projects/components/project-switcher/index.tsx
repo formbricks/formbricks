@@ -27,7 +27,6 @@ interface ProjectSwitcherProps {
   projects: TProject[];
   organization: TOrganization;
   organizationProjectsLimit: number;
-  isLicenseActive: boolean;
   environmentId: string;
   isOwnerOrManager: boolean;
 }
@@ -39,8 +38,6 @@ export const ProjectSwitcher = ({
   project,
   projects,
   organizationProjectsLimit,
-  isLicenseActive,
-  environmentId,
   isOwnerOrManager,
 }: ProjectSwitcherProps) => {
   const [openLimitModal, setOpenLimitModal] = useState(false);

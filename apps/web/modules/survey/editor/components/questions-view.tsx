@@ -28,7 +28,6 @@ import { addMultiLanguageLabels, extractLanguageCodes } from "@formbricks/lib/i1
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@formbricks/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue, extractRecallInfo } from "@formbricks/lib/utils/recall";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TConditionGroup,
   TSingleCondition,
@@ -54,7 +53,6 @@ interface QuestionsViewProps {
   invalidQuestions: string[] | null;
   setInvalidQuestions: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
-  plan: TOrganizationBillingPlan;
   isCxMode: boolean;
 }
 
@@ -67,7 +65,6 @@ export const QuestionsView = ({
   invalidQuestions,
   setInvalidQuestions,
   selectedLanguageCode,
-  plan,
   isCxMode,
 }: QuestionsViewProps) => {
   const { t } = useTranslate();
@@ -466,7 +463,6 @@ export const QuestionsView = ({
                   activeQuestionId={activeQuestionId}
                   isInvalid={invalidQuestions ? invalidQuestions.includes(ending.id) : false}
                   selectedLanguageCode={selectedLanguageCode}
-                  plan={plan}
                   addEndingCard={addEndingCard}
                 />
               );

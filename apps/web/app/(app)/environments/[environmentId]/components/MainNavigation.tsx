@@ -60,7 +60,6 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
-  isLicenseActive: boolean;
 }
 
 export const MainNavigation = ({
@@ -72,7 +71,6 @@ export const MainNavigation = ({
   isMultiOrgEnabled,
   membershipRole,
   organizationProjectsLimit,
-  isLicenseActive,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -274,7 +272,6 @@ export const MainNavigation = ({
                 projects={sortedProjects}
                 project={project}
                 isCollapsed={isCollapsed}
-                isLicenseActive={isLicenseActive}
                 isOwnerOrManager={isOwnerOrManager}
                 isTextVisible={isTextVisible}
                 organization={organization}

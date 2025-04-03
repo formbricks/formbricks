@@ -17,7 +17,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { cn } from "@formbricks/lib/cn";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -33,7 +32,6 @@ interface EditEndingCardProps {
   activeQuestionId: TSurveyQuestionId | null;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  plan: TOrganizationBillingPlan;
   addEndingCard: (index: number) => void;
 }
 
@@ -45,7 +43,6 @@ export const EditEndingCard = ({
   activeQuestionId,
   isInvalid,
   selectedLanguageCode,
-  plan,
   addEndingCard,
 }: EditEndingCardProps) => {
   const endingCard = localSurvey.endings[endingCardIndex];

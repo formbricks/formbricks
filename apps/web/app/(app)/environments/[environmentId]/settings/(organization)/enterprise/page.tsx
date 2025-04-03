@@ -16,7 +16,7 @@ const Page = async (props) => {
     notFound();
   }
 
-  const { isMember, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
+  const { isMember } = await getEnvironmentAuth(params.environmentId);
 
   const isPricingDisabled = isMember;
 
@@ -87,11 +87,7 @@ const Page = async (props) => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
-          membershipRole={currentUserMembership?.role}
-          activeId="enterprise"
-        />
+        <OrganizationSettingsNavbar environmentId={params.environmentId} activeId="enterprise" />
       </PageHeader>
       {isEnterpriseEdition ? (
         <div>

@@ -4,7 +4,7 @@ import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
-import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
+import { getSurvey } from "@/modules/survey/lib/survey";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getTranslate } from "@/tolgee/server";
 import { DEFAULT_LOCALE, MAIL_FROM, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
@@ -38,11 +38,6 @@ export const SurveyEditorPage = async (props) => {
     throw new Error(t("common.project_not_found"));
   }
 
-  const organizationBilling = await getOrganizationBilling(project.organizationId);
-  if (!organizationBilling) {
-    throw new Error(t("common.organization_not_found"));
-  }
-
   const isSurveyCreationDeletionDisabled = isMember && hasReadAccess;
 
   const isSurveyFollowUpsAllowed = false;
@@ -70,7 +65,6 @@ export const SurveyEditorPage = async (props) => {
       responseCount={responseCount}
       membershipRole={currentUserMembership.role}
       colors={SURVEY_BG_COLORS}
-      plan={organizationBilling.plan}
       isUnsplashConfigured={!!UNSPLASH_ACCESS_KEY}
       isCxMode={isCxMode}
       mailFrom={MAIL_FROM ?? "hola@formbricks.com"}

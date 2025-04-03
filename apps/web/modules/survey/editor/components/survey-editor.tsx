@@ -8,12 +8,10 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
+import { ActionClass, Environment, OrganizationRole, Project } from "@prisma/client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { extractLanguageCodes, getEnabledLanguages } from "@formbricks/lib/i18n/utils";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
-import { TOrganizationBillingPlan } from "@formbricks/types/organizations";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { refetchProjectAction } from "../actions";
@@ -29,7 +27,6 @@ interface SurveyEditorProps {
   membershipRole?: OrganizationRole;
   colors: string[];
   isUnsplashConfigured: boolean;
-  plan: TOrganizationBillingPlan;
   isCxMode: boolean;
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
@@ -46,7 +43,6 @@ export const SurveyEditor = ({
   membershipRole,
   colors,
   isUnsplashConfigured,
-  plan,
   isCxMode = false,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
@@ -154,7 +150,6 @@ export const SurveyEditor = ({
               invalidQuestions={invalidQuestions}
               setInvalidQuestions={setInvalidQuestions}
               selectedLanguageCode={selectedLanguageCode ? selectedLanguageCode : "default"}
-              plan={plan}
               isCxMode={isCxMode}
             />
           )}

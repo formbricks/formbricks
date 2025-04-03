@@ -7,7 +7,6 @@ import { Label } from "@/modules/ui/components/label";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OrganizationRole } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
-import Link from "next/link";
 import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
@@ -20,7 +19,7 @@ interface IndividualInviteTabProps {
   membershipRole?: TOrganizationRole;
 }
 
-export const IndividualInviteTab = ({ setOpen, onSubmit, environmentId }: IndividualInviteTabProps) => {
+export const IndividualInviteTab = ({ setOpen, onSubmit }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
     email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email" }),
