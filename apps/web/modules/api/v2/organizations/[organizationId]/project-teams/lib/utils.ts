@@ -80,11 +80,7 @@ export const checkAuthenticationAndAccess = async (
   projectId: string,
   authentication: TAuthenticationApiKey
 ): Promise<Result<boolean, ApiErrorResponseV2>> => {
-  if (!authentication.organizationId) {
-    return err({ type: "unauthorized", details: [{ field: "organizationId", issue: "missing" }] });
-  }
-
-  const hasAccess = await validateTeamIdAndProjectId(authentication.organizationId, teamId, projectId);
+  const hasAccess = await validateTeamIdAndProjectId(authentication.organizationId!, teamId, projectId);
 
   if (!hasAccess.ok) {
     return err(hasAccess.error);

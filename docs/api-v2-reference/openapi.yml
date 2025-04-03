@@ -2599,7 +2599,7 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
-  /teams:
+  /{organizationId}/teams:
     servers: &a10
       - url: https://app.formbricks.com/api/v2/organizations
         description: Formbricks Cloud
@@ -2733,7 +2733,7 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
-  /teams/{id}:
+  /{organizationId}/teams/{id}:
     servers: *a10
     get:
       operationId: getTeam
@@ -2866,7 +2866,7 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
-  /project-teams:
+  /{organizationId}/project-teams:
     servers: *a10
     get:
       operationId: getProjectTeams

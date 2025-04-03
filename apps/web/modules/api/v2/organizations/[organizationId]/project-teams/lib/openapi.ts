@@ -106,7 +106,7 @@ export const updateProjectTeamEndpoint: ZodOpenApiOperationObject = {
 };
 
 export const projectTeamPaths: ZodOpenApiPathsObject = {
-  "/project-teams": {
+  "/{organizationId}/project-teams": {
     servers: organizationServer,
     get: getProjectTeamsEndpoint,
     post: createProjectTeamEndpoint,

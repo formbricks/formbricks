@@ -1,6 +1,7 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[organizationId]/lib/utils";
 import {
   deleteTeam,
   getTeam,
@@ -12,7 +13,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { z } from "zod";
-import { logger } from "@formbricks/logger";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 
 export const GET = async (
   request: Request,
@@ -25,24 +26,7 @@ export const GET = async (
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { params } }) => {
-      if (!authentication.organizationId) {
-        logger.error("Organization ID is missing from the authentication object");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
-      }
-
-      if (params!.organizationId !== authentication.organizationId) {
-        logger.error("Organization ID from params does not match the authenticated organization ID");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "organizationId", issue: "unauthorized" }],
-        });
-      }
-
-      if (!authentication.organizationAccess?.accessControl?.read) {
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -69,24 +53,7 @@ export const DELETE = async (
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { params } }) => {
-      if (!authentication.organizationId) {
-        logger.error("Organization ID is missing from the authentication object");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
-      }
-
-      if (params!.organizationId !== authentication.organizationId) {
-        logger.error("Organization ID from params does not match the authenticated organization ID");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "organizationId", issue: "unauthorized" }],
-        });
-      }
-
-      if (!authentication.organizationAccess?.accessControl?.write) {
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],
@@ -115,24 +82,7 @@ export const PUT = (
       body: teamUpdateSchema,
     },
     handler: async ({ authentication, parsedInput: { body, params } }) => {
-      if (!authentication.organizationId) {
-        logger.error("Organization ID is missing from the authentication object");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
-      }
-
-      if (params!.organizationId !== authentication.organizationId) {
-        logger.error("Organization ID from params does not match the authenticated organization ID");
-
-        return handleApiError(request, {
-          type: "unauthorized",
-          details: [{ field: "organizationId", issue: "unauthorized" }],
-        });
-      }
-
-      if (!authentication.organizationAccess?.accessControl?.write) {
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "organizationId", issue: "unauthorized" }],

@@ -1,7 +1,11 @@
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[organizationId]/lib/utils";
 import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/utils";
+import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { z } from "zod";
+import { OrganizationAccessType } from "@formbricks/types/api-key";
 import {
   createProjectTeam,
   deleteProjectTeam,
@@ -15,18 +19,23 @@ import {
   projectTeamUpdateSchema,
 } from "./types/project-teams";
 
-export async function GET(request: Request) {
+export async function GET(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
     schemas: {
       query: ZGetProjectTeamsFilter.sourceType(),
+      params: z.object({ organizationId: organizationIdSchema }),
     },
-    handler: async ({ parsedInput: { query }, authentication }) => {
-      if (!authentication.organizationId) {
-        return handleApiError(request, { type: "unauthorized" });
+    externalParams: props.params,
+    handler: async ({ parsedInput: { query, params }, authentication }) => {
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Read)) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "organizationId", issue: "unauthorized" }],
+        });
       }
 
-      const result = await getProjectTeams(authentication.organizationId, query!);
+      const result = await getProjectTeams(authentication.organizationId!, query!);
 
       if (!result.ok) {
         return handleApiError(request, result.error);
@@ -37,14 +46,23 @@ export async function GET(request: Request) {
   });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
     schemas: {
       body: ZProjectTeamInput,
+      params: z.object({ organizationId: organizationIdSchema }),
     },
-    handler: async ({ parsedInput: { body }, authentication }) => {
+    externalParams: props.params,
+    handler: async ({ parsedInput: { body, params }, authentication }) => {
       const { teamId, projectId } = body!;
+
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "organizationId", issue: "unauthorized" }],
+        });
+      }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
@@ -62,15 +80,24 @@ export async function POST(request: Request) {
   });
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
     schemas: {
       body: projectTeamUpdateSchema,
       query: ZGetProjectTeamUpdateFilter,
+      params: z.object({ organizationId: organizationIdSchema }),
     },
-    handler: async ({ parsedInput: { query, body }, authentication }) => {
+    externalParams: props.params,
+    handler: async ({ parsedInput: { query, body, params }, authentication }) => {
       const { teamId, projectId } = query!;
+
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "organizationId", issue: "unauthorized" }],
+        });
+      }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
@@ -88,14 +115,23 @@ export async function PUT(request: Request) {
   });
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: Request, props: { params: Promise<{ organizationId: string }> }) {
   return authenticatedApiClient({
     request,
     schemas: {
       query: ZGetProjectTeamUpdateFilter,
+      params: z.object({ organizationId: organizationIdSchema }),
     },
-    handler: async ({ parsedInput: { query }, authentication }) => {
+    externalParams: props.params,
+    handler: async ({ parsedInput: { query, params }, authentication }) => {
       const { teamId, projectId } = query!;
+
+      if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
+        return handleApiError(request, {
+          type: "unauthorized",
+          details: [{ field: "organizationId", issue: "unauthorized" }],
+        });
+      }
 
       const hasAccess = await checkAuthenticationAndAccess(teamId, projectId, authentication);
 
