@@ -22,7 +22,7 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
+RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq py-setuptools
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions

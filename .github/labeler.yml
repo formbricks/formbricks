@@ -1,6 +1,0 @@
-"❗️ migrations":
-  - packages/database/migrations/**/migration.sql
-
-"❗️ .env changes":
-  - .env.example
-  - .env.docker
