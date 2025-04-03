@@ -11,7 +11,7 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
+import { SURVEYS_PER_PAGE } from "@formbricks/lib/constants";
 import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { TTemplateRole } from "@formbricks/types/templates";
 

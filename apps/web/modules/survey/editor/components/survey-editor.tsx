@@ -12,7 +12,6 @@ import { ActionClass, Environment, OrganizationRole, Project } from "@prisma/cli
 import { useCallback, useEffect, useRef, useState } from "react";
 import { structuredClone } from "@formbricks/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@formbricks/lib/useDocumentVisibility";
-import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { refetchProjectAction } from "../actions";
 import { RewardsView } from "./rewards-view";
@@ -22,7 +21,6 @@ interface SurveyEditorProps {
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   actionClasses: ActionClass[];
-  segments: TSegment[];
   responseCount: number;
   membershipRole?: OrganizationRole;
   colors: string[];
@@ -38,7 +36,6 @@ export const SurveyEditor = ({
   project,
   environment,
   actionClasses,
-  segments,
   responseCount,
   membershipRole,
   colors,
@@ -192,7 +189,6 @@ export const SurveyEditor = ({
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
               actionClasses={actionClasses}
-              segments={segments}
               responseCount={responseCount}
               membershipRole={membershipRole}
             />

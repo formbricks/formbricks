@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
+import { TUser, TUserUpdateInput, ZUserUpdateInput } from "@formbricks/types/user";
 import { cache } from "../cache";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "../organization/service";
 import { validateInputs } from "../utils/validate";

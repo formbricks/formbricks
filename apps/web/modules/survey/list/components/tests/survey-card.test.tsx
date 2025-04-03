@@ -46,7 +46,7 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        WEBAPP_URL={WEBAPP_URL}
+        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
       />
@@ -62,7 +62,7 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "draft" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={true}
-        WEBAPP_URL={WEBAPP_URL}
+        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
       />
@@ -78,7 +78,7 @@ describe("SurveyCard", () => {
         survey={{ ...dummySurvey, status: "inProgress" } as unknown as TSurvey}
         environmentId={environmentId}
         isReadOnly={false}
-        WEBAPP_URL={WEBAPP_URL}
+        surveyDomain={WEBAPP_URL}
         duplicateSurvey={mockDuplicateSurvey}
         deleteSurvey={mockDeleteSurvey}
       />

@@ -41,7 +41,6 @@ import { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/datab
 import { getLocalizedValue } from "@formbricks/lib/i18n/utils";
 import { recallToHeadline } from "@formbricks/lib/utils/recall";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TUserLocale } from "@formbricks/types/user";
 
 interface AddFollowUpModalProps {
   localSurvey: TSurvey;
@@ -53,7 +52,6 @@ interface AddFollowUpModalProps {
   mode?: "create" | "edit";
   userEmail: string;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
-  locale: TUserLocale;
 }
 
 type EmailSendToOption = {
@@ -72,7 +70,6 @@ export const FollowUpModal = ({
   mode = "create",
   userEmail,
   setLocalSurvey,
-  locale,
 }: AddFollowUpModalProps) => {
   const { t } = useTranslate();
   const QUESTIONS_ICON_MAP = getQuestionIconMap(t);
@@ -318,7 +315,7 @@ export const FollowUpModal = ({
         body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       });
     }
-  }, [open, defaultValues, emailSendToOptions, form, userEmail, locale]);
+  }, [open, defaultValues, emailSendToOptions, form, userEmail]);
 
   const handleModalClose = () => {
     form.reset();

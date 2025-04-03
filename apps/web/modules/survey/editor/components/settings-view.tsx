@@ -5,7 +5,6 @@ import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-p
 import { SurveyVisibilityCard } from "@/modules/survey/editor/components/survey-visibility-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 import { ActionClass, Environment, OrganizationRole } from "@prisma/client";
-import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyRewardCard } from "./survey-reward-card";
 
@@ -14,7 +13,6 @@ interface SettingsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
   actionClasses: ActionClass[];
-  segments: TSegment[];
   responseCount: number;
   membershipRole?: OrganizationRole;
 }

@@ -7,14 +7,7 @@ import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import {
-  TSurvey,
-  TSurveyCreateInput,
-  TSurveyOpenTextQuestion,
-  TSurveyQuestions,
-  ZSurvey,
-  ZSurveyCreateInput,
-} from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "../actionClass/service";
 import { cache } from "../cache";
 import { segmentCache } from "../cache/segment";
@@ -26,7 +19,7 @@ import {
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
 import { validateInputs } from "../utils/validate";
 import { surveyCache } from "./cache";
-import { doesSurveyHasOpenTextQuestion, getInsightsEnabled, transformPrismaSurvey } from "./utils";
+import { transformPrismaSurvey } from "./utils";
 
 interface TriggerUpdate {
   create?: Array<{ actionClassId: string }>;

@@ -265,6 +265,16 @@ export const mockSyncSurveyOutput: SurveyMock = {
   showLanguageSwitch: null,
   thankYouCard: null,
   verifyEmail: null,
+  public: false,
+  reward: {
+    amount: "0",
+    chainId: 1,
+    contractAddress: "",
+    decimals: 18,
+    logo: "",
+    name: "",
+    verificationRequired: false,
+  },
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -289,6 +299,16 @@ export const mockSurveyOutput: SurveyMock = {
   thankYouCard: null,
   verifyEmail: null,
   ...baseSurveyProperties,
+  public: false,
+  reward: {
+    amount: "0",
+    chainId: 1,
+    contractAddress: "",
+    decimals: 18,
+    logo: "",
+    name: "",
+    verificationRequired: false,
+  },
 };
 
 export const createSurveyInput: TSurveyCreateInput = {

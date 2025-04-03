@@ -220,6 +220,19 @@ const ZSurveyBase = z.object({
   public: z.boolean().openapi({
     description: "Whether it is publicly searchable",
   }),
+  reward: z
+    .object({
+      name: z.string(),
+      logo: z.string(),
+      contractAddress: z.string(),
+      amount: z.string(),
+      chainId: z.number(),
+      decimals: z.number(),
+      verificationRequired: z.boolean(),
+    })
+    .openapi({
+      description: "Whether it is publicly searchable",
+    }),
 });
 
 export const ZSurvey = ZSurveyBase satisfies z.ZodType<Survey>;

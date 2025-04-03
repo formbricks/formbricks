@@ -1,5 +1,4 @@
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectLanguages } from "@/modules/survey/editor/lib/project";
 import { getUserEmail } from "@/modules/survey/editor/lib/user";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getProjectByEnvironmentId } from "@/modules/survey/lib/project";
@@ -7,7 +6,7 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { getTranslate } from "@/tolgee/server";
-import { DEFAULT_LOCALE, MAIL_FROM, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
+import { MAIL_FROM, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@formbricks/lib/constants";
 import { SurveyEditor } from "./components/survey-editor";
 
 export const generateMetadata = async (props) => {

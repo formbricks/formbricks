@@ -9,7 +9,6 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { cn } from "@formbricks/lib/cn";
 import { convertDateString, timeSince } from "@formbricks/lib/time";
-import { TUserLocale } from "@formbricks/types/user";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
@@ -19,7 +18,6 @@ interface SurveyCardProps {
   surveyDomain: string;
   duplicateSurvey: (survey: TSurvey) => void;
   deleteSurvey: (surveyId: string) => void;
-  locale: TUserLocale;
 }
 export const SurveyCard = ({
   survey,
@@ -28,7 +26,6 @@ export const SurveyCard = ({
   surveyDomain,
   deleteSurvey,
   duplicateSurvey,
-  locale,
 }: SurveyCardProps) => {
   const { t } = useTranslate();
   const surveyStatusLabel = (() => {
@@ -91,7 +88,7 @@ export const SurveyCard = ({
           {convertDateString(survey.createdAt.toString())}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
-          {timeSince(survey.updatedAt.toString(), locale)}
+          {timeSince(survey.updatedAt.toString())}
         </div>
         <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
           {survey.creator ? survey.creator.name : "-"}

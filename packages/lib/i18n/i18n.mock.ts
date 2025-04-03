@@ -44,6 +44,7 @@ export const mockOpenTextQuestion: TSurveyOpenTextQuestion = {
   placeholder: {
     default: "Type your answer here...",
   },
+  charLimit: {},
 };
 
 export const mockSingleSelectQuestion: TSurveyMultipleChoiceQuestion = {

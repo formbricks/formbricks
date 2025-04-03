@@ -9,7 +9,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
-import { TSurvey, TSurveyOpenTextQuestion } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 
 export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
   try {
