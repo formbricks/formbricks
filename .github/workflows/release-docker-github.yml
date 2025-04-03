@@ -26,6 +26,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           call: check
+          file: ./apps/web/Dockerfile
 
       - name: Build and push
         uses: docker/build-push-action@v6
