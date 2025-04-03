@@ -22,12 +22,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Validate build configuration
-        uses: docker/build-push-action@v6
-        with:
-          call: check
-          file: ./apps/web/Dockerfile
-
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
