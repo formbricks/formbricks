@@ -1,10 +1,10 @@
 "use client";
 
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { checkForYoutubeUrl, convertToEmbedUrl, extractYoutubeId } from "@formbricks/lib/utils/videoUpload";
@@ -112,10 +112,9 @@ export const VideoSettings = ({
       </div>
 
       {showPlatformWarning && (
-        <div className="flex items-center space-x-2 rounded-md border bg-slate-100 p-2 text-xs text-slate-600">
-          <AlertTriangle className="h-6 w-6" />
-          <p>{t("environments.surveys.edit.invalid_video_url_warning")}</p>
-        </div>
+        <Alert variant="warning" size="small">
+          <AlertTitle>{t("environments.surveys.edit.invalid_video_url_warning")}</AlertTitle>
+        </Alert>
       )}
 
       {isYoutubeLink && (

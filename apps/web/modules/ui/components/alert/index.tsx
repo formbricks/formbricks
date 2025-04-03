@@ -21,23 +21,23 @@ const AlertContext = createContext<AlertContextValue>({
 const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 [&>svg]:text-foreground", {
+const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4", {
   variants: {
     variant: {
       default: "text-foreground border-border",
       error:
-        "text-error-foreground border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted",
+        "text-error-foreground [&>svg]:text-error border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted",
       warning:
-        "text-warning-foreground border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted",
-      info: "text-info-foreground border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted",
+        "text-warning-foreground [&>svg]:text-warning border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted",
+      info: "text-info-foreground [&>svg]:text-info border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted",
       success:
-        "text-success-foreground border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted",
+        "text-success-foreground [&>svg]:text-success border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted",
     },
     size: {
       default:
-        "py-3 px-4 text-sm grid grid-cols-[1fr_auto] grid-rows-[auto_auto] gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
+        "py-3 px-4 text-sm grid grid-cols-[2fr_auto] grid-rows-[auto_auto] gap-y-0.5 gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
       small:
-        "px-3 py-2 text-xs flex items-center justify-between gap-2 [&>svg]:flex-shrink-0 [&_button]:text-xs [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
+        "px-4 py-2 text-xs flex items-center gap-2 [&>svg]:flex-shrink-0 [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {
@@ -58,7 +58,7 @@ const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
 >(({ className, variant, size, ...props }, ref) => {
-  const variantIcon = variant ? (variant !== "default" ? alertVariantIcons[variant] : null) : null;
+  const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
   return (
     <AlertContext.Provider value={{ variant, size }}>
@@ -78,8 +78,8 @@ const AlertTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<H
       <h5
         ref={ref}
         className={cn(
-          "col-start-1 row-start-1 font-medium leading-none tracking-tight",
-          size === "small" ? "min-w-0 flex-shrink truncate" : "col-start-1 row-start-1",
+          "col-start-1 row-start-1 font-medium tracking-tight",
+          size === "small" ? "flex-shrink truncate" : "col-start-1 row-start-1",
           className
         )}
         {...props}
@@ -99,9 +99,7 @@ const AlertDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttrib
         ref={ref}
         className={cn(
           "[&_p]:leading-relaxed",
-          size === "small"
-            ? "hidden min-w-0 flex-shrink flex-grow truncate opacity-80 sm:block" // Hidden on very small screens, limited width
-            : "col-start-1 row-start-2",
+          size === "small" ? "flex-shrink flex-grow-0 truncate" : "col-start-1 row-start-2",
           className
         )}
         {...props}
@@ -124,7 +122,7 @@ const AlertButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(
           "self-end",
           alertSize === "small"
-            ? "-my-2 -mr-3 ml-auto flex-shrink-0"
+            ? "-my-2 -mr-4 ml-auto flex-shrink-0"
             : "col-start-2 row-span-2 row-start-1 flex items-center justify-center"
         )}>
         <Button ref={ref} variant={buttonVariant} size={buttonSize} className={className} {...props}>

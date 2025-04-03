@@ -1,11 +1,11 @@
 "use client";
 
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
 import { useTranslate } from "@tolgee/react";
-import { AlertTriangleIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 
 interface MemberModalProps {
@@ -48,10 +48,9 @@ export const AddApiKeyModal = ({ open, setOpen, onSubmit }: MemberModalProps) =>
                 />
               </div>
 
-              <div className="flex items-center rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-700">
-                <AlertTriangleIcon className="mx-3 h-12 w-12 text-amber-500" />
-                <p>{t("environments.project.api-keys.api_key_security_warning")}</p>
-              </div>
+              <Alert variant="warning" size="small">
+                <AlertTitle>{t("environments.project.api-keys.api_key_security_warning")}</AlertTitle>
+              </Alert>
             </div>
           </div>
           <div className="flex justify-end border-t border-slate-200 p-6">
