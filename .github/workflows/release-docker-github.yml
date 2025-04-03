@@ -28,6 +28,6 @@ jobs:
           push: true
           tags: wonderfilabs/engagehq:latest,wonderfilabs/engagehq:${{ github.sha }}
           file: ./apps/web/Dockerfile
-        env:
-          DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
-          ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
+        build-args: |
+          "DATABASE_URL=${{ secrets.DUMMY_DATABASE_URL }}"
+          "ENCRYPTION_KEY=${{ secrets.DUMMY_ENCRYPTION_KEY }}"
