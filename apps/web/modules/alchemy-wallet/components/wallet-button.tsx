@@ -9,7 +9,7 @@ export function WalletButton(): React.JSX.Element {
   const signerStatus = useSignerStatus();
   const { logout } = useLogout();
   return (
-    <div className="flex w-full items-center justify-center gap-4 p-2 text-center">
+    <div className="flex w-full items-center justify-center gap-4 text-center">
       {signerStatus.isInitializing ? (
         <>Loading...</>
       ) : user ? (
