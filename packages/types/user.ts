@@ -58,6 +58,7 @@ export const ZUser = z.object({
   objective: ZUserObjective.nullable(),
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
+  lastLoginAt: z.date().nullable(),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -72,6 +73,7 @@ export const ZUserUpdateInput = z.object({
   imageUrl: z.string().nullish(),
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
+  lastLoginAt: z.date().nullish(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;

@@ -116,6 +116,8 @@ export const authOptions: NextAuthOptions = {
           }
         }
 
+        await updateUser(user.id, { lastLoginAt: new Date() });
+
         return {
           id: user.id,
           email: user.email,
@@ -166,6 +168,8 @@ export const authOptions: NextAuthOptions = {
 
         // send new user to brevo after email verification
         createBrevoCustomer({ id: user.id, email: user.email });
+
+        await updateUser(user.id, { lastLoginAt: new Date() });
 
         return user;
       },
