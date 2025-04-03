@@ -54,7 +54,7 @@
     "terser": "5.37.0",
     "vite": "6.0.12",
     "vite-plugin-dts": "4.3.0",
-    "vitest": "3.0.5"
+    "vitest": "3.1.1"
   },
   "peerDependencies": {
     "@react-native-async-storage/async-storage": ">=2.1.0",
