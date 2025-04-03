@@ -22,8 +22,6 @@ export const getProjectsByOrganizationId = reactCache(
             },
           });
 
-          console.log("projects query", projects);
-
           return projects;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
