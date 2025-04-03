@@ -76,8 +76,8 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
             logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
           } else {
             // create a new data migration entry with pending status
-            hasLock = true;
             await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
+            hasLock = true;
           }
 
           if (migration.run) {
