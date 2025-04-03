@@ -44,6 +44,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
 
 const runSingleMigration = async (migration: MigrationScript, index: number): Promise<void> => {
   if (migration.type === "data") {
+    let hasLock = false;
     logger.info(`Running data migration: ${migration.name}`);
 
     try {
@@ -75,6 +76,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
             logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
           } else {
             // create a new data migration entry with pending status
+            hasLock = true;
             await prisma.$executeRaw`INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')`;
           }
 
@@ -100,12 +102,15 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
     } catch (error) {
       // Record migration failure
       logger.error(error, `Data migration ${migration.name} failed`);
-      // Mark migration as failed
-      await prisma.$queryRaw`
-        INSERT INTO "DataMigration" (id, name, status)
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- we need to check if the migration has a lock
+      if (hasLock) {
+        // Mark migration as failed
+        await prisma.$queryRaw`
+          INSERT INTO "DataMigration" (id, name, status)
         VALUES (${migration.id}, ${migration.name}, 'failed')
-        ON CONFLICT (id) DO UPDATE SET status = 'failed';
-      `;
+          ON CONFLICT (id) DO UPDATE SET status = 'failed';
+        `;
+      }
 
       throw error;
     }
