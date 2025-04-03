@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { trackAction, trackCodeAction, trackNoCodeAction } from "@/lib/survey/action";
 import { SurveyStore } from "@/lib/survey/store";
 import { triggerSurvey } from "@/lib/survey/widget";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {

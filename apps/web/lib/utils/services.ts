@@ -51,7 +51,7 @@ export const getActionClass = reactCache(
 );
 
 export const getApiKey = reactCache(
-  async (apiKeyId: string): Promise<{ environmentId: string } | null> =>
+  async (apiKeyId: string): Promise<{ organizationId: string } | null> =>
     cache(
       async () => {
         validateInputs([apiKeyId, ZString]);
@@ -66,7 +66,7 @@ export const getApiKey = reactCache(
               id: apiKeyId,
             },
             select: {
-              environmentId: true,
+              organizationId: true,
             },
           });
 

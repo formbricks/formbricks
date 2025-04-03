@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- required for logging errors */
-import { FormbricksAPI } from "@formbricks/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getIsDebug } from "@/lib/common/utils";
 import { type TUpdates, type TUserState } from "@/types/config";
 import { type ApiErrorResponse, type Result, type ResultError, err, ok, okVoid } from "@/types/error";
+import { FormbricksAPI } from "@formbricks/api";
 
 export const sendUpdatesToBackend = async ({
   appUrl,

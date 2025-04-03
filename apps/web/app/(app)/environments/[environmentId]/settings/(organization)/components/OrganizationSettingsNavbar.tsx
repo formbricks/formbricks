@@ -54,6 +54,12 @@ export const OrganizationSettingsNavbar = ({
       hidden: isFormbricksCloud || isPricingDisabled,
       current: pathname?.includes("/enterprise"),
     },
+    {
+      id: "api-keys",
+      label: t("common.api_keys"),
+      href: `/environments/${environmentId}/settings/api-keys`,
+      current: pathname?.includes("/api-keys"),
+    },
   ];
 
   return <SecondaryNavigation navigation={navigation} activeId={activeId} loading={loading} />;

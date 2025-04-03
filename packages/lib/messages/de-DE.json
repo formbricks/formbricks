@@ -372,7 +372,7 @@
     "team": "Team",
     "team_access": "Teamzugriff",
     "team_name": "Teamname",
-    "teams": "Teams",
+    "teams": "Zugriffskontrolle",
     "teams_not_found": "Teams nicht gefunden",
     "text": "Text",
     "time": "Zeit",
@@ -792,6 +792,29 @@
         "secret": "Geheimnis",
         "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
       },
+      "api_keys": {
+        "access_control": "Zugriffskontrolle",
+        "add_api_key": "API-Schlüssel hinzufügen",
+        "add_env_api_key": "{environmentType} API-Schlüssel hinzufügen",
+        "api_key": "API-Schlüssel",
+        "api_key_copied_to_clipboard": "API-Schlüssel in die Zwischenablage kopiert",
+        "api_key_created": "API-Schlüssel erstellt",
+        "api_key_deleted": "API-Schlüssel gelöscht",
+        "api_key_label": "API-Schlüssel Label",
+        "api_key_security_warning": "Aus Sicherheitsgründen wird der API-Schlüssel nur einmal nach der Erstellung angezeigt. Bitte kopiere ihn sofort an einen sicheren Ort.",
+        "dev_api_keys": "API-Schlüssel (Dev)",
+        "dev_api_keys_description": "API-Schlüssel für deine Entwicklungsumgebung hinzufügen und entfernen.",
+        "duplicate_access": "Doppelter Projektzugriff nicht erlaubt",
+        "duplicate_permissions": "Doppelte Berechtigungen sind nicht erlaubt",
+        "no_api_keys_yet": "Du hast noch keine API-Schlüssel",
+        "organization_access": "Organisationszugang",
+        "permissions": "Berechtigungen",
+        "prod_api_keys": "API-Schlüssel (Prod)",
+        "prod_api_keys_description": "API-Schlüssel für deine Produktionsumgebung hinzufügen und entfernen.",
+        "project_access": "Projektzugriff",
+        "secret": "Geheimnis",
+        "unable_to_delete_api_key": "API-Schlüssel kann nicht gelöscht werden"
+      },
       "app-connection": {
         "api_host_description": "Dies ist die URL deines Formbricks Backends.",
         "app_connection": "App-Verbindung",
@@ -988,6 +1011,12 @@
       "with_the_formbricks_sdk": "mit dem Formbricks SDK"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "API-Schlüssel hinzufügen",
+        "add_permission": "Berechtigung hinzufügen",
+        "api_keys_description": "Verwalte API-Schlüssel, um auf die Formbricks-Management-APIs zuzugreifen",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Nur Organisationsinhaber und -manager können API-Schlüssel verwalten"
+      },
       "billing": {
         "10000_monthly_responses": "10,000 monatliche Antworten",
         "1500_monthly_responses": "1,500 monatliche Antworten",

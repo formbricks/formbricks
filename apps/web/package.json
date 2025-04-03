@@ -155,6 +155,7 @@
     "@types/qrcode": "1.5.5",
     "@types/testing-library__react": "10.2.0",
     "@vitest/coverage-v8": "2.1.8",
+    "resize-observer-polyfill": "1.5.1",
     "vite": "6.2.3",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.0.7",

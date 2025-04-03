@@ -372,7 +372,7 @@
     "team": "Équipe",
     "team_access": "Accès Équipe",
     "team_name": "Nom de l'équipe",
-    "teams": "Équipes",
+    "teams": "Contrôle d'accès",
     "teams_not_found": "Équipes non trouvées",
     "text": "Texte",
     "time": "Temps",
@@ -792,6 +792,29 @@
         "secret": "Secret",
         "unable_to_delete_api_key": "Impossible de supprimer la clé API"
       },
+      "api_keys": {
+        "access_control": "Contrôle d'accès",
+        "add_api_key": "Ajouter une clé API",
+        "add_env_api_key": "Ajouter la clé API {environmentType}",
+        "api_key": "Clé API",
+        "api_key_copied_to_clipboard": "Clé API copiée dans le presse-papiers",
+        "api_key_created": "Clé API créée",
+        "api_key_deleted": "Clé API supprimée",
+        "api_key_label": "Étiquette de clé API",
+        "api_key_security_warning": "Pour des raisons de sécurité, la clé API ne sera affichée qu'une seule fois après sa création. Veuillez la copier immédiatement à votre destination.",
+        "dev_api_keys": "Clés de l'environnement de développement",
+        "dev_api_keys_description": "Ajoutez et supprimez des clés API pour votre environnement de développement.",
+        "duplicate_access": "L'accès en double au projet n'est pas autorisé",
+        "duplicate_permissions": "Les autorisations en double ne sont pas autorisées",
+        "no_api_keys_yet": "Vous n'avez pas encore de clés API.",
+        "organization_access": "Accès à l'organisation",
+        "permissions": "Permissions",
+        "prod_api_keys": "Clés de l'environnement de production",
+        "prod_api_keys_description": "Ajoutez et supprimez des clés API pour votre environnement de production.",
+        "project_access": "Accès au projet",
+        "secret": "Secret",
+        "unable_to_delete_api_key": "Impossible de supprimer la clé API"
+      },
       "app-connection": {
         "api_host_description": "Ceci est l'URL de votre backend Formbricks.",
         "app_connection": "Connexion d'application",
@@ -988,6 +1011,12 @@
       "with_the_formbricks_sdk": "avec le SDK Formbricks"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "Ajouter une clé API",
+        "add_permission": "Ajouter une permission",
+        "api_keys_description": "Gérer les clés API pour accéder aux API de gestion de Formbricks",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Seuls les propriétaires et les gestionnaires de l'organisation peuvent gérer les clés API"
+      },
       "billing": {
         "10000_monthly_responses": "10000 Réponses Mensuelles",
         "1500_monthly_responses": "1500 Réponses Mensuelles",

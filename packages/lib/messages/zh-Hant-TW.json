@@ -372,7 +372,7 @@
     "team": "團隊",
     "team_access": "團隊存取權限",
     "team_name": "團隊名稱",
-    "teams": "團隊",
+    "teams": "存取控制",
     "teams_not_found": "找不到團隊",
     "text": "文字",
     "time": "時間",
@@ -792,6 +792,29 @@
         "secret": "密碼",
         "unable_to_delete_api_key": "無法刪除 API 金鑰"
       },
+      "api_keys": {
+        "access_control": "存取控制",
+        "add_api_key": "新增 API 金鑰",
+        "add_env_api_key": "新增 '{'environmentType'}' API 金鑰",
+        "api_key": "API 金鑰",
+        "api_key_copied_to_clipboard": "API 金鑰已複製到剪貼簿",
+        "api_key_created": "API 金鑰已建立",
+        "api_key_deleted": "API 金鑰已刪除",
+        "api_key_label": "API 金鑰標籤",
+        "api_key_security_warning": "為安全起見，API 金鑰僅在建立後顯示一次。請立即將其複製到您的目的地。",
+        "dev_api_keys": "開發環境金鑰",
+        "dev_api_keys_description": "為您的開發環境新增和移除 API 金鑰。",
+        "duplicate_access": "不允許重複的 project 存取",
+        "duplicate_permissions": "不允許重複權限",
+        "no_api_keys_yet": "您還沒有任何 API 金鑰",
+        "organization_access": "組織 Access",
+        "permissions": "權限",
+        "prod_api_keys": "生產環境金鑰",
+        "prod_api_keys_description": "為您的生產環境新增和移除 API 金鑰。",
+        "project_access": "專案存取",
+        "secret": "密碼",
+        "unable_to_delete_api_key": "無法刪除 API 金鑰"
+      },
       "app-connection": {
         "api_host_description": "這是您 Formbricks 後端的網址。",
         "app_connection": "應用程式連線",
@@ -988,6 +1011,12 @@
       "with_the_formbricks_sdk": "使用 Formbricks SDK"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "新增 API 金鑰",
+        "add_permission": "新增權限",
+        "api_keys_description": "管理 API 金鑰以存取 Formbricks 管理 API",
+        "only_organization_owners_and_managers_can_manage_api_keys": "只有組織擁有者和管理員才能管理 API 金鑰"
+      },
       "billing": {
         "10000_monthly_responses": "10000 個每月回應",
         "1500_monthly_responses": "1500 個每月回應",
