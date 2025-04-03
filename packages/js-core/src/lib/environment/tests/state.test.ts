@@ -1,6 +1,4 @@
 // state.test.ts
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { FormbricksAPI } from "@formbricks/api";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
@@ -10,6 +8,8 @@ import {
   fetchEnvironmentState,
 } from "@/lib/environment/state";
 import type { TEnvironmentState } from "@/types/config";
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { FormbricksAPI } from "@formbricks/api";
 
 // Mock the FormbricksAPI so we can control environment.getState
 vi.mock("@formbricks/api", () => ({
@@ -37,6 +37,7 @@ vi.mock("@/lib/common/logger", () => ({
 // Mock filterSurveys
 vi.mock("@/lib/common/utils", () => ({
   filterSurveys: vi.fn(),
+  getIsDebug: vi.fn(),
 }));
 
 // Mock Config
