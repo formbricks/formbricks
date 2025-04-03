@@ -154,10 +154,10 @@
     "@types/papaparse": "5.3.15",
     "@types/qrcode": "1.5.5",
     "@types/testing-library__react": "10.2.0",
-    "@vitest/coverage-v8": "2.1.8",
+    "@vitest/coverage-v8": "3.1.1",
     "vite": "6.2.4",
     "vite-tsconfig-paths": "5.1.4",
-    "vitest": "3.0.7",
-    "vitest-mock-extended": "2.0.2"
+    "vitest": "3.1.1",
+    "vitest-mock-extended": "3.0.1"
   }
 }
