@@ -8,7 +8,7 @@ import {
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
-import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "../i18n/utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
@@ -706,76 +706,4 @@ const generateAllPermutationsOfSubsets = (array: string[]): string[][] => {
 
   findSubsets(0, []);
   return subsets;
-};
-
-/**
- * Determines the JavaScript type of a value
- */
-export const getValueType = (value: unknown): string => {
-  if (value === null) return "null";
-  if (value === undefined) return "undefined";
-  if (Array.isArray(value)) return "array";
-  return typeof value;
-};
-
-/**
- * Maps survey question types to expected response data types
- */
-export const getExpectedResponseType = (questionType: TSurveyQuestionTypeEnum): string | string[] => {
-  switch (questionType) {
-    case TSurveyQuestionTypeEnum.OpenText:
-      return "string";
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle:
-      return "string";
-    case TSurveyQuestionTypeEnum.MultipleChoiceMulti:
-      return ["array", "string"]; // Can be array of choices or single string for "other"
-    case TSurveyQuestionTypeEnum.NPS:
-    case TSurveyQuestionTypeEnum.Rating:
-      return ["number", "string"]; // Sometimes stored as string
-    case TSurveyQuestionTypeEnum.CTA:
-      return "boolean";
-    case TSurveyQuestionTypeEnum.Consent:
-      return "boolean";
-    case TSurveyQuestionTypeEnum.PictureSelection:
-      return ["array", "string"];
-    case TSurveyQuestionTypeEnum.FileUpload:
-      return "array"; // Array of file URLs
-    case TSurveyQuestionTypeEnum.Cal:
-      return "boolean";
-    case TSurveyQuestionTypeEnum.Matrix:
-      return "object";
-    case TSurveyQuestionTypeEnum.Date:
-      return "string";
-    case TSurveyQuestionTypeEnum.Address:
-    case TSurveyQuestionTypeEnum.ContactInfo:
-      return "array";
-    case TSurveyQuestionTypeEnum.Ranking:
-      return "array";
-    default:
-      return ["string", "array", "object", "number", "boolean"]; // Allow any type if unknown
-  }
-};
-
-export interface InconsistentQuestion {
-  questionId: string;
-  headline?: string;
-  expectedType: string | string[];
-  foundTypes: Record<string, number>; // Map of types to count of occurrences
-  totalResponses: number;
-}
-
-export interface ResponseConsistencyResult {
-  hasInconsistencies: boolean;
-  inconsistentQuestions: InconsistentQuestion[];
-  unknownFields: string[];
-}
-
-/**
- * Checks if a type is valid for a given expected type
- */
-const isTypeValid = (actualType: string, expectedType: string | string[]): boolean => {
-  if (Array.isArray(expectedType)) {
-    return expectedType.includes(actualType);
-  }
-  return actualType === expectedType;
 };
