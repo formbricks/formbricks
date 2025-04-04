@@ -53,7 +53,7 @@ importers:
         version: 0.468.0(react@19.0.0)
       next:
         specifier: 15.2.3
-        version: 15.2.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 15.2.3(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react:
         specifier: 19.0.0
         version: 19.0.0
@@ -390,6 +390,9 @@ importers:
       ai:
         specifier: 4.1.17
         version: 4.1.17(react@19.0.0)(zod@3.24.1)
+      alchemy-sdk:
+        specifier: 3.5.6
+        version: 3.5.6(bufferutil@4.0.9)(utf-8-validate@5.0.10)
       autoprefixer:
         specifier: 10.4.20
         version: 10.4.20(postcss@8.4.49)
@@ -18337,7 +18340,6 @@ snapshots:
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
-    optional: true
 
   '@ethersproject/abstract-provider@5.8.0':
     dependencies:
@@ -18348,7 +18350,6 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/transactions': 5.8.0
       '@ethersproject/web': 5.8.0
-    optional: true
 
   '@ethersproject/abstract-signer@5.8.0':
     dependencies:
@@ -18357,7 +18358,6 @@ snapshots:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
-    optional: true
 
   '@ethersproject/address@5.8.0':
     dependencies:
@@ -18366,35 +18366,29 @@ snapshots:
       '@ethersproject/keccak256': 5.8.0
       '@ethersproject/logger': 5.8.0
       '@ethersproject/rlp': 5.8.0
-    optional: true
 
   '@ethersproject/base64@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
-    optional: true
 
   '@ethersproject/basex@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/properties': 5.8.0
-    optional: true
 
   '@ethersproject/bignumber@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
       bn.js: 5.2.1
-    optional: true
 
   '@ethersproject/bytes@5.8.0':
     dependencies:
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/constants@5.8.0':
     dependencies:
       '@ethersproject/bignumber': 5.8.0
-    optional: true
 
   '@ethersproject/contracts@5.8.0':
     dependencies:
@@ -18408,7 +18402,6 @@ snapshots:
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/transactions': 5.8.0
-    optional: true
 
   '@ethersproject/hash@5.8.0':
     dependencies:
@@ -18421,7 +18414,6 @@ snapshots:
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
-    optional: true
 
   '@ethersproject/hdnode@5.8.0':
     dependencies:
@@ -18437,7 +18429,6 @@ snapshots:
       '@ethersproject/strings': 5.8.0
       '@ethersproject/transactions': 5.8.0
       '@ethersproject/wordlists': 5.8.0
-    optional: true
 
   '@ethersproject/json-wallets@5.8.0':
     dependencies:
@@ -18454,32 +18445,26 @@ snapshots:
       '@ethersproject/transactions': 5.8.0
       aes-js: 3.0.0
       scrypt-js: 3.0.1
-    optional: true
 
   '@ethersproject/keccak256@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       js-sha3: 0.8.0
-    optional: true
 
-  '@ethersproject/logger@5.8.0':
-    optional: true
+  '@ethersproject/logger@5.8.0': {}
 
   '@ethersproject/networks@5.8.0':
     dependencies:
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/pbkdf2@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/sha2': 5.8.0
-    optional: true
 
   '@ethersproject/properties@5.8.0':
     dependencies:
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/providers@5.8.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)':
     dependencies:
@@ -18506,26 +18491,22 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
-    optional: true
 
   '@ethersproject/random@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/rlp@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/sha2@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/logger': 5.8.0
       hash.js: 1.1.7
-    optional: true
 
   '@ethersproject/signing-key@5.8.0':
     dependencies:
@@ -18535,14 +18516,12 @@ snapshots:
       bn.js: 5.2.1
       elliptic: 6.6.1
       hash.js: 1.1.7
-    optional: true
 
   '@ethersproject/strings@5.8.0':
     dependencies:
       '@ethersproject/bytes': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/transactions@5.8.0':
     dependencies:
@@ -18555,14 +18534,12 @@ snapshots:
       '@ethersproject/properties': 5.8.0
       '@ethersproject/rlp': 5.8.0
       '@ethersproject/signing-key': 5.8.0
-    optional: true
 
   '@ethersproject/units@5.8.0':
     dependencies:
       '@ethersproject/bignumber': 5.8.0
       '@ethersproject/constants': 5.8.0
       '@ethersproject/logger': 5.8.0
-    optional: true
 
   '@ethersproject/wallet@5.8.0':
     dependencies:
@@ -18581,7 +18558,6 @@ snapshots:
       '@ethersproject/signing-key': 5.8.0
       '@ethersproject/transactions': 5.8.0
       '@ethersproject/wordlists': 5.8.0
-    optional: true
 
   '@ethersproject/web@5.8.0':
     dependencies:
@@ -18590,7 +18566,6 @@ snapshots:
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
-    optional: true
 
   '@ethersproject/wordlists@5.8.0':
     dependencies:
@@ -18599,7 +18574,6 @@ snapshots:
       '@ethersproject/logger': 5.8.0
       '@ethersproject/properties': 5.8.0
       '@ethersproject/strings': 5.8.0
-    optional: true
 
   '@expo/bunyan@4.0.1':
     dependencies:
@@ -24900,8 +24874,7 @@ snapshots:
 
   adler-32@1.3.1: {}
 
-  aes-js@3.0.0:
-    optional: true
+  aes-js@3.0.0: {}
 
   agent-base@6.0.2:
     dependencies:
@@ -25002,7 +24975,6 @@ snapshots:
       - debug
       - supports-color
       - utf-8-validate
-    optional: true
 
   anser@1.4.10: {}
 
@@ -25431,8 +25403,7 @@ snapshots:
 
   bcryptjs@2.4.3: {}
 
-  bech32@1.1.4:
-    optional: true
+  bech32@1.1.4: {}
 
   better-opn@3.0.2:
     dependencies:
@@ -26285,7 +26256,6 @@ snapshots:
     dependencies:
       es5-ext: 0.10.64
       type: 2.7.3
-    optional: true
 
   damerau-levenshtein@1.0.8: {}
 
@@ -26767,14 +26737,12 @@ snapshots:
       es6-symbol: 3.1.4
       esniff: 2.0.1
       next-tick: 1.1.0
-    optional: true
 
   es6-iterator@2.0.3:
     dependencies:
       d: 1.0.2
       es5-ext: 0.10.64
       es6-symbol: 3.1.4
-    optional: true
 
   es6-promise@4.2.8: {}
 
@@ -26786,7 +26754,6 @@ snapshots:
     dependencies:
       d: 1.0.2
       ext: 1.7.0
-    optional: true
 
   esbuild-register@3.6.0(esbuild@0.25.2):
     dependencies:
@@ -27271,7 +27238,6 @@ snapshots:
       es5-ext: 0.10.64
       event-emitter: 0.3.5
       type: 2.7.3
-    optional: true
 
   espree@9.6.1:
     dependencies:
@@ -27343,7 +27309,6 @@ snapshots:
     dependencies:
       d: 1.0.2
       es5-ext: 0.10.64
-    optional: true
 
   event-target-shim@5.0.1: {}
 
@@ -27498,7 +27463,6 @@ snapshots:
   ext@1.7.0:
     dependencies:
       type: 2.7.3
-    optional: true
 
   extend@3.0.2: {}
 
@@ -28582,8 +28546,7 @@ snapshots:
     dependencies:
       which-typed-array: 1.1.19
 
-  is-typedarray@1.0.0:
-    optional: true
+  is-typedarray@1.0.0: {}
 
   is-unicode-supported@0.1.0: {}
 
@@ -28845,8 +28808,7 @@ snapshots:
 
   js-sdsl@4.3.0: {}
 
-  js-sha3@0.8.0:
-    optional: true
+  js-sha3@0.8.0: {}
 
   js-tokens@4.0.0: {}
 
@@ -30370,8 +30332,7 @@ snapshots:
     optionalDependencies:
       zod: 3.24.1
 
-  next-tick@1.1.0:
-    optional: true
+  next-tick@1.1.0: {}
 
   next@15.2.3(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
     dependencies:
@@ -30384,33 +30345,6 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       styled-jsx: 5.1.6(@babel/core@7.26.0)(react@19.0.0)
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 15.2.3
-      '@next/swc-darwin-x64': 15.2.3
-      '@next/swc-linux-arm64-gnu': 15.2.3
-      '@next/swc-linux-arm64-musl': 15.2.3
-      '@next/swc-linux-x64-gnu': 15.2.3
-      '@next/swc-linux-x64-musl': 15.2.3
-      '@next/swc-win32-arm64-msvc': 15.2.3
-      '@next/swc-win32-x64-msvc': 15.2.3
-      '@opentelemetry/api': 1.9.0
-      '@playwright/test': 1.49.1
-      sharp: 0.33.5
-    transitivePeerDependencies:
-      - '@babel/core'
-      - babel-plugin-macros
-
-  next@15.2.3(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@19.0.0(react@19.0.0))(react@19.0.0):
-    dependencies:
-      '@next/env': 15.2.3
-      '@swc/counter': 0.1.3
-      '@swc/helpers': 0.5.15
-      busboy: 1.6.0
-      caniuse-lite: 1.0.30001707
-      postcss: 8.4.31
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
-      styled-jsx: 5.1.6(react@19.0.0)
     optionalDependencies:
       '@next/swc-darwin-arm64': 15.2.3
       '@next/swc-darwin-x64': 15.2.3
@@ -32412,8 +32346,7 @@ snapshots:
 
   screenfull@5.2.0: {}
 
-  scrypt-js@3.0.1:
-    optional: true
+  scrypt-js@3.0.1: {}
 
   secure-json-parse@2.7.0: {}
 
@@ -33027,8 +32960,7 @@ snapshots:
 
   structured-headers@0.4.1: {}
 
-  sturdy-websocket@0.2.1:
-    optional: true
+  sturdy-websocket@0.2.1: {}
 
   style-to-js@1.1.16:
     dependencies:
@@ -33044,11 +32976,6 @@ snapshots:
       react: 19.0.0
     optionalDependencies:
       '@babel/core': 7.26.0
-
-  styled-jsx@5.1.6(react@19.0.0):
-    dependencies:
-      client-only: 0.0.1
-      react: 19.0.0
 
   styled-jsx@5.1.6(react@19.1.0):
     dependencies:
@@ -33516,8 +33443,7 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  type@2.7.3:
-    optional: true
+  type@2.7.3: {}
 
   typed-array-buffer@1.0.3:
     dependencies:
@@ -33555,7 +33481,6 @@ snapshots:
   typedarray-to-buffer@3.1.5:
     dependencies:
       is-typedarray: 1.0.0
-    optional: true
 
   typedarray@0.0.6: {}
 
@@ -34383,7 +34308,6 @@ snapshots:
       yaeti: 0.0.6
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   whatwg-encoding@3.1.1:
     dependencies:
@@ -34611,8 +34535,7 @@ snapshots:
 
   y18n@5.0.8: {}
 
-  yaeti@0.0.6:
-    optional: true
+  yaeti@0.0.6: {}
 
   yallist@3.1.1: {}
 

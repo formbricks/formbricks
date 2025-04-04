@@ -86,6 +86,7 @@
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.1.0",
     "ai": "4.1.17",
+    "alchemy-sdk": "3.5.6",
     "autoprefixer": "10.4.20",
     "bcryptjs": "2.4.3",
     "boring-avatars": "1.11.2",

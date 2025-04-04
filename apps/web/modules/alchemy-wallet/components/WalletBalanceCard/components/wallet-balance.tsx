@@ -2,11 +2,17 @@
 
 import React, { useEffect, useState } from "react";
 import { useSmartAccountClient } from "@account-kit/react";
+import { useTranslate } from "@tolgee/react";
 
-export function WalletBalance(): React.JSX.Element {
+interface WalletBalanceProps {
+  showBalance?: boolean;
+}
+
+export function WalletBalance({showBalance=true}:WalletBalanceProps): React.JSX.Element {
   const { client, address } = useSmartAccountClient({});
   const [balance, setBalance] = useState<bigint>();
-  
+  const { t } = useTranslate()
+
   // Fetch balance when client and address loaded
   useEffect(() => {
     if(!client || !address){
@@ -23,18 +29,15 @@ export function WalletBalance(): React.JSX.Element {
     fetchBalance();
   },[client, address])
 
-  console.log(balance);
   return (
     <div className="flex">
-      {balance != undefined ? 
-        <span>
-          {balance} Wei
-        </span>
-        :
-        <span>
-          Balance unavailable
-        </span>
-      }
+      <p className="text-2xl font-bold">
+        {
+         showBalance ? 
+          balance != undefined ? `${balance} Wei` : t("environments.wallet.balance_card.balance_unavailable")
+          : "••••••"
+        }
+      </p>
     </div>
   );
 }

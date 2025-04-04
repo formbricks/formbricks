@@ -1837,6 +1837,28 @@
         "uses_branching_logic": "This engagement uses branching logic."
       }
     },
+    "wallet": {
+      "_": "Wallet",
+      "balance_card": {
+        "wallet_address": "Wallet Address",
+        "external_link": "External link",
+        "balance": "Balance",
+        "pending_rewards": "Pending Rewards",
+        "balance_unavailable": "Balance Unavailable"
+      },
+      "button": {
+        "loading": "Loading...",
+        "success": "Success!",
+        "logged_in_as": "You're logged in as {email}.",
+        "logout": "Log out",
+        "login": "Login"
+      },
+      "address": {
+        "copy_button": "Copy Address",
+        "copy_success": "Successfully copied address!",
+        "copy_error": "Failed to copy, address not found!"
+      }
+    },
     "xm-templates": {
       "ces": "CES",
       "ces_description": "Leverage every touchpoint to understand ease of customer interaction.",
