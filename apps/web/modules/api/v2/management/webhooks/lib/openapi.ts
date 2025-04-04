@@ -5,7 +5,6 @@ import {
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/openapi";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
 

@@ -4,6 +4,7 @@ import {
   ZProjectTeamInput,
   projectTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
+import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
@@ -16,6 +17,9 @@ export const getProjectTeamsEndpoint: ZodOpenApiOperationObject = {
   description: "Gets projectTeams from the database.",
   requestParams: {
     query: ZGetProjectTeamsFilter.sourceType().required(),
+    path: z.object({
+      organizationId: organizationIdSchema,
+    }),
   },
   tags: ["Organizations API > Project Teams"],
   responses: {
@@ -34,6 +38,11 @@ export const createProjectTeamEndpoint: ZodOpenApiOperationObject = {
   operationId: "createProjectTeam",
   summary: "Create a projectTeam",
   description: "Creates a project team in the database.",
+  requestParams: {
+    path: z.object({
+      organizationId: organizationIdSchema,
+    }),
+  },
   tags: ["Organizations API > Project Teams"],
   requestBody: {
     required: true,
@@ -63,6 +72,9 @@ export const deleteProjectTeamEndpoint: ZodOpenApiOperationObject = {
   tags: ["Organizations API > Project Teams"],
   requestParams: {
     query: ZGetProjectTeamUpdateFilter.required(),
+    path: z.object({
+      organizationId: organizationIdSchema,
+    }),
   },
   responses: {
     "200": {
@@ -83,6 +95,9 @@ export const updateProjectTeamEndpoint: ZodOpenApiOperationObject = {
   tags: ["Organizations API > Project Teams"],
   requestParams: {
     query: ZGetProjectTeamUpdateFilter.required(),
+    path: z.object({
+      organizationId: organizationIdSchema,
+    }),
   },
   requestBody: {
     required: true,

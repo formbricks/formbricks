@@ -2606,6 +2606,12 @@ paths:
       tags:
         - Organizations API > Teams
       parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
         - in: query
           name: limit
           schema:
@@ -2687,6 +2693,13 @@ paths:
       description: Creates a team in the database.
       tags:
         - Organizations API > Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
       requestBody:
         required: true
         description: The team to create
@@ -2742,6 +2755,12 @@ paths:
           schema:
             $ref: "#/components/schemas/teamId"
           required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
       responses:
         "200":
           description: Team retrieved successfully.
@@ -2780,6 +2799,12 @@ paths:
           description: The ID of the team
           schema:
             $ref: "#/components/schemas/teamId"
+          required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
           required: true
       requestBody:
         required: true
@@ -2834,6 +2859,12 @@ paths:
           schema:
             $ref: "#/components/schemas/teamId"
           required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
       responses:
         "200":
           description: Team deleted successfully.
@@ -2869,6 +2900,12 @@ paths:
       tags:
         - Organizations API > Project Teams
       parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
         - in: query
           name: limit
           schema:
@@ -2963,6 +3000,13 @@ paths:
       description: Creates a project team in the database.
       tags:
         - Organizations API > Project Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
       requestBody:
         required: true
         description: The project team to create
@@ -3024,6 +3068,12 @@ paths:
       tags:
         - Organizations API > Project Teams
       parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
         - in: query
           name: teamId
           schema:
@@ -3087,6 +3137,12 @@ paths:
       tags:
         - Organizations API > Project Teams
       parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
         - in: query
           name: teamId
           schema:
@@ -4632,6 +4688,9 @@ components:
     webhookId:
       type: string
       description: The ID of the webhook
+    organizationId:
+      type: string
+      description: The ID of the organization
     teamId:
       type: string
       description: The ID of the team

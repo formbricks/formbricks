@@ -1,5 +1,6 @@
 import { teamIdSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZTeamInput } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
+import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
@@ -12,6 +13,7 @@ export const getTeamEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     path: z.object({
       id: teamIdSchema,
+      organizationId: organizationIdSchema,
     }),
   },
   tags: ["Organizations API > Teams"],
@@ -35,6 +37,7 @@ export const deleteTeamEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     path: z.object({
       id: teamIdSchema,
+      organizationId: organizationIdSchema,
     }),
   },
   responses: {
@@ -57,6 +60,7 @@ export const updateTeamEndpoint: ZodOpenApiOperationObject = {
   requestParams: {
     path: z.object({
       id: teamIdSchema,
+      organizationId: organizationIdSchema,
     }),
   },
   requestBody: {
