@@ -34,12 +34,22 @@ describe("authenticateRequest", () => {
         {
           environmentId: "env-id-1",
           permission: "manage",
-          environment: { id: "env-id-1" },
+          environment: {
+            id: "env-id-1",
+            projectId: "project-id-1",
+            type: "development",
+            project: { name: "Project 1" },
+          },
         },
         {
           environmentId: "env-id-2",
           permission: "read",
-          environment: { id: "env-id-2" },
+          environment: {
+            id: "env-id-2",
+            projectId: "project-id-2",
+            type: "production",
+            project: { name: "Project 2" },
+          },
         },
       ],
     };
@@ -55,8 +65,20 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         environmentPermissions: [
-          { environmentId: "env-id-1", permission: "manage" },
-          { environmentId: "env-id-2", permission: "read" },
+          {
+            environmentId: "env-id-1",
+            permission: "manage",
+            environmentType: "development",
+            projectId: "project-id-1",
+            projectName: "Project 1",
+          },
+          {
+            environmentId: "env-id-2",
+            permission: "read",
+            environmentType: "production",
+            projectId: "project-id-2",
+            projectName: "Project 2",
+          },
         ],
         hashedApiKey: "hashed-api-key",
         apiKeyId: "api-key-id",

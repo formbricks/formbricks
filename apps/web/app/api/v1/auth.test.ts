@@ -62,9 +62,27 @@ describe("getApiKeyWithPermissions", () => {
 
 describe("hasPermission", () => {
   const permissions: TAPIKeyEnvironmentPermission[] = [
-    { environmentId: "env-1", permission: "manage" },
-    { environmentId: "env-2", permission: "write" },
-    { environmentId: "env-3", permission: "read" },
+    {
+      environmentId: "env-1",
+      permission: "manage",
+      environmentType: "development",
+      projectId: "project-1",
+      projectName: "Project 1",
+    },
+    {
+      environmentId: "env-2",
+      permission: "write",
+      environmentType: "production",
+      projectId: "project-2",
+      projectName: "Project 2",
+    },
+    {
+      environmentId: "env-3",
+      permission: "read",
+      environmentType: "development",
+      projectId: "project-3",
+      projectName: "Project 3",
+    },
   ];
 
   it("should return true for manage permission with any method", () => {
@@ -108,7 +126,12 @@ describe("authenticateRequest", () => {
         {
           environmentId: "env-1",
           permission: "manage" as const,
-          environment: { id: "env-1" },
+          environment: {
+            id: "env-1",
+            projectId: "project-1",
+            project: { name: "Project 1" },
+            type: "development",
+          },
         },
       ],
     };
@@ -121,7 +144,15 @@ describe("authenticateRequest", () => {
 
     expect(result).toEqual({
       type: "apiKey",
-      environmentPermissions: [{ environmentId: "env-1", permission: "manage" }],
+      environmentPermissions: [
+        {
+          environmentId: "env-1",
+          permission: "manage",
+          environmentType: "development",
+          projectId: "project-1",
+          projectName: "Project 1",
+        },
+      ],
       hashedApiKey: "hashed-key",
       apiKeyId: "api-key-id",
       organizationId: "org-id",

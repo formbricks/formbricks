@@ -21,7 +21,10 @@ export const authenticateRequest = async (request: Request): Promise<TAuthentica
     type: "apiKey",
     environmentPermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
       environmentId: env.environmentId,
+      environmentType: env.environment.type,
       permission: env.permission,
+      projectId: env.environment.projectId,
+      projectName: env.environment.project.name,
     })),
     hashedApiKey,
     apiKeyId: apiKeyData.id,

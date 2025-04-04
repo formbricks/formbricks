@@ -9,6 +9,8 @@ servers:
 tags:
   - name: Roles
     description: Operations for managing roles.
+  - name: Me
+    description: Operations for managing your API key.
   - name: Management API > Responses
     description: Operations for managing responses.
   - name: Management API > Contacts
@@ -546,6 +548,67 @@ paths:
                     type: array
                     items:
                       type: string
+  /me:
+    get:
+      operationId: me
+      summary: Me
+      description: Fetches the projects and organizations associated with the API key.
+      tags:
+        - Me
+      responses:
+        "200":
+          description: API key information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizationId:
+                    type: string
+                  organizationAccess:
+                    type: object
+                    properties:
+                      accessControl:
+                        type: object
+                        properties:
+                          read:
+                            type: boolean
+                          write:
+                            type: boolean
+                        required:
+                          - read
+                          - write
+                        additionalProperties: false
+                    required:
+                      - accessControl
+                  environments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        environmentId:
+                          type: string
+                        environmentType:
+                          type: string
+                          enum:
+                            - production
+                            - development
+                        permission:
+                          type: string
+                          enum:
+                            - read
+                            - write
+                            - manage
+                        projectId:
+                          type: string
+                        projectName:
+                          type: string
+                      required:
+                        - environmentId
+                        - environmentType
+                        - permission
+                        - projectId
+                        - projectName
   /responses:
     get:
       operationId: getResponses
@@ -3199,6 +3262,59 @@ components:
             type: string
       required:
         - data
+    me:
+      type: object
+      properties:
+        organizationId:
+          type: string
+        organizationAccess:
+          type: object
+          properties:
+            accessControl:
+              type: object
+              properties:
+                read:
+                  type: boolean
+                write:
+                  type: boolean
+              required:
+                - read
+                - write
+              additionalProperties: false
+          required:
+            - accessControl
+        environments:
+          type: array
+          items:
+            type: object
+            properties:
+              environmentId:
+                type: string
+              environmentType:
+                type: string
+                enum:
+                  - production
+                  - development
+              permission:
+                type: string
+                enum:
+                  - read
+                  - write
+                  - manage
+              projectId:
+                type: string
+              projectName:
+                type: string
+            required:
+              - environmentId
+              - environmentType
+              - permission
+              - projectId
+              - projectName
+      required:
+        - organizationId
+        - organizationAccess
+        - environments
     response:
       type: object
       properties:
@@ -3739,12 +3855,13 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a15
+              enum:
                 - bottomLeft
                 - bottomRight
                 - topLeft
                 - topRight
                 - center
+                - null
             clickOutsideClose:
               type:
                 - boolean
@@ -3917,11 +4034,12 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a14
+                  enum:
                     - animation
                     - color
                     - image
                     - upload
+                    - null
                 brightness:
                   type:
                     - number
@@ -4621,7 +4739,12 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a14
+                  enum:
+                    - animation
+                    - color
+                    - image
+                    - upload
+                    - null
                 brightness:
                   type:
                     - number
@@ -4654,7 +4777,13 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a15
+              enum:
+                - bottomLeft
+                - bottomRight
+                - topLeft
+                - topRight
+                - center
+                - null
             clickOutsideClose:
               type:
                 - boolean

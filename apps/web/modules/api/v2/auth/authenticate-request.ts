@@ -11,6 +11,7 @@ export const authenticateRequest = async (
   if (!apiKey) return err({ type: "unauthorized" });
 
   const apiKeyData = await getApiKeyWithPermissions(apiKey);
+
   if (!apiKeyData) return err({ type: "unauthorized" });
 
   const hashedApiKey = hashApiKey(apiKey);
@@ -19,7 +20,10 @@ export const authenticateRequest = async (
     type: "apiKey",
     environmentPermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
       environmentId: env.environmentId,
+      environmentType: env.environment.type,
       permission: env.permission,
+      projectId: env.environment.projectId,
+      projectName: env.environment.project.name,
     })),
     hashedApiKey,
     apiKeyId: apiKeyData.id,

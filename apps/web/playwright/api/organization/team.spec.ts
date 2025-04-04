@@ -1,5 +1,4 @@
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { TEAMS_API_URL } from "@/playwright/api/constants";
+import { ME_API_URL, TEAMS_API_URL } from "@/playwright/api/constants";
 import { expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
 import { test } from "../../lib/fixtures";
@@ -7,23 +6,36 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Teams", () => {
   test("Create, Retrieve, Update, and Delete Teams via API", async ({ page, users, request }) => {
-    let environmentId, apiKey;
+    let apiKey;
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error during login and getting API key");
       throw error;
     }
 
-    let createdTeamId: string;
+    let organizationId, createdTeamId: string;
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    // Get organization ID using the me endpoint
+    await test.step("Get Organization ID", async () => {
+      const response = await request.get(ME_API_URL, {
+        headers: {
+          "x-api-key": apiKey,
+        },
+      });
+      expect(response.ok()).toBe(true);
+      const responseBody = await response.json();
+
+      expect(responseBody.data).toBeTruthy();
+      expect(responseBody.data.organizationId).toBeTruthy();
+
+      organizationId = responseBody.data.organizationId;
+    });
 
     await test.step("Create Team via API", async () => {
       const teamBody = {
         organizationId: organizationId,
         name: "New Team from API",
-        // ... include other required team fields if any ...
       };
 
       const response = await request.post(TEAMS_API_URL(organizationId), {
@@ -41,7 +53,7 @@ test.describe("API Tests for Teams", () => {
     });
 
     await test.step("Retrieve Teams via API", async () => {
-      const queryParams = { limit: 10, skip: 0, sortBy: "name", order: "asc" };
+      const queryParams = { limit: 10, skip: 0, sortBy: "createdAt", order: "asc" };
 
       const response = await request.get(TEAMS_API_URL(organizationId), {
         headers: {

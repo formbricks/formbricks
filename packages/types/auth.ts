@@ -1,4 +1,4 @@
-import { ApiKeyPermission } from "@prisma/client";
+import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "./api-key";
 import { ZUser } from "./user";
@@ -9,6 +9,9 @@ export const ZAuthSession = z.object({
 
 export const ZAPIKeyEnvironmentPermission = z.object({
   environmentId: z.string(),
+  environmentType: z.nativeEnum(EnvironmentType),
+  projectId: z.string().cuid2(),
+  projectName: z.string(),
   permission: z.nativeEnum(ApiKeyPermission),
 });
 
