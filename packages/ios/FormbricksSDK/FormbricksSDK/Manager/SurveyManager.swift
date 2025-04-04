@@ -4,7 +4,12 @@ import SwiftUI
 /// Filtering surveys based on the user's segments, responses, and displays.
 final class SurveyManager {
     static let shared = SurveyManager()
-    private init() { }
+    private init() {
+        /* 
+         This empty initializer prevents external instantiation of the SurveyManager class.
+         The class serves as a namespace for the shared instance, so instance creation is not needed and should be restricted.
+        */
+    }
     
     private static let environmentResponseObjectKey = "environmentResponseObjectKey"
     internal var service = FormbricksService()

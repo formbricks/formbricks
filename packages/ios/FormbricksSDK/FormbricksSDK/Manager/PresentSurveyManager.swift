@@ -3,7 +3,12 @@ import SwiftUI
 /// Presents a survey webview to the window's root
 final class PresentSurveyManager {
     static let shared = PresentSurveyManager()
-    private init() { }
+    private init() {
+        /* 
+         This empty initializer prevents external instantiation of the PresentSurveyManager class.
+         The class serves as a namespace for the present method, so instance creation is not needed and should be restricted.
+        */
+    }
     
     /// The view controller that will present the survey window.
     private weak var viewController: UIViewController?
