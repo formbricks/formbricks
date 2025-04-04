@@ -2725,14 +2725,14 @@ paths:
                       properties:
                         id:
                           type: string
-                          description: The ID of the response
+                          description: The ID of the team
                         createdAt:
                           type: string
-                          description: The date and time the response was created
+                          description: The date and time the team was created
                           example: 2021-01-01T00:00:00.000Z
                         updatedAt:
                           type: string
-                          description: The date and time the response was last updated
+                          description: The date and time the team was last updated
                           example: 2021-01-01T00:00:00.000Z
                         name:
                           type: string
@@ -2787,14 +2787,14 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The ID of the response
+                    description: The ID of the team
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   name:
                     type: string
@@ -2834,14 +2834,14 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The ID of the response
+                    description: The ID of the team
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   name:
                     type: string
@@ -2893,14 +2893,14 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The ID of the response
+                    description: The ID of the team
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   name:
                     type: string
@@ -2938,14 +2938,14 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: The ID of the response
+                    description: The ID of the team
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   name:
                     type: string
@@ -3029,11 +3029,11 @@ paths:
                       properties:
                         createdAt:
                           type: string
-                          description: The date and time the response was created
+                          description: The date and time the project tem was created
                           example: 2021-01-01T00:00:00.000Z
                         updatedAt:
                           type: string
-                          description: The date and time the response was last updated
+                          description: The date and time the project team was last updated
                           example: 2021-01-01T00:00:00.000Z
                         projectId:
                           type: string
@@ -3105,11 +3105,11 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the project tem was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the project team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
@@ -3174,11 +3174,11 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the project tem was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the project team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
@@ -3226,11 +3226,11 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the response was created
+                    description: The date and time the project tem was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the response was last updated
+                    description: The date and time the project team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
@@ -4196,14 +4196,14 @@ components:
       properties:
         id:
           type: string
-          description: The ID of the response
+          description: The ID of the team
         createdAt:
           type: string
-          description: The date and time the response was created
+          description: The date and time the team was created
           example: 2021-01-01T00:00:00.000Z
         updatedAt:
           type: string
-          description: The date and time the response was last updated
+          description: The date and time the team was last updated
           example: 2021-01-01T00:00:00.000Z
         name:
           type: string
@@ -4223,11 +4223,11 @@ components:
       properties:
         createdAt:
           type: string
-          description: The date and time the response was created
+          description: The date and time the project tem was created
           example: 2021-01-01T00:00:00.000Z
         updatedAt:
           type: string
-          description: The date and time the response was last updated
+          description: The date and time the project team was last updated
           example: 2021-01-01T00:00:00.000Z
         projectId:
           type: string
