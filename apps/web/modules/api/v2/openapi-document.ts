@@ -50,7 +50,7 @@ const document = createDocument({
   ],
   tags: [
     {
-      name: "Management API > Roles",
+      name: "Roles",
       description: "Operations for managing roles.",
     },
     {

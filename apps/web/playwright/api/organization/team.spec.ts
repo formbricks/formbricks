@@ -17,7 +17,7 @@ test.describe("API Tests for Teams", () => {
 
     let createdTeamId: string;
 
-    const organizationId = getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
 
     await test.step("Create Team via API", async () => {
       const teamBody = {
@@ -26,7 +26,7 @@ test.describe("API Tests for Teams", () => {
         // ... include other required team fields if any ...
       };
 
-      const response = await request.post(TEAMS_API_URL, {
+      const response = await request.post(TEAMS_API_URL(organizationId), {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -43,7 +43,7 @@ test.describe("API Tests for Teams", () => {
     await test.step("Retrieve Teams via API", async () => {
       const queryParams = { limit: 10, skip: 0, sortBy: "name", order: "asc" };
 
-      const response = await request.get(TEAMS_API_URL, {
+      const response = await request.get(TEAMS_API_URL(organizationId), {
         headers: {
           "x-api-key": apiKey,
         },
@@ -60,7 +60,7 @@ test.describe("API Tests for Teams", () => {
         name: "Updated Team from API",
       };
 
-      const response = await request.put(`${TEAMS_API_URL}/${createdTeamId}`, {
+      const response = await request.put(`${TEAMS_API_URL(organizationId)}/${createdTeamId}`, {
         headers: {
           "x-api-key": apiKey,
           "Content-Type": "application/json",
@@ -73,7 +73,7 @@ test.describe("API Tests for Teams", () => {
     });
 
     await test.step("Get Team by ID from API", async () => {
-      const response = await request.get(`${TEAMS_API_URL}/${createdTeamId}`, {
+      const response = await request.get(`${TEAMS_API_URL(organizationId)}/${createdTeamId}`, {
         headers: {
           "x-api-key": apiKey,
         },
@@ -85,7 +85,7 @@ test.describe("API Tests for Teams", () => {
     });
 
     await test.step("Delete Team via API", async () => {
-      const response = await request.delete(`${TEAMS_API_URL}/${createdTeamId}`, {
+      const response = await request.delete(`${TEAMS_API_URL(organizationId)}/${createdTeamId}`, {
         headers: {
           "x-api-key": apiKey,
         },

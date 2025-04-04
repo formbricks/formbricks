@@ -1,4 +1,5 @@
 import "server-only";
+import { teamCache } from "@/lib/cache/team";
 import { getTeamsQuery } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/utils";
 import {
   TGetTeamsFilter,
@@ -36,6 +37,10 @@ export const createTeam = async (
 
     organizationCache.revalidate({
       id: organizationId,
+    });
+
+    teamCache.revalidate({
+      organizationId: organizationId,
     });
 
     return ok(team);

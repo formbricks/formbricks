@@ -1,4 +1,4 @@
-import { ProjectTeamPermission, type ProjectTeam } from "@prisma/client";
+import { type ProjectTeam, ProjectTeamPermission } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
 
@@ -20,11 +20,11 @@ export const ZProjectTeam = z.object({
     description: "The ID of the team",
   }),
   permission: z.nativeEnum(ProjectTeamPermission).openapi({
-      description: "Level of access granted to the project",
-    }),
+    description: "Level of access granted to the project",
+  }),
 }) satisfies z.ZodType<ProjectTeam>;
 
 ZProjectTeam.openapi({
   ref: "projectTeam",
-  description: "The projects of a team",
+  description: "A relationship between a project and a team with associated permissions",
 });

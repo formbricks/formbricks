@@ -9,7 +9,6 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZTeam } from "@formbricks/database/zod/teams";
 
@@ -26,7 +25,7 @@ export const getTeamsEndpoint: ZodOpenApiOperationObject = {
       description: "Teams retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZTeam))),
+          schema: responseWithMetaSchema(makePartialSchema(ZTeam)),
         },
       },
     },

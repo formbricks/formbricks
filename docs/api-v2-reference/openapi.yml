@@ -7,7 +7,7 @@ servers:
   - url: https://app.formbricks.com/api/v2/management
     description: Formbricks Cloud
 tags:
-  - name: Management API > Roles
+  - name: Roles
     description: Operations for managing roles.
   - name: Management API > Responses
     description: Operations for managing responses.
@@ -609,151 +609,149 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The ID of the response
-                          createdAt:
-                            type: string
-                            description: The date and time the response was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the response was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          finished:
-                            type: boolean
-                            description: Whether the response is finished
-                            example: true
-                          surveyId:
-                            type: string
-                            description: The ID of the survey
-                          contactId:
-                            type:
-                              - string
-                              - "null"
-                            description: The ID of the contact
-                          endingId:
-                            type:
-                              - string
-                              - "null"
-                            description: The ID of the ending
-                          data:
-                            type: object
-                            additionalProperties:
-                              anyOf:
-                                - type: string
-                                - type: number
-                                - type: array
-                                  items:
-                                    type: string
-                                - type: object
-                                  additionalProperties:
-                                    type: string
-                            description: The data of the response
-                            example: &a1
-                              question1: answer1
-                              question2: 2
-                              question3:
-                                - answer3
-                                - answer4
-                              question4:
-                                subquestion1: answer5
-                          variables:
-                            type: object
-                            additionalProperties:
-                              anyOf:
-                                - type: string
-                                - type: number
-                            description: The variables of the response
-                            example: &a2
-                              variable1: answer1
-                              variable2: 2
-                          ttc:
-                            type: object
-                            additionalProperties:
-                              type: number
-                            description: The TTC of the response
-                            example: &a3
-                              question1: 10
-                              question2: 20
-                          meta:
-                            type: object
-                            properties:
-                              source:
-                                type: string
-                                description: The source of the response
-                                example: https://example.com
-                              url:
-                                type: string
-                                description: The URL of the response
-                                example: https://example.com
-                              userAgent:
-                                type: object
-                                properties:
-                                  browser:
-                                    type: string
-                                  os:
-                                    type: string
-                                  device:
-                                    type: string
-                              country:
-                                type: string
-                              action:
-                                type: string
-                            description: The meta data of the response
-                            example: &a4
-                              source: https://example.com
-                              url: https://example.com
-                              userAgent:
-                                browser: Chrome
-                                os: Windows
-                                device: Desktop
-                              country: US
-                              action: click
-                          contactAttributes:
-                            type:
-                              - object
-                              - "null"
-                            additionalProperties:
-                              type: string
-                            description: The attributes of the contact
-                            example: &a5
-                              attribute1: value1
-                              attribute2: value2
-                          singleUseId:
-                            type:
-                              - string
-                              - "null"
-                            description: The single use ID of the response
-                          language:
-                            type:
-                              - string
-                              - "null"
-                            description: The language of the response
-                            example: en
-                          displayId:
-                            type:
-                              - string
-                              - "null"
-                            description: The display ID of the response
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        id:
+                          type: string
+                          description: The ID of the response
+                        createdAt:
+                          type: string
+                          description: The date and time the response was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the response was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        finished:
+                          type: boolean
+                          description: Whether the response is finished
+                          example: true
+                        surveyId:
+                          type: string
+                          description: The ID of the survey
+                        contactId:
+                          type:
+                            - string
+                            - "null"
+                          description: The ID of the contact
+                        endingId:
+                          type:
+                            - string
+                            - "null"
+                          description: The ID of the ending
+                        data:
+                          type: object
+                          additionalProperties:
+                            anyOf:
+                              - type: string
+                              - type: number
+                              - type: array
+                                items:
+                                  type: string
+                              - type: object
+                                additionalProperties:
+                                  type: string
+                          description: The data of the response
+                          example: &a1
+                            question1: answer1
+                            question2: 2
+                            question3:
+                              - answer3
+                              - answer4
+                            question4:
+                              subquestion1: answer5
+                        variables:
+                          type: object
+                          additionalProperties:
+                            anyOf:
+                              - type: string
+                              - type: number
+                          description: The variables of the response
+                          example: &a2
+                            variable1: answer1
+                            variable2: 2
+                        ttc:
+                          type: object
+                          additionalProperties:
+                            type: number
+                          description: The TTC of the response
+                          example: &a3
+                            question1: 10
+                            question2: 20
+                        meta:
+                          type: object
+                          properties:
+                            source:
+                              type: string
+                              description: The source of the response
+                              example: https://example.com
+                            url:
+                              type: string
+                              description: The URL of the response
+                              example: https://example.com
+                            userAgent:
+                              type: object
+                              properties:
+                                browser:
+                                  type: string
+                                os:
+                                  type: string
+                                device:
+                                  type: string
+                            country:
+                              type: string
+                            action:
+                              type: string
+                          description: The meta data of the response
+                          example: &a4
+                            source: https://example.com
+                            url: https://example.com
+                            userAgent:
+                              browser: Chrome
+                              os: Windows
+                              device: Desktop
+                            country: US
+                            action: click
+                        contactAttributes:
+                          type:
+                            - object
+                            - "null"
+                          additionalProperties:
+                            type: string
+                          description: The attributes of the contact
+                          example: &a5
+                            attribute1: value1
+                            attribute2: value2
+                        singleUseId:
+                          type:
+                            - string
+                            - "null"
+                          description: The single use ID of the response
+                        language:
+                          type:
+                            - string
+                            - "null"
+                          description: The language of the response
+                          example: en
+                        displayId:
+                          type:
+                            - string
+                            - "null"
+                          description: The display ID of the response
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createResponse
       summary: Create a response
@@ -2222,69 +2220,67 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The ID of the webhook
-                          name:
-                            type:
-                              - string
-                              - "null"
-                            description: The name of the webhook
-                          createdAt:
-                            type: string
-                            description: The date and time the webhook was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the webhook was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          url:
-                            type: string
-                            format: uri
-                            description: The URL of the webhook
-                          source:
-                            type: string
-                            enum: &a8
-                              - user
-                              - zapier
-                              - make
-                              - n8n
-                            description: The source of the webhook
-                          environmentId:
-                            type: string
-                            description: The ID of the environment
-                          triggers:
-                            type: array
-                            items:
-                              type: string
-                              enum: &a9
-                                - responseFinished
-                                - responseCreated
-                                - responseUpdated
-                            description: The triggers of the webhook
-                          surveyIds:
-                            type: array
-                            items:
-                              type: string
-                            description: "The IDs of the surveys "
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        id:
+                          type: string
+                          description: The ID of the webhook
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: The name of the webhook
+                        createdAt:
+                          type: string
+                          description: The date and time the webhook was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the webhook was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        url:
+                          type: string
+                          format: uri
+                          description: The URL of the webhook
+                        source:
+                          type: string
+                          enum: &a8
+                            - user
+                            - zapier
+                            - make
+                            - n8n
+                          description: The source of the webhook
+                        environmentId:
+                          type: string
+                          description: The ID of the environment
+                        triggers:
+                          type: array
+                          items:
+                            type: string
+                            enum: &a9
+                              - responseFinished
+                              - responseCreated
+                              - responseUpdated
+                          description: The triggers of the webhook
+                        surveyIds:
+                          type: array
+                          items:
+                            type: string
+                          description: "The IDs of the surveys "
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createWebhook
       summary: Create a webhook
@@ -2651,42 +2647,40 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The ID of the response
-                          createdAt:
-                            type: string
-                            description: The date and time the response was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the response was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          name:
-                            type: string
-                            description: The name of the team
-                            example: My team
-                          organizationId:
-                            type: string
-                            description: The ID of the organization
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        id:
+                          type: string
+                          description: The ID of the response
+                        createdAt:
+                          type: string
+                          description: The date and time the response was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the response was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        name:
+                          type: string
+                          description: The name of the team
+                          example: My team
+                        organizationId:
+                          type: string
+                          description: The ID of the organization
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createTeam
       summary: Create a team
@@ -2926,45 +2920,43 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          createdAt:
-                            type: string
-                            description: The date and time the response was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the response was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          projectId:
-                            type: string
-                            description: The ID of the project
-                          teamId:
-                            type: string
-                            description: The ID of the team
-                          permission:
-                            type: string
-                            enum:
-                              - read
-                              - readWrite
-                              - manage
-                            description: Level of access granted to the project
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        createdAt:
+                          type: string
+                          description: The date and time the response was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the response was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        projectId:
+                          type: string
+                          description: The ID of the project
+                        teamId:
+                          type: string
+                          description: The ID of the team
+                        permission:
+                          type: string
+                          enum:
+                            - read
+                            - readWrite
+                            - manage
+                          description: Level of access granted to the project
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createProjectTeam
       summary: Create a projectTeam

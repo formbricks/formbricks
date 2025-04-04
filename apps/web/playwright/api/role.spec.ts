@@ -1,8 +1,8 @@
 import { ROLES_API_URL } from "@/playwright/api/constants";
 import { expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
-import { test } from "../../lib/fixtures";
-import { loginAndGetApiKey } from "../../lib/utils";
+import { test } from "../lib/fixtures";
+import { loginAndGetApiKey } from "../lib/utils";
 
 test.describe("API Tests for Roles", () => {
   test("Retrieve Roles via API", async ({ page, users, request }) => {

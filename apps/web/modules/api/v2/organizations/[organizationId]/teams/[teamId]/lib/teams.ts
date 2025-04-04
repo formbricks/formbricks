@@ -10,13 +10,14 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getTeam = reactCache(async (teamId: string) =>
+export const getTeam = reactCache(async (organizationId, teamId: string) =>
   cache(
     async (): Promise<Result<Team, ApiErrorResponseV2>> => {
       try {
         const responsePrisma = await prisma.team.findUnique({
           where: {
             id: teamId,
+            organizationId,
           },
         });
 
@@ -39,11 +40,15 @@ export const getTeam = reactCache(async (teamId: string) =>
   )()
 );
 
-export const deleteTeam = async (teamId: string): Promise<Result<Team, ApiErrorResponseV2>> => {
+export const deleteTeam = async (
+  organizationId,
+  teamId: string
+): Promise<Result<Team, ApiErrorResponseV2>> => {
   try {
     const deletedTeam = await prisma.team.delete({
       where: {
         id: teamId,
+        organizationId,
       },
       include: {
         projectTeams: {
@@ -87,6 +92,7 @@ export const deleteTeam = async (teamId: string): Promise<Result<Team, ApiErrorR
 };
 
 export const updateTeam = async (
+  organizationId,
   teamId: string,
   teamInput: z.infer<typeof teamUpdateSchema>
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
@@ -94,6 +100,7 @@ export const updateTeam = async (
     const updatedTeam = await prisma.team.update({
       where: {
         id: teamId,
+        organizationId,
       },
       data: teamInput,
       include: {

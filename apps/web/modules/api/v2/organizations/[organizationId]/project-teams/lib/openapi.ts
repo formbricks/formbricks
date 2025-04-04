@@ -23,7 +23,7 @@ export const getProjectTeamsEndpoint: ZodOpenApiOperationObject = {
       description: "Project teams retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZProjectTeam))),
+          schema: responseWithMetaSchema(makePartialSchema(ZProjectTeam)),
         },
       },
     },

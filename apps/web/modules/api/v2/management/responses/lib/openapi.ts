@@ -22,7 +22,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
       description: "Responses retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZResponse))),
+          schema: responseWithMetaSchema(makePartialSchema(ZResponse)),
         },
       },
     },

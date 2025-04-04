@@ -18,8 +18,8 @@ export const ZAuthenticationApiKey = z.object({
   type: z.literal("apiKey"),
   environmentPermissions: z.array(ZAPIKeyEnvironmentPermission),
   hashedApiKey: z.string(),
-  apiKeyId: z.string().optional(),
-  organizationId: z.string().optional(),
+  apiKeyId: z.string(),
+  organizationId: z.string(),
   organizationAccess: ZOrganizationAccess,
 });
 

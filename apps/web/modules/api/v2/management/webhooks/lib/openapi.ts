@@ -22,7 +22,7 @@ export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
       description: "Webhooks retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZWebhook))),
+          schema: responseWithMetaSchema(makePartialSchema(ZWebhook)),
         },
       },
     },

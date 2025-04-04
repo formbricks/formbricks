@@ -28,13 +28,13 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
         });
       }
 
-      const res = await getTeams(authentication.organizationId!, query!);
+      const res = await getTeams(authentication.organizationId, query!);
 
-      if (res.ok) {
-        return responses.successResponse(res.data);
+      if (!res.ok) {
+        return handleApiError(request, res.error);
       }
 
-      return handleApiError(request, res.error);
+      return responses.successResponse(res.data);
     },
   });
 

@@ -33,7 +33,7 @@ export const GET = async (
         });
       }
 
-      const team = await getTeam(params!.teamId);
+      const team = await getTeam(params!.organizationId, params!.teamId);
       if (!team.ok) {
         return handleApiError(request, team.error);
       }
@@ -60,7 +60,7 @@ export const DELETE = async (
         });
       }
 
-      const team = await deleteTeam(params!.teamId);
+      const team = await deleteTeam(params!.organizationId, params!.teamId);
 
       if (!team.ok) {
         return handleApiError(request, team.error);
@@ -89,7 +89,7 @@ export const PUT = (
         });
       }
 
-      const team = await updateTeam(params!.teamId, body!);
+      const team = await updateTeam(params!.organizationId, params!.teamId, body!);
 
       if (!team.ok) {
         return handleApiError(request, team.error);

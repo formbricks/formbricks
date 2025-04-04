@@ -1,3 +1,4 @@
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { PROJECT_TEAMS_API_URL } from "@/playwright/api/constants";
 import { expect } from "@playwright/test";
 import { logger } from "@formbricks/logger";
@@ -6,13 +7,15 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for ProjectTeams", () => {
   test("Create, Retrieve, Update, and Delete ProjectTeams via API", async ({ page, users, request }) => {
-    let apiKey;
+    let apiKey, environmentId;
     try {
-      ({ apiKey } = await loginAndGetApiKey(page, users));
+      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error logging in / retrieving API key");
       throw error;
     }
+
+    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
 
     let createdProjectTeamId: string;
 
@@ -22,7 +25,7 @@ test.describe("API Tests for ProjectTeams", () => {
         teamId: "testTeam",
         permission: "READ",
       };
-      const response = await request.post(PROJECT_TEAMS_API_URL, {
+      const response = await request.post(PROJECT_TEAMS_API_URL(organizationId), {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -37,7 +40,7 @@ test.describe("API Tests for ProjectTeams", () => {
 
     await test.step("Retrieve ProjectTeams via API", async () => {
       const queryParams = { limit: 10, skip: 0 };
-      const response = await request.get(PROJECT_TEAMS_API_URL, {
+      const response = await request.get(PROJECT_TEAMS_API_URL(organizationId), {
         headers: {
           "x-api-key": apiKey,
         },
@@ -53,7 +56,7 @@ test.describe("API Tests for ProjectTeams", () => {
       const body = {
         permission: "WRITE",
       };
-      const response = await request.put(`${PROJECT_TEAMS_API_URL}/${createdProjectTeamId}`, {
+      const response = await request.put(`${PROJECT_TEAMS_API_URL(organizationId)}/${createdProjectTeamId}`, {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
@@ -66,7 +69,7 @@ test.describe("API Tests for ProjectTeams", () => {
     });
 
     await test.step("Get ProjectTeam by ID from API", async () => {
-      const response = await request.get(`${PROJECT_TEAMS_API_URL}/${createdProjectTeamId}`, {
+      const response = await request.get(`${PROJECT_TEAMS_API_URL(organizationId)}/${createdProjectTeamId}`, {
         headers: {
           "x-api-key": apiKey,
         },
@@ -77,11 +80,14 @@ test.describe("API Tests for ProjectTeams", () => {
     });
 
     await test.step("Delete ProjectTeam via API", async () => {
-      const response = await request.delete(`${PROJECT_TEAMS_API_URL}/${createdProjectTeamId}`, {
-        headers: {
-          "x-api-key": apiKey,
-        },
-      });
+      const response = await request.delete(
+        `${PROJECT_TEAMS_API_URL(organizationId)}/${createdProjectTeamId}`,
+        {
+          headers: {
+            "x-api-key": apiKey,
+          },
+        }
+      );
       expect(response.ok()).toBe(true);
     });
   });

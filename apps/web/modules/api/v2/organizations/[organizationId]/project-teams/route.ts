@@ -35,13 +35,13 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
         });
       }
 
-      const result = await getProjectTeams(authentication.organizationId!, query!);
+      const result = await getProjectTeams(authentication.organizationId, query!);
 
       if (!result.ok) {
         return handleApiError(request, result.error);
       }
 
-      return responses.successResponse(result);
+      return responses.successResponse(result.data);
     },
   });
 }
