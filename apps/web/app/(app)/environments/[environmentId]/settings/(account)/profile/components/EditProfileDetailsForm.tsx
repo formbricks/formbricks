@@ -149,7 +149,7 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
         <div className="mt-4 space-y-2">
           <Label htmlFor="reset-password">{t("auth.forgot-password.reset_password")}</Label>
           <div className="flex items-center justify-between gap-2">
-            <Input type="text" id="reset-password" defaultValue={user.email} disabled />
+            <Input type="email" id="reset-password" defaultValue={user.email} disabled />
             <Button
               onClick={handleResetPassword}
               loading={isResettingPassword}
