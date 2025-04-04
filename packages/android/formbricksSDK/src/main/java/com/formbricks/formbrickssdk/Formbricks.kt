@@ -14,6 +14,14 @@ import com.formbricks.formbrickssdk.model.error.SDKError
 import com.formbricks.formbrickssdk.webview.FormbricksFragment
 
 @Keep
+interface FormbricksCallback {
+    fun onSurveyStarted()
+    fun onSurveyFinished()
+    fun onSurveyClosed()
+    fun onError(error: Exception)
+}
+
+@Keep
 object Formbricks {
     internal lateinit var applicationContext: Context
 
@@ -23,6 +31,7 @@ object Formbricks {
     internal var loggingEnabled: Boolean = true
     private var fragmentManager: FragmentManager? = null
     internal var isInitialized = false
+    var callback: FormbricksCallback? = null
 
     /**
      * Initializes the Formbricks SDK with the given [Context] config [FormbricksConfig].
@@ -45,6 +54,13 @@ object Formbricks {
      *
      */
     fun setup(context: Context, config: FormbricksConfig) {
+        if (isInitialized) {
+            val error = SDKError.sdkIsAlreadyInitialized
+            callback?.onError(error)
+            Logger.e(error)
+            return
+        }
+
         applicationContext = context
 
         appUrl = config.appUrl
@@ -74,8 +90,11 @@ object Formbricks {
      */
     fun setUserId(userId: String) {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
+
         }
         UserManager.set(userId)
     }
@@ -91,7 +110,9 @@ object Formbricks {
      */
     fun setAttribute(attribute: String, key: String) {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
         UserManager.addAttribute(attribute, key)
@@ -108,7 +129,9 @@ object Formbricks {
      */
     fun setAttributes(attributes: Map<String, String>) {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
         UserManager.setAttributes(attributes)
@@ -125,7 +148,9 @@ object Formbricks {
      */
     fun setLanguage(language: String) {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
         Formbricks.language = language
@@ -143,12 +168,16 @@ object Formbricks {
      */
     fun track(action: String) {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
 
         if (!isInternetAvailable()) {
-            Logger.w(exception = SDKError.connectionIsNotAvailable)
+            val error = SDKError.connectionIsNotAvailable
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -166,7 +195,9 @@ object Formbricks {
      */
     fun logout() {
         if (!isInitialized) {
-            Logger.e(exception = SDKError.sdkIsNotInitialized)
+            val error = SDKError.sdkIsNotInitialized
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
 
@@ -190,7 +221,9 @@ object Formbricks {
     /// Assembles the survey fragment and presents it
     internal fun showSurvey(id: String) {
         if (fragmentManager == null) {
-            Logger.e(exception = SDKError.fragmentManagerIsNotSet)
+            val error = SDKError.fragmentManagerIsNotSet
+            callback?.onError(error)
+            Logger.e(error)
             return
         }
 
