@@ -1843,12 +1843,13 @@
         "wallet_address": "Wallet Address",
         "external_link": "External link",
         "balance": "Balance",
-        "pending_rewards": "Pending Rewards"
+        "pending_rewards": "Pending Rewards",
+        "balance_unavailable": "Balance Unavailable"
       },
       "button": {
         "loading": "Loading...",
         "success": "Success!",
-        "loggedInAs": "You're logged in as {email}.",
+        "logged_in_as": "You're logged in as {email}.",
         "logout": "Log out",
         "login": "Login"
       },

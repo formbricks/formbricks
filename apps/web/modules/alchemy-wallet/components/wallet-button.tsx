@@ -14,18 +14,18 @@ export function WalletButton(): React.JSX.Element {
   return (
     <div className="flex w-full items-center justify-center gap-4 text-center">
       {signerStatus.isInitializing ? (
-          <>{t("environment.wallet.button.loading")}</>
+          <>{t("environments.wallet.button.loading")}</>
       ) : user ? (
         <div className="flex flex-col gap-2">
-          <p className="text-xl font-bold">{t("environment.wallet.button.success")}</p>
-          {t("environment.wallet.button.logged_in_as", { email: user.email ?? "anon" })}
+          <p className="text-xl font-bold">{t("environments.wallet.button.success")}</p>
+          {t("environments.wallet.button.logged_in_as", { email: user.email ?? "anon" })}
           <button className="akui-btn akui-btn-primary mt-6" onClick={() => logout()}>
-          {t("environment.wallet.button.logout")}
+          {t("environments.wallet.button.logout")}
           </button>
         </div>
       ) : (
         <button className="akui-btn akui-btn-primary flex-1" onClick={openAuthModal}>
-          {t("environment.wallet.button.login")}
+          {t("environments.wallet.button.login")}
         </button>
       )}
     </div>
