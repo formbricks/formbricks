@@ -1,10 +1,10 @@
-import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import * as widget from "@/lib/survey/widget";
 import { type TEnvironmentStateSurvey } from "@/types/config";
+import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {

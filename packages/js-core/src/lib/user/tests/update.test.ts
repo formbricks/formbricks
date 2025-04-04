@@ -1,5 +1,3 @@
-import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
-import { FormbricksAPI } from "@formbricks/api";
 import {
   mockAppUrl,
   mockAttributes,
@@ -10,6 +8,8 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { sendUpdates, sendUpdatesToBackend } from "@/lib/user/update";
 import { type TUpdates } from "@/types/config";
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
+import { FormbricksAPI } from "@formbricks/api";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {

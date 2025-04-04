@@ -598,6 +598,9 @@ importers:
       '@vitest/coverage-v8':
         specifier: 3.1.1
         version: 3.1.1(vitest@3.1.1(@types/debug@4.1.12)(@types/node@22.10.2)(jiti@2.4.1)(jsdom@25.0.1)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.3)(yaml@2.7.0))
+      resize-observer-polyfill:
+        specifier: 1.5.1
+        version: 1.5.1
       vite:
         specifier: 6.2.4
         version: 6.2.4(@types/node@22.10.2)(jiti@2.4.1)(lightningcss@1.29.2)(terser@5.39.0)(tsx@4.19.3)(yaml@2.7.0)
@@ -1041,6 +1044,9 @@ importers:
 
   packages/types:
     dependencies:
+      '@prisma/client':
+        specifier: 6.0.1
+        version: 6.0.1(prisma@6.5.0(typescript@5.8.2))
       zod:
         specifier: 3.24.1
         version: 3.24.1
