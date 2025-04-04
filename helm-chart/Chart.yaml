@@ -26,3 +26,7 @@ dependencies:
     version: 20.11.2
     repository: "oci://registry-1.docker.io/bitnamicharts"
     condition: redis.enabled
+  - name: minio
+    repository: "oci://registry-1.docker.io/bitnamicharts"
+    version: 15.0.7
+    condition: minio.enabled
