@@ -41,6 +41,7 @@ const Page = async (props) => {
   const tags = await getTagsByEnvironmentId(params.environmentId);
 
   const totalResponseCount = await getResponseCountBySurveyId(params.surveyId);
+  alert(totalResponseCount);
 
   const isAIEnabled = await getIsAIEnabled({
     isAIEnabled: organization.isAIEnabled,
@@ -61,6 +62,7 @@ const Page = async (props) => {
             isReadOnly={isReadOnly}
             user={user}
             surveyDomain={surveyDomain}
+            responseCount={totalResponseCount}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (

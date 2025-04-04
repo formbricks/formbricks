@@ -5,6 +5,7 @@ import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
+import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Badge } from "@/modules/ui/components/badge";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
@@ -22,6 +23,7 @@ interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
   user: TUser;
   surveyDomain: string;
+  responseCount: number;
 }
 
 interface ModalState {
@@ -37,6 +39,7 @@ export const SurveyAnalysisCTA = ({
   isReadOnly,
   user,
   surveyDomain,
+  responseCount,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslate();
   const searchParams = useSearchParams();
@@ -107,6 +110,8 @@ export const SurveyAnalysisCTA = ({
     { key: "panel", modalView: "panel" as const, setOpen: handleModalState("panel") },
   ];
 
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   const iconActions = [
     {
       icon: Eye,
@@ -144,7 +149,12 @@ export const SurveyAnalysisCTA = ({
     {
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
-      onClick: () => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`),
+      onClick: () => {
+        alert(responseCount);
+        responseCount && responseCount > 0
+          ? setIsCautionDialogOpen(true)
+          : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
+      },
       isVisible: !isReadOnly,
     },
   ];
@@ -181,6 +191,36 @@ export const SurveyAnalysisCTA = ({
           ))}
           <SuccessMessage environment={environment} survey={survey} />
         </>
+      )}
+
+      {responseCount > 0 && (
+        <AlertDialog
+          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+          open={isCautionDialogOpen}
+          setOpen={setIsCautionDialogOpen}
+          mainText={
+            <>
+              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+              <ul className="mt-3 list-disc space-y-0.5 pl-5">
+                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+              </ul>
+            </>
+          }
+          confirmBtnLabel={t("common.duplicate")}
+          declineBtnLabel={t("common.edit")}
+          declineBtnVariant="outline"
+          onConfirm={async () => {
+            // await duplicateSurveyAndRefresh(survey.id);
+            setIsCautionDialogOpen(false);
+            router.push(`/environments/${environment.id}/surveys`);
+          }}
+          onDecline={() =>
+            router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
+          }></AlertDialog>
       )}
     </div>
   );
