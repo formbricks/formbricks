@@ -104,9 +104,6 @@ type TGetSignedUrlResponse =
     };
 
 const getS3SignedUrl = async (fileKey: string): Promise<string> => {
-  const [_, accessType] = fileKey.split("/");
-  const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
-
   const getObjectCommand = new GetObjectCommand({
     Bucket: S3_BUCKET_NAME,
     Key: fileKey,
@@ -114,7 +111,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
 
   try {
     const s3Client = getS3Client();
-    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
+    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 30 * 60 });
   } catch (err) {
     throw err;
   }

@@ -19,6 +19,11 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
   handleApiError: vi.fn(),
 }));
 
+vi.mock("@/modules/api/v2/lib/utils", () => ({
+  formatZodError: vi.fn(),
+  handleApiError: vi.fn(),
+}));
+
 describe("apiWrapper", () => {
   it("should handle request and return response", async () => {
     const request = new Request("http://localhost", {

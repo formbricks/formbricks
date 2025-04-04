@@ -372,7 +372,7 @@
     "team": "Team",
     "team_access": "Team Access",
     "team_name": "Team name",
-    "teams": "Teams",
+    "teams": "Access Control",
     "teams_not_found": "Teams not found",
     "text": "Text",
     "time": "Time",
@@ -775,20 +775,19 @@
       "zapier_integration_description": "Integrate Formbricks with 5000+ apps via Zapier"
     },
     "project": {
-      "api-keys": {
+      "api_keys": {
         "add_api_key": "Add API Key",
-        "add_env_api_key": "Add {environmentType} API Key",
         "api_key": "API Key",
         "api_key_copied_to_clipboard": "API key copied to clipboard",
         "api_key_created": "API key created",
         "api_key_deleted": "API Key deleted",
         "api_key_label": "API Key Label",
         "api_key_security_warning": "For security reasons, the API key will only be shown once after creation. Please copy it to your destination right away.",
-        "dev_api_keys": "Development Env Keys",
-        "dev_api_keys_description": "Add and remove API keys for your Development environment.",
+        "duplicate_access": "Duplicate project access not allowed",
         "no_api_keys_yet": "You don't have any API keys yet",
-        "prod_api_keys": "Production Env Keys",
-        "prod_api_keys_description": "Add and remove API keys for your Production environment.",
+        "organization_access": "Organization Access",
+        "permissions": "Permissions",
+        "project_access": "Project Access",
         "secret": "Secret",
         "unable_to_delete_api_key": "Unable to delete API Key"
       },
@@ -988,6 +987,12 @@
       "with_the_formbricks_sdk": "with the Formbricks SDK"
     },
     "settings": {
+      "api_keys": {
+        "add_api_key": "Add API key",
+        "add_permission": "Add permission",
+        "api_keys_description": "Manage API keys to access Formbricks management APIs",
+        "only_organization_owners_and_managers_can_manage_api_keys": "Only organization owners and managers can manage API keys"
+      },
       "billing": {
         "10000_monthly_responses": "10000 Monthly Responses",
         "1500_monthly_responses": "1500 Monthly Responses",
