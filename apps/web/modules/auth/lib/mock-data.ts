@@ -18,4 +18,5 @@ export const mockUser: TUser = {
   },
   role: "other",
   locale: "en-US",
+  isActive: true,
 };
