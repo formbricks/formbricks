@@ -26,6 +26,7 @@ import {
   TERMS_URL,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
@@ -40,13 +41,13 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
   const locale = await findMatchingLocale();
-  if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
-    notFound();
-  }
+  if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
+    if (!inviteToken) notFound();
 
-  const isValidInviteToken = await getIsValidInviteToken(inviteToken);
-  if (inviteToken && !isValidInviteToken) {
-    notFound();
+    const { inviteId } = verifyInviteToken(inviteToken);
+
+    const isValidInviteToken = await getIsValidInviteToken(inviteId);
+    if (!isValidInviteToken) notFound();
   }
 
   const emailFromSearchParams = searchParams["email"];

@@ -146,12 +146,12 @@ export const handleSSOCallback = async ({
         // If multi-org is enabled, skip invite token validation
         if (!isMultiOrgEnabled) {
           // Verify invite token and check email match
-          const { email } = verifyInviteToken(inviteToken);
+          const { email, inviteId } = verifyInviteToken(inviteToken);
           if (email !== user.email) {
             return false;
           }
           // Check if invite token is still valid
-          const isValidInviteToken = await getIsValidInviteToken(inviteToken);
+          const isValidInviteToken = await getIsValidInviteToken(inviteId);
           if (!isValidInviteToken) {
             return false;
           }
