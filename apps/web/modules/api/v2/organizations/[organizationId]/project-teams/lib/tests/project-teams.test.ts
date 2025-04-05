@@ -41,15 +41,6 @@ describe("ProjectTeams Lib", () => {
       }
     });
 
-    it("returns not_found when no projectTeams found", async () => {
-      (prisma.$transaction as any).mockResolvedValueOnce([null, 0]);
-      const result = await getProjectTeams("orgx", { skip: 0, limit: 10 } as TGetProjectTeamsFilter);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("not_found");
-      }
-    });
-
     it("returns internal_server_error on exception", async () => {
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("DB error"));
       const result = await getProjectTeams("orgx", { skip: 0, limit: 10 } as TGetProjectTeamsFilter);

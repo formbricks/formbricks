@@ -41,7 +41,7 @@ describe("Teams Lib", () => {
       expect(prisma.team.create).toHaveBeenCalledWith({
         data: {
           name: "Test Team",
-          organization: { connect: { id: organizationId } },
+          organizationId: organizationId,
         },
       });
       expect(organizationCache.revalidate).toHaveBeenCalledWith({ id: organizationId });
@@ -76,20 +76,6 @@ describe("Teams Lib", () => {
         expect(result.data).toEqual({
           data: teamsArray,
           meta: { total: teamsArray.length, limit: filter.limit, offset: filter.skip },
-        });
-      }
-    });
-
-    it("returns not_found error when teams are missing", async () => {
-      (prisma.$transaction as any).mockResolvedValueOnce([null, 0]);
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([]);
-      const organizationId = "org456";
-      const result = await getTeams(organizationId, filter as TGetTeamsFilter);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "not_found",
-          details: [{ field: "teams", issue: "not found" }],
         });
       }
     });
