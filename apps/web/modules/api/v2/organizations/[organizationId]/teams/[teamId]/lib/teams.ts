@@ -1,5 +1,5 @@
 import { teamCache } from "@/lib/cache/team";
-import { teamUpdateSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
+import { ZTeamUpdateSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Team } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -10,7 +10,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getTeam = reactCache(async (organizationId, teamId: string) =>
+export const getTeam = reactCache(async (organizationId: string, teamId: string) =>
   cache(
     async (): Promise<Result<Team, ApiErrorResponseV2>> => {
       try {
@@ -33,7 +33,7 @@ export const getTeam = reactCache(async (organizationId, teamId: string) =>
         });
       }
     },
-    [`organization-getTeam-${teamId}`],
+    [`organization-${organizationId}-getTeam-${teamId}`],
     {
       tags: [teamCache.tag.byId(teamId)],
     }
@@ -94,7 +94,7 @@ export const deleteTeam = async (
 export const updateTeam = async (
   organizationId,
   teamId: string,
-  teamInput: z.infer<typeof teamUpdateSchema>
+  teamInput: z.infer<typeof ZTeamUpdateSchema>
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
   try {
     const updatedTeam = await prisma.team.update({

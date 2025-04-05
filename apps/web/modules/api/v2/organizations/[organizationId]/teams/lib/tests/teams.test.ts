@@ -80,20 +80,6 @@ describe("Teams Lib", () => {
       }
     });
 
-    it("returns not_found error when teams are missing", async () => {
-      (prisma.$transaction as any).mockResolvedValueOnce([null, 0]);
-      vi.mocked(prisma.team.findMany).mockResolvedValueOnce([]);
-      const organizationId = "org456";
-      const result = await getTeams(organizationId, filter as TGetTeamsFilter);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "not_found",
-          details: [{ field: "teams", issue: "not found" }],
-        });
-      }
-    });
-
     it("returns internal_server_error when prisma transaction fails", async () => {
       (prisma.$transaction as any).mockRejectedValueOnce(new Error("Transaction error"));
       const organizationId = "org456";

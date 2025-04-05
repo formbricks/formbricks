@@ -20,9 +20,11 @@ export const getUsers = async (
   params: TGetUsersFilter
 ): Promise<Result<ApiResponseWithMeta<TUser[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getUsersQuery(organizationId, params);
+
     const [users, count] = await prisma.$transaction([
       prisma.user.findMany({
-        ...getUsersQuery(organizationId, params),
+        ...query,
         include: {
           teamUsers: {
             include: {
@@ -32,7 +34,7 @@ export const getUsers = async (
         },
       }),
       prisma.user.count({
-        where: getUsersQuery(organizationId, params).where,
+        where: query.where,
       }),
     ]);
 
@@ -40,22 +42,19 @@ export const getUsers = async (
       return err({ type: "not_found", details: [{ field: "users", issue: "not found" }] });
     }
 
-    const returnedUsers = users.map(
-      (user) =>
-        ({
-          id: user.id,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-          email: user.email,
-          name: user.name,
-          // lastLoginAt: user.lastLoginAt,
-          lastLoginAt: new Date(),
-          // isActive: user.isActive,
-          isActive: true,
-          role: user.role as TNoBillingOrganizationRoles,
-          teams: user.teamUsers.map((teamUser) => teamUser.team.name),
-        }) as TUser
-    );
+    const returnedUsers = users.map((user) => ({
+      id: user.id,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      email: user.email,
+      name: user.name,
+      // lastLoginAt: user.lastLoginAt,
+      lastLoginAt: new Date(),
+      // isActive: user.isActive,
+      isActive: true,
+      role: user.role as TNoBillingOrganizationRoles,
+      teams: user.teamUsers.map((teamUser) => teamUser.team.name),
+    }));
 
     return ok({
       data: returnedUsers,
@@ -76,7 +75,7 @@ export const createUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user created");
 
-  const { name, email, role, isActive, teams } = userInput;
+  const { name, email, role, teams } = userInput;
 
   try {
     const existingTeams = teams && (await getExistingTeamsFromInput(teams, organizationId));
@@ -160,7 +159,7 @@ export const createUser = async (
       isActive: true,
       role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
       teams: existingTeams ? existingTeams.map((team) => team.name) : [],
-    } as TUser;
+    };
 
     return ok(returnedUser);
   } catch (error) {
@@ -174,7 +173,7 @@ export const updateUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user updated");
 
-  const { name, email, role, isActive, teams } = userInput;
+  const { name, email, role, teams } = userInput;
   let existingTeams: string[] = [];
   let newTeams;
 
@@ -337,7 +336,7 @@ export const updateUser = async (
       email: updatedUser.email,
     });
 
-    const returnedUser: TUser = {
+    const returnedUser = {
       id: updatedUser.id,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,

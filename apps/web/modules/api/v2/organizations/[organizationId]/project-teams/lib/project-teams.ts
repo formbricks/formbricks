@@ -3,7 +3,7 @@ import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizati
 import {
   TGetProjectTeamsFilter,
   TProjectTeamInput,
-  projectTeamUpdateSchema,
+  ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
@@ -15,22 +15,20 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getProjectTeams = async (
-  organizationID: string,
+  organizationId: string,
   params: TGetProjectTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<ProjectTeam[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getProjectTeamsQuery(organizationId, params);
+
     const [projectTeams, count] = await prisma.$transaction([
       prisma.projectTeam.findMany({
-        ...getProjectTeamsQuery(organizationID, params),
+        ...query,
       }),
       prisma.projectTeam.count({
-        where: getProjectTeamsQuery(organizationID, params).where,
+        where: query.where,
       }),
     ]);
-
-    if (!projectTeams) {
-      return err({ type: "not_found", details: [{ field: "projectTeam", issue: "not found" }] });
-    }
 
     return ok({
       data: projectTeams,
@@ -81,14 +79,14 @@ export const createProjectTeam = async (
 
     return ok(projectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };
 
 export const updateProjectTeam = async (
   teamId: string,
   projectId: string,
-  teamInput: z.infer<typeof projectTeamUpdateSchema>
+  teamInput: z.infer<typeof ZProjectZTeamUpdateSchema>
 ): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
   try {
     const updatedProjectTeam = await prisma.projectTeam.update({
@@ -111,7 +109,7 @@ export const updateProjectTeam = async (
 
     return ok(updatedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };
 
@@ -139,6 +137,6 @@ export const deleteProjectTeam = async (
 
     return ok(deletedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };

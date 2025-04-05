@@ -7,7 +7,7 @@ import {
   ZGetTeamsFilter,
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
-import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
@@ -20,7 +20,7 @@ export const getTeamsEndpoint: ZodOpenApiOperationObject = {
   description: "Gets teams from the database.",
   requestParams: {
     path: z.object({
-      organizationId: organizationIdSchema,
+      organizationId: ZOrganizationIdSchema,
     }),
     query: ZGetTeamsFilter.sourceType().required(),
   },
@@ -43,7 +43,7 @@ export const createTeamEndpoint: ZodOpenApiOperationObject = {
   description: "Creates a team in the database.",
   requestParams: {
     path: z.object({
-      organizationId: organizationIdSchema,
+      organizationId: ZOrganizationIdSchema,
     }),
   },
   tags: ["Organizations API > Teams"],

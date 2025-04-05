@@ -1,6 +1,7 @@
 import { OrganizationRole, User } from "@prisma/client";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "zod-openapi";
+import { ZUserEmail, ZUserName } from "../../types/user";
 
 extendZodWithOpenApi(z);
 
@@ -33,11 +34,11 @@ export const ZUser = z.object({
     description: "Whether the user is active",
     example: true,
   }),
-  name: z.string().openapi({
+  name: ZUserName.openapi({
     description: "The name of the user",
     example: "John Doe",
   }),
-  email: z.string().email().openapi({
+  email: ZUserEmail.openapi({
     description: "The email of the user",
     example: "example@example.com",
   }),

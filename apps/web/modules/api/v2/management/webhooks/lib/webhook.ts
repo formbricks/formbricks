@@ -13,12 +13,14 @@ export const getWebhooks = async (
   params: TGetWebhooksFilter
 ): Promise<Result<ApiResponseWithMeta<Webhook[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getWebhooksQuery(environmentIds, params);
+
     const [webhooks, count] = await prisma.$transaction([
       prisma.webhook.findMany({
-        ...getWebhooksQuery(environmentIds, params),
+        ...query,
       }),
       prisma.webhook.count({
-        where: getWebhooksQuery(environmentIds, params).where,
+        where: query.where,
       }),
     ]);
 

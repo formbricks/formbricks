@@ -2,7 +2,7 @@ import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { hasOrganizationIdAndAccess } from "@/modules/api/v2/organizations/[organizationId]/lib/utils";
-import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import {
   createUser,
   getUsers,
@@ -23,7 +23,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
     request,
     schemas: {
       query: ZGetUsersFilter.sourceType(),
-      params: z.object({ organizationId: organizationIdSchema }),
+      params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { query, params } }) => {
@@ -56,7 +56,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
     request,
     schemas: {
       body: ZUserInput,
-      params: z.object({ organizationId: organizationIdSchema }),
+      params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { body, params } }) => {
@@ -79,7 +79,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, createUserResult.error);
       }
 
-      return responses.successResponse({ data: createUserResult.data, cors: true });
+      return responses.successResponse({ data: createUserResult.data });
     },
   });
 
@@ -88,7 +88,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
     request,
     schemas: {
       body: ZUserInputPatch,
-      params: z.object({ organizationId: organizationIdSchema }),
+      params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { body, params } }) => {
@@ -118,6 +118,6 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         return handleApiError(request, updateUserResult.error);
       }
 
-      return responses.successResponse({ data: updateUserResult.data, cors: true });
+      return responses.successResponse({ data: updateUserResult.data });
     },
   });

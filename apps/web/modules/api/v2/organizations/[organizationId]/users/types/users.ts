@@ -1,6 +1,7 @@
 import { ZGetFilter } from "@/modules/api/v2/types/api-filter";
 import { z } from "zod";
 import { ZUser } from "@formbricks/database/zod/users";
+import { ZUserName } from "@formbricks/types/user";
 
 export const ZGetUsersFilter = ZGetFilter.extend({
   id: z.string().optional(),
@@ -30,7 +31,7 @@ export type TUserInput = z.infer<typeof ZUserInput>;
 
 export const ZUserInputPatch = ZUserInput.extend({
   // Override specific fields to be optional
-  name: ZUser.shape.name.optional(),
+  name: ZUserName.optional(),
   role: ZUser.shape.role.optional(),
   teams: ZUser.shape.teams.optional(),
   isActive: ZUser.shape.isActive.optional(),

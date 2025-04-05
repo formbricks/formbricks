@@ -1,7 +1,7 @@
 import {
   TGetProjectTeamsFilter,
   TProjectTeamInput,
-  projectTeamUpdateSchema,
+  ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TypeOf } from "zod";
@@ -38,15 +38,6 @@ describe("ProjectTeams Lib", () => {
         if (result.data.meta) {
           expect(result.data.meta.total).toBe(mockTeams.length);
         }
-      }
-    });
-
-    it("returns not_found when no projectTeams found", async () => {
-      (prisma.$transaction as any).mockResolvedValueOnce([null, 0]);
-      const result = await getProjectTeams("orgx", { skip: 0, limit: 10 } as TGetProjectTeamsFilter);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("not_found");
       }
     });
 
@@ -96,7 +87,7 @@ describe("ProjectTeams Lib", () => {
         permission: "READ",
       });
       const result = await updateProjectTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
-        typeof projectTeamUpdateSchema
+        typeof ZProjectZTeamUpdateSchema
       >);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -107,7 +98,7 @@ describe("ProjectTeams Lib", () => {
     it("returns internal_server_error on error", async () => {
       (prisma.projectTeam.update as any).mockRejectedValueOnce(new Error("Update error"));
       const result = await updateProjectTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
-        typeof projectTeamUpdateSchema
+        typeof ZProjectZTeamUpdateSchema
       >);
       expect(result.ok).toBe(false);
       if (!result.ok) {

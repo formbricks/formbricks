@@ -7,7 +7,7 @@ import {
   ZGetTeamsFilter,
   ZTeamInput,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
-import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
@@ -17,7 +17,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
     request,
     schemas: {
       query: ZGetTeamsFilter.sourceType(),
-      params: z.object({ organizationId: organizationIdSchema }),
+      params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { query, params } }) => {
@@ -43,7 +43,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
     request,
     schemas: {
       body: ZTeamInput,
-      params: z.object({ organizationId: organizationIdSchema }),
+      params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { body, params } }) => {
@@ -59,6 +59,6 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, createTeamResult.error);
       }
 
-      return responses.successResponse({ data: createTeamResult.data, cors: true });
+      return responses.successResponse({ data: createTeamResult.data });
     },
   });

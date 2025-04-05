@@ -3,7 +3,7 @@ import { extendZodWithOpenApi } from "zod-openapi";
 
 extendZodWithOpenApi(z);
 
-export const organizationIdSchema = z
+export const ZOrganizationIdSchema = z
   .string()
   .cuid2()
   .openapi({

@@ -9,13 +9,13 @@ import {
 } from "@/modules/api/v2/management/responses/[responseId]/lib/response";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { z } from "zod";
-import { responseIdSchema, responseUpdateSchema } from "./types/responses";
+import { ZResponseIdSchema, ZResponseUpdateSchema } from "./types/responses";
 
 export const GET = async (request: Request, props: { params: Promise<{ responseId: string }> }) =>
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ responseId: responseIdSchema }),
+      params: z.object({ responseId: ZResponseIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -52,7 +52,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ respon
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ responseId: responseIdSchema }),
+      params: z.object({ responseId: ZResponseIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -91,8 +91,8 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
     request,
     externalParams: props.params,
     schemas: {
-      params: z.object({ responseId: responseIdSchema }),
-      body: responseUpdateSchema,
+      params: z.object({ responseId: ZResponseIdSchema }),
+      body: ZResponseUpdateSchema,
     },
     handler: async ({ authentication, parsedInput }) => {
       const { body, params } = parsedInput;

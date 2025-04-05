@@ -15,7 +15,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const createTeam = async (
   teamInput: TTeamInput,
-  organizationId
+  organizationId: string
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
   captureTelemetry("team created");
 
@@ -54,18 +54,16 @@ export const getTeams = async (
   params: TGetTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<Team[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getTeamsQuery(organizationId, params);
+
     const [teams, count] = await prisma.$transaction([
       prisma.team.findMany({
-        ...getTeamsQuery(organizationId, params),
+        ...query,
       }),
       prisma.team.count({
-        where: getTeamsQuery(organizationId, params).where,
+        where: query.where,
       }),
     ]);
-
-    if (!teams) {
-      return err({ type: "not_found", details: [{ field: "teams", issue: "not found" }] });
-    }
 
     return ok({
       data: teams,

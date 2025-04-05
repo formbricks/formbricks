@@ -4,7 +4,7 @@ import { ZTeam } from "@formbricks/database/zod/teams";
 
 extendZodWithOpenApi(z);
 
-export const teamIdSchema = z
+export const ZTeamIdSchema = z
   .string()
   .cuid2()
   .openapi({
@@ -16,7 +16,7 @@ export const teamIdSchema = z
     },
   });
 
-export const teamUpdateSchema = ZTeam.omit({
+export const ZTeamUpdateSchema = ZTeam.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
