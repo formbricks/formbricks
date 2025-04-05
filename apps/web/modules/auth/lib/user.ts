@@ -58,6 +58,7 @@ export const getUserByEmail = reactCache(async (email: string) =>
             locale: true,
             email: true,
             emailVerified: true,
+            isActive: true,
           },
         });
 
