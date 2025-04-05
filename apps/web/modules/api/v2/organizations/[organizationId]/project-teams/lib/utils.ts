@@ -1,8 +1,13 @@
+import { teamCache } from "@/lib/cache/team";
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetProjectTeamsFilter } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Prisma } from "@prisma/client";
+import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { cache } from "@formbricks/lib/cache";
+import { organizationCache } from "@formbricks/lib/organization/cache";
+import { projectCache } from "@formbricks/lib/project/cache";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
@@ -49,40 +54,49 @@ export const getProjectTeamsQuery = (organizationId: string, params: TGetProject
   return query;
 };
 
-export const validateTeamIdAndProjectId = async (
-  organizationId: string,
-  teamId: string,
-  projectId: string
-): Promise<Result<boolean, ApiErrorResponseV2>> => {
-  try {
-    const hasAccess = await prisma.organization.findFirst({
-      where: {
-        id: organizationId,
-        teams: {
-          some: {
-            id: teamId,
-          },
-        },
-        projects: {
-          some: {
-            id: projectId,
-          },
-        },
+export const validateTeamIdAndProjectId = reactCache(
+  async (organizationId: string, teamId: string, projectId: string) =>
+    cache(
+      async (): Promise<Result<boolean, ApiErrorResponseV2>> => {
+        try {
+          const hasAccess = await prisma.organization.findFirst({
+            where: {
+              id: organizationId,
+              teams: {
+                some: {
+                  id: teamId,
+                },
+              },
+              projects: {
+                some: {
+                  id: projectId,
+                },
+              },
+            },
+          });
+
+          if (!hasAccess) {
+            return err({ type: "not_found", details: [{ field: "teamId/projectId", issue: "not_found" }] });
+          }
+
+          return ok(true);
+        } catch (error) {
+          return err({
+            type: "internal_server_error",
+            details: [{ field: "teamId/projectId", issue: error.message }],
+          });
+        }
       },
-    });
-
-    if (!hasAccess) {
-      return err({ type: "not_found", details: [{ field: "teamId/projectId", issue: "not_found" }] });
-    }
-
-    return ok(true);
-  } catch (error) {
-    return err({
-      type: "internal_server_error",
-      details: [{ field: "teamId/projectId", issue: error.message }],
-    });
-  }
-};
+      [`validateTeamIdAndProjectId-${organizationId}-${teamId}-${projectId}`],
+      {
+        tags: [
+          teamCache.tag.byId(teamId),
+          projectCache.tag.byId(projectId),
+          organizationCache.tag.byId(organizationId),
+        ],
+      }
+    )()
+);
 
 export const checkAuthenticationAndAccess = async (
   teamId: string,
