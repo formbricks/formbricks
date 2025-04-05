@@ -19,7 +19,7 @@ export default defineConfig({
         "modules/api/v2/**/*.ts",
         "modules/api/v2/**/*.tsx",
         "modules/auth/lib/**/*.ts",
-        "modules/signup/lib/**/*.ts",
+        "modules/auth/signup/lib/**/*.ts",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
         "modules/ee/role-management/components/*.tsx",
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
