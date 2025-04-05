@@ -13,7 +13,7 @@ import { createOrganization, getOrganization } from "@formbricks/lib/organizatio
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
-export const handleSSOCallback = async ({ user, account }: { user: TUser; account: Account }) => {
+export const handleSsoCallback = async ({ user, account }: { user: TUser; account: Account }) => {
   const isSsoEnabled = await getisSsoEnabled();
   if (!isSsoEnabled) {
     return false;

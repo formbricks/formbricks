@@ -547,15 +547,7 @@ paths:
                   data:
                     type: array
                     items:
-                      anyOf:
-                        - type: string
-                          const: owner
-                        - type: string
-                          const: manager
-                        - type: string
-                          const: member
-                        - type: string
-                          const: billing
+                      type: string
   /me:
     get:
       operationId: me
@@ -3267,15 +3259,7 @@ components:
         data:
           type: array
           items:
-            anyOf:
-              - type: string
-                const: owner
-              - type: string
-                const: manager
-              - type: string
-                const: member
-              - type: string
-                const: billing
+            type: string
       required:
         - data
     me:
