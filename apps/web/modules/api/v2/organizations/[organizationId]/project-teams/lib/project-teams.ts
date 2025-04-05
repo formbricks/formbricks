@@ -15,16 +15,16 @@ import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getProjectTeams = async (
-  organizationID: string,
+  organizationId: string,
   params: TGetProjectTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<ProjectTeam[]>, ApiErrorResponseV2>> => {
   try {
     const [projectTeams, count] = await prisma.$transaction([
       prisma.projectTeam.findMany({
-        ...getProjectTeamsQuery(organizationID, params),
+        ...getProjectTeamsQuery(organizationId, params),
       }),
       prisma.projectTeam.count({
-        where: getProjectTeamsQuery(organizationID, params).where,
+        where: getProjectTeamsQuery(organizationId, params).where,
       }),
     ]);
 

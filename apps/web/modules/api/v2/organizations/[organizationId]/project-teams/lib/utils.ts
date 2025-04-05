@@ -6,14 +6,14 @@ import { prisma } from "@formbricks/database";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getProjectTeamsQuery = (organizationID: string, params: TGetProjectTeamsFilter) => {
+export const getProjectTeamsQuery = (organizationId: string, params: TGetProjectTeamsFilter) => {
   const { teamId, projectId } = params || {};
 
   let query: Prisma.ProjectTeamFindManyArgs = {
     where: {
       teamId,
       team: {
-        organizationId: organizationID,
+        organizationId,
       },
     },
   };
@@ -25,7 +25,7 @@ export const getProjectTeamsQuery = (organizationID: string, params: TGetProject
         ...query.where,
         projectId,
         project: {
-          organizationId: organizationID,
+          organizationId,
         },
       },
     };
