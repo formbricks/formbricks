@@ -16,7 +16,7 @@ export const getProjectTeamsEndpoint: ZodOpenApiOperationObject = {
   summary: "Get project teams",
   description: "Gets projectTeams from the database.",
   requestParams: {
-    query: ZGetProjectTeamsFilter.sourceType().required(),
+    query: ZGetProjectTeamsFilter.sourceType(),
     path: z.object({
       organizationId: ZOrganizationIdSchema,
     }),

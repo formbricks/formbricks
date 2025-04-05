@@ -7,6 +7,7 @@ import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
 import { mePaths } from "@/modules/api/v2/me/lib/openapi";
 import { projectTeamPaths } from "@/modules/api/v2/organizations/[organizationId]/project-teams/lib/openapi";
 import { teamPaths } from "@/modules/api/v2/organizations/[organizationId]/teams/lib/openapi";
+import { userPaths } from "@/modules/api/v2/organizations/[organizationId]/users/lib/openapi";
 import { rolePaths } from "@/modules/api/v2/roles/lib/openapi";
 import { bulkContactPaths } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/openapi";
 import * as yaml from "yaml";
@@ -21,6 +22,7 @@ import { ZResponse } from "@formbricks/database/zod/responses";
 import { ZRoles } from "@formbricks/database/zod/roles";
 import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
+import { ZUser } from "@formbricks/database/zod/users";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 extendZodWithOpenApi(z);
@@ -44,6 +46,7 @@ const document = createDocument({
     ...webhookPaths,
     ...teamPaths,
     ...projectTeamPaths,
+    ...userPaths,
   },
   servers: [
     {
@@ -92,6 +95,10 @@ const document = createDocument({
       name: "Organizations API > Project Teams",
       description: "Operations for managing project teams.",
     },
+    {
+      name: "Organizations API > Users",
+      description: "Operations for managing users.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -113,6 +120,7 @@ const document = createDocument({
       webhook: ZWebhook,
       team: ZTeam,
       projectTeam: ZProjectTeam,
+      user: ZUser,
     },
   },
   security: [
