@@ -53,22 +53,12 @@ export const createProjectTeam = async (
   const { teamId, projectId, permission } = teamInput;
 
   try {
-    const prismaData: Prisma.ProjectTeamCreateInput = {
-      team: {
-        connect: {
-          id: teamId,
-        },
-      },
-      project: {
-        connect: {
-          id: projectId,
-        },
-      },
-      permission,
-    };
-
     const projectTeam = await prisma.projectTeam.create({
-      data: prismaData,
+      data: {
+        teamId,
+        projectId,
+        permission,
+      },
     });
 
     projectCache.revalidate({

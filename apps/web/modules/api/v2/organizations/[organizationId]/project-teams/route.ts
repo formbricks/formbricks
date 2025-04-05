@@ -70,6 +70,26 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, hasAccess.error);
       }
 
+      // check if project team already exists
+      const existingProjectTeam = await getProjectTeams(authentication.organizationId, {
+        teamId,
+        projectId,
+        limit: 10,
+        skip: 0,
+        sortBy: "createdAt",
+        order: "desc",
+      });
+
+      if (!existingProjectTeam.ok) {
+        return handleApiError(request, existingProjectTeam.error);
+      }
+
+      if (existingProjectTeam.data.data.length > 0) {
+        return handleApiError(request, {
+          type: "conflict",
+          details: [{ field: "projectTeam", issue: "Project team already exists" }],
+        });
+      }
       const result = await createProjectTeam(body!);
       if (!result.ok) {
         return handleApiError(request, result.error);
