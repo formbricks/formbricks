@@ -7,7 +7,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { Prisma, ProjectTeam } from "@prisma/client";
+import { ProjectTeam } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { projectCache } from "@formbricks/lib/project/cache";
