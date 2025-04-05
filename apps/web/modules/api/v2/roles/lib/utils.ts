@@ -1,7 +1,7 @@
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { OrganizationRole } from "@prisma/client";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
-import { Result, ok } from "@formbricks/types/error-handlers";
+import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const getRoles = (): Result<{ data: string[] }, ApiErrorResponseV2> => {
   try {
@@ -12,7 +12,7 @@ export const getRoles = (): Result<{ data: string[] }, ApiErrorResponseV2> => {
     return ok({
       data: filteredRoles,
     });
-  } catch (err) {
+  } catch {
     return err({
       type: "internal_server_error",
       details: [{ field: "roles", issue: "Failed to get roles" }],
