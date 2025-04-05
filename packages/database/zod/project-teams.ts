@@ -6,11 +6,11 @@ extendZodWithOpenApi(z);
 
 export const ZProjectTeam = z.object({
   createdAt: z.coerce.date().openapi({
-    description: "The date and time the response was created",
+    description: "The date and time the project tem was created",
     example: "2021-01-01T00:00:00.000Z",
   }),
   updatedAt: z.coerce.date().openapi({
-    description: "The date and time the response was last updated",
+    description: "The date and time the project team was last updated",
     example: "2021-01-01T00:00:00.000Z",
   }),
   projectId: z.string().cuid2().openapi({
