@@ -43,20 +43,16 @@ export const updateUser = async (id: string, data: TUserUpdateInput) => {
   }
 };
 
-export const updateUserByEmail = async (email: string, data: TUserUpdateInput) => {
-  validateInputs([email, ZUserEmail], [data, ZUserUpdateInput.partial()]);
+export const updateUserLastLoginAt = async (email: string) => {
+  validateInputs([email, ZUserEmail]);
 
   try {
     const updatedUser = await prisma.user.update({
       where: {
         email,
       },
-      data: data,
-      select: {
-        id: true,
-        email: true,
-        locale: true,
-        emailVerified: true,
+      data: {
+        lastLoginAt: new Date(),
       },
     });
 
@@ -64,8 +60,6 @@ export const updateUserByEmail = async (email: string, data: TUserUpdateInput) =
       email: updatedUser.email,
       id: updatedUser.id,
     });
-
-    return updatedUser;
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
