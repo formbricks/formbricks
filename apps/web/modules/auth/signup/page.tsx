@@ -44,10 +44,14 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
     if (!inviteToken) notFound();
 
-    const { inviteId } = verifyInviteToken(inviteToken);
+    try {
+      const { inviteId } = verifyInviteToken(inviteToken);
+      const isValidInviteToken = await getIsValidInviteToken(inviteId);
 
-    const isValidInviteToken = await getIsValidInviteToken(inviteId);
-    if (!isValidInviteToken) notFound();
+      if (!isValidInviteToken) notFound();
+    } catch {
+      notFound();
+    }
   }
 
   const emailFromSearchParams = searchParams["email"];
