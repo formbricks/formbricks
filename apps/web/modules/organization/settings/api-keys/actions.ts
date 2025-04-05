@@ -2,13 +2,8 @@
 
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client-middleware";
-import {
-  getOrganizationIdFromApiKeyId,
-  getOrganizationIdFromEnvironmentId,
-  getProjectIdFromApiKeyId,
-  getProjectIdFromEnvironmentId,
-} from "@/lib/utils/helper";
-import { createApiKey, deleteApiKey } from "@/modules/projects/settings/api-keys/lib/api-key";
+import { getOrganizationIdFromApiKeyId } from "@/lib/utils/helper";
+import { createApiKey, deleteApiKey } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZApiKeyCreateInput } from "./types/api-keys";
@@ -28,11 +23,6 @@ export const deleteApiKeyAction = authenticatedActionClient
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "manage",
-          projectId: await getProjectIdFromApiKeyId(parsedInput.id),
-        },
       ],
     });
 
@@ -40,7 +30,7 @@ export const deleteApiKeyAction = authenticatedActionClient
   });
 
 const ZCreateApiKeyAction = z.object({
-  environmentId: ZId,
+  organizationId: ZId,
   apiKeyData: ZApiKeyCreateInput,
 });
 
@@ -49,19 +39,14 @@ export const createApiKeyAction = authenticatedActionClient
   .action(async ({ ctx, parsedInput }) => {
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      organizationId: parsedInput.organizationId,
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
         },
-        {
-          type: "projectTeam",
-          minPermission: "manage",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
-        },
       ],
     });
 
-    return await createApiKey(parsedInput.environmentId, parsedInput.apiKeyData);
+    return await createApiKey(parsedInput.organizationId, ctx.user.id, parsedInput.apiKeyData);
   });
