@@ -1,7 +1,7 @@
 import { deleteDisplay } from "@/modules/api/v2/management/responses/[responseId]/lib/display";
 import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[responseId]/lib/survey";
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
-import { responseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Response } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -98,7 +98,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
 
 export const updateResponse = async (
   responseId: string,
-  responseInput: z.infer<typeof responseUpdateSchema>
+  responseInput: z.infer<typeof ZResponseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
   try {
     const updatedResponse = await prisma.response.update({

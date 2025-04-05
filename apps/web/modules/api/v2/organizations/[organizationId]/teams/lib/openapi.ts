@@ -22,7 +22,7 @@ export const getTeamsEndpoint: ZodOpenApiOperationObject = {
     path: z.object({
       organizationId: ZOrganizationIdSchema,
     }),
-    query: ZGetTeamsFilter.sourceType().required(),
+    query: ZGetTeamsFilter.sourceType(),
   },
   tags: ["Organizations API > Teams"],
   responses: {

@@ -48,12 +48,14 @@ export const getTeams = async (
   params: TGetTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<Team[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getTeamsQuery(organizationId, params);
+
     const [teams, count] = await prisma.$transaction([
       prisma.team.findMany({
-        ...getTeamsQuery(organizationId, params),
+        ...query,
       }),
       prisma.team.count({
-        where: getTeamsQuery(organizationId, params).where,
+        where: query.where,
       }),
     ]);
 

@@ -90,15 +90,15 @@ test.describe("API Tests for ProjectTeams", () => {
     await test.step("Update ProjectTeam by ID via API", async () => {
       const body = {
         permission: "read",
+        teamId: teamId,
+        projectId: projectId,
       };
-      const queryParams = { teamId: teamId, projectId: projectId };
       const response = await request.put(`${PROJECT_TEAMS_API_URL(organizationId)}`, {
         headers: {
           "Content-Type": "application/json",
           "x-api-key": apiKey,
         },
         data: body,
-        params: queryParams,
       });
 
       expect(response.ok()).toBe(true);

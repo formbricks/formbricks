@@ -4,7 +4,7 @@ import { ZResponse } from "@formbricks/database/zod/responses";
 
 extendZodWithOpenApi(z);
 
-export const responseIdSchema = z
+export const ZResponseIdSchema = z
   .string()
   .cuid2()
   .openapi({
@@ -16,7 +16,7 @@ export const responseIdSchema = z
     },
   });
 
-export const responseUpdateSchema = ZResponse.omit({
+export const ZResponseUpdateSchema = ZResponse.omit({
   id: true,
   surveyId: true,
 }).openapi({

@@ -1,4 +1,4 @@
-import { responseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
+import { ZResponseIdSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
@@ -11,7 +11,7 @@ export const getResponseEndpoint: ZodOpenApiOperationObject = {
   description: "Gets a response from the database.",
   requestParams: {
     path: z.object({
-      id: responseIdSchema,
+      id: ZResponseIdSchema,
     }),
   },
   tags: ["Management API > Responses"],
@@ -34,7 +34,7 @@ export const deleteResponseEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Responses"],
   requestParams: {
     path: z.object({
-      id: responseIdSchema,
+      id: ZResponseIdSchema,
     }),
   },
   responses: {
@@ -56,7 +56,7 @@ export const updateResponseEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Responses"],
   requestParams: {
     path: z.object({
-      id: responseIdSchema,
+      id: ZResponseIdSchema,
     }),
   },
   requestBody: {

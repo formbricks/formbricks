@@ -1,5 +1,5 @@
 import { webhookCache } from "@/lib/cache/webhook";
-import { webhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { Webhook } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
@@ -42,7 +42,7 @@ export const getWebhook = async (webhookId: string) =>
 
 export const updateWebhook = async (
   webhookId: string,
-  webhookInput: z.infer<typeof webhookUpdateSchema>
+  webhookInput: z.infer<typeof ZWebhookUpdateSchema>
 ): Promise<Result<Webhook, ApiErrorResponseV2>> => {
   try {
     const updatedWebhook = await prisma.webhook.update({

@@ -16,7 +16,6 @@ import {
   ZGetProjectTeamUpdateFilter,
   ZGetProjectTeamsFilter,
   ZProjectTeamInput,
-  projectTeamUpdateSchema,
 } from "./types/project-teams";
 
 export async function GET(request: Request, props: { params: Promise<{ organizationId: string }> }) {
@@ -95,7 +94,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
         return handleApiError(request, result.error);
       }
 
-      return responses.successResponse({ data: result.data, cors: true });
+      return responses.successResponse({ data: result.data });
     },
   });
 }
@@ -104,13 +103,12 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
   return authenticatedApiClient({
     request,
     schemas: {
-      body: projectTeamUpdateSchema,
-      query: ZGetProjectTeamUpdateFilter,
+      body: ZProjectTeamInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ parsedInput: { query, body, params }, authentication }) => {
-      const { teamId, projectId } = query!;
+    handler: async ({ parsedInput: { body, params }, authentication }) => {
+      const { teamId, projectId } = body!;
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(request, {
@@ -130,7 +128,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
         return handleApiError(request, result.error);
       }
 
-      return responses.successResponse({ data: result.data, cors: true });
+      return responses.successResponse({ data: result.data });
     },
   });
 }
@@ -164,7 +162,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
         return handleApiError(request, result.error);
       }
 
-      return responses.successResponse({ data: result.data, cors: true });
+      return responses.successResponse({ data: result.data });
     },
   });
 }

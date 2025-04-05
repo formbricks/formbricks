@@ -3,7 +3,7 @@ import {
   mockedPrismaWebhookUpdateReturn,
   prismaNotFoundError,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/tests/mocks/webhook.mock";
-import { webhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ZWebhookUpdateSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -61,7 +61,7 @@ describe("getWebhook", () => {
 });
 
 describe("updateWebhook", () => {
-  const mockedWebhookUpdateReturn = { url: "https://example.com" } as z.infer<typeof webhookUpdateSchema>;
+  const mockedWebhookUpdateReturn = { url: "https://example.com" } as z.infer<typeof ZWebhookUpdateSchema>;
 
   test("returns ok on successful update", async () => {
     vi.mocked(prisma.webhook.update).mockResolvedValueOnce(mockedPrismaWebhookUpdateReturn);

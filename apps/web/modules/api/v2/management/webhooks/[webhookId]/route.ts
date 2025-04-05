@@ -8,8 +8,8 @@ import {
   updateWebhook,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import {
-  webhookIdSchema,
-  webhookUpdateSchema,
+  ZWebhookIdSchema,
+  ZWebhookUpdateSchema,
 } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
@@ -19,7 +19,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ webho
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
+      params: z.object({ webhookId: ZWebhookIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -53,8 +53,8 @@ export const PUT = async (request: NextRequest, props: { params: Promise<{ webho
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
-      body: webhookUpdateSchema,
+      params: z.object({ webhookId: ZWebhookIdSchema }),
+      body: ZWebhookUpdateSchema,
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
@@ -112,7 +112,7 @@ export const DELETE = async (request: NextRequest, props: { params: Promise<{ we
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ webhookId: webhookIdSchema }),
+      params: z.object({ webhookId: ZWebhookIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput }) => {
