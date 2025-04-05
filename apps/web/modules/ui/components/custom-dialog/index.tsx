@@ -13,8 +13,10 @@ interface CustomDialogProps {
   children?: React.ReactNode;
   onOk: () => void;
   okBtnText?: string;
+  okBtnVariant?: "destructive" | "default" | "secondary";
   onCancel?: () => void;
   cancelBtnText?: string;
+  cancelBtnVariant?: "secondary" | "outline" | "ghost";
   disabled?: boolean;
 }
 
@@ -27,18 +29,21 @@ export const CustomDialog = ({
   children,
   onOk,
   okBtnText,
+  okBtnVariant,
   onCancel,
   cancelBtnText,
+  cancelBtnVariant,
   disabled,
 }: CustomDialogProps) => {
   const { t } = useTranslate();
+
   return (
     <Modal open={open} setOpen={setOpen} title={title}>
       <p>{text}</p>
       <div>{children}</div>
       <div className="my-4 space-x-2 text-right">
         <Button
-          variant="secondary"
+          variant={cancelBtnVariant || "secondary"}
           onClick={() => {
             if (onCancel) {
               onCancel();
@@ -47,7 +52,11 @@ export const CustomDialog = ({
           }}>
           {cancelBtnText || t("common.cancel")}
         </Button>
-        <Button variant="destructive" onClick={onOk} loading={isLoading} disabled={disabled}>
+        <Button
+          variant={okBtnVariant || "destructive"}
+          onClick={onOk}
+          loading={isLoading}
+          disabled={disabled}>
           {okBtnText || t("common.yes")}
         </Button>
       </div>

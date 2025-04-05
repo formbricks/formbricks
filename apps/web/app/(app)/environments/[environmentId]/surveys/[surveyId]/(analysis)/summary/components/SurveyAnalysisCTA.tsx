@@ -3,10 +3,12 @@
 import { ShareEmbedSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/ShareEmbedSurvey";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { copySurveyToOtherEnvironmentAction } from "@/modules/survey/list/actions";
 import { Badge } from "@/modules/ui/components/badge";
+import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useTranslate } from "@tolgee/react";
 import { BellRing, Code2Icon, Eye, LinkIcon, SquarePenIcon, UsersRound } from "lucide-react";
@@ -45,6 +47,7 @@ export const SurveyAnalysisCTA = ({
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [modalState, setModalState] = useState<ModalState>({
     share: searchParams.get("share") === "true",
@@ -90,6 +93,28 @@ export const SurveyAnalysisCTA = ({
         console.error(err);
       });
     setModalState((prev) => ({ ...prev, dropdown: false }));
+  };
+
+  const duplicateSurveyAndRoute = async (surveyId: string) => {
+    setLoading(true);
+    try {
+      const duplicatedSurveyResponse = await copySurveyToOtherEnvironmentAction({
+        environmentId: environment.id,
+        surveyId: surveyId,
+        targetEnvironmentId: environment.id,
+      });
+      if (duplicatedSurveyResponse?.data) {
+        toast.success(t("environments.surveys.survey_duplicated_successfully"));
+        router.push(`/environments/${environment.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
+      } else {
+        const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      toast.error(t("environments.surveys.survey_duplication_error"));
+    }
+    setIsCautionDialogOpen(false);
+    setLoading(false);
   };
 
   const getPreviewUrl = () => {
@@ -150,7 +175,6 @@ export const SurveyAnalysisCTA = ({
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => {
-        alert(responseCount);
         responseCount && responseCount > 0
           ? setIsCautionDialogOpen(true)
           : router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`);
@@ -194,33 +218,26 @@ export const SurveyAnalysisCTA = ({
       )}
 
       {responseCount > 0 && (
-        <AlertDialog
-          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+        <CustomDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          mainText={
-            <>
-              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-              <ul className="mt-3 list-disc space-y-0.5 pl-5">
-                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-              </ul>
-            </>
-          }
-          confirmBtnLabel={t("common.duplicate")}
-          declineBtnLabel={t("common.edit")}
-          declineBtnVariant="outline"
-          onConfirm={async () => {
-            // await duplicateSurveyAndRefresh(survey.id);
-            setIsCautionDialogOpen(false);
-            router.push(`/environments/${environment.id}/surveys`);
-          }}
-          onDecline={() =>
-            router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)
-          }></AlertDialog>
+          title={t("environments.surveys.edit.caution_edit_published_survey")}
+          isLoading={loading}
+          okBtnText={t("common.duplicate")}
+          okBtnVariant="default"
+          onOk={async () => await duplicateSurveyAndRoute(survey.id)}
+          cancelBtnText={t("common.edit")}
+          cancelBtnVariant="outline"
+          onCancel={() => router.push(`/environments/${environment.id}/surveys/${survey.id}/edit`)}>
+          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <ul className="mt-3 list-disc space-y-0.5 pl-5">
+            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+          </ul>
+        </CustomDialog>
       )}
     </div>
   );

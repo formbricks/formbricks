@@ -8,7 +8,7 @@ import {
   getSurveyAction,
 } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
+import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -60,6 +60,8 @@ export const SurveyDropDownMenu = ({
   const [loading, setLoading] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
+  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+
   const router = useRouter();
 
   const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
@@ -115,6 +117,7 @@ export const SurveyDropDownMenu = ({
     } catch (error) {
       toast.error(t("environments.surveys.survey_duplication_error"));
     }
+    setIsCautionDialogOpen(false);
     setLoading(false);
   };
 
@@ -123,13 +126,6 @@ export const SurveyDropDownMenu = ({
     setIsDropDownOpen(false);
     setIsCautionDialogOpen(true);
   };
-
-  const handleConfirmNavigation = () => {
-    setIsCautionDialogOpen(false);
-    router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`);
-  };
-
-  const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
   return (
     <div
@@ -263,30 +259,26 @@ export const SurveyDropDownMenu = ({
       )}
 
       {survey.responseCount > 0 && (
-        <AlertDialog
-          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+        <CustomDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          mainText={
-            <>
-              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-              <ul className="mt-3 list-disc space-y-0.5 pl-5">
-                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-              </ul>
-            </>
-          }
-          confirmBtnLabel={t("common.duplicate")}
-          declineBtnLabel={t("common.edit")}
-          declineBtnVariant="outline"
-          onConfirm={async () => {
-            await duplicateSurveyAndRefresh(survey.id);
-            setIsCautionDialogOpen(false);
-          }}
-          onDecline={() => handleConfirmNavigation()}></AlertDialog>
+          title={t("environments.surveys.edit.caution_edit_published_survey")}
+          isLoading={loading}
+          okBtnText={t("common.duplicate")}
+          okBtnVariant="default"
+          onOk={async () => await duplicateSurveyAndRefresh(survey.id)}
+          cancelBtnText={t("common.edit")}
+          cancelBtnVariant="outline"
+          onCancel={() => router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)}>
+          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <ul className="mt-3 list-disc space-y-0.5 pl-5">
+            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+          </ul>
+        </CustomDialog>
       )}
 
       {isCopyFormOpen && (
