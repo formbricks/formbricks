@@ -1,6 +1,7 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
+import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
@@ -8,12 +9,22 @@ import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@formbricks/lib/constants";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import { logger } from "@formbricks/logger";
 import type { TUser, TUserNotificationSettings } from "@formbricks/types/user";
 
-export const handleSSOCallback = async ({ user, account }: { user: TUser; account: Account }) => {
+export const handleSSOCallback = async ({
+  user,
+  account,
+  callbackUrl,
+}: {
+  user: TUser;
+  account: Account;
+  callbackUrl: string;
+}) => {
   const isSsoEnabled = await getisSsoEnabled();
   if (!isSsoEnabled) {
     return false;
@@ -99,6 +110,34 @@ export const handleSSOCallback = async ({ user, account }: { user: TUser; accoun
         userName = samlUser.name;
       } else if (samlUser.firstName || samlUser.lastName) {
         userName = `${samlUser.firstName} ${samlUser.lastName}`;
+      }
+    }
+
+    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID) {
+      return false;
+    }
+
+    if (!DEFAULT_ORGANIZATION_ID) {
+      try {
+        const isValidCallbackUrl = new URL(callbackUrl);
+        const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
+        const source = isValidCallbackUrl.searchParams.get("source") || "";
+
+        if (source === "signin" && !inviteToken) {
+          return false;
+        }
+
+        const { email } = verifyInviteToken(inviteToken);
+        if (email !== user.email) {
+          return false;
+        }
+        const isValidInviteToken = await getIsValidInviteToken(inviteToken);
+        if (!isValidInviteToken) {
+          return false;
+        }
+      } catch (err) {
+        logger.error(err, "Invalid callbackUrl");
+        return false;
       }
     }
 

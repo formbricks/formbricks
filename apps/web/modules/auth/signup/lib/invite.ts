@@ -4,6 +4,7 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { cache } from "@formbricks/lib/cache";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 
 export const deleteInvite = async (inviteId: string): Promise<boolean> => {
@@ -71,6 +72,40 @@ export const getInvite = reactCache(
         }
       },
       [`signup-getInvite-${inviteId}`],
+      {
+        tags: [inviteCache.tag.byId(inviteId)],
+      }
+    )()
+);
+
+export const getIsValidInviteToken = reactCache(
+  async (inviteId: string): Promise<boolean> =>
+    cache(
+      async () => {
+        try {
+          const invite = await prisma.invite.findUnique({
+            where: { id: inviteId },
+          });
+          if (!invite) {
+            return false;
+          }
+          if (invite.expiresAt < new Date()) {
+            logger.error(
+              {
+                inviteId,
+                expiresAt: invite.expiresAt,
+              },
+              "SSO: Invite token expired"
+            );
+            return false;
+          }
+          return true;
+        } catch (err) {
+          logger.error(err, "Error getting invite");
+          return false;
+        }
+      },
+      [`getIsValidInviteToken-${inviteId}`],
       {
         tags: [inviteCache.tag.byId(inviteId)],
       }

@@ -4,6 +4,7 @@ import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSSOCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import {
   EMAIL_VERIFICATION_DISABLED,
@@ -208,6 +209,10 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }: { user: TUser; account: Account }) {
+      const cookieStore = await cookies();
+
+      const callbackUrl = cookieStore.get("next-auth.callback-url")?.value || "";
+
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
@@ -216,7 +221,11 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY) {
-        return handleSSOCallback({ user, account });
+        return handleSSOCallback({
+          user,
+          account,
+          callbackUrl,
+        });
       }
       return true;
     },

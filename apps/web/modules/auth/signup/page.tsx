@@ -1,5 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
+import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
@@ -38,11 +39,16 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   ]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
-
   const locale = await findMatchingLocale();
   if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
     notFound();
   }
+
+  const isValidInviteToken = await getIsValidInviteToken(inviteToken);
+  if (inviteToken && !isValidInviteToken) {
+    notFound();
+  }
+
   const emailFromSearchParams = searchParams["email"];
 
   return (
