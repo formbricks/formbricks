@@ -8,7 +8,7 @@ import { useSingleUseId } from "./useSingleUseId";
 
 // Mock external functions
 vi.mock("@/modules/survey/list/actions", () => ({
-  generateSingleUseIdAction: vi.fn(),
+  generateSingleUseIdAction: vi.fn().mockResolvedValue({ data: "initialId" }),
 }));
 
 vi.mock("@/lib/utils/helper", () => ({
@@ -88,8 +88,10 @@ describe("useSingleUseId", () => {
     vi.mocked(generateSingleUseIdAction).mockResolvedValueOnce({ data: "initialId" });
     const { result } = renderHook(() => useSingleUseId(mockSurvey));
 
-    // Wait for initial
-    await new Promise((r) => setTimeout(r, 0));
+    // Wait for initial value to be set
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
     expect(result.current.singleUseId).toBe("initialId");
 
     vi.mocked(generateSingleUseIdAction).mockResolvedValueOnce({ data: "refreshedId" });

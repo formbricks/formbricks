@@ -54,6 +54,19 @@ export const createMembership = async (
   validateInputs([organizationId, ZString], [userId, ZString], [data, ZMembership.partial()]);
 
   try {
+    const existingMembership = await prisma.membership.findUnique({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+    });
+
+    if (existingMembership) {
+      return existingMembership;
+    }
+
     const membership = await prisma.membership.create({
       data: {
         userId,

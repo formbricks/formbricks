@@ -1,6 +1,7 @@
 "use client";
 
 import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
+import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { LockIcon } from "lucide-react";
@@ -14,9 +15,10 @@ interface SamlButtonProps {
   lastUsed?: boolean;
   samlTenant: string;
   samlProduct: string;
+  source: "signin" | "signup";
 }
 
-export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct }: SamlButtonProps) => {
+export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct, source }: SamlButtonProps) => {
   const { t } = useTranslate();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,11 +34,13 @@ export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct }: Sam
       return;
     }
 
+    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
+
     signIn(
       "saml",
       {
         redirect: true,
-        callbackUrl: inviteUrl ? inviteUrl : "/", // redirect after login to /
+        callbackUrl: callbackUrlWithSource,
       },
       {
         tenant: samlTenant,

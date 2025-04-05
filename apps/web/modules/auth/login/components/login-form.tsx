@@ -256,6 +256,7 @@ export const LoginForm = ({
               samlTenant={samlTenant}
               samlProduct={samlProduct}
               callbackUrl={callbackUrl}
+              source="signin"
             />
           )}
         </div>

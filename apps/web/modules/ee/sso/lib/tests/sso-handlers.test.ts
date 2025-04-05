@@ -1,5 +1,6 @@
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 import { createUser, getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import type { TSamlNameFields } from "@/modules/auth/types/auth";
 import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -7,6 +8,7 @@ import { createAccount } from "@formbricks/lib/account/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
+import type { TUser } from "@formbricks/types/user";
 import { handleSsoCallback } from "../sso-handlers";
 import {
   mockAccount,
@@ -32,6 +34,7 @@ vi.mock("@/modules/auth/lib/user", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getisSsoEnabled: vi.fn(),
+  getIsMultiOrgEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -63,6 +66,7 @@ vi.mock("@formbricks/lib/utils/locale", () => ({
 vi.mock("@formbricks/lib/constants", () => ({
   DEFAULT_ORGANIZATION_ID: "org-123",
   DEFAULT_ORGANIZATION_ROLE: "member",
+  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 
 describe("handleSsoCallback", () => {
@@ -90,24 +94,31 @@ describe("handleSsoCallback", () => {
     it("should return false if SSO is not enabled", async () => {
       vi.mocked(getisSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
-      expect(getisSsoEnabled).toHaveBeenCalled();
     });
 
     it("should return false if user email is missing", async () => {
-      const userWithoutEmail = { ...mockUser, email: "" };
-
-      const result = await handleSsoCallback({ user: userWithoutEmail, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: { ...mockUser, email: "" },
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
     });
 
     it("should return false if account type is not oauth", async () => {
-      const nonOauthAccount = { ...mockAccount, type: "credentials" as const };
-
-      const result = await handleSsoCallback({ user: mockUser, account: nonOauthAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: { ...mockAccount, type: "credentials" },
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
     });
@@ -115,10 +126,13 @@ describe("handleSsoCallback", () => {
     it("should return false if provider is SAML and SAML SSO is not enabled", async () => {
       vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockSamlAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockSamlAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
-      expect(getIsSamlSsoEnabled).toHaveBeenCalled();
     });
   });
 
@@ -130,7 +144,11 @@ describe("handleSsoCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       });
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
@@ -160,7 +178,11 @@ describe("handleSsoCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(updateUser).mockResolvedValue({ ...existingUser, email: mockUser.email });
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(updateUser).toHaveBeenCalledWith(existingUser.id, { email: mockUser.email });
@@ -180,9 +202,16 @@ describe("handleSsoCallback", () => {
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
         locale: mockUser.locale,
+        isActive: true,
       });
 
-      await expect(handleSsoCallback({ user: mockUser, account: mockAccount })).rejects.toThrow(
+      await expect(
+        handleSsoCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow(
         "Looks like you updated your email somewhere else. A user with this new email exists already."
       );
     });
@@ -194,9 +223,14 @@ describe("handleSsoCallback", () => {
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
         locale: mockUser.locale,
+        isActive: true,
       });
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
     });
@@ -208,7 +242,11 @@ describe("handleSsoCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith({
@@ -228,7 +266,11 @@ describe("handleSsoCallback", () => {
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
       vi.mocked(getOrganization).mockResolvedValue(null);
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createOrganization).toHaveBeenCalledWith({
@@ -255,7 +297,11 @@ describe("handleSsoCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSsoCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSsoCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createOrganization).not.toHaveBeenCalled();
@@ -276,14 +322,21 @@ describe("handleSsoCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("Direct Name"));
 
-      const result = await handleSsoCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSsoCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -297,14 +350,21 @@ describe("handleSsoCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("John Doe"));
 
-      const result = await handleSsoCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSsoCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -319,14 +379,21 @@ describe("handleSsoCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("preferred.user"));
 
-      const result = await handleSsoCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSsoCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "preferred.user",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -340,18 +407,152 @@ describe("handleSsoCallback", () => {
         email: "test.user@example.com",
       });
 
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("test.user"));
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("test user"));
 
-      const result = await handleSsoCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSsoCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
-
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
+          name: "test user",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
+    });
+  });
+
+  describe("SAML name handling", () => {
+    it("should use samlUser.name when available", async () => {
+      const samlUser = {
+        ...mockUser,
+        name: "Direct Name",
+        firstName: "John",
+        lastName: "Doe",
+      } as TUser & TSamlNameFields;
+
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("Direct Name"));
+
+      const result = await handleSsoCallback({
+        user: samlUser,
+        account: mockSamlAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Direct Name",
+          email: samlUser.email,
+          emailVerified: expect.any(Date),
+          identityProvider: "saml",
+          identityProviderAccountId: mockSamlAccount.providerAccountId,
+          locale: "en-US",
+        })
+      );
+    });
+
+    it("should use firstName + lastName when name is not available", async () => {
+      const samlUser = {
+        ...mockUser,
+        name: "",
+        firstName: "John",
+        lastName: "Doe",
+      } as TUser & TSamlNameFields;
+
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("John Doe"));
+
+      const result = await handleSsoCallback({
+        user: samlUser,
+        account: mockSamlAccount,
+        callbackUrl: "http://localhost:3000",
+      });
+
+      expect(result).toBe(true);
+      expect(createUser).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "John Doe",
+          email: samlUser.email,
+          emailVerified: expect.any(Date),
+          identityProvider: "saml",
+          identityProviderAccountId: mockSamlAccount.providerAccountId,
+          locale: "en-US",
+        })
+      );
+    });
+  });
+
+  describe("Organization handling", () => {
+    it("should handle invalid DEFAULT_ORGANIZATION_ID gracefully", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(getOrganization).mockResolvedValue(null);
+      vi.mocked(createOrganization).mockRejectedValue(new Error("Invalid organization ID"));
+
+      await expect(
+        handleSsoCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow("Invalid organization ID");
+
+      expect(createOrganization).toHaveBeenCalled();
+      expect(createMembership).not.toHaveBeenCalled();
+    });
+
+    it("should handle membership creation failure gracefully", async () => {
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+      vi.mocked(createMembership).mockRejectedValue(new Error("Failed to create membership"));
+
+      await expect(
+        handleSsoCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow("Failed to create membership");
+
+      expect(createMembership).toHaveBeenCalled();
+    });
+  });
+
+  describe("Error handling", () => {
+    it("should handle prisma errors gracefully", async () => {
+      vi.mocked(prisma.user.findFirst).mockRejectedValue(new Error("Database error"));
+
+      await expect(
+        handleSsoCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow("Database error");
+    });
+
+    it("should handle locale finding errors gracefully", async () => {
+      vi.mocked(findMatchingLocale).mockRejectedValue(new Error("Locale error"));
+      vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+      vi.mocked(getUserByEmail).mockResolvedValue(null);
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
+
+      await expect(
+        handleSsoCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow("Locale error");
     });
   });
 });

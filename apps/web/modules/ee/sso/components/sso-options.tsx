@@ -19,6 +19,7 @@ interface SSOOptionsProps {
   samlSsoEnabled: boolean;
   samlTenant: string;
   samlProduct: string;
+  source: "signin" | "signup";
 }
 
 export const SSOOptions = ({
@@ -31,6 +32,7 @@ export const SSOOptions = ({
   samlSsoEnabled,
   samlTenant,
   samlProduct,
+  source,
 }: SSOOptionsProps) => {
   const { t } = useTranslate();
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
@@ -44,17 +46,20 @@ export const SSOOptions = ({
   return (
     <div className="space-y-2">
       {googleOAuthEnabled && (
-        <GoogleButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Google"} />
+        <GoogleButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Google"} source={source} />
       )}
       {githubOAuthEnabled && (
-        <GithubButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Github"} />
+        <GithubButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Github"} source={source} />
       )}
-      {azureOAuthEnabled && <AzureButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Azure"} />}
+      {azureOAuthEnabled && (
+        <AzureButton inviteUrl={callbackUrl} lastUsed={lastLoggedInWith === "Azure"} source={source} />
+      )}
       {oidcOAuthEnabled && (
         <OpenIdButton
           inviteUrl={callbackUrl}
           lastUsed={lastLoggedInWith === "OpenID"}
           text={t("auth.continue_with_oidc", { oidcDisplayName })}
+          source={source}
         />
       )}
       {samlSsoEnabled && (
@@ -63,6 +68,7 @@ export const SSOOptions = ({
           lastUsed={lastLoggedInWith === "Saml"}
           samlTenant={samlTenant}
           samlProduct={samlProduct}
+          source={source}
         />
       )}
     </div>
