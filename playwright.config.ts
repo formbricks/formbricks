@@ -17,6 +17,8 @@ export default defineConfig({
   retries: 0,
   /* Timeout for each test */
   timeout: 120000,
+  /* Fail the test run after the first failure */
+  maxFailures: 1, // Stop execution after the first failed test
   /* Opt out of parallel tests on CI. */
   // workers: os.cpus().length,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

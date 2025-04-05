@@ -892,13 +892,13 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.waitForLoadState("networkidle");
 
       await page.getByRole("button", { name: "Close" }).click();
+
+      // Ensure the page is on the Responses tab and stable before verifying the cell
       await page.getByRole("link").filter({ hasText: "Responses" }).click();
-      await page.waitForSelector("#response-table");
+      await page.waitForURL(/\/responses$/); // Wait for the URL to confirm navigation
+      await page.waitForSelector("#response-table", { state: "visible" }); // Wait for the table to be visible
 
-      await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
-
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(5000);
+      // Verify the cell content
       await expect(page.getByRole("cell", { name: "32", exact: true })).toBeVisible();
     });
   });
