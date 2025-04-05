@@ -28,10 +28,6 @@ export const getProjectTeams = async (
       }),
     ]);
 
-    if (!projectTeams.length) {
-      return err({ type: "not_found", details: [{ field: "projectTeam", issue: "not found" }] });
-    }
-
     return ok({
       data: projectTeams,
       meta: {
