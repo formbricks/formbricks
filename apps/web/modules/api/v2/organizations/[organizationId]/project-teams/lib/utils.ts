@@ -11,12 +11,21 @@ export const getProjectTeamsQuery = (organizationId: string, params: TGetProject
 
   let query: Prisma.ProjectTeamFindManyArgs = {
     where: {
-      teamId,
       team: {
         organizationId,
       },
     },
   };
+
+  if (teamId) {
+    query = {
+      ...query,
+      where: {
+        ...query.where,
+        teamId,
+      },
+    };
+  }
 
   if (projectId) {
     query = {
