@@ -22,6 +22,8 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByRole("menuitem", { name: "production" }).click();
   await page.getByRole("button", { name: "read" }).click();
   await page.getByRole("menuitem", { name: "manage" }).click();
+  await page.getByTestId("organization-access-accessControl-read").click();
+  await page.getByTestId("organization-access-accessControl-write").click();
   await page.getByRole("button", { name: "Add API Key" }).click();
   await page.locator(".copyApiKeyIcon").click();
 
