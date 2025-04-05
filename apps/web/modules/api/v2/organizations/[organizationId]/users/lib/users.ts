@@ -76,10 +76,23 @@ export const createUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user created");
 
-  const { name, email, role, isActive } = userInput;
+  const { name, email, role, isActive, teams } = userInput;
 
   try {
-    const { existingTeams, teamUsersToCreate } = await getTeamsFromInput(userInput, organizationId);
+    const existingTeams = teams && (await getExistingTeamsFromInput(teams, organizationId));
+
+    let teamUsersToCreate;
+
+    if (existingTeams) {
+      teamUsersToCreate = existingTeams.map((team) => ({
+        role: TeamUserRole.contributor,
+        team: {
+          connect: {
+            id: team.id,
+          },
+        },
+      }));
+    }
 
     const prismaData: Prisma.UserCreateInput = {
       name,
@@ -116,20 +129,18 @@ export const createUser = async (
       },
     });
 
-    if (existingTeams?.length > 0) {
-      for (const team of existingTeams) {
-        teamCache.revalidate({
-          id: team.id,
-          organizationId: organizationId,
-        });
+    existingTeams?.forEach((team) => {
+      teamCache.revalidate({
+        id: team.id,
+        organizationId: organizationId,
+      });
 
-        for (const projectTeam of team.projectTeams) {
-          teamCache.revalidate({
-            projectId: projectTeam.projectId,
-          });
-        }
+      for (const projectTeam of team.projectTeams) {
+        teamCache.revalidate({
+          projectId: projectTeam.projectId,
+        });
       }
-    }
+    });
 
     // revalidate membership cache
     membershipCache.revalidate({
@@ -163,10 +174,12 @@ export const updateUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user updated");
 
-  const { name, email, role, isActive } = userInput;
+  const { name, email, role, isActive, teams } = userInput;
+  let existingTeams: string[] = [];
+  let newTeams;
 
   try {
-    // check the teams that the user is part of and remove the ones that are not in the input
+    // First, fetch the existing user along with memberships and teamUsers.
     const existingUser = await prisma.user.findUnique({
       where: { email },
       include: {
@@ -185,34 +198,69 @@ export const updateUser = async (
     });
 
     if (!existingUser) {
-      return err({ type: "not_found", details: [{ field: "user", issue: "not found" }] });
+      return err({
+        type: "not_found",
+        details: [{ field: "user", issue: "not found" }],
+      });
     }
 
-    // check if the user's teams changed in the input
-    const existingTeams = existingUser.teamUsers
-      .map((teamUser) => teamUser.team)
-      .forEach((team) => {
-        if (!userInput.teams?.includes(team.name)) {
-          // remove the team from the user
+    // Capture the existing team names for the user.
+    existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
+
+    // Build an array of operations for deleting teamUsers that are not in the input.
+    const deleteTeamOps = [] as Prisma.PrismaPromise<any>[];
+    existingUser.teamUsers.forEach((teamUser) => {
+      if (!teams?.includes(teamUser.team.name)) {
+        deleteTeamOps.push(
           prisma.teamUser.delete({
             where: {
-              userId: existingUser.id,
-              teamId: team.id,
+              teamId_userId: {
+                teamId: teamUser.team.id,
+                userId: existingUser.id,
+              },
             },
-          });
+            include: {
+              team: {
+                include: {
+                  projectTeams: {
+                    select: { projectId: true },
+                  },
+                },
+              },
+            },
+          })
+        );
+      }
+    });
 
-          teamCache.revalidate({
-            id: team.id,
-            organizationId: organizationId,
-          });
+    // Look up teams from the input that exist in this organization.
+    newTeams = await getExistingTeamsFromInput(teams, organizationId);
+    const existingUserTeamNames = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
 
-          for (const projectTeam of team.projectTeams) {
-            teamCache.revalidate({
-              projectId: projectTeam.projectId,
-            });
-          }
-        }
-      });
+    // Build an array of operations for creating new teamUsers.
+    const createTeamOps = [] as Prisma.PrismaPromise<any>[];
+    newTeams?.forEach((team) => {
+      if (!existingUserTeamNames.includes(team.name)) {
+        createTeamOps.push(
+          prisma.teamUser.create({
+            data: {
+              role: TeamUserRole.contributor,
+              user: { connect: { id: existingUser.id } },
+              team: { connect: { id: team.id } },
+            },
+            include: {
+              team: {
+                include: {
+                  projectTeams: {
+                    select: { projectId: true },
+                  },
+                },
+              },
+            },
+          })
+        );
+      }
+    });
 
     const prismaData: Prisma.UserUpdateInput = {
       name: name ?? undefined,
@@ -228,80 +276,99 @@ export const updateUser = async (
           },
         },
       },
-      teamUsers:
-        existingTeams?.length > 0
-          ? {
-              createMany: { data: teamUsersToCreate },
-            }
-          : undefined,
     };
 
-    const user = await prisma.user.update({
+    // Build the user update operation.
+    const updateUserOp = prisma.user.update({
       where: { email },
       data: prismaData,
       include: {
         memberships: {
-          select: {
-            role: true,
-            organizationId: true,
-          },
+          select: { role: true, organizationId: true },
         },
       },
     });
 
-    if (existingTeams?.length > 0) {
-      for (const team of existingTeams) {
-        teamCache.revalidate({
-          id: team.id,
-          organizationId,
-        });
+    // Combine all operations into one transaction.
+    const operations = [...deleteTeamOps, ...createTeamOps, updateUserOp];
 
-        for (const projectTeam of team.projectTeams) {
-          teamCache.revalidate({
-            projectId: projectTeam.projectId,
-          });
-        }
-      }
+    // Execute the transaction. The result will be an array with the results in the same order.
+    const results = await prisma.$transaction(operations);
+
+    // Retrieve the updated user result. Since the update was the last operation, it is the last item.
+    const updatedUser = results[results.length - 1];
+
+    // For each deletion, revalidate the corresponding team and its project caches.
+    for (const opResult of results.slice(0, deleteTeamOps.length)) {
+      const deletedTeamUser = opResult;
+      teamCache.revalidate({
+        id: deletedTeamUser.team.id,
+        userId: existingUser.id,
+        organizationId,
+      });
+      deletedTeamUser.team.projectTeams.forEach((projectTeam) => {
+        teamCache.revalidate({
+          projectId: projectTeam.projectId,
+        });
+      });
+    }
+    // For each creation, do the same.
+    for (const opResult of results.slice(deleteTeamOps.length, deleteTeamOps.length + createTeamOps.length)) {
+      const newTeamUser = opResult;
+      teamCache.revalidate({
+        id: newTeamUser.team.id,
+        userId: existingUser.id,
+        organizationId,
+      });
+      newTeamUser.team.projectTeams.forEach((projectTeam) => {
+        teamCache.revalidate({
+          projectId: projectTeam.projectId,
+        });
+      });
     }
 
-    // revalidate membership cache
+    // Revalidate membership and user caches for the updated user.
     membershipCache.revalidate({
       organizationId,
-      userId: user.id,
+      userId: updatedUser.id,
     });
-
-    // revalidate user cache
     userCache.revalidate({
-      id: user.id,
-      email: user.email,
+      id: updatedUser.id,
+      email: updatedUser.email,
     });
 
-    const returnedUser = {
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      email: user.email,
-      name: user.name,
+    const returnedUser: TUser = {
+      id: updatedUser.id,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
+      email: updatedUser.email,
+      name: updatedUser.name,
       // lastLoginAt: user.lastLoginAt,
       lastLoginAt: new Date(),
       // isActive: user.isActive,
       isActive: true,
-      role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
-      teams: existingTeams ? existingTeams.map((team) => team.name) : [],
-    } as TUser;
+      role: updatedUser.memberships.find(
+        (m: { organizationId: string }) => m.organizationId === organizationId
+      )?.role,
+      teams: newTeams ? newTeams.map((team) => team.name) : existingTeams,
+    };
+
     return ok(returnedUser);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "user", issue: error.message }] });
+    return err({
+      type: "internal_server_error",
+      details: [{ field: "user", issue: error.message }],
+    });
   }
 };
 
-const getTeamsFromInput = async (userInput: TUserInput | TUserInputPatch, organizationId: string) => {
+const getExistingTeamsFromInput = async (userInputTeams: string[] | undefined, organizationId: string) => {
   let existingTeams;
 
-  if (userInput.teams) {
+  if (userInputTeams) {
     existingTeams = await prisma.team.findMany({
       where: {
-        name: { in: userInput.teams },
+        name: { in: userInputTeams },
         organizationId,
       },
       select: {
@@ -316,18 +383,5 @@ const getTeamsFromInput = async (userInput: TUserInput | TUserInputPatch, organi
     });
   }
 
-  let teamUsersToCreate;
-
-  if (existingTeams) {
-    teamUsersToCreate = existingTeams.map((team) => ({
-      role: TeamUserRole.contributor,
-      team: {
-        connect: {
-          id: team.id,
-        },
-      },
-    }));
-  }
-
-  return { existingTeams, teamUsersToCreate };
+  return existingTeams;
 };
