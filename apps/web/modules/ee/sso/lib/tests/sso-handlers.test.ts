@@ -7,7 +7,7 @@ import { createAccount } from "@formbricks/lib/account/service";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
-import { handleSSOCallback } from "../sso-handlers";
+import { handleSsoCallback } from "../sso-handlers";
 import {
   mockAccount,
   mockCreatedUser,
@@ -67,7 +67,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 
-describe("handleSSOCallback", () => {
+describe("handleSsoCallback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
@@ -92,7 +92,7 @@ describe("handleSSOCallback", () => {
     it("should return false if SSO is not enabled", async () => {
       vi.mocked(getisSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -102,7 +102,7 @@ describe("handleSSOCallback", () => {
     });
 
     it("should return false if user email is missing", async () => {
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: { ...mockUser, email: "" },
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -112,7 +112,7 @@ describe("handleSSOCallback", () => {
     });
 
     it("should return false if account type is not oauth", async () => {
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: { ...mockAccount, type: "credentials" },
         callbackUrl: "http://localhost:3000",
@@ -124,7 +124,7 @@ describe("handleSSOCallback", () => {
     it("should return false if provider is SAML and SAML SSO is not enabled", async () => {
       vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockSamlAccount,
         callbackUrl: "http://localhost:3000",
@@ -142,7 +142,7 @@ describe("handleSSOCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       });
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -176,7 +176,7 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(updateUser).mockResolvedValue({ ...existingUser, email: mockUser.email });
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -204,7 +204,7 @@ describe("handleSSOCallback", () => {
       });
 
       await expect(
-        handleSSOCallback({
+        handleSsoCallback({
           user: mockUser,
           account: mockAccount,
           callbackUrl: "http://localhost:3000",
@@ -224,7 +224,7 @@ describe("handleSSOCallback", () => {
         isActive: true,
       });
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -240,7 +240,7 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -264,7 +264,7 @@ describe("handleSSOCallback", () => {
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
       vi.mocked(getOrganization).mockResolvedValue(null);
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -295,7 +295,7 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: mockUser,
         account: mockAccount,
         callbackUrl: "http://localhost:3000",
@@ -320,7 +320,7 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("Direct Name"));
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: openIdUser,
         account: mockOpenIdAccount,
         callbackUrl: "http://localhost:3000",
@@ -348,7 +348,7 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("John Doe"));
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: openIdUser,
         account: mockOpenIdAccount,
         callbackUrl: "http://localhost:3000",
@@ -377,7 +377,7 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("preferred.user"));
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: openIdUser,
         account: mockOpenIdAccount,
         callbackUrl: "http://localhost:3000",
@@ -407,7 +407,7 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("test user"));
 
-      const result = await handleSSOCallback({
+      const result = await handleSsoCallback({
         user: openIdUser,
         account: mockOpenIdAccount,
         callbackUrl: "http://localhost:3000",

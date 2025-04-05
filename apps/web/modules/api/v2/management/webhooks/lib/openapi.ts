@@ -5,7 +5,6 @@ import {
 } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/openapi";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
@@ -22,7 +21,7 @@ export const getWebhooksEndpoint: ZodOpenApiOperationObject = {
       description: "Webhooks retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZWebhook))),
+          schema: responseWithMetaSchema(makePartialSchema(ZWebhook)),
         },
       },
     },
@@ -60,7 +59,7 @@ export const webhookPaths: ZodOpenApiPathsObject = {
     get: getWebhooksEndpoint,
     post: createWebhookEndpoint,
   },
-  "/webhooks/{webhookId}": {
+  "/webhooks/{id}": {
     get: getWebhookEndpoint,
     put: updateWebhookEndpoint,
     delete: deleteWebhookEndpoint,

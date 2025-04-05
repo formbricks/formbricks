@@ -1,7 +1,7 @@
-import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
+import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
-import { handleSSOCallback } from "@/modules/ee/sso/lib/sso-handlers";
+import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
@@ -218,15 +218,17 @@ export const authOptions: NextAuthOptions = {
         if (!user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           throw new Error("Email Verification is Pending");
         }
+        await updateUserLastLoginAt(user.email);
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY) {
-        return handleSSOCallback({
-          user,
-          account,
-          callbackUrl,
-        });
+        const result = await handleSsoCallback({ user, account, callbackUrl });
+        if (result) {
+          await updateUserLastLoginAt(user.email);
+        }
+        return result;
       }
+      await updateUserLastLoginAt(user.email);
       return true;
     },
   },

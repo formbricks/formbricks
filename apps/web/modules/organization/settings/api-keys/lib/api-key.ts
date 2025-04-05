@@ -59,33 +59,50 @@ export const getApiKeyWithPermissions = reactCache(async (apiKey: string) => {
   const hashedKey = hashApiKey(apiKey);
   return cache(
     async () => {
-      // Look up the API key in the new structure
-      const apiKeyData = await prisma.apiKey.findUnique({
-        where: {
-          hashedKey,
-        },
-        include: {
-          apiKeyEnvironments: {
-            include: {
-              environment: true,
+      try {
+        // Look up the API key in the new structure
+        const apiKeyData = await prisma.apiKey.findUnique({
+          where: {
+            hashedKey,
+          },
+          include: {
+            apiKeyEnvironments: {
+              include: {
+                environment: {
+                  include: {
+                    project: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+                },
+              },
             },
           },
-        },
-      });
+        });
 
-      if (!apiKeyData) return null;
+        if (!apiKeyData) return null;
 
-      // Update the last used timestamp
-      await prisma.apiKey.update({
-        where: {
-          id: apiKeyData.id,
-        },
-        data: {
-          lastUsedAt: new Date(),
-        },
-      });
+        // Update the last used timestamp
+        await prisma.apiKey.update({
+          where: {
+            id: apiKeyData.id,
+          },
+          data: {
+            lastUsedAt: new Date(),
+          },
+        });
 
-      return apiKeyData;
+        return apiKeyData;
+      } catch (error) {
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+          throw new DatabaseError(error.message);
+        }
+
+        throw error;
+      }
     },
     [`getApiKeyWithPermissions-${apiKey}`],
     {
