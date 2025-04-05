@@ -31,6 +31,12 @@ export const getUsers = async (
               team: true,
             },
           },
+          memberships: {
+            select: {
+              role: true,
+              organizationId: true,
+            },
+          },
         },
       }),
       prisma.user.count({
@@ -48,7 +54,7 @@ export const getUsers = async (
       lastLoginAt: new Date(),
       // isActive: user.isActive,
       isActive: true,
-      role: user.role as TNoBillingOrganizationRoles,
+      role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
       teams: user.teamUsers.map((teamUser) => teamUser.team.name),
     }));
 
@@ -299,6 +305,7 @@ export const updateUser = async (
         userId: existingUser.id,
         organizationId,
       });
+
       deletedTeamUser.team.projectTeams.forEach((projectTeam) => {
         teamCache.revalidate({
           projectId: projectTeam.projectId,
@@ -313,6 +320,7 @@ export const updateUser = async (
         userId: existingUser.id,
         organizationId,
       });
+
       newTeamUser.team.projectTeams.forEach((projectTeam) => {
         teamCache.revalidate({
           projectId: projectTeam.projectId,

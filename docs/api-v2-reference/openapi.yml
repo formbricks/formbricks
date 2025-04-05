@@ -3134,16 +3134,6 @@ paths:
           schema:
             $ref: "#/components/schemas/organizationId"
           required: true
-        - in: query
-          name: teamId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: projectId
-          schema:
-            type: string
-          required: true
       requestBody:
         required: true
         description: The project team to update
@@ -3152,6 +3142,12 @@ paths:
             schema:
               type: object
               properties:
+                teamId:
+                  type: string
+                  description: The ID of the team
+                projectId:
+                  type: string
+                  description: The ID of the project
                 permission:
                   type: string
                   enum:
@@ -3160,6 +3156,8 @@ paths:
                     - manage
                   description: Level of access granted to the project
               required:
+                - teamId
+                - projectId
                 - permission
       responses:
         "200":

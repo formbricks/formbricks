@@ -16,7 +16,6 @@ import {
   ZGetProjectTeamUpdateFilter,
   ZGetProjectTeamsFilter,
   ZProjectTeamInput,
-  ZProjectZTeamUpdateSchema,
 } from "./types/project-teams";
 
 export async function GET(request: Request, props: { params: Promise<{ organizationId: string }> }) {
@@ -104,13 +103,12 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
   return authenticatedApiClient({
     request,
     schemas: {
-      body: ZProjectZTeamUpdateSchema,
-      query: ZGetProjectTeamUpdateFilter,
+      body: ZProjectTeamInput,
       params: z.object({ organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
-    handler: async ({ parsedInput: { query, body, params }, authentication }) => {
-      const { teamId, projectId } = query!;
+    handler: async ({ parsedInput: { body, params }, authentication }) => {
+      const { teamId, projectId } = body!;
 
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {
         return handleApiError(request, {

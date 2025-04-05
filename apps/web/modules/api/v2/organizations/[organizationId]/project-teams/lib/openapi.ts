@@ -2,7 +2,6 @@ import {
   ZGetProjectTeamUpdateFilter,
   ZGetProjectTeamsFilter,
   ZProjectTeamInput,
-  ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { organizationServer } from "@/modules/api/v2/organizations/lib/openapi";
@@ -94,7 +93,6 @@ export const updateProjectTeamEndpoint: ZodOpenApiOperationObject = {
   description: "Updates a project team in the database.",
   tags: ["Organizations API > Project Teams"],
   requestParams: {
-    query: ZGetProjectTeamUpdateFilter.required(),
     path: z.object({
       organizationId: ZOrganizationIdSchema,
     }),
@@ -104,7 +102,7 @@ export const updateProjectTeamEndpoint: ZodOpenApiOperationObject = {
     description: "The project team to update",
     content: {
       "application/json": {
-        schema: ZProjectZTeamUpdateSchema,
+        schema: ZProjectTeamInput,
       },
     },
   },
