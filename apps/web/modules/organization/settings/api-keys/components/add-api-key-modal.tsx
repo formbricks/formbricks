@@ -377,6 +377,7 @@ export const AddApiKeyModal = ({
                         </div>
                         <div className="flex items-center justify-center py-1">
                           <Switch
+                            data-testid={`organization-access-${key}-write`}
                             checked={selectedOrganizationAccess[key].write}
                             onCheckedChange={(newVal) =>
                               setSelectedOrganizationAccessValue(key, "write", newVal)

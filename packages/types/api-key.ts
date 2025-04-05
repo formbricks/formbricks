@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-enum OrganizationAccessType {
+export enum OrganizationAccessType {
   Read = "read",
   Write = "write",
 }
 
-enum OrganizationAccess {
+export enum OrganizationAccess {
   AccessControl = "accessControl",
 }
 

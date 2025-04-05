@@ -11,7 +11,7 @@ export const getWebhookEndpoint: ZodOpenApiOperationObject = {
   description: "Gets a webhook from the database.",
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: webhookIdSchema,
     }),
   },
   tags: ["Management API > Webhooks"],
@@ -34,7 +34,7 @@ export const deleteWebhookEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Webhooks"],
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: webhookIdSchema,
     }),
   },
   responses: {
@@ -56,7 +56,7 @@ export const updateWebhookEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Webhooks"],
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: webhookIdSchema,
     }),
   },
   requestBody: {

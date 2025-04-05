@@ -1,4 +1,4 @@
-import { type ApiKey, type ApiKeyEnvironment, ApiKeyPermission } from "@prisma/client";
+import { type ApiKey, type ApiKeyEnvironment, ApiKeyPermission, EnvironmentType } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "../../types/api-key";
 
@@ -10,6 +10,9 @@ export const ZApiKeyEnvironment = z.object({
   updatedAt: z.date(),
   apiKeyId: z.string().cuid2(),
   environmentId: z.string().cuid2(),
+  projectId: z.string().cuid2(),
+  projectName: z.string(),
+  environmentType: z.nativeEnum(EnvironmentType),
   permission: ZApiKeyPermission,
 }) satisfies z.ZodType<ApiKeyEnvironment>;
 
@@ -37,3 +40,20 @@ export const ZApiKeyEnvironmentCreateInput = z.object({
   environmentId: z.string().cuid2(),
   permission: ZApiKeyPermission,
 });
+
+export const ZApiKeyData = ZApiKey.pick({
+  organizationId: true,
+  organizationAccess: true,
+}).merge(
+  z.object({
+    environments: z.array(
+      ZApiKeyEnvironment.pick({
+        environmentId: true,
+        environmentType: true,
+        permission: true,
+        projectId: true,
+        projectName: true,
+      })
+    ),
+  })
+);
