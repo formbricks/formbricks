@@ -3,8 +3,8 @@
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
-import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
+import { CustomDialog } from "@/modules/ui/components/custom-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Project } from "@prisma/client";
 import { useTranslate } from "@tolgee/react";
@@ -387,39 +387,22 @@ export const SurveyMenuBar = ({
             </Button>
           )}
         </div>
-        <AlertDialog
-          headerText={t("environments.surveys.edit.confirm_survey_changes")}
-          open={isConfirmDialogOpen}
-          setOpen={setConfirmDialogOpen}
-          mainText={t("environments.surveys.edit.unsaved_changes_warning")}
-          confirmBtnLabel={t("common.save")}
-          declineBtnLabel={t("common.discard")}
-          declineBtnVariant="destructive"
-          onDecline={() => {
-            setConfirmDialogOpen(false);
-            router.back();
-          }}
-          onConfirm={() => handleSaveAndGoBack()}
-        />
-        <AlertDialog
-          headerText={t("environments.surveys.edit.caution_edit_published_survey")}
+        <CustomDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}
-          mainText={
-            <>
-              <p>{t("environments.surveys.edit.caution_recommendation")}</p>
-              <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
-              <ul className="mt-3 list-disc space-y-0.5 pl-5">
-                <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
-                <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
-              </ul>
-            </>
-          }
-          confirmBtnLabel={t("common.close")}
-          onConfirm={() => setIsCautionDialogOpen(false)}
-        />
+          title={t("environments.surveys.edit.caution_edit_published_survey")}
+          okBtnText={t("common.close")}
+          okBtnVariant="default"
+          onOk={async () => setIsCautionDialogOpen(false)}>
+          <p>{t("environments.surveys.edit.caution_recommendation")}</p>
+          <p className="mt-3">{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <ul className="mt-3 list-disc space-y-0.5 pl-5">
+            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+            <li>{t("environments.surveys.edit.caution_explanation_all_data_as_download")}</li>
+          </ul>
+        </CustomDialog>
       </div>
     </>
   );
