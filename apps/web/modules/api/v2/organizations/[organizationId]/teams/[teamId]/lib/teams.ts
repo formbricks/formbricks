@@ -10,7 +10,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { cache } from "@formbricks/lib/cache";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-export const getTeam = reactCache(async (organizationId, teamId: string) =>
+export const getTeam = reactCache(async (organizationId: string, teamId: string) =>
   cache(
     async (): Promise<Result<Team, ApiErrorResponseV2>> => {
       try {
@@ -41,7 +41,7 @@ export const getTeam = reactCache(async (organizationId, teamId: string) =>
 );
 
 export const deleteTeam = async (
-  organizationId,
+  organizationId: string,
   teamId: string
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
   try {
@@ -92,7 +92,7 @@ export const deleteTeam = async (
 };
 
 export const updateTeam = async (
-  organizationId,
+  organizationId: string,
   teamId: string,
   teamInput: z.infer<typeof teamUpdateSchema>
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
