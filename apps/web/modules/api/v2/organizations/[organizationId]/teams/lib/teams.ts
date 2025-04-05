@@ -7,7 +7,7 @@ import {
 } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
-import { Prisma, Team } from "@prisma/client";
+import { Team } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { organizationCache } from "@formbricks/lib/organization/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
@@ -15,24 +15,18 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const createTeam = async (
   teamInput: TTeamInput,
-  organizationId
+  organizationId: string
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
   captureTelemetry("team created");
 
   const { name } = teamInput;
 
   try {
-    const prismaData: Prisma.TeamCreateInput = {
-      name,
-      organization: {
-        connect: {
-          id: organizationId,
-        },
-      },
-    };
-
     const team = await prisma.team.create({
-      data: prismaData,
+      data: {
+        name,
+        organizationId,
+      },
     });
 
     organizationCache.revalidate({
