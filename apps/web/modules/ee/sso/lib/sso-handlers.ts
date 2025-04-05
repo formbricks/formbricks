@@ -3,7 +3,11 @@ import { getUserByEmail, updateUser } from "@/modules/auth/lib/user";
 import { createUser } from "@/modules/auth/lib/user";
 import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import { TOidcNameFields, TSamlNameFields } from "@/modules/auth/types/auth";
-import { getIsSamlSsoEnabled, getisSsoEnabled } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getisSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
@@ -117,29 +121,43 @@ export const handleSSOCallback = async ({
       }
     }
 
+    // Reject if no callback URL and no default org in self-hosted environment
     if (!callbackUrl && !DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
       return false;
     }
 
+    // Get multi-org license status
+    const isMultiOrgEnabled = await getIsMultiOrgEnabled();
+
+    // Additional security checks for self-hosted instances without default org
     if (!DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
       try {
+        // Parse and validate the callback URL
         const isValidCallbackUrl = new URL(callbackUrl);
+        // Extract invite token and source from URL parameters
         const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
         const source = isValidCallbackUrl.searchParams.get("source") || "";
 
-        if (source === "signin" && !inviteToken) {
+        // Allow sign-in if multi-org is enabled, otherwise check for invite token
+        if (source === "signin" && !inviteToken && !isMultiOrgEnabled) {
           return false;
         }
 
-        const { email } = verifyInviteToken(inviteToken);
-        if (email !== user.email) {
-          return false;
-        }
-        const isValidInviteToken = await getIsValidInviteToken(inviteToken);
-        if (!isValidInviteToken) {
-          return false;
+        // If multi-org is enabled, skip invite token validation
+        if (!isMultiOrgEnabled) {
+          // Verify invite token and check email match
+          const { email } = verifyInviteToken(inviteToken);
+          if (email !== user.email) {
+            return false;
+          }
+          // Check if invite token is still valid
+          const isValidInviteToken = await getIsValidInviteToken(inviteToken);
+          if (!isValidInviteToken) {
+            return false;
+          }
         }
       } catch (err) {
+        // Log and reject on any validation errors
         logger.error(err, "Invalid callbackUrl");
         return false;
       }
