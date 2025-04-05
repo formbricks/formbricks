@@ -1328,6 +1328,7 @@
         "card_shadow_color": "cor da sombra do cartão",
         "card_styling": "Estilização de Cartão",
         "casual": "Casual",
+        "caution_edit_duplicate": "Duplicar e editar",
         "caution_edit_published_survey": "Editar uma pesquisa publicada?",
         "caution_explanation_all_data_as_download": "Todos os dados, incluindo respostas anteriores, estão disponíveis para download.",
         "caution_explanation_intro": "Entendemos que você ainda pode querer fazer alterações. Aqui está o que acontece se você fizer:",

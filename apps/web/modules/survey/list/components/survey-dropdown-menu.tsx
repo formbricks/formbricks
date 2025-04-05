@@ -117,7 +117,6 @@ export const SurveyDropDownMenu = ({
     } catch (error) {
       toast.error(t("environments.surveys.survey_duplication_error"));
     }
-    setIsCautionDialogOpen(false);
     setLoading(false);
   };
 
@@ -266,7 +265,8 @@ export const SurveyDropDownMenu = ({
           isLoading={loading}
           okBtnText={t("common.duplicate")}
           okBtnVariant="default"
-          onOk={async () => await duplicateSurveyAndRefresh(survey.id)}
+          onOk={async () => {await duplicateSurveyAndRefresh(survey.id);
+                    setIsCautionDialogOpen(false)}}
           cancelBtnText={t("common.edit")}
           cancelBtnVariant="outline"
           onCancel={() => router.push(`/environments/${environmentId}/surveys/${survey.id}/edit`)}>

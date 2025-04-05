@@ -223,7 +223,7 @@ export const SurveyAnalysisCTA = ({
           setOpen={setIsCautionDialogOpen}
           title={t("environments.surveys.edit.caution_edit_published_survey")}
           isLoading={loading}
-          okBtnText={t("common.duplicate")}
+          okBtnText={t("environments.surveys.edit.caution_edit_duplicate")}
           okBtnVariant="default"
           onOk={async () => await duplicateSurveyAndRoute(survey.id)}
           cancelBtnText={t("common.edit")}
