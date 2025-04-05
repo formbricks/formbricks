@@ -38,10 +38,6 @@ export const getUsers = async (
       }),
     ]);
 
-    if (!users) {
-      return err({ type: "not_found", details: [{ field: "users", issue: "not found" }] });
-    }
-
     const returnedUsers = users.map((user) => ({
       id: user.id,
       createdAt: user.createdAt,

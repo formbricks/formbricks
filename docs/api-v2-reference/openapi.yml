@@ -3371,8 +3371,8 @@ paths:
     post:
       operationId: createUser
       summary: Create a user
-      description: Gets users from the database.<br />Only available for self-hosted
-        Formbricks.
+      description: Create a new user in the database.<br />Only available for
+        self-hosted Formbricks.
       tags:
         - Organizations API > Users
       parameters:
@@ -3474,8 +3474,8 @@ paths:
     patch:
       operationId: updateUser
       summary: Update a user
-      description: Gets users from the database.<br />Only available for self-hosted
-        Formbricks.
+      description: Updates an existing user in the database.<br />Only available for
+        self-hosted Formbricks.
       tags:
         - Organizations API > Users
       parameters:
@@ -3521,7 +3521,7 @@ paths:
               required:
                 - email
       responses:
-        "201":
+        "200":
           description: User updated successfully.
           content:
             application/json:
@@ -4631,6 +4631,7 @@ components:
         - createdAt
         - updatedAt
         - lastLoginAt
+        - isActive
         - name
         - email
         - role

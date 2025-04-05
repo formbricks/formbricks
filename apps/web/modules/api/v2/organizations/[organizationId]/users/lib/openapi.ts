@@ -36,7 +36,7 @@ export const getUsersEndpoint: ZodOpenApiOperationObject = {
 export const createUserEndpoint: ZodOpenApiOperationObject = {
   operationId: "createUser",
   summary: "Create a user",
-  description: `Gets users from the database.<br />Only available for self-hosted Formbricks.`,
+  description: `Create a new user in the database.<br />Only available for self-hosted Formbricks.`,
   requestParams: {
     path: z.object({
       organizationId: ZOrganizationIdSchema,
@@ -67,7 +67,7 @@ export const createUserEndpoint: ZodOpenApiOperationObject = {
 export const updateUserEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateUser",
   summary: "Update a user",
-  description: `Gets users from the database.<br />Only available for self-hosted Formbricks.`,
+  description: `Updates an existing user in the database.<br />Only available for self-hosted Formbricks.`,
   requestParams: {
     path: z.object({
       organizationId: ZOrganizationIdSchema,
@@ -84,7 +84,7 @@ export const updateUserEndpoint: ZodOpenApiOperationObject = {
     },
   },
   responses: {
-    "201": {
+    "200": {
       description: "User updated successfully.",
       content: {
         "application/json": {

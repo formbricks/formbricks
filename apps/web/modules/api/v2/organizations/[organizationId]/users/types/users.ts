@@ -25,6 +25,8 @@ export const ZUserInput = ZUser.omit({
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
+}).extend({
+  isActive: ZUser.shape.isActive.optional(),
 });
 
 export type TUserInput = z.infer<typeof ZUserInput>;

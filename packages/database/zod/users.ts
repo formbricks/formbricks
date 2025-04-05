@@ -30,7 +30,7 @@ export const ZUser = z.object({
     description: "The date and time the user last logged in",
     example: "2021-01-01T00:00:00.000Z",
   }),
-  isActive: z.boolean().optional().openapi({
+  isActive: z.boolean().openapi({
     description: "Whether the user is active",
     example: true,
   }),
