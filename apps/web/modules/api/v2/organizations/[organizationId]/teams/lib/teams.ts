@@ -57,10 +57,6 @@ export const getTeams = async (
       }),
     ]);
 
-    if (!teams) {
-      return err({ type: "not_found", details: [{ field: "teams", issue: "not found" }] });
-    }
-
     return ok({
       data: teams,
       meta: {

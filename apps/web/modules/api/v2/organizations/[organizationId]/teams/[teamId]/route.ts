@@ -8,10 +8,10 @@ import {
   updateTeam,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/lib/teams";
 import {
-  teamIdSchema,
-  teamUpdateSchema,
+  ZTeamIdSchema,
+  ZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
-import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { z } from "zod";
 import { OrganizationAccessType } from "@formbricks/types/api-key";
 
@@ -22,7 +22,7 @@ export const GET = async (
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ teamId: teamIdSchema, organizationId: organizationIdSchema }),
+      params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { params } }) => {
@@ -49,7 +49,7 @@ export const DELETE = async (
   authenticatedApiClient({
     request,
     schemas: {
-      params: z.object({ teamId: teamIdSchema, organizationId: organizationIdSchema }),
+      params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
     },
     externalParams: props.params,
     handler: async ({ authentication, parsedInput: { params } }) => {
@@ -78,8 +78,8 @@ export const PUT = (
     request,
     externalParams: props.params,
     schemas: {
-      params: z.object({ teamId: teamIdSchema, organizationId: organizationIdSchema }),
-      body: teamUpdateSchema,
+      params: z.object({ teamId: ZTeamIdSchema, organizationId: ZOrganizationIdSchema }),
+      body: ZTeamUpdateSchema,
     },
     handler: async ({ authentication, parsedInput: { body, params } }) => {
       if (!hasOrganizationIdAndAccess(params!.organizationId, authentication, OrganizationAccessType.Write)) {

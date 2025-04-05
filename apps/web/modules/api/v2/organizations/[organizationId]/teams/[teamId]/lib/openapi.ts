@@ -1,6 +1,6 @@
-import { teamIdSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
+import { ZTeamIdSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ZTeamInput } from "@/modules/api/v2/organizations/[organizationId]/teams/types/teams";
-import { organizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
+import { ZOrganizationIdSchema } from "@/modules/api/v2/organizations/[organizationId]/types/organizations";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
 import { ZodOpenApiOperationObject } from "zod-openapi";
@@ -12,8 +12,8 @@ export const getTeamEndpoint: ZodOpenApiOperationObject = {
   description: "Gets a team from the database.",
   requestParams: {
     path: z.object({
-      id: teamIdSchema,
-      organizationId: organizationIdSchema,
+      id: ZTeamIdSchema,
+      organizationId: ZOrganizationIdSchema,
     }),
   },
   tags: ["Organizations API > Teams"],
@@ -36,8 +36,8 @@ export const deleteTeamEndpoint: ZodOpenApiOperationObject = {
   tags: ["Organizations API > Teams"],
   requestParams: {
     path: z.object({
-      id: teamIdSchema,
-      organizationId: organizationIdSchema,
+      id: ZTeamIdSchema,
+      organizationId: ZOrganizationIdSchema,
     }),
   },
   responses: {
@@ -59,8 +59,8 @@ export const updateTeamEndpoint: ZodOpenApiOperationObject = {
   tags: ["Organizations API > Teams"],
   requestParams: {
     path: z.object({
-      id: teamIdSchema,
-      organizationId: organizationIdSchema,
+      id: ZTeamIdSchema,
+      organizationId: ZOrganizationIdSchema,
     }),
   },
   requestBody: {
