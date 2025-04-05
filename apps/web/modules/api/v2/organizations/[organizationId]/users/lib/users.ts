@@ -75,7 +75,7 @@ export const createUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user created");
 
-  const { name, email, role, teams } = userInput;
+  const { name, email, role, teams, isActive } = userInput;
 
   try {
     const existingTeams = teams && (await getExistingTeamsFromInput(teams, organizationId));
@@ -96,7 +96,7 @@ export const createUser = async (
     const prismaData: Prisma.UserCreateInput = {
       name,
       email,
-      // isActive: isActive ?? false,
+      isActive: isActive,
       memberships: {
         create: {
           accepted: true, // auto accept because there is no invite
@@ -153,13 +153,11 @@ export const createUser = async (
       updatedAt: user.updatedAt,
       email: user.email,
       name: user.name,
-      // lastLoginAt: user.lastLoginAt,
-      lastLoginAt: new Date(),
-      // isActive: user.isActive,
-      isActive: true,
+      lastLoginAt: user.lastLoginAt,
+      isActive: user.isActive,
       role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
       teams: existingTeams ? existingTeams.map((team) => team.name) : [],
-    };
+    } as TUser;
 
     return ok(returnedUser);
   } catch (error) {
@@ -173,7 +171,7 @@ export const updateUser = async (
 ): Promise<Result<TUser, ApiErrorResponseV2>> => {
   captureTelemetry("user updated");
 
-  const { name, email, role, teams } = userInput;
+  const { name, email, role, teams, isActive } = userInput;
   let existingTeams: string[] = [];
   let newTeams;
 
@@ -209,7 +207,7 @@ export const updateUser = async (
     // Build an array of operations for deleting teamUsers that are not in the input.
     const deleteTeamOps = [] as Prisma.PrismaPromise<any>[];
     existingUser.teamUsers.forEach((teamUser) => {
-      if (!teams?.includes(teamUser.team.name)) {
+      if (teams && !teams?.includes(teamUser.team.name)) {
         deleteTeamOps.push(
           prisma.teamUser.delete({
             where: {
@@ -264,7 +262,7 @@ export const updateUser = async (
     const prismaData: Prisma.UserUpdateInput = {
       name: name ?? undefined,
       email: email ?? undefined,
-      // isActive: isActive ?? undefined,
+      isActive: isActive ?? undefined,
       memberships: {
         updateMany: {
           where: {
@@ -342,10 +340,8 @@ export const updateUser = async (
       updatedAt: updatedUser.updatedAt,
       email: updatedUser.email,
       name: updatedUser.name,
-      // lastLoginAt: user.lastLoginAt,
-      lastLoginAt: new Date(),
-      // isActive: user.isActive,
-      isActive: true,
+      lastLoginAt: updatedUser.lastLoginAt,
+      isActive: updatedUser.isActive,
       role: updatedUser.memberships.find(
         (m: { organizationId: string }) => m.organizationId === organizationId
       )?.role,
