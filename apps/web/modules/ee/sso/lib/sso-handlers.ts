@@ -121,16 +121,16 @@ export const handleSSOCallback = async ({
       }
     }
 
-    // Reject if no callback URL and no default org in self-hosted environment
-    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
-      return false;
-    }
-
     // Get multi-org license status
     const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
+    // Reject if no callback URL and no default org in self-hosted environment
+    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID && !isMultiOrgEnabled) {
+      return false;
+    }
+
     // Additional security checks for self-hosted instances without default org
-    if (!DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
+    if (!DEFAULT_ORGANIZATION_ID && !isMultiOrgEnabled) {
       try {
         // Parse and validate the callback URL
         const isValidCallbackUrl = new URL(callbackUrl);
@@ -139,22 +139,20 @@ export const handleSSOCallback = async ({
         const source = isValidCallbackUrl.searchParams.get("source") || "";
 
         // Allow sign-in if multi-org is enabled, otherwise check for invite token
-        if (source === "signin" && !inviteToken && !isMultiOrgEnabled) {
+        if (source === "signin" && !inviteToken) {
           return false;
         }
 
         // If multi-org is enabled, skip invite token validation
-        if (!isMultiOrgEnabled) {
-          // Verify invite token and check email match
-          const { email, inviteId } = verifyInviteToken(inviteToken);
-          if (email !== user.email) {
-            return false;
-          }
-          // Check if invite token is still valid
-          const isValidInviteToken = await getIsValidInviteToken(inviteId);
-          if (!isValidInviteToken) {
-            return false;
-          }
+        // Verify invite token and check email match
+        const { email, inviteId } = verifyInviteToken(inviteToken);
+        if (email !== user.email) {
+          return false;
+        }
+        // Check if invite token is still valid
+        const isValidInviteToken = await getIsValidInviteToken(inviteId);
+        if (!isValidInviteToken) {
+          return false;
         }
       } catch (err) {
         // Log and reject on any validation errors
