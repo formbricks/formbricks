@@ -194,6 +194,7 @@ export const authOptions: NextAuthOptions = {
       return {
         ...token,
         profile: { id: existingUser.id },
+        isActive: existingUser.isActive,
       };
     },
     async session({ session, token }) {
