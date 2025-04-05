@@ -81,6 +81,8 @@ export const getPlaceHolderById = (id: string, t: TFnType) => {
       return t("environments.surveys.edit.your_question_here_recall_information_with");
     case "subheader":
       return t("environments.surveys.edit.your_description_here_recall_information_with");
+    case "tooltip":
+      return t("environments.surveys.edit.your_tooltip_here_recall_information_with");
     default:
       return "";
   }

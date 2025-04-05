@@ -1283,6 +1283,7 @@
         "add_question": "Add question",
         "add_question_below": "Add question below",
         "add_row": "Add row",
+        "add_tooltip": "Add tooltip",
         "add_variable": "Add variable",
         "address_fields": "Address Fields",
         "address_line_1": "Address Line 1",
@@ -1623,6 +1624,7 @@
         "three_points": "3 points",
         "times": "times",
         "to_keep_the_placement_over_all_surveys_consistent_you_can": "To keep the placement over all surveys consistent, you can",
+        "tooltip": "Tooltip",
         "trigger_survey_when_one_of_the_actions_is_fired": "Trigger survey when one of the actions is fired...",
         "try_lollipop_or_mountain": "Try 'lollipop' or 'mountain'...",
         "type_field_id": "Type field id",
@@ -1655,6 +1657,7 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "You need to have two or more languages set up in your project to work with translations.",
         "your_description_here_recall_information_with": "Your description here. Recall information with @",
         "your_question_here_recall_information_with": "Your question here. Recall information with @",
+        "your_tooltip_here_recall_information_with": "Your tooltip here. Recall information with @",
         "your_web_app": "Your web app",
         "zip": "Zip"
       },

@@ -294,7 +294,9 @@ export const QuestionFormInput = ({
               onAddFallback={() => {
                 inputRef.current?.focus();
               }}
-              isRecallAllowed={!isWelcomeCard && (id === "headline" || id === "subheader")}
+              isRecallAllowed={
+                !isWelcomeCard && (id === "headline" || id === "subheader" || id === "tooltip")
+              }
               usedLanguageCode={usedLanguageCode}
               render={({
                 value,
@@ -396,23 +398,26 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {id === "subheader" && question && question.subheader !== undefined && (
-                          <TooltipRenderer tooltipContent={t("environments.surveys.edit.remove_description")}>
-                            <Button
-                              variant="secondary"
-                              size="icon"
-                              aria-label="Remove description"
-                              className="ml-2"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (updateQuestion) {
-                                  updateQuestion(questionIdx, { subheader: undefined });
-                                }
-                              }}>
-                              <TrashIcon />
-                            </Button>
-                          </TooltipRenderer>
-                        )}
+                        {((id === "subheader" && question.subheader !== undefined) ||
+                          (id === "tooltip" && question.tooltip !== undefined)) &&
+                          question && (
+                            <TooltipRenderer
+                              tooltipContent={t("environments.surveys.edit.remove_description")}>
+                              <Button
+                                variant="secondary"
+                                size="icon"
+                                aria-label="Remove description"
+                                className="ml-2"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (updateQuestion) {
+                                    updateQuestion(questionIdx, { [id]: undefined });
+                                  }
+                                }}>
+                                <TrashIcon />
+                              </Button>
+                            </TooltipRenderer>
+                          )}
                       </>
                     </div>
                   </div>

@@ -1283,6 +1283,7 @@
         "add_question": "Ajouter une question",
         "add_question_below": "Ajouter une question ci-dessous",
         "add_row": "Ajouter une ligne",
+        "add_tooltip": "Ajouter une info-bulle",
         "add_variable": "Ajouter une variable",
         "address_fields": "Champs d'adresse",
         "address_line_1": "Ligne d'adresse 1",
@@ -1623,6 +1624,7 @@
         "three_points": "3 points",
         "times": "fois",
         "to_keep_the_placement_over_all_surveys_consistent_you_can": "Pour maintenir la cohérence du placement sur tous les sondages, vous pouvez",
+        "tooltip": "Info-bulle",
         "trigger_survey_when_one_of_the_actions_is_fired": "Déclencher l'enquête lorsqu'une des actions est déclenchée...",
         "try_lollipop_or_mountain": "Essayez 'sucette' ou 'montagne'...",
         "type_field_id": "Identifiant de champ de type",
@@ -1655,6 +1657,7 @@
         "you_need_to_have_two_or_more_languages_set_up_in_your_project_to_work_with_translations": "Vous devez avoir deux langues ou plus configurées dans votre projet pour travailler avec des traductions.",
         "your_description_here_recall_information_with": "Votre description ici. Rappelez-vous des informations avec @",
         "your_question_here_recall_information_with": "Votre question ici. Rappelez-vous des informations avec @",
+        "your_tooltip_here_recall_information_with": "Votre info-bulle ici. Rappelez-vous des informations avec @",
         "your_web_app": "Votre application web",
         "zip": "Zip"
       },
