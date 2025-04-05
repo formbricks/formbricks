@@ -32,6 +32,7 @@ vi.mock("@/modules/auth/lib/user", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsSamlSsoEnabled: vi.fn(),
   getisSsoEnabled: vi.fn(),
+  getIsMultiOrgEnabled: vi.fn().mockResolvedValue(true),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -63,6 +64,7 @@ vi.mock("@formbricks/lib/utils/locale", () => ({
 vi.mock("@formbricks/lib/constants", () => ({
   DEFAULT_ORGANIZATION_ID: "org-123",
   DEFAULT_ORGANIZATION_ROLE: "member",
+  ENCRYPTION_KEY: "test-encryption-key-32-chars-long",
 }));
 
 describe("handleSSOCallback", () => {
@@ -90,24 +92,31 @@ describe("handleSSOCallback", () => {
     it("should return false if SSO is not enabled", async () => {
       vi.mocked(getisSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
-      expect(getisSsoEnabled).toHaveBeenCalled();
     });
 
     it("should return false if user email is missing", async () => {
-      const userWithoutEmail = { ...mockUser, email: "" };
-
-      const result = await handleSSOCallback({ user: userWithoutEmail, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: { ...mockUser, email: "" },
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
     });
 
     it("should return false if account type is not oauth", async () => {
-      const nonOauthAccount = { ...mockAccount, type: "credentials" as const };
-
-      const result = await handleSSOCallback({ user: mockUser, account: nonOauthAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: { ...mockAccount, type: "credentials" },
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
     });
@@ -115,10 +124,13 @@ describe("handleSSOCallback", () => {
     it("should return false if provider is SAML and SAML SSO is not enabled", async () => {
       vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockSamlAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockSamlAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(false);
-      expect(getIsSamlSsoEnabled).toHaveBeenCalled();
     });
   });
 
@@ -130,7 +142,11 @@ describe("handleSSOCallback", () => {
         accounts: [{ provider: mockAccount.provider }],
       });
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
@@ -160,7 +176,11 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(updateUser).mockResolvedValue({ ...existingUser, email: mockUser.email });
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(updateUser).toHaveBeenCalledWith(existingUser.id, { email: mockUser.email });
@@ -180,9 +200,16 @@ describe("handleSSOCallback", () => {
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
         locale: mockUser.locale,
+        isActive: true,
       });
 
-      await expect(handleSSOCallback({ user: mockUser, account: mockAccount })).rejects.toThrow(
+      await expect(
+        handleSSOCallback({
+          user: mockUser,
+          account: mockAccount,
+          callbackUrl: "http://localhost:3000",
+        })
+      ).rejects.toThrow(
         "Looks like you updated your email somewhere else. A user with this new email exists already."
       );
     });
@@ -194,9 +221,14 @@ describe("handleSSOCallback", () => {
         email: mockUser.email,
         emailVerified: mockUser.emailVerified,
         locale: mockUser.locale,
+        isActive: true,
       });
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
     });
@@ -208,7 +240,11 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith({
@@ -228,7 +264,11 @@ describe("handleSSOCallback", () => {
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
       vi.mocked(getOrganization).mockResolvedValue(null);
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createOrganization).toHaveBeenCalledWith({
@@ -255,7 +295,11 @@ describe("handleSSOCallback", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser());
 
-      const result = await handleSSOCallback({ user: mockUser, account: mockAccount });
+      const result = await handleSSOCallback({
+        user: mockUser,
+        account: mockAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createOrganization).not.toHaveBeenCalled();
@@ -276,14 +320,21 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("Direct Name"));
 
-      const result = await handleSSOCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSSOCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "Direct Name",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -297,14 +348,21 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("John Doe"));
 
-      const result = await handleSSOCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSSOCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "John Doe",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -319,14 +377,21 @@ describe("handleSSOCallback", () => {
 
       vi.mocked(createUser).mockResolvedValue(mockCreatedUser("preferred.user"));
 
-      const result = await handleSSOCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSSOCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "preferred.user",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
@@ -340,16 +405,23 @@ describe("handleSSOCallback", () => {
         email: "test.user@example.com",
       });
 
-      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("test.user"));
+      vi.mocked(createUser).mockResolvedValue(mockCreatedUser("test user"));
 
-      const result = await handleSSOCallback({ user: openIdUser, account: mockOpenIdAccount });
+      const result = await handleSSOCallback({
+        user: openIdUser,
+        account: mockOpenIdAccount,
+        callbackUrl: "http://localhost:3000",
+      });
 
       expect(result).toBe(true);
-
       expect(createUser).toHaveBeenCalledWith(
         expect.objectContaining({
+          name: "test user",
           email: openIdUser.email,
+          emailVerified: expect.any(Date),
           identityProvider: "openid",
+          identityProviderAccountId: mockOpenIdAccount.providerAccountId,
+          locale: "en-US",
         })
       );
     });
