@@ -22,6 +22,7 @@ export const mockUser: TUser = {
   updatedAt: new Date(),
   objective: "improve_user_retention",
   lastLoginAt: new Date(),
+  isActive: true,
 };
 
 // Mock account data

@@ -873,6 +873,7 @@ model User {
   surveys                   Survey[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
+  isActive                  Boolean          @default(true)
 
   @@index([email])
 }

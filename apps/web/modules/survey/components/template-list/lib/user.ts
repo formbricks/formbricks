@@ -28,6 +28,7 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
         notificationSettings: true,
         locale: true,
         lastLoginAt: true,
+        isActive: true,
       },
     });
 

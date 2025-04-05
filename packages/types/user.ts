@@ -59,6 +59,7 @@ export const ZUser = z.object({
   notificationSettings: ZUserNotificationSettings,
   locale: ZUserLocale,
   lastLoginAt: z.date().nullable(),
+  isActive: z.boolean().default(true),
 });
 
 export type TUser = z.infer<typeof ZUser>;
@@ -74,6 +75,7 @@ export const ZUserUpdateInput = z.object({
   notificationSettings: ZUserNotificationSettings.optional(),
   locale: ZUserLocale.optional(),
   lastLoginAt: z.date().nullish(),
+  isActive: z.boolean().optional(),
 });
 
 export type TUserUpdateInput = z.infer<typeof ZUserUpdateInput>;

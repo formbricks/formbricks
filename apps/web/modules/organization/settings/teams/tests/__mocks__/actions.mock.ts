@@ -41,6 +41,7 @@ export const mockUser: TUser = {
   imageUrl: null,
   role: null,
   lastLoginAt: new Date(),
+  isActive: true,
 };
 
 // Mock session
