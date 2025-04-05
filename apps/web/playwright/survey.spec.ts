@@ -886,13 +886,18 @@ test.describe("Testing Survey with advanced logic", async () => {
     });
 
     await test.step("Verify Survey Response", async () => {
-      await page.goBack();
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      const currentUrl = page.url();
+      const environmentIdMatch = currentUrl.match(/\/environments\/([^/]+)/);
+      const surveyIdMatch = currentUrl.match(/\/surveys\/([^/]+)/);
 
-      await page.waitForLoadState("networkidle");
+      if (!environmentIdMatch || !surveyIdMatch) {
+        throw new Error("Unable to extract environmentId or surveyId from the URL");
+      }
 
-      await page.getByRole("button", { name: "Close" }).click();
-      await page.getByRole("link").filter({ hasText: "Responses" }).click();
+      const environmentId = environmentIdMatch[1];
+      const surveyId = surveyIdMatch[1];
+
+      await page.goto(`/environments/${environmentId}/surveys/${surveyId}/responses`);
       await page.waitForSelector("#response-table");
 
       await expect(page.getByRole("cell", { name: "score" })).toBeVisible();
