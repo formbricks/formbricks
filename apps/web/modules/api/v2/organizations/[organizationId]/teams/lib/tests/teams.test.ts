@@ -41,7 +41,7 @@ describe("Teams Lib", () => {
       expect(prisma.team.create).toHaveBeenCalledWith({
         data: {
           name: "Test Team",
-          organization: { connect: { id: organizationId } },
+          organizationId: organizationId,
         },
       });
       expect(organizationCache.revalidate).toHaveBeenCalledWith({ id: organizationId });

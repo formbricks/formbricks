@@ -122,9 +122,11 @@ const notFoundResponse = ({
 const conflictResponse = ({
   cors = false,
   cache = "private, no-store",
+  details = [],
 }: {
   cors?: boolean;
   cache?: string;
+  details?: ApiErrorDetails;
 } = {}) => {
   const headers = {
     ...(cors && corsHeaders),
@@ -136,6 +138,7 @@ const conflictResponse = ({
       error: {
         code: 409,
         message: "Conflict",
+        details,
       },
     },
     {

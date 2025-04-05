@@ -85,13 +85,15 @@ describe("API Responses", () => {
 
   describe("conflictResponse", () => {
     test("return a 409 response", async () => {
-      const res = responses.conflictResponse();
+      const details = [{ field: "resource", issue: "already exists" }];
+      const res = responses.conflictResponse({ details });
       expect(res.status).toBe(409);
       const body = await res.json();
       expect(body).toEqual({
         error: {
           code: 409,
           message: "Conflict",
+          details,
         },
       });
     });

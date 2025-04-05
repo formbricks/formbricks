@@ -1,3 +1,4 @@
+import { organizationCache } from "@/lib/cache/organization";
 import { teamCache } from "@/lib/cache/team";
 import { ZTeamUpdateSchema } from "@/modules/api/v2/organizations/[organizationId]/teams/[teamId]/types/teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
@@ -33,15 +34,15 @@ export const getTeam = reactCache(async (organizationId: string, teamId: string)
         });
       }
     },
-    [`organization-${organizationId}-getTeam-${teamId}`],
+    [`organizationId-${organizationId}-getTeam-${teamId}`],
     {
-      tags: [teamCache.tag.byId(teamId)],
+      tags: [teamCache.tag.byId(teamId), organizationCache.tag.byId(organizationId)],
     }
   )()
 );
 
 export const deleteTeam = async (
-  organizationId,
+  organizationId: string,
   teamId: string
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
   try {
@@ -92,7 +93,7 @@ export const deleteTeam = async (
 };
 
 export const updateTeam = async (
-  organizationId,
+  organizationId: string,
   teamId: string,
   teamInput: z.infer<typeof ZTeamUpdateSchema>
 ): Promise<Result<Team, ApiErrorResponseV2>> => {
