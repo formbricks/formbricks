@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ZProjectTeam } from "@formbricks/database/zod/project-teams";
 
 export const ZGetProjectTeamsFilter = ZGetFilter.extend({
-  teamId: z.string().cuid2(),
+  teamId: z.string().cuid2().optional(),
   projectId: z.string().cuid2().optional(),
 }).refine(
   (data) => {
