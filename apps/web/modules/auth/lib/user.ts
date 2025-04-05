@@ -43,6 +43,34 @@ export const updateUser = async (id: string, data: TUserUpdateInput) => {
   }
 };
 
+export const updateUserLastLoginAt = async (email: string) => {
+  validateInputs([email, ZUserEmail]);
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: {
+        email,
+      },
+      data: {
+        lastLoginAt: new Date(),
+      },
+    });
+
+    userCache.revalidate({
+      email: updatedUser.email,
+      id: updatedUser.id,
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PrismaErrorType.RecordDoesNotExist
+    ) {
+      throw new ResourceNotFoundError("email", email);
+    }
+    throw error;
+  }
+};
+
 export const getUserByEmail = reactCache(async (email: string) =>
   cache(
     async () => {

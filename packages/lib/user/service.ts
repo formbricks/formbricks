@@ -26,6 +26,7 @@ const responseSelection = {
   objective: true,
   notificationSettings: true,
   locale: true,
+  lastLoginAt: true,
   isActive: true,
 };
 

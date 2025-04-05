@@ -872,6 +872,7 @@ model User {
   locale                    String           @default("en-US")
   surveys                   Survey[]
   teamUsers                 TeamUser[]
+  lastLoginAt               DateTime?
   isActive                  Boolean          @default(true)
 
   @@index([email])
