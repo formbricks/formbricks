@@ -52,6 +52,7 @@ export default defineConfig({
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
+        "modules/ee/sso/components/**/*.tsx",
       ],
       exclude: [
         "**/.next/**",

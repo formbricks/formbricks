@@ -33,8 +33,7 @@ export const deleteInvite = async (inviteId: string): Promise<boolean> => {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
-
-    throw error;
+    throw new DatabaseError(error instanceof Error ? error.message : "Unknown error occurred");
   }
 };
 
@@ -67,8 +66,7 @@ export const getInvite = reactCache(
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
             throw new DatabaseError(error.message);
           }
-
-          throw error;
+          throw new DatabaseError(error instanceof Error ? error.message : "Unknown error occurred");
         }
       },
       [`signup-getInvite-${inviteId}`],
@@ -87,6 +85,16 @@ export const getIsValidInviteToken = reactCache(
             where: { id: inviteId },
           });
           if (!invite) {
+            return false;
+          }
+          if (!invite.expiresAt || isNaN(invite.expiresAt.getTime())) {
+            logger.error(
+              {
+                inviteId,
+                expiresAt: invite.expiresAt,
+              },
+              "SSO: Invite token expired"
+            );
             return false;
           }
           if (invite.expiresAt < new Date()) {
