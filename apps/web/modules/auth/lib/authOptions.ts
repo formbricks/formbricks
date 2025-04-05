@@ -62,7 +62,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("User has no password stored");
         }
         if (user.isActive === false) {
-          throw new Error("Sorry, your account is inactive");
+          throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
 
         const isValid = await verifyPassword(credentials.password, user.password);
@@ -166,7 +166,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         if (user.isActive === false) {
-          throw new Error("Sorry, your account is inactive");
+          throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
 
         user = await updateUser(user.id, { emailVerified: new Date() });

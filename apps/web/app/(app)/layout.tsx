@@ -14,6 +14,7 @@ const AppLayout = async ({ children }) => {
   const session = await getServerSession(authOptions);
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
+  // If user account is deactivated, log them out instead of rendering the app
   if (user?.isActive === false) {
     return <ClientLogout />;
   }
