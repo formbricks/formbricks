@@ -28,7 +28,7 @@ export const getProjectTeams = async (
       }),
     ]);
 
-    if (!projectTeams) {
+    if (!projectTeams.length) {
       return err({ type: "not_found", details: [{ field: "projectTeam", issue: "not found" }] });
     }
 
