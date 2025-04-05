@@ -44,19 +44,20 @@ export const getUsers = async (
       }),
     ]);
 
-    const returnedUsers = users.map((user) => ({
-      id: user.id,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      email: user.email,
-      name: user.name,
-      // lastLoginAt: user.lastLoginAt,
-      lastLoginAt: new Date(),
-      // isActive: user.isActive,
-      isActive: true,
-      role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
-      teams: user.teamUsers.map((teamUser) => teamUser.team.name),
-    }));
+    const returnedUsers = users.map(
+      (user) =>
+        ({
+          id: user.id,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+          email: user.email,
+          name: user.name,
+          lastLoginAt: user.lastLoginAt,
+          isActive: user.isActive,
+          role: user.memberships.filter((membership) => membership.organizationId === organizationId)[0].role,
+          teams: user.teamUsers.map((teamUser) => teamUser.team.name),
+        }) as TUser
+    );
 
     return ok({
       data: returnedUsers,
