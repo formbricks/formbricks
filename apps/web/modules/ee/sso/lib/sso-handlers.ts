@@ -113,11 +113,11 @@ export const handleSSOCallback = async ({
       }
     }
 
-    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID) {
+    if (!callbackUrl && !DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
       return false;
     }
 
-    if (!DEFAULT_ORGANIZATION_ID) {
+    if (!DEFAULT_ORGANIZATION_ID && !IS_FORMBRICKS_CLOUD) {
       try {
         const isValidCallbackUrl = new URL(callbackUrl);
         const inviteToken = isValidCallbackUrl.searchParams.get("token") || "";
