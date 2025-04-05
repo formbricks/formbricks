@@ -9,7 +9,7 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import { OrganizationRole, Prisma, TeamUserRole } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { TNoBillingOrganizationRoles, TUser } from "@formbricks/database/zod/users";
+import { TUser } from "@formbricks/database/zod/users";
 import { membershipCache } from "@formbricks/lib/membership/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
 import { userCache } from "@formbricks/lib/user/cache";
