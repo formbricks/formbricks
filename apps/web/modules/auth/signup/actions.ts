@@ -3,13 +3,13 @@
 import { actionClient } from "@/lib/utils/action-client";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
-import { createTeamMembership } from "@/modules/auth/signup/lib/team";
+import { createDefaultTeamMembership, createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { captureFailedSignup, verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
 import { z } from "zod";
 import { hashPassword } from "@formbricks/lib/auth";
-import { IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
+import { DEFAULT_TEAM_ID, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
@@ -92,9 +92,7 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
 
     await sendInviteAcceptedEmail(invite.creator.name ?? "", user.name, invite.creator.email);
     await deleteInvite(invite.id);
-  }
-  // Handle organization assignment
-  else {
+  } else {
     let organizationId: string | undefined;
     let role: TOrganizationRole = "owner";
 
@@ -131,6 +129,10 @@ export const createUserAction = actionClient.schema(ZCreateUserAction).action(as
           ),
         },
       });
+    }
+
+    if (DEFAULT_TEAM_ID) {
+      await createDefaultTeamMembership(user.id);
     }
   }
 
