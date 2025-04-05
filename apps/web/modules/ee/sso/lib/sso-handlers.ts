@@ -8,7 +8,11 @@ import type { IdentityProvider } from "@prisma/client";
 import type { Account } from "next-auth";
 import { prisma } from "@formbricks/database";
 import { createAccount } from "@formbricks/lib/account/service";
-import { DEFAULT_ORGANIZATION_ID, DEFAULT_ORGANIZATION_ROLE } from "@formbricks/lib/constants";
+import {
+  DEFAULT_ORGANIZATION_ID,
+  DEFAULT_ORGANIZATION_ROLE,
+  IS_FORMBRICKS_CLOUD,
+} from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { createMembership } from "@formbricks/lib/membership/service";
 import { createOrganization, getOrganization } from "@formbricks/lib/organization/service";
