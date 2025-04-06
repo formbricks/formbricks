@@ -19,7 +19,8 @@ export default defineConfig({
         "modules/api/v2/**/*.ts",
         "modules/api/v2/**/*.tsx",
         "modules/auth/lib/**/*.ts",
-        "modules/signup/lib/**/*.ts",
+        "modules/auth/signup/lib/**/*.ts",
+        "modules/auth/signup/**/*.tsx",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
         "modules/ee/role-management/components/*.tsx",
         "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
@@ -52,6 +53,7 @@ export default defineConfig({
         "modules/survey/list/components/survey-card.tsx",
         "modules/survey/list/components/survey-dropdown-menu.tsx",
         "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
+        "modules/ee/sso/components/**/*.tsx",
       ],
       exclude: [
         "**/.next/**",
