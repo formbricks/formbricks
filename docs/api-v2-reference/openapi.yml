@@ -27,6 +27,8 @@ tags:
     description: Operations for managing teams.
   - name: Organizations API > Project Teams
     description: Operations for managing project teams.
+  - name: Organizations API > Users
+    description: Operations for managing users.
 security:
   - apiKeyAuth: []
 paths:
@@ -547,7 +549,15 @@ paths:
                   data:
                     type: array
                     items:
-                      type: string
+                      anyOf:
+                        - type: string
+                          const: owner
+                        - type: string
+                          const: manager
+                        - type: string
+                          const: member
+                        - type: string
+                          const: billing
   /me:
     get:
       operationId: me
@@ -650,22 +660,18 @@ paths:
           name: startDate
           schema:
             type: string
-          required: true
         - in: query
           name: endDate
           schema:
             type: string
-          required: true
         - in: query
           name: surveyId
           schema:
             type: string
-          required: true
         - in: query
           name: contactId
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: Responses retrieved successfully.
@@ -2264,19 +2270,16 @@ paths:
           name: startDate
           schema:
             type: string
-          required: true
         - in: query
           name: endDate
           schema:
             type: string
-          required: true
         - in: query
           name: surveyIds
           schema:
             type: array
             items:
               type: string
-          required: true
       responses:
         "200":
           description: Webhooks retrieved successfully.
@@ -2704,12 +2707,10 @@ paths:
           name: startDate
           schema:
             type: string
-          required: true
         - in: query
           name: endDate
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: Teams retrieved successfully.
@@ -2998,22 +2999,18 @@ paths:
           name: startDate
           schema:
             type: string
-          required: true
         - in: query
           name: endDate
           schema:
             type: string
-          required: true
         - in: query
           name: teamId
           schema:
             type: string
-          required: true
         - in: query
           name: projectId
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: Project teams retrieved successfully.
@@ -3137,16 +3134,6 @@ paths:
           schema:
             $ref: "#/components/schemas/organizationId"
           required: true
-        - in: query
-          name: teamId
-          schema:
-            type: string
-          required: true
-        - in: query
-          name: projectId
-          schema:
-            type: string
-          required: true
       requestBody:
         required: true
         description: The project team to update
@@ -3155,6 +3142,12 @@ paths:
             schema:
               type: object
               properties:
+                teamId:
+                  type: string
+                  description: The ID of the team
+                projectId:
+                  type: string
+                  description: The ID of the project
                 permission:
                   type: string
                   enum:
@@ -3163,6 +3156,8 @@ paths:
                     - manage
                   description: Level of access granted to the project
               required:
+                - teamId
+                - projectId
                 - permission
       responses:
         "200":
@@ -3245,6 +3240,334 @@ paths:
                       - readWrite
                       - manage
                     description: Level of access granted to the project
+  /{organizationId}/users:
+    servers: *a10
+    get:
+      operationId: getUsers
+      summary: Get users
+      description: Gets users from the database.<br />Only available for self-hosted
+        Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: number
+            minimum: 1
+            maximum: 100
+            default: 10
+        - in: query
+          name: skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+        - in: query
+          name: sortBy
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+        - in: query
+          name: order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+        - in: query
+          name: startDate
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          schema:
+            type: string
+        - in: query
+          name: id
+          schema:
+            type: string
+        - in: query
+          name: email
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the user
+                        createdAt:
+                          type: string
+                          description: The date and time the user was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the user was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        lastLoginAt:
+                          type: string
+                          description: The date and time the user last logged in
+                          example: 2021-01-01T00:00:00.000Z
+                        isActive:
+                          type: boolean
+                          description: Whether the user is active
+                          example: true
+                        name:
+                          type: string
+                          pattern: ^[\p{L}\p{M}\s'\d-]+$
+                          minLength: 1
+                          description: The name of the user
+                          example: John Doe
+                        email:
+                          type: string
+                          format: email
+                          maxLength: 255
+                          description: The email of the user
+                          example: example@example.com
+                        role:
+                          type: string
+                          enum: &a11
+                            - owner
+                            - manager
+                            - member
+                          description: The role of the user in the organization
+                          example: member
+                        teams:
+                          type: array
+                          items:
+                            type: string
+                          description: The list of teams the user is a member of
+                          example: &a12
+                            - team1
+                            - team2
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+    post:
+      operationId: createUser
+      summary: Create a user
+      description: Create a new user in the database.<br />Only available for
+        self-hosted Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The user to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Whether the user is active
+                  example: true
+                name:
+                  type: string
+                  pattern: ^[\p{L}\p{M}\s'\d-]+$
+                  minLength: 1
+                  description: The name of the user
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  description: The email of the user
+                  example: example@example.com
+                role:
+                  type: string
+                  enum: *a11
+                  description: The role of the user in the organization
+                  example: member
+                teams:
+                  type: array
+                  items:
+                    type: string
+                  description: The list of teams the user is a member of
+                  example: *a12
+              required:
+                - name
+                - email
+                - role
+      responses:
+        "201":
+          description: User created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the user
+                  createdAt:
+                    type: string
+                    description: The date and time the user was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the user was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  lastLoginAt:
+                    type: string
+                    description: The date and time the user last logged in
+                    example: 2021-01-01T00:00:00.000Z
+                  isActive:
+                    type: boolean
+                    description: Whether the user is active
+                    example: true
+                  name:
+                    type: string
+                    pattern: ^[\p{L}\p{M}\s'\d-]+$
+                    minLength: 1
+                    description: The name of the user
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 255
+                    description: The email of the user
+                    example: example@example.com
+                  role:
+                    type: string
+                    enum: *a11
+                    description: The role of the user in the organization
+                    example: member
+                  teams:
+                    type: array
+                    items:
+                      type: string
+                    description: The list of teams the user is a member of
+                    example: *a12
+    patch:
+      operationId: updateUser
+      summary: Update a user
+      description: Updates an existing user in the database.<br />Only available for
+        self-hosted Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The user to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Whether the user is active
+                  example: true
+                name:
+                  type: string
+                  pattern: ^[\p{L}\p{M}\s'\d-]+$
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  description: The email of the user
+                  example: example@example.com
+                role:
+                  type: string
+                  enum: *a11
+                  description: The role of the user in the organization
+                  example: member
+                teams:
+                  type: array
+                  items:
+                    type: string
+                  description: The list of teams the user is a member of
+                  example: *a12
+              required:
+                - email
+      responses:
+        "200":
+          description: User updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the user
+                  createdAt:
+                    type: string
+                    description: The date and time the user was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the user was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  lastLoginAt:
+                    type: string
+                    description: The date and time the user last logged in
+                    example: 2021-01-01T00:00:00.000Z
+                  isActive:
+                    type: boolean
+                    description: Whether the user is active
+                    example: true
+                  name:
+                    type: string
+                    pattern: ^[\p{L}\p{M}\s'\d-]+$
+                    minLength: 1
+                    description: The name of the user
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 255
+                    description: The email of the user
+                    example: example@example.com
+                  role:
+                    type: string
+                    enum: *a11
+                    description: The role of the user in the organization
+                    example: member
+                  teams:
+                    type: array
+                    items:
+                      type: string
+                    description: The list of teams the user is a member of
+                    example: *a12
 components:
   securitySchemes:
     apiKeyAuth:
@@ -3259,7 +3582,15 @@ components:
         data:
           type: array
           items:
-            type: string
+            anyOf:
+              - type: string
+                const: owner
+              - type: string
+                const: manager
+              - type: string
+                const: member
+              - type: string
+                const: billing
       required:
         - data
     me:
@@ -3708,7 +4039,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a12 []
+          default: &a14 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3776,7 +4107,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a13
+          enum: &a15
             - displayOnce
             - displayMultiple
             - displaySome
@@ -4011,13 +4342,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a11
+                  enum: &a13
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a11
+                  enum: *a13
               required:
                 - linkSurveys
                 - appSurveys
@@ -4248,6 +4579,60 @@ components:
         - projectId
         - teamId
         - permission
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the user
+        createdAt:
+          type: string
+          description: The date and time the user was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the user was last updated
+          example: 2021-01-01T00:00:00.000Z
+        lastLoginAt:
+          type: string
+          description: The date and time the user last logged in
+          example: 2021-01-01T00:00:00.000Z
+        isActive:
+          type: boolean
+          description: Whether the user is active
+          example: true
+        name:
+          type: string
+          pattern: ^[\p{L}\p{M}\s'\d-]+$
+          minLength: 1
+          description: The name of the user
+          example: John Doe
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: The email of the user
+          example: example@example.com
+        role:
+          type: string
+          enum: *a11
+          description: The role of the user in the organization
+          example: member
+        teams:
+          type: array
+          items:
+            type: string
+          description: The list of teams the user is a member of
+          example: *a12
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - lastLoginAt
+        - isActive
+        - name
+        - email
+        - role
     responseId:
       type: string
       description: The ID of the response
@@ -4393,7 +4778,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a12
+          default: *a14
           description: The endings of the survey
         thankYouCard:
           type:
@@ -4459,7 +4844,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a13
+          enum: *a15
           description: Display options for the survey
         recontactDays:
           type:
@@ -4719,10 +5104,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a11
+                  enum: *a13
                 appSurveys:
                   type: string
-                  enum: *a11
+                  enum: *a13
               required:
                 - linkSurveys
                 - appSurveys

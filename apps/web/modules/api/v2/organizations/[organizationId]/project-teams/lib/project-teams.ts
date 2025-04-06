@@ -3,7 +3,7 @@ import { getProjectTeamsQuery } from "@/modules/api/v2/organizations/[organizati
 import {
   TGetProjectTeamsFilter,
   TProjectTeamInput,
-  projectTeamUpdateSchema,
+  ZProjectZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/project-teams/types/project-teams";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
@@ -19,12 +19,14 @@ export const getProjectTeams = async (
   params: TGetProjectTeamsFilter
 ): Promise<Result<ApiResponseWithMeta<ProjectTeam[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getProjectTeamsQuery(organizationId, params);
+
     const [projectTeams, count] = await prisma.$transaction([
       prisma.projectTeam.findMany({
-        ...getProjectTeamsQuery(organizationId, params),
+        ...query,
       }),
       prisma.projectTeam.count({
-        where: getProjectTeamsQuery(organizationId, params).where,
+        where: query.where,
       }),
     ]);
 
@@ -67,14 +69,14 @@ export const createProjectTeam = async (
 
     return ok(projectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };
 
 export const updateProjectTeam = async (
   teamId: string,
   projectId: string,
-  teamInput: z.infer<typeof projectTeamUpdateSchema>
+  teamInput: z.infer<typeof ZProjectZTeamUpdateSchema>
 ): Promise<Result<ProjectTeam, ApiErrorResponseV2>> => {
   try {
     const updatedProjectTeam = await prisma.projectTeam.update({
@@ -97,7 +99,7 @@ export const updateProjectTeam = async (
 
     return ok(updatedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };
 
@@ -125,6 +127,6 @@ export const deleteProjectTeam = async (
 
     return ok(deletedProjectTeam);
   } catch (error) {
-    return err({ type: "internal_server_error", details: [{ field: "projecteam", issue: error.message }] });
+    return err({ type: "internal_server_error", details: [{ field: "projectTeam", issue: error.message }] });
   }
 };
