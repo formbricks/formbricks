@@ -9,7 +9,11 @@ export function pickCommonFilter<T extends TGetFilter>(params: T) {
   return { limit, skip, sortBy, order, startDate, endDate };
 }
 
-type HasFindMany = Prisma.WebhookFindManyArgs | Prisma.ResponseFindManyArgs | Prisma.TeamFindManyArgs | Prisma.ProjectTeamFindManyArgs;
+type HasFindMany =
+  | Prisma.WebhookFindManyArgs
+  | Prisma.ResponseFindManyArgs
+  | Prisma.TeamFindManyArgs
+  | Prisma.ProjectTeamFindManyArgs;
 
 export function buildCommonFilterQuery<T extends HasFindMany>(query: T, params: TGetFilter): T {
   const { limit, skip, sortBy, order, startDate, endDate } = params || {};
