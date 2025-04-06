@@ -19,7 +19,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-{{ include "formbricks.labels" $ | indent 6 }}
+{{ include "formbricks.selectorLabels" $ | indent 6 }}
   namespaceSelector:
     matchNames:
       - {{ include "formbricks.namespace" . }}
