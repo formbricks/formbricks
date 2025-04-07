@@ -486,7 +486,7 @@ export function Survey({
   useEffect(() => {
     if (isResponseSendingFinished && isSurveyFinished) {
       // Post a message to the parent window indicating that the survey is completed.
-      window.parent.postMessage("formbricksSurveyCompleted", "*");
+      window.parent.postMessage("formbricksSurveyCompleted", "*"); // NOSONAR typescript:S2819 // We can't check the targetOrigin here because we don't know the parent window's origin.
       onFinished?.();
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
