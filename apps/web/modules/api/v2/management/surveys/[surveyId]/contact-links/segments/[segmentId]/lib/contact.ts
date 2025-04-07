@@ -13,7 +13,7 @@ import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
-const getContactAttributeKeys = reactCache((environmentId: string) =>
+export const getContactAttributeKeys = reactCache((environmentId: string) =>
   cache(
     async (): Promise<Result<string[], ApiErrorResponseV2>> => {
       try {
