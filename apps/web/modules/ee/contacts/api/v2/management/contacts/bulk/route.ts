@@ -1,9 +1,10 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { upsertBulkContacts } from "@/modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact";
 import { ZContactBulkUploadRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const PUT = async (request: Request) =>
   authenticatedApiClient({
@@ -20,8 +21,22 @@ export const PUT = async (request: Request) =>
         });
       }
 
+      const environmentId = parsedInput.body?.environmentId;
+
+      if (!environmentId) {
+        return handleApiError(request, {
+          type: "bad_request",
+          details: [{ field: "environmentId", issue: "missing" }],
+        });
+      }
+
       const { contacts } = parsedInput.body ?? { contacts: [] };
-      const { environmentId } = authentication;
+
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "PUT")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
+      }
 
       const emails = contacts.map(
         (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!

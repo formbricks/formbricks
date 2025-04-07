@@ -14,7 +14,13 @@ import Network
     static internal var service = FormbricksService()      
     
     // make this class not instantiatable outside of the SDK
-    internal override init() {}
+    internal override init() {
+        /* 
+         This empty initializer prevents external instantiation of the Formbricks class.
+         All methods are static and the class serves as a namespace for the SDK,
+         so instance creation is not needed and should be restricted.
+        */
+    }
     
     /**
      Initializes the Formbricks SDK with the given config ``FormbricksConfig``.

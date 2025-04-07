@@ -7,6 +7,10 @@ servers:
   - url: https://app.formbricks.com/api/v2/management
     description: Formbricks Cloud
 tags:
+  - name: Roles
+    description: Operations for managing roles.
+  - name: Me
+    description: Operations for managing your API key.
   - name: Management API > Responses
     description: Operations for managing responses.
   - name: Management API > Contacts
@@ -21,11 +25,602 @@ tags:
     description: Operations for generating personalized survey links for contacts.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
-  - name: Management API > Roles
-    description: Operations for managing roles.
+  - name: Organizations API > Teams
+    description: Operations for managing teams.
+  - name: Organizations API > Project Teams
+    description: Operations for managing project teams.
+  - name: Organizations API > Users
+    description: Operations for managing users.
 security:
   - apiKeyAuth: []
 paths:
+  /responses/{responseId}:
+    put:
+      description: Update an existing response for example when you want to mark a
+        response as finished or you want to change an existing response's value.
+      parameters:
+        - in: path
+          name: responseId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                data:
+                  tcgls0063n8ri7dtrbnepcmz: Who? Who? Who?
+                finished: true
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                data: {}
+              schema:
+                type: object
+          description: OK
+        "404":
+          content:
+            application/json:
+              example:
+                code: not_found
+                details:
+                  resource_type: Response
+                message: Response not found
+              schema:
+                type: object
+          description: Not Found
+      summary: Update Response
+      tags:
+        - Client API > Response
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/responses:
+    post:
+      description: Create a response for a survey and its fields with the user's
+        responses. The userId & meta here is optional
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                responses: {}
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                responseId: response123
+              schema:
+                type: object
+          description: Created
+      summary: Create Response
+      tags:
+        - Client API > Response
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/contacts/{userId}/attributes:
+    put:
+      description: Update a contact's attributes in Formbricks to keep them in sync
+        with your app or when you want to set a custom attribute in Formbricks.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              examples:
+                example-0: {}
+                example-1: {}
+              schema:
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              example:
+                code: internal_server_error
+                details: {}
+                message: "Unable to complete request: Expected"
+              schema:
+                type: object
+          description: Internal Server Error
+      summary: Update Contact (Attributes)
+      tags:
+        - Client API > Contacts
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/identify/contacts/{userId}:
+    get:
+      description: Retrieves a contact's state including their segments, displays,
+        responses and other tracking information. If the contact doesn't exist,
+        it will be created.
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Contact State
+      tags:
+        - Client API > Contacts
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/displays:
+    post:
+      description: Create a new display for a valid survey ID. If a userId is passed,
+        the display is linked to the user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                surveyId: survey123
+                userId: user123
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: Created
+      summary: Create Display
+      tags:
+        - Client API > Display
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/displays/{displayId}:
+    put:
+      description: Update a Display for a user. A use case can be when a user submits
+        a response & you want to link it to an existing display.
+      parameters:
+        - in: path
+          name: displayId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                responseId: response123
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                displayId: display123
+              schema:
+                type: object
+          description: OK
+      summary: Update Display
+      tags:
+        - Client API > Display
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/environment:
+    get:
+      description: Retrieves the environment state to be used in Formbricks SDKs
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                environmentId: env123
+                state: active
+              schema:
+                type: object
+          description: OK
+      summary: Get Environment State
+      tags:
+        - Client API > Environment
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/user:
+    post:
+      description: Endpoint for creating or identifying a user within the specified
+        environment. If the user already exists, this will identify them and
+        potentially update user attributes. If they don't exist, it will create
+        a new user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              example:
+                userId: user123
+                attributes: {}
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                userId: user123
+                state: identified
+              schema:
+                type: object
+          description: OK
+      summary: Create or Identify User
+      tags:
+        - Client API > User
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks Client
+  /{environmentId}/storage:
+    post:
+      summary: Upload Private File
+      description: API endpoint for uploading private files. Uploaded files are kept
+        private so that only users with access to the specified environment can
+        retrieve them. The endpoint validates the survey ID, file name, and file
+        type from the request body, and returns a signed URL for S3 uploads
+        along with a local upload URL.
+      tags:
+        - Client API > File Upload
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey associated with the file.
+                fileName:
+                  type: string
+                  description: The name of the file to be uploaded.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+              required:
+                - surveyId
+                - fileName
+                - fileType
+              example:
+                surveyId: cm7pr0x2y004o192zmit8cjvb
+                fileName: example.jpg
+                fileType: image/jpeg
+      responses:
+        "200":
+          description: OK - Returns the signed URL, signing data, updated file name, and
+            file URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signedUrl:
+                        type: string
+                        description: Signed URL for uploading the file to local storage.
+                      signingData:
+                        type: object
+                        properties:
+                          signature:
+                            type: string
+                            description: Signature for verifying the upload.
+                          timestamp:
+                            type: number
+                            description: Timestamp used in the signature.
+                          uuid:
+                            type: string
+                            description: Unique identifier for the signed upload.
+                      updatedFileName:
+                        type: string
+                        description: The updated file name after processing.
+                      fileUrl:
+                        type: string
+                        description: URL where the uploaded file can be accessed.
+                example:
+                  data:
+                    signedUrl: http://localhost:3000/api/v1/client/cm1ubebtj000614kqe4hs3c67/storage/local
+                    signingData:
+                      signature: 3e51c6f441e646a0c9a47fdcdd25eee9bfac26d5506461d811b9c55cbdd90914
+                      timestamp: 1741693207760
+                      uuid: f48bcb1aad904f574069a253388024af
+                    updatedFileName: halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg
+                    fileUrl: http://localhost:3000/storage/cm1ubebtj000614kqe4hs3c67/private/halle--fid--b153ba3e-6602-4bb3-bed9-211b5b1ae463.jpg
+        "400":
+          description: Bad Request - One or more required fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: fileName is required
+        "404":
+          description: Not Found - The specified survey or organization does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Survey survey123 not found
+      servers:
+        - url: https://app.formbricks.com/api/v2/client
+          description: Formbricks API Server
+  /{environmentId}/storage/local:
+    post:
+      summary: Upload Private File to Local Storage
+      description: API endpoint for uploading private files to local storage. The
+        request must include a valid signature, UUID, and timestamp to verify
+        the upload. The file is provided as a Base64 encoded string in the
+        request body. The "Content-Type" header must be set to a valid MIME
+        type, and the file data must be a valid file object (buffer).
+      tags:
+        - Client API > File Upload
+      parameters:
+        - in: path
+          name: environmentId
+          required: true
+          schema:
+            type: string
+          description: The ID of the environment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                surveyId:
+                  type: string
+                  description: The ID of the survey associated with the file.
+                fileName:
+                  type: string
+                  description: The URI encoded file name.
+                fileType:
+                  type: string
+                  description: The MIME type of the file.
+                signature:
+                  type: string
+                  description: Signed signature for verifying the file upload.
+                uuid:
+                  type: string
+                  description: Unique identifier used in the signature validation.
+                timestamp:
+                  type: string
+                  description: Timestamp used in the signature validation.
+                fileBase64String:
+                  type: string
+                  description: Base64 encoded string of the file. It should include data type
+                    information, e.g.
+                    "data:<mime-type>;base64,<base64-encoded-data>".
+              required:
+                - surveyId
+                - fileName
+                - fileType
+                - signature
+                - uuid
+                - timestamp
+                - fileBase64String
+              example:
+                surveyId: survey123
+                fileName: example.jpg
+                fileType: image/jpeg
+                signature: signedSignatureValue
+                uuid: uniqueUuidValue
+                timestamp: "1627891234567"
+                fileBase64String: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/...
+      responses:
+        "200":
+          description: OK - File uploaded successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    description: Success message.
+                example:
+                  message: File uploaded successfully
+        "400":
+          description: Bad Request - One or more required fields are missing or the file
+            is too large.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: fileName is required
+        "401":
+          description: Unauthorized - Signature validation failed or required signature
+            fields are missing.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Unauthorized
+        "404":
+          description: Not Found - The specified survey or organization does not exist.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: Survey survey123 not found
+        "500":
+          description: Internal Server Error - File upload failed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Detailed error message.
+                example:
+                  error: File upload failed
+      servers:
+        - url: https://app.formbricks.com/api/v2
+          description: Formbricks API Server
+  /roles:
+    get:
+      operationId: getRoles
+      summary: Get roles
+      description: Gets roles from the database.
+      tags:
+        - Roles
+      responses:
+        "200":
+          description: Roles retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      anyOf:
+                        - type: string
+                          const: owner
+                        - type: string
+                          const: manager
+                        - type: string
+                          const: member
+                        - type: string
+                          const: billing
+  /me:
+    get:
+      operationId: me
+      summary: Me
+      description: Fetches the projects and organizations associated with the API key.
+      tags:
+        - Me
+      responses:
+        "200":
+          description: API key information retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  organizationId:
+                    type: string
+                  organizationAccess:
+                    type: object
+                    properties:
+                      accessControl:
+                        type: object
+                        properties:
+                          read:
+                            type: boolean
+                          write:
+                            type: boolean
+                        required:
+                          - read
+                          - write
+                        additionalProperties: false
+                    required:
+                      - accessControl
+                  environments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        environmentId:
+                          type: string
+                        environmentType:
+                          type: string
+                          enum:
+                            - production
+                            - development
+                        permission:
+                          type: string
+                          enum:
+                            - read
+                            - write
+                            - manage
+                        projectId:
+                          type: string
+                        projectName:
+                          type: string
+                      required:
+                        - environmentId
+                        - environmentType
+                        - permission
+                        - projectId
+                        - projectName
   /responses:
     get:
       operationId: getResponses
@@ -73,175 +668,173 @@ paths:
             description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
-          required: true
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
-          required: true
+            description: End date
         - in: query
           name: surveyId
           schema:
             type: string
-          required: true
         - in: query
           name: contactId
           schema:
             type: string
-          required: true
       responses:
         "200":
           description: Responses retrieved successfully.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The ID of the response
-                          createdAt:
-                            type: string
-                            description: The date and time the response was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the response was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          finished:
-                            type: boolean
-                            description: Whether the response is finished
-                            example: true
-                          surveyId:
-                            type: string
-                            description: The ID of the survey
-                          contactId:
-                            type:
-                              - string
-                              - "null"
-                            description: The ID of the contact
-                          endingId:
-                            type:
-                              - string
-                              - "null"
-                            description: The ID of the ending
-                          data:
-                            type: object
-                            additionalProperties:
-                              anyOf:
-                                - type: string
-                                - type: number
-                                - type: array
-                                  items:
-                                    type: string
-                                - type: object
-                                  additionalProperties:
-                                    type: string
-                            description: The data of the response
-                            example: &a1
-                              question1: answer1
-                              question2: 2
-                              question3:
-                                - answer3
-                                - answer4
-                              question4:
-                                subquestion1: answer5
-                          variables:
-                            type: object
-                            additionalProperties:
-                              anyOf:
-                                - type: string
-                                - type: number
-                            description: The variables of the response
-                            example: &a2
-                              variable1: answer1
-                              variable2: 2
-                          ttc:
-                            type: object
-                            additionalProperties:
-                              type: number
-                            description: The TTC of the response
-                            example: &a3
-                              question1: 10
-                              question2: 20
-                          meta:
-                            type: object
-                            properties:
-                              source:
-                                type: string
-                                description: The source of the response
-                                example: https://example.com
-                              url:
-                                type: string
-                                description: The URL of the response
-                                example: https://example.com
-                              userAgent:
-                                type: object
-                                properties:
-                                  browser:
-                                    type: string
-                                  os:
-                                    type: string
-                                  device:
-                                    type: string
-                              country:
-                                type: string
-                              action:
-                                type: string
-                            description: The meta data of the response
-                            example: &a4
-                              source: https://example.com
-                              url: https://example.com
-                              userAgent:
-                                browser: Chrome
-                                os: Windows
-                                device: Desktop
-                              country: US
-                              action: click
-                          contactAttributes:
-                            type:
-                              - object
-                              - "null"
-                            additionalProperties:
-                              type: string
-                            description: The attributes of the contact
-                            example: &a5
-                              attribute1: value1
-                              attribute2: value2
-                          singleUseId:
-                            type:
-                              - string
-                              - "null"
-                            description: The single use ID of the response
-                          language:
-                            type:
-                              - string
-                              - "null"
-                            description: The language of the response
-                            example: en
-                          displayId:
-                            type:
-                              - string
-                              - "null"
-                            description: The display ID of the response
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        id:
+                          type: string
+                          description: The ID of the response
+                        createdAt:
+                          type: string
+                          description: The date and time the response was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the response was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        finished:
+                          type: boolean
+                          description: Whether the response is finished
+                          example: true
+                        surveyId:
+                          type: string
+                          description: The ID of the survey
+                        contactId:
+                          type:
+                            - string
+                            - "null"
+                          description: The ID of the contact
+                        endingId:
+                          type:
+                            - string
+                            - "null"
+                          description: The ID of the ending
+                        data:
+                          type: object
+                          additionalProperties:
+                            anyOf:
+                              - type: string
+                              - type: number
+                              - type: array
+                                items:
+                                  type: string
+                              - type: object
+                                additionalProperties:
+                                  type: string
+                          description: The data of the response
+                          example: &a1
+                            question1: answer1
+                            question2: 2
+                            question3:
+                              - answer3
+                              - answer4
+                            question4:
+                              subquestion1: answer5
+                        variables:
+                          type: object
+                          additionalProperties:
+                            anyOf:
+                              - type: string
+                              - type: number
+                          description: The variables of the response
+                          example: &a2
+                            variable1: answer1
+                            variable2: 2
+                        ttc:
+                          type: object
+                          additionalProperties:
+                            type: number
+                          description: The TTC of the response
+                          example: &a3
+                            question1: 10
+                            question2: 20
+                        meta:
+                          type: object
+                          properties:
+                            source:
+                              type: string
+                              description: The source of the response
+                              example: https://example.com
+                            url:
+                              type: string
+                              description: The URL of the response
+                              example: https://example.com
+                            userAgent:
+                              type: object
+                              properties:
+                                browser:
+                                  type: string
+                                os:
+                                  type: string
+                                device:
+                                  type: string
+                            country:
+                              type: string
+                            action:
+                              type: string
+                          description: The meta data of the response
+                          example: &a4
+                            source: https://example.com
+                            url: https://example.com
+                            userAgent:
+                              browser: Chrome
+                              os: Windows
+                              device: Desktop
+                            country: US
+                            action: click
+                        contactAttributes:
+                          type:
+                            - object
+                            - "null"
+                          additionalProperties:
+                            type: string
+                          description: The attributes of the contact
+                          example: &a5
+                            attribute1: value1
+                            attribute2: value2
+                        singleUseId:
+                          type:
+                            - string
+                            - "null"
+                          description: The single use ID of the response
+                        language:
+                          type:
+                            - string
+                            - "null"
+                          description: The language of the response
+                          example: en
+                        displayId:
+                          type:
+                            - string
+                            - "null"
+                          description: The display ID of the response
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createResponse
       summary: Create a response
@@ -944,6 +1537,8 @@ paths:
             schema:
               type: object
               properties:
+                environmentId:
+                  type: string
                 contacts:
                   type: array
                   items:
@@ -973,6 +1568,7 @@ paths:
                       - attributes
                   maxItems: 1000
               required:
+                - environmentId
                 - contacts
       responses:
         "200":
@@ -1794,90 +2390,89 @@ paths:
             description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
-          required: true
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
-          required: true
+            description: End date
         - in: query
           name: surveyIds
           schema:
             type: array
             items:
               type: string
-          required: true
       responses:
         "200":
           description: Webhooks retrieved successfully.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    data:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          id:
-                            type: string
-                            description: The ID of the webhook
-                          name:
-                            type:
-                              - string
-                              - "null"
-                            description: The name of the webhook
-                          createdAt:
-                            type: string
-                            description: The date and time the webhook was created
-                            example: 2021-01-01T00:00:00.000Z
-                          updatedAt:
-                            type: string
-                            description: The date and time the webhook was last updated
-                            example: 2021-01-01T00:00:00.000Z
-                          url:
-                            type: string
-                            format: uri
-                            description: The URL of the webhook
-                          source:
-                            type: string
-                            enum: &a8
-                              - user
-                              - zapier
-                              - make
-                              - n8n
-                            description: The source of the webhook
-                          environmentId:
-                            type: string
-                            description: The ID of the environment
-                          triggers:
-                            type: array
-                            items:
-                              type: string
-                              enum: &a9
-                                - responseFinished
-                                - responseCreated
-                                - responseUpdated
-                            description: The triggers of the webhook
-                          surveyIds:
-                            type: array
-                            items:
-                              type: string
-                            description: "The IDs of the surveys "
-                    meta:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        total:
-                          type: number
-                        limit:
-                          type: number
-                        offset:
-                          type: number
+                        id:
+                          type: string
+                          description: The ID of the webhook
+                        name:
+                          type:
+                            - string
+                            - "null"
+                          description: The name of the webhook
+                        createdAt:
+                          type: string
+                          description: The date and time the webhook was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the webhook was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        url:
+                          type: string
+                          format: uri
+                          description: The URL of the webhook
+                        source:
+                          type: string
+                          enum: &a8
+                            - user
+                            - zapier
+                            - make
+                            - n8n
+                          description: The source of the webhook
+                        environmentId:
+                          type: string
+                          description: The ID of the environment
+                        triggers:
+                          type: array
+                          items:
+                            type: string
+                            enum: &a9
+                              - responseFinished
+                              - responseCreated
+                              - responseUpdated
+                          description: The triggers of the webhook
+                        surveyIds:
+                          type: array
+                          items:
+                            type: string
+                          description: "The IDs of the surveys "
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
     post:
       operationId: createWebhook
       summary: Create a webhook
@@ -1972,7 +2567,7 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
-  /webhooks/{webhookId}:
+  /webhooks/{id}:
     get:
       operationId: getWebhook
       summary: Get a webhook
@@ -2192,22 +2787,949 @@ paths:
                     items:
                       type: string
                     description: "The IDs of the surveys "
-  /roles:
+  /{organizationId}/teams:
+    servers: &a10
+      - url: https://app.formbricks.com/api/v2/organizations
+        description: Formbricks Cloud
     get:
-      operationId: getRoles
-      summary: Get roles
-      description: Gets roles from the database.
+      operationId: getTeams
+      summary: Get teams
+      description: Gets teams from the database.
       tags:
-        - Management API > Roles
+        - Organizations API > Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: sortBy
+          description: Sort by field
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+            description: Sort order
+        - in: query
+          name: startDate
+          description: Start date
+          schema:
+            type: string
+            description: Start date
+        - in: query
+          name: endDate
+          description: End date
+          schema:
+            type: string
+            description: End date
       responses:
         "200":
-          description: Roles retrieved successfully.
+          description: Teams retrieved successfully.
           content:
             application/json:
               schema:
-                type: array
-                items:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the team
+                        createdAt:
+                          type: string
+                          description: The date and time the team was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the team was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        name:
+                          type: string
+                          description: The name of the team
+                          example: My team
+                        organizationId:
+                          type: string
+                          description: The ID of the organization
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+    post:
+      operationId: createTeam
+      summary: Create a team
+      description: Creates a team in the database.
+      tags:
+        - Organizations API > Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The team to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
                   type: string
+                  description: The name of the team
+                  example: My team
+              required:
+                - name
+      responses:
+        "201":
+          description: Team created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the team
+                  createdAt:
+                    type: string
+                    description: The date and time the team was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  name:
+                    type: string
+                    description: The name of the team
+                    example: My team
+                  organizationId:
+                    type: string
+                    description: The ID of the organization
+  /{organizationId}/teams/{id}:
+    servers: *a10
+    get:
+      operationId: getTeam
+      summary: Get a team
+      description: Gets a team from the database.
+      tags:
+        - Organizations API > Teams
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the team
+          schema:
+            $ref: "#/components/schemas/teamId"
+          required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      responses:
+        "200":
+          description: Team retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the team
+                  createdAt:
+                    type: string
+                    description: The date and time the team was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  name:
+                    type: string
+                    description: The name of the team
+                    example: My team
+                  organizationId:
+                    type: string
+                    description: The ID of the organization
+    put:
+      operationId: updateTeam
+      summary: Update a team
+      description: Updates a team in the database.
+      tags:
+        - Organizations API > Teams
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the team
+          schema:
+            $ref: "#/components/schemas/teamId"
+          required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The team to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the team
+                  example: My team
+              required:
+                - name
+      responses:
+        "200":
+          description: Team updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the team
+                  createdAt:
+                    type: string
+                    description: The date and time the team was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  name:
+                    type: string
+                    description: The name of the team
+                    example: My team
+                  organizationId:
+                    type: string
+                    description: The ID of the organization
+    delete:
+      operationId: deleteTeam
+      summary: Delete a team
+      description: Deletes a team from the database.
+      tags:
+        - Organizations API > Teams
+      parameters:
+        - in: path
+          name: id
+          description: The ID of the team
+          schema:
+            $ref: "#/components/schemas/teamId"
+          required: true
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      responses:
+        "200":
+          description: Team deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the team
+                  createdAt:
+                    type: string
+                    description: The date and time the team was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  name:
+                    type: string
+                    description: The name of the team
+                    example: My team
+                  organizationId:
+                    type: string
+                    description: The ID of the organization
+  /{organizationId}/project-teams:
+    servers: *a10
+    get:
+      operationId: getProjectTeams
+      summary: Get project teams
+      description: Gets projectTeams from the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: sortBy
+          description: Sort by field
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+            description: Sort order
+        - in: query
+          name: startDate
+          description: Start date
+          schema:
+            type: string
+            description: Start date
+        - in: query
+          name: endDate
+          description: End date
+          schema:
+            type: string
+            description: End date
+        - in: query
+          name: teamId
+          schema:
+            type: string
+        - in: query
+          name: projectId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Project teams retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        createdAt:
+                          type: string
+                          description: The date and time the project tem was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the project team was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        projectId:
+                          type: string
+                          description: The ID of the project
+                        teamId:
+                          type: string
+                          description: The ID of the team
+                        permission:
+                          type: string
+                          enum:
+                            - read
+                            - readWrite
+                            - manage
+                          description: Level of access granted to the project
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+    post:
+      operationId: createProjectTeam
+      summary: Create a projectTeam
+      description: Creates a project team in the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The project team to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  description: The ID of the team
+                projectId:
+                  type: string
+                  description: The ID of the project
+                permission:
+                  type: string
+                  enum:
+                    - read
+                    - readWrite
+                    - manage
+                  description: Level of access granted to the project
+              required:
+                - teamId
+                - projectId
+                - permission
+      responses:
+        "201":
+          description: Project team created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the project tem was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the project team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
+    put:
+      operationId: updateProjectTeam
+      summary: Update a project team
+      description: Updates a project team in the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The project team to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                teamId:
+                  type: string
+                  description: The ID of the team
+                projectId:
+                  type: string
+                  description: The ID of the project
+                permission:
+                  type: string
+                  enum:
+                    - read
+                    - readWrite
+                    - manage
+                  description: Level of access granted to the project
+              required:
+                - teamId
+                - projectId
+                - permission
+      responses:
+        "200":
+          description: Project team updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the project tem was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the project team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
+    delete:
+      operationId: deleteProjectTeam
+      summary: Delete a project team
+      description: Deletes a project team from the database.
+      tags:
+        - Organizations API > Project Teams
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+        - in: query
+          name: teamId
+          schema:
+            type: string
+          required: true
+        - in: query
+          name: projectId
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: Project team deleted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  createdAt:
+                    type: string
+                    description: The date and time the project tem was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the project team was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  projectId:
+                    type: string
+                    description: The ID of the project
+                  teamId:
+                    type: string
+                    description: The ID of the team
+                  permission:
+                    type: string
+                    enum:
+                      - read
+                      - readWrite
+                      - manage
+                    description: Level of access granted to the project
+  /{organizationId}/users:
+    servers: *a10
+    get:
+      operationId: getUsers
+      summary: Get users
+      description: Gets users from the database.<br />Only available for self-hosted
+        Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: sortBy
+          description: Sort by field
+          schema:
+            type: string
+            enum: *a6
+            default: createdAt
+            description: Sort by field
+        - in: query
+          name: order
+          description: Sort order
+          schema:
+            type: string
+            enum: *a7
+            default: desc
+            description: Sort order
+        - in: query
+          name: startDate
+          description: Start date
+          schema:
+            type: string
+            description: Start date
+        - in: query
+          name: endDate
+          description: End date
+          schema:
+            type: string
+            description: End date
+        - in: query
+          name: id
+          schema:
+            type: string
+        - in: query
+          name: email
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Users retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The ID of the user
+                        createdAt:
+                          type: string
+                          description: The date and time the user was created
+                          example: 2021-01-01T00:00:00.000Z
+                        updatedAt:
+                          type: string
+                          description: The date and time the user was last updated
+                          example: 2021-01-01T00:00:00.000Z
+                        lastLoginAt:
+                          type: string
+                          description: The date and time the user last logged in
+                          example: 2021-01-01T00:00:00.000Z
+                        isActive:
+                          type: boolean
+                          description: Whether the user is active
+                          example: true
+                        name:
+                          type: string
+                          pattern: ^[\p{L}\p{M}\s'\d-]+$
+                          minLength: 1
+                          description: The name of the user
+                          example: John Doe
+                        email:
+                          type: string
+                          format: email
+                          maxLength: 255
+                          description: The email of the user
+                          example: example@example.com
+                        role:
+                          type: string
+                          enum: &a11
+                            - owner
+                            - manager
+                            - member
+                          description: The role of the user in the organization
+                          example: member
+                        teams:
+                          type: array
+                          items:
+                            type: string
+                          description: The list of teams the user is a member of
+                          example: &a12
+                            - team1
+                            - team2
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: number
+                      limit:
+                        type: number
+                      offset:
+                        type: number
+    post:
+      operationId: createUser
+      summary: Create a user
+      description: Create a new user in the database.<br />Only available for
+        self-hosted Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The user to create
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Whether the user is active
+                  example: true
+                name:
+                  type: string
+                  pattern: ^[\p{L}\p{M}\s'\d-]+$
+                  minLength: 1
+                  description: The name of the user
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  description: The email of the user
+                  example: example@example.com
+                role:
+                  type: string
+                  enum: *a11
+                  description: The role of the user in the organization
+                  example: member
+                teams:
+                  type: array
+                  items:
+                    type: string
+                  description: The list of teams the user is a member of
+                  example: *a12
+              required:
+                - name
+                - email
+                - role
+      responses:
+        "201":
+          description: User created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the user
+                  createdAt:
+                    type: string
+                    description: The date and time the user was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the user was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  lastLoginAt:
+                    type: string
+                    description: The date and time the user last logged in
+                    example: 2021-01-01T00:00:00.000Z
+                  isActive:
+                    type: boolean
+                    description: Whether the user is active
+                    example: true
+                  name:
+                    type: string
+                    pattern: ^[\p{L}\p{M}\s'\d-]+$
+                    minLength: 1
+                    description: The name of the user
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 255
+                    description: The email of the user
+                    example: example@example.com
+                  role:
+                    type: string
+                    enum: *a11
+                    description: The role of the user in the organization
+                    example: member
+                  teams:
+                    type: array
+                    items:
+                      type: string
+                    description: The list of teams the user is a member of
+                    example: *a12
+    patch:
+      operationId: updateUser
+      summary: Update a user
+      description: Updates an existing user in the database.<br />Only available for
+        self-hosted Formbricks.
+      tags:
+        - Organizations API > Users
+      parameters:
+        - in: path
+          name: organizationId
+          description: The ID of the organization
+          schema:
+            $ref: "#/components/schemas/organizationId"
+          required: true
+      requestBody:
+        required: true
+        description: The user to update
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+                  description: Whether the user is active
+                  example: true
+                name:
+                  type: string
+                  pattern: ^[\p{L}\p{M}\s'\d-]+$
+                  minLength: 1
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  description: The email of the user
+                  example: example@example.com
+                role:
+                  type: string
+                  enum: *a11
+                  description: The role of the user in the organization
+                  example: member
+                teams:
+                  type: array
+                  items:
+                    type: string
+                  description: The list of teams the user is a member of
+                  example: *a12
+              required:
+                - email
+      responses:
+        "200":
+          description: User updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The ID of the user
+                  createdAt:
+                    type: string
+                    description: The date and time the user was created
+                    example: 2021-01-01T00:00:00.000Z
+                  updatedAt:
+                    type: string
+                    description: The date and time the user was last updated
+                    example: 2021-01-01T00:00:00.000Z
+                  lastLoginAt:
+                    type: string
+                    description: The date and time the user last logged in
+                    example: 2021-01-01T00:00:00.000Z
+                  isActive:
+                    type: boolean
+                    description: Whether the user is active
+                    example: true
+                  name:
+                    type: string
+                    pattern: ^[\p{L}\p{M}\s'\d-]+$
+                    minLength: 1
+                    description: The name of the user
+                    example: John Doe
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 255
+                    description: The email of the user
+                    example: example@example.com
+                  role:
+                    type: string
+                    enum: *a11
+                    description: The role of the user in the organization
+                    example: member
+                  teams:
+                    type: array
+                    items:
+                      type: string
+                    description: The list of teams the user is a member of
+                    example: *a12
 components:
   securitySchemes:
     apiKeyAuth:
@@ -2216,6 +3738,76 @@ components:
       name: x-api-key
       description: Use your Formbricks x-api-key to authenticate.
   schemas:
+    role:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            anyOf:
+              - type: string
+                const: owner
+              - type: string
+                const: manager
+              - type: string
+                const: member
+              - type: string
+                const: billing
+      required:
+        - data
+    me:
+      type: object
+      properties:
+        organizationId:
+          type: string
+        organizationAccess:
+          type: object
+          properties:
+            accessControl:
+              type: object
+              properties:
+                read:
+                  type: boolean
+                write:
+                  type: boolean
+              required:
+                - read
+                - write
+              additionalProperties: false
+          required:
+            - accessControl
+        environments:
+          type: array
+          items:
+            type: object
+            properties:
+              environmentId:
+                type: string
+              environmentType:
+                type: string
+                enum:
+                  - production
+                  - development
+              permission:
+                type: string
+                enum:
+                  - read
+                  - write
+                  - manage
+              projectId:
+                type: string
+              projectName:
+                type: string
+            required:
+              - environmentId
+              - environmentType
+              - permission
+              - projectId
+              - projectName
+      required:
+        - organizationId
+        - organizationAccess
+        - environments
     response:
       type: object
       properties:
@@ -2609,7 +4201,7 @@ components:
                 required:
                   - id
                   - type
-          default: &a11 []
+          default: &a14 []
           description: The endings of the survey
         thankYouCard:
           type:
@@ -2677,7 +4269,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: &a12
+          enum: &a15
             - displayOnce
             - displayMultiple
             - displaySome
@@ -2756,12 +4348,13 @@ components:
               type:
                 - string
                 - "null"
-              enum: &a14
+              enum:
                 - bottomLeft
                 - bottomRight
                 - topLeft
                 - topRight
                 - center
+                - null
             clickOutsideClose:
               type:
                 - boolean
@@ -2911,13 +4504,13 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: &a10
+                  enum: &a13
                     - casual
                     - straight
                     - simple
                 appSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a13
               required:
                 - linkSurveys
                 - appSurveys
@@ -2934,11 +4527,12 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: &a13
+                  enum:
                     - animation
                     - color
                     - image
                     - upload
+                    - null
                 brightness:
                   type:
                     - number
@@ -3090,10 +4684,117 @@ components:
         - environmentId
         - triggers
         - surveyIds
-    role:
-      type: array
-      items:
-        type: string
+    team:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the team
+        createdAt:
+          type: string
+          description: The date and time the team was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the team was last updated
+          example: 2021-01-01T00:00:00.000Z
+        name:
+          type: string
+          description: The name of the team
+          example: My team
+        organizationId:
+          type: string
+          description: The ID of the organization
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - name
+        - organizationId
+    projectTeam:
+      type: object
+      properties:
+        createdAt:
+          type: string
+          description: The date and time the project tem was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the project team was last updated
+          example: 2021-01-01T00:00:00.000Z
+        projectId:
+          type: string
+          description: The ID of the project
+        teamId:
+          type: string
+          description: The ID of the team
+        permission:
+          type: string
+          enum:
+            - read
+            - readWrite
+            - manage
+          description: Level of access granted to the project
+      required:
+        - createdAt
+        - updatedAt
+        - projectId
+        - teamId
+        - permission
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The ID of the user
+        createdAt:
+          type: string
+          description: The date and time the user was created
+          example: 2021-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          description: The date and time the user was last updated
+          example: 2021-01-01T00:00:00.000Z
+        lastLoginAt:
+          type: string
+          description: The date and time the user last logged in
+          example: 2021-01-01T00:00:00.000Z
+        isActive:
+          type: boolean
+          description: Whether the user is active
+          example: true
+        name:
+          type: string
+          pattern: ^[\p{L}\p{M}\s'\d-]+$
+          minLength: 1
+          description: The name of the user
+          example: John Doe
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: The email of the user
+          example: example@example.com
+        role:
+          type: string
+          enum: *a11
+          description: The role of the user in the organization
+          example: member
+        teams:
+          type: array
+          items:
+            type: string
+          description: The list of teams the user is a member of
+          example: *a12
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - lastLoginAt
+        - isActive
+        - name
+        - email
+        - role
     responseId:
       type: string
       description: The ID of the response
@@ -3239,7 +4940,7 @@ components:
                 required:
                   - id
                   - type
-          default: *a11
+          default: *a14
           description: The endings of the survey
         thankYouCard:
           type:
@@ -3305,7 +5006,7 @@ components:
           description: Survey variables
         displayOption:
           type: string
-          enum: *a12
+          enum: *a15
           description: Display options for the survey
         recontactDays:
           type:
@@ -3565,10 +5266,10 @@ components:
               properties:
                 linkSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a13
                 appSurveys:
                   type: string
-                  enum: *a10
+                  enum: *a13
               required:
                 - linkSurveys
                 - appSurveys
@@ -3585,7 +5286,12 @@ components:
                   type:
                     - string
                     - "null"
-                  enum: *a13
+                  enum:
+                    - animation
+                    - color
+                    - image
+                    - upload
+                    - null
                 brightness:
                   type:
                     - number
@@ -3618,7 +5324,13 @@ components:
               type:
                 - string
                 - "null"
-              enum: *a14
+              enum:
+                - bottomLeft
+                - bottomRight
+                - topLeft
+                - topRight
+                - center
+                - null
             clickOutsideClose:
               type:
                 - boolean
@@ -3652,4 +5364,9 @@ components:
     webhookId:
       type: string
       description: The ID of the webhook
-
+    organizationId:
+      type: string
+      description: The ID of the organization
+    teamId:
+      type: string
+      description: The ID of the team

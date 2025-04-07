@@ -1,10 +1,9 @@
 import { authenticateRequest, handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import {
   deleteContactAttributeKey,
   getContactAttributeKey,
@@ -12,20 +11,22 @@ import {
 } from "./lib/contact-attribute-key";
 import { ZContactAttributeKeyUpdateInput } from "./types/contact-attribute-keys";
 
-const fetchAndAuthorizeContactAttributeKey = async (
+async function fetchAndAuthorizeContactAttributeKey(
+  attributeKeyId: string,
   authentication: TAuthenticationApiKey,
-  contactAttributeKeyId: string
-): Promise<TContactAttributeKey | null> => {
-  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
-  if (!contactAttributeKey) {
-    return null;
+  requiredPermission: "GET" | "PUT" | "DELETE"
+) {
+  const attributeKey = await getContactAttributeKey(attributeKeyId);
+  if (!attributeKey) {
+    return { error: responses.notFoundResponse("Attribute Key", attributeKeyId) };
   }
-  if (contactAttributeKey.environmentId !== authentication.environmentId) {
-    throw new Error("Unauthorized");
-  }
-  return contactAttributeKey;
-};
 
+  if (!hasPermission(authentication.environmentPermissions, attributeKey.environmentId, requiredPermission)) {
+    return { error: responses.unauthorizedResponse() };
+  }
+
+  return { attributeKey };
+}
 export const GET = async (
   request: Request,
   { params: paramsPromise }: { params: Promise<{ contactAttributeKeyId: string }> }
@@ -35,20 +36,21 @@ export const GET = async (
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
-    }
-
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
+    const result = await fetchAndAuthorizeContactAttributeKey(
+      params.contactAttributeKeyId,
       authentication,
-      params.contactAttributeKeyId
+      "GET"
     );
-    if (contactAttributeKey) {
-      return responses.successResponse(contactAttributeKey);
-    }
-    return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
+    if (result.error) return result.error;
+
+    return responses.successResponse(result.attributeKey);
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
+    ) {
+      return responses.forbiddenResponse(error.message);
+    }
     return handleErrorResponse(error);
   }
 };
@@ -62,24 +64,25 @@ export const DELETE = async (
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
-    }
-
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
+    const result = await fetchAndAuthorizeContactAttributeKey(
+      params.contactAttributeKeyId,
       authentication,
-      params.contactAttributeKeyId
+      "DELETE"
     );
-    if (!contactAttributeKey) {
-      return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
-    }
-    if (contactAttributeKey.type === "default") {
+
+    if (result.error) return result.error;
+    if (result.attributeKey.type === "default") {
       return responses.badRequestResponse("Default Contact Attribute Keys cannot be deleted");
     }
     const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
     return responses.successResponse(deletedContactAttributeKey);
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
+    ) {
+      return responses.forbiddenResponse(error.message);
+    }
     return handleErrorResponse(error);
   }
 };
@@ -93,18 +96,12 @@ export const PUT = async (
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const isContactsEnabled = await getIsContactsEnabled();
-    if (!isContactsEnabled) {
-      return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
-    }
-
-    const contactAttributeKey = await fetchAndAuthorizeContactAttributeKey(
+    const result = await fetchAndAuthorizeContactAttributeKey(
+      params.contactAttributeKeyId,
       authentication,
-      params.contactAttributeKeyId
+      "PUT"
     );
-    if (!contactAttributeKey) {
-      return responses.notFoundResponse("Contact Attribute Key", params.contactAttributeKeyId);
-    }
+    if (result.error) return result.error;
 
     let contactAttributeKeyUpdate;
     try {
@@ -130,6 +127,12 @@ export const PUT = async (
     }
     return responses.internalServerErrorResponse("Some error ocured while updating action");
   } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === "Contacts are only enabled for Enterprise Edition, please upgrade."
+    ) {
+      return responses.forbiddenResponse(error.message);
+    }
     return handleErrorResponse(error);
   }
 };
