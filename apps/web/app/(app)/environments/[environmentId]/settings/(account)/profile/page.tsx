@@ -5,6 +5,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import { getTranslate } from "@/tolgee/server";
 import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getOrganizationsWhereUserIsSingleOwner } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
 import { SettingsCard } from "../../components/SettingsCard";
@@ -28,10 +29,12 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new Error(t("common.user_not_found"));
   }
 
+  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar environmentId={environmentId} activeId="profile" />
+        <AccountSettingsNavbar environmentId={environmentId} activeId="profile" hasAccess={hasAccess} />
       </PageHeader>
       {user && (
         <div>

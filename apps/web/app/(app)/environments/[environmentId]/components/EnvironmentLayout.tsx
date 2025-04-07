@@ -1,28 +1,30 @@
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
-import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
 import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import {
-  getMonthlyActiveOrganizationPeopleCount,
-  getMonthlyOrganizationResponseCount,
   getOrganizationByEnvironmentId,
   getOrganizationsByUserId,
 } from "@formbricks/lib/organization/service";
-import { getUserProjects } from "@formbricks/lib/project/service";
+import { getProjects } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
 
 interface EnvironmentLayoutProps {
   environmentId: string;
   session: Session;
   children?: React.ReactNode;
+  hasAccess: boolean;
 }
 
-export const EnvironmentLayout = async ({ environmentId, session, children }: EnvironmentLayoutProps) => {
+export const EnvironmentLayout = async ({
+  environmentId,
+  session,
+  children,
+  hasAccess,
+}: EnvironmentLayoutProps) => {
   const t = await getTranslate();
   const [user, environment, organizations, organization] = await Promise.all([
     getUser(session.user.id),
@@ -44,7 +46,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
   }
 
   const [projects, environments] = await Promise.all([
-    getUserProjects(user.id, organization.id),
+    getProjects(organization.id),
     getEnvironments(environment.projectId),
   ]);
 
@@ -57,33 +59,15 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
 
   const isMultiOrgEnabled = false;
 
-  let peopleCount = 0;
-  let responseCount = 0;
-
-  if (IS_FORMBRICKS_CLOUD) {
-    [peopleCount, responseCount] = await Promise.all([
-      getMonthlyActiveOrganizationPeopleCount(organization.id),
-      getMonthlyOrganizationResponseCount(organization.id),
-    ]);
-  }
-
   const organizationProjectsLimit = 10;
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
       <DevEnvironmentBanner environment={environment} />
 
-      {IS_FORMBRICKS_CLOUD && (
-        <LimitsReachedBanner
-          organization={organization}
-          environmentId={environment.id}
-          peopleCount={peopleCount}
-          responseCount={responseCount}
-        />
-      )}
-
       <div className="flex h-full">
         <MainNavigation
+          hasAccess={hasAccess}
           environment={environment}
           organization={organization}
           organizations={organizations}

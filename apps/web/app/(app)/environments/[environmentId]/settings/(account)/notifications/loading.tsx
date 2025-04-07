@@ -24,7 +24,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar activeId="notifications" loading />
+        <AccountSettingsNavbar activeId="notifications" loading hasAccess={false} />
       </PageHeader>
       {cards.map((card, index) => (
         <LoadingCard key={index} {...card} />

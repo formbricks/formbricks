@@ -19,7 +19,7 @@ import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbric
 import { cache } from "../cache";
 import { getOrganizationsByUserId } from "../organization/service";
 import { capturePosthogEnvironmentEvent } from "../posthogServer";
-import { getUserProjects } from "../project/service";
+import { getProjects, getUserProjects } from "../project/service";
 import { validateInputs } from "../utils/validate";
 import { environmentCache } from "./cache";
 
@@ -125,6 +125,30 @@ export const updateEnvironment = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
+    throw error;
+  }
+};
+
+export const getFirstEnvironmentId = async (userId: string): Promise<string | null> => {
+  try {
+    const organizations = await getOrganizationsByUserId(userId);
+    if (organizations.length === 0) {
+      return null;
+    }
+    const firstOrganization = organizations[0];
+    const projects = await getProjects(firstOrganization.id);
+    if (projects.length === 0) {
+      return null;
+    }
+    const firstProject = projects[0];
+    const productionEnvironment = firstProject.environments.find(
+      (environment) => environment.type === "production"
+    );
+    if (!productionEnvironment) {
+      return null;
+    }
+    return productionEnvironment.id;
+  } catch (error) {
     throw error;
   }
 };

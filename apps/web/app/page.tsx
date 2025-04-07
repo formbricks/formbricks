@@ -4,7 +4,7 @@ import { ClientLogout } from "@/modules/ui/components/client-logout";
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { getFirstEnvironmentIdByUserId } from "@formbricks/lib/environment/service";
+import { getFirstEnvironmentId } from "@formbricks/lib/environment/service";
 import { getIsFreshInstance } from "@formbricks/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -35,7 +35,7 @@ const Page = async () => {
   }
 
   let environmentId: string | null = null;
-  environmentId = await getFirstEnvironmentIdByUserId(session.user.id);
+  environmentId = await getFirstEnvironmentId(session.user.id);
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(
     session.user.id,

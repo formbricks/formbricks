@@ -6,6 +6,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@formbricks/database";
+import { hasUserEnvironmentAccess } from "@formbricks/lib/environment/auth";
 import { getUser } from "@formbricks/lib/user/service";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { EditAlerts } from "./components/EditAlerts";
@@ -164,10 +165,16 @@ const Page = async (props) => {
   if (user?.notificationSettings) {
     user.notificationSettings = setCompleteNotificationSettings(user.notificationSettings, memberships);
   }
+  const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
+
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.account_settings")}>
-        <AccountSettingsNavbar environmentId={params.environmentId} activeId="notifications" />
+        <AccountSettingsNavbar
+          environmentId={params.environmentId}
+          activeId="notifications"
+          hasAccess={hasAccess}
+        />
       </PageHeader>
       <SettingsCard
         title={t("environments.settings.notifications.email_alerts_surveys")}

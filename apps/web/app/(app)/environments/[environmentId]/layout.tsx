@@ -11,7 +11,6 @@ import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getProjectByEnvironmentId } from "@formbricks/lib/project/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { FormbricksClient } from "../../components/FormbricksClient";
 import EnvironmentStorageHandler from "./components/EnvironmentStorageHandler";
 import { PosthogIdentify } from "./components/PosthogIdentify";
@@ -37,9 +36,6 @@ const EnvLayout = async (props: {
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
-  if (!hasAccess) {
-    throw new AuthorizationError(t("common.not_authorized"));
-  }
 
   const organization = await getOrganizationByEnvironmentId(params.environmentId);
   if (!organization) {
@@ -70,7 +66,7 @@ const EnvLayout = async (props: {
       <FormbricksClient userId={user.id} email={user.email} />
       <ToasterClient />
       <EnvironmentStorageHandler environmentId={params.environmentId} />
-      <EnvironmentLayout environmentId={params.environmentId} session={session}>
+      <EnvironmentLayout environmentId={params.environmentId} session={session} hasAccess={hasAccess}>
         {children}
       </EnvironmentLayout>
     </ResponseFilterProvider>

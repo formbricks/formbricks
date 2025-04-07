@@ -4,7 +4,6 @@ import { NavigationLink } from "@/app/(app)/environments/[environmentId]/compone
 import { formbricksLogout } from "@/app/lib/formbricks";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
-import { ProjectSwitcher } from "@/modules/projects/components/project-switcher";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -23,7 +22,6 @@ import {
 import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
-  ArrowUpRightIcon,
   BlocksIcon,
   ChevronRightIcon,
   Cog,
@@ -61,6 +59,7 @@ interface NavigationProps {
   isMultiOrgEnabled: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
+  hasAccess: boolean;
 }
 
 export const MainNavigation = ({
@@ -71,7 +70,7 @@ export const MainNavigation = ({
   projects,
   isMultiOrgEnabled,
   membershipRole,
-  organizationProjectsLimit,
+  hasAccess,
 }: NavigationProps) => {
   const { logout } = useLogout({});
 
@@ -85,9 +84,7 @@ export const MainNavigation = ({
   const [isTextVisible, setIsTextVisible] = useState(true);
 
   const project = projects.find((project) => project.id === environment.projectId);
-  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
-
-  const isOwnerOrManager = isManager || isOwner;
+  const { isBilling } = getAccessFlags(membershipRole);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -118,27 +115,6 @@ export const MainNavigation = ({
     return [...organizations].sort((a, b) => a.name.localeCompare(b.name));
   }, [organizations]);
 
-  const sortedProjects = useMemo(() => {
-    const channelOrder: (string | null)[] = ["website", "app", "link", null];
-
-    const groupedProjects = projects.reduce(
-      (acc, project) => {
-        const channel = project.config.channel;
-        const key = channel !== null ? channel : "null";
-        acc[key] = acc[key] || [];
-        acc[key].push(project);
-        return acc;
-      },
-      {} as Record<string, typeof projects>
-    );
-
-    Object.keys(groupedProjects).forEach((channel) => {
-      groupedProjects[channel].sort((a, b) => a.name.localeCompare(b.name));
-    });
-
-    return channelOrder.flatMap((channel) => groupedProjects[channel !== null ? channel : "null"] || []);
-  }, [projects]);
-
   const handleEnvironmentChangeByOrganization = (organizationId: string) => {
     router.push(`/organizations/${organizationId}/`);
   };
@@ -146,43 +122,47 @@ export const MainNavigation = ({
   const mainNavigation = useMemo(
     () => [
       {
-        name: t("common.surveys"),
-        href: `/environments/${environment.id}/surveys`,
-        icon: MessageCircle,
-        isActive: pathname?.includes("/surveys"),
-        isHidden: false,
-      },
-      {
-        href: `/environments/${environment.id}/contacts`,
-        name: t("common.contacts"),
-        icon: UserIcon,
-        isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
-      },
-      {
-        name: t("common.actions"),
-        href: `/environments/${environment.id}/actions`,
-        icon: MousePointerClick,
-        isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
-      },
-      {
-        name: t("common.integrations"),
-        href: `/environments/${environment.id}/integrations`,
-        icon: BlocksIcon,
-        isActive: pathname?.includes("/integrations"),
-      },
-      {
-        name: t("common.configuration"),
-        href: `/environments/${environment.id}/project/general`,
-        icon: Cog,
-        isActive: pathname?.includes("/project"),
-      },
-      {
         name: t("common.wallet"),
         href: `/environments/${environment.id}/wallet`,
         icon: WalletMinimalIcon,
         isActive: pathname?.includes("/wallet"),
         isHidden: false,
       },
+      ...(hasAccess
+        ? [
+            {
+              name: t("common.surveys"),
+              href: `/environments/${environment.id}/surveys`,
+              icon: MessageCircle,
+              isActive: pathname?.includes("/surveys"),
+              isHidden: false,
+            },
+            {
+              href: `/environments/${environment.id}/contacts`,
+              name: t("common.contacts"),
+              icon: UserIcon,
+              isActive: pathname?.includes("/contacts") || pathname?.includes("/segments"),
+            },
+            {
+              name: t("common.actions"),
+              href: `/environments/${environment.id}/actions`,
+              icon: MousePointerClick,
+              isActive: pathname?.includes("/actions") || pathname?.includes("/actions"),
+            },
+            {
+              name: t("common.integrations"),
+              href: `/environments/${environment.id}/integrations`,
+              icon: BlocksIcon,
+              isActive: pathname?.includes("/integrations"),
+            },
+            {
+              name: t("common.configuration"),
+              href: `/environments/${environment.id}/project/general`,
+              icon: Cog,
+              isActive: pathname?.includes("/project"),
+            },
+          ]
+        : []),
     ],
     [t, environment.id, pathname]
   );
@@ -193,17 +173,15 @@ export const MainNavigation = ({
       href: `/environments/${environment.id}/settings/profile`,
       icon: UserCircleIcon,
     },
-    {
-      label: t("common.organization"),
-      href: `/environments/${environment.id}/settings/general`,
-      icon: UsersIcon,
-    },
-    {
-      label: t("common.documentation"),
-      href: "https://formbricks.com/docs",
-      target: "_blank",
-      icon: ArrowUpRightIcon,
-    },
+    ...(hasAccess
+      ? [
+          {
+            label: t("common.organization"),
+            href: `/environments/${environment.id}/settings/general`,
+            icon: UsersIcon,
+          },
+        ]
+      : []),
   ];
 
   const mainNavigationLink = `/environments/${environment.id}/${isBilling ? "settings/billing/" : "surveys/"}`;
@@ -268,20 +246,6 @@ export const MainNavigation = ({
           </div>
 
           <div>
-            {/* Project Switch */}
-            {!isBilling && (
-              <ProjectSwitcher
-                environmentId={environment.id}
-                projects={sortedProjects}
-                project={project}
-                isCollapsed={isCollapsed}
-                isOwnerOrManager={isOwnerOrManager}
-                isTextVisible={isTextVisible}
-                organization={organization}
-                organizationProjectsLimit={organizationProjectsLimit}
-              />
-            )}
-
             {/* User Switch */}
             <div className="flex items-center">
               <DropdownMenu>
@@ -327,11 +291,7 @@ export const MainNavigation = ({
                   {/* Dropdown Items */}
 
                   {dropdownNavigation.map((link) => (
-                    <Link
-                      href={link.href}
-                      target={link.target}
-                      className="flex w-full items-center"
-                      key={link.label}>
+                    <Link href={link.href} className="flex w-full items-center" key={link.label}>
                       <DropdownMenuItem>
                         <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
                         {link.label}
