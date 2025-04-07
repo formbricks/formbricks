@@ -66,7 +66,7 @@ export const OrganizationActions = ({
         organizationId: organization.id,
         email: data[0].email.toLowerCase(),
         name: data[0].name,
-        role: data[0].role,
+        role: "manager",
         teamIds: data[0].teamIds,
       });
       if (inviteUserActionResult?.data) {

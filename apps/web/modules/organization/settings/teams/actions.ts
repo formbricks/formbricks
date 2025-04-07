@@ -9,9 +9,8 @@ import {
   getMembershipsByUserId,
   getOrganizationOwnerCount,
 } from "@/modules/organization/settings/teams/lib/membership";
-import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { INVITE_DISABLED } from "@formbricks/lib/constants";
 import { createInviteToken } from "@formbricks/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -184,10 +183,6 @@ export const inviteUserAction = authenticatedActionClient
       throw new AuthenticationError("Invite disabled");
     }
 
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.role === OrganizationRole.billing) {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
     const currentUserMembership = await getMembershipByUserIdOrganizationId(
       ctx.user.id,
       parsedInput.organizationId
@@ -206,10 +201,6 @@ export const inviteUserAction = authenticatedActionClient
         },
       ],
     });
-
-    if (currentUserMembership.role === "manager" && parsedInput.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only invite users as members");
-    }
 
     const inviteId = await inviteUser({
       organizationId: parsedInput.organizationId,
