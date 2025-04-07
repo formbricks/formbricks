@@ -34,6 +34,4 @@ final class PresentSurveyManager {
     func dismissView() {
         viewController?.dismiss(animated: true)
     }
-    
-    
 }
