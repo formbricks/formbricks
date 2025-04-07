@@ -13,11 +13,11 @@ export function WalletAddress(): React.JSX.Element {
   const { t } = useTranslate();
   const handleCopyAddress = () => {
     if (!address){
-      toast.error(t("environments.wallet.address.copy_error"));
+      toast.error(t("environments.wallet.address.copy.error"));
       return;
     }
     navigator.clipboard.writeText(address).then(() => {
-      toast.success(t("environments.wallet.address.copy_success"));
+      toast.success(t("environments.wallet.address.copy.success"));
     })
   }
 
@@ -28,7 +28,7 @@ export function WalletAddress(): React.JSX.Element {
           <span>
             {formatAddress(address)}
           </span>
-          <IconButton label={t("environments.wallet.address.copy_button")} icon={CopyIcon} onClick={handleCopyAddress}/>
+          <IconButton label={t("environments.wallet.address.copy.button")} icon={CopyIcon} onClick={handleCopyAddress}/>
         </>
         :
         <span>
