@@ -31,7 +31,6 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        bundledPackages: ["@formbricks/api"],
       }),
       copyCompiledAssetsPlugin({
         filename: "formbricks",
