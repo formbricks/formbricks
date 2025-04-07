@@ -2,10 +2,10 @@ import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/manag
 import { TGetWebhooksFilter } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { Prisma } from "@prisma/client";
 
-export const getWebhooksQuery = (environmentId: string, params?: TGetWebhooksFilter) => {
+export const getWebhooksQuery = (environmentIds: string[], params?: TGetWebhooksFilter) => {
   let query: Prisma.WebhookFindManyArgs = {
     where: {
-      environmentId,
+      environmentId: { in: environmentIds },
     },
   };
 

@@ -1,10 +1,10 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { NextRequest } from "next/server";
 
 export const GET = async (request: NextRequest) =>
@@ -23,9 +23,11 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const environmentId = authentication.environmentId;
+      const environemntIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
 
-      const res = await getWebhooks(environmentId, query);
+      const res = await getWebhooks(environemntIds, query);
 
       if (res.ok) {
         return responses.successResponse(res.data);
@@ -57,22 +59,11 @@ export const POST = async (request: NextRequest) =>
         return handleApiError(request, environmentIdResult.error);
       }
 
-      const environmentId = environmentIdResult.data;
-
-      if (body.environmentId !== environmentId) {
+      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
         return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "environmentId", issue: "does not match the surveys environment" }],
+          type: "forbidden",
+          details: [{ field: "environmentId", issue: "does not have permission to create webhook" }],
         });
-      }
-
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
       }
 
       const createWebhookResult = await createWebhook(body);

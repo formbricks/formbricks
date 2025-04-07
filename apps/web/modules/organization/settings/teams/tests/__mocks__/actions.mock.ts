@@ -40,6 +40,8 @@ export const mockUser: TUser = {
   locale: "en-US",
   imageUrl: null,
   role: null,
+  lastLoginAt: new Date(),
+  isActive: true,
 };
 
 // Mock session

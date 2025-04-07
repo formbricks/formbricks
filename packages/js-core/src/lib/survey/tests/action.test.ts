@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { trackAction, trackCodeAction, trackNoCodeAction } from "@/lib/survey/action";
 import { SurveyStore } from "@/lib/survey/store";
 import { triggerSurvey } from "@/lib/survey/widget";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {
@@ -33,6 +33,7 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   shouldDisplayBasedOnPercentage: vi.fn(),
+  handleHiddenFields: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/widget", () => ({
@@ -100,10 +101,10 @@ describe("survey/action.ts", () => {
         filteredSurveys: [mockSurvey],
       });
 
-      const result = await trackAction("testAction");
+      const result = await trackAction("testAction", undefined);
 
       expect(result.ok).toBe(true);
-      expect(triggerSurvey).toHaveBeenCalledWith(mockSurvey, "testAction");
+      expect(triggerSurvey).toHaveBeenCalledWith(mockSurvey, "testAction", undefined);
     });
 
     test("handles multiple matching surveys", async () => {
