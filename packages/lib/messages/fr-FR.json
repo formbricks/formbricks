@@ -1552,6 +1552,7 @@
         "redirect_to_url_not_available_on_free_plan": "La redirection vers l'URL n'est pas disponible sur le plan gratuit.",
         "release_survey_on_date": "Publier l'enquête à la date",
         "remove_description": "Supprimer la description",
+        "remove_tooltip": "Supprimer l'info-bulle",
         "remove_translations": "Supprimer les traductions",
         "require_answer": "Réponse requise",
         "required": "Requis",

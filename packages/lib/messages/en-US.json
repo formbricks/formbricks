@@ -1552,6 +1552,7 @@
         "redirect_to_url_not_available_on_free_plan": "Redirect To Url is not available on free plan",
         "release_survey_on_date": "Release survey on date",
         "remove_description": "Remove description",
+        "remove_tooltip": "Remove tooltip",
         "remove_translations": "Remove translations",
         "require_answer": "Require Answer",
         "required": "Required",

@@ -1552,6 +1552,7 @@
         "redirect_to_url_not_available_on_free_plan": "重新導向至網址在免費方案中不可用",
         "release_survey_on_date": "在指定日期發佈問卷",
         "remove_description": "移除描述",
+        "remove_tooltip": "移除工具提示",
         "remove_translations": "移除翻譯",
         "require_answer": "要求回答",
         "required": "必填",

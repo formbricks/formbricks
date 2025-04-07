@@ -1552,6 +1552,7 @@
         "redirect_to_url_not_available_on_free_plan": "Umleitung zu URL ist im kostenlosen Plan nicht verfügbar",
         "release_survey_on_date": "Umfrage an Datum veröffentlichen",
         "remove_description": "Beschreibung entfernen",
+        "remove_tooltip": "Tooltip entfernen",
         "remove_translations": "Übersetzungen entfernen",
         "require_answer": "Antwort erforderlich",
         "required": "Erforderlich",
