@@ -1,6 +1,6 @@
-import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
-import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
-import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
+// import { contactAttributeKeyPaths } from "@/modules/api/v2/management/contact-attribute-keys/lib/openapi";
+// import { contactAttributePaths } from "@/modules/api/v2/management/contact-attributes/lib/openapi";
+// import { contactPaths } from "@/modules/api/v2/management/contacts/lib/openapi";
 import { responsePaths } from "@/modules/api/v2/management/responses/lib/openapi";
 import { surveyPaths } from "@/modules/api/v2/management/surveys/lib/openapi";
 import { webhookPaths } from "@/modules/api/v2/management/webhooks/lib/openapi";
@@ -39,9 +39,9 @@ const document = createDocument({
     ...mePaths,
     ...responsePaths,
     ...bulkContactPaths,
-    ...contactPaths,
-    ...contactAttributePaths,
-    ...contactAttributeKeyPaths,
+    // ...contactPaths,
+    // ...contactAttributePaths,
+    // ...contactAttributeKeyPaths,
     ...surveyPaths,
     ...webhookPaths,
     ...teamPaths,
