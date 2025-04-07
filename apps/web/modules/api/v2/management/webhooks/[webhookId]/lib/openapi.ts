@@ -1,4 +1,4 @@
-import { webhookIdSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
+import { ZWebhookIdSchema } from "@/modules/api/v2/management/webhooks/[webhookId]/types/webhooks";
 import { ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 import { makePartialSchema } from "@/modules/api/v2/types/openapi-response";
 import { z } from "zod";
@@ -11,7 +11,7 @@ export const getWebhookEndpoint: ZodOpenApiOperationObject = {
   description: "Gets a webhook from the database.",
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: ZWebhookIdSchema,
     }),
   },
   tags: ["Management API > Webhooks"],
@@ -34,7 +34,7 @@ export const deleteWebhookEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Webhooks"],
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: ZWebhookIdSchema,
     }),
   },
   responses: {
@@ -56,7 +56,7 @@ export const updateWebhookEndpoint: ZodOpenApiOperationObject = {
   tags: ["Management API > Webhooks"],
   requestParams: {
     path: z.object({
-      webhookId: webhookIdSchema,
+      id: ZWebhookIdSchema,
     }),
   },
   requestBody: {

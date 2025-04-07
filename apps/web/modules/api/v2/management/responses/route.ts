@@ -1,6 +1,6 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
@@ -81,6 +81,6 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error);
       }
 
-      return responses.successResponse({ data: createResponseResult.data, cors: true });
+      return responses.successResponse({ data: createResponseResult.data });
     },
   });

@@ -16,7 +16,7 @@ export const handleApiError = (request: Request, err: ApiErrorResponseV2): Respo
     case "not_found":
       return responses.notFoundResponse({ details: err.details });
     case "conflict":
-      return responses.conflictResponse();
+      return responses.conflictResponse({ details: err.details });
     case "unprocessable_entity":
       return responses.unprocessableEntityResponse({ details: err.details });
     case "too_many_requests":
