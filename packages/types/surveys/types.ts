@@ -933,6 +933,12 @@ export const ZSurvey = z
           ctx.addIssue(multiLangIssue);
         }
       }
+      if (question.tooltip && question.tooltip.default.trim() !== "") {
+        multiLangIssue = validateQuestionLabels("tooltip", question.tooltip, languages, questionIndex, true);
+        if (multiLangIssue) {
+          ctx.addIssue(multiLangIssue);
+        }
+      }
 
       const defaultLanguageCode = "default";
       const initialFieldsToValidate = [

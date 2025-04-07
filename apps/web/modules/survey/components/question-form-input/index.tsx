@@ -398,8 +398,8 @@ export const QuestionFormInput = ({
                             </Button>
                           </TooltipRenderer>
                         )}
-                        {((id === "subheader" && question.subheader !== undefined) ||
-                          (id === "tooltip" && question.tooltip !== undefined)) &&
+                        {((id === "subheader" && question?.subheader !== undefined) ||
+                          (id === "tooltip" && question?.tooltip !== undefined)) &&
                           question && (
                             <TooltipRenderer
                               tooltipContent={

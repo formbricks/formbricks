@@ -99,6 +99,7 @@ export const isValueIncomplete = (
     "label",
     "headline",
     "subheader",
+    "tooltip",
     "lowerLabel",
     "upperLabel",
     "buttonLabel",
