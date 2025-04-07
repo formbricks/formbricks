@@ -54,10 +54,20 @@ export const createMembership = async (
   validateInputs([organizationId, ZString], [userId, ZString], [data, ZMembership.partial()]);
 
   try {
-    const membership = await prisma.membership.create({
-      data: {
+    const membership = await prisma.membership.upsert({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+      create: {
         userId,
         organizationId,
+        accepted: data.accepted,
+        role: data.role as TMembership["role"],
+      },
+      update: {
         accepted: data.accepted,
         role: data.role as TMembership["role"],
       },

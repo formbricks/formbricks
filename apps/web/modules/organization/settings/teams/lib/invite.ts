@@ -125,7 +125,7 @@ export const inviteUser = async ({
     if (user) {
       const member = await getMembershipByUserIdOrganizationId(user.id, organizationId);
 
-      if (member) {
+      if (member?.role && member.role !== "member") {
         throw new InvalidInputError("User is already a member of this organization");
       }
     }
