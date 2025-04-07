@@ -128,6 +128,7 @@
     "cancel": "Cancel",
     "centered_modal": "Centered Modal",
     "choices": "Choices",
+    "claim": "Claim",
     "clear_all": "Clear all",
     "clear_filters": "Clear filters",
     "clear_selection": "Clear selection",
@@ -1854,9 +1855,26 @@
         "login": "Login"
       },
       "address": {
-        "copy_button": "Copy Address",
-        "copy_success": "Successfully copied address!",
-        "copy_error": "Failed to copy, address not found!"
+        "copy": {
+          "button": "Copy Address",
+          "success": "Successfully copied address!",
+          "error": "Failed to copy, address not found!"
+        }
+      },
+      "modal": {
+        "send_funds": "Send Funds"
+      },
+      "form": {
+        "recipient_address": "Recipient Address",
+        "amount_usdc": "Amount (USDC)",
+        "error": {
+          "address_required": "Address is required",
+          "invalid_eth_address": "Invalid Ethereum address",
+          "amount_required": "Amount is required",
+          "min_amount": "Amount must be at least 0.01",
+          "max_amount": "Amount cannot exceed 1,000,000",
+          "positive_amount": "Amount must be greater than zero"
+        }
       }
     },
     "xm-templates": {

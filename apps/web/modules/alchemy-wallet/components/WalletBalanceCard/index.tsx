@@ -6,7 +6,12 @@ import { cn } from "@formbricks/lib/cn";
 import WalletAddress from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-address";
 import WalletBalance from "@/modules/alchemy-wallet/components/WalletBalanceCard/components/wallet-balance";
 import IconButton from "@/modules/alchemy-wallet/components/common/IconButton";
+import { Button } from "@/modules/ui/components/button";
 import { EyeIcon, EyeOffIcon, SquareArrowOutUpRightIcon } from "lucide-react";
+import SendModal from "@/modules/alchemy-wallet/components/common/SendModal";
+
+
+
 export function WalletBalanceCard({className=""}:{
   className?: string;
 }): React.JSX.Element {
@@ -16,12 +21,12 @@ export function WalletBalanceCard({className=""}:{
   return (
     <div
       className={cn(
-        "relative my-4 w-full rounded-xl border border-slate-200 bg-white py-4 text-left shadow-sm",
+        "relative my-4 px-4 flex flex-row flex-wrap gap-4 w-full rounded-xl border border-slate-200 bg-white py-4 text-left shadow-sm",
         className
       )}
       id={"wallet-balance"}
     >
-      <div className="px-4 grid grid-cols-3 gap-6">
+      <div className="flex-1 grid grid-cols-3 gap-6">
         <div className="flex flex-col gap-2">
           <div className="flex flex-row gap-2 items-center justify-between">
             <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{t("environments.wallet.balance_card.wallet_address")}</h3>
@@ -43,6 +48,10 @@ export function WalletBalanceCard({className=""}:{
           <h3 className="text-lg font-medium capitalize leading-6 text-slate-900">{t("environments.wallet.balance_card.pending_rewards")}</h3>
           <div className="text-2xl font-bold">0 Wei</div>
         </div>
+      </div>
+      <div className="flex flex-col gap-2">
+      <SendModal />
+      <Button variant="secondary" onClick={() => console.log("Claim")} className="">{t("common.claim")}</Button>
       </div>
     </div>
   );
