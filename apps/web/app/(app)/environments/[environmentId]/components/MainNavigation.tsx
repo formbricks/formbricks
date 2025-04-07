@@ -63,7 +63,7 @@ interface NavigationProps {
   projects: TProject[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud: boolean;
-  isLocalDevelopment: boolean;
+  isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
@@ -80,7 +80,7 @@ export const MainNavigation = ({
   isFormbricksCloud,
   organizationProjectsLimit,
   isLicenseActive,
-  isLocalDevelopment,
+  isDevelopment,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -298,21 +298,17 @@ export const MainNavigation = ({
 
           <div>
             {/* New Version Available */}
-            {!isCollapsed &&
-              isOwnerOrManager &&
-              latestVersion &&
-              !isFormbricksCloud &&
-              !isLocalDevelopment && (
-                <Link
-                  href="https://github.com/formbricks/formbricks/releases"
-                  target="_blank"
-                  className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                  <p className="flex items-center justify-center gap-x-2 text-xs">
-                    <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
-                    {t("common.new_version_available", { version: latestVersion })}
-                  </p>
-                </Link>
-              )}
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
+              <Link
+                href="https://github.com/formbricks/formbricks/releases"
+                target="_blank"
+                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                <p className="flex items-center justify-center gap-x-2 text-xs">
+                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                  {t("common.new_version_available", { version: latestVersion })}
+                </p>
+              </Link>
+            )}
 
             {/* Project Switch */}
             {!isBilling && (

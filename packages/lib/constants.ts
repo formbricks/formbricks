@@ -20,7 +20,6 @@ export const DEFAULT_BRAND_COLOR = "#64748b";
 export const FB_LOGO_URL =
   "https://s3.eu-central-1.amazonaws.com/listmonk-formbricks/Formbricks-Light-transparent.png";
 
-export const IS_LOCALHOST = ["localhost", "127.0.0.1", "::1"].includes(new URL(WEBAPP_URL).hostname);
 export const PRIVACY_URL = env.PRIVACY_URL;
 export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
