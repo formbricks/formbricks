@@ -1,7 +1,6 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact";
 import {
@@ -9,6 +8,8 @@ import {
   ZContactLinksBySegmentQuery,
 } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 
 export const GET = async (
@@ -32,6 +33,16 @@ export const GET = async (
         });
       }
 
+      const isContactsEnabled = await getIsContactsEnabled();
+      if (!isContactsEnabled) {
+        return handleApiError(request, {
+          type: "forbidden",
+          details: [
+            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
+          ],
+        });
+      }
+
       const environmentIdResult = await getEnvironmentId(params.surveyId, false);
 
       if (!environmentIdResult.ok) {
@@ -40,13 +51,10 @@ export const GET = async (
 
       const environmentId = environmentIdResult.data;
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       // Get contacts based on segment
