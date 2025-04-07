@@ -9,14 +9,6 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("foo=bar"),
 }));
 
-// Mock the environment variables.
-vi.mock("@formbricks/lib/env", () => ({
-  env: {
-    NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: "env-test",
-    NEXT_PUBLIC_FORMBRICKS_API_HOST: "https://api.test.com",
-  },
-}));
-
 // Mock the flag that enables Formbricks.
 vi.mock("@/app/lib/formbricks", () => ({
   formbricksEnabled: true,
