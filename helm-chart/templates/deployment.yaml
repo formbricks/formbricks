@@ -79,7 +79,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       containers:
         - name: {{ template "formbricks.name" . }}
-          image: "{{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion }}"
+          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion | default "latest" }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           {{- if .Values.deployment.command }}
           command:
@@ -97,7 +97,7 @@ spec:
               protocol: {{ $config.protocol | default "TCP" | quote }}
             {{- end }}
           {{- end }}
-          {{- if or .Values.deployment.envFrom (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
           envFrom:
           {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
           - secretRef:

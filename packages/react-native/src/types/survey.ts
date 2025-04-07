@@ -1,7 +1,7 @@
-import { type TJsFileUploadParams } from "../../../types/js";
 import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "@/types/config";
 import type { TResponseData, TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
+import { type TJsFileUploadParams } from "../../../types/js";
 
 export interface SurveyBaseProps {
   survey: TEnvironmentStateSurvey;
@@ -38,7 +38,7 @@ export interface SurveyInlineProps extends SurveyBaseProps {
 }
 
 export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUpload"> {
-  apiHost?: string;
+  appUrl?: string;
   environmentId?: string;
   userId?: string;
   contactId?: string;

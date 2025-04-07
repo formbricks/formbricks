@@ -13,6 +13,7 @@ import { randomUUID } from "crypto";
 import { access, mkdir, readFile, rmdir, unlink, writeFile } from "fs/promises";
 import { lookup } from "mime-types";
 import path, { join } from "path";
+import { logger } from "@formbricks/logger";
 import { TAccessType } from "@formbricks/types/storage";
 import {
   IS_FORMBRICKS_CLOUD,
@@ -64,7 +65,7 @@ export const testS3BucketAccess = async () => {
 
     return true;
   } catch (error) {
-    console.error(`Failed to access S3 bucket: ${error}`);
+    logger.error(error, "Failed to access S3 bucket");
     throw new Error(`S3 Bucket Access Test Failed: ${error}`);
   }
 };
@@ -103,9 +104,6 @@ type TGetSignedUrlResponse =
     };
 
 const getS3SignedUrl = async (fileKey: string): Promise<string> => {
-  const [_, accessType] = fileKey.split("/");
-  const expiresIn = accessType === "public" ? 60 * 60 : 10 * 60;
-
   const getObjectCommand = new GetObjectCommand({
     Bucket: S3_BUCKET_NAME,
     Key: fileKey,
@@ -113,7 +111,7 @@ const getS3SignedUrl = async (fileKey: string): Promise<string> => {
 
   try {
     const s3Client = getS3Client();
-    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn });
+    return await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 30 * 60 });
   } catch (err) {
     throw err;
   }

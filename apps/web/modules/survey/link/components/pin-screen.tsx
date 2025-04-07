@@ -16,6 +16,7 @@ interface PinScreenProps {
   emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
+  surveyDomain: string;
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
@@ -25,12 +26,14 @@ interface PinScreenProps {
   isEmbed: boolean;
   locale: string;
   isPreview: boolean;
+  contactId?: string;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
     project,
+    surveyDomain,
     webAppUrl,
     emailVerificationStatus,
     singleUseId,
@@ -43,6 +46,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isEmbed,
     locale,
     isPreview,
+    contactId,
   } = props;
 
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
@@ -75,7 +79,7 @@ export const PinScreen = (props: PinScreenProps) => {
       if (isValidPin) {
         setLoading(true);
         const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
-        if (response?.data) {
+        if (response?.data?.survey) {
           setSurvey(response.data.survey);
         } else {
           const errorMessage = getFormattedErrorMessage(response);
@@ -116,6 +120,7 @@ export const PinScreen = (props: PinScreenProps) => {
       emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
+      surveyDomain={surveyDomain}
       webAppUrl={webAppUrl}
       verifiedEmail={verifiedEmail}
       languageCode={languageCode}
@@ -125,6 +130,7 @@ export const PinScreen = (props: PinScreenProps) => {
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       locale={locale}
       isPreview={isPreview}
+      contactId={contactId}
     />
   );
 };

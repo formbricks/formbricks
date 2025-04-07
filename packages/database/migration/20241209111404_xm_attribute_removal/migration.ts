@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition -- Required for a while loop here */
 import { Prisma } from "@prisma/client";
+import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 export const xmAttributeRemoval: MigrationScript = {
@@ -83,6 +84,6 @@ export const xmAttributeRemoval: MigrationScript = {
       ),
     };
 
-    console.log("Data migration completed. Summary: ", summary);
+    logger.info(summary, "Data migration completed. Summary: ");
   },
 };

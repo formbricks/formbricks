@@ -29,7 +29,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  SENTRY_DNS: "mock-sentry-dsn",
+  SENTRY_DSN: "mock-sentry-dsn",
 }));
 
 vi.mock("@/tolgee/language", () => ({
@@ -38,10 +38,6 @@ vi.mock("@/tolgee/language", () => ({
 
 vi.mock("@/tolgee/server", () => ({
   getTolgee: vi.fn(),
-}));
-
-vi.mock("@vercel/speed-insights/next", () => ({
-  SpeedInsights: () => <div data-testid="speed-insights">SpeedInsights</div>,
 }));
 
 vi.mock("@/modules/ui/components/post-hog-client", () => ({
@@ -71,9 +67,9 @@ vi.mock("@/tolgee/client", () => ({
 }));
 
 vi.mock("@/app/sentry/SentryProvider", () => ({
-  SentryProvider: ({ children, sentryDns }: { children: React.ReactNode; sentryDns?: string }) => (
+  SentryProvider: ({ children, sentryDsn }: { children: React.ReactNode; sentryDsn?: string }) => (
     <div data-testid="sentry-provider">
-      SentryProvider: {sentryDns}
+      SentryProvider: {sentryDsn}
       {children}
     </div>
   ),
@@ -101,11 +97,6 @@ describe("RootLayout", () => {
     const element = await RootLayout({ children });
     render(element);
 
-    // log env vercel
-    console.log("vercel", process.env.VERCEL);
-
-    expect(screen.getByTestId("speed-insights")).toBeInTheDocument();
-    expect(screen.getByTestId("ph-provider")).toBeInTheDocument();
     expect(screen.getByTestId("tolgee-next-provider")).toBeInTheDocument();
     expect(screen.getByTestId("sentry-provider")).toBeInTheDocument();
     expect(screen.getByTestId("child")).toHaveTextContent("Child Content");

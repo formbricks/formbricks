@@ -1,6 +1,7 @@
 /* eslint-disable import/no-relative-packages -- required for importing types */
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
 import { type TActionClassNoCodeConfig } from "../types/action-classes";
+import type { TOrganizationAccess } from "../types/api-key";
 import { type TIntegrationConfig } from "../types/integration";
 import { type TOrganizationBilling } from "../types/organizations";
 import { type TProjectConfig, type TProjectStyling } from "../types/project";
@@ -45,5 +46,6 @@ declare global {
     export type Locale = TUserLocale;
     export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
     export type SurveyFollowUpAction = TSurveyFollowUpAction;
+    export type OrganizationAccess = TOrganizationAccess;
   }
 }

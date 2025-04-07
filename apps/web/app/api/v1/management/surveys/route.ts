@@ -2,11 +2,14 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getMultiLanguagePermission } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
-import { createSurvey, getSurveys } from "@formbricks/lib/survey/service";
+import { createSurvey } from "@formbricks/lib/survey/service";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
+import { getSurveys } from "./lib/surveys";
 
 export const GET = async (request: Request) => {
   try {
@@ -17,7 +20,11 @@ export const GET = async (request: Request) => {
     const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
     const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
-    const surveys = await getSurveys(authentication.environmentId!, limit, offset);
+    const environmentIds = authentication.environmentPermissions.map(
+      (permission) => permission.environmentId
+    );
+    const surveys = await getSurveys(environmentIds, limit, offset);
+
     return responses.successResponse(surveys);
   } catch (error) {
     if (error instanceof DatabaseError) {
@@ -32,20 +39,14 @@ export const POST = async (request: Request): Promise<Response> => {
     const authentication = await authenticateRequest(request);
     if (!authentication) return responses.notAuthenticatedResponse();
 
-    const organization = await getOrganizationByEnvironmentId(authentication.environmentId);
-    if (!organization) {
-      return responses.notFoundResponse("Organization", null);
-    }
-
     let surveyInput;
     try {
       surveyInput = await request.json();
     } catch (error) {
-      console.error(`Error parsing JSON: ${error}`);
+      logger.error({ error, url: request.url }, "Error parsing JSON");
       return responses.badRequestResponse("Malformed JSON input, please check your request body");
     }
-
-    const inputValidation = ZSurveyCreateInput.safeParse(surveyInput);
+    const inputValidation = ZSurveyCreateInputWithEnvironmentId.safeParse(surveyInput);
 
     if (!inputValidation.success) {
       return responses.badRequestResponse(
@@ -55,8 +56,18 @@ export const POST = async (request: Request): Promise<Response> => {
       );
     }
 
-    const environmentId = authentication.environmentId;
-    const surveyData = { ...inputValidation.data, environmentId: undefined };
+    const environmentId = inputValidation.data.environmentId;
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
+
+    const organization = await getOrganizationByEnvironmentId(environmentId);
+    if (!organization) {
+      return responses.notFoundResponse("Organization", null);
+    }
+
+    const surveyData = { ...inputValidation.data, environmentId };
 
     if (surveyData.followUps?.length) {
       const isSurveyFollowUpsEnabled = await getSurveyFollowUpsPermission(organization.billing.plan);
@@ -72,7 +83,7 @@ export const POST = async (request: Request): Promise<Response> => {
       }
     }
 
-    const survey = await createSurvey(environmentId, surveyData);
+    const survey = await createSurvey(environmentId, { ...surveyData, environmentId: undefined });
     return responses.successResponse(survey);
   } catch (error) {
     if (error instanceof DatabaseError) {

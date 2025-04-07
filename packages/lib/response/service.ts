@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -91,7 +92,7 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
-const getResponseContact = (
+export const getResponseContact = (
   responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
 ): TResponseContact | null => {
   if (!responsePrisma.contact) return null;
@@ -570,7 +571,7 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
 
       return deleteFile(environmentId, accessType as "private" | "public", fileName);
     } catch (error) {
-      console.error(`Failed to delete file ${fileUrl}:`, error);
+      logger.error(error, `Failed to delete file ${fileUrl}`);
     }
   });
 

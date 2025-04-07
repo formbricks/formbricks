@@ -5,14 +5,14 @@ import { useEffect } from "react";
 
 interface SentryProviderProps {
   children: React.ReactNode;
-  sentryDns?: string;
+  sentryDsn?: string;
 }
 
-export const SentryProvider = ({ children, sentryDns }: SentryProviderProps) => {
+export const SentryProvider = ({ children, sentryDsn }: SentryProviderProps) => {
   useEffect(() => {
-    if (sentryDns) {
+    if (sentryDsn) {
       Sentry.init({
-        dsn: sentryDns,
+        dsn: sentryDsn,
 
         // Adjust this value in production, or use tracesSampler for greater control
         tracesSampleRate: 1,

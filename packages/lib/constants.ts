@@ -11,6 +11,8 @@ export const IS_FORMBRICKS_ENABLED = !!(env.FORMBRICKS_API_HOST && env.FORMBRICK
 export const WEBAPP_URL =
   env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
 
+export const SURVEY_URL = env.SURVEY_URL;
+
 // encryption keys
 export const FORMBRICKS_ENCRYPTION_KEY = env.FORMBRICKS_ENCRYPTION_KEY || undefined;
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
@@ -175,8 +177,8 @@ export const MANAGEMENT_API_RATE_LIMIT = {
 };
 
 export const SHARE_RATE_LIMIT = {
-  interval: 60 * 60, // 60 minutes
-  allowedPerInterval: 100,
+  interval: 60 * 1, // 1 minutes
+  allowedPerInterval: 30,
 };
 export const FORGET_PASSWORD_RATE_LIMIT = {
   interval: 60 * 60, // 60 minutes
@@ -203,6 +205,7 @@ export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
 
 export const REDIS_URL = env.REDIS_URL;
 export const REDIS_HTTP_URL = env.REDIS_HTTP_URL;
+export const REDIS_DEFAULT_TTL = env.REDIS_DEFAULT_TTL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
 export const UNKEY_ROOT_KEY = env.UNKEY_ROOT_KEY;
 
@@ -291,6 +294,6 @@ export const IS_PRODUCTION = env.NODE_ENV === "production";
 
 export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 
-export const SENTRY_DNS = env.SENTRY_DNS;
+export const SENTRY_DSN = env.SENTRY_DSN;
 
 export const PROMETHEUS_ENABLED = env.PROMETHEUS_ENABLED === "1";

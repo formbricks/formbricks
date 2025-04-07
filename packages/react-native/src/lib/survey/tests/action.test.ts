@@ -1,10 +1,10 @@
-import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { track, trackAction, triggerSurvey } from "@/lib/survey/action";
 import { SurveyStore } from "@/lib/survey/store";
 import { type TEnvironmentStateSurvey } from "@/types/config";
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("@/lib/common/config", () => ({
   RNConfig: {
@@ -34,6 +34,12 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   shouldDisplayBasedOnPercentage: vi.fn(),
+}));
+
+vi.mock("@react-native-community/netinfo", () => ({
+  fetch: vi.fn(() => ({
+    isConnected: true,
+  })),
 }));
 
 describe("survey/action.ts", () => {
@@ -153,15 +159,14 @@ describe("survey/action.ts", () => {
       });
     });
 
-    test("tracks a valid action by code", () => {
-      const result = track("testCode");
+    test("tracks a valid action by code", async () => {
+      const result = await track("testCode");
 
       expect(result.ok).toBe(true);
-      // expect(mockLogger.debug).toHaveBeenCalledWith('Formbricks: Action "testAction" tracked');
     });
 
-    test("returns error for invalid action code", () => {
-      const result = track("invalidCode");
+    test("returns error for invalid action code", async () => {
+      const result = await track("invalidCode");
 
       expect(result.ok).toBe(false);
 

@@ -15,6 +15,7 @@ import {
 } from "@formbricks/lib/posthogServer";
 import { projectCache } from "@formbricks/lib/project/cache";
 import { surveyCache } from "@formbricks/lib/survey/cache";
+import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TJsEnvironmentState } from "@formbricks/types/js";
 import { getActionClassesForEnvironmentState } from "./actionClass";
@@ -89,7 +90,7 @@ export const getEnvironmentState = async (
             },
           });
         } catch (err) {
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
 

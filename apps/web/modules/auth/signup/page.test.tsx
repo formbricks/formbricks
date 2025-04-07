@@ -1,13 +1,55 @@
-import * as licenseCheck from "@/modules/ee/license-check/lib/utils";
+import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
+import {
+  getIsMultiOrgEnabled,
+  getIsSamlSsoEnabled,
+  getisSsoEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupPage } from "./page";
 
-// Mock dependencies
+// Mock the necessary dependencies
+vi.mock("@/modules/auth/components/testimonial", () => ({
+  Testimonial: () => <div data-testid="testimonial">Testimonial</div>,
+}));
 
+vi.mock("@/modules/auth/components/form-wrapper", () => ({
+  FormWrapper: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="form-wrapper">{children}</div>
+  ),
+}));
+
+vi.mock("@/modules/auth/signup/components/signup-form", () => ({
+  SignupForm: () => <div data-testid="signup-form">SignupForm</div>,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsMultiOrgEnabled: vi.fn(),
+  getIsSamlSsoEnabled: vi.fn(),
+  getisSsoEnabled: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/signup/lib/invite", () => ({
+  getIsValidInviteToken: vi.fn(),
+}));
+
+vi.mock("@formbricks/lib/jwt", () => ({
+  verifyInviteToken: vi.fn(),
+}));
+
+vi.mock("@formbricks/lib/utils/locale", () => ({
+  findMatchingLocale: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(),
+}));
+
+// Mock environment variables and constants
 vi.mock("@formbricks/lib/constants", () => ({
   IS_FORMBRICKS_CLOUD: false,
   POSTHOG_API_KEY: "mock-posthog-api-key",
@@ -29,7 +71,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  SENTRY_DNS: "mock-sentry-dsn",
+  SENTRY_DSN: "mock-sentry-dsn",
   FB_LOGO_URL: "mock-fb-logo-url",
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: 587,
@@ -52,57 +94,98 @@ vi.mock("@formbricks/lib/constants", () => ({
   SAML_TENANT: "test-saml-tenant",
   SAML_PRODUCT: "test-saml-product",
   TURNSTILE_SITE_KEY: "test-turnstile-site-key",
-}));
-
-vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsMultiOrgEnabled: vi.fn(),
-  getisSsoEnabled: vi.fn(),
-  getIsSamlSsoEnabled: vi.fn(),
-}));
-
-vi.mock("@formbricks/lib/utils/locale", () => ({
-  findMatchingLocale: vi.fn(),
-}));
-
-// Mock components
-
-vi.mock("@/modules/auth/components/testimonial", () => ({
-  Testimonial: () => <div data-testid="testimonial">Testimonial</div>,
-}));
-vi.mock("@/modules/auth/components/form-wrapper", () => ({
-  FormWrapper: () => <div data-testid="form-wrapper">FormWrapper</div>,
+  SAML_OAUTH_ENABLED: true,
 }));
 
 describe("SignupPage", () => {
+  const mockSearchParams = {
+    inviteToken: "test-token",
+    email: "test@example.com",
+  };
+
   beforeEach(() => {
-    (licenseCheck.getIsMultiOrgEnabled as any).mockResolvedValue(true);
-    (licenseCheck.getisSsoEnabled as any).mockResolvedValue(false);
-    (licenseCheck.getIsSamlSsoEnabled as any).mockResolvedValue(false);
-    (findMatchingLocale as any).mockResolvedValue("en-US");
+    vi.clearAllMocks();
   });
 
-  it("renders the signup page correctly when inviteToken is provided", async () => {
-    const searchParamsPromise = Promise.resolve({
-      inviteToken: "abc123",
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("renders the signup page with all components when signup is enabled", async () => {
+    // Mock the license check functions to return true
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
       email: "test@example.com",
     });
+    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
 
-    const page = await SignupPage({ searchParams: searchParamsPromise });
-    render(page);
+    const result = await SignupPage({ searchParams: mockSearchParams });
+    render(result);
 
+    // Verify that all components are rendered
     expect(screen.getByTestId("testimonial")).toBeInTheDocument();
     expect(screen.getByTestId("form-wrapper")).toBeInTheDocument();
+    expect(screen.getByTestId("signup-form")).toBeInTheDocument();
   });
 
-  it("calls notFound when inviteToken is missing and multi-org is disabled", async () => {
-    // For this test, simulate a missing inviteToken and disable multi-org.
-    const searchParamsPromise = Promise.resolve({
-      email: "test@example.com",
+  it("calls notFound when signup is disabled and no valid invite token is provided", async () => {
+    // Mock the license check functions to return false
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    vi.mocked(verifyInviteToken).mockImplementation(() => {
+      throw new Error("Invalid token");
     });
-    (licenseCheck.getIsMultiOrgEnabled as any).mockResolvedValue(false);
 
-    await SignupPage({ searchParams: searchParamsPromise });
+    await SignupPage({ searchParams: {} });
 
     expect(notFound).toHaveBeenCalled();
+  });
+
+  it("calls notFound when invite token is invalid", async () => {
+    // Mock the license check functions to return false
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    vi.mocked(verifyInviteToken).mockImplementation(() => {
+      throw new Error("Invalid token");
+    });
+
+    await SignupPage({ searchParams: { inviteToken: "invalid-token" } });
+
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("calls notFound when invite token is valid but invite is not found", async () => {
+    // Mock the license check functions to return false
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
+      email: "test@example.com",
+    });
+    vi.mocked(getIsValidInviteToken).mockResolvedValue(false);
+
+    await SignupPage({ searchParams: { inviteToken: "test-token" } });
+
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  it("renders the page with email from search params", async () => {
+    // Mock the license check functions to return true
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
+    vi.mocked(getisSsoEnabled).mockResolvedValue(true);
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
+      email: "test@example.com",
+    });
+    vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
+
+    const result = await SignupPage({ searchParams: { email: "test@example.com" } });
+    render(result);
+
+    // Verify that the form is rendered with the email from search params
+    expect(screen.getByTestId("signup-form")).toBeInTheDocument();
   });
 });

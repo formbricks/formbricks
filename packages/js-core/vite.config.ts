@@ -6,6 +6,11 @@ import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 
 const config = () => {
   return defineConfig({
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src"),
+      },
+    },
     define: {
       "import.meta.env.VERSION": JSON.stringify(webPackageJson.version),
     },
@@ -26,7 +31,7 @@ const config = () => {
     plugins: [
       dts({
         rollupTypes: true,
-        bundledPackages: ["@formbricks/api", "@formbricks/types"],
+        bundledPackages: ["@formbricks/api"],
       }),
       copyCompiledAssetsPlugin({
         filename: "formbricks",
@@ -34,6 +39,14 @@ const config = () => {
         skipDirectoryCheck: true, // Skip checking for subdirectories that might not exist
       }),
     ],
+    test: {
+      setupFiles: ["./vitest.setup.ts"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+        include: ["src/lib/**/*.ts"],
+      },
+    },
   });
 };
 

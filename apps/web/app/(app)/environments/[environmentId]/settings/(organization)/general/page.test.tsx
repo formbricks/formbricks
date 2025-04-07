@@ -3,15 +3,11 @@ import {
   getIsOrganizationAIReady,
   getWhiteLabelPermission,
 } from "@/modules/ee/license-check/lib/utils";
+import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
+import { TEnvironmentAuth } from "@/modules/environments/types/environment-auth";
 import { getTranslate } from "@/tolgee/server";
-import { getServerSession } from "next-auth";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
-import { getAccessFlags } from "@formbricks/lib/membership/utils";
-import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { getUser } from "@formbricks/lib/user/service";
-import { TMembership } from "@formbricks/types/memberships";
-import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import Page from "./page";
 
@@ -57,16 +53,8 @@ vi.mock("@formbricks/lib/user/service", () => ({
   getUser: vi.fn(),
 }));
 
-vi.mock("@formbricks/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: vi.fn(),
-}));
-
-vi.mock("@formbricks/lib/membership/service", () => ({
-  getMembershipByUserIdOrganizationId: vi.fn(),
-}));
-
-vi.mock("@formbricks/lib/membership/utils", () => ({
-  getAccessFlags: vi.fn(),
+vi.mock("@/modules/environments/lib/utils", () => ({
+  getEnvironmentAuth: vi.fn(),
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
@@ -76,26 +64,21 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 }));
 
 describe("Page", () => {
-  const mockParams = { environmentId: "test-environment-id" };
-  const mockSession = { user: { id: "test-user-id" } };
+  let mockEnvironmentAuth = {
+    session: { user: { id: "test-user-id" } },
+    currentUserMembership: { role: "owner" },
+    organization: { id: "test-organization-id", billing: { plan: "free" } },
+    isOwner: true,
+    isManager: false,
+  } as unknown as TEnvironmentAuth;
+
   const mockUser = { id: "test-user-id" } as TUser;
-  const mockOrganization = { id: "test-organization-id", billing: { plan: "free" } } as TOrganization;
-  const mockMembership = { role: "owner" } as TMembership;
   const mockTranslate = vi.fn((key) => key);
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(getServerSession).mockResolvedValue(mockSession);
     vi.mocked(getTranslate).mockResolvedValue(mockTranslate);
     vi.mocked(getUser).mockResolvedValue(mockUser);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(mockOrganization);
-    vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(mockMembership);
-    vi.mocked(getAccessFlags).mockReturnValue({
-      isOwner: true,
-      isManager: false,
-      isBilling: false,
-      isMember: false,
-    });
+    vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(getIsOrganizationAIReady).mockResolvedValue(true);
     vi.mocked(getWhiteLabelPermission).mockResolvedValue(true);
@@ -111,8 +94,10 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("renders if session user id is null", async () => {
-    vi.mocked(getServerSession).mockResolvedValue({ user: { id: null } });
+  it("renders if session user id empty", async () => {
+    mockEnvironmentAuth.session.user.id = "";
+
+    vi.mocked(getEnvironmentAuth).mockResolvedValue(mockEnvironmentAuth);
 
     const props = {
       params: Promise.resolve({ environmentId: "env-123" }),
@@ -123,17 +108,13 @@ describe("Page", () => {
     expect(result).toBeTruthy();
   });
 
-  it("throws an error if the session is not found", async () => {
-    vi.mocked(getServerSession).mockResolvedValue(null);
+  it("handles getEnvironmentAuth error", async () => {
+    vi.mocked(getEnvironmentAuth).mockRejectedValue(new Error("Authentication error"));
 
-    await expect(Page({ params: Promise.resolve(mockParams) })).rejects.toThrow("common.session_not_found");
-  });
+    const props = {
+      params: Promise.resolve({ environmentId: "env-123" }),
+    };
 
-  it("throws an error if the organization is not found", async () => {
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue(null);
-
-    await expect(Page({ params: Promise.resolve(mockParams) })).rejects.toThrow(
-      "common.organization_not_found"
-    );
+    await expect(Page(props)).rejects.toThrow("Authentication error");
   });
 });

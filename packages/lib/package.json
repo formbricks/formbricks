@@ -21,6 +21,7 @@
     "@aws-sdk/s3-request-presigner": "3.741.0",
     "@formbricks/api": "workspace:*",
     "@formbricks/database": "workspace:*",
+    "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "2.2.2",
     "@t3-oss/env-nextjs": "0.12.0",
@@ -46,7 +47,7 @@
     "@types/ungap__structured-clone": "1.2.0",
     "dotenv": "16.4.7",
     "ts-node": "10.9.2",
-    "vitest": "2.1.9",
-    "vitest-mock-extended": "2.0.2"
+    "vitest": "3.1.1",
+    "vitest-mock-extended": "3.0.1"
   }
 }

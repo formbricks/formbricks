@@ -24,12 +24,12 @@ export const FormbricksClient = ({
 
   useEffect(() => {
     if (formbricksEnabled && userId) {
-      formbricks.init({
+      formbricks.setup({
         environmentId: formbricksEnvironmentId ?? "",
-        apiHost: formbricksApiHost ?? "",
-        userId,
+        appUrl: formbricksApiHost ?? "",
       });
 
+      formbricks.setUserId(userId);
       formbricks.setEmail(email);
     }
   }, [userId, email, formbricksEnvironmentId, formbricksApiHost, formbricksEnabled]);

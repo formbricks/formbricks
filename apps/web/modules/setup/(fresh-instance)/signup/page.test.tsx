@@ -29,7 +29,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  SENTRY_DNS: "mock-sentry-dsn",
+  SENTRY_DSN: "mock-sentry-dsn",
   FB_LOGO_URL: "mock-fb-logo-url",
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: 587,
@@ -69,7 +69,11 @@ vi.mock("@/tolgee/server", () => ({
 
 // Mock the SignupForm component to simplify our test assertions
 vi.mock("@/modules/auth/signup/components/signup-form", () => ({
-  SignupForm: () => <div data-testid="signup-form">SignupForm</div>,
+  SignupForm: (props) => (
+    <div data-testid="signup-form" data-turnstile-key={props.turnstileSiteKey}>
+      SignupForm
+    </div>
+  ),
 }));
 
 describe("SignupPage", () => {
@@ -85,5 +89,9 @@ describe("SignupPage", () => {
     render(page);
 
     expect(screen.getByTestId("signup-form")).toBeInTheDocument();
+    expect(screen.getByTestId("signup-form")).toHaveAttribute(
+      "data-turnstile-key",
+      "test-turnstile-site-key"
+    );
   });
 });

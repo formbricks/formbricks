@@ -16,6 +16,7 @@ import { responseCache } from "@formbricks/lib/response/cache";
 import { calculateTtcTotal } from "@formbricks/lib/response/utils";
 import { responseNoteCache } from "@formbricks/lib/responseNote/cache";
 import { captureTelemetry } from "@formbricks/lib/telemetry";
+import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 
 export const createResponse = async (
@@ -40,7 +41,14 @@ export const createResponse = async (
   } = responseInput;
 
   try {
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    let ttc = {};
+    if (initialTtc) {
+      if (finished) {
+        ttc = calculateTtcTotal(initialTtc);
+      } else {
+        ttc = initialTtc;
+      }
+    }
 
     const prismaData: Prisma.ResponseCreateInput = {
       survey: {
@@ -66,11 +74,11 @@ export const createResponse = async (
       return err(organizationIdResult.error);
     }
 
-    const organizationResult = await getOrganizationBilling(organizationIdResult.data);
-    if (!organizationResult.ok) {
-      return err(organizationResult.error);
+    const billing = await getOrganizationBilling(organizationIdResult.data);
+    if (!billing.ok) {
+      return err(billing.error);
     }
-    const organization = organizationResult.data;
+    const billingData = billing.data;
 
     const response = await prisma.response.create({
       data: prismaData,
@@ -94,12 +102,12 @@ export const createResponse = async (
       }
 
       const responsesCount = responsesCountResult.data;
-      const responsesLimit = organization.billing.limits.monthly.responses;
+      const responsesLimit = billingData.limits?.monthly.responses;
 
       if (responsesLimit && responsesCount >= responsesLimit) {
         try {
           await sendPlanLimitsReachedEventToPosthogWeekly(environmentId, {
-            plan: organization.billing.plan,
+            plan: billingData.plan,
             limits: {
               projects: null,
               monthly: {
@@ -110,7 +118,7 @@ export const createResponse = async (
           });
         } catch (err) {
           // Log error but do not throw it
-          console.error(`Error sending plan limits reached event to Posthog: ${err}`);
+          logger.error(err, "Error sending plan limits reached event to Posthog");
         }
       }
     }
@@ -122,16 +130,18 @@ export const createResponse = async (
 };
 
 export const getResponses = async (
-  environmentId: string,
+  environmentIds: string[],
   params: TGetResponsesFilter
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getResponsesQuery(environmentIds, params);
+
     const [responses, count] = await prisma.$transaction([
       prisma.response.findMany({
-        ...getResponsesQuery(environmentId, params),
+        ...query,
       }),
       prisma.response.count({
-        where: getResponsesQuery(environmentId, params).where,
+        where: query.where,
       }),
     ]);
 

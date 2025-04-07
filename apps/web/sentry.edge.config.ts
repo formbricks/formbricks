@@ -3,13 +3,13 @@
 // Note that this config is unrelated to the Vercel Edge Runtime and is also required when running locally.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 import * as Sentry from "@sentry/nextjs";
-import { SENTRY_DNS } from "@formbricks/lib/constants";
+import { SENTRY_DSN } from "@formbricks/lib/constants";
 
-if (SENTRY_DNS) {
+if (SENTRY_DSN) {
   console.log("Sentry DSN found, enabling Sentry on the edge");
 
   Sentry.init({
-    dsn: SENTRY_DNS,
+    dsn: SENTRY_DSN,
 
     // Adjust this value in production, or use tracesSampler for greater control
     tracesSampleRate: 1,

@@ -1,16 +1,19 @@
+import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 import { TGetResponsesFilter } from "@/modules/api/v2/management/responses/types/responses";
 import { Prisma } from "@prisma/client";
 
-export const getResponsesQuery = (environmentId: string, params?: TGetResponsesFilter) => {
-  const { surveyId, limit, skip, sortBy, order, startDate, endDate, contactId } = params || {};
-
+export const getResponsesQuery = (environmentIds: string[], params?: TGetResponsesFilter) => {
   let query: Prisma.ResponseFindManyArgs = {
     where: {
       survey: {
-        environmentId,
+        environmentId: { in: environmentIds },
       },
     },
   };
+
+  if (!params) return query;
+
+  const { surveyId, contactId } = params || {};
 
   if (surveyId) {
     query = {
@@ -22,55 +25,6 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
     };
   }
 
-  if (startDate) {
-    query = {
-      ...query,
-      where: {
-        ...query.where,
-        createdAt: {
-          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Response">),
-          gte: startDate,
-        },
-      },
-    };
-  }
-
-  if (endDate) {
-    query = {
-      ...query,
-      where: {
-        ...query.where,
-        createdAt: {
-          ...(query.where?.createdAt as Prisma.DateTimeFilter<"Response">),
-          lte: endDate,
-        },
-      },
-    };
-  }
-
-  if (sortBy) {
-    query = {
-      ...query,
-      orderBy: {
-        [sortBy]: order,
-      },
-    };
-  }
-
-  if (limit) {
-    query = {
-      ...query,
-      take: limit,
-    };
-  }
-
-  if (skip) {
-    query = {
-      ...query,
-      skip: skip,
-    };
-  }
-
   if (contactId) {
     query = {
       ...query,
@@ -79,6 +33,12 @@ export const getResponsesQuery = (environmentId: string, params?: TGetResponsesF
         contactId,
       },
     };
+  }
+
+  const baseFilter = pickCommonFilter(params);
+
+  if (baseFilter) {
+    query = buildCommonFilterQuery<Prisma.ResponseFindManyArgs>(query, baseFilter);
   }
 
   return query;

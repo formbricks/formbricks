@@ -1,12 +1,9 @@
 import { getDefaultEndingCard } from "@/app/lib/templates";
 import { createId } from "@paralleldrive/cuid2";
 import { TFnType } from "@tolgee/react";
+import { logger } from "@formbricks/logger";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
-
-function logError(error: Error, context: string) {
-  console.error(`Error in ${context}:`, error);
-}
 
 export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
   try {
@@ -19,7 +16,7 @@ export const getXMSurveyDefault = (t: TFnType): TXMTemplate => {
       },
     };
   } catch (error) {
-    logError(error, "getXMSurveyDefault");
+    logger.error(error, "Failed to create default XM survey template");
     throw error; // Re-throw after logging
   }
 };
@@ -449,7 +446,7 @@ export const getXMTemplates = (t: TFnType): TXMTemplate[] => {
       enpsSurvey(t),
     ];
   } catch (error) {
-    logError(error, "getXMTemplates");
+    logger.error(error, "Unable to load XM templates, returning empty array");
     return []; // Return an empty array or handle as needed
   }
 };

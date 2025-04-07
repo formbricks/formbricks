@@ -1,5 +1,6 @@
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { Testimonial } from "@/modules/auth/components/testimonial";
+import { getIsValidInviteToken } from "@/modules/auth/signup/lib/invite";
 import {
   getIsMultiOrgEnabled,
   getIsSamlSsoEnabled,
@@ -26,6 +27,7 @@ import {
   TURNSTILE_SITE_KEY,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { verifyInviteToken } from "@formbricks/lib/jwt";
 import { findMatchingLocale } from "@formbricks/lib/utils/locale";
 import { SignupForm } from "./components/signup-form";
 
@@ -39,10 +41,18 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
   ]);
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
-
   const locale = await findMatchingLocale();
-  if (!inviteToken && (!SIGNUP_ENABLED || !isMultOrgEnabled)) {
-    notFound();
+  if (!SIGNUP_ENABLED || !isMultOrgEnabled) {
+    if (!inviteToken) notFound();
+
+    try {
+      const { inviteId } = verifyInviteToken(inviteToken);
+      const isValidInviteToken = await getIsValidInviteToken(inviteId);
+
+      if (!isValidInviteToken) notFound();
+    } catch {
+      notFound();
+    }
   }
 
   const emailFromSearchParams = searchParams["email"];

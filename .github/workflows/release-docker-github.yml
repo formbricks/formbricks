@@ -6,10 +6,11 @@ name: Docker Release to Github
 # documentation.
 
 on:
-  workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
+    outputs:
+      VERSION:
+        description: release version
+        value: ${{ jobs.build.outputs.VERSION }}
 
 env:
   # Use docker.io for Docker Hub if empty
@@ -18,7 +19,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-  DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public"
 
 permissions:
   contents: read
@@ -33,6 +33,9 @@ jobs:
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
 
+    outputs:
+      VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
+
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
@@ -41,6 +44,19 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3.6.0
+
+      - name: Get Release Tag
+        id: extract_release_tag
+        run: |
+          TAG=${{ github.ref }}
+          TAG=${TAG#refs/tags/v}
+          echo "RELEASE_TAG=$TAG" >> $GITHUB_ENV
+          echo "VERSION=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        run: |
+          sed -i "s/\"version\": \"0.0.0\"/\"version\": \"${{ env.RELEASE_TAG }}\"/" ./apps/web/package.json
+          cat ./apps/web/package.json | grep version
 
       - name: Set up Depot CLI
         uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
@@ -83,6 +99,9 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

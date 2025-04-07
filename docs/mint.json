@@ -116,7 +116,7 @@
       ]
     },
     {
-      "group": "Core Features",
+      "group": "Platform Features",
       "pages": [
         {
           "group": "Integrations",
@@ -140,10 +140,6 @@
         "xm-and-surveys/core-features/email-customization",
         "xm-and-surveys/core-features/test-environment"
       ]
-    },
-    {
-      "group": "Enterprise Features",
-      "pages": ["xm-and-surveys/enterprise-features/saml-sso"]
     },
     {
       "group": "XM",
@@ -247,8 +243,8 @@
       "pages": [
         "self-hosting/setup/one-click",
         "self-hosting/setup/docker",
-        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/monitoring",
+        "self-hosting/setup/cluster-setup",
         "self-hosting/setup/kubernetes"
       ]
     },
@@ -258,6 +254,7 @@
         "self-hosting/configuration/custom-ssl",
         "self-hosting/configuration/environment-variables",
         "self-hosting/configuration/smtp",
+        "self-hosting/configuration/domain-configuration",
         {
           "group": "Auth & SSO",
           "icon": "lock",

@@ -284,6 +284,7 @@ export const SignupForm = ({
           samlTenant={samlTenant}
           samlProduct={samlProduct}
           callbackUrl={callbackUrl}
+          source="signup"
         />
       )}
       <TermsPrivacyLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />

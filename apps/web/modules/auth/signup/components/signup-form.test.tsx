@@ -31,7 +31,7 @@ vi.mock("@formbricks/lib/constants", () => ({
   OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
   WEBAPP_URL: "test-webapp-url",
   IS_PRODUCTION: false,
-  SENTRY_DNS: "mock-sentry-dsn",
+  SENTRY_DSN: "mock-sentry-dsn",
   FB_LOGO_URL: "mock-fb-logo-url",
   SMTP_HOST: "smtp.example.com",
   SMTP_PORT: 587,

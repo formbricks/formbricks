@@ -2,6 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@formbricks/lib/constants";
+import { logger } from "@formbricks/logger";
 import { preloadConnection } from "../preload-connection";
 
 vi.mock("@formbricks/lib/constants", () => ({
@@ -114,14 +115,11 @@ describe("SAML Preload Connection", () => {
   test("handle case when no XML files are found", async () => {
     vi.mocked(fs.readdir).mockResolvedValue(["other-file.txt"] as any);
 
-    const consoleErrorSpy = vi.spyOn(console, "error");
+    const loggerSpy = vi.spyOn(logger, "error");
 
     await preloadConnection(mockConnectionController as any);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Error preloading connection:",
-      expect.stringContaining("No preloaded connection file found")
-    );
+    expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error preloading connection");
 
     expect(mockConnectionController.createSAMLConnection).not.toHaveBeenCalled();
   });
@@ -130,13 +128,10 @@ describe("SAML Preload Connection", () => {
     const errorMessage = "Invalid metadata";
     mockConnectionController.createSAMLConnection.mockRejectedValue(new Error(errorMessage));
 
-    const consoleErrorSpy = vi.spyOn(console, "error");
+    const loggerSpy = vi.spyOn(logger, "error");
 
     await preloadConnection(mockConnectionController as any);
 
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "Error preloading connection:",
-      expect.stringContaining(errorMessage)
-    );
+    expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error preloading connection");
   });
 });

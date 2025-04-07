@@ -1,6 +1,7 @@
 "use client";
 
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import {
   copySurveyToOtherEnvironmentAction,
   deleteSurveyAction,
@@ -35,8 +36,8 @@ import { CopySurveyModal } from "./copy-survey-modal";
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurvey;
-  webAppUrl: string;
-  singleUseId?: string;
+  surveyDomain: string;
+  refreshSingleUseId: () => Promise<string | undefined>;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   duplicateSurvey: (survey: TSurvey) => void;
@@ -46,8 +47,8 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
-  webAppUrl,
-  singleUseId,
+  surveyDomain,
+  refreshSingleUseId,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
@@ -60,7 +61,7 @@ export const SurveyDropDownMenu = ({
   const [isCopyFormOpen, setIsCopyFormOpen] = useState(false);
   const router = useRouter();
 
-  const surveyUrl = useMemo(() => webAppUrl + "/s/" + survey.id, [survey.id, webAppUrl]);
+  const surveyLink = useMemo(() => surveyDomain + "/s/" + survey.id, [survey.id, surveyDomain]);
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -74,6 +75,20 @@ export const SurveyDropDownMenu = ({
       toast.error(t("environments.surveys.error_deleting_survey"));
     }
     setLoading(false);
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      e.preventDefault();
+      setIsDropDownOpen(false);
+      const newId = await refreshSingleUseId();
+      const copiedLink = copySurveyLink(surveyLink, newId);
+      navigator.clipboard.writeText(copiedLink);
+      toast.success(t("common.copied_to_clipboard"));
+      router.refresh();
+    } catch (error) {
+      toast.error(t("environments.surveys.summary.failed_to_copy_link"));
+    }
   };
 
   const duplicateSurveyAndRefresh = async (surveyId: string) => {
@@ -105,6 +120,7 @@ export const SurveyDropDownMenu = ({
   return (
     <div
       id={`${survey.name.toLowerCase().split(" ").join("-")}-survey-actions`}
+      data-testid="survey-dropdown-menu"
       onClick={(e) => e.stopPropagation()}>
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild disabled={disabled}>
@@ -168,11 +184,12 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <div
                     className="flex w-full cursor-pointer items-center"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      const previewUrl = singleUseId
-                        ? `/s/${survey.id}?suId=${singleUseId}&preview=true`
+                      const newId = await refreshSingleUseId();
+                      const previewUrl = newId
+                        ? `/s/${survey.id}?suId=${newId}&preview=true`
                         : `/s/${survey.id}?preview=true`;
                       window.open(previewUrl, "_blank");
                     }}>
@@ -183,16 +200,9 @@ export const SurveyDropDownMenu = ({
                 <DropdownMenuItem>
                   <button
                     type="button"
+                    data-testid="copy-link"
                     className="flex w-full items-center"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsDropDownOpen(false);
-                      navigator.clipboard.writeText(
-                        singleUseId ? `${surveyUrl}?suId=${singleUseId}` : surveyUrl
-                      );
-                      toast.success("Copied link to clipboard");
-                      router.refresh();
-                    }}>
+                    onClick={async (e) => handleCopyLink(e)}>
                     <LinkIcon className="mr-2 h-4 w-4" />
                     {t("common.copy_link")}
                   </button>

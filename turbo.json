@@ -10,6 +10,9 @@
       "dependsOn": ["@formbricks/api#build"],
       "persistent": true
     },
+    "@formbricks/database#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#setup": {
       "dependsOn": ["db:up"]
     },
@@ -37,8 +40,23 @@
     "@formbricks/js#lint": {
       "dependsOn": ["@formbricks/js-core#build"]
     },
+
+    "@formbricks/js-core#go": {
+      "cache": false,
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "persistent": true
+    },
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/js-core#test": {
+      "dependsOn": ["@formbricks/api#build"]
+    },
+    "@formbricks/lib#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/lib#test": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/react-native#build": {
       "dependsOn": ["^build"],
@@ -46,7 +64,7 @@
     },
     "@formbricks/react-native#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build", "@formbricks/js#build"],
+      "dependsOn": ["@formbricks/database#db:setup", "@formbricks/api#build"],
       "persistent": true
     },
     "@formbricks/react-native#lint": {
@@ -73,6 +91,12 @@
       "dependsOn": ["@formbricks/database#db:setup", "@formbricks/js#build"],
       "persistent": true
     },
+    "@formbricks/web#test": {
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+    },
+    "@formbricks/web#test:coverage": {
+      "dependsOn": ["@formbricks/js#build", "@formbricks/logger#build"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
@@ -94,6 +118,7 @@
         "BREVO_LIST_ID",
         "DEFAULT_ORGANIZATION_ID",
         "DEFAULT_ORGANIZATION_ROLE",
+        "DOCKER_CRON_ENABLED",
         "CRON_SECRET",
         "CUSTOM_CACHE_DISABLED",
         "DATABASE_URL",
@@ -124,6 +149,7 @@
         "IS_FORMBRICKS_CLOUD",
         "INTERCOM_APP_ID",
         "INTERCOM_SECRET_KEY",
+        "LOG_LEVEL",
         "MAIL_FROM",
         "MAIL_FROM_NAME",
         "NEXT_PUBLIC_LAYER_API_KEY",
@@ -153,6 +179,7 @@
         "RATE_LIMITING_DISABLED",
         "REDIS_HTTP_URL",
         "REDIS_URL",
+        "REDIS_DEFAULT_TTL",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_ENDPOINT_URL",
@@ -176,6 +203,7 @@
         "STRIPE_WEBHOOK_SECRET",
         "SURVEYS_PACKAGE_MODE",
         "SURVEYS_PACKAGE_BUILD",
+        "SURVEY_URL",
         "TELEMETRY_DISABLED",
         "TURNSTILE_SECRET_KEY",
         "TURNSTILE_SITE_KEY",
@@ -220,6 +248,7 @@
     },
     "db:setup": {
       "cache": false,
+      "dependsOn": ["@formbricks/logger#build"],
       "outputs": []
     },
     "db:start": {

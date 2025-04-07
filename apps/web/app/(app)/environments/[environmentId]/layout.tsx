@@ -4,7 +4,7 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 import { getTranslate } from "@/tolgee/server";
 import { getServerSession } from "next-auth";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import {
   FORMBRICKS_API_HOST,
   FORMBRICKS_ENVIRONMENT_ID,
@@ -56,7 +56,10 @@ const EnvLayout = async (props: {
   }
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  if (!membership) return notFound();
+
+  if (!membership) {
+    throw new Error(t("common.membership_not_found"));
+  }
 
   return (
     <ResponseFilterProvider>

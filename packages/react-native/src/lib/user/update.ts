@@ -1,10 +1,10 @@
 /* eslint-disable no-console -- required for logging errors */
-import { FormbricksAPI } from "@formbricks/api";
 import { RNConfig } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { filterSurveys } from "@/lib/common/utils";
 import { type TUpdates, type TUserState } from "@/types/config";
 import { type ApiErrorResponse, type Result, err, ok, okVoid } from "@/types/error";
+import { FormbricksAPI } from "@formbricks/api";
 
 export const sendUpdatesToBackend = async ({
   appUrl,
@@ -24,7 +24,7 @@ export const sendUpdatesToBackend = async ({
   >
 > => {
   const url = `${appUrl}/api/v1/client/${environmentId}/user`;
-  const api = new FormbricksAPI({ apiHost: appUrl, environmentId });
+  const api = new FormbricksAPI({ appUrl, environmentId });
 
   try {
     const response = await api.client.user.createOrUpdate({

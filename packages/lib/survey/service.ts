@@ -2,6 +2,7 @@ import "server-only";
 import { ActionClass, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { ZOptionalNumber } from "@formbricks/types/common";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -134,7 +135,7 @@ const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: Act
   }
 };
 
-const handleTriggerUpdates = (
+export const handleTriggerUpdates = (
   updatedTriggers: TSurvey["triggers"],
   currentTriggers: TSurvey["triggers"],
   actionClasses: ActionClass[]
@@ -198,7 +199,7 @@ export const getSurvey = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -241,7 +242,7 @@ export const getSurveysByActionClassId = reactCache(
           });
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys by action class id");
             throw new DatabaseError(error.message);
           }
 
@@ -286,7 +287,7 @@ export const getSurveys = reactCache(
           return surveysPrisma.map((surveyPrisma) => transformPrismaSurvey<TSurvey>(surveyPrisma));
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting surveys");
             throw new DatabaseError(error.message);
           }
           throw error;
@@ -314,7 +315,7 @@ export const getSurveyCount = reactCache(
           return surveyCount;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
-            console.error(error);
+            logger.error(error, "Error getting survey count");
             throw new DatabaseError(error.message);
           }
 
@@ -435,7 +436,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
           segmentCache.revalidate({ id: updatedSegment.id, environmentId: updatedSegment.environmentId });
           updatedSegment.surveys.map((survey) => surveyCache.revalidate({ id: survey.id }));
         } catch (error) {
-          console.error(error);
+          logger.error(error, "Error updating survey");
           throw new Error("Error updating survey");
         }
       } else {
@@ -688,7 +689,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
     return modifiedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error updating survey");
       throw new DatabaseError(error.message);
     }
 
@@ -862,7 +863,7 @@ export const createSurvey = async (
     return transformedSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error(error);
+      logger.error(error, "Error creating survey");
       throw new DatabaseError(error.message);
     }
     throw error;
@@ -890,6 +891,7 @@ export const getSurveyIdByResultShareKey = reactCache(
           return survey.id;
         } catch (error) {
           if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            logger.error(error, "Error getting survey id by result share key");
             throw new DatabaseError(error.message);
           }
 

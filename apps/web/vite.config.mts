@@ -1,4 +1,5 @@
-import { loadEnv } from "vite";
+// vitest.config.ts
+import { PluginOption, loadEnv } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
@@ -6,9 +7,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    environmentMatchGlobs: [
-      ["**/*.test.tsx", "jsdom"],
-    ],
+    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     exclude: ["playwright/**", "node_modules/**"],
     setupFiles: ["../../packages/lib/vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
@@ -18,15 +17,21 @@ export default defineConfig({
       reportsDirectory: "./coverage", // Output coverage reports to the coverage/ directory
       include: [
         "modules/api/v2/**/*.ts",
+        "modules/api/v2/**/*.tsx",
         "modules/auth/lib/**/*.ts",
         "modules/auth/signup/components/signup-form.tsx",
         "modules/auth/signup/page.tsx",
         "modules/signup/lib/**/*.ts",
+        "modules/auth/signup/lib/**/*.ts",
+        "modules/auth/signup/**/*.tsx",
         "modules/ee/whitelabel/email-customization/components/*.tsx",
         "modules/ee/sso/lib/**/*.ts",
         "modules/email/components/email-template.tsx",
         "modules/email/emails/survey/follow-up.tsx",
         "modules/ui/components/post-hog-client/*.tsx",
+        "modules/ee/role-management/components/*.tsx",
+        "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx",
+        "modules/ui/components/alert/*.tsx",
         "app/(app)/environments/**/layout.tsx",
         "app/(app)/environments/**/settings/(organization)/general/page.tsx",
         "app/(app)/environments/**/components/PosthogIdentify.tsx",
@@ -38,10 +43,25 @@ export default defineConfig({
         "app/layout.tsx",
         "app/intercom/*.tsx",
         "app/sentry/*.tsx",
+        "app/(app)/environments/**/surveys/**/(analysis)/summary/components/SurveyAnalysisCTA.tsx",
+        "modules/ee/sso/lib/**/*.ts",
+        "app/lib/**/*.ts",
+        "app/api/(internal)/insights/lib/**/*.ts",
+        "modules/ee/role-management/*.ts",
+        "modules/organization/settings/teams/actions.ts",
+        "modules/organization/settings/api-keys/lib/**/*.ts",
+        "app/api/v1/**/*.ts",
+        "modules/api/v2/management/auth/*.ts",
+        "modules/organization/settings/api-keys/components/*.tsx",
+        "modules/survey/hooks/*.tsx",
+        "modules/survey/lib/client-utils.ts",
+        "modules/survey/list/components/survey-card.tsx",
+        "modules/survey/list/components/survey-dropdown-menu.tsx",
+        "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts",
+        "modules/ee/sso/components/**/*.tsx",
       ],
       exclude: [
         "**/.next/**",
-        "**/*.test.*",
         "**/*.spec.*",
         "**/constants.ts", // Exclude constants files
         "**/route.ts", // Exclude route files
@@ -51,5 +71,5 @@ export default defineConfig({
       ],
     },
   },
-  plugins: [tsconfigPaths(), react()],
+  plugins: [tsconfigPaths(), react() as PluginOption],
 });
