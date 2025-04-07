@@ -106,7 +106,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         className="h-full w-full cursor-pointer"
         id="howToSendCardTrigger">
         <div className="inline-flex px-4 py-4">
-          <div className="flex items-center pl-2 pr-5">
+          <div className="flex items-center pr-5 pl-2">
             <CheckIcon
               strokeWidth={3}
               className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
@@ -171,7 +171,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                       </div>
                       <p className="mt-2 text-xs font-normal text-slate-600">{option.description}</p>
                       {localSurvey.type === option.id && option.alert && (
-                        <Alert variant="warning">
+                        <Alert variant="warning" className="mt-2">
                           <AlertTitle>
                             {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
                           </AlertTitle>
@@ -187,7 +187,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                                 "_blank"
                               )
                             }>
-                            {t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
+                            {t("common.connect_formbricks")}
                           </AlertButton>
                         </Alert>
                       )}
