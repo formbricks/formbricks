@@ -9,7 +9,7 @@
     "@vercel/style-guide": "6.0.0",
     "eslint-config-next": "15.2.4",
     "eslint-config-prettier": "10.1.1",
-    "eslint-config-turbo": "2.3.3",
+    "eslint-config-turbo": "2.5.0",
     "eslint-plugin-i18n-json": "4.0.1",
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.2.0",
