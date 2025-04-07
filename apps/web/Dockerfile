@@ -1,4 +1,4 @@
-FROM node:20-alpine3.20 AS base
+FROM node:22-alpine3.20 AS base
 
 #
 ## step 1: Prune monorepo
