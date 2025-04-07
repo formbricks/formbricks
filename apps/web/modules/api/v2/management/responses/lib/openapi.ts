@@ -5,7 +5,6 @@ import {
 } from "@/modules/api/v2/management/responses/[responseId]/lib/openapi";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
 import { makePartialSchema, responseWithMetaSchema } from "@/modules/api/v2/types/openapi-response";
-import { z } from "zod";
 import { ZodOpenApiOperationObject, ZodOpenApiPathsObject } from "zod-openapi";
 import { ZResponse } from "@formbricks/database/zod/responses";
 
@@ -14,7 +13,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
   summary: "Get responses",
   description: "Gets responses from the database.",
   requestParams: {
-    query: ZGetResponsesFilter.sourceType().required(),
+    query: ZGetResponsesFilter.sourceType(),
   },
   tags: ["Management API > Responses"],
   responses: {
@@ -22,7 +21,7 @@ export const getResponsesEndpoint: ZodOpenApiOperationObject = {
       description: "Responses retrieved successfully.",
       content: {
         "application/json": {
-          schema: z.array(responseWithMetaSchema(makePartialSchema(ZResponse))),
+          schema: responseWithMetaSchema(makePartialSchema(ZResponse)),
         },
       },
     },

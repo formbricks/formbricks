@@ -1,7 +1,14 @@
 // mock these globally used functions
 import "@testing-library/jest-dom/vitest";
+import ResizeObserver from "resize-observer-polyfill";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ValidationError } from "@formbricks/types/errors";
+
+// Make ResizeObserver available globally (Vitest/Jest environment)
+// This is used by radix-ui
+if (!global.ResizeObserver) {
+  global.ResizeObserver = ResizeObserver;
+}
 
 // mock react toast
 

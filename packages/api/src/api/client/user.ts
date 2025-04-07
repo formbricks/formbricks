@@ -5,10 +5,12 @@ import { makeRequest } from "../../utils/make-request";
 export class UserAPI {
   private appUrl: string;
   private environmentId: string;
+  private isDebug: boolean;
 
-  constructor(appUrl: string, environmentId: string) {
+  constructor(appUrl: string, environmentId: string, isDebug: boolean) {
     this.appUrl = appUrl;
     this.environmentId = environmentId;
+    this.isDebug = isDebug;
   }
 
   async createOrUpdate(userUpdateInput: { userId: string; attributes?: Record<string, string> }): Promise<
@@ -37,9 +39,15 @@ export class UserAPI {
       attributes[key] = String(userUpdateInput.attributes[key]);
     }
 
-    return makeRequest(this.appUrl, `/api/v2/client/${this.environmentId}/user`, "POST", {
-      userId: userUpdateInput.userId,
-      attributes,
-    });
+    return makeRequest(
+      this.appUrl,
+      `/api/v2/client/${this.environmentId}/user`,
+      "POST",
+      {
+        userId: userUpdateInput.userId,
+        attributes,
+      },
+      this.isDebug
+    );
   }
 }
