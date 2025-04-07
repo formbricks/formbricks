@@ -68,6 +68,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             isReadOnly={isReadOnly}
             user={user}
             surveyDomain={surveyDomain}
+            responseCount={totalResponseCount}
           />
         }>
         {isAIEnabled && shouldGenerateInsights && (
