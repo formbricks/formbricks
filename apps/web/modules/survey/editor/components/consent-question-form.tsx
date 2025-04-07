@@ -51,6 +51,21 @@ export const ConsentQuestionForm = ({
         locale={locale}
       />
       <div>
+        {question.tooltip === undefined && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-4"
+            type="button"
+            onClick={() => {
+              updateQuestion(questionIdx, {
+                tooltip: createI18nString("", surveyLanguageCodes),
+              });
+            }}>
+            <PlusIcon className="mr-1 h-4 w-4" />
+            {t("environments.surveys.edit.add_tooltip")}
+          </Button>
+        )}
         {question.tooltip !== undefined && (
           <div className="inline-flex w-full items-center">
             <div className="w-full">
@@ -68,21 +83,6 @@ export const ConsentQuestionForm = ({
               />
             </div>
           </div>
-        )}
-        {question.tooltip === undefined && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="mt-4"
-            type="button"
-            onClick={() => {
-              updateQuestion(questionIdx, {
-                tooltip: createI18nString("", surveyLanguageCodes),
-              });
-            }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_tooltip")}
-          </Button>
         )}
       </div>
 
