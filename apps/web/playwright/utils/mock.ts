@@ -1,4 +1,4 @@
-const MOCK_PASSWORD = "mock_password_for_testing_only";
+const MOCK_PASSWORD = "Mock_password_for_testing_0nly";
 
 export const mockUsers = {
   signup: [
