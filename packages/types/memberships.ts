@@ -21,6 +21,7 @@ export const ZMember = z.object({
   userId: z.string(),
   accepted: z.boolean(),
   role: ZOrganizationRole,
+  isActive: z.boolean(),
 });
 
 export type TMember = z.infer<typeof ZMember>;

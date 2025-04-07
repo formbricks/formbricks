@@ -1,6 +1,6 @@
 {
   "name": "@formbricks/demo",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "scripts": {
     "clean": "rimraf .turbo node_modules .next",
@@ -12,10 +12,14 @@
   },
   "dependencies": {
     "@formbricks/js": "workspace:*",
-    "lucide-react": "0.468.0",
-    "next": "15.2.3",
+    "@tailwindcss/forms": "0.5.9",
+    "@tailwindcss/postcss": "4.1.3",
+    "lucide-react": "0.486.0",
+    "next": "15.2.4",
+    "postcss": "8.5.3",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "tailwindcss": "4.1.3"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

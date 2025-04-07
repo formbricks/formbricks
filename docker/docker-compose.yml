@@ -75,6 +75,9 @@ x-environment: &environment
     # Set the below to 0 to disable cron jobs
     # DOCKER_CRON_ENABLED: 1
 
+    # Set the below to your Survey Domain(default is WEBAPP_URL)
+    # SURVEY_URL:
+
     ################################################### OPTIONAL (STORAGE) ###################################################
 
     # Set the below to set a custom Upload Directory
@@ -95,7 +98,7 @@ x-environment: &environment
     ############################################# OPTIONAL (OAUTH CONFIGURATION) #############################################
 
     # Set the below from Cloudflare Turnstile if you want to enable turnstile in signups
-    # NEXT_PUBLIC_TURNSTILE_SITE_KEY:
+    # TURNSTILE_SITE_KEY:
     # TURNSTILE_SECRET_KEY:
 
     # Set the below from GitHub if you want to enable GitHub OAuth

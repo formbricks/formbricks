@@ -1,5 +1,6 @@
 "use client";
 
+import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { useTranslate } from "@tolgee/react";
 import { signIn } from "next-auth/react";
@@ -11,19 +12,28 @@ interface OpenIdButtonProps {
   lastUsed?: boolean;
   directRedirect?: boolean;
   text?: string;
+  source: "signin" | "signup";
 }
 
-export const OpenIdButton = ({ inviteUrl, lastUsed, directRedirect = false, text }: OpenIdButtonProps) => {
+export const OpenIdButton = ({
+  inviteUrl,
+  lastUsed,
+  directRedirect = false,
+  text,
+  source,
+}: OpenIdButtonProps) => {
   const { t } = useTranslate();
   const handleLogin = useCallback(async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "OpenID");
     }
+    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
+
     await signIn("openid", {
       redirect: true,
-      callbackUrl: inviteUrl ? inviteUrl : "/",
+      callbackUrl: callbackUrlWithSource,
     });
-  }, [inviteUrl]);
+  }, [inviteUrl, source]);
 
   useEffect(() => {
     if (directRedirect) {

@@ -16,6 +16,7 @@ import {
   SMTP_USER,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
+import { getSurveyDomain } from "@formbricks/lib/getSurveyUrl";
 import { createInviteToken, createToken, createTokenForLinkSurvey } from "@formbricks/lib/jwt";
 import { getOrganizationByEnvironmentId } from "@formbricks/lib/organization/service";
 import { logger } from "@formbricks/logger";
@@ -270,9 +271,9 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const t = await getTranslate();
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
     }
-    return `${WEBAPP_URL}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
+    return `${getSurveyDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };
   const surveyLink = getSurveyLink();
 
