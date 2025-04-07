@@ -402,11 +402,15 @@ export const QuestionFormInput = ({
                           (id === "tooltip" && question.tooltip !== undefined)) &&
                           question && (
                             <TooltipRenderer
-                              tooltipContent={t("environments.surveys.edit.remove_description")}>
+                              tooltipContent={
+                                id === "tooltip"
+                                  ? t("environments.surveys.edit.remove_tooltip")
+                                  : t("environments.surveys.edit.remove_description")
+                              }>
                               <Button
                                 variant="secondary"
                                 size="icon"
-                                aria-label="Remove description"
+                                aria-label={id === "tooltip" ? "Remove tooltip" : "Remove description"}
                                 className="ml-2"
                                 onClick={(e) => {
                                   e.preventDefault();

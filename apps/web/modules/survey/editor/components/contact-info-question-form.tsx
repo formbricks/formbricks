@@ -99,6 +99,43 @@ export const ContactInfoQuestionForm = ({
       />
 
       <div ref={parent}>
+        {question.subheader !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
+                id="subheader"
+                value={question.subheader}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                label={t("common.description")}
+                locale={locale}
+              />
+            </div>
+          </div>
+        )}
+
+        {question.tooltip !== undefined && (
+          <div className="inline-flex w-full items-center">
+            <div className="w-full">
+              <QuestionFormInput
+                id="tooltip"
+                value={question.tooltip}
+                label={t("environments.surveys.edit.tooltip")}
+                localSurvey={localSurvey}
+                questionIdx={questionIdx}
+                isInvalid={isInvalid}
+                updateQuestion={updateQuestion}
+                selectedLanguageCode={selectedLanguageCode}
+                setSelectedLanguageCode={setSelectedLanguageCode}
+                locale={locale}
+              />
+            </div>
+          </div>
+        )}
         {question.subheader === undefined && (
           <Button
             size="sm"
@@ -128,42 +165,6 @@ export const ContactInfoQuestionForm = ({
             <PlusIcon className="mr-1 h-4 w-4" />
             {t("environments.surveys.edit.add_tooltip")}
           </Button>
-        )}
-        {question.subheader !== undefined && (
-          <div className="inline-flex w-full items-center">
-            <div className="w-full">
-              <QuestionFormInput
-                id="subheader"
-                value={question.subheader}
-                localSurvey={localSurvey}
-                questionIdx={questionIdx}
-                isInvalid={isInvalid}
-                updateQuestion={updateQuestion}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                label={t("common.description")}
-                locale={locale}
-              />
-            </div>
-          </div>
-        )}
-        {question.tooltip !== undefined && (
-          <div className="inline-flex w-full items-center">
-            <div className="w-full">
-              <QuestionFormInput
-                id="tooltip"
-                value={question.tooltip}
-                label={t("environments.surveys.edit.tooltip")}
-                localSurvey={localSurvey}
-                questionIdx={questionIdx}
-                isInvalid={isInvalid}
-                updateQuestion={updateQuestion}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
-                locale={locale}
-              />
-            </div>
-          </div>
         )}
 
         <QuestionToggleTable
