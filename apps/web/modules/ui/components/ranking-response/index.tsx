@@ -13,7 +13,7 @@ export const RankingRespone = ({ value, isExpanded }: RankingResponseProps) => {
           item && (
             <div key={index} className="mb-1 flex items-center">
               <span className="mr-2 text-slate-400">#{index + 1}</span>
-              <div className="rounded bg-slate-100 px-2 py-1">{item}</div>
+              <div className="rounded-sm bg-slate-100 px-2 py-1">{item}</div>
             </div>
           )
       )}

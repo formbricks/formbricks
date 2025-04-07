@@ -19,7 +19,7 @@ export const PopoverPicker = ({ color, onChange, disabled = false }: PopoverPick
     <div className="picker relative">
       <div
         id="color-picker"
-        className="h-6 w-10 cursor-pointer rounded border border-slate-200"
+        className="h-6 w-10 cursor-pointer rounded-sm border border-slate-200"
         style={{ backgroundColor: color, opacity: disabled ? 0.5 : 1 }}
         onClick={() => {
           if (!disabled) {
@@ -30,7 +30,7 @@ export const PopoverPicker = ({ color, onChange, disabled = false }: PopoverPick
 
       {isOpen && (
         <div className="absolute right-0 z-20 mt-2 origin-top-right" ref={popover}>
-          <div className="rounded bg-white p-2 shadow-lg">
+          <div className="rounded-sm bg-white p-2 shadow-lg">
             <HexColorPicker color={color} onChange={onChange} />
           </div>
         </div>

@@ -124,7 +124,7 @@ export const ProjectSwitcher = ({
         <DropdownMenuTrigger
           asChild
           id="projectDropdownTrigger"
-          className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-none">
+          className="w-full rounded-br-xl border-t py-4 transition-colors duration-200 hover:bg-slate-50 focus:outline-hidden">
           <div
             tabIndex={0}
             className={cn(

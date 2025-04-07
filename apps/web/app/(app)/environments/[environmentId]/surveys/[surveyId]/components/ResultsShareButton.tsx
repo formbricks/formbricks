@@ -86,8 +86,8 @@ export const ResultsShareButton = ({ survey, webAppUrl }: ResultsShareButtonProp
       <DropdownMenu>
         <DropdownMenuTrigger
           asChild
-          className="focus:bg-muted cursor-pointer border border-slate-200 outline-none hover:border-slate-300">
-          <div className="min-w-auto h-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
+          className="focus:bg-muted cursor-pointer border border-slate-200 outline-hidden hover:border-slate-300">
+          <div className="h-auto min-w-auto rounded-md border bg-white p-3 sm:flex sm:min-w-[7rem] sm:px-6 sm:py-3">
             <div className="hidden w-full items-center justify-between sm:flex">
               <span className="text-sm text-slate-700">
                 {t("environments.surveys.summary.share_results")}

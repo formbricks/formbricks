@@ -18,7 +18,7 @@ export const SegmentTable = async ({
 }: TSegmentTableProps) => {
   const t = await getTranslate();
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
       <div className="grid h-12 grid-cols-7 content-center border-b text-left text-sm font-semibold text-slate-900">
         <div className="col-span-4 pl-6">{t("common.title")}</div>
         <div className="col-span-1 hidden text-center sm:block">{t("common.surveys")}</div>

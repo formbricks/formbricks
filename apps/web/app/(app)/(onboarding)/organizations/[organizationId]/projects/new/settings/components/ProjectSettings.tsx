@@ -218,14 +218,14 @@ export const ProjectSettings = ({
         </FormProvider>
       </div>
 
-      <div className="relative flex h-[30rem] w-1/2 flex-col items-center justify-center space-y-2 rounded-lg border bg-slate-200 shadow">
+      <div className="relative flex h-[30rem] w-1/2 flex-col items-center justify-center space-y-2 rounded-lg border bg-slate-200 shadow-sm">
         {logoUrl && (
           <Image
             src={logoUrl}
             alt="Logo"
             width={256}
             height={56}
-            className="absolute left-2 top-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+            className="absolute top-2 left-2 -mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
           />
         )}
         <p className="text-sm text-slate-400">{t("common.preview")}</p>

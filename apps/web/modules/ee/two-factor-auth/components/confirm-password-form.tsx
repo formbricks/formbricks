@@ -86,7 +86,7 @@ export const ConfirmPasswordForm = ({
                       required
                       onChange={(password) => field.onChange(password)}
                       value={field.value}
-                      className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                      className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-xs sm:text-sm"
                     />
                     {error?.message && <FormError className="text-left">{error.message}</FormError>}
                   </FormItem>

@@ -121,7 +121,7 @@ export const SingleResponseCard = ({
     <div className={clsx("group relative", isOpen && "min-h-[300px]")}>
       <div
         className={clsx(
-          "relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all",
+          "relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-xs transition-all",
           pageType === "response" &&
             (isOpen
               ? "w-3/4"

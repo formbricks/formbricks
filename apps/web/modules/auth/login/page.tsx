@@ -35,7 +35,7 @@ export const LoginPage = async () => {
 
   const samlSsoEnabled = isSamlSsoEnabled && SAML_OAUTH_ENABLED;
   return (
-    <div className="grid min-h-screen w-full bg-gradient-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
+    <div className="grid min-h-screen w-full bg-linear-to-tr from-slate-100 to-slate-50 lg:grid-cols-5">
       <div className="col-span-2 hidden lg:flex">
         <Testimonial />
       </div>

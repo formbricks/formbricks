@@ -164,7 +164,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
             value={inputValue}
             onValueChange={setInputValue}
             placeholder={t("common.search") + "..."}
-            className="h-5 border-none border-transparent p-0 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+            className="h-5 border-none border-transparent p-0 shadow-none ring-offset-transparent outline-0 focus:border-none focus:border-transparent focus:shadow-none focus:ring-offset-transparent focus:outline-0"
           />
         )}
         <div>
@@ -177,7 +177,7 @@ export const QuestionsComboBox = ({ options, selected, onChangeValue }: Question
       </div>
       <div className="relative mt-2 h-full">
         {open && (
-          <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+          <div className="animate-in bg-popover absolute top-0 z-50 max-h-52 w-full overflow-auto rounded-md bg-white outline-hidden">
             <CommandList>
               <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
               {options?.map((data) => (

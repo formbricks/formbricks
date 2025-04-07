@@ -62,7 +62,7 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left">
                                     {getProjectName(permission.environmentId)}
@@ -79,7 +79,7 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left capitalize">
                                     {getEnvironmentName(permission.environmentId)}
@@ -96,7 +96,7 @@ export const ViewPermissionModal = ({ open, setOpen, apiKey, projects }: ViewPer
                             <DropdownMenuTrigger asChild>
                               <button
                                 type="button"
-                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                                className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-hidden">
                                 <span className="flex w-4/5 flex-1">
                                   <span className="w-full truncate text-left capitalize">
                                     {permission.permission}

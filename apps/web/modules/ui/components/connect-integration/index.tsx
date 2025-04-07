@@ -48,7 +48,7 @@ export const ConnectIntegration = ({
 
   return (
     <div className="flex h-[75vh] w-full items-center justify-center">
-      <div className="flex w-1/2 flex-col items-center justify-center rounded-lg bg-white p-8 shadow">
+      <div className="flex w-1/2 flex-col items-center justify-center rounded-lg bg-white p-8 shadow-sm">
         <div className="flex w-1/2 justify-center -space-x-4">
           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white p-6 shadow-md">
             <FormbricksLogo />
@@ -59,7 +59,7 @@ export const ConnectIntegration = ({
         </div>
         <p className="my-8">{integrationDetails?.text}</p>
         {!isEnabled && (
-          <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
+          <p className="mb-8 rounded-sm border-slate-200 bg-slate-100 p-3 text-sm">
             {integrationDetails?.notConfiguredText}
             <br />
             {t("common.follow_these")}{" "}

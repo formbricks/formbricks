@@ -24,7 +24,7 @@ export const renderEmailResponseValue = async (
           {Array.isArray(response) &&
             response.map((responseItem) => (
               <Link
-                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-sm"
+                className="mt-2 flex flex-col items-center justify-center rounded-lg bg-slate-200 p-2 text-black shadow-xs"
                 href={responseItem}
                 key={responseItem}>
                 <FileIcon />
@@ -58,7 +58,7 @@ export const renderEmailResponseValue = async (
                   item && (
                     <Row key={item} className="mb-1 flex items-center">
                       <Column className="w-6 text-slate-400">#{index + 1}</Column>
-                      <Column className="rounded bg-slate-100 px-2 py-1">{item}</Column>
+                      <Column className="rounded-sm bg-slate-100 px-2 py-1">{item}</Column>
                     </Row>
                   )
               )}
@@ -67,7 +67,7 @@ export const renderEmailResponseValue = async (
       );
 
     default:
-      return <Text className="mt-0 whitespace-pre-wrap break-words font-bold">{response}</Text>;
+      return <Text className="mt-0 font-bold break-words whitespace-pre-wrap">{response}</Text>;
   }
 };
 
@@ -128,7 +128,7 @@ export async function ResponseFinishedEmail({
                         )}
                         {variable.name}
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
                         {variableResponse}
                       </Text>
                     </Column>
@@ -146,7 +146,7 @@ export async function ResponseFinishedEmail({
                       <Text className="mb-2 flex items-center gap-2 font-medium">
                         {hiddenFieldId} <EyeOffIcon />
                       </Text>
-                      <Text className="mt-0 whitespace-pre-wrap break-words font-bold">
+                      <Text className="mt-0 font-bold break-words whitespace-pre-wrap">
                         {hiddenFieldResponse}
                       </Text>
                     </Column>

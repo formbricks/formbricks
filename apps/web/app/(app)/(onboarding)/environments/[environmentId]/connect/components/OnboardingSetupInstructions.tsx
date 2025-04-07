@@ -101,17 +101,17 @@ export const OnboardingSetupInstructions = ({
       <div>
         {activeTab === "npm" ? (
           <div className="prose prose-slate w-full">
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+            <CodeBlock customEditorClass="bg-white! border border-slate-200" language="sh">
               npm install @formbricks/js
             </CodeBlock>
             <p>{t("common.or")}</p>
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="sh">
+            <CodeBlock customEditorClass="bg-white! border border-slate-200" language="sh">
               yarn add @formbricks/js
             </CodeBlock>
             <p className="text-sm text-slate-700">
               {t("environments.connect.import_formbricks_and_initialize_the_widget_in_your_component")}
             </p>
-            <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
+            <CodeBlock customEditorClass="bg-white! border border-slate-200" language="js">
               {channel === "app" ? npmSnippetForAppSurveys : npmSnippetForWebsiteSurveys}
             </CodeBlock>
             <Button id="onboarding-inapp-connect-read-npm-docs" className="mt-3" variant="secondary" asChild>
@@ -125,11 +125,11 @@ export const OnboardingSetupInstructions = ({
           </div>
         ) : activeTab === "html" ? (
           <div className="prose prose-slate">
-            <p className="-mb-1 mt-6 text-sm text-slate-700">
+            <p className="mt-6 -mb-1 text-sm text-slate-700">
               {t("environments.connect.insert_this_code_into_the_head_tag_of_your_website")}
             </p>
             <div>
-              <CodeBlock customEditorClass="!bg-white border border-slate-200" language="js">
+              <CodeBlock customEditorClass="bg-white! border border-slate-200" language="js">
                 {channel === "app" ? htmlSnippetForAppSurveys : htmlSnippetForWebsiteSurveys}
               </CodeBlock>
             </div>

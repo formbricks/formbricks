@@ -44,7 +44,7 @@ export function LanguageIndicator({
   });
 
   return (
-    <div className="absolute right-2 top-2">
+    <div className="absolute top-2 right-2">
       <button
         aria-expanded={showLanguageDropdown}
         aria-haspopup="true"
@@ -64,7 +64,7 @@ export function LanguageIndicator({
               language.language.code !== languageToBeDisplayed?.language.code &&
               language.enabled && (
                 <button
-                  className="block w-full rounded-sm p-1 text-left hover:bg-slate-700"
+                  className="block w-full rounded-xs p-1 text-left hover:bg-slate-700"
                   key={language.language.id}
                   onClick={() => {
                     changeLanguage(language);

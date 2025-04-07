@@ -96,7 +96,7 @@ export const QuestionFilterComboBox = ({
           <DropdownMenuTrigger
             disabled={disabled}
             className={clsx(
-              "h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600 focus:outline-transparent focus:ring-0",
+              "h-9 max-w-fit rounded-md rounded-r-none border-r-[1px] border-slate-300 bg-white p-2 text-sm text-slate-600 focus:ring-0 focus:outline-transparent",
               !disabled ? "cursor-pointer" : "opacity-50"
             )}>
             <div className="flex items-center justify-between">
@@ -146,7 +146,7 @@ export const QuestionFilterComboBox = ({
                       key={`${o}-${index}`}
                       type="button"
                       onClick={() => handleRemoveMultiSelect(filterComboBoxValue.filter((i) => i !== o))}
-                      className="w-30 flex items-center whitespace-nowrap bg-slate-100 px-2 text-slate-600">
+                      className="flex w-30 items-center bg-slate-100 px-2 whitespace-nowrap text-slate-600">
                       {o}
                       <X width={14} height={14} className="ml-2" />
                     </button>
@@ -166,7 +166,7 @@ export const QuestionFilterComboBox = ({
         </div>
         <div className="relative mt-2 h-full">
           {open && (
-            <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-none">
+            <div className="animate-in bg-popover absolute top-0 z-10 max-h-52 w-full overflow-auto rounded-md bg-white outline-hidden">
               <CommandList>
                 <div className="p-2">
                   <Input

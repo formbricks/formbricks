@@ -1,53 +1,86 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
-:root {
-  /* Brand Colors */
-  --formbricks-brand: #038178;
+@config '../../tailwind.config.js';
 
-  /* Fill Colors */
-  --formbricks-fill-primary: #fefefe;
-  --formbricks-fill-secondary: #0f172a;
-  --formbricks-fill-disabled: #e0e0e0;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
 
-  /* Label Colors */
-  --formbricks-label-primary: #0f172a;
-  --formbricks-label-secondary: #384258;
-  --formbricks-label-disabled: #bdbdbd;
-
-  /* Border Colors */
-  --formbricks-border-primary: #e0e0e0;
-  --formbricks-border-secondary: #0f172a;
-  --formbricks-border-disabled: #ececec;
-
-  /* Functional Colors */
-  --formbricks-focus: #1982fc;
-  --formbricks-error: #d13a3a;
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-.dark {
-  /* Brand Colors */
-  --formbricks-brand: #038178;
+@utility no-scrollbar {
+  @layer responsive {
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
-  /* Fill Colors */
-  --formbricks-fill-primary: #0f172a;
-  --formbricks-fill-secondary: #e0e0e0;
-  --formbricks-fill-disabled: #394258;
+    /* Hide scrollbar for IE, Edge and Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
 
-  /* Label Colors */
-  --formbricks-label-primary: #fefefe;
-  --formbricks-label-secondary: #f2f2f2;
-  --formbricks-label-disabled: #bdbdbd;
+@layer utilities {
+  :root {
+    /* Brand Colors */
+    --formbricks-brand: #038178;
 
-  /* Border Colors */
-  --formbricks-border-primary: #394258;
-  --formbricks-border-secondary: #e0e0e0;
-  --formbricks-border-disabled: #394258;
+    /* Fill Colors */
+    --formbricks-fill-primary: #fefefe;
+    --formbricks-fill-secondary: #0f172a;
+    --formbricks-fill-disabled: #e0e0e0;
 
-  /* Functional Colors */
-  --formbricks-focus: #1982fc;
-  --formbricks-error: #d13a3a;
+    /* Label Colors */
+    --formbricks-label-primary: #0f172a;
+    --formbricks-label-secondary: #384258;
+    --formbricks-label-disabled: #bdbdbd;
+
+    /* Border Colors */
+    --formbricks-border-primary: #e0e0e0;
+    --formbricks-border-secondary: #0f172a;
+    --formbricks-border-disabled: #ececec;
+
+    /* Functional Colors */
+    --formbricks-focus: #1982fc;
+    --formbricks-error: #d13a3a;
+  }
+
+  .dark {
+    /* Brand Colors */
+    --formbricks-brand: #038178;
+
+    /* Fill Colors */
+    --formbricks-fill-primary: #0f172a;
+    --formbricks-fill-secondary: #e0e0e0;
+    --formbricks-fill-disabled: #394258;
+
+    /* Label Colors */
+    --formbricks-label-primary: #fefefe;
+    --formbricks-label-secondary: #f2f2f2;
+    --formbricks-label-disabled: #bdbdbd;
+
+    /* Border Colors */
+    --formbricks-border-primary: #394258;
+    --formbricks-border-secondary: #e0e0e0;
+    --formbricks-border-disabled: #394258;
+
+    /* Functional Colors */
+    --formbricks-focus: #1982fc;
+    --formbricks-error: #d13a3a;
+  }
 }
 
 @layer base {
@@ -56,51 +89,38 @@
   }
 }
 
-/* Chrome, Edge, and Safari */
-*::-webkit-scrollbar {
-  width: 10px;
-}
-
-*::-webkit-scrollbar-track {
-  background: #e2e8f0;
-}
-
-*::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border: 3px solid #cbd5e1;
-}
-
-.filter-scrollbar::-webkit-scrollbar {
-  height: 10px;
-}
-
-.filter-scrollbar::-webkit-scrollbar-thumb {
-  border-radius: 8px;
-}
-
-.filter-scrollbar::-webkit-scrollbar-track {
-  border-radius: 8px;
-}
-
-input:focus {
-  --tw-ring-color: none;
-  --tw-ring-offset-color: none;
-  --tw-ring-shadow: 0 0 #000 !important;
-  box-shadow: none;
-}
-
 @layer utilities {
-  @layer responsive {
-    /* Hide scrollbar for Chrome, Safari and Opera */
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
+  /* Chrome, Edge, and Safari */
+  *::-webkit-scrollbar {
+    width: 10px;
+  }
 
-    /* Hide scrollbar for IE, Edge and Firefox */
-    .no-scrollbar {
-      -ms-overflow-style: none; /* IE and Edge */
-      scrollbar-width: none; /* Firefox */
-    }
+  *::-webkit-scrollbar-track {
+    background: #e2e8f0;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border: 3px solid #cbd5e1;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+  }
+
+  .filter-scrollbar::-webkit-scrollbar-track {
+    border-radius: 8px;
+  }
+
+  input:focus {
+    --tw-ring-color: none;
+    --tw-ring-offset-color: none;
+    --tw-ring-shadow: 0 0 #000 !important;
+    box-shadow: none;
   }
 }
 

@@ -65,7 +65,7 @@ export const ModalWithTabs = ({
           {tabs.map((tab, index) => (
             <button
               key={index}
-              className={`mr-4 px-1 pb-3 pt-6 focus:outline-none ${
+              className={`mr-4 px-1 pt-6 pb-3 focus:outline-hidden ${
                 activeTab === index
                   ? "border-brand-dark border-b-2 font-semibold text-slate-900"
                   : "text-slate-500 hover:text-slate-700"

@@ -181,7 +181,7 @@ export const LoginForm = ({
                             value={field.value}
                             onChange={(email) => field.onChange(email)}
                             placeholder="work@email.com"
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-xs sm:text-sm"
                           />
                           {error?.message && <FormError className="text-left">{error.message}</FormError>}
                         </div>
@@ -204,7 +204,7 @@ export const LoginForm = ({
                             aria-label="password"
                             aria-required="true"
                             required
-                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                            className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-xs sm:text-sm"
                             value={field.value}
                             onChange={(password) => field.onChange(password)}
                           />

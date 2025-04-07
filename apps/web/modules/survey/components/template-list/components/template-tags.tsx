@@ -93,17 +93,21 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
 
   return (
     <div className="flex flex-wrap gap-1.5">
-      <div className={cn("rounded border px-1.5 py-0.5 text-xs", roleBasedStyling)}>{t(roleTag ?? "")}</div>
+      <div className={cn("rounded-sm border px-1.5 py-0.5 text-xs", roleBasedStyling)}>
+        {t(roleTag ?? "")}
+      </div>
       {industryTag && (
         <div
-          className={cn("rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500")}>
+          className={cn(
+            "rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
+          )}>
           {industryTag}
         </div>
       )}
       {channelTag && (
         <div
           className={cn(
-            "flex-nowrap rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
+            "flex-nowrap rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 text-xs text-slate-500"
           )}>
           {channelTag}
         </div>
@@ -112,7 +116,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
         <TooltipRenderer
           tooltipContent={t("environments.surveys.templates.uses_branching_logic")}
           shouldRender={true}>
-          <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+          <SplitIcon className="h-5 w-5 rounded-sm border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
         </TooltipRenderer>
       )}
     </div>

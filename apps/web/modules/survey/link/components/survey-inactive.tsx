@@ -29,7 +29,7 @@ export const SurveyInactive = async ({
   };
 
   return (
-    <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
+    <div className="flex h-full flex-col items-center justify-between bg-linear-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
       <div></div>
       <div className="flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}

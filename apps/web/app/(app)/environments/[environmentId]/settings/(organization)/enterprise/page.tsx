@@ -97,7 +97,7 @@ const Page = async (props) => {
       </PageHeader>
       {isEnterpriseEdition ? (
         <div>
-          <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
+          <div className="mt-8 max-w-4xl rounded-lg border border-slate-300 bg-slate-100 shadow-xs">
             <div className="space-y-4 p-8">
               <div className="flex items-center gap-x-2">
                 <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
@@ -123,7 +123,7 @@ const Page = async (props) => {
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
             <svg
               viewBox="0 0 1024 1024"
-              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+              className="absolute top-1/2 left-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
               aria-hidden="true">
               <circle
                 cx={512}
@@ -152,7 +152,7 @@ const Page = async (props) => {
               </p>
             </div>
           </div>
-          <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-sm">
+          <div className="mt-8 rounded-lg border border-slate-300 bg-slate-100 shadow-xs">
             <div className="p-8">
               <h2 className="mr-2 inline-flex text-2xl font-bold text-slate-700">
                 {t("environments.settings.enterprise.enterprise_features")}

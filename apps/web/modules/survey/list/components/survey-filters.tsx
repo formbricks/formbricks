@@ -177,8 +177,8 @@ export const SurveyFilters = ({
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild
-            className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-none hover:bg-slate-900">
-            <div className="min-w-auto h-8 rounded-md border sm:flex sm:px-2">
+            className="surveyFilterDropdown h-full cursor-pointer border border-slate-700 outline-hidden hover:bg-slate-900">
+            <div className="h-8 min-w-auto rounded-md border sm:flex sm:px-2">
               <div className="hidden w-full items-center justify-between hover:text-white sm:flex">
                 <span className="text-sm">
                   {t("common.sort_by")}:{" "}

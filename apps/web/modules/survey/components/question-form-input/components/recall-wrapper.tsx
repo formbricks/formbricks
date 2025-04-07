@@ -220,7 +220,7 @@ export const RecallWrapper = ({
           }
           parts.push(
             <span
-              className="z-30 flex h-fit cursor-pointer justify-center whitespace-pre rounded-md bg-slate-100 text-sm text-transparent"
+              className="z-30 flex h-fit cursor-pointer justify-center rounded-md bg-slate-100 text-sm whitespace-pre text-transparent"
               key={`recall-${parts.length}`}>
               {"@" + label}
             </span>
@@ -255,7 +255,7 @@ export const RecallWrapper = ({
               <Button
                 variant="ghost"
                 type="button"
-                className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
+                className="absolute top-full right-2 z-1 flex h-6 cursor-pointer items-center rounded-t-none rounded-b-lg bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200"
                 onClick={(e) => {
                   e.preventDefault();
                   setShowFallbackInput(true);

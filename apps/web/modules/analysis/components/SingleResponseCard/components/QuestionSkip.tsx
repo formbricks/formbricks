@@ -39,7 +39,7 @@ export const QuestionSkip = ({
                     background:
                       "repeating-linear-gradient(rgb(148, 163, 184), rgb(148, 163, 184) 5px, transparent 5px, transparent 8px)", // adjust the values to fit your design
                   }}>
-                  <CheckCircle2Icon className="p-0.25 absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white text-slate-400" />
+                  <CheckCircle2Icon className="absolute top-0 w-[1.5rem] min-w-[1.5rem] rounded-full bg-white p-0.25 text-slate-400" />
                 </div>
               }
               <div className="ml-6 flex flex-col text-slate-700">{t("common.welcome_card")}</div>
@@ -87,7 +87,7 @@ export const QuestionSkip = ({
           {status === "aborted" && (
             <div className="flex">
               <div
-                className="flex w-0.5 flex-grow items-start justify-center"
+                className="flex w-0.5 grow items-start justify-center"
                 style={{
                   background:
                     "repeating-linear-gradient(to bottom,  rgb(148 163 184),  rgb(148 163 184) 2px, transparent 2px, transparent 10px)", // adjust the 2px to change dot size and 10px to change space between dots

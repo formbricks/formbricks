@@ -101,14 +101,14 @@ export const ResponseNotes = ({
   return (
     <div
       className={clsx(
-        "absolute w-1/4 rounded-lg border border-slate-200 shadow-sm transition-all",
+        "absolute w-1/4 rounded-lg border border-slate-200 shadow-xs transition-all",
         !isOpen && unresolvedNotes.length && "group/hint cursor-pointer bg-white hover:-right-3",
         !isOpen && !unresolvedNotes.length && "cursor-pointer bg-slate-50",
         isOpen
-          ? "-right-2 top-0 h-5/6 max-h-[600px] w-1/4 bg-white"
+          ? "top-0 -right-2 h-5/6 max-h-[600px] w-1/4 bg-white"
           : unresolvedNotes.length
-            ? "right-0 top-[8.33%] h-5/6 max-h-[600px] w-1/12"
-            : "right-[120px] top-[8.333%] h-5/6 max-h-[600px] w-1/12 group-hover:right-[0]"
+            ? "top-[8.33%] right-0 h-5/6 max-h-[600px] w-1/12"
+            : "top-[8.333%] right-[120px] h-5/6 max-h-[600px] w-1/12 group-hover:right-0"
       )}
       onClick={() => {
         if (!isOpen) setIsOpen(true);
@@ -117,7 +117,7 @@ export const ResponseNotes = ({
         <div className="flex h-full flex-col">
           <div
             className={clsx(
-              "space-y-2 rounded-t-lg px-2 pb-2 pt-2",
+              "space-y-2 rounded-t-lg px-2 pt-2 pb-2",
               unresolvedNotes.length ? "flex h-12 items-center justify-end bg-amber-50" : "bg-slate-200"
             )}>
             {!unresolvedNotes.length ? (
@@ -128,7 +128,7 @@ export const ResponseNotes = ({
               </div>
             ) : (
               <div className="float-left mr-1.5">
-                <Maximize2Icon className="h-4 w-4 text-amber-500 hover:text-amber-600 group-hover/hint:scale-110" />
+                <Maximize2Icon className="h-4 w-4 text-amber-500 group-hover/hint:scale-110 hover:text-amber-600" />
               </div>
             )}
           </div>
@@ -142,7 +142,7 @@ export const ResponseNotes = ({
         </div>
       ) : (
         <div className="relative flex h-full flex-col">
-          <div className="rounded-t-lg bg-amber-50 px-4 pb-3 pt-4">
+          <div className="rounded-t-lg bg-amber-50 px-4 pt-4 pb-3">
             <div className="flex items-center justify-between">
               <div className="group flex items-center">
                 <h3 className="pb-1 text-sm text-amber-500">{t("common.note")}</h3>
@@ -216,7 +216,7 @@ export const ResponseNotes = ({
                   <textarea
                     rows={2}
                     className={cn(
-                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-sm focus:border-slate-500 focus:ring-0 sm:text-sm",
+                      "block w-full resize-none rounded-md border border-slate-100 bg-slate-50 p-2 shadow-xs focus:border-slate-500 focus:ring-0 sm:text-sm",
                       !isTextAreaOpen && "scale-y-0 transition-all duration-1000",
                       !isTextAreaOpen && "translate-y-8 transition-all duration-300",
                       isTextAreaOpen && "scale-y-1 transition-all duration-1000",

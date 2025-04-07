@@ -35,7 +35,7 @@ export const GET = async (req: NextRequest) => {
               <div tw="flex rounded-2xl absolute -right-2 mt-2">
                 <a tw={`rounded-xl border border-transparent bg-[${brandColor}] h-18 w-38 opacity-50`}></a>
               </div>
-              <div tw="flex rounded-2xl shadow ">
+              <div tw="flex rounded-2xl shadow-sm ">
                 <a
                   tw={`flex items-center justify-center rounded-xl border border-transparent bg-[${brandColor}] text-2xl text-white h-18 w-38`}>
                   Begin!

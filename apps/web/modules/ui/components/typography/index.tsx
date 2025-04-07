@@ -76,7 +76,7 @@ export { Lead };
 
 const P = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>((props, ref) => {
   return (
-    <p {...props} ref={ref} className={cn("leading-7 [&:not(:first-child)]:mt-6", props.className)}>
+    <p {...props} ref={ref} className={cn("leading-7 not-first:mt-6", props.className)}>
       {props.children}
     </p>
   );
@@ -98,7 +98,7 @@ export { Large };
 
 const Small = forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>((props, ref) => {
   return (
-    <p {...props} ref={ref} className={cn("text-sm font-medium leading-none", props.className)}>
+    <p {...props} ref={ref} className={cn("text-sm leading-none font-medium", props.className)}>
       {props.children}
     </p>
   );
@@ -124,7 +124,7 @@ const InlineCode = forwardRef<HTMLSpanElement, React.HTMLAttributes<HTMLSpanElem
       {...props}
       ref={ref}
       className={cn(
-        "bg-muted relative rounded px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
+        "bg-muted relative rounded-sm px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold",
         props.className
       )}>
       {props.children}

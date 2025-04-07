@@ -60,7 +60,7 @@ export const ForgotPasswordForm = () => {
                       onChange={(e) => field.onChange(e)}
                       autoComplete="email"
                       required
-                      className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-sm sm:text-sm"
+                      className="focus:border-brand-dark focus:ring-brand-dark block w-full rounded-md border-slate-300 shadow-xs sm:text-sm"
                     />
                   </FormControl>
                   {error?.message && <FormError className="text-left">{error.message}</FormError>}
