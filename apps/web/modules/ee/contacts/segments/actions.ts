@@ -19,6 +19,7 @@ import {
   resetSegmentInSurvey,
   updateSegment,
 } from "@/modules/ee/contacts/segments/lib/segments";
+import { checkForRecursiveSegmentFilter } from "@/modules/ee/contacts/segments/lib/utils";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { z } from "zod";
 import { getOrganization } from "@formbricks/lib/organization/service";
@@ -120,6 +121,8 @@ export const updateSegmentAction = authenticatedActionClient
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
         throw new Error(errMsg);
       }
+
+      checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
     }
 
     return await updateSegment(parsedInput.segmentId, parsedInput.data);

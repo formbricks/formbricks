@@ -1,4 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
+import { InvalidInputError } from "@formbricks/types/errors";
 import {
   TAllOperators,
   TAttributeOperator,
@@ -487,4 +488,25 @@ export const isAdvancedSegment = (filters: TBaseFilters): boolean => {
   }
 
   return false;
+};
+
+/**
+ * Checks if a segment filter contains a recursive reference to itself
+ * @param filters - The filters to check for recursive references
+ * @param segmentId - The ID of the segment being checked
+ * @throws {InvalidInputError} When a recursive segment filter is detected
+ */
+export const checkForRecursiveSegmentFilter = (filters: TBaseFilters, segmentId: string) => {
+  for (const filter of filters) {
+    const { resource } = filter;
+    if (isResourceFilter(resource)) {
+      if (resource.root.type === "segment") {
+        if (resource.value === segmentId) {
+          throw new InvalidInputError("Recursive segment filter is not allowed");
+        }
+      }
+    } else {
+      checkForRecursiveSegmentFilter(resource, segmentId);
+    }
+  }
 };
