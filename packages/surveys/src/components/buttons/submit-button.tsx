@@ -2,9 +2,9 @@ import { ButtonHTMLAttributes, useRef } from "preact/compat";
 import { useCallback, useEffect } from "preact/hooks";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  buttonLabel: string | undefined;
-  isLastQuestion: boolean;
-  focus?: boolean;
+  readonly buttonLabel: string | undefined;
+  readonly isLastQuestion: boolean;
+  readonly focus?: boolean;
 }
 
 export function SubmitButton({
@@ -56,7 +56,7 @@ export function SubmitButton({
       className="fb-bg-brand fb-border-submit-button-border fb-text-on-brand focus:fb-ring-focus fb-rounded-custom fb-flex fb-items-center fb-border fb-px-3 fb-py-3 fb-text-base fb-font-medium fb-leading-4 fb-shadow-sm hover:fb-opacity-90 focus:fb-outline-none focus:fb-ring-2 focus:fb-ring-offset-2"
       onClick={onClick}
       disabled={disabled}>
-      {buttonLabel || (isLastQuestion ? "Finish" : "Next")}
+      {buttonLabel ?? (isLastQuestion ? "Finish" : "Next")}
     </button>
   );
 }
