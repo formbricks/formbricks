@@ -7,7 +7,7 @@ import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-bann
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import { getTranslate } from "@/tolgee/server";
 import type { Session } from "next-auth";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { IS_FORMBRICKS_CLOUD, IS_LOCALHOST } from "@formbricks/lib/constants";
 import { getEnvironment, getEnvironments } from "@formbricks/lib/environment/service";
 import { getMembershipByUserIdOrganizationId } from "@formbricks/lib/membership/service";
 import { getAccessFlags } from "@formbricks/lib/membership/utils";
@@ -111,6 +111,7 @@ export const EnvironmentLayout = async ({ environmentId, session, children }: En
           organizationProjectsLimit={organizationProjectsLimit}
           user={user}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          isLocalDevelopment={IS_LOCALHOST}
           membershipRole={membershipRole}
           isMultiOrgEnabled={isMultiOrgEnabled}
           isLicenseActive={active}
