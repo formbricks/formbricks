@@ -32,6 +32,11 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'else' >> /tmp/read-secrets.sh && \
     echo '  echo "DATABASE_URL secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
     echo 'fi' >> /tmp/read-secrets.sh && \
+    echo 'if [ -f "/run/secrets/next_public_alchemy_api_key" ]; then' >> /tmp/read-secrets.sh && \
+    echo '  export NEXT_PUBLIC_ALCHEMY_API_KEY=$(cat /run/secrets/next_public_alchemy_api_key)' >> /tmp/read-secrets.sh && \
+    echo 'else' >> /tmp/read-secrets.sh && \
+    echo '  echo "NEXT_PUBLIC_ALCHEMY_API_KEY secret not found. Build may fail if this is required."' >> /tmp/read-secrets.sh && \
+    echo 'fi' >> /tmp/read-secrets.sh && \
     echo 'if [ -f "/run/secrets/encryption_key" ]; then' >> /tmp/read-secrets.sh && \
     echo '  export ENCRYPTION_KEY=$(cat /run/secrets/encryption_key)' >> /tmp/read-secrets.sh && \
     echo 'else' >> /tmp/read-secrets.sh && \

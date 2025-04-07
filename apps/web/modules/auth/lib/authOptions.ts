@@ -3,15 +3,131 @@ import { verifyPassword } from "@/modules/auth/lib/utils";
 import type { Account, NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@formbricks/database";
-import { EMAIL_VERIFICATION_DISABLED, ENCRYPTION_KEY } from "@formbricks/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  ENCRYPTION_KEY,
+  NEXT_PUBLIC_ALCHEMY_API_KEY,
+} from "@formbricks/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@formbricks/lib/crypto";
 import { verifyToken } from "@formbricks/lib/jwt";
+import { createMembership } from "@formbricks/lib/membership/service";
+import { getOrganizationsByUserId } from "@formbricks/lib/organization/service";
 import { logger } from "@formbricks/logger";
 import { TUser } from "@formbricks/types/user";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    CredentialsProvider({
+      id: "alchemy",
+      // The name to display on the sign in form (e.g. "Sign in with...")
+      name: "Alchemy",
+      // The credentials is used to generate a suitable form on the sign in page.
+      // You can specify whatever fields you are expecting to be submitted.
+      // e.g. domain, username, password, 2FA token, etc.
+      // You can pass any HTML attribute to the <input> tag through the object.
+      credentials: {
+        url: {
+          label: "Url",
+          type: "text",
+          placeholder: "text",
+        },
+        body: {
+          label: "Body",
+          type: "text",
+          placeholder: "text",
+        },
+        stampHeaderName: {
+          label: "stampHeaderName",
+          type: "text",
+          placeholder: "text",
+        },
+        stampHeaderValue: {
+          label: "stampHeaderValue",
+          type: "text",
+          placeholder: "text",
+        },
+      },
+      async authorize(credentials, _req) {
+        console.log("credentials");
+        if (!credentials) {
+          throw new Error("Invalid credentials");
+        }
+        let user;
+        try {
+          const options = {
+            method: "POST",
+            headers: {
+              accept: "application/json",
+              "content-type": "application/json",
+              Authorization: `Bearer ${NEXT_PUBLIC_ALCHEMY_API_KEY}`,
+            },
+            body: JSON.stringify({
+              stampedRequest: {
+                stamp: {
+                  stampHeaderName: credentials.stampHeaderName,
+                  stampHeaderValue: credentials.stampHeaderValue,
+                },
+                url: credentials.url,
+                body: credentials.body,
+              },
+            }),
+          };
+
+          const resp = await fetch("https://api.g.alchemy.com/signer/v1/whoami", options);
+          const data: {
+            email: string;
+            userId: string;
+            orgId: string;
+            address: string;
+            solanaAddress: string;
+          } = await resp.json();
+
+          if (!data.email || !data.address) {
+            throw new Error("Invalid credentials");
+          }
+
+          user = await prisma.user.findUnique({
+            where: {
+              email: data.email,
+            },
+          });
+
+          if (!user) {
+            user = await prisma.user.create({
+              data: {
+                email: data.email,
+                name: "",
+                emailVerified: new Date(),
+              },
+            });
+          }
+          if (user) {
+            const userOrganizations = await getOrganizationsByUserId(user.id);
+
+            if (userOrganizations.length === 0) {
+              const org = await prisma.organization.findFirst({});
+              if (org) {
+                await createMembership(org.id, user.id, { role: "member", accepted: true });
+              }
+            }
+          }
+        } catch (e) {
+          logger.error(e, "Error in CredentialsProvider authorize");
+          throw Error("Internal server error. Please try again later");
+        }
+        if (!user) {
+          throw new Error("Invalid credentials");
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          imageUrl: user.imageUrl,
+        };
+      },
+    }),
     CredentialsProvider({
       id: "credentials",
       // The name to display on the sign in form (e.g. "Sign in with...")

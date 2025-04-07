@@ -20,6 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useLogout } from "@account-kit/react";
 import { useTranslate } from "@tolgee/react";
 import {
   ArrowUpRightIcon,
@@ -72,6 +73,8 @@ export const MainNavigation = ({
   membershipRole,
   organizationProjectsLimit,
 }: NavigationProps) => {
+  const { logout } = useLogout({});
+
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslate();
@@ -179,7 +182,7 @@ export const MainNavigation = ({
         icon: WalletMinimalIcon,
         isActive: pathname?.includes("/wallet"),
         isHidden: false,
-      }
+      },
     ],
     [t, environment.id, pathname]
   );
@@ -340,6 +343,7 @@ export const MainNavigation = ({
 
                   <DropdownMenuItem
                     onClick={async () => {
+                      await logout();
                       const route = await signOut({ redirect: false, callbackUrl: "/auth/login" });
                       router.push(route.url);
                       await formbricksLogout();

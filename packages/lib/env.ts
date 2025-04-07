@@ -118,6 +118,7 @@ export const env = createEnv({
     NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID: z.string().optional(),
     NEXT_PUBLIC_FORMBRICKS_ONBOARDING_SURVEY_ID: z.string().optional(),
     NEXT_PUBLIC_TURNSTILE_SITE_KEY: z.string().optional(),
+    NEXT_PUBLIC_ALCHEMY_API_KEY: z.string().optional(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -213,5 +214,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED,
     PROMETHEUS_EXPORTER_PORT: process.env.PROMETHEUS_EXPORTER_PORT,
+    NEXT_PUBLIC_ALCHEMY_API_KEY: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY,
   },
 });

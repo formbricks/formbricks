@@ -184,11 +184,11 @@ importers:
   apps/web:
     dependencies:
       '@account-kit/infra':
-        specifier: 4.21.0
-        version: 4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+        specifier: 4.23.1
+        version: 4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
       '@account-kit/react':
-        specifier: 4.21.0
-        version: 4.21.0(kfy73k757372n3mhchndnkn6fu)
+        specifier: 4.23.1
+        version: 4.23.1(kfy73k757372n3mhchndnkn6fu)
       '@ai-sdk/azure':
         specifier: 1.1.9
         version: 1.1.9(zod@3.24.1)
@@ -1083,35 +1083,35 @@ packages:
       graphql:
         optional: true
 
-  '@aa-sdk/core@4.21.0':
-    resolution: {integrity: sha512-4OJDRVvyEh/SVBaJLVp9l4Q660YA6oYur84KG1UwazZVBbsLldxcmVEKSsKv6GJTsNJ+qw2Jg4JKCE0z0LsevQ==}
+  '@aa-sdk/core@4.23.1':
+    resolution: {integrity: sha512-9KQPFzO9D9NdmzvzVmTgRjUMtP/O5MoXEvW5KzECArplQmwjwrBzqx/G+uRpvpMTJwMj+Rq/midpxgIZ+Ld3TQ==}
     peerDependencies:
       viem: ^2.22.6
 
-  '@account-kit/core@4.21.0':
-    resolution: {integrity: sha512-qfZOpi8SO1GYpkZ/U4CabrqmnepwYIRBt0HxhgPpNDrBQoqtqiUMimQrjQbDQfhD2+5VcwQKjU/wL9kEJ1gW/w==}
+  '@account-kit/core@4.23.1':
+    resolution: {integrity: sha512-Es4onJbH/oQla1sxthKc+jVRkjAALHdVYlo6P8RyWsMW08z6PsIKGxK35g+6wjdaIOSXdGngKYcj3FD8nfr9PQ==}
     peerDependencies:
       viem: ^2.22.6
       wagmi: ^2.12.7
 
-  '@account-kit/infra@4.21.0':
-    resolution: {integrity: sha512-9R/gSo+DRkgpKeoM2X9CR2bGdluC9nJUXq2gcp/VIvRvdBivV/qqQXk38DuhHU/BzRtk6f8lH0voaMeWPXHnXA==}
+  '@account-kit/infra@4.23.1':
+    resolution: {integrity: sha512-GoU3/gNN2EVshvniGBK43mUdJlwW4drZQK4dUvNHQ8uEpzEfO8g9/HqfjQmrm1zKaS4c8hmWwgZ8k9JYrM9cjg==}
     peerDependencies:
       viem: ^2.22.6
 
-  '@account-kit/logging@4.21.0':
-    resolution: {integrity: sha512-rNVrt7ZdBqDihs6mOPdjLxNnGYeK4779HObGJ+U6kbh+5EYCVB/Ns0nlGkYqaUHREe/V0FLyRSv4f7W1BIUl0w==}
+  '@account-kit/logging@4.23.1':
+    resolution: {integrity: sha512-t0NfY8Qcm0l183HTpdNU54QbQO0/A2h5HtXRXcuK5Xy4kIEvM/j5pOcTenjNKgu7TXrXZFwNG8k06vDScWNXsw==}
 
-  '@account-kit/react-native-signer@4.21.0':
-    resolution: {integrity: sha512-urfcxuhZikQ7OnkYLTI+vhEajO5WH2q9BWKHJhvR+Iup9kqwO1+elHvY8I9UipVxK6zsEOl4S/Pghs+VvQaPwA==}
+  '@account-kit/react-native-signer@4.23.1':
+    resolution: {integrity: sha512-wJVLjyAM2Zj+SgCIf9fV5Lw97D40K1c5jsmn7URMv/LzVanRNzWKLxOdRvoUOFMQFIl7p34Dm3KHTQ5rMFTgZw==}
     peerDependencies:
       react: '>=18.0.0'
       react-native: '>=0.76.0'
       react-native-inappbrowser-reborn: ^3.7.0
       react-native-mmkv: ^3.1.0
 
-  '@account-kit/react@4.21.0':
-    resolution: {integrity: sha512-FZoUuFntoPBP/yddGHxjBHGEggTQtIz0504Qrmy90If0x1uZ7fQnCShE4VjoCkk3ejVZJh8jahMXi0y5CVq3mA==}
+  '@account-kit/react@4.23.1':
+    resolution: {integrity: sha512-saFHZEO+R2gDlijB1KKz/jx9HIVopqp51aY98vUL4dLu5T4nefARLT4UGFy2y6lToqOIyn1dVCYqJBTW9FvRog==}
     peerDependencies:
       '@tanstack/react-query': ^5.28.9
       react: ^18.2.0
@@ -1120,13 +1120,13 @@ packages:
       viem: ^2.22.6
       wagmi: ^2.12.7
 
-  '@account-kit/signer@4.21.0':
-    resolution: {integrity: sha512-2HDEZjUSUwnfZV7ZZKcjpHtl2pTeRZbvz21HRi0cl8dRdcvSpB0jX8LuKs5oOTnwl41Figoo6geUo4sn/ifGsQ==}
+  '@account-kit/signer@4.23.1':
+    resolution: {integrity: sha512-ydKOZe7UTGv3SrpcsqhYjAoK19GFvtCFQEqP9MgEC/7bIx1GBL6b8liMXlnyZlwyGBxipihP/hD276F/vyYtCQ==}
     peerDependencies:
       viem: ^2.22.6
 
-  '@account-kit/smart-contracts@4.21.0':
-    resolution: {integrity: sha512-6Pj4OIe2gQPISRHrZsF/g1C9LraIj+BVx3cOr/D2Y6UyHIjSW1E9GqNyupknwfDaRr5/mk/izsCe0N5fOXtjgg==}
+  '@account-kit/smart-contracts@4.23.1':
+    resolution: {integrity: sha512-hEKZ/L2aZ4RFW7QSpXcvLQ1PdAEYjDgFY62IRzJ1Pi7iasONtzYRrhfi1k1qGZ+jvQR2lyF3JRPxB8qaLTe1sw==}
     peerDependencies:
       viem: ^2.22.6
 
@@ -1458,6 +1458,7 @@ packages:
   '@azure/msal-browser@4.9.0':
     resolution: {integrity: sha512-7ozXQXts71Yjjy4AmCZK0/lkUhRt0pglcdXkl9T8FtMt7uLrzsaHhkbHTw3L5GfxsgkUgNh1hGIGchKrHBb9/Q==}
     engines: {node: '>=0.8.0'}
+    deprecated: A bug was identified in msal-browser v4.9.0 that could be production impacting. Please roll back to v4.8.0 or before until a new release is made with the bug fix.
 
   '@azure/msal-common@15.4.0':
     resolution: {integrity: sha512-reeIUDXt6Xc+FpCBDEbUFQWvJ6SjE0JwsGYIfa3ZCR6Tpzjc9J1v+/InQgfCeJzfTRd7PDJVxI6TSzOmOd7+Ag==}
@@ -15670,7 +15671,7 @@ snapshots:
 
   '@0no-co/graphql.web@1.1.2': {}
 
-  '@aa-sdk/core@4.21.0(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
+  '@aa-sdk/core@4.23.1(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
     dependencies:
       abitype: 0.8.11(typescript@5.8.2)(zod@3.24.1)
       eventemitter3: 5.0.1
@@ -15679,13 +15680,13 @@ snapshots:
     transitivePeerDependencies:
       - typescript
 
-  '@account-kit/core@4.21.0(kgw3qgemjypzv4dx7l4m3v6ohu)':
+  '@account-kit/core@4.23.1(kgw3qgemjypzv4dx7l4m3v6ohu)':
     dependencies:
-      '@account-kit/infra': 4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/logging': 4.21.0(encoding@0.1.13)
-      '@account-kit/react-native-signer': 4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react-native-inappbrowser-reborn@3.7.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10)))(react-native-mmkv@3.2.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0))(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(zod@3.24.1)
-      '@account-kit/signer': 4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/smart-contracts': 4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/infra': 4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/logging': 4.23.1(encoding@0.1.13)
+      '@account-kit/react-native-signer': 4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react-native-inappbrowser-reborn@3.7.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10)))(react-native-mmkv@3.2.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0))(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(zod@3.24.1)
+      '@account-kit/signer': 4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/smart-contracts': 4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
       js-cookie: 3.0.5
       viem: 2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       wagmi: 2.14.16(@azure/identity@4.8.0)(@azure/storage-blob@12.27.0)(@tanstack/query-core@5.71.1)(@tanstack/react-query@5.71.1(react@19.0.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))(zod@3.24.1)
@@ -15710,10 +15711,10 @@ snapshots:
       - use-sync-external-store
       - utf-8-validate
 
-  '@account-kit/infra@4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
+  '@account-kit/infra@4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
     dependencies:
-      '@aa-sdk/core': 4.21.0(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/logging': 4.21.0(encoding@0.1.13)
+      '@aa-sdk/core': 4.23.1(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/logging': 4.23.1(encoding@0.1.13)
       eventemitter3: 5.0.1
       viem: 2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       zod: 3.24.1
@@ -15727,17 +15728,17 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@account-kit/logging@4.21.0(encoding@0.1.13)':
+  '@account-kit/logging@4.23.1(encoding@0.1.13)':
     dependencies:
       '@segment/analytics-next': 1.79.0(encoding@0.1.13)
       uuid: 11.1.0
     transitivePeerDependencies:
       - encoding
 
-  '@account-kit/react-native-signer@4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react-native-inappbrowser-reborn@3.7.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10)))(react-native-mmkv@3.2.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0))(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(zod@3.24.1)':
+  '@account-kit/react-native-signer@4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react-native-inappbrowser-reborn@3.7.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10)))(react-native-mmkv@3.2.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0))(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(zod@3.24.1)':
     dependencies:
-      '@aa-sdk/core': 4.21.0(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/signer': 4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@aa-sdk/core': 4.23.1(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/signer': 4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
       react: 19.0.0
       react-native: 0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10)
       react-native-inappbrowser-reborn: 3.7.0(react-native@0.74.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(utf-8-validate@5.0.10))
@@ -15756,12 +15757,12 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@account-kit/react@4.21.0(kfy73k757372n3mhchndnkn6fu)':
+  '@account-kit/react@4.23.1(kfy73k757372n3mhchndnkn6fu)':
     dependencies:
-      '@account-kit/core': 4.21.0(kgw3qgemjypzv4dx7l4m3v6ohu)
-      '@account-kit/infra': 4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/logging': 4.21.0(encoding@0.1.13)
-      '@account-kit/signer': 4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/core': 4.23.1(kgw3qgemjypzv4dx7l4m3v6ohu)
+      '@account-kit/infra': 4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/logging': 4.23.1(encoding@0.1.13)
+      '@account-kit/signer': 4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
       '@tanstack/react-form': 0.33.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(typescript@5.8.2)
       '@tanstack/react-query': 5.71.1(react@19.0.0)
       '@tanstack/zod-form-adapter': 0.33.0(zod@3.24.1)
@@ -15812,10 +15813,10 @@ snapshots:
       - use-sync-external-store
       - utf-8-validate
 
-  '@account-kit/signer@4.21.0(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
+  '@account-kit/signer@4.23.1(@babel/core@7.26.0)(@babel/preset-env@7.26.9(@babel/core@7.26.0))(@types/react@19.0.1)(bufferutil@4.0.9)(encoding@0.1.13)(react@19.0.0)(typescript@5.8.2)(use-sync-external-store@1.4.0(react@19.0.0))(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
     dependencies:
-      '@aa-sdk/core': 4.21.0(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/logging': 4.21.0(encoding@0.1.13)
+      '@aa-sdk/core': 4.23.1(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/logging': 4.23.1(encoding@0.1.13)
       '@solana/web3.js': 1.98.0(bufferutil@4.0.9)(encoding@0.1.13)(utf-8-validate@5.0.10)
       '@turnkey/http': 2.22.0(encoding@0.1.13)
       '@turnkey/iframe-stamper': 1.2.0
@@ -15838,10 +15839,10 @@ snapshots:
       - use-sync-external-store
       - utf-8-validate
 
-  '@account-kit/smart-contracts@4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
+  '@account-kit/smart-contracts@4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))':
     dependencies:
-      '@aa-sdk/core': 4.21.0(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
-      '@account-kit/infra': 4.21.0(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@aa-sdk/core': 4.23.1(typescript@5.8.2)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
+      '@account-kit/infra': 4.23.1(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.2)(utf-8-validate@5.0.10)(viem@2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1))
       viem: 2.24.3(bufferutil@4.0.9)(typescript@5.8.2)(utf-8-validate@5.0.10)(zod@3.24.1)
     transitivePeerDependencies:
       - bufferutil
