@@ -4,7 +4,12 @@ import SwiftUI
 /// Filtering surveys based on the user's segments, responses, and displays.
 final class SurveyManager {
     static let shared = SurveyManager()
-    private init() { }
+    private init() {
+        /*
+         This empty initializer prevents external instantiation of the SurveyManager class.
+         The class serves as a namespace for the shared instance, so instance creation is not needed and should be restricted.
+         */
+    }
     
     private static let environmentResponseObjectKey = "environmentResponseObjectKey"
     internal var service = FormbricksService()
@@ -124,7 +129,7 @@ private extension SurveyManager {
         if let environmentResponse = environmentResponse {
             PresentSurveyManager.shared.present(environmentResponse: environmentResponse, id: id)
         }
-                    
+        
     }
     
     /// Starts a timer to refresh the environment state after the given timeout (`expiresAt`).
@@ -200,7 +205,9 @@ private extension SurveyManager {
                 
             case .displaySome:
                 if let limit = survey.displayLimit {
-                    if responses.contains(where: { $0 == survey.id }) { return false }
+                    if responses.contains(where: { $0 == survey.id }) {
+                        return false
+                    }
                     return displays.filter { $0.surveyId == survey.id }.count < limit
                 } else {
                     return true
@@ -236,5 +243,5 @@ private extension SurveyManager {
             return segments.contains(segmentId)
         }
     }
-
+    
 }
