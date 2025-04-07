@@ -16,7 +16,9 @@ describe("hasOrganizationIdAndAccess", () => {
 
     const result = hasOrganizationIdAndAccess("org1", authentication, "read" as OrganizationAccessType);
     expect(result).toBe(false);
-    expect(spyError).toHaveBeenCalledWith("Organization ID is missing from the authentication object");
+    expect(spyError).toHaveBeenCalledWith(
+      "Organization ID from params does not match the authenticated organization ID"
+    );
   });
 
   it("should return false and log error if param organizationId does not match authentication organizationId", () => {

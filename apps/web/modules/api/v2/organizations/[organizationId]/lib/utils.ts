@@ -7,12 +7,6 @@ export const hasOrganizationIdAndAccess = (
   authentication: TAuthenticationApiKey,
   accessType: OrganizationAccessType
 ): boolean => {
-  if (!authentication.organizationId) {
-    logger.error("Organization ID is missing from the authentication object");
-
-    return false;
-  }
-
   if (paramOrganizationId !== authentication.organizationId) {
     logger.error("Organization ID from params does not match the authenticated organization ID");
 

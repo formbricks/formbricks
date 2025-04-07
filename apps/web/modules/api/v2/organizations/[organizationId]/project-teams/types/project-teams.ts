@@ -32,6 +32,6 @@ export const ZGetProjectTeamUpdateFilter = z.object({
   projectId: z.string().cuid2(),
 });
 
-export const projectTeamUpdateSchema = ZProjectTeam.pick({
+export const ZProjectZTeamUpdateSchema = ZProjectTeam.pick({
   permission: true,
 });

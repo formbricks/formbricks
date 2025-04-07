@@ -235,7 +235,7 @@ const internalServerErrorResponse = ({
 const successResponse = ({
   data,
   meta,
-  cors = false,
+  cors = true,
   cache = "private, no-store",
 }: {
   data: Object;
