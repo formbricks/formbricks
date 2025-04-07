@@ -2,14 +2,20 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { triggerSurvey } from "@/lib/survey/widget";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
+import { type TTrackProperties } from "@/types/survey";
 
 /**
  * Tracks an action name and triggers associated surveys
  * @param name - The name of the action to track
  * @param alias - Optional alias for the action name
+ * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
  * @returns Result indicating success or network error
  */
-export const trackAction = async (name: string, alias?: string): Promise<Result<void, NetworkError>> => {
+export const trackAction = async (
+  name: string,
+  alias?: string,
+  properties?: TTrackProperties
+): Promise<Result<void, NetworkError>> => {
   const logger = Logger.getInstance();
   const appConfig = Config.getInstance();
 
@@ -24,7 +30,7 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
     for (const survey of activeSurveys) {
       for (const trigger of survey.triggers) {
         if (trigger.actionClass.name === name) {
-          await triggerSurvey(survey, name);
+          await triggerSurvey(survey, name, properties);
         }
       }
     }
@@ -38,10 +44,12 @@ export const trackAction = async (name: string, alias?: string): Promise<Result<
 /**
  * Tracks an action by its code and triggers associated surveys (used for code actions only)
  * @param code - The action code to track
+ * @param properties - Optional properties to set, like the hidden fields (deprecated, hidden fields will be removed in a future version)
  * @returns Result indicating success, network error, or invalid code error
  */
 export const trackCodeAction = async (
-  code: string
+  code: string,
+  properties?: TTrackProperties
 ): Promise<Result<void, NetworkError> | Result<void, InvalidCodeError>> => {
   const appConfig = Config.getInstance();
 
@@ -61,7 +69,7 @@ export const trackCodeAction = async (
     });
   }
 
-  return trackAction(actionClass.name, code);
+  return trackAction(actionClass.name, code, properties);
 };
 
 export const trackNoCodeAction = (name: string): Promise<Result<void, NetworkError>> => {

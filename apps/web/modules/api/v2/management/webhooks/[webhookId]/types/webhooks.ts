@@ -4,7 +4,7 @@ import { ZWebhook } from "@formbricks/database/zod/webhooks";
 
 extendZodWithOpenApi(z);
 
-export const webhookIdSchema = z
+export const ZWebhookIdSchema = z
   .string()
   .cuid2()
   .openapi({
@@ -16,7 +16,7 @@ export const webhookIdSchema = z
     },
   });
 
-export const webhookUpdateSchema = ZWebhook.omit({
+export const ZWebhookUpdateSchema = ZWebhook.omit({
   id: true,
   createdAt: true,
   updatedAt: true,

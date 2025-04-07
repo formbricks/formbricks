@@ -1,18 +1,19 @@
-import { getEnvironmentIdFromApiKey } from "@/app/api/v1/lib/api-key";
+import { authenticateRequest } from "@/app/api/v1/auth";
 import { deleteWebhook, getWebhook } from "@/app/api/v1/webhooks/[webhookId]/lib/webhook";
 import { responses } from "@/app/lib/api/response";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { headers } from "next/headers";
 import { logger } from "@formbricks/logger";
 
-export const GET = async (_: Request, props: { params: Promise<{ webhookId: string }> }) => {
+export const GET = async (request: Request, props: { params: Promise<{ webhookId: string }> }) => {
   const params = await props.params;
   const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
-  if (!environmentId) {
+  const authentication = await authenticateRequest(request);
+  if (!authentication) {
     return responses.notAuthenticatedResponse();
   }
 
@@ -21,7 +22,7 @@ export const GET = async (_: Request, props: { params: Promise<{ webhookId: stri
   if (!webhook) {
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
-  if (webhook.environmentId !== environmentId) {
+  if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "GET")) {
     return responses.unauthorizedResponse();
   }
   return responses.successResponse(webhook);
@@ -34,8 +35,8 @@ export const DELETE = async (request: Request, props: { params: Promise<{ webhoo
   if (!apiKey) {
     return responses.notAuthenticatedResponse();
   }
-  const environmentId = await getEnvironmentIdFromApiKey(apiKey);
-  if (!environmentId) {
+  const authentication = await authenticateRequest(request);
+  if (!authentication) {
     return responses.notAuthenticatedResponse();
   }
 
@@ -44,7 +45,7 @@ export const DELETE = async (request: Request, props: { params: Promise<{ webhoo
   if (!webhook) {
     return responses.notFoundResponse("Webhook", params.webhookId);
   }
-  if (webhook.environmentId !== environmentId) {
+  if (!hasPermission(authentication.environmentPermissions, webhook.environmentId, "DELETE")) {
     return responses.unauthorizedResponse();
   }
 
