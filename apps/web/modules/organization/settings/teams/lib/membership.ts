@@ -14,6 +14,62 @@ import { DatabaseError, UnknownError } from "@formbricks/types/errors";
 import { TMember } from "@formbricks/types/memberships";
 import { TMembership } from "@formbricks/types/memberships";
 
+export const getEditMembershipByOrganizationId = reactCache(
+  async (organizationId: string, page?: number): Promise<TMember[]> =>
+    cache(
+      async () => {
+        validateInputs([organizationId, ZString], [page, ZOptionalNumber]);
+
+        try {
+          const membersData = await prisma.membership.findMany({
+            where: {
+              organizationId,
+              role: {
+                not: "member",
+              },
+            },
+            select: {
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+              userId: true,
+              accepted: true,
+              role: true,
+            },
+            take: page ? ITEMS_PER_PAGE : undefined,
+            skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+          });
+
+          const members = membersData.map((member) => {
+            return {
+              name: member.user?.name || "",
+              email: member.user?.email || "",
+              userId: member.userId,
+              accepted: member.accepted,
+              role: member.role,
+            };
+          });
+
+          return members;
+        } catch (error) {
+          if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            logger.error(error, "Error fetching membership by organization id");
+            throw new DatabaseError(error.message);
+          }
+
+          throw new UnknownError("Error while fetching members");
+        }
+      },
+      [`getEditMembershipByOrganizationId-${organizationId}-${page}`],
+      {
+        tags: [membershipCache.tag.byOrganizationId(organizationId)],
+      }
+    )()
+);
+
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> =>
     cache(

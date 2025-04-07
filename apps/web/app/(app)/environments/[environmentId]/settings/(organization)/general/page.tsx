@@ -11,7 +11,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { organization } = await getEnvironmentAuth(params.environmentId);
+  const { organization, currentUserMembership } = await getEnvironmentAuth(params.environmentId);
 
   return (
     <PageContentWrapper>
@@ -21,7 +21,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       <SettingsCard
         title={t("environments.settings.general.organization_name")}
         description={t("environments.settings.general.organization_name_description")}>
-        <EditOrganizationNameForm organization={organization} environmentId={params.environmentId} />
+        <EditOrganizationNameForm
+          organization={organization}
+          environmentId={params.environmentId}
+          membershipRole={currentUserMembership.role}
+        />
       </SettingsCard>
       <SettingsId title={t("common.organization_id")} id={organization.id}></SettingsId>
     </PageContentWrapper>

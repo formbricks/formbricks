@@ -9,7 +9,7 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
 
 interface MembersViewProps {
-  membershipRole?: TOrganizationRole;
+  membershipRole: TOrganizationRole;
   organization: TOrganization;
   currentUserId: string;
   environmentId: string;

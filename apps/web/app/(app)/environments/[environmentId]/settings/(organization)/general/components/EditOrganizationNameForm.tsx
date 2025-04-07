@@ -25,7 +25,7 @@ import { TOrganization, ZOrganization } from "@formbricks/types/organizations";
 interface EditOrganizationNameProps {
   environmentId: string;
   organization: TOrganization;
-  membershipRole?: TOrganizationRole;
+  membershipRole: TOrganizationRole;
 }
 
 const ZEditOrganizationNameFormSchema = ZOrganization.pick({ name: true });
