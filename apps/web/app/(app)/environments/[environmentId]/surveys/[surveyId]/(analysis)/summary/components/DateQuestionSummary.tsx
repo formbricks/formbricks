@@ -70,8 +70,10 @@ export const DateQuestionSummary = ({
                   </div>
                 )}
               </div>
-              <div className="ph-no-capture col-span-2 whitespace-pre-wrap pl-6 font-semibold">
-                {formatDateWithOrdinal(new Date(response.value as string))}
+              <div className="ph-no-capture col-span-2 pl-6 font-semibold whitespace-pre-wrap">
+                {isNaN(new Date(response.value as string).getTime())
+                  ? `${t("common.invalid_date")}(${response.value})`
+                  : formatDateWithOrdinal(new Date(response.value as string))}
               </div>
               <div className="px-4 text-slate-500 md:px-6">
                 {timeSince(new Date(response.updatedAt).toISOString(), locale)}
