@@ -170,7 +170,7 @@ export const VerifyEmail = ({
         {!emailSent && showPreviewQuestions && (
           <div>
             <p className="text-2xl font-bold">{t("s.question_preview")}</p>
-            <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50 bg-opacity-20 p-8 text-slate-700">
+            <div className="mt-4 flex w-full flex-col justify-center rounded-lg border border-slate-200 bg-slate-50/20 p-8 text-slate-700">
               {localSurvey.questions.map((question, index) => (
                 <p
                   key={index}

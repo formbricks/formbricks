@@ -105,7 +105,7 @@ export const EditProfileAvatarForm = ({ session, environmentId, imageUrl }: Edit
     <div>
       <div className="relative h-10 w-10 overflow-hidden rounded-full">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
             <svg className="h-7 w-7 animate-spin text-slate-200" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path
