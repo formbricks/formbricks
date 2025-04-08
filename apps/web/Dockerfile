@@ -85,11 +85,14 @@ RUN apk add --no-cache curl \
 
 WORKDIR /home/nextjs
 
+# Ensure no write permissions are assigned to the copied resource
+COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
+RUN chmod -R 755 ./
+
 COPY --from=installer /app/apps/web/next.config.mjs .
 COPY --from=installer /app/apps/web/package.json .
 # Leverage output traces to reduce image size
 
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
