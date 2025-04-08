@@ -2261,6 +2261,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/survey"
   /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    servers: *a6
     get:
       operationId: getContactLinksBySegment
       summary: Get survey links for contacts in a segment
