@@ -51,10 +51,9 @@ jobs:
           tags: formbricks-test:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            secrets: |
-              database_url=${{ secrets.DUMMY_DATABASE_URL }}
-              encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
 
       - name: Verify PostgreSQL Connection
         run: |
