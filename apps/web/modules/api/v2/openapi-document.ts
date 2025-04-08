@@ -50,7 +50,7 @@ const document = createDocument({
   },
   servers: [
     {
-      url: "https://app.formbricks.com/api/v2/management",
+      url: "https://app.formbricks.com/api/v2/",
       description: "Formbricks Cloud",
     },
   ],

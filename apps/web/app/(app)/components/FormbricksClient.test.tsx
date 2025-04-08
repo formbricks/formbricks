@@ -32,7 +32,15 @@ describe("FormbricksClient", () => {
     const mockSetEmail = vi.spyOn(formbricks, "setEmail");
     const mockRegisterRouteChange = vi.spyOn(formbricks, "registerRouteChange");
 
-    render(<FormbricksClient userId="user-123" email="test@example.com" />);
+    render(
+      <FormbricksClient
+        userId="user-123"
+        email="test@example.com"
+        formbricksEnvironmentId="env-test"
+        formbricksApiHost="https://api.test.com"
+        formbricksEnabled={true}
+      />
+    );
 
     // Expect the first effect to call setup and assign the provided user details.
     expect(mockSetup).toHaveBeenCalledWith({
@@ -52,7 +60,15 @@ describe("FormbricksClient", () => {
     const mockSetEmail = vi.spyOn(formbricks, "setEmail");
     const mockRegisterRouteChange = vi.spyOn(formbricks, "registerRouteChange");
 
-    render(<FormbricksClient userId="" email="test@example.com" />);
+    render(
+      <FormbricksClient
+        userId=""
+        email="test@example.com"
+        formbricksEnvironmentId="env-test"
+        formbricksApiHost="https://api.test.com"
+        formbricksEnabled={true}
+      />
+    );
 
     // Since userId is falsy, the first effect should not call setup or assign user details.
     expect(mockSetup).not.toHaveBeenCalled();
