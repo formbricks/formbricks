@@ -54,8 +54,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                     responseLogMessage.append(urlString)
                 }
                 
-                switch httpStatus.responseType {
-                case .success:
+                if httpStatus.responseType == .success {
                     guard let data = data else {
                         self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
                         return
@@ -73,12 +72,12 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                             Formbricks.logger.info(responseLogMessage)
                             
                             // We want to save the entire response dictionary for the environment response
-                            if var environmentResponse = body as? EnvironmentResponse {
-                                if let jsonString = String(data: data, encoding: .utf8) {
-                                    environmentResponse.responseString = jsonString
-                                    body = environmentResponse as! Request.Response
-                                }
+                            if var environmentResponse = body as? EnvironmentResponse,
+                               let jsonString = String(data: data, encoding: .utf8) {
+                                environmentResponse.responseString = jsonString
+                                body = environmentResponse as! Request.Response
                             }
+
                             
                             self.completion?(.success(body))
                         }
@@ -111,8 +110,7 @@ class APIClient<Request: CodableRequest>: Operation, @unchecked Sendable {
                         Formbricks.logger.error(responseLogMessage)
                         self.completion?(.failure(FormbricksAPIClientError(type: .invalidResponse, statusCode: httpStatus.rawValue)))
                     }
-                    
-                default:
+                } else {
                     if let error = error {
                         responseLogMessage.append("\nError: \(error.localizedDescription)")
                         Formbricks.logger.error(responseLogMessage)

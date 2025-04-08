@@ -21,6 +21,8 @@ tags:
     description: Operations for managing contact attributes keys.
   - name: Management API > Surveys
     description: Operations for managing surveys.
+  - name: Management API > Surveys > Contact Links
+    description: Operations for generating personalized survey links for contacts.
   - name: Management API > Webhooks
     description: Operations for managing webhooks.
   - name: Organizations API > Teams
@@ -635,41 +637,53 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: &a6
               - createdAt
               - updatedAt
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: &a7
               - asc
               - desc
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: surveyId
           schema:
@@ -1647,6 +1661,106 @@ paths:
                   surveyUrl:
                     type: string
                     format: uri
+  /surveys/{surveyId}/contact-links/segments/{segmentId}:
+    get:
+      operationId: getContactLinksBySegment
+      summary: Get survey links for contacts in a segment
+      description: Generates personalized survey links for contacts in a segment.
+      tags:
+        - Management API > Surveys > Contact Links
+      parameters:
+        - in: path
+          name: surveyId
+          description: The ID of the survey
+          schema:
+            type: string
+            description: The ID of the survey
+          required: true
+        - in: path
+          name: segmentId
+          description: The ID of the segment
+          schema:
+            type: string
+            description: The ID of the segment
+          required: true
+        - in: query
+          name: limit
+          description: Number of items to return
+          schema:
+            type: number
+            minimum: 1
+            maximum: 250
+            default: 50
+            description: Number of items to return
+        - in: query
+          name: skip
+          description: Number of items to skip
+          schema:
+            type: number
+            minimum: 0
+            default: 0
+            description: Number of items to skip
+        - in: query
+          name: expirationDays
+          description: Number of days until the generated JWT expires. If not provided,
+            there is no expiration.
+          schema:
+            type:
+              - number
+              - "null"
+            minimum: 1
+            maximum: 365
+            default: null
+            description: Number of days until the generated JWT expires. If not provided,
+              there is no expiration.
+        - in: query
+          name: attributeKeys
+          schema:
+            type: string
+            description: Comma-separated list of contact attribute keys to include in the
+              response. You can have max 20 keys. If not provided, no attributes
+              will be included.
+      responses:
+        "200":
+          description: Contact links generated successfully.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          contactId:
+                            type: string
+                            description: The ID of the contact
+                          surveyUrl:
+                            type: string
+                            format: uri
+                            description: Personalized survey link
+                          expiresAt:
+                            type:
+                              - string
+                              - "null"
+                            description: The date and time the link expires, null if no expiration
+                          attributes:
+                            type: object
+                            additionalProperties:
+                              type: string
+                            description: The attributes of the contact
+                    meta:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                        limit:
+                          type: number
+                        offset:
+                          type: number
   /webhooks:
     get:
       operationId: getWebhooks
@@ -1657,37 +1771,49 @@ paths:
       parameters:
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: *a6
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: *a7
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: surveyIds
           schema:
@@ -2094,37 +2220,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: *a6
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: *a7
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
       responses:
         "200":
           description: Teams retrieved successfully.
@@ -2386,37 +2524,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: *a6
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: *a7
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: teamId
           schema:
@@ -2672,37 +2822,49 @@ paths:
           required: true
         - in: query
           name: limit
+          description: Number of items to return
           schema:
             type: number
             minimum: 1
-            maximum: 100
-            default: 10
+            maximum: 250
+            default: 50
+            description: Number of items to return
         - in: query
           name: skip
+          description: Number of items to skip
           schema:
             type: number
             minimum: 0
             default: 0
+            description: Number of items to skip
         - in: query
           name: sortBy
+          description: Sort by field
           schema:
             type: string
             enum: *a6
             default: createdAt
+            description: Sort by field
         - in: query
           name: order
+          description: Sort order
           schema:
             type: string
             enum: *a7
             default: desc
+            description: Sort order
         - in: query
           name: startDate
+          description: Start date
           schema:
             type: string
+            description: Start date
         - in: query
           name: endDate
+          description: End date
           schema:
             type: string
+            description: End date
         - in: query
           name: id
           schema:
