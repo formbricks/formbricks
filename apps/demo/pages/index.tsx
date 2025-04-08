@@ -96,10 +96,10 @@ export default function AppPage(): React.JSX.Element {
             <p className="text-slate-700 dark:text-slate-300">
               Copy the environment ID of your Formbricks app to the env variable in /apps/demo/.env
             </p>
-            <Image src={fbsetup} alt="fb setup" className="mt-4 rounded-xs" priority />
+            <Image src={fbsetup} alt="fb setup" className="rounded-xs mt-4" priority />
 
             <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
-              <p className="mb-1 sm:mr-2 sm:mb-0">You&apos;re connected with env:</p>
+              <p className="mb-1 sm:mb-0 sm:mr-2">You&apos;re connected with env:</p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">
                   {process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID}
