@@ -83,15 +83,11 @@ const renderComponent = (props: Partial<React.ComponentProps<typeof LinkSurvey>>
   const defaultProps = {
     survey: dummySurvey,
     project: dummyProject,
-    emailVerificationStatus: "verified",
     singleUseId: "single-use-123",
     webAppUrl: "https://example.com",
     responseCount: 0,
     languageCode: "en",
     isEmbed: false,
-    IMPRINT_URL: "https://example.com/imprint",
-    PRIVACY_URL: "https://example.com/privacy",
-    IS_FORMBRICKS_CLOUD: false,
     locale: "en",
     isPreview: false,
   };
@@ -108,25 +104,6 @@ describe("LinkSurvey Component", () => {
     renderComponent({ singleUseResponse: dummySingleUseResponse });
     expect(screen.getByTestId("survey-link-used")).toBeInTheDocument();
     expect(screen.getByText(/SurveyLinkUsed:/)).toHaveTextContent("Single Use Message");
-  });
-
-  test("renders VerifyEmail error component when emailVerificationStatus is fishy", () => {
-    // Set up survey with email verification enabled.
-    const survey = { ...dummySurvey, isVerifyEmailEnabled: true };
-    renderComponent({ survey, emailVerificationStatus: "fishy" });
-    const verifyEmail = screen.getByTestId("verify-email");
-    expect(verifyEmail).toBeInTheDocument();
-    expect(verifyEmail).toHaveTextContent("Error");
-  });
-
-  test("renders VerifyEmail component when emailVerificationStatus is not-verified", () => {
-    const survey = { ...dummySurvey, isVerifyEmailEnabled: true };
-    renderComponent({ survey, emailVerificationStatus: "not-verified" });
-    // Get all rendered VerifyEmail components.
-    const verifyEmailElements = screen.getAllByTestId("verify-email");
-    // Filter out the ones that have "Error" in their text.
-    const nonErrorVerifyEmail = verifyEmailElements.filter((el) => !el.textContent?.includes("Error"));
-    expect(nonErrorVerifyEmail.length).toBeGreaterThan(0);
   });
 
   test("renders LinkSurveyWrapper and SurveyInline when conditions are met", async () => {
@@ -167,19 +144,6 @@ describe("LinkSurvey Component", () => {
         expect(el).toHaveTextContent("AutoFocus");
       });
     });
-  });
-
-  test("includes verifiedEmail in hiddenFieldsRecord when survey verifies email", () => {
-    const survey = { ...dummySurvey, isVerifyEmailEnabled: true };
-    renderComponent({ survey, emailVerificationStatus: "verified", verifiedEmail: "test@example.com" });
-    const surveyInlineElements = screen.getAllByTestId("survey-inline");
-
-    // Find the instance that includes the verifiedEmail in its hiddenFieldsRecord
-    const withVerifiedEmail = surveyInlineElements.find((el) =>
-      el.textContent?.includes('"verifiedEmail":"test@example.com"')
-    );
-
-    expect(withVerifiedEmail).toBeDefined();
   });
 
   test("handleResetSurvey sets questionId and resets response data", () => {

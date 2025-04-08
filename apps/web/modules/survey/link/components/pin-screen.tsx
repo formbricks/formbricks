@@ -13,15 +13,12 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 interface PinScreenProps {
   surveyId: string;
   project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
-  emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
-  surveyDomain: string;
   webAppUrl: string;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
-  verifiedEmail?: string;
   languageCode: string;
   isEmbed: boolean;
   isPreview: boolean;
@@ -32,15 +29,9 @@ export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
     project,
-    surveyDomain,
     webAppUrl,
-    emailVerificationStatus,
     singleUseId,
     singleUseResponse,
-    IMPRINT_URL,
-    PRIVACY_URL,
-    IS_FORMBRICKS_CLOUD,
-    verifiedEmail,
     languageCode,
     isEmbed,
     isPreview,
@@ -115,17 +106,11 @@ export const PinScreen = (props: PinScreenProps) => {
     <LinkSurvey
       survey={survey}
       project={project}
-      emailVerificationStatus={emailVerificationStatus}
       singleUseId={singleUseId}
       singleUseResponse={singleUseResponse}
-      surveyDomain={surveyDomain}
       webAppUrl={webAppUrl}
-      verifiedEmail={verifiedEmail}
       languageCode={languageCode}
       isEmbed={isEmbed}
-      IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       isPreview={isPreview}
       contactId={contactId}
     />

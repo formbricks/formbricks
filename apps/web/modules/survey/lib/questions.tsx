@@ -314,6 +314,7 @@ export const getCXQuestionTypes = (t: TFnType) =>
       TSurveyQuestionTypeEnum.NPS,
       TSurveyQuestionTypeEnum.Consent,
       TSurveyQuestionTypeEnum.CTA,
+      TSurveyQuestionTypeEnum.DeployToken,
     ].includes(questionType.id as TSurveyQuestionTypeEnum);
   });
 

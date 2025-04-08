@@ -1,4 +1,3 @@
-import { LegalFooter } from "@/modules/survey/link/components/legal-footer";
 import { SurveyLoadingAnimation } from "@/modules/survey/link/components/survey-loading-animation";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import { MediaBackground } from "@/modules/ui/components/media-background";
@@ -19,10 +18,6 @@ interface LinkSurveyWrapperProps {
   isEmbed: boolean;
   determineStyling: () => TSurveyStyling | TProjectStyling;
   handleResetSurvey: () => void;
-  IMPRINT_URL?: string;
-  PRIVACY_URL?: string;
-  IS_FORMBRICKS_CLOUD: boolean;
-  surveyDomain: string;
   isBrandingEnabled: boolean;
 }
 
@@ -31,15 +26,10 @@ export const LinkSurveyWrapper = ({
   project,
   isWelcomeCardEnabled,
   surveyType,
-  surveyId,
   isPreview,
   isEmbed,
   determineStyling,
   handleResetSurvey,
-  IMPRINT_URL,
-  PRIVACY_URL,
-  IS_FORMBRICKS_CLOUD,
-  surveyDomain,
   isBrandingEnabled,
 }: LinkSurveyWrapperProps) => {
   //for embedded survey strip away all surrounding css
@@ -92,12 +82,6 @@ export const LinkSurveyWrapper = ({
             </div>
           </div>
         </MediaBackground>
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={surveyDomain + "/s/" + surveyId}
-        />
       </div>
     );
 };

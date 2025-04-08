@@ -702,6 +702,15 @@ export const ZSurveyContactInfoQuestion = ZSurveyQuestionBase.extend({
   company: ZToggleInputConfig,
 });
 
+export const ZSurveyDeployTokenQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.DeployToken),
+  firstName: ZToggleInputConfig,
+  lastName: ZToggleInputConfig,
+  email: ZToggleInputConfig,
+  phone: ZToggleInputConfig,
+  company: ZToggleInputConfig,
+});
+
 export type TSurveyAddressQuestion = z.infer<typeof ZSurveyAddressQuestion>;
 
 export type TSurveyContactInfoQuestion = z.infer<typeof ZSurveyContactInfoQuestion>;
@@ -733,6 +742,7 @@ export const ZSurveyQuestion = z.union([
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
   ZSurveyContactInfoQuestion,
+  ZSurveyDeployTokenQuestion,
 ]);
 
 export type TSurveyQuestion = z.infer<typeof ZSurveyQuestion>;
@@ -757,6 +767,7 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
   TSurveyQuestionTypeEnum.ContactInfo,
+  TSurveyQuestionTypeEnum.DeployToken,
 ]);
 
 export type TSurveyQuestionType = z.infer<typeof ZSurveyQuestionType>;
@@ -2674,6 +2685,28 @@ export const ZSurveyQuestionSummaryContactInfo = z.object({
 
 export type TSurveyQuestionSummaryContactInfo = z.infer<typeof ZSurveyQuestionSummaryContactInfo>;
 
+export const ZSurveyQuestionSummaryDeployToken = z.object({
+  type: z.literal("contactInfo"),
+  question: ZSurveyContactInfoQuestion,
+  responseCount: z.number(),
+  samples: z.array(
+    z.object({
+      id: z.string(),
+      updatedAt: z.date(),
+      value: z.array(z.string()),
+      contact: z
+        .object({
+          id: ZId,
+          userId: z.string(),
+        })
+        .nullable(),
+      contactAttributes: ZContactAttributes.nullable(),
+    })
+  ),
+});
+
+export type TSurveyQuestionSummaryDeployToken = z.infer<typeof ZSurveyQuestionSummaryDeployToken>;
+
 export const ZSurveyQuestionSummaryRanking = z.object({
   type: z.literal("ranking"),
   question: ZSurveyRankingQuestion,
@@ -2717,6 +2750,7 @@ export const ZSurveyQuestionSummary = z.union([
   ZSurveyQuestionSummaryAddress,
   ZSurveyQuestionSummaryRanking,
   ZSurveyQuestionSummaryContactInfo,
+  ZSurveyQuestionSummaryDeployToken,
 ]);
 
 export type TSurveyQuestionSummary = z.infer<typeof ZSurveyQuestionSummary>;

@@ -401,6 +401,7 @@ export async function PreviewEmailTemplate({
         </EmailTemplateWrapper>
       );
     case TSurveyQuestionTypeEnum.Address:
+    case TSurveyQuestionTypeEnum.DeployToken:
     case TSurveyQuestionTypeEnum.ContactInfo:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>

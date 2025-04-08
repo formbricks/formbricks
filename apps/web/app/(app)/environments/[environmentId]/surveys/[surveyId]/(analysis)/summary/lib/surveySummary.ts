@@ -810,6 +810,7 @@ export const getQuestionSummary = async (
         break;
       }
       case TSurveyQuestionTypeEnum.Address:
+      case TSurveyQuestionTypeEnum.DeployToken:
       case TSurveyQuestionTypeEnum.ContactInfo: {
         let values: TSurveyQuestionSummaryAddress["samples"] = [];
         responses.forEach((response) => {

@@ -1,4 +1,7 @@
+import { alchemyConfig, AlchemyWalletProvider } from "@/modules/alchemy-wallet";
+import { cookieToInitialState } from "@account-kit/core";
 import { Viewport } from "next";
+import { headers as nextHeaders } from "next/headers";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -8,6 +11,16 @@ export const viewport: Viewport = {
   viewportFit: "contain",
 };
 
-export const LinkSurveyLayout = ({ children }) => {
-  return <div className="h-dvh">{children}</div>;
+export const LinkSurveyLayout = async ({ children }) => {
+  const headers = await nextHeaders();
+    const alchemyInitialState = cookieToInitialState(alchemyConfig, headers.get("cookie") ?? undefined);
+  
+    return (
+      <>
+        <AlchemyWalletProvider initialState={alchemyInitialState}>
+          <div className="h-dvh">{children}</div>;
+        </AlchemyWalletProvider>
+      </>
+    );
+  return 
 };

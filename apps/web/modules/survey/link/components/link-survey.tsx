@@ -2,7 +2,6 @@
 
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { SurveyLinkUsed } from "@/modules/survey/link/components/survey-link-used";
-import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getPrefillValue } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 import { Project, Response } from "@prisma/client";
@@ -10,6 +9,8 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TResponseData, TResponseHiddenFieldValue } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { LoginForm } from "@/modules/auth/login/components/login-form";
+import { useUser } from "@account-kit/react";
 
 let setQuestionId = (_: string) => {};
 let setResponseData = (_: TResponseData) => {};
@@ -17,18 +18,12 @@ let setResponseData = (_: TResponseData) => {};
 interface LinkSurveyProps {
   survey: TSurvey;
   project: Pick<Project, "styling" | "logo" | "linkSurveyBranding">;
-  emailVerificationStatus?: string;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
-  surveyDomain: string;
   webAppUrl: string;
   responseCount?: number;
-  verifiedEmail?: string;
   languageCode: string;
   isEmbed: boolean;
-  IMPRINT_URL?: string;
-  PRIVACY_URL?: string;
-  IS_FORMBRICKS_CLOUD: boolean;
   isPreview: boolean;
   contactId?: string;
 }
@@ -36,25 +31,19 @@ interface LinkSurveyProps {
 export const LinkSurvey = ({
   survey,
   project,
-  emailVerificationStatus,
   singleUseId,
   singleUseResponse,
-  surveyDomain,
   webAppUrl,
   responseCount,
-  verifiedEmail,
   languageCode,
   isEmbed,
-  IMPRINT_URL,
-  PRIVACY_URL,
-  IS_FORMBRICKS_CLOUD,
   isPreview,
   contactId,
 }: LinkSurveyProps) => {
   const responseId = singleUseResponse?.id;
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
-  const suId = searchParams.get("suId");
+  const user = useUser();
 
   const startAt = searchParams.get("startAt");
   const isStartAtValid = useMemo(() => {
@@ -106,37 +95,30 @@ export const LinkSurvey = ({
   }, [searchParams, survey.hiddenFields.fieldIds]);
 
   const getVerifiedEmail = useMemo<Record<string, string> | null>(() => {
-    if (survey.isVerifyEmailEnabled && verifiedEmail) {
-      return { verifiedEmail: verifiedEmail };
+    if (survey.isVerifyEmailEnabled && user?.email) {
+      return { verifiedEmail: user.email };
     } else {
       return null;
     }
-  }, [survey.isVerifyEmailEnabled, verifiedEmail]);
+  }, [survey.isVerifyEmailEnabled, user]);
 
   if (hasFinishedSingleUseResponse) {
     return <SurveyLinkUsed singleUseMessage={survey.singleUse} />;
   }
 
-  if (survey.isVerifyEmailEnabled && emailVerificationStatus !== "verified") {
-    if (emailVerificationStatus === "fishy") {
-      return (
-        <VerifyEmail
-          survey={survey}
-          isErrorComponent={true}
-          languageCode={languageCode}
-          styling={project.styling}
-        />
-      );
-    }
-    //emailVerificationStatus === "not-verified"
+  if (survey.isVerifyEmailEnabled && !user?.address) {
     return (
-      <VerifyEmail
-        singleUseId={suId ?? ""}
-        survey={survey}
-        languageCode={languageCode}
-        styling={project.styling}
-      />
-    );
+      <div className="h-screen flex items-center justify-center bg-slate-50">
+        <div className="max-w-xs mx-auto border bg-white rounded-xl">
+          <LoginForm 
+            emailAuthEnabled={false}
+            isMultiOrgEnabled={false}
+            passwordResetEnabled={false}
+            publicSignUpEnabled={false}    
+          />
+        </div>
+      </div>
+    )
   }
 
   const determineStyling = () => {
@@ -164,10 +146,6 @@ export const LinkSurvey = ({
       handleResetSurvey={handleResetSurvey}
       determineStyling={determineStyling}
       isEmbed={isEmbed}
-      surveyDomain={surveyDomain}
-      IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-      IMPRINT_URL={IMPRINT_URL}
-      PRIVACY_URL={PRIVACY_URL}
       isBrandingEnabled={project.linkSurveyBranding}>
       <SurveyInline
         appUrl={webAppUrl}
