@@ -85,34 +85,60 @@ RUN apk add --no-cache curl \
 
 WORKDIR /home/nextjs
 
-# Ensure no write permissions are assigned to the copied resource
+# Ensure no write permissions are assigned to the copied resources
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
 RUN chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .
+RUN chmod 644 ./next.config.mjs
+
 COPY --from=installer /app/apps/web/package.json .
-# Leverage output traces to reduce image size
+RUN chmod 644 ./package.json
 
 COPY --from=installer --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
-COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
-COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
+RUN chmod -R 755 ./apps/web/.next/static
 
-# Copy Prisma-specific generated files
+COPY --from=installer --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
+RUN chmod -R 755 ./apps/web/public
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/schema.prisma ./packages/database/schema.prisma
+RUN chmod 644 ./packages/database/schema.prisma
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/package.json ./packages/database/package.json
+RUN chmod 644 ./packages/database/package.json
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/migration ./packages/database/migration
+RUN chmod -R 755 ./packages/database/migration
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/src ./packages/database/src
+RUN chmod -R 755 ./packages/database/src
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/database/node_modules ./packages/database/node_modules
+RUN chmod -R 755 ./packages/database/node_modules
+
+COPY --from=installer --chown=nextjs:nextjs /app/packages/logger/dist ./packages/database/node_modules/@formbricks/logger/dist
+RUN chmod -R 755 ./packages/database/node_modules/@formbricks/logger/dist
+
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/@prisma/client ./node_modules/@prisma/client
+RUN chmod -R 755 ./node_modules/@prisma/client
+
 COPY --from=installer --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
+RUN chmod -R 755 ./node_modules/.prisma
 
 COPY --from=installer --chown=nextjs:nextjs /prisma_version.txt .
-COPY /docker/cronjobs /app/docker/cronjobs
+RUN chmod 644 ./prisma_version.txt
 
-# Copy required dependencies
+COPY /docker/cronjobs /app/docker/cronjobs
+RUN chmod -R 755 /app/docker/cronjobs
+
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
+RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
+
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
+RUN chmod -R 755 ./node_modules/@noble/hashes
+
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
+RUN chmod -R 755 ./node_modules/zod
 
 RUN npm install -g tsx typescript prisma pino-pretty
 
