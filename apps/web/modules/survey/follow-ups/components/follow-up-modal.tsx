@@ -7,6 +7,7 @@ import {
 } from "@/modules/survey/editor/types/survey-follow-up";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import { getQuestionIconMap } from "@/modules/survey/lib/questions";
+import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Editor } from "@/modules/ui/components/editor";
@@ -423,17 +424,13 @@ export const FollowUpModal = ({
                               </Select>
 
                               {triggerType === "endings" && !localSurvey.endings.length ? (
-                                <div className="mt-4 flex items-start text-yellow-600">
-                                  <TriangleAlertIcon
-                                    className="mr-2 h-5 min-h-5 w-5 min-w-5"
-                                    aria-hidden="true"
-                                  />
-                                  <p className="text-sm">
+                                <Alert variant="warning" size="small">
+                                  <AlertTitle>
                                     {t(
                                       "environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"
                                     )}
-                                  </p>
-                                </div>
+                                  </AlertTitle>
+                                </Alert>
                               ) : null}
                             </div>
                           </div>
