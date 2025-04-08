@@ -52,7 +52,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            DATABASE_URL=postgresql://test:test@host.docker.internal:5432/formbricks
+            secrets: |
+              database_url=${{ secrets.DUMMY_DATABASE_URL }}
+              encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
 
       - name: Verify PostgreSQL Connection
         run: |
