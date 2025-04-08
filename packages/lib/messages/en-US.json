@@ -2242,6 +2242,8 @@
     "default_welcome_card_button_label": "Next",
     "default_welcome_card_headline": "Welcome!",
     "default_welcome_card_html": "Thanks for providing your feedback - let's go!",
+    "deploy_token": "Deploy Token",
+    "deploy_token_description": "Allow respondents to deploy a token with custom fields",
     "docs_feedback_description": "Measure how clear each page of your developer documentation is.",
     "docs_feedback_name": "Docs Feedback",
     "docs_feedback_question_1_choice_1": "Yes \uD83D\uDC4D",

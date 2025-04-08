@@ -9,15 +9,12 @@ import { Label } from "@/modules/ui/components/label";
 import { Modal } from "@/modules/ui/components/modal";
 import { useForm } from "react-hook-form";
 
-interface SendModalProps {
-}
-
 type FormValues = {
   address: string;
   amount: number;
 };
 
-export function SendModal({}:SendModalProps): React.JSX.Element {
+export function SendModal(): React.JSX.Element {
   const { t } = useTranslate();
   const [showSendModal, setSendShowModal] = useState(false)
   const { register, handleSubmit, formState: {errors} } = useForm<FormValues>();
