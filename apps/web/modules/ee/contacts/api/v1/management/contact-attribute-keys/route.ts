@@ -2,6 +2,7 @@ import { authenticateRequest } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZContactAttributeKeyCreateInput } from "./[contactAttributeKeyId]/types/contact-attribute-keys";
@@ -17,7 +18,12 @@ export const GET = async (request: Request) => {
       return responses.forbiddenResponse("Contacts are only enabled for Enterprise Edition, please upgrade.");
     }
 
-    const contactAttributeKeys = await getContactAttributeKeys(authentication.environmentId);
+    const environmentIds = authentication.environmentPermissions.map(
+      (permission) => permission.environmentId
+    );
+
+    const contactAttributeKeys = await getContactAttributeKeys(environmentIds);
+
     return responses.successResponse(contactAttributeKeys);
   } catch (error) {
     if (error instanceof DatabaseError) {
@@ -54,9 +60,14 @@ export const POST = async (request: Request): Promise<Response> => {
         true
       );
     }
+    const environmentId = contactAttibuteKeyInput.environmentId;
+
+    if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      return responses.unauthorizedResponse();
+    }
 
     const contactAttributeKey = await createContactAttributeKey(
-      authentication.environmentId,
+      environmentId,
       inputValidation.data.key,
       inputValidation.data.type
     );

@@ -45,12 +45,11 @@
     "lint-staged": "15.5.0",
     "rimraf": "6.0.1",
     "tsx": "4.19.3",
-    "turbo": "2.4.4"
+    "turbo": "2.5.0"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
-      "prettier --write",
-      "eslint --fix"
+      "prettier --write"
     ],
     "*.json": [
       "prettier --write"

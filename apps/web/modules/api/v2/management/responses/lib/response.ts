@@ -130,16 +130,18 @@ export const createResponse = async (
 };
 
 export const getResponses = async (
-  environmentId: string,
+  environmentIds: string[],
   params: TGetResponsesFilter
 ): Promise<Result<ApiResponseWithMeta<Response[]>, ApiErrorResponseV2>> => {
   try {
+    const query = getResponsesQuery(environmentIds, params);
+
     const [responses, count] = await prisma.$transaction([
       prisma.response.findMany({
-        ...getResponsesQuery(environmentId, params),
+        ...query,
       }),
       prisma.response.count({
-        where: getResponsesQuery(environmentId, params).where,
+        where: query.where,
       }),
     ]);
 

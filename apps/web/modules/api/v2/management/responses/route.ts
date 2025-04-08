@@ -1,9 +1,10 @@
+import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { authenticatedApiClient } from "@/modules/api/v2/management/auth/authenticated-api-client";
-import { checkAuthorization } from "@/modules/api/v2/management/auth/check-authorization";
 import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
 import { ZGetResponsesFilter, ZResponseInput } from "@/modules/api/v2/management/responses/types/responses";
+import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { createResponse, getResponses } from "./lib/response";
 
@@ -23,15 +24,20 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const environmentId = authentication.environmentId;
+      const environmentIds = authentication.environmentPermissions.map(
+        (permission) => permission.environmentId
+      );
 
-      const res = await getResponses(environmentId, query);
+      const environmentResponses: Response[] = [];
+      const res = await getResponses(environmentIds, query);
 
-      if (res.ok) {
-        return responses.successResponse(res.data);
+      if (!res.ok) {
+        return handleApiError(request, res.error);
       }
 
-      return handleApiError(request, res.error);
+      environmentResponses.push(...res.data.data);
+
+      return responses.successResponse({ data: environmentResponses });
     },
   });
 
@@ -59,13 +65,10 @@ export const POST = async (request: Request) =>
 
       const environmentId = environmentIdResult.data;
 
-      const checkAuthorizationResult = await checkAuthorization({
-        authentication,
-        environmentId,
-      });
-
-      if (!checkAuthorizationResult.ok) {
-        return handleApiError(request, checkAuthorizationResult.error);
+      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+        return handleApiError(request, {
+          type: "unauthorized",
+        });
       }
 
       // if there is a createdAt but no updatedAt, set updatedAt to createdAt
@@ -78,6 +81,6 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error);
       }
 
-      return responses.successResponse({ data: createResponseResult.data, cors: true });
+      return responses.successResponse({ data: createResponseResult.data });
     },
   });

@@ -2,7 +2,7 @@
 
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 import { useTranslate } from "@tolgee/react";
-import { BrushIcon, KeyIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import { BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 interface ProjectConfigNavigationProps {
@@ -47,13 +47,6 @@ export const ProjectConfigNavigation = ({
       icon: <TagIcon className="h-5 w-5" />,
       href: `/environments/${environmentId}/project/tags`,
       current: pathname?.includes("/tags"),
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      icon: <KeyIcon className="h-5 w-5" />,
-      href: `/environments/${environmentId}/project/api-keys`,
-      current: pathname?.includes("/api-keys"),
     },
     {
       id: "app-connection",

@@ -19,7 +19,6 @@ import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
-import { env } from "@formbricks/lib/env";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { createEmailTokenAction } from "../../../auth/actions";
@@ -30,8 +29,6 @@ const ZSignupInput = z.object({
   email: z.string().email(),
   password: ZUserPassword,
 });
-
-const turnstileSiteKey = env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
 
@@ -55,6 +52,7 @@ interface SignupFormProps {
   isTurnstileConfigured: boolean;
   samlTenant: string;
   samlProduct: string;
+  turnstileSiteKey?: string;
 }
 
 export const SignupForm = ({
@@ -77,6 +75,7 @@ export const SignupForm = ({
   isTurnstileConfigured,
   samlTenant,
   samlProduct,
+  turnstileSiteKey,
 }: SignupFormProps) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -171,10 +170,11 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <Input
+                              data-testid="signup-name"
                               value={field.value}
                               name="name"
                               autoFocus
-                              onChange={(name) => field.onChange(name)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               placeholder="Full name"
                               className="bg-white"
                             />
@@ -192,9 +192,10 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <Input
+                              data-testid="signup-email"
                               value={field.value}
                               name="email"
-                              onChange={(email) => field.onChange(email)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               placeholder="work@email.com"
                               className="bg-white"
                             />
@@ -212,10 +213,11 @@ export const SignupForm = ({
                         <FormControl>
                           <div>
                             <PasswordInput
+                              data-testid="signup-password"
                               id="password"
                               name="password"
                               value={field.value}
-                              onChange={(password) => field.onChange(password)}
+                              onChange={(e) => field.onChange(e.target.value)}
                               autoComplete="current-password"
                               placeholder="*******"
                               aria-placeholder="password"
@@ -248,6 +250,7 @@ export const SignupForm = ({
 
             {showLogin && (
               <Button
+                data-testid="signup-submit"
                 type="submit"
                 className="h-10 w-full justify-center"
                 loading={form.formState.isSubmitting}
@@ -258,6 +261,7 @@ export const SignupForm = ({
 
             {!showLogin && (
               <Button
+                data-testid="signup-show-login"
                 type="button"
                 onClick={() => {
                   setShowLogin(true);
@@ -280,6 +284,7 @@ export const SignupForm = ({
           samlTenant={samlTenant}
           samlProduct={samlProduct}
           callbackUrl={callbackUrl}
+          source="signup"
         />
       )}
       <TermsPrivacyLinks termsUrl={termsUrl} privacyUrl={privacyUrl} />

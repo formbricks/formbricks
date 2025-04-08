@@ -6,7 +6,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { SettingsId } from "@/modules/ui/components/settings-id";
 import packageJson from "@/package.json";
 import { getTranslate } from "@/tolgee/server";
-import { IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
+import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@formbricks/lib/constants";
 import { getProjects } from "@formbricks/lib/project/service";
 import { DeleteProject } from "./components/delete-project";
 import { EditProjectNameForm } from "./components/edit-project-name-form";
@@ -51,7 +51,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ environment
       </SettingsCard>
       <div>
         <SettingsId title={t("common.project_id")} id={project.id}></SettingsId>
-        {!IS_FORMBRICKS_CLOUD && (
+        {!IS_FORMBRICKS_CLOUD && !IS_DEVELOPMENT && (
           <SettingsId title={t("common.formbricks_version")} id={packageJson.version}></SettingsId>
         )}
       </div>
