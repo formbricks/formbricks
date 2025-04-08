@@ -85,6 +85,7 @@
     "@vercel/og": "0.6.4",
     "@vercel/otel": "1.10.0",
     "@vercel/speed-insights": "1.1.0",
+    "@wonderchain/sdk": "1.0.6",
     "ai": "4.1.17",
     "alchemy-sdk": "3.5.6",
     "autoprefixer": "10.4.20",
@@ -142,6 +143,7 @@
     "uuid": "11.1.0",
     "webpack": "5.97.1",
     "xlsx": "0.18.5",
+    "zksync-ethers": "6.17.0",
     "zod": "3.24.1",
     "zod-openapi": "4.2.3"
   },
