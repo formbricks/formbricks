@@ -1,4 +1,4 @@
-import { contactAttributeKeyCache } from "@/lib/cache/contact-attribute-key";
+import { getContactAttributeKeys } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact-attribute-key";
 import { getSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment";
 import { getSurvey } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/surveys";
 import { TContactWithAttributes } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/types/contact";
@@ -12,33 +12,6 @@ import { segmentCache } from "@formbricks/lib/cache/segment";
 import { surveyCache } from "@formbricks/lib/survey/cache";
 import { logger } from "@formbricks/logger";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-
-export const getContactAttributeKeys = reactCache((environmentId: string) =>
-  cache(
-    async (): Promise<Result<string[], ApiErrorResponseV2>> => {
-      try {
-        const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-          where: { environmentId },
-          select: {
-            key: true,
-          },
-        });
-
-        const keys = contactAttributeKeys.map((key) => key.key);
-        return ok(keys);
-      } catch (error) {
-        return err({
-          type: "internal_server_error",
-          details: [{ field: "contact attribute keys", issue: error.message }],
-        });
-      }
-    },
-    [`getContactAttributeKeys-${environmentId}`],
-    {
-      tags: [contactAttributeKeyCache.tag.byEnvironmentId(environmentId)],
-    }
-  )()
-);
 
 export const getContactsInSegment = reactCache(
   (surveyId: string, segmentId: string, limit: number, skip: number, attributeKeys?: string) =>
@@ -93,6 +66,7 @@ export const getContactsInSegment = reactCache(
           if (!contactAttributeKeysResult.ok) {
             return err(contactAttributeKeysResult.error);
           }
+
           const allAttributeKeys = contactAttributeKeysResult.data;
 
           const fieldArray = (attributeKeys || "").split(",").map((field) => field.trim());
