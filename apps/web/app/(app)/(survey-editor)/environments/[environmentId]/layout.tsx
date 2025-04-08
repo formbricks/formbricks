@@ -1,16 +1,7 @@
-import { FormbricksClient } from "@/app/(app)/components/FormbricksClient";
-import { PosthogIdentify } from "@/app/(app)/environments/[environmentId]/components/PosthogIdentify";
-import { ResponseFilterProvider } from "@/app/(app)/environments/[environmentId]/components/ResponseFilterContext";
 import { environmentIdLayoutChecks } from "@/modules/environments/lib/utils";
 import { DevEnvironmentBanner } from "@/modules/ui/components/dev-environment-banner";
-import { ToasterClient } from "@/modules/ui/components/toaster-client";
+import { EnvironmentIdBaseLayout } from "@/modules/ui/components/environmentId-base-layout";
 import { redirect } from "next/navigation";
-import {
-  FORMBRICKS_API_HOST,
-  FORMBRICKS_ENVIRONMENT_ID,
-  IS_FORMBRICKS_ENABLED,
-  IS_POSTHOG_CONFIGURED,
-} from "@formbricks/lib/constants";
 import { getEnvironment } from "@formbricks/lib/environment/service";
 
 const SurveyEditorEnvironmentLayout = async (props) => {
@@ -20,8 +11,12 @@ const SurveyEditorEnvironmentLayout = async (props) => {
 
   const { t, session, user, organization } = await environmentIdLayoutChecks(params.environmentId);
 
+  if (!session) {
+    return redirect(`/auth/login`);
+  }
+
   if (!user) {
-    redirect(`/auth/login`);
+    throw new Error(t("common.user_not_found"));
   }
 
   const environment = await getEnvironment(params.environmentId);
@@ -31,29 +26,16 @@ const SurveyEditorEnvironmentLayout = async (props) => {
   }
 
   return (
-    <ResponseFilterProvider>
-      <PosthogIdentify
-        session={session}
-        user={user}
-        environmentId={params.environmentId}
-        organizationId={organization.id}
-        organizationName={organization.name}
-        organizationBilling={organization.billing}
-        isPosthogEnabled={IS_POSTHOG_CONFIGURED}
-      />
-      <FormbricksClient
-        userId={user.id}
-        email={user.email}
-        formbricksApiHost={FORMBRICKS_API_HOST}
-        formbricksEnvironmentId={FORMBRICKS_ENVIRONMENT_ID}
-        formbricksEnabled={IS_FORMBRICKS_ENABLED}
-      />
-      <ToasterClient />
+    <EnvironmentIdBaseLayout
+      environmentId={params.environmentId}
+      session={session}
+      user={user}
+      organization={organization}>
       <div className="flex h-screen flex-col">
         <DevEnvironmentBanner environment={environment} />
         <div className="h-full overflow-y-auto bg-slate-50">{children}</div>
       </div>
-    </ResponseFilterProvider>
+    </EnvironmentIdBaseLayout>
   );
 };
 

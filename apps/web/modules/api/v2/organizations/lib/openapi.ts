@@ -1,6 +1,8 @@
+import { env } from "@formbricks/lib/env";
+
 export const organizationServer = [
   {
-    url: "https://app.formbricks.com/api/v2/organizations",
-    description: "Formbricks Cloud",
+    url: `${env.WEBAPP_URL}/api/v2/organizations`,
+    description: "Formbricks Organizations API",
   },
 ];

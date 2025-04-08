@@ -4,7 +4,7 @@ info:
   description: Manage Formbricks resources programmatically.
   version: 2.0.0
 servers:
-  - url: https://app.formbricks.com/api/v2/
+  - url: http://localhost:3000/api/v2/
     description: Formbricks Cloud
 tags:
   - name: Roles
@@ -623,8 +623,8 @@ paths:
                         - projectName
   /responses:
     servers: &a6
-      - url: https://app.formbricks.com/api/v2/management
-        description: Formbricks Cloud
+      - url: http://localhost:3000/api/v2/management
+        description: Formbricks Management API
     get:
       operationId: getResponses
       summary: Get responses
@@ -2805,8 +2805,8 @@ paths:
                     description: "The IDs of the surveys "
   /{organizationId}/teams:
     servers: &a11
-      - url: https://app.formbricks.com/api/v2/organizations
-        description: Formbricks Cloud
+      - url: http://localhost:3000/api/v2/organizations
+        description: Formbricks Organizations API
     get:
       operationId: getTeams
       summary: Get teams

@@ -25,6 +25,7 @@ import { ZSurveyWithoutQuestionType } from "@formbricks/database/zod/surveys";
 import { ZTeam } from "@formbricks/database/zod/teams";
 import { ZUser } from "@formbricks/database/zod/users";
 import { ZWebhook } from "@formbricks/database/zod/webhooks";
+import { env } from "@formbricks/lib/env";
 
 extendZodWithOpenApi(z);
 
@@ -52,7 +53,7 @@ const document = createDocument({
   },
   servers: [
     {
-      url: "https://app.formbricks.com/api/v2/",
+      url: `${env.WEBAPP_URL}/api/v2/`,
       description: "Formbricks Cloud",
     },
   ],
