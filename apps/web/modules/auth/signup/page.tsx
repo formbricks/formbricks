@@ -24,6 +24,7 @@ import {
   SAML_TENANT,
   SIGNUP_ENABLED,
   TERMS_URL,
+  TURNSTILE_SITE_KEY,
   WEBAPP_URL,
 } from "@formbricks/lib/constants";
 import { verifyInviteToken } from "@formbricks/lib/jwt";
@@ -83,6 +84,7 @@ export const SignupPage = async ({ searchParams: searchParamsProps }) => {
             isTurnstileConfigured={IS_TURNSTILE_CONFIGURED}
             samlTenant={SAML_TENANT}
             samlProduct={SAML_PRODUCT}
+            turnstileSiteKey={TURNSTILE_SITE_KEY}
           />
         </FormWrapper>
       </div>

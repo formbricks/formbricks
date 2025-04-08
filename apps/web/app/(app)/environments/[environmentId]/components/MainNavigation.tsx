@@ -63,6 +63,7 @@ interface NavigationProps {
   projects: TProject[];
   isMultiOrgEnabled: boolean;
   isFormbricksCloud: boolean;
+  isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
   organizationProjectsLimit: number;
   isLicenseActive: boolean;
@@ -79,6 +80,7 @@ export const MainNavigation = ({
   isFormbricksCloud,
   organizationProjectsLimit,
   isLicenseActive,
+  isDevelopment,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -296,7 +298,7 @@ export const MainNavigation = ({
 
           <div>
             {/* New Version Available */}
-            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && (
+            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
               <Link
                 href="https://github.com/formbricks/formbricks/releases"
                 target="_blank"

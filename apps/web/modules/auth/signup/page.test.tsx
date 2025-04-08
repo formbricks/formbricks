@@ -4,6 +4,7 @@ import {
   getIsSamlSsoEnabled,
   getisSsoEnabled,
 } from "@/modules/ee/license-check/lib/utils";
+import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -50,23 +51,50 @@ vi.mock("next/navigation", () => ({
 
 // Mock environment variables and constants
 vi.mock("@formbricks/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: false,
+  POSTHOG_API_KEY: "mock-posthog-api-key",
+  POSTHOG_HOST: "mock-posthog-host",
+  IS_POSTHOG_CONFIGURED: true,
+  ENCRYPTION_KEY: "mock-encryption-key",
+  ENTERPRISE_LICENSE_KEY: "mock-enterprise-license-key",
+  GITHUB_ID: "mock-github-id",
+  GITHUB_SECRET: "test-githubID",
+  GOOGLE_CLIENT_ID: "test-google-client-id",
+  GOOGLE_CLIENT_SECRET: "test-google-client-secret",
+  AZUREAD_CLIENT_ID: "test-azuread-client-id",
+  AZUREAD_CLIENT_SECRET: "test-azure",
+  AZUREAD_TENANT_ID: "test-azuread-tenant-id",
+  OIDC_DISPLAY_NAME: "test-oidc-display-name",
+  OIDC_CLIENT_ID: "test-oidc-client-id",
+  OIDC_ISSUER: "test-oidc-issuer",
+  OIDC_CLIENT_SECRET: "test-oidc-client-secret",
+  OIDC_SIGNING_ALGORITHM: "test-oidc-signing-algorithm",
+  WEBAPP_URL: "test-webapp-url",
+  IS_PRODUCTION: false,
+  SENTRY_DSN: "mock-sentry-dsn",
+  FB_LOGO_URL: "mock-fb-logo-url",
+  SMTP_HOST: "smtp.example.com",
+  SMTP_PORT: 587,
+  SMTP_USER: "smtp-user",
+  SAML_AUDIENCE: "test-saml-audience",
+  SAML_PATH: "test-saml-path",
+  SAML_DATABASE_URL: "test-saml-database-url",
+  TERMS_URL: "test-terms-url",
   SIGNUP_ENABLED: true,
-  EMAIL_AUTH_ENABLED: true,
+  PRIVACY_URL: "test-privacy-url",
   EMAIL_VERIFICATION_DISABLED: false,
+  EMAIL_AUTH_ENABLED: true,
   GOOGLE_OAUTH_ENABLED: true,
   GITHUB_OAUTH_ENABLED: true,
   AZURE_OAUTH_ENABLED: true,
   OIDC_OAUTH_ENABLED: true,
-  OIDC_DISPLAY_NAME: "OpenID",
-  SAML_OAUTH_ENABLED: true,
-  SAML_TENANT: "test-tenant",
-  SAML_PRODUCT: "test-product",
+  DEFAULT_ORGANIZATION_ID: "test-default-organization-id",
+  DEFAULT_ORGANIZATION_ROLE: "test-default-organization-role",
   IS_TURNSTILE_CONFIGURED: true,
-  WEBAPP_URL: "http://localhost:3000",
-  TERMS_URL: "http://localhost:3000/terms",
-  PRIVACY_URL: "http://localhost:3000/privacy",
-  DEFAULT_ORGANIZATION_ID: "test-org-id",
-  DEFAULT_ORGANIZATION_ROLE: "admin",
+  SAML_TENANT: "test-saml-tenant",
+  SAML_PRODUCT: "test-saml-product",
+  TURNSTILE_SITE_KEY: "test-turnstile-site-key",
+  SAML_OAUTH_ENABLED: true,
 }));
 
 describe("SignupPage", () => {
@@ -88,8 +116,11 @@ describe("SignupPage", () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-    vi.mocked(findMatchingLocale).mockResolvedValue("en");
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "test-invite-id" });
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
+      email: "test@example.com",
+    });
     vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
 
     const result = await SignupPage({ searchParams: mockSearchParams });
@@ -128,7 +159,10 @@ describe("SignupPage", () => {
   it("calls notFound when invite token is valid but invite is not found", async () => {
     // Mock the license check functions to return false
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "test-invite-id" });
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
+      email: "test@example.com",
+    });
     vi.mocked(getIsValidInviteToken).mockResolvedValue(false);
 
     await SignupPage({ searchParams: { inviteToken: "test-token" } });
@@ -141,8 +175,11 @@ describe("SignupPage", () => {
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
     vi.mocked(getisSsoEnabled).mockResolvedValue(true);
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-    vi.mocked(findMatchingLocale).mockResolvedValue("en");
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "test-invite-id" });
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
+    vi.mocked(verifyInviteToken).mockReturnValue({
+      inviteId: "test-invite-id",
+      email: "test@example.com",
+    });
     vi.mocked(getIsValidInviteToken).mockResolvedValue(true);
 
     const result = await SignupPage({ searchParams: { email: "test@example.com" } });

@@ -45,7 +45,13 @@ struct SurveyWebView: UIViewRepresentable {
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
         WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
             records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {
+                    /*
+                     This completion handler is intentionally empty since we only need to 
+                     ensure the data is removed. No additional actions are required after
+                     the website data has been cleared.
+                    */
+                })
             }
         }
     }
@@ -56,7 +62,13 @@ extension SurveyWebView {
         // webView function handles Javascipt alert
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String, initiatedByFrame frame: WKFrameInfo,  completionHandler: @escaping () -> Void) {
             let alertController = UIAlertController(title: "", message: message, preferredStyle: .alert)
-           alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in })
+           alertController.addAction(UIAlertAction(title: "OK", style: .default) { _ in 
+               /* 
+                This closure is intentionally empty since we only need a simple OK button
+                to dismiss the alert. The alert dismissal is handled automatically by the
+                system when the button is tapped.
+               */
+           })
             UIApplication.safeKeyWindow?.rootViewController?.presentedViewController?.present(alertController, animated: true)
             completionHandler()
         }
