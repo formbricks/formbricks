@@ -300,6 +300,11 @@ export const getQuestionTypes = (t: TFnType): TQuestion[] => [
       tokenSymbol: { show: true, required: true, placeholder: { default: "Token Name" } },
       buttonLabel: { default: t("templates.deploy") },
       backButtonLabel: { default: t("templates.back") },
+      // tokenName: { show: true, required: true, placeholder: { default: "SampleToken" } },
+      // tokenSymbol: { show: true, required: true, placeholder: { default: "TKN" } },
+      // initialSupply: { show: true, required: true, placeholder: { default: 1_000_000_000 } },
+      // buttonLabel: { default: t("templates.deploy") },
+      // backButtonLabel: { default: t("templates.back") },
     } as Partial<TSurveyContactInfoQuestion>,
   },
 ];
@@ -314,7 +319,6 @@ export const getCXQuestionTypes = (t: TFnType) =>
       TSurveyQuestionTypeEnum.NPS,
       TSurveyQuestionTypeEnum.Consent,
       TSurveyQuestionTypeEnum.CTA,
-      TSurveyQuestionTypeEnum.DeployToken,
     ].includes(questionType.id as TSurveyQuestionTypeEnum);
   });
 
