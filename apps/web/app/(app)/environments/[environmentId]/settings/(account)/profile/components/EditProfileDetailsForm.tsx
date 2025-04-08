@@ -67,10 +67,9 @@ export const EditProfileDetailsForm = ({ user }: { user: TUser }) => {
     if (!resetPasswordResponse?.data) {
       const errorMessage = getFormattedErrorMessage(resetPasswordResponse);
       toast.error(errorMessage);
-      return;
+    } else {
+      toast.success(t("auth.forgot-password.email-sent.heading"));
     }
-
-    toast.success(t("auth.forgot-password.email-sent.heading"));
 
     setIsResettingPassword(false);
   };
