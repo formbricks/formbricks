@@ -33,13 +33,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 }
 
 extension AppDelegate: FormbricksDelegate {
+    func onResponseCreated() {
+        
+    }
+    
     func onSurveyDisplayed() {
         
     }
     
     func onSuccess(_ successAction: FormbricksSDK.SuccessAction) {
 //        if (successAction == .onFinishedSetup) {
-//            Formbricks.track("[action_key]]")
+//            Formbricks.track("[action_key]", hiddenFields: ["key": "value"])
 //        }
     }
     
