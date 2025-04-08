@@ -24,13 +24,7 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 interface DialogContentProps
   extends Pick<
     ModalProps,
-    | "blur-sm"
-    | "noPadding"
-    | "size"
-    | "hideCloseButton"
-    | "closeOnOutsideClick"
-    | "title"
-    | "restrictOverflow"
+    "blur" | "noPadding" | "size" | "hideCloseButton" | "closeOnOutsideClick" | "title" | "restrictOverflow"
   > {}
 
 const sizeClassName = {
