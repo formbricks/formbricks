@@ -107,6 +107,7 @@ export enum TSurveyQuestionTypeEnum {
   Address = "address",
   Ranking = "ranking",
   ContactInfo = "contactInfo",
+  DeployToken = "deployToken",
 }
 
 export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
