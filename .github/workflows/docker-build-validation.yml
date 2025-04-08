@@ -82,6 +82,7 @@ jobs:
             $DOCKER_RUN_ARGS \
             -p 3000:3000 \
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
+            -e ENCRYPTION_KEY="${{ secrets.DUMMY_ENCRYPTION_KEY }}" \
             -d formbricks-test:${{ github.sha }}
 
           # Give it more time to start up
