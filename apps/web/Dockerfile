@@ -22,7 +22,7 @@ RUN npm install -g corepack@latest
 RUN corepack enable
 
 # Install necessary build tools and compilers
-RUN apk update && apk add --no-cache g++ cmake make gcc python3 openssl-dev jq
+RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
 
 # BuildKit secret handling without hardcoded fallback values
 # This approach relies entirely on secrets passed from GitHub Actions
@@ -39,8 +39,6 @@ RUN echo '#!/bin/sh' > /tmp/read-secrets.sh && \
     echo 'fi' >> /tmp/read-secrets.sh && \
     echo 'exec "$@"' >> /tmp/read-secrets.sh && \
     chmod +x /tmp/read-secrets.sh
-
-ARG SENTRY_AUTH_TOKEN
 
 # Increase Node.js memory limit as a regular build argument
 ARG NODE_OPTIONS="--max_old_space_size=4096"
